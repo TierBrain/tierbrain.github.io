@@ -87,6 +87,13 @@
   .c9{--a:#e8b65a;--b:#e0556b;animation-delay:.34s;}
   .c10{--a:#45e0ff;--b:#ff5ce0;animation-delay:.36s;}
   .c11{--a:#b9a0ff;--b:#ffe08a;animation-delay:.38s;}
+  .support{display:inline-flex;align-items:center;gap:8px;margin-top:18px;text-decoration:none;
+    font-family:'Baloo 2';font-weight:700;font-size:15px;color:#0e0c1f;
+    background:linear-gradient(180deg,#ffe08a,#f2c95c);padding:11px 22px;border-radius:30px;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .15s,box-shadow .15s;}
+  .support:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.45);}
+  .support:active{transform:translateY(0);}
+  .support svg{width:16px;height:16px;}
   @keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
 </style>
@@ -180,6 +187,13 @@
   <footer>
     Tap an answer or press <b>1–4</b>. Get two right in a row to climb a level; two wrong drops you back.<br>
     Pick any game to begin.
+    <br>
+    <!-- ===== TIP JAR: set to PayPal donations (officialnamesub@gmail.com).
+         To switch to a tidier PayPal.me link later, change the href below to: https://paypal.me/yourhandle ===== -->
+    <a class="support" href="https://www.paypal.com/donate/?business=officialnamesub@gmail.com&amp;no_recurring=0&amp;item_name=Support%20Quiz%20Climb&amp;currency_code=GBP" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Support this site
+    </a>
   </footer>
 </body>
 </html>
