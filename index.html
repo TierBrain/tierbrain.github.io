@@ -78,6 +78,15 @@
     font-size:13px;line-height:1.6;animation:rise .7s .3s cubic-bezier(.2,.8,.2,1) both;}
   footer b{color:#cdc7ee;}
 
+  .card.feature{grid-column:1/-1;background:linear-gradient(180deg,rgba(58,209,209,.08),rgba(183,148,255,.05));}
+  .card.feature h2{font-size:clamp(28px,7vw,40px);}
+  .c5{--a:#3ad1d1;--b:#b794ff;animation-delay:.02s;}
+  .c6{--a:#ff9b3d;--b:#ff5db0;animation-delay:.28s;}
+  .c7{--a:#ffcf5a;--b:#6cc4ff;animation-delay:.30s;}
+  .c8{--a:#36c98a;--b:#46d6ff;animation-delay:.32s;}
+  .c9{--a:#e8b65a;--b:#e0556b;animation-delay:.34s;}
+  .c10{--a:#45e0ff;--b:#ff5ce0;animation-delay:.36s;}
+  .c11{--a:#b9a0ff;--b:#ffe08a;animation-delay:.38s;}
   @keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
 </style>
@@ -86,10 +95,17 @@
   <header>
     <div class="kicker">Trivia · Three Levels · Beat the Clock</div>
     <h1>Quiz Climb</h1>
-    <p class="tag">Four games, one challenge. Answer right to climb the difficulty, slip up and drop back — how far can you get before the clock or your luck runs out?</p>
+    <p class="tag">Eleven games, one challenge. Answer right to climb the difficulty, slip up and drop back — how far can you get before the clock or your luck runs out?</p>
   </header>
 
   <main class="grid">
+    <a class="card feature c5" href="general-knowledge-quiz.html">
+      <span class="badge">Super Quiz · 4 Tiers</span>
+      <h2>General Knowledge</h2>
+      <p>A big shuffled pool across four tiers — climb from Easy through Medium and Hard all the way to the new Legends tier.</p>
+      <div class="meta"><span class="qn">160 questions &amp; growing · Legends tier</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
     <a class="card c1" href="bible-quiz.html">
       <span class="badge">Scripture</span>
       <h2>The Bible</h2>
@@ -116,6 +132,48 @@
       <h2>Real Housewives</h2>
       <p>Bravo's franchise — taglines, cast feuds and the table flip.</p>
       <div class="meta"><span class="qn">97 questions · 3 levels</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c6" href="music-quiz.html">
+      <span class="badge">Music</span>
+      <h2>Music</h2>
+      <p>Pop, rock, classical and jazz — instruments, artists and theory.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c7" href="film-screen-quiz.html">
+      <span class="badge">Film &amp; TV</span>
+      <h2>Film &amp; Screen</h2>
+      <p>Movies, TV, actors and directors — from blockbusters to world cinema.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c8" href="sport-quiz.html">
+      <span class="badge">Sport</span>
+      <h2>Sport</h2>
+      <p>Football, the Olympics, tennis, cricket, golf, boxing and F1.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c9" href="history-quiz.html">
+      <span class="badge">History</span>
+      <h2>History</h2>
+      <p>Ancient empires to the modern world — figures, dates and events.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c10" href="science-quiz.html">
+      <span class="badge">Science</span>
+      <h2>Science</h2>
+      <p>Biology, chemistry, physics and space — from cells to black holes.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
+    </a>
+
+    <a class="card c11" href="maths-quiz.html">
+      <span class="badge">Maths</span>
+      <h2>Maths</h2>
+      <p>Arithmetic, geometry, algebra and number facts to puzzle over.</p>
+      <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
   </main>
 

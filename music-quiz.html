@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Music Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#14100a; --bg1:#241a10; --card:#241a12; --card2:#30241a;
+    --ink:#fdf2e6; --mut:#c9b49a; --line:#4a3a28;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#ff7a3d; --l4:#ff5db0;
+    --gold:#ffc24a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(255,140,60,.20), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,93,176,.16), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Music Trivia</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions from a big pool — pop, rock, classical and jazz, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"Which instrument has 88 keys?","correct":"The piano","wrong":["The guitar","The violin","The flute"]},
+      {"q":"How many strings does a standard guitar have?","correct":"Six","wrong":["Four","Five","Twelve"]},
+      {"q":"Which band released the album 'Abbey Road'?","correct":"The Beatles","wrong":["The Rolling Stones","The Who","Queen"]},
+      {"q":"Who is known as the 'King of Pop'?","correct":"Michael Jackson","wrong":["Elvis Presley","Prince","James Brown"]},
+      {"q":"A large group of musicians led by a conductor is called an…?","correct":"Orchestra","wrong":["Choir","Duet","Solo"]},
+      {"q":"Which of these is a percussion instrument?","correct":"Drums","wrong":["Violin","Flute","Trumpet"]},
+      {"q":"Which singer is called the 'Queen of Pop'?","correct":"Madonna","wrong":["Cher","Whitney Houston","Janet Jackson"]},
+      {"q":"What is the name for the words of a song?","correct":"Lyrics","wrong":["Notes","Chords","Beats"]},
+      {"q":"Which family does the violin belong to?","correct":"Strings","wrong":["Woodwind","Brass","Percussion"]},
+      {"q":"Elvis Presley is known as the King of…?","correct":"Rock and Roll","wrong":["Pop","Soul","Country"]},
+      {"q":"How many musicians are in a quartet?","correct":"Four","wrong":["Two","Three","Five"]},
+      {"q":"Which British band sang 'Bohemian Rhapsody'?","correct":"Queen","wrong":["The Beatles","Oasis","Coldplay"]},
+      {"q":"What do you call the person who leads an orchestra?","correct":"A conductor","wrong":["A composer","A soloist","A producer"]},
+      {"q":"Which instrument has a bag and pipes and is linked with Scotland?","correct":"The bagpipes","wrong":["The banjo","The accordion","The harmonica"]},
+      {"q":"A song performed by one person alone is called a…?","correct":"Solo","wrong":["Duet","Chorus","Medley"]},
+      {"q":"Which instrument has black and white keys?","correct":"The piano","wrong":["The harp","The cello","The clarinet"]},
+      {"q":"The Spice Girls were a famous pop group from which country?","correct":"England","wrong":["The USA","Australia","Canada"]},
+      {"q":"Which of these is a brass instrument?","correct":"The trumpet","wrong":["The flute","The violin","The xylophone"]},
+      {"q":"The catchy, repeated part of a song is the…?","correct":"Chorus","wrong":["Verse","Bridge","Intro"]},
+      {"q":"How many strings does a standard violin have?","correct":"Four","wrong":["Six","Five","Three"]},
+      {"q":"Which singer is known as the 'Queen of Soul'?","correct":"Aretha Franklin","wrong":["Diana Ross","Tina Turner","Whitney Houston"]},
+      {"q":"Drums are usually played with…?","correct":"Drumsticks","wrong":["A bow","A pick","Keys"]},
+      {"q":"Which band were nicknamed the 'Fab Four'?","correct":"The Beatles","wrong":["The Beach Boys","ABBA","The Eagles"]},
+      {"q":"A duet is performed by how many people?","correct":"Two","wrong":["One","Four","A whole choir"]},
+      {"q":"Which pop star sang 'Thriller'?","correct":"Michael Jackson","wrong":["Lionel Richie","Stevie Wonder","Prince"]},
+      {"q":"What do you call the symbols written on a musical staff?","correct":"Notes","wrong":["Letters","Words","Numbers"]},
+      {"q":"The pop group ABBA came from which country?","correct":"Sweden","wrong":["Norway","Denmark","Finland"]},
+      {"q":"Which large keyboard instrument has pipes and is often found in churches?","correct":"The organ","wrong":["The piano","The harpsichord","The accordion"]},
+      {"q":"Which Italian word tells musicians to play loudly?","correct":"Forte","wrong":["Piano","Lento","Largo"]},
+      {"q":"Which Italian word tells musicians to play softly?","correct":"Piano","wrong":["Forte","Allegro","Vivace"]},
+      {"q":"Which band member usually keeps the beat?","correct":"The drummer","wrong":["The singer","The guitarist","The keyboardist"]},
+      {"q":"What is a traditional Christmas song called?","correct":"A carol","wrong":["A hymn","A jingle","An anthem"]},
+      {"q":"Which US city is regarded as the home of country music?","correct":"Nashville","wrong":["New York","Los Angeles","Miami"]},
+      {"q":"Which of these is a woodwind instrument?","correct":"The flute","wrong":["The trumpet","The cymbals","The cello"]},
+      {"q":"Hip-hop is built around a vocal style called…?","correct":"Rapping","wrong":["Yodelling","Opera","Scatting"]},
+      {"q":"What is the highest female singing voice called?","correct":"Soprano","wrong":["Alto","Tenor","Bass"]},
+      {"q":"What is the lowest male singing voice called?","correct":"Bass","wrong":["Tenor","Soprano","Alto"]},
+      {"q":"Which is the largest instrument in the orchestral string family?","correct":"The double bass","wrong":["The violin","The viola","The cello"]},
+      {"q":"A live event where bands or artists perform is called a…?","correct":"Concert","wrong":["Gallery","Play","Lecture"]},
+      {"q":"Which of these instruments is plucked or strummed?","correct":"The guitar","wrong":["The trombone","The clarinet","The timpani"]}
+    ],
+    2:[
+      {"q":"Who composed 'The Four Seasons'?","correct":"Antonio Vivaldi","wrong":["J.S. Bach","Mozart","Handel"]},
+      {"q":"'Smells Like Teen Spirit' was a hit for which band?","correct":"Nirvana","wrong":["Pearl Jam","Soundgarden","Green Day"]},
+      {"q":"Which instrument did Jimi Hendrix famously play?","correct":"The guitar","wrong":["The drums","The piano","The saxophone"]},
+      {"q":"What nationality was the composer Mozart?","correct":"Austrian","wrong":["German","Italian","French"]},
+      {"q":"Which decade is most associated with the peak of disco?","correct":"The 1970s","wrong":["The 1950s","The 1990s","The 2010s"]},
+      {"q":"Bob Marley is most associated with which genre?","correct":"Reggae","wrong":["Blues","Jazz","Punk"]},
+      {"q":"How many lines are there in a standard musical staff?","correct":"Five","wrong":["Four","Six","Three"]},
+      {"q":"Which band's frontman was Freddie Mercury?","correct":"Queen","wrong":["Led Zeppelin","The Who","Genesis"]},
+      {"q":"Who composed the opera 'The Magic Flute'?","correct":"Mozart","wrong":["Verdi","Puccini","Wagner"]},
+      {"q":"What does the Italian term 'allegro' mean?","correct":"Fast and lively","wrong":["Slow","Soft","Loud"]},
+      {"q":"Which English city are The Beatles from?","correct":"Liverpool","wrong":["Manchester","London","Birmingham"]},
+      {"q":"Who composed the ballet 'Swan Lake'?","correct":"Tchaikovsky","wrong":["Chopin","Brahms","Debussy"]},
+      {"q":"Three or more notes sounded together form a…?","correct":"Chord","wrong":["Scale","Beat","Rest"]},
+      {"q":"Which instrument family does the trumpet belong to?","correct":"Brass","wrong":["Woodwind","Strings","Percussion"]},
+      {"q":"'Stairway to Heaven' is by which band?","correct":"Led Zeppelin","wrong":["Deep Purple","The Eagles","Pink Floyd"]},
+      {"q":"Which American rock singer is nicknamed 'The Boss'?","correct":"Bruce Springsteen","wrong":["Bon Jovi","Tom Petty","Bob Seger"]},
+      {"q":"What does 'tempo' refer to in music?","correct":"The speed","wrong":["The volume","The pitch","The key"]},
+      {"q":"The blues genre originated among African American communities in which country?","correct":"The United States","wrong":["Jamaica","Britain","Brazil"]},
+      {"q":"Which singer released the albums '21' and '25'?","correct":"Adele","wrong":["Amy Winehouse","Sam Smith","Duffy"]},
+      {"q":"Beethoven was famously afflicted by what later in life?","correct":"Deafness","wrong":["Blindness","Muteness","Paralysis"]},
+      {"q":"What is the term for gradually getting louder?","correct":"Crescendo","wrong":["Decrescendo","Staccato","Legato"]},
+      {"q":"Which instrument is Yo-Yo Ma renowned for?","correct":"The cello","wrong":["The piano","The violin","The flute"]},
+      {"q":"The 'grunge' genre emerged from which US city in the early 1990s?","correct":"Seattle","wrong":["Detroit","New Orleans","Memphis"]},
+      {"q":"Who composed the opera 'Carmen'?","correct":"Georges Bizet","wrong":["Verdi","Rossini","Donizetti"]},
+      {"q":"How many distinct notes are in a major scale (before the octave repeats)?","correct":"Seven","wrong":["Five","Eight","Twelve"]},
+      {"q":"Which Beatle wrote and performed the solo song 'Imagine'?","correct":"John Lennon","wrong":["Paul McCartney","George Harrison","Ringo Starr"]},
+      {"q":"What is the symbol that sets the pitch at the start of a staff?","correct":"A clef","wrong":["A rest","A sharp","A tie"]},
+      {"q":"Which instrument is large, triangular, golden and plucked?","correct":"The harp","wrong":["The lyre","The zither","The banjo"]},
+      {"q":"'Hotel California' is a song by which band?","correct":"The Eagles","wrong":["Fleetwood Mac","The Doors","Steely Dan"]},
+      {"q":"What is the Italian term for smoothly connected notes?","correct":"Legato","wrong":["Staccato","Forte","Presto"]},
+      {"q":"Which legendary 1969 music festival was held in New York state?","correct":"Woodstock","wrong":["Glastonbury","Coachella","Lollapalooza"]},
+      {"q":"Whitney Houston's huge hit 'I Will Always Love You' was written by which country star?","correct":"Dolly Parton","wrong":["Loretta Lynn","Reba McEntire","Tammy Wynette"]},
+      {"q":"What does 'a cappella' mean?","correct":"Singing without instruments","wrong":["Singing very loudly","Singing in a round","Singing in Latin"]},
+      {"q":"Jazz is strongly associated with the origins of which US city?","correct":"New Orleans","wrong":["Chicago","Nashville","Las Vegas"]},
+      {"q":"Which keyboard instrument predates the piano and plucks its strings?","correct":"The harpsichord","wrong":["The organ","The accordion","The synthesizer"]},
+      {"q":"What is the lowest-pitched brass instrument in an orchestra?","correct":"The tuba","wrong":["The trumpet","The trombone","The French horn"]},
+      {"q":"Which 1980s pop star was dubbed the 'Material Girl'?","correct":"Madonna","wrong":["Cyndi Lauper","Whitney Houston","Janet Jackson"]},
+      {"q":"A piece written for a solo instrument with orchestra is called a…?","correct":"Concerto","wrong":["Symphony","Sonata","Fugue"]},
+      {"q":"Which band released 'The Dark Side of the Moon'?","correct":"Pink Floyd","wrong":["Led Zeppelin","The Who","Genesis"]},
+      {"q":"What is the highest male voice type, above tenor?","correct":"Countertenor","wrong":["Bass","Baritone","Alto"]}
+    ],
+    3:[
+      {"q":"Who composed the opera cycle 'The Ring of the Nibelung'?","correct":"Richard Wagner","wrong":["Verdi","Puccini","Richard Strauss"]},
+      {"q":"Which tempo marking means 'very fast'?","correct":"Presto","wrong":["Adagio","Andante","Largo"]},
+      {"q":"In which year did Elvis Presley die?","correct":"1977","wrong":["1967","1985","1973"]},
+      {"q":"On sheet music, the dynamic 'piano' is abbreviated as…?","correct":"p","wrong":["pn","pi","f"]},
+      {"q":"Who composed 'Clair de Lune'?","correct":"Claude Debussy","wrong":["Maurice Ravel","Erik Satie","Gabriel Fauré"]},
+      {"q":"The interval from one note to the next of the same name is called an…?","correct":"Octave","wrong":["Fifth","Third","Semitone"]},
+      {"q":"Which instrument did Louis Armstrong famously play?","correct":"The trumpet","wrong":["The saxophone","The piano","The clarinet"]},
+      {"q":"'Like a Rolling Stone' was a landmark song by which artist?","correct":"Bob Dylan","wrong":["Neil Young","Leonard Cohen","Johnny Cash"]},
+      {"q":"What is the smallest interval in standard Western music?","correct":"A semitone","wrong":["A tone","A third","An octave"]},
+      {"q":"Which composer wrote his Ninth Symphony while almost completely deaf?","correct":"Beethoven","wrong":["Mozart","Schubert","Haydn"]},
+      {"q":"The band U2 comes from which country?","correct":"Ireland","wrong":["Scotland","England","Wales"]},
+      {"q":"Who composed the 'Brandenburg Concertos'?","correct":"J.S. Bach","wrong":["Handel","Vivaldi","Telemann"]},
+      {"q":"'Purple Rain' was an album and film by which artist?","correct":"Prince","wrong":["Michael Jackson","Lionel Richie","Rick James"]},
+      {"q":"In 4/4 time, how many beats does a whole note (semibreve) last?","correct":"Four","wrong":["Two","One","Eight"]},
+      {"q":"Which singer fronted The Supremes before a huge solo career?","correct":"Diana Ross","wrong":["Aretha Franklin","Gladys Knight","Tina Turner"]},
+      {"q":"What does the time signature 4/4 indicate?","correct":"Four beats per bar","wrong":["Four bars","Four sharps","Four instruments"]},
+      {"q":"Which Italian composer wrote 'La Traviata' and 'Aida'?","correct":"Giuseppe Verdi","wrong":["Puccini","Rossini","Bellini"]},
+      {"q":"'Good Vibrations' is a classic by which American band?","correct":"The Beach Boys","wrong":["The Byrds","The Mamas & the Papas","Creedence Clearwater Revival"]},
+      {"q":"A large-scale orchestral work in several movements is called a…?","correct":"Symphony","wrong":["Concerto","Sonata","Étude"]},
+      {"q":"Which guitarist of the '27 Club' set fire to his guitar at Monterey and played Woodstock?","correct":"Jimi Hendrix","wrong":["Eric Clapton","Jimmy Page","Keith Richards"]},
+      {"q":"Orchestras typically tune to the note A at which frequency?","correct":"440 Hz","wrong":["432 Hz","256 Hz","500 Hz"]},
+      {"q":"Who composed 'Rhapsody in Blue'?","correct":"George Gershwin","wrong":["Aaron Copland","Leonard Bernstein","Cole Porter"]},
+      {"q":"'Hey Jude' was written mainly by which Beatle?","correct":"Paul McCartney","wrong":["John Lennon","George Harrison","Ringo Starr"]},
+      {"q":"The 'ska' genre originated in which country?","correct":"Jamaica","wrong":["Cuba","Brazil","Trinidad"]},
+      {"q":"What is the term for a gradual slowing of tempo?","correct":"Ritardando","wrong":["Accelerando","Crescendo","Fermata"]},
+      {"q":"Which Polish composer is famous for his piano nocturnes and études?","correct":"Frédéric Chopin","wrong":["Franz Liszt","Robert Schumann","Edvard Grieg"]},
+      {"q":"Which has the highest range of these orchestral woodwinds?","correct":"The piccolo","wrong":["The bassoon","The oboe","The clarinet"]},
+      {"q":"'Respect' became a signature anthem for which soul legend?","correct":"Aretha Franklin","wrong":["Etta James","Nina Simone","Gladys Knight"]},
+      {"q":"Which 1970s band's members included Robert Plant and Jimmy Page?","correct":"Led Zeppelin","wrong":["Deep Purple","Black Sabbath","Free"]},
+      {"q":"Which ticking device helps musicians keep steady time?","correct":"A metronome","wrong":["A tuner","An amplifier","A capo"]},
+      {"q":"Who composed the 'New World Symphony'?","correct":"Antonín Dvořák","wrong":["Bedřich Smetana","Jean Sibelius","Edvard Grieg"]},
+      {"q":"'Born to Run' is a famous album by which artist?","correct":"Bruce Springsteen","wrong":["Tom Petty","Bob Seger","John Mellencamp"]},
+      {"q":"Which instruments make up a standard string quartet?","correct":"Two violins, a viola and a cello","wrong":["Four violins","Two cellos and two violas","Violin, viola, cello and bass"]},
+      {"q":"What is the term for a concluding passage at the end of a piece?","correct":"Coda","wrong":["Intro","Bridge","Refrain"]},
+      {"q":"Which jazz trumpeter and bandleader recorded 'Kind of Blue'?","correct":"Miles Davis","wrong":["John Coltrane","Dizzy Gillespie","Charlie Parker"]},
+      {"q":"The 'Waltz King' who wrote 'The Blue Danube' was…?","correct":"Johann Strauss II","wrong":["Franz Lehár","Joseph Haydn","Franz Schubert"]},
+      {"q":"Which British band released 'OK Computer' in 1997?","correct":"Radiohead","wrong":["Blur","Oasis","Pulp"]},
+      {"q":"A multi-movement work for a solo instrument (often piano) is a…?","correct":"Sonata","wrong":["Concerto","Symphony","Prelude"]},
+      {"q":"Which jazz singer was known as 'Lady Day'?","correct":"Billie Holiday","wrong":["Ella Fitzgerald","Sarah Vaughan","Nina Simone"]},
+      {"q":"'Sgt. Pepper's Lonely Hearts Club Band' (1967) was released by which band?","correct":"The Beatles","wrong":["The Rolling Stones","The Beach Boys","The Kinks"]}
+    ],
+    4:[
+      {"q":"Who composed 'The Rite of Spring', which caused an uproar at its 1913 premiere?","correct":"Igor Stravinsky","wrong":["Claude Debussy","Maurice Ravel","Arnold Schoenberg"]},
+      {"q":"What is the Italian term for a sudden strong accent on a note?","correct":"Sforzando","wrong":["Pianissimo","Legato","Rubato"]},
+      {"q":"Who composed the 'Enigma Variations'?","correct":"Edward Elgar","wrong":["Ralph Vaughan Williams","Gustav Holst","Benjamin Britten"]},
+      {"q":"The 12-bar form is fundamental to which genre?","correct":"The blues","wrong":["Bebop","Baroque","Bluegrass"]},
+      {"q":"What is the relative minor key of C major?","correct":"A minor","wrong":["E minor","D minor","G minor"]},
+      {"q":"Who composed 'Pictures at an Exhibition'?","correct":"Modest Mussorgsky","wrong":["Alexander Borodin","Rimsky-Korsakov","Mikhail Glinka"]},
+      {"q":"Which saxophonist recorded the landmark album 'A Love Supreme'?","correct":"John Coltrane","wrong":["Charlie Parker","Sonny Rollins","Dexter Gordon"]},
+      {"q":"In sonata form, the three main sections are exposition, development and…?","correct":"Recapitulation","wrong":["Coda","Cadenza","Interlude"]},
+      {"q":"Who composed the operas 'Tosca' and 'Madama Butterfly'?","correct":"Giacomo Puccini","wrong":["Verdi","Rossini","Mascagni"]},
+      {"q":"A cadence moving from chord V to chord I, sounding finished, is a…?","correct":"Perfect cadence","wrong":["Plagal cadence","Interrupted cadence","Imperfect cadence"]},
+      {"q":"Which 20th-century composer pioneered the twelve-tone technique?","correct":"Arnold Schoenberg","wrong":["Igor Stravinsky","Béla Bartók","Paul Hindemith"]},
+      {"q":"Which composer was working on his unfinished 'Requiem' when he died in 1791?","correct":"Mozart","wrong":["Haydn","Salieri","Gluck"]},
+      {"q":"In singing, what is a 'melisma'?","correct":"Several notes sung on one syllable","wrong":["A sudden key change","A drum fill","A type of guitar"]},
+      {"q":"The 'cor anglais' (English horn) is most closely related to which instrument?","correct":"The oboe","wrong":["The flute","The clarinet","The trumpet"]},
+      {"q":"The 'Trout Quintet' is a chamber work by which composer?","correct":"Franz Schubert","wrong":["Johannes Brahms","Robert Schumann","Felix Mendelssohn"]},
+      {"q":"What does the term 'rubato' mean?","correct":"Flexible, expressive timing","wrong":["Very loud","Plucked strings","Played twice"]},
+      {"q":"Who wrote the tone poem 'Also sprach Zarathustra'?","correct":"Richard Strauss","wrong":["Gustav Mahler","Anton Bruckner","Richard Wagner"]},
+      {"q":"In jazz, what is 'scat' singing?","correct":"Improvised wordless vocals","wrong":["Singing extremely low","A trumpet mute technique","A drum pattern"]},
+      {"q":"The well-known 'Dies Irae' chant traditionally belongs to which type of work?","correct":"A requiem mass","wrong":["A wedding march","A lullaby","A national anthem"]},
+      {"q":"Who composed the orchestral suite 'The Planets'?","correct":"Gustav Holst","wrong":["Edward Elgar","Vaughan Williams","William Walton"]},
+      {"q":"What is the term for combining independent melodies at the same time?","correct":"Counterpoint","wrong":["Harmony","Unison","Monophony"]},
+      {"q":"Which Baroque composer wrote 'Water Music' and 'Messiah'?","correct":"George Frideric Handel","wrong":["J.S. Bach","Vivaldi","Henry Purcell"]},
+      {"q":"A 'tritone' spans how many semitones?","correct":"Six","wrong":["Three","Five","Twelve"]},
+      {"q":"Who composed the 'Hungarian Rhapsodies' for piano?","correct":"Franz Liszt","wrong":["Chopin","Brahms","Bartók"]},
+      {"q":"Which double-reed instrument is the lowest common woodwind in an orchestra?","correct":"The bassoon","wrong":["The clarinet","The flute","The oboe"]},
+      {"q":"'Appalachian Spring' was composed by which American?","correct":"Aaron Copland","wrong":["Charles Ives","Samuel Barber","Leonard Bernstein"]},
+      {"q":"In tonal music, the 'home' note or key of a piece is called the…?","correct":"Tonic","wrong":["Dominant","Mediant","Leading note"]},
+      {"q":"Which composer wrote the 'Leningrad' Symphony under Soviet scrutiny?","correct":"Dmitri Shostakovich","wrong":["Sergei Prokofiev","Aram Khachaturian","Dmitry Kabalevsky"]},
+      {"q":"Who composed the opera 'The Barber of Seville'?","correct":"Gioachino Rossini","wrong":["Donizetti","Bellini","Verdi"]},
+      {"q":"What does 'pizzicato' instruct a string player to do?","correct":"Pluck the strings","wrong":["Bow very softly","Mute the strings","Tap the body"]},
+      {"q":"Which jazz pianist and composer wrote 'Round Midnight'?","correct":"Thelonious Monk","wrong":["Bill Evans","Oscar Peterson","Art Tatum"]},
+      {"q":"Who composed 'Peter and the Wolf' and the ballet 'Romeo and Juliet'?","correct":"Sergei Prokofiev","wrong":["Stravinsky","Shostakovich","Glazunov"]},
+      {"q":"A countertenor sings in roughly which vocal range?","correct":"The alto/contralto range","wrong":["The bass range","The baritone range","The sub-bass range"]},
+      {"q":"Which 1965 Beatles song, written by McCartney, features a string quartet?","correct":"'Yesterday'","wrong":["'Help!'","'Michelle'","'Let It Be'"]},
+      {"q":"What does 'fortissimo' (ff) mean?","correct":"Very loud","wrong":["Very soft","Moderately loud","Gradually softer"]},
+      {"q":"Who wrote the 'Peer Gynt' suite, including 'In the Hall of the Mountain King'?","correct":"Edvard Grieg","wrong":["Jean Sibelius","Carl Nielsen","Antonín Dvořák"]},
+      {"q":"A 'perfect fifth' spans how many semitones?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"Who composed the music for the musical 'West Side Story'?","correct":"Leonard Bernstein","wrong":["Stephen Sondheim","Richard Rodgers","Cole Porter"]},
+      {"q":"What is a 'fugue'?","correct":"A piece built on imitative counterpoint of a theme","wrong":["A slow lament","A dance in triple time","A solo cadenza"]},
+      {"q":"Which Russian composer wrote the '1812 Overture'?","correct":"Tchaikovsky","wrong":["Borodin","Mussorgsky","Rimsky-Korsakov"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>

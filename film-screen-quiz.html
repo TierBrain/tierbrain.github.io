@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Film &amp; Screen Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0b0b11; --bg1:#16131c; --card:#17151f; --card2:#201d2b;
+    --ink:#f6f1ff; --mut:#b6acc6; --line:#36313f;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#ff5d5d; --l4:#6cc4ff;
+    --gold:#ffcf5a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(255,200,80,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,80,80,.14), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Film &amp; Screen Trivia</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions from a big pool — movies, TV, actors and directors, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"In 'The Wizard of Oz', what colour is the brick road Dorothy follows?","correct":"Yellow","wrong":["Red","Blue","Green"]},
+      {"q":"Which animated film features a snowman named Olaf and sisters Elsa and Anna?","correct":"Frozen","wrong":["Moana","Tangled","Brave"]},
+      {"q":"In 'Star Wars', what is the glowing sword used by the Jedi called?","correct":"A lightsaber","wrong":["A blaster","A phaser","A cutlass"]},
+      {"q":"Which superhero is the 'Caped Crusader' who protects Gotham City?","correct":"Batman","wrong":["Superman","Spider-Man","Iron Man"]},
+      {"q":"Daniel Radcliffe played which boy wizard in films?","correct":"Harry Potter","wrong":["Frodo","Percy Jackson","Edmund"]},
+      {"q":"In 'Toy Story', what kind of toy is Woody?","correct":"A cowboy","wrong":["An astronaut","A dinosaur","A robot"]},
+      {"q":"Which actor played Jack in 'Titanic'?","correct":"Leonardo DiCaprio","wrong":["Brad Pitt","Tom Cruise","Johnny Depp"]},
+      {"q":"What is the name of the lion cub who becomes king in 'The Lion King'?","correct":"Simba","wrong":["Mufasa","Scar","Nala"]},
+      {"q":"Which film features a great white shark terrorising a beach town?","correct":"Jaws","wrong":["Free Willy","Finding Nemo","The Meg"]},
+      {"q":"In 'Finding Nemo', what type of fish is Nemo?","correct":"A clownfish","wrong":["A shark","A goldfish","A dolphin"]},
+      {"q":"Which green ogre stars in a DreamWorks film with a donkey sidekick?","correct":"Shrek","wrong":["The Hulk","Yoda","The Grinch"]},
+      {"q":"'E.T.' is a famous film about a friendly…?","correct":"Alien","wrong":["Dinosaur","Robot","Ghost"]},
+      {"q":"Which superhero shoots webs after being bitten by a spider?","correct":"Spider-Man","wrong":["Batman","Superman","Thor"]},
+      {"q":"Which animated TV family includes Homer, Marge, Bart and Lisa?","correct":"The Simpsons","wrong":["Family Guy","South Park","The Flintstones"]},
+      {"q":"In 'Beauty and the Beast', the Beast turns back into a…?","correct":"Prince","wrong":["Frog","Wizard","Knight"]},
+      {"q":"Which film features dinosaurs brought back to life in a theme park?","correct":"Jurassic Park","wrong":["King Kong","Godzilla","Ice Age"]},
+      {"q":"What is the name of the boy who never grows up?","correct":"Peter Pan","wrong":["Pinocchio","Aladdin","Mowgli"]},
+      {"q":"Which actor is famous for playing Captain Jack Sparrow?","correct":"Johnny Depp","wrong":["Orlando Bloom","Brad Pitt","Russell Crowe"]},
+      {"q":"In 'Cinderella', what does she lose at the ball at midnight?","correct":"A glass slipper","wrong":["A crown","A ring","A glove"]},
+      {"q":"Which superhero team includes Iron Man, Captain America and Thor?","correct":"The Avengers","wrong":["The Justice League","The X-Men","The Fantastic Four"]},
+      {"q":"What kind of animal is the Disney character Dumbo?","correct":"An elephant","wrong":["A mouse","A bear","A deer"]},
+      {"q":"Which film studio uses a hopping lamp named 'Luxo Jr.' in its logo?","correct":"Pixar","wrong":["Disney","DreamWorks","Warner Bros"]},
+      {"q":"In 'Snow White', how many dwarfs are there?","correct":"Seven","wrong":["Five","Three","Nine"]},
+      {"q":"Which actor plays Wolverine in the X-Men films?","correct":"Hugh Jackman","wrong":["Ryan Reynolds","Chris Evans","Patrick Stewart"]},
+      {"q":"What is the name of the boxer played by Sylvester Stallone?","correct":"Rocky","wrong":["Rambo","Creed","Apollo"]},
+      {"q":"Which film features the forgetful blue fish Dory?","correct":"Finding Nemo","wrong":["Shark Tale","Bambi","Madagascar"]},
+      {"q":"In 'The Jungle Book', what kind of animal is Baloo?","correct":"A bear","wrong":["A tiger","A panther","A snake"]},
+      {"q":"Which film franchise features Optimus Prime and robots that change into vehicles?","correct":"Transformers","wrong":["Power Rangers","Pacific Rim","RoboCop"]},
+      {"q":"Who created Mickey Mouse and founded a famous film studio?","correct":"Walt Disney","wrong":["Steven Spielberg","Stan Lee","Jim Henson"]},
+      {"q":"Which sitcom features friends Ross, Rachel, Monica, Chandler, Joey and Phoebe?","correct":"Friends","wrong":["Seinfeld","How I Met Your Mother","The Office"]},
+      {"q":"In 'Up', the house is lifted into the sky by what?","correct":"Balloons","wrong":["A rocket","A crane","A storm"]},
+      {"q":"Which Pixar film is named after its little waste-collecting robot?","correct":"WALL-E","wrong":["Cars","Up","Brave"]},
+      {"q":"Which masked 'Star Wars' villain breathes heavily and wears black?","correct":"Darth Vader","wrong":["Yoda","Chewbacca","Han Solo"]},
+      {"q":"What is the name of the grey-bearded wizard in 'The Lord of the Rings'?","correct":"Gandalf","wrong":["Dumbledore","Merlin","Saruman"]},
+      {"q":"Which film features the song 'Hakuna Matata'?","correct":"The Lion King","wrong":["Madagascar","Tarzan","The Jungle Book"]},
+      {"q":"Which actor is famous for playing Mr Bean?","correct":"Rowan Atkinson","wrong":["Hugh Grant","Ricky Gervais","John Cleese"]},
+      {"q":"In 'Monsters, Inc.', the monster city is powered by children's…?","correct":"Screams","wrong":["Toys","Drawings","Songs"]},
+      {"q":"The Joker is the arch-enemy of which superhero?","correct":"Batman","wrong":["Superman","Spider-Man","The Hulk"]},
+      {"q":"What is the name of the toy astronaut in 'Toy Story'?","correct":"Buzz Lightyear","wrong":["Woody","Rex","Slinky"]},
+      {"q":"Which Disney film features a princess with long magical hair?","correct":"Tangled","wrong":["Frozen","Brave","Mulan"]}
+    ],
+    2:[
+      {"q":"Who directed 'Jaws', 'E.T.' and 'Jurassic Park'?","correct":"Steven Spielberg","wrong":["George Lucas","James Cameron","Ridley Scott"]},
+      {"q":"'The Godfather' (1972) was directed by whom?","correct":"Francis Ford Coppola","wrong":["Martin Scorsese","Stanley Kubrick","Sidney Lumet"]},
+      {"q":"Which 1997 film won 11 Oscars and starred DiCaprio and Winslet?","correct":"Titanic","wrong":["Avatar","The Aviator","Gladiator"]},
+      {"q":"In 'The Matrix', what is the main character's name?","correct":"Neo","wrong":["Morpheus","Trinity","Cypher"]},
+      {"q":"Which actor played the title role in 'Forrest Gump'?","correct":"Tom Hanks","wrong":["Kevin Costner","Robin Williams","Mel Gibson"]},
+      {"q":"'Pulp Fiction' was directed by whom?","correct":"Quentin Tarantino","wrong":["The Coen Brothers","David Fincher","Spike Lee"]},
+      {"q":"Which film features Hannibal Lecter and Clarice Starling?","correct":"The Silence of the Lambs","wrong":["Se7en","Zodiac","Psycho"]},
+      {"q":"Who created the Star Wars saga?","correct":"George Lucas","wrong":["Steven Spielberg","J.J. Abrams","Gene Roddenberry"]},
+      {"q":"Which actress played Hermione Granger in the Harry Potter films?","correct":"Emma Watson","wrong":["Emma Stone","Keira Knightley","Anne Hathaway"]},
+      {"q":"'The Shawshank Redemption' is based on a story by which author?","correct":"Stephen King","wrong":["John Grisham","Dean Koontz","Michael Crichton"]},
+      {"q":"Which 1994 Disney film features Simba and Mufasa?","correct":"The Lion King","wrong":["Aladdin","Pocahontas","Hercules"]},
+      {"q":"In 'Breaking Bad', what was Walter White's job before cooking meth?","correct":"Chemistry teacher","wrong":["Lawyer","Doctor","Police officer"]},
+      {"q":"Which film series is set at a school called Hogwarts?","correct":"Harry Potter","wrong":["Narnia","Percy Jackson","The Worst Witch"]},
+      {"q":"Who won a posthumous Oscar for playing the Joker in 'The Dark Knight' (2008)?","correct":"Heath Ledger","wrong":["Jack Nicholson","Joaquin Phoenix","Jared Leto"]},
+      {"q":"'Avatar' (2009) was directed by whom?","correct":"James Cameron","wrong":["Peter Jackson","Ridley Scott","Christopher Nolan"]},
+      {"q":"Which studio made 'Toy Story', the first fully computer-animated feature film?","correct":"Pixar","wrong":["DreamWorks","Studio Ghibli","Blue Sky"]},
+      {"q":"In 'The Lord of the Rings', which hobbit carries the One Ring?","correct":"Frodo Baggins","wrong":["Bilbo Baggins","Samwise Gamgee","Pippin Took"]},
+      {"q":"Which sci-fi franchise features the USS Enterprise and Captain Kirk?","correct":"Star Trek","wrong":["Star Wars","Battlestar Galactica","Doctor Who"]},
+      {"q":"Which actress starred in 'Pretty Woman' and 'Erin Brockovich'?","correct":"Julia Roberts","wrong":["Sandra Bullock","Meg Ryan","Nicole Kidman"]},
+      {"q":"'Gladiator' (2000) starred which actor as Maximus?","correct":"Russell Crowe","wrong":["Brad Pitt","Mel Gibson","Gerard Butler"]},
+      {"q":"Which director made 'Inception', 'Interstellar' and 'The Dark Knight'?","correct":"Christopher Nolan","wrong":["Denis Villeneuve","Ridley Scott","James Cameron"]},
+      {"q":"Which long-running British sci-fi series features a time-travelling alien called the Doctor?","correct":"Doctor Who","wrong":["Torchwood","Red Dwarf","The Twilight Zone"]},
+      {"q":"Who voiced Woody in the 'Toy Story' films?","correct":"Tom Hanks","wrong":["Tim Allen","Billy Crystal","Robin Williams"]},
+      {"q":"'Schindler's List' was directed by whom?","correct":"Steven Spielberg","wrong":["Roman Polanski","Oliver Stone","Clint Eastwood"]},
+      {"q":"Which 1983 film features the gangster Tony Montana, played by Al Pacino?","correct":"Scarface","wrong":["Goodfellas","Casino","Heat"]},
+      {"q":"The spy James Bond is known by which code number?","correct":"007","wrong":["001","008","009"]},
+      {"q":"Which Pixar film features emotions like Joy, Sadness and Anger inside a girl's mind?","correct":"Inside Out","wrong":["Soul","Coco","Brave"]},
+      {"q":"Who directed 'Psycho' and 'The Birds', the 'Master of Suspense'?","correct":"Alfred Hitchcock","wrong":["Orson Welles","Billy Wilder","John Ford"]},
+      {"q":"Which actor portrayed Indiana Jones?","correct":"Harrison Ford","wrong":["Tom Selleck","Sean Connery","Kurt Russell"]},
+      {"q":"Which TV drama is set in Westeros with houses Stark and Lannister?","correct":"Game of Thrones","wrong":["The Witcher","Vikings","Rome"]},
+      {"q":"Which actress won the Best Actress Oscar for 'La La Land' (2016)?","correct":"Emma Stone","wrong":["Emma Watson","Jennifer Lawrence","Natalie Portman"]},
+      {"q":"'Back to the Future' features a time machine made from which car?","correct":"A DeLorean","wrong":["A Ferrari","A Cadillac","A Mustang"]},
+      {"q":"Who directed 'Goodfellas', 'Taxi Driver' and 'The Departed'?","correct":"Martin Scorsese","wrong":["Francis Ford Coppola","Brian De Palma","Michael Mann"]},
+      {"q":"Which animated franchise features ogres, fairy-tale characters and Puss in Boots?","correct":"Shrek","wrong":["Madagascar","Kung Fu Panda","Ice Age"]},
+      {"q":"In 'Rocky', which city's steps does Rocky famously run up?","correct":"Philadelphia","wrong":["New York","Chicago","Boston"]},
+      {"q":"Which actor played Edward Scissorhands and Willy Wonka (2005)?","correct":"Johnny Depp","wrong":["Jim Carrey","Tim Allen","Adam Sandler"]},
+      {"q":"Which superhero film universe is abbreviated 'MCU'?","correct":"Marvel Cinematic Universe","wrong":["DC Extended Universe","Pixar","Lucasfilm"]},
+      {"q":"Which Studio Ghibli film features a girl named Chihiro in a spirit world?","correct":"Spirited Away","wrong":["My Neighbour Totoro","Ponyo","Princess Mononoke"]},
+      {"q":"Who directed 'Citizen Kane'... wait","correct":"placeholder","wrong":["a","b","c"]},
+      {"q":"Which Studio Ghibli classic features a giant forest spirit and two young sisters?","correct":"My Neighbour Totoro","wrong":["Spirited Away","Kiki's Delivery Service","Ponyo"]}
+    ],
+    3:[
+      {"q":"Which film won the very first Academy Award for Best Picture?","correct":"Wings","wrong":["Sunrise","The Jazz Singer","Metropolis"]},
+      {"q":"Who directed '2001: A Space Odyssey' and 'A Clockwork Orange'?","correct":"Stanley Kubrick","wrong":["Ridley Scott","George Lucas","Robert Wise"]},
+      {"q":"'Citizen Kane' (1941) was directed by and starred whom?","correct":"Orson Welles","wrong":["Charlie Chaplin","John Huston","Frank Capra"]},
+      {"q":"Which 2019 film was the first non-English-language film to win Best Picture?","correct":"Parasite","wrong":["Roma","Crouching Tiger, Hidden Dragon","Amour"]},
+      {"q":"Who directed 'Vertigo' and 'Rear Window'?","correct":"Alfred Hitchcock","wrong":["Billy Wilder","Fritz Lang","William Wyler"]},
+      {"q":"Which actor played Vito Corleone in 'The Godfather'?","correct":"Marlon Brando","wrong":["Al Pacino","Robert De Niro","James Caan"]},
+      {"q":"Which actress holds the record for most Best Actress Oscars, with four?","correct":"Katharine Hepburn","wrong":["Meryl Streep","Bette Davis","Ingrid Bergman"]},
+      {"q":"'Blade Runner' (1982) was directed by whom?","correct":"Ridley Scott","wrong":["James Cameron","John Carpenter","George Miller"]},
+      {"q":"Which 1939 epic featured Scarlett O'Hara and Rhett Butler?","correct":"Gone with the Wind","wrong":["Casablanca","Ben-Hur","Wuthering Heights"]},
+      {"q":"Who directed the 'Lord of the Rings' film trilogy?","correct":"Peter Jackson","wrong":["Guillermo del Toro","J.J. Abrams","Chris Columbus"]},
+      {"q":"Which actor played Michael Corleone in 'The Godfather'?","correct":"Al Pacino","wrong":["Robert De Niro","Marlon Brando","Robert Duvall"]},
+      {"q":"'Casablanca' (1942) starred which actor as Rick Blaine?","correct":"Humphrey Bogart","wrong":["Cary Grant","James Stewart","Clark Gable"]},
+      {"q":"Which Japanese director made 'Seven Samurai' and 'Rashomon'?","correct":"Akira Kurosawa","wrong":["Yasujiro Ozu","Hayao Miyazaki","Kenji Mizoguchi"]},
+      {"q":"Three films share the record of 11 Oscars: Ben-Hur, Titanic and which?","correct":"The Lord of the Rings: The Return of the King","wrong":["Gladiator","Schindler's List","Braveheart"]},
+      {"q":"Who directed 'Fight Club', 'Se7en' and 'The Social Network'?","correct":"David Fincher","wrong":["Darren Aronofsky","Paul Thomas Anderson","Spike Jonze"]},
+      {"q":"'Singin' in the Rain' is a classic example of which film genre?","correct":"The musical","wrong":["Film noir","The western","Horror"]},
+      {"q":"Which actor won three Best Actor Oscars, including for 'There Will Be Blood'?","correct":"Daniel Day-Lewis","wrong":["Jack Nicholson","Anthony Hopkins","Robert De Niro"]},
+      {"q":"'The Good, the Bad and the Ugly' was directed by whom?","correct":"Sergio Leone","wrong":["Sam Peckinpah","John Sturges","Howard Hawks"]},
+      {"q":"Which film features the motel killer Norman Bates?","correct":"Psycho","wrong":["The Shining","Halloween","Carrie"]},
+      {"q":"Who composed the scores for 'Jaws', 'Star Wars' and 'Indiana Jones'?","correct":"John Williams","wrong":["Hans Zimmer","Ennio Morricone","Danny Elfman"]},
+      {"q":"Which 1976 film about a New York taxi driver starred Robert De Niro?","correct":"Taxi Driver","wrong":["Mean Streets","Raging Bull","The King of Comedy"]},
+      {"q":"Which film studio is known by its roaring lion mascot, Leo?","correct":"MGM","wrong":["Paramount","Universal","Columbia"]},
+      {"q":"Who directed the Vietnam War epic 'Apocalypse Now' (1979)?","correct":"Francis Ford Coppola","wrong":["Oliver Stone","Stanley Kubrick","Michael Cimino"]},
+      {"q":"Who played Hannibal Lecter in 'The Silence of the Lambs'?","correct":"Anthony Hopkins","wrong":["Gary Oldman","Ralph Fiennes","Ian McKellen"]},
+      {"q":"Which actress played Holly Golightly in 'Breakfast at Tiffany's'?","correct":"Audrey Hepburn","wrong":["Grace Kelly","Elizabeth Taylor","Marilyn Monroe"]},
+      {"q":"'Apocalypse Now' is loosely based on which novel?","correct":"Heart of Darkness","wrong":["Catch-22","The Things They Carried","Slaughterhouse-Five"]},
+      {"q":"Which film won the Best Picture Oscar for 1994?","correct":"Forrest Gump","wrong":["Pulp Fiction","The Shawshank Redemption","Quiz Show"]},
+      {"q":"Who directed the surreal films 'Mulholland Drive' and 'Blue Velvet'?","correct":"David Lynch","wrong":["David Cronenberg","Terrence Malick","Joel Coen"]},
+      {"q":"'Lawrence of Arabia' (1962) was directed by whom?","correct":"David Lean","wrong":["William Wyler","Carol Reed","Fred Zinnemann"]},
+      {"q":"Which silent star played 'The Tramp' in films he also directed?","correct":"Charlie Chaplin","wrong":["Buster Keaton","Harold Lloyd","Stan Laurel"]},
+      {"q":"Which 1999 sci-fi film features humans trapped in a simulated reality?","correct":"The Matrix","wrong":["Dark City","eXistenZ","The Thirteenth Floor"]},
+      {"q":"Who directed 'Pan's Labyrinth' and 'The Shape of Water'?","correct":"Guillermo del Toro","wrong":["Alejandro Inarritu","Alfonso Cuaron","Pedro Almodovar"]},
+      {"q":"Which film features a hotel caretaker named Jack Torrance?","correct":"The Shining","wrong":["The Shawshank Redemption","Misery","The Amityville Horror"]},
+      {"q":"Hayao Miyazaki co-founded which Japanese animation studio?","correct":"Studio Ghibli","wrong":["Toei Animation","Madhouse","Pixar"]},
+      {"q":"Which 1975 shark thriller is credited with launching the summer blockbuster?","correct":"Jaws","wrong":["Jurassic Park","Deep Blue Sea","The Abyss"]},
+      {"q":"Which composer is famous for spaghetti-western scores like 'The Good, the Bad and the Ugly'?","correct":"Ennio Morricone","wrong":["John Williams","Bernard Herrmann","Jerry Goldsmith"]},
+      {"q":"In which European city is 'The Third Man' set?","correct":"Vienna","wrong":["Berlin","Prague","Lisbon"]},
+      {"q":"Which 1968 film features astronauts and the computer HAL 9000?","correct":"2001: A Space Odyssey","wrong":["Solaris","Silent Running","Forbidden Planet"]},
+      {"q":"The Italian classic 'La Dolce Vita' was directed by whom?","correct":"Federico Fellini","wrong":["Vittorio De Sica","Michelangelo Antonioni","Luchino Visconti"]},
+      {"q":"Which film won the very first Academy Award for Best Animated Feature?","correct":"Shrek","wrong":["Monsters, Inc.","Ice Age","Finding Nemo"]}
+    ],
+    4:[
+      {"q":"Who directed the German Expressionist film 'Metropolis' (1927)?","correct":"Fritz Lang","wrong":["F.W. Murnau","Robert Wiene","G.W. Pabst"]},
+      {"q":"'Battleship Potemkin', famed for its Odessa Steps sequence, was directed by whom?","correct":"Sergei Eisenstein","wrong":["Dziga Vertov","Lev Kuleshov","Vsevolod Pudovkin"]},
+      {"q":"Which director's films include 'Wild Strawberries' and 'The Seventh Seal'?","correct":"Ingmar Bergman","wrong":["Carl Dreyer","Michelangelo Antonioni","Andrei Tarkovsky"]},
+      {"q":"Who holds the record for most competitive Academy Awards won by one person (22)?","correct":"Walt Disney","wrong":["Alfred Hitchcock","Steven Spielberg","John Ford"]},
+      {"q":"The French New Wave film 'Breathless' was directed by whom?","correct":"Jean-Luc Godard","wrong":["Francois Truffaut","Eric Rohmer","Claude Chabrol"]},
+      {"q":"Which silent comedian directed and starred in 'The General' (1926)?","correct":"Buster Keaton","wrong":["Charlie Chaplin","Harold Lloyd","Roscoe Arbuckle"]},
+      {"q":"'Bicycle Thieves', a landmark of Italian Neorealism, was directed by whom?","correct":"Vittorio De Sica","wrong":["Roberto Rossellini","Luchino Visconti","Federico Fellini"]},
+      {"q":"Who directed the meditative sci-fi films 'Stalker' and 'Solaris'?","correct":"Andrei Tarkovsky","wrong":["Sergei Parajanov","Elem Klimov","Andrzej Wajda"]},
+      {"q":"Which 1927 film is regarded as the first feature-length 'talkie'?","correct":"The Jazz Singer","wrong":["The Wizard of Oz","King Kong","Snow White"]},
+      {"q":"Which 1958 Hitchcock film is frequently voted among the greatest ever made?","correct":"Vertigo","wrong":["Notorious","Rope","Spellbound"]},
+      {"q":"The 'auteur theory' grew out of which French film magazine?","correct":"Cahiers du Cinema","wrong":["Sight & Sound","Variety","Positif"]},
+      {"q":"In which 1925 Chaplin film does he eat a boiled shoe?","correct":"The Gold Rush","wrong":["City Lights","Modern Times","The Kid"]},
+      {"q":"Who composed the scores for Hitchcock's 'Psycho' and 'Vertigo'?","correct":"Bernard Herrmann","wrong":["Max Steiner","Dimitri Tiomkin","Elmer Bernstein"]},
+      {"q":"In 'Citizen Kane', which single word is the central mystery?","correct":"Rosebud","wrong":["Xanadu","Inquirer","Kane"]},
+      {"q":"Which director made the celebrated 'Apu Trilogy' of Indian cinema?","correct":"Satyajit Ray","wrong":["Guru Dutt","Raj Kapoor","Mrinal Sen"]},
+      {"q":"'Nosferatu' (1922), an unauthorised 'Dracula' adaptation, was directed by whom?","correct":"F.W. Murnau","wrong":["Fritz Lang","Paul Wegener","Robert Wiene"]},
+      {"q":"Which actor won back-to-back Best Actor Oscars for 'Philadelphia' and 'Forrest Gump'?","correct":"Tom Hanks","wrong":["Daniel Day-Lewis","Jack Nicholson","Anthony Hopkins"]},
+      {"q":"The Soviet editing technique of juxtaposing shots to create meaning is called…?","correct":"Montage","wrong":["Mise-en-scene","Continuity","The match cut"]},
+      {"q":"The word 'paparazzo' comes from a character in which 1960 film?","correct":"La Dolce Vita","wrong":["8 1/2","La Strada","Amarcord"]},
+      {"q":"Who directed 'Tokyo Story' (1953), a pinnacle of Japanese cinema?","correct":"Yasujiro Ozu","wrong":["Kenji Mizoguchi","Akira Kurosawa","Mikio Naruse"]},
+      {"q":"The Hays Code, enforced from the 1930s, regulated what in Hollywood films?","correct":"Moral content","wrong":["Ticket prices","Film length","Studio mergers"]},
+      {"q":"Which film festival awards the Palme d'Or?","correct":"Cannes","wrong":["Venice","Berlin","Sundance"]},
+      {"q":"Who directed the French classic 'The Rules of the Game' (1939)?","correct":"Jean Renoir","wrong":["Marcel Carne","Rene Clair","Julien Duvivier"]},
+      {"q":"What is the French term for the arrangement of everything within a film frame?","correct":"Mise-en-scene","wrong":["Montage","Diegesis","Auteur"]},
+      {"q":"Who directed the silent epics 'Intolerance' and 'The Birth of a Nation'?","correct":"D.W. Griffith","wrong":["Cecil B. DeMille","Erich von Stroheim","Mack Sennett"]},
+      {"q":"Which actress holds the record for most acting Oscar nominations?","correct":"Meryl Streep","wrong":["Katharine Hepburn","Bette Davis","Judi Dench"]},
+      {"q":"'Seven Samurai' was remade as which American western?","correct":"The Magnificent Seven","wrong":["Rio Bravo","High Noon","Shane"]},
+      {"q":"The Venice Film Festival awards which top prize?","correct":"The Golden Lion","wrong":["The Golden Bear","The Palme d'Or","The Golden Globe"]},
+      {"q":"Which director's debut feature was 'Reservoir Dogs' (1992)?","correct":"Quentin Tarantino","wrong":["Robert Rodriguez","Kevin Smith","Guy Ritchie"]},
+      {"q":"The Berlin International Film Festival's top award is the…?","correct":"Golden Bear","wrong":["Golden Lion","Palme d'Or","Silver Star"]},
+      {"q":"Who directed 'Do the Right Thing' (1989)?","correct":"Spike Lee","wrong":["John Singleton","Charles Burnett","Melvin Van Peebles"]},
+      {"q":"Which 1957 courtroom drama with a lone dissenting juror did Sidney Lumet direct?","correct":"12 Angry Men","wrong":["Witness for the Prosecution","Anatomy of a Murder","Inherit the Wind"]},
+      {"q":"Which animation technique uses physical models moved frame by frame?","correct":"Stop-motion","wrong":["Rotoscoping","Cel animation","CGI"]},
+      {"q":"The 'Dogme 95' movement was founded by Lars von Trier and which other Dane?","correct":"Thomas Vinterberg","wrong":["Nicolas Winding Refn","Bille August","Susanne Bier"]},
+      {"q":"Which 1939 film famously shifts from sepia to three-strip Technicolor?","correct":"The Wizard of Oz","wrong":["Gone with the Wind","Snow White","Fantasia"]},
+      {"q":"Who directed the 'Three Colours' trilogy (Blue, White, Red)?","correct":"Krzysztof Kieslowski","wrong":["Andrzej Wajda","Roman Polanski","Agnieszka Holland"]},
+      {"q":"Which silent film star was nicknamed 'The Man of a Thousand Faces'?","correct":"Lon Chaney","wrong":["Rudolph Valentino","Douglas Fairbanks","John Barrymore"]},
+      {"q":"Kurosawa's film 'Ran' is based on which Shakespeare play?","correct":"King Lear","wrong":["Macbeth","Hamlet","Othello"]},
+      {"q":"Which was the first film to win the 'Big Five' Academy Awards?","correct":"It Happened One Night","wrong":["Gone with the Wind","Mutiny on the Bounty","You Can't Take It with You"]},
+      {"q":"Which French New Wave landmark 'The 400 Blows' was directed by whom?","correct":"Francois Truffaut","wrong":["Jean-Luc Godard","Eric Rohmer","Alain Resnais"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>

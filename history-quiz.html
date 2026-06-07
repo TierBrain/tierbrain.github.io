@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>History Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#13140e; --bg1:#26241a; --card:#23211a; --card2:#2f2c22;
+    --ink:#f6efe0; --mut:#bcae93; --line:#4a4534;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#e8884a; --l4:#e0556b;
+    --gold:#e8b65a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(232,182,90,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(180,70,70,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">History Trivia</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions from a big pool — ancient empires to the modern world, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"In which country were the Pyramids of Giza built?","correct":"Egypt","wrong":["Greece","Italy","Mexico"]},
+      {"q":"Who was the first President of the United States?","correct":"George Washington","wrong":["Abraham Lincoln","Thomas Jefferson","John Adams"]},
+      {"q":"In 1912, the Titanic sank after hitting what?","correct":"An iceberg","wrong":["A rock","A whale","A reef"]},
+      {"q":"Which ancient people built the Colosseum in Rome?","correct":"The Romans","wrong":["The Greeks","The Egyptians","The Vikings"]},
+      {"q":"Which Egyptian queen was famously linked with Julius Caesar and Mark Antony?","correct":"Cleopatra","wrong":["Nefertiti","Boudica","Victoria"]},
+      {"q":"The Great Wall is found in which country?","correct":"China","wrong":["Japan","India","Mongolia"]},
+      {"q":"Who led the Nazi party in Germany during World War II?","correct":"Adolf Hitler","wrong":["Joseph Stalin","Winston Churchill","Benito Mussolini"]},
+      {"q":"Which ship carried the Pilgrims to America in 1620?","correct":"The Mayflower","wrong":["The Santa Maria","The Beagle","The Endeavour"]},
+      {"q":"In 1969, which country first landed humans on the Moon?","correct":"The United States","wrong":["The Soviet Union","China","Britain"]},
+      {"q":"Who was British Prime Minister for most of World War II?","correct":"Winston Churchill","wrong":["Neville Chamberlain","Margaret Thatcher","Tony Blair"]},
+      {"q":"The ancient Olympic Games were held in which country?","correct":"Greece","wrong":["Italy","Egypt","Turkey"]},
+      {"q":"Which explorer is credited with reaching the Americas in 1492?","correct":"Christopher Columbus","wrong":["Marco Polo","Vasco da Gama","Ferdinand Magellan"]},
+      {"q":"Which US President was assassinated in Dallas in 1963?","correct":"John F. Kennedy","wrong":["Abraham Lincoln","Martin Luther King","Robert Kennedy"]},
+      {"q":"The ancient Egyptians wrote using picture symbols called…?","correct":"Hieroglyphs","wrong":["Runes","Cuneiform","Braille"]},
+      {"q":"Which 1860s war was fought between the North and South of the USA?","correct":"The American Civil War","wrong":["The Revolutionary War","World War I","The War of 1812"]},
+      {"q":"Which British queen gave her name to an era and reigned until 1901?","correct":"Queen Victoria","wrong":["Queen Elizabeth I","Queen Anne","Queen Mary"]},
+      {"q":"The Vikings came from which part of the world?","correct":"Scandinavia","wrong":["Spain","Italy","Egypt"]},
+      {"q":"Which famous wall divided a German city until 1989?","correct":"The Berlin Wall","wrong":["Hadrian's Wall","The Great Wall","The Western Wall"]},
+      {"q":"Who painted the Sistine Chapel ceiling during the Renaissance?","correct":"Michelangelo","wrong":["Leonardo da Vinci","Raphael","Donatello"]},
+      {"q":"In which country did the Industrial Revolution begin?","correct":"Britain","wrong":["France","Germany","The USA"]},
+      {"q":"Which leader was Emperor of the French and lost at Waterloo?","correct":"Napoleon Bonaparte","wrong":["Louis XIV","Charlemagne","Julius Caesar"]},
+      {"q":"In which decade did World War II end?","correct":"The 1940s","wrong":["The 1930s","The 1950s","The 1920s"]},
+      {"q":"Who was the nurse known as 'the Lady with the Lamp'?","correct":"Florence Nightingale","wrong":["Mother Teresa","Marie Curie","Joan of Arc"]},
+      {"q":"Which civilisation built Machu Picchu in South America?","correct":"The Inca","wrong":["The Aztec","The Maya","The Roman"]},
+      {"q":"In which country was the Declaration of Independence signed?","correct":"The United States","wrong":["Britain","France","Canada"]},
+      {"q":"Who was the first person to step on the Moon?","correct":"Neil Armstrong","wrong":["Buzz Aldrin","Yuri Gagarin","John Glenn"]},
+      {"q":"Which Egyptian monument has a lion's body and a human head?","correct":"The Sphinx","wrong":["The Pyramid","The Obelisk","The Colossus"]},
+      {"q":"The Tudors and Stuarts were royal families of which country?","correct":"England","wrong":["France","Spain","Russia"]},
+      {"q":"Who gave the famous 'I Have a Dream' speech?","correct":"Martin Luther King Jr.","wrong":["Malcolm X","Nelson Mandela","Frederick Douglass"]},
+      {"q":"In Greek legend, which hero had a single vulnerable heel?","correct":"Achilles","wrong":["Hercules","Odysseus","Perseus"]},
+      {"q":"The Cold War was mainly between the USA and which country?","correct":"The Soviet Union","wrong":["China","Germany","Japan"]},
+      {"q":"Who is the longest-reigning monarch in British history?","correct":"Elizabeth II","wrong":["Victoria","Elizabeth I","Anne"]},
+      {"q":"Which ancient city was destroyed by the eruption of Vesuvius?","correct":"Pompeii","wrong":["Troy","Carthage","Atlantis"]},
+      {"q":"Who led the Soviet Union during World War II?","correct":"Joseph Stalin","wrong":["Vladimir Lenin","Mikhail Gorbachev","Leon Trotsky"]},
+      {"q":"Which country gave the Statue of Liberty to the United States?","correct":"France","wrong":["Britain","Spain","Italy"]},
+      {"q":"Medieval knights wore protective metal suits called…?","correct":"Armour","wrong":["Robes","Togas","Tunics"]},
+      {"q":"Which English playwright wrote during the Elizabethan era?","correct":"William Shakespeare","wrong":["Charles Dickens","Geoffrey Chaucer","Jane Austen"]},
+      {"q":"Who built and flew the first powered aeroplane?","correct":"The Wright brothers","wrong":["The Montgolfier brothers","The Lumiere brothers","Leonardo da Vinci"]},
+      {"q":"Which empire was ruled from the city of Rome?","correct":"The Roman Empire","wrong":["The Ottoman Empire","The British Empire","The Mongol Empire"]},
+      {"q":"Slavery in the USA was abolished in the aftermath of which war?","correct":"The American Civil War","wrong":["World War I","The Revolutionary War","The Cold War"]}
+    ],
+    2:[
+      {"q":"In which year did World War I begin?","correct":"1914","wrong":["1912","1918","1939"]},
+      {"q":"Who was the first Emperor of Rome?","correct":"Augustus","wrong":["Julius Caesar","Nero","Constantine"]},
+      {"q":"In which year did the French Revolution begin?","correct":"1789","wrong":["1776","1804","1815"]},
+      {"q":"Which English king had six wives?","correct":"Henry VIII","wrong":["Henry V","Edward VI","James I"]},
+      {"q":"The Magna Carta was sealed in 1215 by which English king?","correct":"King John","wrong":["Richard I","Henry III","Edward I"]},
+      {"q":"Which Macedonian king had conquered a vast empire by 323 BC?","correct":"Alexander the Great","wrong":["Darius","Hannibal","Leonidas"]},
+      {"q":"The 14th-century Black Death was a pandemic of which disease?","correct":"Plague","wrong":["Cholera","Smallpox","Influenza"]},
+      {"q":"Which 1776 document declared the American colonies independent?","correct":"The Declaration of Independence","wrong":["The Constitution","The Bill of Rights","The Magna Carta"]},
+      {"q":"Which queen led a British revolt against Roman rule?","correct":"Boudica","wrong":["Cleopatra","Victoria","Elizabeth I"]},
+      {"q":"In which country did the Renaissance begin?","correct":"Italy","wrong":["France","England","Germany"]},
+      {"q":"Which war was fought between 1939 and 1945?","correct":"World War II","wrong":["World War I","The Korean War","The Vietnam War"]},
+      {"q":"Who discovered a sea route to India around Africa in 1498?","correct":"Vasco da Gama","wrong":["Christopher Columbus","Ferdinand Magellan","Francis Drake"]},
+      {"q":"The ancient Egyptians preserved the dead as…?","correct":"Mummies","wrong":["Statues","Fossils","Idols"]},
+      {"q":"Which Russian royal family was overthrown in the 1917 Revolution?","correct":"The Romanovs","wrong":["The Habsburgs","The Bourbons","The Tudors"]},
+      {"q":"Who was the British monarch when the USA declared independence?","correct":"King George III","wrong":["George I","William IV","Victoria"]},
+      {"q":"China's first emperor, famous for the Terracotta Army, was…?","correct":"Qin Shi Huang","wrong":["Kublai Khan","Confucius","Sun Tzu"]},
+      {"q":"The Hundred Years' War was fought between England and which country?","correct":"France","wrong":["Spain","Scotland","The Netherlands"]},
+      {"q":"Who led the first expedition to sail around the world?","correct":"Ferdinand Magellan","wrong":["Christopher Columbus","James Cook","Francis Drake"]},
+      {"q":"In WWII, atomic bombs were dropped on Hiroshima and which other city?","correct":"Nagasaki","wrong":["Tokyo","Kyoto","Osaka"]},
+      {"q":"Whose assassination in 1914 helped trigger World War I?","correct":"Archduke Franz Ferdinand","wrong":["Tsar Nicholas II","Kaiser Wilhelm","Vladimir Lenin"]},
+      {"q":"In which year did the Great Fire of London occur?","correct":"1666","wrong":["1605","1700","1588"]},
+      {"q":"Which Ancient Wonder was a great lighthouse in Egypt?","correct":"The Lighthouse of Alexandria","wrong":["The Hanging Gardens","The Colossus of Rhodes","The Great Pyramid"]},
+      {"q":"Who led India's non-violent movement for independence from Britain?","correct":"Mahatma Gandhi","wrong":["Jawaharlal Nehru","Nelson Mandela","Subhas Chandra Bose"]},
+      {"q":"The Spanish Armada was defeated by England during whose reign?","correct":"Elizabeth I","wrong":["Henry VIII","Mary I","James I"]},
+      {"q":"Which empire was centred on Constantinople for over 1,000 years?","correct":"The Byzantine Empire","wrong":["The Roman Republic","The Persian Empire","The Mongol Empire"]},
+      {"q":"In which year did the American Civil War end?","correct":"1865","wrong":["1850","1877","1812"]},
+      {"q":"Which Carthaginian general crossed the Alps with war elephants?","correct":"Hannibal","wrong":["Scipio","Hamilcar","Pompey"]},
+      {"q":"Which queen of England was known as the 'Virgin Queen'?","correct":"Elizabeth I","wrong":["Mary I","Victoria","Anne"]},
+      {"q":"The Cold War ended around 1991 with the collapse of which country?","correct":"The Soviet Union","wrong":["Yugoslavia","East Germany","Czechoslovakia"]},
+      {"q":"Which Soviet leader introduced 'glasnost' and 'perestroika'?","correct":"Mikhail Gorbachev","wrong":["Boris Yeltsin","Leonid Brezhnev","Nikita Khrushchev"]},
+      {"q":"In which year was the Battle of Hastings?","correct":"1066","wrong":["1215","1314","1485"]},
+      {"q":"Which civilisation built the city of Tenochtitlan in Mexico?","correct":"The Aztec","wrong":["The Inca","The Maya","The Olmec"]},
+      {"q":"Who was the first woman to win a Nobel Prize?","correct":"Marie Curie","wrong":["Rosalind Franklin","Florence Nightingale","Ada Lovelace"]},
+      {"q":"The 'Boston Tea Party' was a protest leading to which conflict?","correct":"The American Revolution","wrong":["The Civil War","World War I","The War of 1812"]},
+      {"q":"Which ancient Greek city-state was famed for its warrior culture?","correct":"Sparta","wrong":["Athens","Corinth","Thebes"]},
+      {"q":"Europe's printing press was developed around 1440 by whom?","correct":"Johannes Gutenberg","wrong":["Leonardo da Vinci","Galileo","Copernicus"]},
+      {"q":"Apartheid was a system of racial segregation in which country?","correct":"South Africa","wrong":["Nigeria","Egypt","Kenya"]},
+      {"q":"In which year did the Wright brothers make the first powered flight?","correct":"1903","wrong":["1890","1912","1920"]},
+      {"q":"Which British queen reigned for 63 years into the early 1900s?","correct":"Victoria","wrong":["Elizabeth I","Anne","Mary II"]},
+      {"q":"The 1962 Cuban Missile Crisis was a standoff between the USA and whom?","correct":"The Soviet Union","wrong":["Cuba alone","China","North Korea"]}
+    ],
+    3:[
+      {"q":"In which year did the Berlin Wall fall?","correct":"1989","wrong":["1991","1987","1985"]},
+      {"q":"Which Roman leader was assassinated on the Ides of March, 44 BC?","correct":"Julius Caesar","wrong":["Augustus","Pompey","Mark Antony"]},
+      {"q":"The Treaty of Versailles (1919) formally ended which war?","correct":"World War I","wrong":["World War II","The Napoleonic Wars","The Franco-Prussian War"]},
+      {"q":"Which dynasty ruled China until the empire ended in 1912?","correct":"The Qing","wrong":["The Ming","The Han","The Tang"]},
+      {"q":"The 1917 Russian Revolution brought which party to power under Lenin?","correct":"The Bolsheviks","wrong":["The Mensheviks","The Whites","The Tsarists"]},
+      {"q":"Hatshepsut was notable as one of ancient Egypt's few female…?","correct":"Pharaohs","wrong":["Generals","Scribes","Slaves"]},
+      {"q":"The 'Domesday Book' survey of England was ordered in 1086 by whom?","correct":"William the Conqueror","wrong":["Harold II","Edward the Confessor","Alfred the Great"]},
+      {"q":"Which empire did Suleiman the Magnificent rule in the 16th century?","correct":"The Ottoman Empire","wrong":["The Byzantine Empire","The Mughal Empire","The Safavid Empire"]},
+      {"q":"In which century did the Hundred Years' War finally end?","correct":"The 15th century","wrong":["The 13th century","The 16th century","The 12th century"]},
+      {"q":"Who was the last Tsar of Russia?","correct":"Nicholas II","wrong":["Alexander III","Peter the Great","Ivan IV"]},
+      {"q":"The Reformation began in 1517 when Martin Luther published his…?","correct":"Ninety-five Theses","wrong":["Magna Carta","Edict of Worms","Book of Common Prayer"]},
+      {"q":"At which 480 BC battle did 300 Spartans make a famous stand?","correct":"Thermopylae","wrong":["Marathon","Salamis","Cannae"]},
+      {"q":"Who was the principal drafter of the American Declaration of Independence?","correct":"Thomas Jefferson","wrong":["George Washington","Benjamin Franklin","John Adams"]},
+      {"q":"The Wars of the Roses pitted the House of Lancaster against the House of…?","correct":"York","wrong":["Tudor","Stuart","Plantagenet"]},
+      {"q":"Which explorer claimed Australia's east coast for Britain in 1770?","correct":"James Cook","wrong":["Abel Tasman","Walter Raleigh","Francis Drake"]},
+      {"q":"The Mughal Empire ruled mainly in which region?","correct":"The Indian subcontinent","wrong":["Persia","North Africa","Southeast Asia"]},
+      {"q":"In which year did the United States declare independence?","correct":"1776","wrong":["1783","1765","1789"]},
+      {"q":"Which Frankish king was crowned 'Emperor of the Romans' in 800 AD?","correct":"Charlemagne","wrong":["Clovis","Otto I","Charles Martel"]},
+      {"q":"The 'Trail of Tears' was the forced relocation of which people?","correct":"Native Americans","wrong":["Enslaved Africans","Irish immigrants","Mormons"]},
+      {"q":"Which 1815 battle ended Napoleon's rule for good?","correct":"Waterloo","wrong":["Austerlitz","Trafalgar","Borodino"]},
+      {"q":"The Rosetta Stone helped scholars decode ancient Egyptian…?","correct":"Hieroglyphs","wrong":["Mummies","Pyramids","Calendars"]},
+      {"q":"Which queen of Castile funded Columbus's 1492 voyage?","correct":"Isabella I","wrong":["Catherine of Aragon","Joanna of Castile","Maria Theresa"]},
+      {"q":"The 'Meiji Restoration' modernised which country in the late 1800s?","correct":"Japan","wrong":["China","Korea","Thailand"]},
+      {"q":"The 1914 Sarajevo assassination killed the heir to which empire?","correct":"Austria-Hungary","wrong":["The Ottoman Empire","Germany","Russia"]},
+      {"q":"The 'Long March' was a famous retreat led by Mao Zedong in which country?","correct":"China","wrong":["Vietnam","Russia","Korea"]},
+      {"q":"Which English king was killed at the Battle of Bosworth in 1485?","correct":"Richard III","wrong":["Henry VI","Edward IV","Henry VII"]},
+      {"q":"The ancient Library of Alexandria was located in which country?","correct":"Egypt","wrong":["Greece","Turkey","Italy"]},
+      {"q":"Who was the first female Prime Minister of the United Kingdom?","correct":"Margaret Thatcher","wrong":["Theresa May","Indira Gandhi","Golda Meir"]},
+      {"q":"The 1605 'Gunpowder Plot' aimed to blow up which building?","correct":"The Houses of Parliament","wrong":["The Tower of London","Buckingham Palace","Westminster Abbey"]},
+      {"q":"Which civilisation built stepped pyramids and a precise calendar in Central America?","correct":"The Maya","wrong":["The Inca","The Aztec","The Olmec"]},
+      {"q":"Which French heroine of the Hundred Years' War was burned at the stake?","correct":"Joan of Arc","wrong":["Marie Antoinette","Catherine de Medici","Eleanor of Aquitaine"]},
+      {"q":"The 1900 'Boxer Rebellion' took place in which country?","correct":"China","wrong":["India","Japan","Persia"]},
+      {"q":"Which empire did Genghis Khan found in the 13th century?","correct":"The Mongol Empire","wrong":["The Ottoman Empire","The Persian Empire","The Han Empire"]},
+      {"q":"The Suez Canal, opened in 1869, links the Mediterranean to which sea?","correct":"The Red Sea","wrong":["The Black Sea","The Caspian Sea","The Arabian Sea"]},
+      {"q":"Which US President issued the Emancipation Proclamation?","correct":"Abraham Lincoln","wrong":["George Washington","Ulysses S. Grant","Andrew Jackson"]},
+      {"q":"The Renaissance genius Leonardo da Vinci was from which country?","correct":"Italy","wrong":["France","Spain","Greece"]},
+      {"q":"In which year did the Spanish Armada try to invade England?","correct":"1588","wrong":["1492","1605","1620"]},
+      {"q":"The ancient Persian Empire was founded by which king?","correct":"Cyrus the Great","wrong":["Darius III","Xerxes","Cambyses"]},
+      {"q":"The 1957 treaty creating the European Economic Community was signed in which city?","correct":"Rome","wrong":["Paris","Maastricht","Brussels"]},
+      {"q":"Which wall did Emperor Hadrian build across northern Britain?","correct":"Hadrian's Wall","wrong":["The Antonine Wall","Offa's Dyke","The Great Wall"]}
+    ],
+    4:[
+      {"q":"The Code of Hammurabi, an early law code, came from which civilisation?","correct":"Babylon","wrong":["Egypt","Assyria","Persia"]},
+      {"q":"At which 1066 battle did King Harold defeat a Norwegian invasion before Hastings?","correct":"Stamford Bridge","wrong":["Bosworth","Agincourt","Towton"]},
+      {"q":"The 1618 'Defenestration of Prague' helped trigger which war?","correct":"The Thirty Years' War","wrong":["The Hundred Years' War","The English Civil War","The Seven Years' War"]},
+      {"q":"Whose largely intact tomb did Howard Carter discover in 1922?","correct":"Tutankhamun","wrong":["Ramesses II","Akhenaten","Khufu"]},
+      {"q":"Who famously 'crossed the Rubicon' in 49 BC?","correct":"Julius Caesar","wrong":["Pompey","Sulla","Cicero"]},
+      {"q":"Which 1648 treaty ended the Thirty Years' War and shaped state sovereignty?","correct":"The Peace of Westphalia","wrong":["The Treaty of Tordesillas","The Congress of Vienna","The Treaty of Utrecht"]},
+      {"q":"The Sumerians of Mesopotamia developed which early writing system?","correct":"Cuneiform","wrong":["Hieroglyphs","The alphabet","Linear B"]},
+      {"q":"Which Byzantine emperor codified Roman law and built the Hagia Sophia?","correct":"Justinian I","wrong":["Constantine","Heraclius","Basil II"]},
+      {"q":"The 1688 'Glorious Revolution' deposed which English king?","correct":"James II","wrong":["Charles I","Charles II","William III"]},
+      {"q":"Which ancient city is said to have fallen to a giant wooden horse?","correct":"Troy","wrong":["Carthage","Sparta","Babylon"]},
+      {"q":"The 313 AD 'Edict of Milan' granted tolerance to which religion?","correct":"Christianity","wrong":["Judaism","Mithraism","Zoroastrianism"]},
+      {"q":"Cleopatra belonged to which dynasty, founded by a general of Alexander?","correct":"The Ptolemaic dynasty","wrong":["The Julio-Claudian","The Achaemenid","The Antigonid"]},
+      {"q":"Napoleon's 'Hundred Days' began with his return from exile on which island?","correct":"Elba","wrong":["Saint Helena","Corsica","Sicily"]},
+      {"q":"Who is traditionally regarded as the first Emperor of Japan?","correct":"Jimmu","wrong":["Hirohito","Meiji","Oda Nobunaga"]},
+      {"q":"Which grandson of Genghis Khan founded the Yuan dynasty in China?","correct":"Kublai Khan","wrong":["Ogedei Khan","Tamerlane","Batu Khan"]},
+      {"q":"In North America, the Seven Years' War is known as the…?","correct":"French and Indian War","wrong":["Revolutionary War","War of 1812","King Philip's War"]},
+      {"q":"Which Egyptian queen is famous for a painted bust now displayed in Berlin?","correct":"Nefertiti","wrong":["Hatshepsut","Cleopatra","Nefertari"]},
+      {"q":"At which meadow was the Magna Carta sealed in 1215?","correct":"Runnymede","wrong":["Hastings","Bosworth","Tewkesbury"]},
+      {"q":"Which empire did the conquistador Hernan Cortes destroy?","correct":"The Aztec Empire","wrong":["The Inca Empire","The Maya","The Olmec"]},
+      {"q":"Which conquistador toppled the Inca Empire?","correct":"Francisco Pizarro","wrong":["Hernan Cortes","Vasco Nunez de Balboa","Hernando de Soto"]},
+      {"q":"The 'Antonine Wall', north of Hadrian's Wall, lies in which modern country?","correct":"Scotland","wrong":["Wales","Ireland","England"]},
+      {"q":"Which empire, ruled by Darius and Xerxes, fought the ancient Greeks?","correct":"The Persian Empire","wrong":["The Babylonian Empire","The Hittite Empire","The Assyrian Empire"]},
+      {"q":"The Bayeux Tapestry depicts the lead-up to which 1066 event?","correct":"The Norman Conquest of England","wrong":["The Crusades","The Battle of Agincourt","The Magna Carta"]},
+      {"q":"Which 18th-century Russian ruler is known as 'the Great'?","correct":"Catherine the Great","wrong":["Elizabeth of Russia","Anna of Russia","Maria Theresa"]},
+      {"q":"The 1494 Treaty of Tordesillas divided the New World between Spain and whom?","correct":"Portugal","wrong":["France","England","The Netherlands"]},
+      {"q":"The ancestors of which people built Great Zimbabwe in southern Africa?","correct":"The Shona","wrong":["The Zulu","The Ashanti","The Mali Empire"]},
+      {"q":"The Hagia Sophia is a famous landmark in which city?","correct":"Istanbul","wrong":["Athens","Rome","Cairo"]},
+      {"q":"Which Holy Roman Emperor went to Canossa in 1077 to seek papal forgiveness?","correct":"Henry IV","wrong":["Frederick Barbarossa","Otto I","Charlemagne"]},
+      {"q":"Besides hieroglyphs and Demotic, the Rosetta Stone is written in which script?","correct":"Ancient Greek","wrong":["Latin","Aramaic","Coptic"]},
+      {"q":"Which immensely wealthy 14th-century king ruled the West African Mali Empire?","correct":"Mansa Musa","wrong":["Sundiata Keita","Askia Muhammad","Sonni Ali"]},
+      {"q":"Which civil war pitted Royalist 'Cavaliers' against Parliamentarian 'Roundheads'?","correct":"The English Civil War","wrong":["The Wars of the Roses","The Jacobite Rising","The Anarchy"]},
+      {"q":"Who led the Parliamentarians and later ruled as Lord Protector?","correct":"Oliver Cromwell","wrong":["Charles I","Thomas Fairfax","John Pym"]},
+      {"q":"Rome and Carthage clashed in which series of ancient wars?","correct":"The Punic Wars","wrong":["The Gallic Wars","The Persian Wars","The Macedonian Wars"]},
+      {"q":"Which 1453 event marked the fall of the Byzantine Empire?","correct":"The fall of Constantinople","wrong":["The sack of Rome","The fall of Granada","The Battle of Hastings"]},
+      {"q":"The medieval 'Hanseatic League' was a trading network centred on which sea?","correct":"The Baltic Sea","wrong":["The Mediterranean","The Black Sea","The Adriatic"]},
+      {"q":"Which Indian empire, under Ashoka the Great, unified most of the subcontinent?","correct":"The Maurya Empire","wrong":["The Gupta Empire","The Mughal Empire","The Chola Empire"]},
+      {"q":"The 1521 'Diet of Worms' put which reformer on trial?","correct":"Martin Luther","wrong":["John Calvin","Huldrych Zwingli","John Wycliffe"]},
+      {"q":"Which queen was executed in 1587 on the orders of Elizabeth I?","correct":"Mary, Queen of Scots","wrong":["Anne Boleyn","Lady Jane Grey","Catherine Howard"]},
+      {"q":"Stonehenge was largely built by people of which prehistoric era?","correct":"The Neolithic and Bronze Age","wrong":["The Roman era","The Viking age","The Iron Age"]},
+      {"q":"The 732 AD 'Battle of Tours' was won by which Frankish leader?","correct":"Charles Martel","wrong":["Charlemagne","Clovis","Pepin the Short"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>

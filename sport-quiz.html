@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sport Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#07150e; --bg1:#0e2c1a; --card:#0f2a1a; --card2:#163a26;
+    --ink:#eafff2; --mut:#9fc7ad; --line:#27543a;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#ff6b5d; --l4:#46d6ff;
+    --gold:#ffd24a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(60,220,140,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,210,74,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Sport Trivia</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions from a big pool — football, the Olympics, tennis, cricket, golf and more, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"How many players are on a football (soccer) team on the pitch?","correct":"11","wrong":["9","10","12"]},
+      {"q":"In tennis, what is a score of zero called?","correct":"Love","wrong":["Nil","Duck","Blank"]},
+      {"q":"How many rings are on the Olympic flag?","correct":"Five","wrong":["Four","Six","Three"]},
+      {"q":"In which sport would you perform a slam dunk?","correct":"Basketball","wrong":["Tennis","Golf","Cricket"]},
+      {"q":"How many players from one team are on a basketball court?","correct":"Five","wrong":["Six","Seven","Four"]},
+      {"q":"What sport is Wimbledon famous for?","correct":"Tennis","wrong":["Golf","Cricket","Rowing"]},
+      {"q":"In football, scoring three goals in one game is called a…?","correct":"Hat-trick","wrong":["Treble","Triple","Trio"]},
+      {"q":"How many holes are on a standard golf course?","correct":"18","wrong":["9","12","24"]},
+      {"q":"Which sport uses a shuttlecock?","correct":"Badminton","wrong":["Squash","Table tennis","Volleyball"]},
+      {"q":"How many rounds is a modern world title boxing fight?","correct":"12","wrong":["10","15","8"]},
+      {"q":"What colour card does a football referee show to send a player off?","correct":"Red","wrong":["Yellow","Blue","Green"]},
+      {"q":"How often are the Summer Olympic Games normally held?","correct":"Every four years","wrong":["Every two years","Every year","Every six years"]},
+      {"q":"How many players are in a cricket team?","correct":"11","wrong":["9","10","13"]},
+      {"q":"Which sport is played at the Masters tournament?","correct":"Golf","wrong":["Tennis","Snooker","Darts"]},
+      {"q":"What do you hit a baseball with?","correct":"A bat","wrong":["A racket","A club","A stick"]},
+      {"q":"In which sport do teams score a 'try'?","correct":"Rugby","wrong":["Football","Hockey","Netball"]},
+      {"q":"How many points is a touchdown worth in American football?","correct":"Six","wrong":["Three","Seven","Two"]},
+      {"q":"The Tour de France is a famous event in which sport?","correct":"Cycling","wrong":["Running","Swimming","Rowing"]},
+      {"q":"How many players per side are there in rugby union?","correct":"15","wrong":["13","11","17"]},
+      {"q":"In swimming, which stroke is named after an insect?","correct":"Butterfly","wrong":["Backstroke","Breaststroke","Freestyle"]},
+      {"q":"Which sport is associated with the Super Bowl?","correct":"American football","wrong":["Baseball","Basketball","Ice hockey"]},
+      {"q":"How many players from one team are on the ice in ice hockey, including the goalie?","correct":"Six","wrong":["Five","Seven","Four"]},
+      {"q":"Which sport uses terms like 'birdie', 'eagle' and 'par'?","correct":"Golf","wrong":["Tennis","Cricket","Darts"]},
+      {"q":"In football, the goalkeeper is the only player allowed to use their…?","correct":"Hands","wrong":["Head","Feet","Chest"]},
+      {"q":"In tennis, what is the shot that starts a point called?","correct":"A serve","wrong":["A volley","A smash","A lob"]},
+      {"q":"Which sport is played at Lord's, the 'home of cricket'?","correct":"Cricket","wrong":["Rugby","Tennis","Polo"]},
+      {"q":"How many bases are there in baseball?","correct":"Four","wrong":["Three","Five","Two"]},
+      {"q":"What do you aim to knock down in ten-pin bowling?","correct":"Pins","wrong":["Cones","Hoops","Targets"]},
+      {"q":"In which sport might you win by a 'knockout'?","correct":"Boxing","wrong":["Golf","Cricket","Tennis"]},
+      {"q":"The FIFA World Cup is held in which sport?","correct":"Football (soccer)","wrong":["Rugby","Cricket","Hockey"]},
+      {"q":"Which sport features scrums and line-outs?","correct":"Rugby","wrong":["Football","Basketball","Tennis"]},
+      {"q":"In athletics, the 100 metres is a type of…?","correct":"Sprint","wrong":["Marathon","Relay","Hurdle"]},
+      {"q":"Roughly how long is a marathon?","correct":"26 miles","wrong":["13 miles","10 miles","50 miles"]},
+      {"q":"Which sport do Venus and Serena Williams play?","correct":"Tennis","wrong":["Golf","Athletics","Basketball"]},
+      {"q":"In darts, what is the highest score with three darts?","correct":"180","wrong":["100","150","200"]},
+      {"q":"What sport is Lionel Messi famous for?","correct":"Football (soccer)","wrong":["Basketball","Tennis","Golf"]},
+      {"q":"Which winter sport involves sliding stones on ice towards a target?","correct":"Curling","wrong":["Ice hockey","Bobsleigh","Figure skating"]},
+      {"q":"A standard football match normally lasts how many minutes?","correct":"90","wrong":["60","100","120"]},
+      {"q":"What protective gear does a cricket batter wear on the legs?","correct":"Pads","wrong":["Gloves","Helmets","Boots"]},
+      {"q":"Which sport is played with a 'puck'?","correct":"Ice hockey","wrong":["Field hockey","Lacrosse","Polo"]}
+    ],
+    2:[
+      {"q":"Which country has won the most FIFA World Cups?","correct":"Brazil","wrong":["Germany","Italy","Argentina"]},
+      {"q":"In which city were the first modern Olympic Games held, in 1896?","correct":"Athens","wrong":["Paris","London","Rome"]},
+      {"q":"How many players are on a netball team?","correct":"Seven","wrong":["Six","Five","Eleven"]},
+      {"q":"Which Jamaican sprinter set the 100m world record of 9.58 seconds?","correct":"Usain Bolt","wrong":["Yohan Blake","Tyson Gay","Asafa Powell"]},
+      {"q":"In golf, one stroke under par on a hole is called a…?","correct":"Birdie","wrong":["Eagle","Bogey","Par"]},
+      {"q":"Which country is credited with inventing cricket?","correct":"England","wrong":["Australia","India","South Africa"]},
+      {"q":"In tennis, what is the term for a score of 40-40?","correct":"Deuce","wrong":["Advantage","Match point","Tiebreak"]},
+      {"q":"The Ashes is a cricket rivalry between England and which country?","correct":"Australia","wrong":["India","South Africa","New Zealand"]},
+      {"q":"How many Grand Slam tournaments are there in tennis each year?","correct":"Four","wrong":["Three","Five","Two"]},
+      {"q":"Which boxer was known as 'The Greatest'?","correct":"Muhammad Ali","wrong":["Mike Tyson","Joe Frazier","George Foreman"]},
+      {"q":"How many World Championships did F1 driver Michael Schumacher win?","correct":"Seven","wrong":["Five","Three","Nine"]},
+      {"q":"The Masters and The Open are major championships in which sport?","correct":"Golf","wrong":["Tennis","Snooker","Cycling"]},
+      {"q":"The football legend Pele played for which country?","correct":"Brazil","wrong":["Argentina","Portugal","Spain"]},
+      {"q":"The 'Six Nations' is a championship in which sport?","correct":"Rugby union","wrong":["Football","Cricket","Athletics"]},
+      {"q":"How many points is a free throw worth in basketball?","correct":"One","wrong":["Two","Three","Four"]},
+      {"q":"The Indianapolis 500 motor race is held in which country?","correct":"The United States","wrong":["Italy","France","Britain"]},
+      {"q":"In cricket, taking three wickets in three consecutive balls is a…?","correct":"Hat-trick","wrong":["Maiden","Duck","Century"]},
+      {"q":"Which Grand Slam tennis tournament is played on clay courts?","correct":"The French Open","wrong":["Wimbledon","The US Open","The Australian Open"]},
+      {"q":"How many players per side are on the field in American football?","correct":"Eleven","wrong":["Nine","Ten","Twelve"]},
+      {"q":"In which sport is the Stanley Cup awarded?","correct":"Ice hockey","wrong":["Basketball","Baseball","American football"]},
+      {"q":"The Tour de France takes place mainly in which country?","correct":"France","wrong":["Italy","Spain","Belgium"]},
+      {"q":"Under modern rules, how many points win a game of table tennis?","correct":"Eleven","wrong":["Twenty-one","Fifteen","Ten"]},
+      {"q":"Which country won the very first FIFA World Cup, in 1930?","correct":"Uruguay","wrong":["Brazil","Argentina","Italy"]},
+      {"q":"In golf, two strokes under par on a hole is called an…?","correct":"Eagle","wrong":["Birdie","Albatross","Bogey"]},
+      {"q":"Which cricketer had a Test batting average of 99.94?","correct":"Don Bradman","wrong":["Sachin Tendulkar","Garfield Sobers","Brian Lara"]},
+      {"q":"Which sport features positions like point guard and center?","correct":"Basketball","wrong":["Rugby","Cricket","Hockey"]},
+      {"q":"In which country is the Wimbledon tennis championship held?","correct":"England","wrong":["The USA","France","Australia"]},
+      {"q":"How many players are on a volleyball team on court?","correct":"Six","wrong":["Five","Seven","Four"]},
+      {"q":"In athletics, which men's event combines ten disciplines?","correct":"The decathlon","wrong":["The heptathlon","The pentathlon","The triathlon"]},
+      {"q":"Which boxer was nicknamed 'Iron Mike'?","correct":"Mike Tyson","wrong":["Evander Holyfield","Lennox Lewis","Riddick Bowe"]},
+      {"q":"What is the top European club football competition called?","correct":"The Champions League","wrong":["The Europa League","The World Cup","The FA Cup"]},
+      {"q":"Which country fields the rugby team known as the All Blacks?","correct":"New Zealand","wrong":["Australia","South Africa","England"]},
+      {"q":"In snooker, which colour ball is worth the most points?","correct":"Black","wrong":["Pink","Blue","Yellow"]},
+      {"q":"An NBA basketball game is divided into how many quarters?","correct":"Four","wrong":["Two","Three","Five"]},
+      {"q":"Which famous horse race is held at Churchill Downs in the USA?","correct":"The Kentucky Derby","wrong":["The Grand National","The Melbourne Cup","Royal Ascot"]},
+      {"q":"How many players are on each team in rugby league?","correct":"Thirteen","wrong":["Fifteen","Eleven","Seventeen"]},
+      {"q":"Which country won the 1966 FIFA World Cup on home soil?","correct":"England","wrong":["West Germany","Brazil","Italy"]},
+      {"q":"The Ryder Cup is a team competition in which sport?","correct":"Golf","wrong":["Tennis","Cycling","Sailing"]},
+      {"q":"In tennis, hitting the ball before it bounces is called a…?","correct":"Volley","wrong":["Lob","Slice","Rally"]},
+      {"q":"Which swimmer has won the most Olympic gold medals in history?","correct":"Michael Phelps","wrong":["Mark Spitz","Ian Thorpe","Ryan Lochte"]}
+    ],
+    3:[
+      {"q":"In which year did Roger Bannister run the first sub-four-minute mile?","correct":"1954","wrong":["1948","1960","1966"]},
+      {"q":"Which country has hosted the Summer Olympics the most times?","correct":"The United States","wrong":["Britain","France","Greece"]},
+      {"q":"The 'Fosbury Flop' technique is used in which athletics event?","correct":"The high jump","wrong":["The long jump","The pole vault","The javelin"]},
+      {"q":"In cricket, a batter being out for zero is called a…?","correct":"Duck","wrong":["Blob","Nought","Diamond"]},
+      {"q":"Which Formula 1 team uses a prancing horse as its logo?","correct":"Ferrari","wrong":["McLaren","Williams","Mercedes"]},
+      {"q":"At which Olympics did Jesse Owens win four gold medals?","correct":"Berlin 1936","wrong":["Los Angeles 1932","London 1948","Helsinki 1952"]},
+      {"q":"How many clubs are golfers allowed to carry in their bag?","correct":"14","wrong":["12","16","18"]},
+      {"q":"Which country won the 1934 FIFA World Cup, the first held in Europe?","correct":"Italy","wrong":["Uruguay","Brazil","Spain"]},
+      {"q":"The 'Green Jacket' is awarded to the winner of which golf tournament?","correct":"The Masters","wrong":["The Open","The US Open","The PGA Championship"]},
+      {"q":"How wide is a football goal, between the posts?","correct":"8 yards","wrong":["10 yards","6 yards","12 yards"]},
+      {"q":"Which boxer beat Muhammad Ali in the 1971 'Fight of the Century'?","correct":"Joe Frazier","wrong":["George Foreman","Sonny Liston","Ken Norton"]},
+      {"q":"In rugby union, how many points is a try worth?","correct":"Five","wrong":["Four","Three","Seven"]},
+      {"q":"Which country has won the most men's Cricket World Cups?","correct":"Australia","wrong":["India","West Indies","England"]},
+      {"q":"Which sprinter won 100m and 200m gold at three straight Olympics (2008-2016)?","correct":"Usain Bolt","wrong":["Carl Lewis","Justin Gatlin","Maurice Greene"]},
+      {"q":"Winning all four tennis majors in one calendar year is called a…?","correct":"Grand Slam","wrong":["Clean sweep","Treble","Career slam"]},
+      {"q":"The Heisman Trophy is awarded in which sport?","correct":"American college football","wrong":["Basketball","Baseball","Ice hockey"]},
+      {"q":"Which country are the rugby union 'Springboks'?","correct":"South Africa","wrong":["Australia","New Zealand","Argentina"]},
+      {"q":"In Formula 1, which flag signals the end of a race?","correct":"The chequered flag","wrong":["The yellow flag","The red flag","The blue flag"]},
+      {"q":"Which golfer holds the record for most men's majors, with 18?","correct":"Jack Nicklaus","wrong":["Tiger Woods","Arnold Palmer","Gary Player"]},
+      {"q":"A marathon's 26.2 miles is approximately how many kilometres?","correct":"42 km","wrong":["40 km","45 km","50 km"]},
+      {"q":"Which country won the 1995 Rugby World Cup on home soil?","correct":"South Africa","wrong":["New Zealand","Australia","England"]},
+      {"q":"In cricket, hitting the ball over the boundary on the full scores how many?","correct":"Six","wrong":["Four","Five","Two"]},
+      {"q":"Wimbledon tennis is played on which court surface?","correct":"Grass","wrong":["Clay","Hard court","Carpet"]},
+      {"q":"Which three-time F1 champion died in a crash at Imola in 1994?","correct":"Ayrton Senna","wrong":["Nelson Piquet","Emerson Fittipaldi","Rubens Barrichello"]},
+      {"q":"In American football, how many points is a field goal worth?","correct":"Three","wrong":["Six","One","Two"]},
+      {"q":"How many players are in the water per team in water polo, including the goalkeeper?","correct":"Seven","wrong":["Six","Five","Eight"]},
+      {"q":"The US Triple Crown of horse racing is the Kentucky Derby, the Preakness Stakes and the…?","correct":"Belmont Stakes","wrong":["Breeders' Cup","Travers Stakes","Arlington Million"]},
+      {"q":"Which footballer is nicknamed 'CR7'?","correct":"Cristiano Ronaldo","wrong":["Roberto Carlos","Carlos Tevez","Cesc Fabregas"]},
+      {"q":"In snooker, what is the highest possible break without fouls?","correct":"147","wrong":["155","140","180"]},
+      {"q":"Which country won the 2014 FIFA World Cup in Brazil?","correct":"Germany","wrong":["Argentina","Brazil","Netherlands"]},
+      {"q":"The Davis Cup is an international team event in which sport?","correct":"Tennis","wrong":["Golf","Cycling","Rowing"]},
+      {"q":"In athletics, the women's seven-event competition is the…?","correct":"The heptathlon","wrong":["The pentathlon","The decathlon","The triathlon"]},
+      {"q":"Which is the heaviest weight class in boxing?","correct":"Heavyweight","wrong":["Middleweight","Welterweight","Featherweight"]},
+      {"q":"Who was the first gymnast to score a perfect 10 at the Olympics, in 1976?","correct":"Nadia Comaneci","wrong":["Olga Korbut","Mary Lou Retton","Simone Biles"]},
+      {"q":"Which country fields the cricket team known as the 'Black Caps'?","correct":"New Zealand","wrong":["Australia","South Africa","Sri Lanka"]},
+      {"q":"What colour jersey does the overall Tour de France leader wear?","correct":"Yellow","wrong":["Green","Polka dot","White"]},
+      {"q":"Which NBA legend was nicknamed 'Air Jordan'?","correct":"Michael Jordan","wrong":["Magic Johnson","Larry Bird","Kobe Bryant"]},
+      {"q":"The Calcutta Cup in rugby is contested between England and which nation?","correct":"Scotland","wrong":["Wales","Ireland","France"]},
+      {"q":"How many Grand Slam singles titles did Steffi Graf win?","correct":"22","wrong":["18","24","15"]},
+      {"q":"Which country won the first ICC men's T20 World Cup, in 2007?","correct":"India","wrong":["Pakistan","Australia","England"]}
+    ],
+    4:[
+      {"q":"The 26.2-mile marathon distance was famously set at which city's 1908 Olympics?","correct":"London","wrong":["Athens","Stockholm","Paris"]},
+      {"q":"Which horse won the US Triple Crown in 1973 with a record-breaking Belmont?","correct":"Secretariat","wrong":["Seabiscuit","Man o' War","Citation"]},
+      {"q":"Who scored the highest individual innings in Test cricket, 400 not out?","correct":"Brian Lara","wrong":["Sachin Tendulkar","Don Bradman","Garfield Sobers"]},
+      {"q":"In the 1930 World Cup final, Uruguay defeated which country?","correct":"Argentina","wrong":["Brazil","Italy","USA"]},
+      {"q":"Which American won nine Olympic golds in sprints and long jump (1984-1996)?","correct":"Carl Lewis","wrong":["Jesse Owens","Michael Johnson","Maurice Greene"]},
+      {"q":"The Monaco Grand Prix's street race is run through which area?","correct":"Monte Carlo","wrong":["Spa","Monza","Silverstone"]},
+      {"q":"Who was the first footballer to win the World Cup three times as a player?","correct":"Pele","wrong":["Diego Maradona","Garrincha","Franz Beckenbauer"]},
+      {"q":"Which boxer retired undefeated after 49 professional fights in the 1950s?","correct":"Rocky Marciano","wrong":["Joe Louis","Sugar Ray Robinson","Jack Dempsey"]},
+      {"q":"In the 1974 'Rumble in the Jungle', Ali defeated which champion?","correct":"George Foreman","wrong":["Joe Frazier","Ken Norton","Sonny Liston"]},
+      {"q":"Which country lost the first Rugby World Cup final, in 1987, to New Zealand?","correct":"France","wrong":["Australia","England","Wales"]},
+      {"q":"Who won golf's Grand Slam of all four majors in a single year (1930)?","correct":"Bobby Jones","wrong":["Ben Hogan","Sam Snead","Walter Hagen"]},
+      {"q":"Which player completed tennis's calendar 'Golden Slam' in 1988?","correct":"Steffi Graf","wrong":["Martina Navratilova","Chris Evert","Margaret Court"]},
+      {"q":"What is the length of an Olympic (long course) swimming pool?","correct":"50 metres","wrong":["25 metres","100 metres","33 metres"]},
+      {"q":"Which French rider, 'The Badger', won the Tour de France five times?","correct":"Bernard Hinault","wrong":["Eddy Merckx","Jacques Anquetil","Greg LeMond"]},
+      {"q":"Who shattered the long jump world record at the 1968 Mexico Olympics?","correct":"Bob Beamon","wrong":["Carl Lewis","Ralph Boston","Mike Powell"]},
+      {"q":"The famous Borg-McEnroe rivalry was in which sport?","correct":"Tennis","wrong":["Golf","Boxing","Snooker"]},
+      {"q":"Which team won the first men's Cricket World Cup, in 1975?","correct":"West Indies","wrong":["Australia","England","India"]},
+      {"q":"Who won five consecutive F1 titles from 2000 to 2004 with Ferrari?","correct":"Michael Schumacher","wrong":["Mika Hakkinen","Fernando Alonso","Sebastian Vettel"]},
+      {"q":"Which center won a record 11 NBA championships with the Boston Celtics?","correct":"Bill Russell","wrong":["Wilt Chamberlain","Kareem Abdul-Jabbar","Magic Johnson"]},
+      {"q":"Which spin bowler took a record 800 Test wickets?","correct":"Muttiah Muralitharan","wrong":["Shane Warne","Anil Kumble","Glenn McGrath"]},
+      {"q":"For which country did heptathlon great Jackie Joyner-Kersee compete?","correct":"The USA","wrong":["Britain","Jamaica","Australia"]},
+      {"q":"Which country hosted and won the 1998 FIFA World Cup?","correct":"France","wrong":["Brazil","Italy","Germany"]},
+      {"q":"Which Australian woman won a record 24 Grand Slam singles titles?","correct":"Margaret Court","wrong":["Serena Williams","Steffi Graf","Chris Evert"]},
+      {"q":"The 1980 Olympic 'Miracle on Ice' upset came in which sport?","correct":"Ice hockey","wrong":["Figure skating","Bobsleigh","Curling"]},
+      {"q":"Which boxer was stripped of his title for refusing the Vietnam draft, then regained it?","correct":"Muhammad Ali","wrong":["Joe Frazier","Floyd Patterson","Sonny Liston"]},
+      {"q":"In golf, three strokes under par on a single hole is called an…?","correct":"Albatross","wrong":["Eagle","Condor","Birdie"]},
+      {"q":"Which Brazilian striker, 'O Fenomeno', won World Cups in 1994 and 2002?","correct":"Ronaldo","wrong":["Romario","Rivaldo","Ronaldinho"]},
+      {"q":"Which tennis major is played on hard courts in January?","correct":"The Australian Open","wrong":["The US Open","Wimbledon","The French Open"]},
+      {"q":"Who captained the dominant West Indies cricket team of the late 1970s and early 1980s?","correct":"Clive Lloyd","wrong":["Viv Richards","Garfield Sobers","Michael Holding"]},
+      {"q":"In Formula 1, the Constructors' Championship is awarded to the…?","correct":"Team","wrong":["Best driver","Fastest pit crew","Host country"]},
+      {"q":"Which Ethiopian ran barefoot to win the Olympic marathon in 1960?","correct":"Abebe Bikila","wrong":["Haile Gebrselassie","Kenenisa Bekele","Mo Farah"]},
+      {"q":"The Curtis Cup and Walker Cup are amateur team events in which sport?","correct":"Golf","wrong":["Tennis","Rowing","Sailing"]},
+      {"q":"Which country won the 1986 FIFA World Cup, inspired by Diego Maradona?","correct":"Argentina","wrong":["Brazil","West Germany","Italy"]},
+      {"q":"The 'Flying Finn' Paavo Nurmi dominated which type of athletics event?","correct":"Long-distance running","wrong":["Sprinting","Throwing","Jumping"]},
+      {"q":"Which player won Wimbledon five years in a row, from 1976 to 1980?","correct":"Bjorn Borg","wrong":["John McEnroe","Jimmy Connors","Ivan Lendl"]},
+      {"q":"Which American swimmer won seven golds at the 1972 Munich Olympics?","correct":"Mark Spitz","wrong":["Michael Phelps","Matt Biondi","Don Schollander"]},
+      {"q":"Which country won the Rugby World Cup in 1987, 2011 and 2015?","correct":"New Zealand","wrong":["Australia","South Africa","England"]},
+      {"q":"The 1975 'Thrilla in Manila' was the third bout between Ali and whom?","correct":"Joe Frazier","wrong":["George Foreman","Ken Norton","Larry Holmes"]},
+      {"q":"Which Spaniard won the Tour de France five years running (1991-1995)?","correct":"Miguel Indurain","wrong":["Alberto Contador","Carlos Sastre","Pedro Delgado"]},
+      {"q":"Which sprinter set the long-standing women's 100m world record of 10.49 in 1988?","correct":"Florence Griffith-Joyner","wrong":["Marion Jones","Shelly-Ann Fraser-Pryce","Elaine Thompson"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>

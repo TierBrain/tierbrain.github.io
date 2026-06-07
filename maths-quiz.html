@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Maths Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0f1117; --bg1:#191d27; --card:#1a1e29; --card2:#232838;
+    --ink:#f3f5fb; --mut:#a7afc4; --line:#343b4d;
+    --l1:#5fd6a8; --l2:#ffd76a; --l3:#ff8a8a; --l4:#b9a0ff;
+    --gold:#ffe08a; --right:#5fd6a8; --wrong:#ff6b7d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(120,160,255,.14), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(185,160,255,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Maths Trivia</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions from a big pool — arithmetic, geometry, algebra and number facts, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"What is 2 + 2?","correct":"4","wrong":["3","5","22"]},
+      {"q":"What is 5 x 3?","correct":"15","wrong":["8","18","53"]},
+      {"q":"How many sides does a square have?","correct":"4","wrong":["3","5","6"]},
+      {"q":"What is 10 - 4?","correct":"6","wrong":["5","7","14"]},
+      {"q":"What is half of 20?","correct":"10","wrong":["5","15","40"]},
+      {"q":"How many sides does a triangle have?","correct":"3","wrong":["4","5","2"]},
+      {"q":"What is 9 + 6?","correct":"15","wrong":["14","16","96"]},
+      {"q":"What is 100 divided by 10?","correct":"10","wrong":["1","100","110"]},
+      {"q":"Which of these numbers is even?","correct":"8","wrong":["3","5","7"]},
+      {"q":"What is 7 x 2?","correct":"14","wrong":["9","16","72"]},
+      {"q":"How many minutes are in an hour?","correct":"60","wrong":["30","100","24"]},
+      {"q":"What is 12 - 5?","correct":"7","wrong":["6","8","17"]},
+      {"q":"Which shape is perfectly round with no corners?","correct":"A circle","wrong":["A square","A triangle","A pentagon"]},
+      {"q":"What is 3 x 4?","correct":"12","wrong":["7","9","34"]},
+      {"q":"What number comes after 19?","correct":"20","wrong":["18","21","91"]},
+      {"q":"What is 8 + 8?","correct":"16","wrong":["15","18","88"]},
+      {"q":"How many degrees are in a right angle?","correct":"90","wrong":["45","180","360"]},
+      {"q":"What is 6 x 5?","correct":"30","wrong":["11","35","65"]},
+      {"q":"What is 1/2 as a percentage?","correct":"50%","wrong":["25%","75%","100%"]},
+      {"q":"How many sides does a pentagon have?","correct":"5","wrong":["4","6","7"]},
+      {"q":"What is 20 + 30?","correct":"50","wrong":["40","60","2030"]},
+      {"q":"What is 4 squared (4 x 4)?","correct":"16","wrong":["8","12","44"]},
+      {"q":"How many zeros are in the number one hundred?","correct":"2","wrong":["1","3","100"]},
+      {"q":"What is 15 divided by 3?","correct":"5","wrong":["3","6","12"]},
+      {"q":"What is the next number: 2, 4, 6, __?","correct":"8","wrong":["7","9","10"]},
+      {"q":"How many seconds are in a minute?","correct":"60","wrong":["30","100","24"]},
+      {"q":"What is 11 + 11?","correct":"22","wrong":["21","23","1111"]},
+      {"q":"Which of these is the largest number?","correct":"9","wrong":["3","6","8"]},
+      {"q":"What is 50 - 25?","correct":"25","wrong":["15","35","75"]},
+      {"q":"How many sides does a hexagon have?","correct":"6","wrong":["5","7","8"]},
+      {"q":"What is 2 x 10?","correct":"20","wrong":["12","22","210"]},
+      {"q":"What is a quarter of 100?","correct":"25","wrong":["10","50","75"]},
+      {"q":"What is 7 + 0?","correct":"7","wrong":["0","70","8"]},
+      {"q":"What is 100 - 1?","correct":"99","wrong":["98","101","90"]},
+      {"q":"How many corners does a square have?","correct":"4","wrong":["3","5","8"]},
+      {"q":"What is 6 divided by 2?","correct":"3","wrong":["2","4","12"]},
+      {"q":"What is double 9?","correct":"18","wrong":["11","19","99"]},
+      {"q":"Which of these is an odd number?","correct":"7","wrong":["2","4","8"]},
+      {"q":"What is 5 + 5 + 5?","correct":"15","wrong":["10","20","25"]},
+      {"q":"How many days are in a week?","correct":"7","wrong":["5","6","12"]}
+    ],
+    2:[
+      {"q":"What is 12 x 12?","correct":"144","wrong":["124","132","154"]},
+      {"q":"What is 144 divided by 12?","correct":"12","wrong":["11","14","24"]},
+      {"q":"What is 25% of 80?","correct":"20","wrong":["25","40","16"]},
+      {"q":"What is the perimeter of a square with sides of 5 cm?","correct":"20 cm","wrong":["25 cm","10 cm","15 cm"]},
+      {"q":"What is 7 x 8?","correct":"56","wrong":["54","63","49"]},
+      {"q":"How many degrees are in a full circle?","correct":"360","wrong":["180","90","270"]},
+      {"q":"What is 3/4 as a decimal?","correct":"0.75","wrong":["0.34","0.43","0.5"]},
+      {"q":"What is the area of a rectangle 4 cm by 6 cm?","correct":"24 cm squared","wrong":["10 cm squared","20 cm squared","48 cm squared"]},
+      {"q":"What is 1000 - 250?","correct":"750","wrong":["850","650","700"]},
+      {"q":"What is the square root of 81?","correct":"9","wrong":["8","9.5","18"]},
+      {"q":"What is 15 x 4?","correct":"60","wrong":["45","75","54"]},
+      {"q":"A triangle's angles add up to how many degrees?","correct":"180","wrong":["90","360","270"]},
+      {"q":"What is 0.5 + 0.25?","correct":"0.75","wrong":["0.7","1.0","0.55"]},
+      {"q":"What is 9 x 9?","correct":"81","wrong":["72","99","91"]},
+      {"q":"What is 200 divided by 4?","correct":"50","wrong":["40","25","80"]},
+      {"q":"What is 10% of 250?","correct":"25","wrong":["2.5","50","250"]},
+      {"q":"What is the next prime number after 7?","correct":"11","wrong":["9","10","13"]},
+      {"q":"How many millimetres are in a centimetre?","correct":"10","wrong":["100","1000","12"]},
+      {"q":"What is 6 x 7?","correct":"42","wrong":["36","48","67"]},
+      {"q":"Which fraction is equal to 0.5?","correct":"1/2","wrong":["1/3","1/4","2/3"]},
+      {"q":"What is 13 + 28?","correct":"41","wrong":["39","43","51"]},
+      {"q":"What is the value of pi to two decimal places?","correct":"3.14","wrong":["3.41","3.12","22.7"]},
+      {"q":"What is 8 x 8?","correct":"64","wrong":["56","72","88"]},
+      {"q":"What is 1/3 + 1/3?","correct":"2/3","wrong":["1/6","1/3","1/2"]},
+      {"q":"What is 500 x 2?","correct":"1000","wrong":["250","502","750"]},
+      {"q":"A shape with 8 sides is called a…?","correct":"Octagon","wrong":["Hexagon","Heptagon","Nonagon"]},
+      {"q":"What is 45 + 55?","correct":"100","wrong":["90","110","95"]},
+      {"q":"What is 5 x 11?","correct":"55","wrong":["50","56","65"]},
+      {"q":"How many centimetres are in a metre?","correct":"100","wrong":["10","1000","12"]},
+      {"q":"What is 90 divided by 9?","correct":"10","wrong":["9","11","81"]},
+      {"q":"What is 2 to the power of 5?","correct":"32","wrong":["16","25","64"]},
+      {"q":"What is 3/4 of 100?","correct":"75","wrong":["25","50","80"]},
+      {"q":"What is 17 - 9?","correct":"8","wrong":["7","9","6"]},
+      {"q":"What is the average (mean) of 4, 6 and 8?","correct":"6","wrong":["5","7","9"]},
+      {"q":"How many sides does a heptagon have?","correct":"7","wrong":["6","8","9"]},
+      {"q":"What is 11 x 11?","correct":"121","wrong":["111","122","132"]},
+      {"q":"What is 1/10 as a percentage?","correct":"10%","wrong":["1%","100%","0.1%"]},
+      {"q":"What is 64 divided by 8?","correct":"8","wrong":["7","9","6"]},
+      {"q":"What is the next number: 5, 10, 15, 20, __?","correct":"25","wrong":["24","30","21"]},
+      {"q":"What is 250 + 250?","correct":"500","wrong":["400","600","550"]}
+    ],
+    3:[
+      {"q":"What is 13 x 13?","correct":"169","wrong":["156","196","159"]},
+      {"q":"What is the square root of 144?","correct":"12","wrong":["14","11","13"]},
+      {"q":"What is 7 cubed (7 x 7 x 7)?","correct":"343","wrong":["49","210","729"]},
+      {"q":"Solve for x: x + 7 = 12.","correct":"x = 5","wrong":["x = 19","x = 7","x = 6"]},
+      {"q":"What is 15% of 200?","correct":"30","wrong":["15","45","20"]},
+      {"q":"The area of a circle equals pi times the radius…?","correct":"Squared","wrong":["Cubed","Doubled","Tripled"]},
+      {"q":"What is 9 x 12?","correct":"108","wrong":["96","120","112"]},
+      {"q":"What is 1000 divided by 8?","correct":"125","wrong":["120","150","128"]},
+      {"q":"What is 6 factorial (6!)?","correct":"720","wrong":["120","360","36"]},
+      {"q":"What is 0.2 as a fraction in simplest form?","correct":"1/5","wrong":["1/2","2/5","1/4"]},
+      {"q":"In a right-angled triangle, the longest side is called the…?","correct":"Hypotenuse","wrong":["Adjacent","Opposite","Tangent"]},
+      {"q":"What is 144 + 156?","correct":"300","wrong":["290","310","312"]},
+      {"q":"Solve for x: 3x = 21.","correct":"x = 7","wrong":["x = 3","x = 18","x = 24"]},
+      {"q":"What is 25 x 25?","correct":"625","wrong":["525","615","650"]},
+      {"q":"What is each angle of an equilateral triangle?","correct":"60 degrees","wrong":["45 degrees","90 degrees","30 degrees"]},
+      {"q":"What is 5/8 as a decimal?","correct":"0.625","wrong":["0.58","0.65","0.8"]},
+      {"q":"What is 17 x 3?","correct":"51","wrong":["48","54","41"]},
+      {"q":"What do the interior angles of a quadrilateral add up to?","correct":"360 degrees","wrong":["180 degrees","270 degrees","540 degrees"]},
+      {"q":"What is 8 x 4?","correct":"32","wrong":["16","64","12"]},
+      {"q":"What is 30% of 150?","correct":"45","wrong":["30","50","60"]},
+      {"q":"What is the next prime number after 13?","correct":"17","wrong":["15","16","19"]},
+      {"q":"What is 81 divided by 9?","correct":"9","wrong":["8","7","11"]},
+      {"q":"A polygon with 10 sides is called a…?","correct":"Decagon","wrong":["Nonagon","Octagon","Dodecagon"]},
+      {"q":"What is 7 x 13?","correct":"91","wrong":["84","96","81"]},
+      {"q":"Convert 3/5 to a percentage.","correct":"60%","wrong":["30%","35%","65%"]},
+      {"q":"What is 15 squared (15 x 15)?","correct":"225","wrong":["215","250","125"]},
+      {"q":"What is the sum of the whole numbers from 1 to 10?","correct":"55","wrong":["45","50","100"]},
+      {"q":"The rule a squared + b squared = c squared is known as…?","correct":"Pythagoras' theorem","wrong":["Euclid's law","Newton's law","The quadratic formula"]},
+      {"q":"What is 0.75 as a fraction in simplest form?","correct":"3/4","wrong":["7/5","75/10","3/5"]},
+      {"q":"What is 12 x 15?","correct":"180","wrong":["150","175","144"]},
+      {"q":"What is 40% of 90?","correct":"36","wrong":["30","45","40"]},
+      {"q":"What is 1/4 + 1/2?","correct":"3/4","wrong":["2/6","1/3","5/4"]},
+      {"q":"What is the perimeter of a rectangle 8 by 3?","correct":"22","wrong":["24","11","16"]},
+      {"q":"What is 100 - 37?","correct":"63","wrong":["67","73","53"]},
+      {"q":"What is the cube root of 27?","correct":"3","wrong":["9","6","27"]},
+      {"q":"What is 11 x 12?","correct":"132","wrong":["121","144","123"]},
+      {"q":"What is 250 x 4?","correct":"1000","wrong":["800","1200","950"]},
+      {"q":"An angle greater than 90 but less than 180 degrees is called…?","correct":"Obtuse","wrong":["Acute","Right","Reflex"]},
+      {"q":"What is 6 x 6 x 6?","correct":"216","wrong":["36","18","666"]},
+      {"q":"What is 7/8 as a decimal?","correct":"0.875","wrong":["0.78","0.87","0.788"]}
+    ],
+    4:[
+      {"q":"What is the value of pi to four decimal places?","correct":"3.1416","wrong":["3.1614","3.1461","3.4116"]},
+      {"q":"What is the only even prime number?","correct":"2","wrong":["1","3","0"]},
+      {"q":"What is 2 to the power of 10?","correct":"1024","wrong":["512","2048","1000"]},
+      {"q":"What name is given to a number divisible only by 1 and itself?","correct":"A prime number","wrong":["A composite number","A square number","A factor"]},
+      {"q":"What is the square root of 169?","correct":"13","wrong":["12","14","17"]},
+      {"q":"What do the interior angles of a pentagon add up to?","correct":"540 degrees","wrong":["360 degrees","450 degrees","720 degrees"]},
+      {"q":"In the Fibonacci sequence 1, 1, 2, 3, 5, 8, what comes next?","correct":"13","wrong":["11","10","15"]},
+      {"q":"What is the mathematical constant 'e' approximately?","correct":"2.718","wrong":["3.142","1.618","1.414"]},
+      {"q":"What is the golden ratio approximately?","correct":"1.618","wrong":["2.718","3.142","1.414"]},
+      {"q":"What do you call a triangle with all three sides of different lengths?","correct":"Scalene","wrong":["Equilateral","Isosceles","Right-angled"]},
+      {"q":"What is 12 cubed (12 x 12 x 12)?","correct":"1728","wrong":["144","1212","1278"]},
+      {"q":"In statistics, the most frequently occurring value is the…?","correct":"Mode","wrong":["Mean","Median","Range"]},
+      {"q":"What is the square root of 256?","correct":"16","wrong":["14","18","26"]},
+      {"q":"Numbers like 1, 4, 9, 16 and 25 are known as…?","correct":"Square numbers","wrong":["Prime numbers","Cube numbers","Triangular numbers"]},
+      {"q":"What does 0! (zero factorial) equal?","correct":"1","wrong":["0","Undefined","10"]},
+      {"q":"What is the interior angle of a regular hexagon?","correct":"120 degrees","wrong":["90 degrees","108 degrees","135 degrees"]},
+      {"q":"What is 1/8 as a decimal?","correct":"0.125","wrong":["0.18","0.08","0.8"]},
+      {"q":"What is the next number: 1, 4, 9, 16, 25, __?","correct":"36","wrong":["30","35","49"]},
+      {"q":"A polygon with 12 sides is called a…?","correct":"Dodecagon","wrong":["Decagon","Hendecagon","Icosagon"]},
+      {"q":"What is 3 to the power of 4?","correct":"81","wrong":["12","27","64"]},
+      {"q":"What is the median of 3, 7, 8, 12 and 20?","correct":"8","wrong":["10","7","12"]},
+      {"q":"What is the logarithm of 1000 to base 10?","correct":"3","wrong":["2","4","100"]},
+      {"q":"In a circle, the distance straight across through the centre is the…?","correct":"Diameter","wrong":["Radius","Circumference","Chord"]},
+      {"q":"What is the square root of 625?","correct":"25","wrong":["15","35","50"]},
+      {"q":"What do the interior angles of a hexagon add up to?","correct":"720 degrees","wrong":["540 degrees","360 degrees","900 degrees"]},
+      {"q":"What is the reciprocal of 4?","correct":"1/4","wrong":["4","-4","0.4"]},
+      {"q":"What is the number 100 written in binary?","correct":"1100100","wrong":["1000000","110100","1010100"]},
+      {"q":"What is the area of a triangle with base 10 and height 6?","correct":"30","wrong":["60","16","24"]},
+      {"q":"Which of these is a 'perfect number', equal to the sum of its divisors?","correct":"6","wrong":["4","8","10"]},
+      {"q":"What is 5 factorial (5!)?","correct":"120","wrong":["25","60","720"]},
+      {"q":"What is the square root of 49 plus the square root of 16?","correct":"11","wrong":["9","13","65"]},
+      {"q":"The number pi is an example of which type of number?","correct":"Irrational","wrong":["Rational","Imaginary","Prime"]},
+      {"q":"What is 15% of 300?","correct":"45","wrong":["30","60","50"]},
+      {"q":"Which branch of maths studies triangles and uses sine, cosine and tangent?","correct":"Trigonometry","wrong":["Algebra","Calculus","Statistics"]},
+      {"q":"What is 9 x 11?","correct":"99","wrong":["88","108","91"]},
+      {"q":"What is the next term: 3, 6, 12, 24, __?","correct":"48","wrong":["36","30","60"]},
+      {"q":"A 3D shape with six square faces is a…?","correct":"Cube","wrong":["Sphere","Pyramid","Cylinder"]},
+      {"q":"What is the hypotenuse of a right triangle with legs of 3 and 4?","correct":"5","wrong":["6","7","12"]},
+      {"q":"What is 1 - 1/4?","correct":"3/4","wrong":["1/4","2/4","4/3"]},
+      {"q":"Which ancient Greek mathematician is called the 'father of geometry'?","correct":"Euclid","wrong":["Pythagoras","Archimedes","Plato"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>General Knowledge Super Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0a1320; --bg1:#0f2236; --card:#10243a; --card2:#16304a;
+    --ink:#eef6ff; --mut:#9fb4cf; --line:#28425f;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#ff6b5d; --l4:#b794ff;
+    --gold:#ffd24a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(58,209,209,.18), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(183,148,255,.16), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">General Knowledge · Super Quiz</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions pulled from a big shuffled pool, across four tiers — climb from Easy all the way to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"What is the capital of France?","correct":"Paris","wrong":["London","Rome","Berlin"]},
+      {"q":"How many continents are there on Earth?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"What is the largest ocean on Earth?","correct":"Pacific","wrong":["Atlantic","Indian","Arctic"]},
+      {"q":"Which country is famously shaped like a boot?","correct":"Italy","wrong":["Spain","Greece","Portugal"]},
+      {"q":"The Great Pyramids are found in which country?","correct":"Egypt","wrong":["Mexico","Iraq","India"]},
+      {"q":"What is the capital of Japan?","correct":"Tokyo","wrong":["Beijing","Seoul","Bangkok"]},
+      {"q":"Which is the largest planet in our solar system?","correct":"Jupiter","wrong":["Saturn","Earth","Mars"]},
+      {"q":"How many days are there in a leap year?","correct":"366","wrong":["365","364","367"]},
+      {"q":"What colour do you get by mixing blue and yellow?","correct":"Green","wrong":["Purple","Orange","Brown"]},
+      {"q":"How many sides does a triangle have?","correct":"Three","wrong":["Four","Five","Six"]},
+      {"q":"H2O is more commonly known as what?","correct":"Water","wrong":["Salt","Oxygen","Acid"]},
+      {"q":"Which animal is known as the king of the jungle?","correct":"Lion","wrong":["Tiger","Elephant","Gorilla"]},
+      {"q":"How many legs does a spider have?","correct":"Eight","wrong":["Six","Ten","Four"]},
+      {"q":"What is the freezing point of water in Celsius?","correct":"0","wrong":["10","32","100"]},
+      {"q":"Which planet do we live on?","correct":"Earth","wrong":["Mars","Venus","Mercury"]},
+      {"q":"What is the largest mammal on Earth?","correct":"Blue whale","wrong":["Elephant","Giraffe","Hippopotamus"]},
+      {"q":"How many colours are traditionally in a rainbow?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"Which sea creature has eight arms?","correct":"Octopus","wrong":["Starfish","Jellyfish","Crab"]},
+      {"q":"What do bees make?","correct":"Honey","wrong":["Silk","Milk","Jam"]},
+      {"q":"How many minutes are in an hour?","correct":"60","wrong":["30","100","24"]},
+      {"q":"What is the currency of the United States?","correct":"Dollar","wrong":["Euro","Pound","Yen"]},
+      {"q":"Which is the closest planet to the Sun?","correct":"Mercury","wrong":["Venus","Earth","Mars"]},
+      {"q":"What is the tallest land animal?","correct":"Giraffe","wrong":["Elephant","Horse","Camel"]},
+      {"q":"In which country is the Eiffel Tower?","correct":"France","wrong":["Italy","Germany","Belgium"]},
+      {"q":"How many players are on a football (soccer) team on the pitch?","correct":"11","wrong":["9","10","12"]},
+      {"q":"Which gas do humans need to breathe in to survive?","correct":"Oxygen","wrong":["Carbon dioxide","Nitrogen","Helium"]},
+      {"q":"What is the largest country in the world by land area?","correct":"Russia","wrong":["Canada","China","USA"]},
+      {"q":"How many hours are in a day?","correct":"24","wrong":["12","48","60"]},
+      {"q":"What is frozen water called?","correct":"Ice","wrong":["Steam","Smoke","Mist"]},
+      {"q":"What is the capital of England?","correct":"London","wrong":["Manchester","Birmingham","Liverpool"]},
+      {"q":"What shape is a typical stop sign?","correct":"Octagon","wrong":["Circle","Square","Triangle"]},
+      {"q":"What do you call a baby dog?","correct":"Puppy","wrong":["Kitten","Cub","Calf"]},
+      {"q":"Which planet is known as the Red Planet?","correct":"Mars","wrong":["Venus","Jupiter","Saturn"]},
+      {"q":"What is the main language spoken in Spain?","correct":"Spanish","wrong":["Portuguese","Italian","French"]},
+      {"q":"How many cents are in a US dollar?","correct":"100","wrong":["50","10","1000"]},
+      {"q":"Which is bigger, a kilometre or a metre?","correct":"A kilometre","wrong":["A metre","They are equal","It depends"]},
+      {"q":"How many wheels does a typical bicycle have?","correct":"Two","wrong":["Three","Four","One"]},
+      {"q":"What is the opposite of 'hot'?","correct":"Cold","wrong":["Warm","Cool","Dry"]},
+      {"q":"Which animal famously says 'moo'?","correct":"Cow","wrong":["Sheep","Pig","Horse"]},
+      {"q":"What is the largest hot desert in the world?","correct":"The Sahara","wrong":["The Gobi","The Kalahari","The Arabian"]}
+    ],
+    2:[
+      {"q":"What is the capital of Australia?","correct":"Canberra","wrong":["Sydney","Melbourne","Perth"]},
+      {"q":"Who painted the Mona Lisa?","correct":"Leonardo da Vinci","wrong":["Michelangelo","Raphael","Donatello"]},
+      {"q":"What is the chemical symbol for gold?","correct":"Au","wrong":["Ag","Gd","Go"]},
+      {"q":"How many bones are in the adult human body?","correct":"206","wrong":["201","215","196"]},
+      {"q":"Which planet has the most prominent ring system?","correct":"Saturn","wrong":["Jupiter","Uranus","Neptune"]},
+      {"q":"How many strings does a standard guitar have?","correct":"Six","wrong":["Four","Five","Twelve"]},
+      {"q":"Which river runs through London?","correct":"The Thames","wrong":["The Seine","The Tiber","The Danube"]},
+      {"q":"What is the hardest natural substance?","correct":"Diamond","wrong":["Gold","Iron","Quartz"]},
+      {"q":"How many planets are in our solar system?","correct":"Eight","wrong":["Nine","Seven","Ten"]},
+      {"q":"Who wrote 'Romeo and Juliet'?","correct":"William Shakespeare","wrong":["Charles Dickens","Jane Austen","Mark Twain"]},
+      {"q":"What is the chemical symbol for oxygen?","correct":"O","wrong":["Ox","O2","Og"]},
+      {"q":"In which country would you find the Colosseum?","correct":"Italy","wrong":["Greece","Spain","Turkey"]},
+      {"q":"What is the smallest prime number?","correct":"2","wrong":["1","0","3"]},
+      {"q":"Which is the smallest ocean?","correct":"Arctic","wrong":["Indian","Atlantic","Southern"]},
+      {"q":"How many degrees are in a right angle?","correct":"90","wrong":["45","180","360"]},
+      {"q":"What is the capital of Canada?","correct":"Ottawa","wrong":["Toronto","Vancouver","Montreal"]},
+      {"q":"Who developed the theory of general relativity?","correct":"Albert Einstein","wrong":["Isaac Newton","Galileo","Stephen Hawking"]},
+      {"q":"What is the largest organ in the human body?","correct":"The skin","wrong":["The liver","The heart","The lungs"]},
+      {"q":"What is the currency of Japan?","correct":"Yen","wrong":["Won","Yuan","Ringgit"]},
+      {"q":"Which gas do plants absorb from the air?","correct":"Carbon dioxide","wrong":["Oxygen","Hydrogen","Nitrogen"]},
+      {"q":"What is the capital of Russia?","correct":"Moscow","wrong":["St Petersburg","Kyiv","Minsk"]},
+      {"q":"Who was the first person to walk on the Moon?","correct":"Neil Armstrong","wrong":["Buzz Aldrin","Yuri Gagarin","Michael Collins"]},
+      {"q":"In which year did World War II end?","correct":"1945","wrong":["1939","1918","1950"]},
+      {"q":"What is the chemical symbol for sodium?","correct":"Na","wrong":["So","Sd","Sn"]},
+      {"q":"How many sides does a hexagon have?","correct":"Six","wrong":["Five","Seven","Eight"]},
+      {"q":"Which language has the most native speakers worldwide?","correct":"Mandarin Chinese","wrong":["English","Spanish","Hindi"]},
+      {"q":"What is the national flower of England?","correct":"The rose","wrong":["The tulip","The daffodil","The lily"]},
+      {"q":"Which planet is famous for a giant red spot?","correct":"Jupiter","wrong":["Mars","Saturn","Neptune"]},
+      {"q":"What is the capital of Germany?","correct":"Berlin","wrong":["Munich","Frankfurt","Hamburg"]},
+      {"q":"Who wrote the Harry Potter series?","correct":"J.K. Rowling","wrong":["Roald Dahl","Stephen King","J.R.R. Tolkien"]},
+      {"q":"What is often called the powerhouse of the cell?","correct":"The mitochondria","wrong":["The nucleus","The ribosome","The membrane"]},
+      {"q":"How many players from one team are on a basketball court?","correct":"Five","wrong":["Six","Seven","Four"]},
+      {"q":"Which metal is liquid at room temperature?","correct":"Mercury","wrong":["Iron","Lead","Aluminium"]},
+      {"q":"Which country gifted the Statue of Liberty to the USA?","correct":"France","wrong":["Britain","Spain","Italy"]},
+      {"q":"What is the square root of 144?","correct":"12","wrong":["14","11","13"]},
+      {"q":"What is the largest country in South America?","correct":"Brazil","wrong":["Argentina","Peru","Colombia"]},
+      {"q":"How many strings does a violin have?","correct":"Four","wrong":["Six","Five","Three"]},
+      {"q":"In which museum does the Mona Lisa hang?","correct":"The Louvre","wrong":["The Met","The Uffizi","The Prado"]},
+      {"q":"In music, how many notes make up an octave, inclusively?","correct":"Eight","wrong":["Seven","Twelve","Five"]},
+      {"q":"What is the chemical symbol for carbon?","correct":"C","wrong":["Ca","Co","Cb"]}
+    ],
+    3:[
+      {"q":"What is the chemical symbol for potassium?","correct":"K","wrong":["P","Po","Pt"]},
+      {"q":"In which year did the Berlin Wall fall?","correct":"1989","wrong":["1991","1987","1985"]},
+      {"q":"Who wrote 'War and Peace'?","correct":"Leo Tolstoy","wrong":["Fyodor Dostoevsky","Anton Chekhov","Ivan Turgenev"]},
+      {"q":"What is the most abundant gas in Earth's atmosphere?","correct":"Nitrogen","wrong":["Oxygen","Carbon dioxide","Argon"]},
+      {"q":"What is the smallest planet in our solar system?","correct":"Mercury","wrong":["Mars","Venus","Pluto"]},
+      {"q":"The speed of light is approximately how many km per second?","correct":"300,000","wrong":["150,000","30,000","3,000,000"]},
+      {"q":"Who painted 'The Starry Night'?","correct":"Vincent van Gogh","wrong":["Claude Monet","Paul Cézanne","Edvard Munch"]},
+      {"q":"What is the capital of New Zealand?","correct":"Wellington","wrong":["Auckland","Christchurch","Hamilton"]},
+      {"q":"How many hearts does an octopus have?","correct":"Three","wrong":["One","Two","Eight"]},
+      {"q":"In Greek mythology, who is the king of the gods?","correct":"Zeus","wrong":["Poseidon","Hades","Apollo"]},
+      {"q":"What is the chemical symbol for iron?","correct":"Fe","wrong":["Ir","In","Fr"]},
+      {"q":"Who composed the Ninth Symphony, with its 'Ode to Joy'?","correct":"Ludwig van Beethoven","wrong":["Mozart","Bach","Brahms"]},
+      {"q":"What is the largest internal organ in the human body?","correct":"The liver","wrong":["The heart","The stomach","The lungs"]},
+      {"q":"In which year did the Titanic sink?","correct":"1912","wrong":["1905","1920","1898"]},
+      {"q":"What is the study of fungi called?","correct":"Mycology","wrong":["Botany","Zoology","Ecology"]},
+      {"q":"Who wrote 'On the Origin of Species'?","correct":"Charles Darwin","wrong":["Gregor Mendel","Louis Pasteur","Carl Linnaeus"]},
+      {"q":"What is the SI unit of force?","correct":"The newton","wrong":["The joule","The watt","The pascal"]},
+      {"q":"Which country has the longest coastline in the world?","correct":"Canada","wrong":["Russia","Australia","USA"]},
+      {"q":"Which language has the most speakers in India?","correct":"Hindi","wrong":["Tamil","Bengali","Urdu"]},
+      {"q":"What number is the Roman numeral 'C'?","correct":"100","wrong":["50","500","1,000"]},
+      {"q":"Who is credited with discovering penicillin?","correct":"Alexander Fleming","wrong":["Marie Curie","Louis Pasteur","Edward Jenner"]},
+      {"q":"What is the largest moon of Saturn?","correct":"Titan","wrong":["Europa","Ganymede","Io"]},
+      {"q":"In which country did the Olympic Games originate?","correct":"Greece","wrong":["Italy","Egypt","China"]},
+      {"q":"What is the chemical formula for table salt?","correct":"NaCl","wrong":["KCl","H2O","CO2"]},
+      {"q":"Who wrote 'Pride and Prejudice'?","correct":"Jane Austen","wrong":["Emily Brontë","Charlotte Brontë","George Eliot"]},
+      {"q":"What is the largest bone in the human body?","correct":"The femur","wrong":["The tibia","The humerus","The pelvis"]},
+      {"q":"What is the capital of Norway?","correct":"Oslo","wrong":["Bergen","Stockholm","Helsinki"]},
+      {"q":"The Great Barrier Reef lies off the coast of which country?","correct":"Australia","wrong":["Indonesia","The Philippines","Fiji"]},
+      {"q":"Which planet rotates on its side?","correct":"Uranus","wrong":["Neptune","Saturn","Venus"]},
+      {"q":"What is the currency of Switzerland?","correct":"The Swiss franc","wrong":["The euro","The krona","The lira"]},
+      {"q":"Who is credited with formulating the three laws of motion?","correct":"Isaac Newton","wrong":["Galileo","Albert Einstein","Johannes Kepler"]},
+      {"q":"In which year did the French Revolution begin?","correct":"1789","wrong":["1776","1812","1799"]},
+      {"q":"What is the term for animals that are active at night?","correct":"Nocturnal","wrong":["Diurnal","Crepuscular","Migratory"]},
+      {"q":"What is the chemical symbol for silver?","correct":"Ag","wrong":["Si","Sv","Au"]},
+      {"q":"Which mountain is the tallest above sea level?","correct":"Mount Everest","wrong":["K2","Kilimanjaro","Denali"]},
+      {"q":"What is the capital of Egypt?","correct":"Cairo","wrong":["Alexandria","Giza","Luxor"]},
+      {"q":"Who wrote the 'Divine Comedy'?","correct":"Dante Alighieri","wrong":["Homer","Virgil","Petrarch"]},
+      {"q":"Which blood type is the universal donor?","correct":"O negative","wrong":["AB positive","A positive","B negative"]},
+      {"q":"What is the largest island in the world?","correct":"Greenland","wrong":["New Guinea","Borneo","Madagascar"]},
+      {"q":"Who developed the first inactivated polio vaccine?","correct":"Jonas Salk","wrong":["Albert Sabin","Alexander Fleming","Louis Pasteur"]}
+    ],
+    4:[
+      {"q":"What is the SI unit of electrical resistance?","correct":"The ohm","wrong":["The volt","The ampere","The watt"]},
+      {"q":"Which metal has the highest melting point?","correct":"Tungsten","wrong":["Iron","Platinum","Titanium"]},
+      {"q":"In which year did the Western Roman Empire fall?","correct":"476 AD","wrong":["410 AD","312 AD","527 AD"]},
+      {"q":"What is the smallest unit of a chemical element?","correct":"The atom","wrong":["The molecule","The cell","The proton"]},
+      {"q":"Who is considered the first Roman Emperor?","correct":"Augustus","wrong":["Julius Caesar","Nero","Constantine"]},
+      {"q":"Which element has atomic number 1?","correct":"Hydrogen","wrong":["Helium","Oxygen","Carbon"]},
+      {"q":"What is a word spelled the same forwards and backwards called?","correct":"A palindrome","wrong":["An anagram","A homonym","An acronym"]},
+      {"q":"Who composed the opera 'The Magic Flute'?","correct":"Mozart","wrong":["Beethoven","Verdi","Wagner"]},
+      {"q":"Which part of the brain controls balance and coordination?","correct":"The cerebellum","wrong":["The cerebrum","The medulla","The hippocampus"]},
+      {"q":"In which year was the Magna Carta sealed?","correct":"1215","wrong":["1066","1300","1415"]},
+      {"q":"What is the most abundant metal in the Earth's crust?","correct":"Aluminium","wrong":["Iron","Copper","Gold"]},
+      {"q":"Who wrote the dystopian novel '1984'?","correct":"George Orwell","wrong":["Aldous Huxley","Ray Bradbury","H.G. Wells"]},
+      {"q":"The deepest point in the ocean is which trench?","correct":"The Mariana Trench","wrong":["The Tonga Trench","The Java Trench","The Puerto Rico Trench"]},
+      {"q":"What is the chemical symbol for tin?","correct":"Sn","wrong":["Ti","Tn","St"]},
+      {"q":"Which of the Seven Wonders of the Ancient World still stands today?","correct":"The Great Pyramid of Giza","wrong":["The Hanging Gardens","The Colossus of Rhodes","The Lighthouse of Alexandria"]},
+      {"q":"What is the study of the origin of words called?","correct":"Etymology","wrong":["Entomology","Etiology","Ecology"]},
+      {"q":"Who painted the ceiling of the Sistine Chapel?","correct":"Michelangelo","wrong":["Leonardo da Vinci","Raphael","Botticelli"]},
+      {"q":"What unit measures the loudness of sound?","correct":"The decibel","wrong":["The hertz","The watt","The lumen"]},
+      {"q":"Which planet has a day longer than its year?","correct":"Venus","wrong":["Mercury","Mars","Neptune"]},
+      {"q":"What was the name of the first artificial satellite, launched in 1957?","correct":"Sputnik 1","wrong":["Explorer 1","Apollo 1","Vostok 1"]},
+      {"q":"In Norse mythology, what is the name of the rainbow bridge?","correct":"Bifröst","wrong":["Yggdrasil","Asgard","Valhalla"]},
+      {"q":"What is the largest artery in the human body?","correct":"The aorta","wrong":["The vena cava","The carotid","The femoral artery"]},
+      {"q":"Who is considered the father of modern genetics?","correct":"Gregor Mendel","wrong":["Charles Darwin","James Watson","Francis Crick"]},
+      {"q":"What is the capital of Mongolia?","correct":"Ulaanbaatar","wrong":["Astana","Tashkent","Bishkek"]},
+      {"q":"Which artist created the painting 'Guernica'?","correct":"Pablo Picasso","wrong":["Salvador Dalí","Joan Miró","Diego Velázquez"]},
+      {"q":"What is the chemical symbol for lead?","correct":"Pb","wrong":["Ld","Le","Pl"]},
+      {"q":"Roughly how many bones is a human baby born with?","correct":"300","wrong":["206","250","350"]},
+      {"q":"Which astronomer proposed the Sun-centred model of the solar system?","correct":"Copernicus","wrong":["Ptolemy","Tycho Brahe","Galileo"]},
+      {"q":"What is the nearest large spiral galaxy to the Milky Way?","correct":"Andromeda","wrong":["Triangulum","The Whirlpool","The Sombrero"]},
+      {"q":"In which year did the Wright brothers make the first powered flight?","correct":"1903","wrong":["1899","1910","1918"]},
+      {"q":"What is a ten-sided polygon called?","correct":"A decagon","wrong":["A nonagon","An octagon","A dodecagon"]},
+      {"q":"Who wrote 'The Canterbury Tales'?","correct":"Geoffrey Chaucer","wrong":["William Shakespeare","John Milton","Edmund Spenser"]},
+      {"q":"What is the SI base unit of temperature?","correct":"The kelvin","wrong":["The Celsius","The Fahrenheit","The joule"]},
+      {"q":"Which empire was founded and ruled by Genghis Khan?","correct":"The Mongol Empire","wrong":["The Ottoman Empire","The Persian Empire","The Roman Empire"]},
+      {"q":"What is the chemical symbol for the element mercury?","correct":"Hg","wrong":["Me","Mg","Hy"]},
+      {"q":"What is the longest above-ground mountain range in the world?","correct":"The Andes","wrong":["The Himalayas","The Rockies","The Alps"]},
+      {"q":"Which noble gas is used in glowing advertising signs?","correct":"Neon","wrong":["Argon","Helium","Krypton"]},
+      {"q":"In which year did Columbus first reach the Americas?","correct":"1492","wrong":["1500","1453","1488"]},
+      {"q":"What scale measures how acidic or alkaline a solution is?","correct":"The pH scale","wrong":["The decibel scale","The Richter scale","The Kelvin scale"]},
+      {"q":"In which Shakespeare play do Rosencrantz and Guildenstern appear?","correct":"Hamlet","wrong":["Macbeth","Othello","King Lear"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+})();
+</script>
+</body>
+</html>
