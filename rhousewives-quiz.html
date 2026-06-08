@@ -136,6 +136,20 @@
   .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
     color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
   .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#10142e;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#10142e;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#10142e;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
 </style>
 </head>
 <body>
@@ -171,6 +185,7 @@
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
     <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
     <a class="homelink" href="index.html">‹ All games</a>
   </div>
 
@@ -182,6 +197,7 @@
     <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
   </div>
 
   <!-- COMPLETED -->
@@ -195,6 +211,7 @@
       <button class="cta" id="doneAgain">Play Again</button>
       <button class="cta blue" id="doneMenu">Menu</button>
     </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
   </div>
 
   <!-- TIME'S UP -->
@@ -205,7 +222,26 @@
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
   </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
 </div>
 
 <script>
@@ -440,6 +476,7 @@
   function endOut(){
     playing=false; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
@@ -448,16 +485,18 @@
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
     $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('doneScreen');
   }
   function endTimeUp(){
     playing=false; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
   }
 
   // ============ screen helpers ============
-  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen'];
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
   function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
@@ -490,6 +529,56 @@
         [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
       row.appendChild(b); });
   })();
+  // ============ local leaderboard (per device) ============
+  const QUIZ_ID='qc_rhousewives-quiz';
+  const NAME_KEY='qc_name';
+  let lastRun=null, BOARD=[];
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function loadBoard(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+  loadBoard();
+  function renderBoard(hi){
+    const list=$('boardList'); list.innerHTML='';
+    BOARD.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+    $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+  }
+  function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    renderBoard();
+    show('boardScreen');
+  }
+  function saveScore(){
+    if(!lastRun) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+    lsSet(QUIZ_ID, JSON.stringify(BOARD));
+    lastRun=null; $('saveArea').classList.add('hidden');
+    beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+  }
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
 })();
 </script>
 </body>
