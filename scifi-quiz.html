@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sci-Fi Quiz — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#05101e; --bg1:#08203a; --card:#0a1c30; --card2:#0e2742;
+    --ink:#e6f6ff; --mut:#8fb6cf; --line:#1d3a55;
+    --l1:#3fd7b0; --l2:#ffd23d; --l3:#ff7b5d; --l4:#5ad0ff;
+    --gold:#5ad0ff; --right:#3fd7b0; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(90,208,255,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(63,215,176,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#10142e;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#10142e;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#10142e;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Science Fiction</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 questions on science fiction — the books, films, authors and ideas that built the genre, over four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code — optional</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"In Star Wars, the masked Sith villain is Darth who?","correct":"Vader","wrong":["Maul","Sidious","Bane"]},
+      {"q":"Which sci-fi franchise features the starship USS Enterprise?","correct":"Star Trek","wrong":["Star Wars","Battlestar Galactica","Babylon 5"]},
+      {"q":"The friendly alien in the 1982 film who wants to “phone home” is known as?","correct":"E.T.","wrong":["Alf","Yoda","Marvin"]},
+      {"q":"In The Matrix, the hero takes which colour pill to learn the truth?","correct":"Red","wrong":["Blue","Green","Yellow"]},
+      {"q":"The time-travelling car in Back to the Future is a what?","correct":"DeLorean","wrong":["Ferrari","Mustang","Cadillac"]},
+      {"q":"Which author wrote the robot stories featuring the Three Laws of Robotics?","correct":"Isaac Asimov","wrong":["Arthur C. Clarke","Philip K. Dick","Ray Bradbury"]},
+      {"q":"In Star Wars, the small green Jedi master is named?","correct":"Yoda","wrong":["Obi-Wan","Mace Windu","Qui-Gon"]},
+      {"q":"In the 1979 film “Alien,” the creature famously bursts from a character's what?","correct":"Chest","wrong":["Head","Arm","Back"]},
+      {"q":"Which franchise features robotic Daleks shouting “Exterminate!”?","correct":"Doctor Who","wrong":["Star Trek","The X-Files","Red Dwarf"]},
+      {"q":"The robotic assassin played by Arnold Schwarzenegger is the what?","correct":"Terminator","wrong":["RoboCop","Replicant","Cyberman"]},
+      {"q":"Sci-fi ships jumping to faster-than-light speed often enter what?","correct":"Hyperspace","wrong":["Cyberspace","Outer space","The void"]},
+      {"q":"In Doctor Who, the Doctor travels in a blue box called the what?","correct":"TARDIS","wrong":["Enterprise","DeLorean","Millennium Falcon"]},
+      {"q":"Which film series features dinosaurs cloned for a theme park?","correct":"Jurassic Park","wrong":["Godzilla","King Kong","Jaws"]},
+      {"q":"The smuggler's ship in Star Wars is the Millennium what?","correct":"Falcon","wrong":["Eagle","Hawk","Condor"]},
+      {"q":"In sci-fi, machine intelligence is often called “AI,” standing for what?","correct":"Artificial Intelligence","wrong":["Automated Interface","Android Intellect","Advanced Input"]},
+      {"q":"Which 1968 film features the sinister computer HAL 9000?","correct":"2001: A Space Odyssey","wrong":["Star Wars","Alien","Blade Runner"]},
+      {"q":"A human-like robot is often called an what?","correct":"Android","wrong":["Avatar","Alien","Asteroid"]},
+      {"q":"The mystical energy field that gives Jedi their powers is the what?","correct":"Force","wrong":["Aura","Spark","Flow"]},
+      {"q":"Superman comes from which doomed planet?","correct":"Krypton","wrong":["Vulcan","Mars","Tatooine"]},
+      {"q":"Which blockbuster features blue aliens, the Na'vi, on the moon Pandora?","correct":"Avatar","wrong":["Star Trek","Dune","Prometheus"]},
+      {"q":"The phrase “Beam me up” is associated with which series?","correct":"Star Trek","wrong":["Star Wars","Doctor Who","Stargate"]},
+      {"q":"A story set in a grim, oppressive future is often described as what?","correct":"Dystopian","wrong":["Utopian","Pastoral","Romantic"]},
+      {"q":"Which franchise features Optimus Prime and shape-shifting robots?","correct":"Transformers","wrong":["Voltron","Gundam","Power Rangers"]},
+      {"q":"In The Hitchhiker's Guide to the Galaxy, the answer to life is which number?","correct":"42","wrong":["7","100","0"]},
+      {"q":"Which 1977 film launched the original Star Wars trilogy?","correct":"A New Hope","wrong":["The Empire Strikes Back","Return of the Jedi","The Phantom Menace"]},
+      {"q":"A being that is part human, part machine is a what?","correct":"Cyborg","wrong":["Clone","Mutant","Ghost"]},
+      {"q":"Which franchise features Buzz Lightyear, a toy space ranger?","correct":"Toy Story","wrong":["Transformers","Star Trek","Avatar"]},
+      {"q":"The artificial humans called “replicants” appear in which 1982 film?","correct":"Blade Runner","wrong":["Alien","Tron","The Thing"]},
+      {"q":"Which series follows a starship crew exploring “the final frontier”?","correct":"Star Trek","wrong":["Star Wars","Firefly","The Expanse"]},
+      {"q":"The X-Files famously claimed “The truth is out ___”?","correct":"There","wrong":["Here","Now","Gone"]}
+    ],
+    2:[
+      {"q":"Which author wrote the novel “Dune”?","correct":"Frank Herbert","wrong":["Isaac Asimov","Arthur C. Clarke","Robert Heinlein"]},
+      {"q":"Blade Runner is based on a novel by which author?","correct":"Philip K. Dick","wrong":["Isaac Asimov","William Gibson","Ray Bradbury"]},
+      {"q":"The dystopian novel “Nineteen Eighty-Four” was written by whom?","correct":"George Orwell","wrong":["Aldous Huxley","H.G. Wells","Ray Bradbury"]},
+      {"q":"“Brave New World” was written by whom?","correct":"Aldous Huxley","wrong":["George Orwell","Yevgeny Zamyatin","Ray Bradbury"]},
+      {"q":"Which H.G. Wells novel features a Martian invasion of Earth?","correct":"The War of the Worlds","wrong":["The Time Machine","The Invisible Man","The Island of Doctor Moreau"]},
+      {"q":"The precious “spice” melange is central to which sci-fi universe?","correct":"Dune","wrong":["Star Trek","Foundation","Hyperion"]},
+      {"q":"Who directed the original 1977 Star Wars film?","correct":"George Lucas","wrong":["Steven Spielberg","Ridley Scott","James Cameron"]},
+      {"q":"Who directed both “Alien” (1979) and “Blade Runner” (1982)?","correct":"Ridley Scott","wrong":["James Cameron","George Lucas","Stanley Kubrick"]},
+      {"q":"James Cameron directed which 1984 film about a time-travelling killer robot?","correct":"The Terminator","wrong":["RoboCop","Total Recall","Predator"]},
+      {"q":"Which TV series is set aboard the spaceship Serenity?","correct":"Firefly","wrong":["Battlestar Galactica","Babylon 5","The Expanse"]},
+      {"q":"The novel “Foundation” was written by whom?","correct":"Isaac Asimov","wrong":["Frank Herbert","Arthur C. Clarke","Orson Scott Card"]},
+      {"q":"In Star Trek, Mr. Spock comes from which planet?","correct":"Vulcan","wrong":["Romulus","Kronos","Betazed"]},
+      {"q":"Which cyberpunk novel by William Gibson defined the genre in 1984?","correct":"Neuromancer","wrong":["Snow Crash","Schismatrix","The Difference Engine"]},
+      {"q":"“2001: A Space Odyssey” was directed by whom?","correct":"Stanley Kubrick","wrong":["Steven Spielberg","Ridley Scott","George Lucas"]},
+      {"q":"Which play introduced the word “robot,” from a Czech term for forced labour?","correct":"R.U.R.","wrong":["Frankenstein","Metropolis","We"]},
+      {"q":"The film “The Day the Earth Stood Still” features a robot named what?","correct":"Gort","wrong":["Robby","HAL","Maria"]},
+      {"q":"Arthur C. Clarke co-wrote which 1968 film with Stanley Kubrick?","correct":"2001: A Space Odyssey","wrong":["Solaris","Silent Running","Forbidden Planet"]},
+      {"q":"Ray Bradbury's novel about a future where books are burned is titled what?","correct":"Fahrenheit 451","wrong":["1984","Brave New World","The Martian Chronicles"]},
+      {"q":"Which 1999 film popularised “bullet time” and a simulated reality?","correct":"The Matrix","wrong":["Inception","eXistenZ","The Thirteenth Floor"]},
+      {"q":"Who is the captain of the Enterprise in the original Star Trek series?","correct":"James T. Kirk","wrong":["Jean-Luc Picard","Han Solo","Malcolm Reynolds"]},
+      {"q":"Which sci-fi epic is set on the desert planet Arrakis?","correct":"Dune","wrong":["Star Wars","Foundation","Star Trek"]},
+      {"q":"“Ender's Game” was written by whom?","correct":"Orson Scott Card","wrong":["Robert Heinlein","Joe Haldeman","Frank Herbert"]},
+      {"q":"The 1927 silent sci-fi landmark “Metropolis” was directed by whom?","correct":"Fritz Lang","wrong":["Georges Méliès","F.W. Murnau","Sergei Eisenstein"]},
+      {"q":"Which Star Trek captain commands the Enterprise-D in “The Next Generation”?","correct":"Jean-Luc Picard","wrong":["James T. Kirk","Benjamin Sisko","Kathryn Janeway"]},
+      {"q":"The cybernetic collective called the Borg appears in which franchise?","correct":"Star Trek","wrong":["Star Wars","Doctor Who","Halo"]},
+      {"q":"Which Mary Shelley novel is often called the first science-fiction novel?","correct":"Frankenstein","wrong":["Dracula","The Time Machine","Gulliver's Travels"]},
+      {"q":"Steven Spielberg's 1982 film about a stranded alien befriended by a boy is?","correct":"E.T. the Extra-Terrestrial","wrong":["Close Encounters","Super 8","Cocoon"]},
+      {"q":"Which franchise features the time-travelling Time Lords and the Cybermen?","correct":"Doctor Who","wrong":["Star Trek","Stargate","Babylon 5"]},
+      {"q":"Which 1982 film asks whether androids “dream” and is set in a future Los Angeles?","correct":"Blade Runner","wrong":["Total Recall","Minority Report","A.I."]},
+      {"q":"“The Martian Chronicles” and “Fahrenheit 451” were written by whom?","correct":"Ray Bradbury","wrong":["Isaac Asimov","Robert Heinlein","Arthur C. Clarke"]}
+    ],
+    3:[
+      {"q":"Who wrote “The Left Hand of Darkness” and “A Wizard of Earthsea”?","correct":"Ursula K. Le Guin","wrong":["Octavia Butler","Anne McCaffrey","Connie Willis"]},
+      {"q":"Asimov's First Law of Robotics forbids a robot from harming a what?","correct":"Human being","wrong":["Robot","Animal","Itself"]},
+      {"q":"Which 1956 classic features Robby the Robot and echoes Shakespeare's The Tempest?","correct":"Forbidden Planet","wrong":["The Day the Earth Stood Still","War of the Worlds","Them!"]},
+      {"q":"Philip K. Dick's “We Can Remember It for You Wholesale” inspired which film?","correct":"Total Recall","wrong":["Minority Report","Blade Runner","The Adjustment Bureau"]},
+      {"q":"The Hugo and Nebula are the major awards in which genre?","correct":"Science fiction","wrong":["Horror","Romance","Mystery"]},
+      {"q":"Which author wrote “Starship Troopers” and “Stranger in a Strange Land”?","correct":"Robert A. Heinlein","wrong":["Isaac Asimov","Frank Herbert","Arthur C. Clarke"]},
+      {"q":"The TV series “Battlestar Galactica” features robotic enemies called what?","correct":"Cylons","wrong":["Daleks","Borg","Replicants"]},
+      {"q":"Stanisław Lem's novel about a sentient ocean planet is titled what?","correct":"Solaris","wrong":["Roadside Picnic","His Master's Voice","Eden"]},
+      {"q":"Which director made “Close Encounters of the Third Kind” and “Minority Report”?","correct":"Steven Spielberg","wrong":["Ridley Scott","James Cameron","Robert Zemeckis"]},
+      {"q":"N.K. Jemisin won three straight Hugo Awards for Best Novel for which trilogy?","correct":"The Broken Earth","wrong":["The Expanse","The Culture","Mars"]},
+      {"q":"Iain M. Banks created which post-scarcity space-opera civilization?","correct":"The Culture","wrong":["The Imperium","The Foundation","The Expanse"]},
+      {"q":"“The Expanse” centres on tensions between Earth, Mars and the what?","correct":"Belt","wrong":["Moon","Sun","Jovians"]},
+      {"q":"Which 1985 Orson Scott Card novel features child soldiers trained against aliens?","correct":"Ender's Game","wrong":["Starship Troopers","The Forever War","Old Man's War"]},
+      {"q":"Joe Haldeman's “The Forever War” reflects his experience in which conflict?","correct":"The Vietnam War","wrong":["World War II","The Korean War","The Gulf War"]},
+      {"q":"Which 1973 Michael Crichton film features a rogue android in a Wild West park?","correct":"Westworld","wrong":["Jurassic Park","Logan's Run","The Terminal Man"]},
+      {"q":"In “Dune,” the spice melange is prized partly because it enables safe interstellar what?","correct":"Navigation","wrong":["Mining","Warfare","Farming"]},
+      {"q":"Which author wrote the “Hyperion Cantos”?","correct":"Dan Simmons","wrong":["Peter F. Hamilton","Alastair Reynolds","Vernor Vinge"]},
+      {"q":"The term “cyberspace” was popularised by which author?","correct":"William Gibson","wrong":["Neal Stephenson","Bruce Sterling","Philip K. Dick"]},
+      {"q":"“Snow Crash” (1992), which featured a “Metaverse,” was written by whom?","correct":"Neal Stephenson","wrong":["William Gibson","Cory Doctorow","Bruce Sterling"]},
+      {"q":"Which 1997 film imagines a genetically-stratified future and stars Ethan Hawke?","correct":"Gattaca","wrong":["Equilibrium","The Island","In Time"]},
+      {"q":"Andrei Tarkovsky's acclaimed 1972 Soviet film adapted which Lem novel?","correct":"Solaris","wrong":["Roadside Picnic","We","Aelita"]},
+      {"q":"The Strugatsky brothers' “Roadside Picnic” inspired which Tarkovsky film?","correct":"Stalker","wrong":["Solaris","Aelita","Hard to Be a God"]},
+      {"q":"Which Asimov collection introduces the robopsychologist Susan Calvin?","correct":"I, Robot","wrong":["The Caves of Steel","Foundation","The Naked Sun"]},
+      {"q":"“Childhood's End” and “Rendezvous with Rama” were written by whom?","correct":"Arthur C. Clarke","wrong":["Isaac Asimov","Larry Niven","Robert Heinlein"]},
+      {"q":"Larry Niven's “Ringworld” features a giant artificial ring built around a what?","correct":"Star","wrong":["Planet","Black hole","Moon"]},
+      {"q":"Which Margaret Atwood novel imagines a theocratic future America?","correct":"The Handmaid's Tale","wrong":["Oryx and Crake","The Children of Men","Parable of the Sower"]},
+      {"q":"The “positronic brain” is a concept from whose robot stories?","correct":"Isaac Asimov","wrong":["Philip K. Dick","Arthur C. Clarke","Frank Herbert"]},
+      {"q":"Which 2014 Christopher Nolan film features a wormhole and relativity-bending time?","correct":"Interstellar","wrong":["Gravity","Ad Astra","The Martian"]},
+      {"q":"Which acclaimed author wrote “Kindred” and the “Parable” novels?","correct":"Octavia Butler","wrong":["Ursula K. Le Guin","Connie Willis","Anne McCaffrey"]},
+      {"q":"“Do Androids Dream of Electric Sheep?” is the basis for which film?","correct":"Blade Runner","wrong":["The Terminator","Westworld","Ex Machina"]}
+    ],
+    4:[
+      {"q":"Hugo Gernsback, namesake of the Hugo Award, founded which early magazine in 1926?","correct":"Amazing Stories","wrong":["Astounding","Weird Tales","Galaxy"]},
+      {"q":"John W. Campbell edited which influential magazine during sci-fi's “Golden Age”?","correct":"Astounding Science Fiction","wrong":["Amazing Stories","Galaxy","If"]},
+      {"q":"The first science-fiction film, “A Trip to the Moon” (1902), was made by whom?","correct":"Georges Méliès","wrong":["Fritz Lang","D.W. Griffith","Thomas Edison"]},
+      {"q":"Asimov's “Foundation” series was inspired by the decline of which historical empire?","correct":"The Roman Empire","wrong":["The British Empire","The Ottoman Empire","The Mongol Empire"]},
+      {"q":"Which author coined the word “robotics”?","correct":"Isaac Asimov","wrong":["Karel Čapek","William Gibson","Arthur C. Clarke"]},
+      {"q":"The word “robot” derives from a Czech word meaning what?","correct":"Forced labour","wrong":["Metal","Machine","Servant"]},
+      {"q":"Clarke's Third Law states sufficiently advanced technology is indistinguishable from what?","correct":"Magic","wrong":["Nature","God","Life"]},
+      {"q":"Yevgeny Zamyatin's 1921 dystopia “We” influenced which Orwell novel?","correct":"Nineteen Eighty-Four","wrong":["Brave New World","Animal Farm","Fahrenheit 451"]},
+      {"q":"The “grandfather paradox” is a classic problem in stories about what?","correct":"Time travel","wrong":["Cloning","Teleportation","AI"]},
+      {"q":"Which author wrote “The Dispossessed” and won multiple Hugos and Nebulas?","correct":"Ursula K. Le Guin","wrong":["Octavia Butler","Joanna Russ","Connie Willis"]},
+      {"q":"“James Tiptree Jr.” was the pen name of which female author?","correct":"Alice Sheldon","wrong":["Ursula K. Le Guin","Octavia Butler","C.L. Moore"]},
+      {"q":"The “Kessel Run in less than 12 parsecs” boast describes which Star Wars ship?","correct":"The Millennium Falcon","wrong":["An X-wing","A Star Destroyer","Slave I"]},
+      {"q":"Which Polish author wrote “Solaris” and “The Cyberiad”?","correct":"Stanisław Lem","wrong":["Karel Čapek","Andrei Tarkovsky","Boris Strugatsky"]},
+      {"q":"The Nebula Award is presented by which organisation?","correct":"The Science Fiction and Fantasy Writers of America","wrong":["The Hugo Society","WorldCon","The Academy"]},
+      {"q":"The Hugo Awards are voted on by attendees of which annual convention?","correct":"Worldcon","wrong":["Comic-Con","Dragon Con","Gen Con"]},
+      {"q":"Which 1956 Alfred Bester novel features teleportation called “jaunting”?","correct":"The Stars My Destination","wrong":["The Demolished Man","Neuromancer","Ringworld"]},
+      {"q":"A self-replicating interstellar probe is named after which mathematician?","correct":"Von Neumann","wrong":["Dyson","Hawking","Sagan"]},
+      {"q":"A hypothetical megastructure enclosing a star to harness its energy is a ___ sphere?","correct":"Dyson","wrong":["Von Neumann","Schwarzschild","Penrose"]},
+      {"q":"Which author proposed the idea of geostationary communications satellites?","correct":"Arthur C. Clarke","wrong":["Isaac Asimov","Robert Heinlein","Carl Sagan"]},
+      {"q":"Carl Sagan wrote which novel, later filmed with Jodie Foster, about alien contact?","correct":"Contact","wrong":["Cosmos","Sphere","Solaris"]},
+      {"q":"The “Foundation” novels introduce a fictional science of predicting the future called what?","correct":"Psychohistory","wrong":["Cliodynamics","Futurology","Prescience"]},
+      {"q":"Which 1965 novel won the very first Nebula Award for Best Novel?","correct":"Dune","wrong":["Foundation","Stranger in a Strange Land","Neuromancer"]},
+      {"q":"The android Lieutenant Commander Data appears in which Star Trek series?","correct":"The Next Generation","wrong":["The Original Series","Voyager","Deep Space Nine"]},
+      {"q":"The 1960s “New Wave” of sci-fi centred on which British magazine edited by Michael Moorcock?","correct":"New Worlds","wrong":["Astounding","Galaxy","Interzone"]},
+      {"q":"Which author's “Mars trilogy” (Red, Green, Blue Mars) explores terraforming?","correct":"Kim Stanley Robinson","wrong":["Ben Bova","Greg Bear","Andy Weir"]},
+      {"q":"In Andy Weir's “The Martian,” which astronaut is stranded on Mars?","correct":"Mark Watney","wrong":["Dave Bowman","Sam Bell","Chris Hadfield"]},
+      {"q":"The word “grok” was coined in which Robert Heinlein novel?","correct":"Stranger in a Strange Land","wrong":["Starship Troopers","The Moon Is a Harsh Mistress","Time Enough for Love"]},
+      {"q":"Which Harlan Ellison-scripted Star Trek episode is hailed as one of the best ever?","correct":"The City on the Edge of Forever","wrong":["The Trouble with Tribbles","Balance of Terror","Mirror, Mirror"]},
+      {"q":"“Blade Runner” (1982) is loosely set in which year?","correct":"2019","wrong":["2049","2001","2099"]},
+      {"q":"The Vulcan greeting in Star Trek is “Live long and ___”?","correct":"Prosper","wrong":["Be logical","Be well","Endure"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_scifi-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+</body>
+</html>
