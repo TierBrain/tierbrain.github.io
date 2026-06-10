@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Odd One Out — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#140a22; --bg1:#241338; --card:#1e1133; --card2:#281944;
+    --ink:#f3ecff; --mut:#b6a3d4; --line:#392a55;
+    --l1:#4cc78a; --l2:#ffd23d; --l3:#ff7bb0; --l4:#9d7bff;
+    --gold:#ffd23d; --right:#4cc78a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(157,123,255,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,123,176,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#10142e;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#10142e;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#10142e;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+.reveal{min-height:20px;margin-top:14px;text-align:center;color:var(--mut);font-size:14px;font-weight:600;line-height:1.5;opacity:0;transition:opacity .25s;}
+  .reveal.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">PUZZLE 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+    <div class="reveal" id="revealLine"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Odd One Out</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 puzzles: three of the four belong together — spot the one that doesn’t. The link is revealed after each pick, and the higher you climb, the trickier the connections. Watch for red herrings!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to solve all 20 puzzles.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code — optional</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Game</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You solved <b id="outAns">0</b> puzzles<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You solved <b id="tuAns">0</b> puzzles<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"Which is the odd one out?","correct":"Potato","wrong":["Apple","Banana","Strawberry"],"reveal":"The other three are all fruits (a potato is a vegetable)."},
+      {"q":"Which is the odd one out?","correct":"Whale","wrong":["Salmon","Cod","Tuna"],"reveal":"The other three are all fish (a whale is a mammal)."},
+      {"q":"Which is the odd one out?","correct":"Spider","wrong":["Ant","Bee","Beetle"],"reveal":"The other three are all insects with six legs (a spider has eight)."},
+      {"q":"Which is the odd one out?","correct":"The Sun","wrong":["Earth","Mars","Venus"],"reveal":"The other three are all planets (the Sun is a star)."},
+      {"q":"Which is the odd one out?","correct":"Green","wrong":["Sunday","Monday","Friday"],"reveal":"The other three are all days of the week (green is a colour)."},
+      {"q":"Which is the odd one out?","correct":"Guitar","wrong":["Trumpet","Flute","Clarinet"],"reveal":"The other three are all wind instruments (a guitar has strings)."},
+      {"q":"Which is the odd one out?","correct":"Circle","wrong":["Square","Triangle","Hexagon"],"reveal":"The other three are all shapes with straight sides (a circle has none)."},
+      {"q":"Which is the odd one out?","correct":"Copper","wrong":["Oxygen","Hydrogen","Nitrogen"],"reveal":"The other three are all gases (copper is a solid metal)."},
+      {"q":"Which is the odd one out?","correct":"Spanish","wrong":["France","Germany","Italy"],"reveal":"The other three are all countries (Spanish is a language)."},
+      {"q":"Which is the odd one out?","correct":"Swimming","wrong":["Football","Tennis","Basketball"],"reveal":"The other three are all ball sports (swimming uses no ball)."},
+      {"q":"Which is the odd one out?","correct":"Bicycle","wrong":["Car","Bus","Lorry"],"reveal":"The other three are all motor vehicles (a bicycle has no engine)."},
+      {"q":"Which is the odd one out?","correct":"The Moon","wrong":["The Sun","A lamp","A candle"],"reveal":"The other three are all sources of their own light — the Moon only reflects light."},
+      {"q":"Which is the odd one out?","correct":"Penguin","wrong":["Eagle","Sparrow","Robin"],"reveal":"The other three are all birds that can fly (a penguin cannot)."},
+      {"q":"Which is the odd one out?","correct":"Iron","wrong":["Gold","Silver","Bronze"],"reveal":"The other three are all Olympic medals (iron is not one)."},
+      {"q":"Which is the odd one out?","correct":"Violin","wrong":["Drum","Tambourine","Cymbals"],"reveal":"The other three are all percussion instruments (a violin has strings)."},
+      {"q":"Which is the odd one out?","correct":"Cow","wrong":["Lion","Tiger","Wolf"],"reveal":"The other three are all meat-eating carnivores (a cow eats plants)."},
+      {"q":"Which is the odd one out?","correct":"Rose","wrong":["Oak","Pine","Birch"],"reveal":"The other three are all trees (a rose is a flower)."},
+      {"q":"Which is the odd one out?","correct":"The Atlantic","wrong":["The Nile","The Amazon","The Thames"],"reveal":"The other three are all rivers (the Atlantic is an ocean)."},
+      {"q":"Which is the odd one out?","correct":"Spoon","wrong":["Hammer","Saw","Drill"],"reveal":"The other three are all tools (a spoon is cutlery)."},
+      {"q":"Which is the odd one out?","correct":"Red","wrong":["Dog","Cat","Goldfish"],"reveal":"The other three are all pets (red is a colour)."},
+      {"q":"Which is the odd one out?","correct":"Three","wrong":["Two","Four","Six"],"reveal":"The other three are all even numbers (three is odd)."},
+      {"q":"Which is the odd one out?","correct":"Snake","wrong":["Frog","Toad","Newt"],"reveal":"The other three are all amphibians (a snake is a reptile)."},
+      {"q":"Which is the odd one out?","correct":"Saturn","wrong":["Mercury","Venus","Mars"],"reveal":"The other three are all small rocky planets (Saturn is a giant gas planet)."},
+      {"q":"Which is the odd one out?","correct":"Banana","wrong":["Lettuce","Spinach","Cabbage"],"reveal":"The other three are all leafy green vegetables (a banana is a fruit)."},
+      {"q":"Which is the odd one out?","correct":"Piano","wrong":["Cricket","Rugby","Hockey"],"reveal":"The other three are all team sports (a piano is an instrument)."},
+      {"q":"Which is the odd one out?","correct":"Knife","wrong":["Plate","Bowl","Cup"],"reveal":"The other three are all things that hold food or drink (a knife is for cutting)."},
+      {"q":"Which is the odd one out?","correct":"Sunflower","wrong":["Owl","Bat","Fox"],"reveal":"The other three are all animals active at night (a sunflower is a plant)."},
+      {"q":"Which is the odd one out?","correct":"Goldfish","wrong":["Lion","Elephant","Kangaroo"],"reveal":"The other three are all land animals (a goldfish lives in water)."},
+      {"q":"Which is the odd one out?","correct":"Mile","wrong":["Square","Circle","Triangle"],"reveal":"The other three are all shapes (a mile is a unit of distance)."},
+      {"q":"Which is the odd one out?","correct":"Ostrich","wrong":["Eagle","Falcon","Sparrow"],"reveal":"The other three are all birds that can fly (an ostrich cannot)."}
+    ],
+    2:[
+      {"q":"Which is the odd one out?","correct":"Tomato","wrong":["Carrot","Potato","Onion"],"reveal":"The other three are all vegetables — a tomato is botanically a fruit."},
+      {"q":"Which is the odd one out?","correct":"Bat","wrong":["Eagle","Owl","Sparrow"],"reveal":"The other three are all birds (a bat is a flying mammal)."},
+      {"q":"Which is the odd one out?","correct":"Pluto","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all full planets (Pluto is a dwarf planet)."},
+      {"q":"Which is the odd one out?","correct":"Brazil","wrong":["France","Spain","Germany"],"reveal":"The other three are all members of the European Union (Brazil is not)."},
+      {"q":"Which is the odd one out?","correct":"Sydney","wrong":["Canberra","Tokyo","Cairo"],"reveal":"The other three are all capital cities (Sydney is not Australia’s capital)."},
+      {"q":"Which is the odd one out?","correct":"Latin","wrong":["English","French","Spanish"],"reveal":"The other three are all living languages (Latin is no longer spoken day to day)."},
+      {"q":"Which is the odd one out?","correct":"Emerald","wrong":["Gold","Silver","Platinum"],"reveal":"The other three are all precious metals (an emerald is a gemstone)."},
+      {"q":"Which is the odd one out?","correct":"Mercury","wrong":["Copper","Iron","Lead"],"reveal":"The other three are all metals that are solid at room temperature (mercury is liquid)."},
+      {"q":"Which is the odd one out?","correct":"Crab","wrong":["Spider","Scorpion","Tick"],"reveal":"The other three are all arachnids (a crab is a crustacean)."},
+      {"q":"Which is the odd one out?","correct":"Shakespeare","wrong":["Dickens","Austen","Orwell"],"reveal":"The other three are all novelists (Shakespeare wrote plays)."},
+      {"q":"Which is the odd one out?","correct":"Everest","wrong":["The Nile","The Amazon","The Danube"],"reveal":"The other three are all rivers (Everest is a mountain)."},
+      {"q":"Which is the odd one out?","correct":"Femur","wrong":["Heart","Liver","Kidney"],"reveal":"The other three are all organs (the femur is a bone)."},
+      {"q":"Which is the odd one out?","correct":"Tennis","wrong":["Boxing","Judo","Wrestling"],"reveal":"The other three are all combat sports (tennis is not)."},
+      {"q":"Which is the odd one out?","correct":"Maple","wrong":["Wheat","Barley","Oats"],"reveal":"The other three are all cereal crops (maple is a tree)."},
+      {"q":"Which is the odd one out?","correct":"Eel","wrong":["Cobra","Python","Viper"],"reveal":"The other three are all snakes (an eel is a fish)."},
+      {"q":"Which is the odd one out?","correct":"Beethoven","wrong":["Picasso","Monet","Van Gogh"],"reveal":"The other three are all painters (Beethoven was a composer)."},
+      {"q":"Which is the odd one out?","correct":"Dolphin","wrong":["Cod","Salmon","Herring"],"reveal":"The other three are all fish (a dolphin is a mammal)."},
+      {"q":"Which is the odd one out?","correct":"Circle","wrong":["Cube","Sphere","Pyramid"],"reveal":"The other three are all three-dimensional solids (a circle is flat)."},
+      {"q":"Which is the odd one out?","correct":"Venus","wrong":["Mars","Jupiter","Neptune"],"reveal":"The other three are all planets farther from the Sun than Earth (Venus is closer)."},
+      {"q":"Which is the odd one out?","correct":"Algebra","wrong":["Spanish","French","German"],"reveal":"The other three are all languages (algebra is part of maths)."},
+      {"q":"Which is the odd one out?","correct":"Tofu","wrong":["Cheddar","Brie","Gouda"],"reveal":"The other three are all cheeses (tofu is made from soya beans)."},
+      {"q":"Which is the odd one out?","correct":"New York","wrong":["Washington","London","Paris"],"reveal":"The other three are all national capitals (New York is not a capital)."},
+      {"q":"Which is the odd one out?","correct":"Crocodile","wrong":["Frog","Salamander","Newt"],"reveal":"The other three are all amphibians (a crocodile is a reptile)."},
+      {"q":"Which is the odd one out?","correct":"Ben Nevis","wrong":["Vesuvius","Etna","Krakatoa"],"reveal":"The other three are all volcanoes (Ben Nevis is not one)."},
+      {"q":"Which is the odd one out?","correct":"Sand","wrong":["Diamond","Graphite","Charcoal"],"reveal":"The other three are all forms of carbon (sand is mostly silicon)."},
+      {"q":"Which is the odd one out?","correct":"Oxygen","wrong":["Gold","Iron","Copper"],"reveal":"The other three are all metals (oxygen is a non-metal gas)."},
+      {"q":"Which is the odd one out?","correct":"Mumbai","wrong":["Tokyo","Beijing","Seoul"],"reveal":"The other three are all capital cities (Mumbai is not India’s capital)."},
+      {"q":"Which is the odd one out?","correct":"Ireland","wrong":["England","Scotland","Wales"],"reveal":"The other three are all countries of Great Britain (Ireland is a separate island)."},
+      {"q":"Which is the odd one out?","correct":"Mercury","wrong":["Earth","Mars","Jupiter"],"reveal":"The other three are all planets with at least one moon (Mercury has none)."},
+      {"q":"Which is the odd one out?","correct":"Komodo dragon","wrong":["Frog","Toad","Salamander"],"reveal":"The other three are all amphibians (a Komodo dragon is a reptile)."}
+    ],
+    3:[
+      {"q":"Which is the odd one out?","correct":"Carrot","wrong":["Tomato","Cucumber","Pepper"],"reveal":"The other three are all botanically fruits (a carrot is a true root vegetable)."},
+      {"q":"Which is the odd one out?","correct":"Sydney","wrong":["Ottawa","Wellington","Canberra"],"reveal":"The other three are all capital cities (Sydney is Australia’s biggest city, not its capital)."},
+      {"q":"Which is the odd one out?","correct":"Mercury","wrong":["Venus","Earth","Mars"],"reveal":"The other three are all rocky planets with an atmosphere (Mercury has almost none)."},
+      {"q":"Which is the odd one out?","correct":"Spanish","wrong":["Welsh","Irish","Breton"],"reveal":"The other three are all Celtic languages (Spanish is a Romance language)."},
+      {"q":"Which is the odd one out?","correct":"Diamond","wrong":["Sapphire","Ruby","Topaz"],"reveal":"The other three are all coloured gemstones (a diamond is colourless)."},
+      {"q":"Which is the odd one out?","correct":"Mars","wrong":["Pluto","Ceres","Eris"],"reveal":"The other three are all dwarf planets (Mars is a full planet)."},
+      {"q":"Which is the odd one out?","correct":"Trumpet","wrong":["Saxophone","Clarinet","Oboe"],"reveal":"The other three are all woodwind instruments (a trumpet is brass)."},
+      {"q":"Which is the odd one out?","correct":"Avocado","wrong":["Lime","Lemon","Orange"],"reveal":"The other three are all citrus fruits (an avocado is not citrus)."},
+      {"q":"Which is the odd one out?","correct":"Da Vinci","wrong":["Mozart","Beethoven","Bach"],"reveal":"The other three are all composers (Da Vinci was a painter and inventor)."},
+      {"q":"Which is the odd one out?","correct":"Spider","wrong":["Lobster","Crab","Shrimp"],"reveal":"The other three are all crustaceans (a spider is an arachnid)."},
+      {"q":"Which is the odd one out?","correct":"The Atlantic","wrong":["The Mediterranean","The Caribbean","The Baltic"],"reveal":"The other three are all seas (the Atlantic is an ocean)."},
+      {"q":"Which is the odd one out?","correct":"English","wrong":["French","Spanish","Romanian"],"reveal":"The other three are all Romance languages (English is Germanic)."},
+      {"q":"Which is the odd one out?","correct":"Bronze","wrong":["Gold","Silver","Copper"],"reveal":"The other three are all chemical elements (bronze is an alloy)."},
+      {"q":"Which is the odd one out?","correct":"Salamander","wrong":["Gecko","Iguana","Chameleon"],"reveal":"The other three are all reptiles (a salamander is an amphibian)."},
+      {"q":"Which is the odd one out?","correct":"Earth","wrong":["Jupiter","Saturn","Neptune"],"reveal":"The other three are all giant planets (Earth is a small rocky planet)."},
+      {"q":"Which is the odd one out?","correct":"Penicillin","wrong":["Aspirin","Paracetamol","Ibuprofen"],"reveal":"The other three are all painkillers (penicillin is an antibiotic)."},
+      {"q":"Which is the odd one out?","correct":"Mont Blanc","wrong":["Vesuvius","Krakatoa","Mauna Loa"],"reveal":"The other three are all volcanoes (Mont Blanc is not one)."},
+      {"q":"Which is the odd one out?","correct":"Whale","wrong":["Elephant","Rhino","Hippo"],"reveal":"The other three are all land mammals (a whale lives in the sea)."},
+      {"q":"Which is the odd one out?","correct":"Australia","wrong":["Greenland","Borneo","Madagascar"],"reveal":"The other three are all islands (Australia is a continent)."},
+      {"q":"Which is the odd one out?","correct":"Chlorine","wrong":["Helium","Neon","Argon"],"reveal":"The other three are all noble gases (chlorine is a reactive halogen)."},
+      {"q":"Which is the odd one out?","correct":"Picasso","wrong":["Hemingway","Tolstoy","Dickens"],"reveal":"The other three are all writers (Picasso was a painter)."},
+      {"q":"Which is the odd one out?","correct":"Jupiter","wrong":["Sirius","Vega","Betelgeuse"],"reveal":"The other three are all stars (Jupiter is a planet)."},
+      {"q":"Which is the odd one out?","correct":"Venus","wrong":["Earth","Mars","Jupiter"],"reveal":"The other three are all planets with at least one moon (Venus has none)."},
+      {"q":"Which is the odd one out?","correct":"Newt","wrong":["Cobra","Adder","Mamba"],"reveal":"The other three are all snakes (a newt is an amphibian)."},
+      {"q":"Which is the odd one out?","correct":"Iron","wrong":["Hydrogen","Helium","Oxygen"],"reveal":"The other three are all among the most abundant elements in the universe (iron is far rarer)."},
+      {"q":"Which is the odd one out?","correct":"Tin","wrong":["Bronze","Brass","Steel"],"reveal":"The other three are all metal alloys (tin is a pure element)."},
+      {"q":"Which is the odd one out?","correct":"Tomato","wrong":["Apple","Cherry","Plum"],"reveal":"The other three are all fruits that grow on trees (a tomato grows on a vine)."},
+      {"q":"Which is the odd one out?","correct":"Komodo dragon","wrong":["Salamander","Newt","Axolotl"],"reveal":"The other three are all amphibians (a Komodo dragon is a reptile)."},
+      {"q":"Which is the odd one out?","correct":"Helium","wrong":["Lithium","Sodium","Potassium"],"reveal":"The other three are all reactive alkali metals (helium is an inert gas)."},
+      {"q":"Which is the odd one out?","correct":"Beijing","wrong":["Shanghai","Guangzhou","Shenzhen"],"reveal":"The other three are all large Chinese cities that are not the capital (Beijing is China’s capital)."}
+    ],
+    4:[
+      {"q":"Which is the odd one out?","correct":"Mercury","wrong":["Jupiter","Saturn","Uranus"],"reveal":"The other three are all planets with ring systems (Mercury has none)."},
+      {"q":"Which is the odd one out?","correct":"Finnish","wrong":["Welsh","Irish","Breton"],"reveal":"The other three are all Celtic languages (Finnish belongs to a different, Uralic family)."},
+      {"q":"Which is the odd one out?","correct":"Luxembourg","wrong":["Vatican City","Monaco","San Marino"],"reveal":"The other three are all among Europe’s tiniest states — Luxembourg is far larger."},
+      {"q":"Which is the odd one out?","correct":"Quartz","wrong":["Diamond","Graphite","Coal"],"reveal":"The other three are all forms of carbon (quartz is silicon dioxide)."},
+      {"q":"Which is the odd one out?","correct":"Axolotl","wrong":["Gecko","Skink","Iguana"],"reveal":"The other three are all reptiles (an axolotl is an amphibian)."},
+      {"q":"Which is the odd one out?","correct":"Whale shark","wrong":["Blue whale","Orca","Dolphin"],"reveal":"The other three are all marine mammals (a whale shark is a fish)."},
+      {"q":"Which is the odd one out?","correct":"Platypus","wrong":["Kangaroo","Koala","Wombat"],"reveal":"The other three are all marsupials (a platypus is an egg-laying monotreme)."},
+      {"q":"Which is the odd one out?","correct":"Nine","wrong":["Two","Five","Eleven"],"reveal":"The other three are all prime numbers (nine is 3 × 3, not prime)."},
+      {"q":"Which is the odd one out?","correct":"Betelgeuse","wrong":["Proxima Centauri","Alpha Centauri","Sirius"],"reveal":"The other three are all stars very close to Earth (Betelgeuse is far more distant)."},
+      {"q":"Which is the odd one out?","correct":"Latin","wrong":["Spanish","Portuguese","Romanian"],"reveal":"The other three are all living Romance languages (Latin is no longer spoken natively)."},
+      {"q":"Which is the odd one out?","correct":"Helium","wrong":["Hydrogen","Oxygen","Nitrogen"],"reveal":"The other three are all elements that readily form compounds (helium is inert)."},
+      {"q":"Which is the odd one out?","correct":"Antarctica","wrong":["Greenland","Borneo","Honshu"],"reveal":"The other three are all islands (Antarctica is a continent)."},
+      {"q":"Which is the odd one out?","correct":"Falcon","wrong":["Ostrich","Emu","Kiwi"],"reveal":"The other three are all flightless birds (a falcon flies)."},
+      {"q":"Which is the odd one out?","correct":"K2","wrong":["Kilimanjaro","Mount Fuji","Vesuvius"],"reveal":"The other three are all volcanoes (K2 is a non-volcanic mountain)."},
+      {"q":"Which is the odd one out?","correct":"Frog","wrong":["Tortoise","Crocodile","Snake"],"reveal":"The other three are all reptiles (a frog is an amphibian)."},
+      {"q":"Which is the odd one out?","correct":"Halley’s Comet","wrong":["Mercury","Venus","Mars"],"reveal":"The other three are all planets (Halley’s is a comet)."},
+      {"q":"Which is the odd one out?","correct":"Sodium","wrong":["Helium","Neon","Argon"],"reveal":"The other three are all noble, unreactive gases (sodium is a reactive metal)."},
+      {"q":"Which is the odd one out?","correct":"Esperanto","wrong":["French","Russian","Japanese"],"reveal":"The other three are all natural languages (Esperanto was invented)."},
+      {"q":"Which is the odd one out?","correct":"Brass","wrong":["Gold","Silver","Iron"],"reveal":"The other three are all pure chemical elements (brass is an alloy of copper and zinc)."},
+      {"q":"Which is the odd one out?","correct":"Korean","wrong":["Mandarin","Cantonese","Hokkien"],"reveal":"The other three are all varieties of Chinese (Korean is a separate language)."},
+      {"q":"Which is the odd one out?","correct":"Diamond","wrong":["Talc","Gypsum","Calcite"],"reveal":"The other three are all soft minerals low on the hardness scale (diamond is the hardest)."},
+      {"q":"Which is the odd one out?","correct":"Venus","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all planets that spin the usual way (Venus rotates backwards)."},
+      {"q":"Which is the odd one out?","correct":"Eel","wrong":["Dolphin","Seal","Otter"],"reveal":"The other three are all marine mammals (an eel is a fish)."},
+      {"q":"Which is the odd one out?","correct":"Maths","wrong":["Physics","Chemistry","Biology"],"reveal":"The other three are all natural sciences (maths is a formal science)."},
+      {"q":"Which is the odd one out?","correct":"Ceres","wrong":["Titan","Europa","Triton"],"reveal":"The other three are all moons of planets (Ceres is a dwarf planet)."},
+      {"q":"Which is the odd one out?","correct":"Pentagon","wrong":["Hexagon","Octagon","Decagon"],"reveal":"The other three are all shapes with an even number of sides (a pentagon has five)."},
+      {"q":"Which is the odd one out?","correct":"Rugby","wrong":["Football","Hockey","Netball"],"reveal":"The other three are all sports played with a round ball (rugby uses an oval ball)."},
+      {"q":"Which is the odd one out?","correct":"Hydrogen","wrong":["Nitrogen","Oxygen","Argon"],"reveal":"The other three are all gases that make up most of Earth’s air (hydrogen is barely present)."},
+      {"q":"Which is the odd one out?","correct":"Polaris","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all planets (Polaris is a star — the North Star)."},
+      {"q":"Which is the odd one out?","correct":"Pi","wrong":["Two","Seven","Thirteen"],"reveal":"The other three are all whole numbers (pi is irrational, 3.14159…)."}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='PUZZLE '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    { const rl=$('revealLine'); if(rl){ rl.classList.remove('show'); rl.textContent=''; } }
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+    { const rl=$('revealLine'); if(rl){ rl.textContent=current.reveal||''; rl.classList.add('show'); } }
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_odd-one-out';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+</body>
+</html>

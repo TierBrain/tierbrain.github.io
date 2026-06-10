@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Guess the Year — Quiz Climb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#16110a; --bg1:#241b0d; --card:#201a0e; --card2:#2c2412;
+    --ink:#fdf6e8; --mut:#cbb98f; --line:#42351a;
+    --l1:#4cc78a; --l2:#e8b34a; --l3:#ff8a5d; --l4:#5ad0ff;
+    --gold:#e8b34a; --right:#4cc78a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(232,179,74,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(90,208,255,.10), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#10142e;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#10142e;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#10142e;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+.reveal{min-height:20px;margin-top:14px;text-align:center;color:var(--mut);font-size:14px;font-weight:600;line-height:1.5;opacity:0;transition:opacity .25s;}
+  .reveal.show{opacity:1;}
+  .yearui{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:10px;}
+  .yrreadout{display:flex;align-items:center;gap:18px;}
+  .yrval{font-size:46px;font-weight:800;letter-spacing:1px;color:var(--ink);font-variant-numeric:tabular-nums;min-width:140px;text-align:center;}
+  .yrnudge{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:26px;font-weight:700;cursor:pointer;line-height:1;}
+  .yrnudge:active{background:var(--card);}
+  .yrslider{width:100%;max-width:440px;accent-color:var(--gold);height:36px;}
+  .yrhint{color:var(--mut);font-size:13px;text-align:center;max-width:440px;}
+  .yrlock{margin-top:2px;}
+  .yearui.locked .yrnudge,.yearui.locked .yrslider{opacity:.45;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">EVENT 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+    <div class="reveal" id="revealLine"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Guess the Year</div>
+    <h1 class="big display">Quiz Climb</h1>
+    <p class="lead">20 events from history — slide the timeline to your best guess and lock it in. Land close enough and it counts; the window tightens as you climb (Legends is within 2 years). The dates are fixed history, so it never goes stale.</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to date all 20 events.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code — optional</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Game</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You dated <b id="outAns">0</b> events<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You dated <b id="tuAns">0</b> events<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  let roundLevel=1, guess=1700;
+  const YR_MIN=1000, YR_MAX=2025, YR_MID=1700;
+  const TOL={1:20,2:10,3:5,4:2};
+  const BANK={
+    1:[
+      {"q":"Humans first walked on the Moon","year":1969},
+      {"q":"The Second World War ended","year":1945},
+      {"q":"The First World War began","year":1914},
+      {"q":"The Titanic sank","year":1912},
+      {"q":"The Berlin Wall fell","year":1989},
+      {"q":"The first iPhone was released","year":2007},
+      {"q":"The Second World War began","year":1939},
+      {"q":"The Great Fire of London raged","year":1666},
+      {"q":"Columbus first reached the Americas","year":1492},
+      {"q":"The French Revolution began","year":1789},
+      {"q":"The American Declaration of Independence was signed","year":1776},
+      {"q":"The COVID-19 pandemic was declared","year":2020},
+      {"q":"The Battle of Hastings was fought","year":1066},
+      {"q":"The Wright brothers made the first powered flight","year":1903},
+      {"q":"London hosted the Olympic Games for a third time","year":2012},
+      {"q":"The first modern Olympic Games were held","year":1896},
+      {"q":"The Channel Tunnel opened","year":1994},
+      {"q":"Queen Elizabeth II was crowned","year":1953},
+      {"q":"Yuri Gagarin became the first human in space","year":1961},
+      {"q":"Pearl Harbor was attacked","year":1941},
+      {"q":"The Spanish Armada was defeated","year":1588},
+      {"q":"The Gunpowder Plot was foiled","year":1605},
+      {"q":"The American Civil War began","year":1861},
+      {"q":"The Eiffel Tower was completed","year":1889},
+      {"q":"The Suez Canal opened","year":1869},
+      {"q":"The Hindenburg airship crashed","year":1937},
+      {"q":"The Great Plague struck London","year":1665},
+      {"q":"Sputnik, the first satellite, was launched","year":1957},
+      {"q":"The Beatles broke up","year":1970},
+      {"q":"The United Nations was founded","year":1945}
+    ],
+    2:[
+      {"q":"Magna Carta was sealed","year":1215},
+      {"q":"The storming of the Bastille took place","year":1789},
+      {"q":"Britain abolished the slave trade","year":1807},
+      {"q":"The Battle of Waterloo was fought","year":1815},
+      {"q":"The California Gold Rush began","year":1849},
+      {"q":"The Russian Revolution took place","year":1917},
+      {"q":"The Wall Street Crash happened","year":1929},
+      {"q":"India was partitioned at independence","year":1947},
+      {"q":"John F. Kennedy was assassinated","year":1963},
+      {"q":"The Cuban Missile Crisis unfolded","year":1962},
+      {"q":"The Apollo 13 mission ran into trouble","year":1970},
+      {"q":"The first Star Wars film was released","year":1977},
+      {"q":"The Chernobyl disaster occurred","year":1986},
+      {"q":"The Soviet Union was dissolved","year":1991},
+      {"q":"The first Harry Potter book was published","year":1997},
+      {"q":"The September 11 attacks happened","year":2001},
+      {"q":"The Live Aid concerts were held","year":1985},
+      {"q":"The Mayflower sailed to America","year":1620},
+      {"q":"The Battle of Trafalgar was fought","year":1805},
+      {"q":"The telephone was patented by Bell","year":1876},
+      {"q":"Penicillin was discovered by Fleming","year":1928},
+      {"q":"The Boston Tea Party took place","year":1773},
+      {"q":"Germany was unified under Bismarck","year":1871},
+      {"q":"The first human heart transplant was performed","year":1967},
+      {"q":"Constantinople fell to the Ottomans","year":1453},
+      {"q":"The Hubble Space Telescope was launched","year":1990},
+      {"q":"The Good Friday Agreement was signed","year":1998},
+      {"q":"The first London Underground line opened","year":1863},
+      {"q":"The atomic bomb was dropped on Hiroshima","year":1945},
+      {"q":"Nelson Mandela was released from prison","year":1990}
+    ],
+    3:[
+      {"q":"The Battle of Agincourt was fought","year":1415},
+      {"q":"The Gutenberg Bible was printed","year":1455},
+      {"q":"The English Civil War began","year":1642},
+      {"q":"King Charles I was executed","year":1649},
+      {"q":"England and Scotland were joined by the Act of Union","year":1707},
+      {"q":"The Boston Massacre took place","year":1770},
+      {"q":"The United States made the Louisiana Purchase","year":1803},
+      {"q":"The Stockton–Darlington railway opened","year":1825},
+      {"q":"Darwin published On the Origin of Species","year":1859},
+      {"q":"The US transcontinental railroad was completed","year":1869},
+      {"q":"Edison demonstrated the light bulb","year":1879},
+      {"q":"Karl Benz built the first modern motor car","year":1886},
+      {"q":"X-rays were discovered by Röntgen","year":1895},
+      {"q":"Marconi sent the first transatlantic radio signal","year":1901},
+      {"q":"The Russian Tsar abdicated","year":1917},
+      {"q":"The Spanish flu pandemic spread","year":1918},
+      {"q":"Tutankhamun's tomb was discovered","year":1922},
+      {"q":"John Logie Baird demonstrated television","year":1926},
+      {"q":"The Jarrow March set off","year":1936},
+      {"q":"Britain's NHS was founded","year":1948},
+      {"q":"Hillary and Tenzing conquered Everest","year":1953},
+      {"q":"The structure of DNA was revealed","year":1953},
+      {"q":"The Hungarian Uprising was crushed","year":1956},
+      {"q":"Construction of the Berlin Wall began","year":1961},
+      {"q":"England won the football World Cup","year":1966},
+      {"q":"Britain switched to decimal currency","year":1971},
+      {"q":"The UK joined the EEC","year":1973},
+      {"q":"The first test-tube baby was born","year":1978},
+      {"q":"The Falklands War was fought","year":1982},
+      {"q":"The first handheld mobile phone call was made","year":1973}
+    ],
+    4:[
+      {"q":"The Domesday Book was compiled","year":1086},
+      {"q":"The Black Death reached England","year":1348},
+      {"q":"The Peasants' Revolt broke out","year":1381},
+      {"q":"The Wars of the Roses began","year":1455},
+      {"q":"Henry VIII became King of England","year":1509},
+      {"q":"The dissolution of the monasteries began","year":1536},
+      {"q":"Queen Elizabeth I died","year":1603},
+      {"q":"The King James Bible was published","year":1611},
+      {"q":"The Bank of England was founded","year":1694},
+      {"q":"The South Sea Bubble burst","year":1720},
+      {"q":"The Jacobite rising of Bonnie Prince Charlie began","year":1745},
+      {"q":"The Seven Years' War began","year":1756},
+      {"q":"Captain Cook reached Australia","year":1770},
+      {"q":"The Battle of Bunker Hill was fought","year":1775},
+      {"q":"The Treaty of Versailles was signed","year":1919},
+      {"q":"The Peterloo Massacre took place","year":1819},
+      {"q":"The first permanent photograph was taken","year":1826},
+      {"q":"Queen Victoria came to the throne","year":1837},
+      {"q":"The Communist Manifesto was published","year":1848},
+      {"q":"The Crimean War began","year":1853},
+      {"q":"Krakatoa erupted catastrophically","year":1883},
+      {"q":"J. J. Thomson discovered the electron","year":1897},
+      {"q":"The San Francisco earthquake struck","year":1906},
+      {"q":"Alcock and Brown first flew the Atlantic non-stop","year":1919},
+      {"q":"Britain's General Strike took place","year":1926},
+      {"q":"King Edward VIII abdicated","year":1936},
+      {"q":"The Battle of Britain was fought","year":1940},
+      {"q":"The D-Day landings took place","year":1944},
+      {"q":"The Korean War began","year":1950},
+      {"q":"Napoleon crowned himself Emperor","year":1804}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    roundLevel=level;
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='EVENT '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    guess=YR_MID;
+    const box=$('opts'); box.className='yearui'; box.classList.remove('locked');
+    box.innerHTML='<div class="yrreadout"><button type="button" class="yrnudge" id="yrMinus">\u2212</button>'
+      +'<span class="yrval" id="yrVal"></span>'
+      +'<button type="button" class="yrnudge" id="yrPlus">+</button></div>'
+      +'<input id="yrSlider" class="yrslider" type="range" min="'+YR_MIN+'" max="'+YR_MAX+'" step="1">'
+      +'<div class="yrhint">Slide to your best guess, then lock it in. This level counts a hit within \u00b1'+TOL[level]+' years.</div>'
+      +'<button type="button" class="cta yrlock" id="yrLock"></button>';
+    const sl=$('yrSlider'), val=$('yrVal'), lock=$('yrLock');
+    function setG(v){ guess=Math.max(YR_MIN,Math.min(YR_MAX,v)); if(sl)sl.value=guess; if(val)val.textContent=guess; if(lock)lock.textContent='Lock in '+guess; }
+    setG(YR_MID);
+    if(sl) sl.addEventListener('input',()=>setG(parseInt(sl.value,10)));
+    const m=$('yrMinus'), p=$('yrPlus');
+    if(m) m.addEventListener('click',()=>setG(guess-1));
+    if(p) p.addEventListener('click',()=>setG(guess+1));
+    if(lock) lock.addEventListener('click',()=>evaluate());
+    { const rl=$('revealLine'); if(rl){ rl.classList.remove('show'); rl.textContent=''; } }
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function evaluate(){
+    if(locked) return; locked=true;
+    const diff=Math.abs(guess-current.year);
+    const right = diff<=TOL[roundLevel];
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    const sl=$('yrSlider'); if(sl) sl.disabled=true;
+    const lk=$('yrLock'); if(lk){ lk.disabled=true; lk.textContent='Locked: '+guess; }
+    const rl=$('revealLine');
+    if(rl){
+      rl.textContent='It was '+current.year+'. You guessed '+guess+' \u2014 '+(diff===0?'spot on!':(diff+' year'+(diff===1?'':'s')+' off'))+(right&&diff!==0?' (a hit!)':(!right?' \u2014 just missed.':''));
+      rl.style.color = right?'var(--right)':'var(--wrong)'; rl.classList.add('show');
+    }
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?1000:1250);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing && e.key==='Enter'){ const b=$('yrLock'); if(b) b.click(); }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_guess-year';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+</body>
+</html>
