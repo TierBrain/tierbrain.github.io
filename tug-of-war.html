@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tug of War — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0d0f12; --bg1:#16181d; --card:#14171c; --card2:#1d2128; --line:#333a44;
+    --ink:#f2f4f7; --mut:#9aa3ad; --blue:#3b82f6; --red:#e63946; --gold:#f6c945;
+    --right:#2dd4a7; --wrong:#e63946;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(230,57,70,.14), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(59,130,246,.14), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;}
+  .display{font-family:'Baloo 2',cursive;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:780px;min-height:600px;
+    display:flex;flex-direction:column;padding:18px;gap:14px;overflow:hidden;}
+  .screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .sub{font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:12px;color:var(--gold);}
+  h1{font-size:38px;line-height:1.05;}
+  .lead{color:var(--mut);font-size:14.5px;line-height:1.5;max-width:420px;font-weight:600;}
+  .field{width:100%;max-width:340px;text-align:left;}
+  .field label{font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:1px;display:block;margin:0 0 5px 3px;}
+  input{width:100%;font-family:inherit;font-weight:800;font-size:17px;padding:13px 16px;border-radius:14px;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);}
+  input:focus{outline:none;border-color:var(--gold);}
+  input.code{text-transform:uppercase;letter-spacing:3px;text-align:center;}
+  .cta{font-family:inherit;font-weight:800;font-size:17px;padding:14px 26px;border-radius:30px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--gold),#e0a92b);color:#241c06;box-shadow:0 8px 22px rgba(246,201,69,.28);}
+  .cta:disabled{opacity:.45;box-shadow:none;cursor:default;}
+  .cta.go{font-size:19px;padding:15px 36px;}
+  .err{color:var(--wrong);font-weight:800;font-size:13px;min-height:1em;}
+  .note{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .codepill{font-family:'Baloo 2',cursive;font-size:28px;letter-spacing:5px;background:var(--card2);border:1px dashed var(--line);border-radius:14px;padding:7px 20px;color:var(--gold);}
+
+  /* lobby sides */
+  .sides{display:flex;gap:10px;align-items:stretch;width:100%;max-width:400px;}
+  .sideCol{flex:1;background:var(--card2);border:2px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;}
+  .sideCol.blue{border-color:rgba(59,130,246,.5);} .sideCol.red{border-color:rgba(230,57,70,.5);}
+  .sideCol.mine{box-shadow:0 0 0 2px var(--gold) inset;}
+  .sideBtn{font-family:inherit;font-weight:800;font-size:14px;padding:9px;border-radius:10px;border:none;cursor:pointer;color:#fff;}
+  .blue .sideBtn{background:var(--blue);} .red .sideBtn{background:var(--red);}
+  .roster{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:800;text-align:left;}
+  .roster div{background:rgba(255,255,255,.05);border-radius:8px;padding:5px 8px;}
+  .vs{align-self:center;font-family:'Baloo 2',cursive;font-size:18px;color:var(--mut);}
+
+  #countNum{font-family:'Baloo 2',cursive;font-size:120px;color:var(--gold);line-height:1;}
+
+  /* tug */
+  #tugScreen{justify-content:flex-start;gap:14px;}
+  .tugHud{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:15px;}
+  .tBlue{color:var(--blue);} .tRed{color:var(--red);} #capClock{color:var(--mut);font-size:13px;}
+  .ropeWrap{width:100%;}
+  .ropeBar{position:relative;height:56px;border-radius:14px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(90deg, rgba(59,130,246,.16), rgba(255,255,255,.03) 50%, rgba(230,57,70,.16));}
+  .zone{position:absolute;top:0;bottom:0;width:18%;}
+  .zoneL{left:0;background:linear-gradient(90deg,rgba(59,130,246,.4),transparent);}
+  .zoneR{right:0;background:linear-gradient(270deg,rgba(230,57,70,.4),transparent);}
+  .winline{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed rgba(255,255,255,.45);}
+  .winlineL{left:18%;} .winlineR{right:18%;}
+  .rope{position:absolute;top:50%;left:6%;right:6%;height:5px;transform:translateY(-50%);
+    background:repeating-linear-gradient(90deg,#caa15a 0 9px,#8f6a30 9px 16px);border-radius:3px;}
+  .knot{position:absolute;top:50%;left:50%;width:30px;height:30px;border-radius:9px;background:var(--gold);
+    transform:translate(-50%,-50%);transition:left .28s ease;box-shadow:0 0 16px rgba(246,201,69,.7);border:2px solid #fff3cf;z-index:3;}
+  .qbox{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .qtext{font-size:18px;font-weight:800;line-height:1.3;text-align:center;}
+  .opts{display:flex;flex-direction:column;gap:9px;width:100%;}
+  .opt{display:flex;align-items:center;gap:10px;font-family:inherit;font-weight:800;font-size:15px;padding:13px 15px;border-radius:13px;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;text-align:left;}
+  .opt .k{flex:none;width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .opt.good{border-color:var(--right);background:rgba(45,212,167,.16);}
+  .opt.bad{border-color:var(--wrong);background:rgba(230,57,70,.16);}
+  .opt:disabled{opacity:.85;}
+
+  .placard{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px;}
+  .winbanner{font-family:'Baloo 2',cursive;font-size:30px;}
+  .place{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:800;text-align:left;}
+  .toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-weight:800;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;}
+  .toast.show{opacity:1;}
+  .home{color:var(--mut);font-size:12px;font-weight:700;text-decoration:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="toast" id="toast"></div>
+
+  <div class="screen" id="menuScreen">
+    <div class="sub">TierBrain</div>
+    <h1 class="display">Tug of War</h1>
+    <p class="lead">A live tug for two sides. Everyone enters the same room code and picks a team — then every right answer hauls the rope your way, and a wrong one lets it slip back. First side to drag the rope past their line wins.</p>
+    <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
+    <div class="field"><label>Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
+    <div class="err" id="menuErr"></div>
+    <button class="cta" id="joinBtn">Enter room</button>
+    <p class="note">Pick any code and tell your friends — same code = same match.</p>
+  </div>
+
+  <div class="screen hidden" id="lobbyScreen">
+    <div class="sub">Pick your side</div>
+    <div class="codepill" id="lobbyCode">----</div>
+    <div class="sides">
+      <div class="sideCol blue" id="colBlue">
+        <button class="sideBtn" id="joinBlue">Join Blue</button>
+        <div class="roster" id="rosterBlue"></div>
+      </div>
+      <div class="vs">vs</div>
+      <div class="sideCol red" id="colRed">
+        <button class="sideBtn" id="joinRed">Join Red</button>
+        <div class="roster" id="rosterRed"></div>
+      </div>
+    </div>
+    <button class="cta go" id="goBtn" disabled>Start the tug</button>
+    <p class="note" id="lobbyNote">Both sides need at least one puller.</p>
+    <a class="home" id="leaveBtn">← leave</a>
+  </div>
+
+  <div class="screen hidden" id="countScreen">
+    <div class="sub">Take the strain…</div>
+    <div id="countNum">3</div>
+  </div>
+
+  <div class="screen hidden" id="tugScreen">
+    <div class="tugHud"><span class="tBlue" id="blueTally">Blue 0</span><span id="capClock">2:00</span><span class="tRed" id="redTally">Red 0</span></div>
+    <div class="ropeWrap">
+      <div class="ropeBar">
+        <div class="zone zoneL"></div><div class="zone zoneR"></div>
+        <div class="winline winlineL"></div><div class="winline winlineR"></div>
+        <div class="rope"></div>
+        <div class="knot" id="knot"></div>
+      </div>
+    </div>
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div class="screen hidden" id="resultScreen">
+    <div class="sub">Pulled over the line</div>
+    <div class="winbanner" id="winBanner">Finish!</div>
+    <div class="placard" id="placard"></div>
+    <button class="cta" id="againBtn">Rematch</button>
+    <a class="home" id="menuBtn">← back to menu</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+  var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+  var QUIZ_ID='qc_tug';
+  var THRESH=10;     // net pulls to win
+  var SLIP=0.4;      // how far a wrong answer slips toward the opponent
+  var CAP=120;       // seconds fallback
+  var POLL_MS=1500, HB_MS=2600, GO='__GO__';
+
+  var POOL=[
+   ["What is the capital of France?","Paris",["London","Rome","Berlin"]],
+   ["What is the largest planet in the solar system?","Jupiter",["Saturn","Mars","Neptune"]],
+   ["H2O is better known as what?","Water",["Salt","Gold","Air"]],
+   ["How many legs does a spider have?","Eight",["Six","Ten","Four"]],
+   ["Who painted the Mona Lisa?","Leonardo da Vinci",["Michelangelo","Raphael","Rembrandt"]],
+   ["What is the capital of Japan?","Tokyo",["Beijing","Seoul","Bangkok"]],
+   ["What is the largest ocean on Earth?","The Pacific",["The Atlantic","The Indian","The Arctic"]],
+   ["What is the chemical symbol for gold?","Au",["Ag","Gd","Go"]],
+   ["Who wrote 'Romeo and Juliet'?","William Shakespeare",["Charles Dickens","Jane Austen","Mark Twain"]],
+   ["Which is the fastest land animal?","The cheetah",["The lion","The horse","The leopard"]],
+   ["Which planet is the Red Planet?","Mars",["Venus","Mercury","Saturn"]],
+   ["How many days are in a week?","Seven",["Five","Ten","Six"]],
+   ["Which country gifted the Statue of Liberty to the USA?","France",["Britain","Spain","Italy"]],
+   ["What is the hardest natural substance?","Diamond",["Gold","Iron","Quartz"]],
+   ["In which year did World War II end?","1945",["1944","1939","1918"]],
+   ["What is the smallest country in the world?","Vatican City",["Monaco","Malta","Nauru"]],
+   ["Which is the largest land animal?","The African elephant",["The giraffe","The rhino","The hippo"]],
+   ["What is the capital of Canada?","Ottawa",["Toronto","Vancouver","Montreal"]],
+   ["How many continents are there?","Seven",["Five","Six","Eight"]],
+   ["Which metal is liquid at room temperature?","Mercury",["Lead","Iron","Aluminium"]],
+   ["What is the tallest mountain on Earth?","Mount Everest",["K2","Kilimanjaro","Denali"]],
+   ["Who was the first person to walk on the Moon?","Neil Armstrong",["Buzz Aldrin","Yuri Gagarin","John Glenn"]],
+   ["What currency is used in Japan?","The yen",["The won","The yuan","The ringgit"]],
+   ["Which painter cut off part of his own ear?","Vincent van Gogh",["Claude Monet","Pablo Picasso","Salvador Dali"]],
+   ["What is the capital of Egypt?","Cairo",["Alexandria","Giza","Luxor"]],
+   ["Who wrote the novel '1984'?","George Orwell",["Aldous Huxley","Ray Bradbury","H.G. Wells"]],
+   ["Which planet rotates on its side?","Uranus",["Neptune","Saturn","Venus"]],
+   ["What is the largest island in the world?","Greenland",["Borneo","Madagascar","New Guinea"]],
+   ["In Greek mythology, who is king of the gods?","Zeus",["Poseidon","Apollo","Hades"]],
+   ["In which year did the Titanic sink?","1912",["1905","1918","1920"]],
+   ["What is the chemical symbol for sodium?","Na",["So","Sd","Sn"]],
+   ["What is the longest river in Africa?","The Nile",["The Congo","The Niger","The Zambezi"]],
+   ["Which language has the most native speakers?","Mandarin Chinese",["English","Spanish","Hindi"]],
+   ["What is the capital of Australia?","Canberra",["Sydney","Melbourne","Perth"]],
+   ["What is the largest moon of Saturn?","Titan",["Europa","Io","Ganymede"]],
+   ["Which planet is the hottest in the solar system?","Venus",["Mercury","Mars","Jupiter"]],
+   ["Who is credited with discovering penicillin?","Alexander Fleming",["Louis Pasteur","Joseph Lister","Robert Koch"]],
+   ["Which Italian city is famous for its canals?","Venice",["Florence","Rome","Pisa"]],
+   ["Which civilisation built the pyramids at Giza?","The Egyptians",["The Romans","The Greeks","The Aztecs"]],
+   ["What is the largest internal organ in the body?","The liver",["The brain","The lungs","The heart"]],
+   ["What is the capital of Russia?","Moscow",["St Petersburg","Kazan","Sochi"]],
+   ["What is the chemical symbol for iron?","Fe",["Ir","In","Fr"]],
+   ["Who is regarded as the first Roman emperor?","Augustus",["Julius Caesar","Nero","Caligula"]],
+   ["What is the boiling point of water in Celsius?","100 degrees",["0 degrees","50 degrees","90 degrees"]],
+   ["What gas makes up most of Earth's atmosphere?","Nitrogen",["Oxygen","Carbon dioxide","Hydrogen"]]
+  ];
+
+  var me='', code='', side=0, phase='menu', started=false, ended=false;
+  var myCorrect=0, myWrong=0, lastPlayers={}, queue=[], qi=0, current=null, locked=false;
+  var startTime=0, pollT=null, hbT=null, capT=null, actx=null;
+
+  function beep(f,d,t,g){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); var o=actx.createOscillator(),v=actx.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(v); v.connect(actx.destination); var n=actx.currentTime; v.gain.setValueAtTime(g||0.12,n); v.gain.exponentialRampToValueAtTime(0.0001,n+(d||0.1)); o.start(n); o.stop(n+(d||0.1)); }catch(e){} }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function show(id){ ['menuScreen','lobbyScreen','countScreen','tugScreen','resultScreen'].forEach(function(s){ $(s).classList.add('hidden'); }); $(id).classList.remove('hidden'); }
+  function toast(t){ var el=$('toast'); el.textContent=t; el.classList.add('show'); setTimeout(function(){ el.classList.remove('show'); },1500); }
+  function fmtT(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  function ping(nm, sd, corr, wr){
+    var body=[{quiz_id:QUIZ_ID, group_code:code, name:nm, correct:corr|0, level:sd|0, time_left:wr|0}];
+    return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).catch(function(){});
+  }
+  function sbRead(){
+    var url=sbBase()+'?select=name,correct,level,time_left,created_at'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)+'&group_code=eq.'+encodeURIComponent(code)
+      +'&order=created_at.desc&limit=400';
+    return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; });
+  }
+
+  function processRows(rows){
+    var goSeen=false, p={};
+    rows.forEach(function(r){
+      if(r.name===GO){ goSeen=true; return; }
+      if(!p[r.name]) p[r.name]={side:r.level, correct:r.correct, wrong:r.time_left}; // first = latest (desc)
+    });
+    if(me && side){ p[me]={side:side, correct:myCorrect, wrong:myWrong}; }
+    lastPlayers=p; return goSeen;
+  }
+  function ropeOf(p){
+    var R=0;
+    for(var nm in p){ var e=p[nm];
+      if(e.side===2){ R+=e.correct - SLIP*e.wrong; }
+      else if(e.side===1){ R+= -e.correct + SLIP*e.wrong; }
+    }
+    return R;
+  }
+  function sideCounts(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b++; else if(p[nm].side===2)r++; } return {blue:b,red:r}; }
+  function tallies(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b+=p[nm].correct; else if(p[nm].side===2)r+=p[nm].correct; } return {blue:b,red:r}; }
+
+  function poll(){
+    return sbRead().then(function(rows){
+      var goSeen=processRows(rows);
+      if(phase==='lobby'){ renderLobby(); if(goSeen && !started){ beginCountdown(); } }
+      else if(phase==='tug'){ renderTug(); checkEnd(); }
+    });
+  }
+  function startPoll(){ if(pollT) clearInterval(pollT); pollT=setInterval(poll,POLL_MS); poll(); }
+  function startHB(){ if(hbT) clearInterval(hbT); hbT=setInterval(function(){ if((phase==='lobby'||phase==='tug')&&side){ ping(me,side,myCorrect,myWrong); } },HB_MS); }
+  function stopHB(){ if(hbT){ clearInterval(hbT); hbT=null; } }
+
+  function enterRoom(){
+    var n=($('nameIn').value||'').trim(); var c=($('codeIn').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(n.length<1){ $('menuErr').textContent='Enter your name.'; return; }
+    if(c.length<2){ $('menuErr').textContent='Enter a room code (2+ letters/numbers).'; return; }
+    me=n; code=c; side=0; started=false; ended=false; myCorrect=0; myWrong=0; lastPlayers={};
+    try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    $('lobbyCode').textContent=code; phase='lobby'; show('lobbyScreen');
+    startPoll();
+  }
+  function pickSide(s){ side=s; ping(me,side,myCorrect,myWrong); startHB(); renderLobby(); }
+  function leave(){ phase='menu'; started=false; if(pollT)clearInterval(pollT); stopHB(); if(capT)clearInterval(capT); show('menuScreen'); }
+
+  function renderLobby(){
+    var rb=$('rosterBlue'), rr=$('rosterRed'); rb.innerHTML=''; rr.innerHTML='';
+    for(var nm in lastPlayers){
+      var d=document.createElement('div'); d.textContent=nm+(nm===me?' (you)':'');
+      (lastPlayers[nm].side===1?rb:lastPlayers[nm].side===2?rr:rb).appendChild(d);
+    }
+    $('colBlue').classList.toggle('mine', side===1);
+    $('colRed').classList.toggle('mine', side===2);
+    var c=sideCounts(lastPlayers); var ready=(c.blue>=1 && c.red>=1 && side!==0);
+    $('goBtn').disabled=!ready;
+    $('lobbyNote').textContent = ready ? 'Ready! Anyone can start.' : 'Both sides need at least one puller.';
+  }
+
+  function pressGo(){ if(started) return; ping(GO,0,0,0); beginCountdown(); }
+  function beginCountdown(){
+    if(started) return; started=true; phase='countdown'; show('countScreen');
+    var n=3; $('countNum').textContent=n; beep(440,0.12,'square',0.13);
+    var iv=setInterval(function(){
+      n--;
+      if(n>0){ $('countNum').textContent=n; beep(440,0.12,'square',0.13); }
+      else if(n===0){ $('countNum').textContent='PULL!'; beep(880,0.25,'square',0.16); }
+      else { clearInterval(iv); startTug(); }
+    },1000);
+  }
+
+  function startTug(){
+    phase='tug'; startTime=Date.now(); queue=shuffle(POOL); qi=0;
+    show('tugScreen'); renderTug(); renderQuestion();
+    if(capT) clearInterval(capT);
+    capT=setInterval(function(){
+      if(phase!=='tug') return;
+      var left=CAP-(Date.now()-startTime)/1000;
+      $('capClock').textContent=fmtT(left);
+      if(left<=0){ checkEnd(true); }
+    },500);
+  }
+  function renderTug(){
+    var R=ropeOf(lastPlayers), t=tallies(lastPlayers);
+    $('blueTally').textContent='Blue '+t.blue; $('redTally').textContent='Red '+t.red;
+    var f=Math.max(-1,Math.min(1,R/THRESH));
+    $('knot').style.left=(50 + f*32)+'%';
+  }
+  var KEYS=['A','B','C','D'];
+  function renderQuestion(){
+    current=queue[qi%queue.length]; qi++;
+    $('qtext').textContent=current[0];
+    var opts=shuffle([current[1]].concat(current[2]));
+    var box=$('opts'); box.innerHTML=''; locked=false;
+    opts.forEach(function(o,i){
+      var b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="k">'+KEYS[i]+'</span><span>'+esc(o)+'</span>';
+      b.addEventListener('click',function(){ answer(o,b); });
+      box.appendChild(b);
+    });
+  }
+  function answer(o,btn){
+    if(locked||phase!=='tug') return; locked=true;
+    var ok=(o===current[1]);
+    if(ok){ btn.classList.add('good'); beep(720,0.07,'sine',0.13); myCorrect++; }
+    else { btn.classList.add('bad'); beep(200,0.13,'sawtooth',0.12); myWrong++; toast('Slip! the rope gives'); }
+    if(side){ lastPlayers[me]={side:side,correct:myCorrect,wrong:myWrong}; }
+    ping(me,side,myCorrect,myWrong);
+    renderTug(); checkEnd();
+    if(ended) return;
+    setTimeout(function(){ if(phase==='tug') renderQuestion(); }, ok?360:640);
+  }
+  function checkEnd(timeup){
+    if(ended || phase!=='tug') return;
+    var R=ropeOf(lastPlayers);
+    var winner=0;
+    if(R>=THRESH) winner=2;
+    else if(R<=-THRESH) winner=1;
+    else if(timeup){ winner = R>0?2 : R<0?1 : 0; }
+    if(winner!==0 || timeup){ finish(winner); }
+  }
+  function finish(winner){
+    ended=true; phase='results'; stopHB(); if(capT) clearInterval(capT);
+    show('resultScreen');
+    var nameOf={0:'Draw',1:'Blue',2:'Red'};
+    var wb=$('winBanner');
+    if(winner===0){ wb.textContent='Stalemate!'; wb.style.color='var(--mut)'; }
+    else { wb.textContent=nameOf[winner]+' wins! \uD83C\uDFC6'; wb.style.color=(winner===1?'var(--blue)':'var(--red)'); beep(990,0.3,'square',0.15); }
+    // MVP = most correct
+    var mvp=null,best=-1;
+    for(var nm in lastPlayers){ if(lastPlayers[nm].correct>best){ best=lastPlayers[nm].correct; mvp=nm; } }
+    var t=tallies(lastPlayers);
+    var pl=$('placard'); pl.innerHTML='';
+    function row(label,val,col){ var d=document.createElement('div'); d.className='place'; d.innerHTML='<span style="flex:1;color:'+col+'">'+label+'</span><span>'+val+' pulls</span>'; pl.appendChild(d); }
+    row('Blue team', t.blue, 'var(--blue)');
+    row('Red team', t.red, 'var(--red)');
+    if(mvp){ var d=document.createElement('div'); d.className='place'; d.innerHTML='<span style="flex:1">\uD83D\uDCAA MVP: '+esc(mvp)+(mvp===me?' (you)':'')+'</span><span>'+best+'</span>'; pl.appendChild(d); }
+  }
+
+  // wiring
+  $('joinBtn').addEventListener('click',enterRoom);
+  $('codeIn').addEventListener('keydown',function(e){ if(e.key==='Enter') enterRoom(); });
+  $('joinBlue').addEventListener('click',function(){ pickSide(1); });
+  $('joinRed').addEventListener('click',function(){ pickSide(2); });
+  $('goBtn').addEventListener('click',pressGo);
+  $('leaveBtn').addEventListener('click',leave);
+  $('menuBtn').addEventListener('click',leave);
+  $('againBtn').addEventListener('click',function(){
+    started=false; ended=false; myCorrect=0; myWrong=0; phase='lobby'; show('lobbyScreen');
+    if(side) ping(me,side,0,0); startHB(); poll();
+  });
+  document.addEventListener('keydown',function(e){
+    if(phase!=='tug') return; var n=parseInt(e.key,10);
+    if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); }
+  });
+
+  // test hook (network stubbed by harness)
+  window.__tug_test={
+    enter:function(n,c){ $('nameIn').value=n; $('codeIn').value=c; enterRoom(); },
+    side:function(s){ pickSide(s); },
+    go:function(){ pressGo(); },
+    forceStart:function(){ startTug(); },
+    correct:function(){ answer(current[1], document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
+    wrong:function(){ answer(current[2][0], document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
+    poll:function(){ return poll(); },
+    timeup:function(){ checkEnd(true); },
+    state:function(){ return {phase:phase, side:side, myCorrect:myCorrect, myWrong:myWrong, R:ropeOf(lastPlayers), ended:ended, players:JSON.parse(JSON.stringify(lastPlayers))}; }
+  };
+})();
+</script>
+</body>
+</html>
