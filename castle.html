@@ -99,6 +99,20 @@
   .saverow input{flex:1;text-align:center;}
   button.save{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--ctaInk);border:none;cursor:pointer;background:linear-gradient(180deg,var(--ctaA),var(--ctaB));border-radius:13px;padding:0 18px;}
   .savesum{color:var(--mut);font-weight:700;font-size:13px;text-align:center;}
+  #mpBar{display:flex;flex-direction:column;gap:4px;padding:4px 2px 8px;}
+  .mprow{display:flex;align-items:center;gap:8px;font-weight:800;font-size:12px;}
+  .mprow.me .mpn{color:var(--gold);}
+  .mpn{flex:0 0 82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+  .mpt{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;}
+  .mpf{display:block;height:100%;background:linear-gradient(90deg,var(--gate),var(--gold));border-radius:5px;transition:width .4s;}
+  #lobby{gap:14px;}
+  #lobbyCode{font-family:var(--disp);font-size:30px;color:var(--gold);letter-spacing:4px;}
+  #lobbyList{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;width:100%;max-width:340px;}
+  .prow{display:flex;align-items:center;gap:9px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:10px 14px;font-weight:800;}
+  .prow .dot{width:10px;height:10px;border-radius:50%;flex:none;}
+  .prow small{color:var(--mut);font-weight:600;}
+  #lobbyStatus{color:var(--mut);font-weight:700;font-size:13px;text-align:center;min-height:1em;}
+  #countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:90px;color:var(--gold);background:rgba(5,4,12,.62);z-index:30;text-shadow:0 0 30px var(--titleglow);}
 </style>
 </head>
 <body>
@@ -108,19 +122,30 @@
     <h1 class="title" id="titleEl"></h1>
     <p class="lead" id="leadEl"></p>
     <div class="howto" id="howEl"></div>
+    <div class="field"><label>Mode</label><div class="chips" id="modeRow"></div></div>
     <div class="field"><label id="pilotLbl"></label><input id="nameIn" maxlength="14" placeholder="Your name" autocomplete="off"></div>
     <div class="field"><label id="crewLbl"></label><div class="chips" id="charRow"></div></div>
     <div class="field"><label>Difficulty</label><div class="chips tier" id="tierRow"></div></div>
-    <div class="field"><label>Squad code (optional &mdash; share a board with friends)</label><input id="codeIn" maxlength="24" placeholder="e.g. ORION" autocomplete="off"></div>
+    <div class="field"><label id="codeLbl">Squad code (optional &mdash; share a board with friends)</label><input id="codeIn" maxlength="24" placeholder="e.g. ORION" autocomplete="off"></div>
     <button id="startBtn" class="cta">Begin</button>
     <button id="boardBtn" class="linkbtn">View leaderboard</button>
     <div class="err" id="menuErr"></div>
   </section>
   <section id="game" class="screen hidden">
     <div id="hud"><div id="livesBox"></div><span class="hstat">Cleared <b id="statCorrect">0</b></span><span id="tierPill">EXPLORER</span><span id="runTimer">0:00</span></div>
+    <div id="mpBar" class="hidden"></div>
     <div id="mapScroll"><div id="mapInner"><svg id="edgesSvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
     <div id="hint"></div>
   </section>
+  <section id="lobby" class="screen hidden" style="justify-content:center;align-items:center;">
+    <div class="sub">Race &middot; Room</div>
+    <div id="lobbyCode"></div>
+    <ul id="lobbyList"></ul>
+    <div id="lobbyStatus"></div>
+    <button id="startRaceBtn" class="cta" style="max-width:320px;width:100%;">Start race</button>
+    <button id="leaveLobby" class="linkbtn">Leave room</button>
+  </section>
+  <div id="countdown" class="hidden">3</div>
   <div id="obWrap" class="hidden"><div id="obCard">
     <div id="obBanner"></div><div id="obStreak" class="hidden"></div>
     <div class="obTimerWrap"><div id="obTimer"></div></div>
@@ -149,7 +174,7 @@
   var W={"id": "qc_keep", "brand": "Escape the Keep", "sub": "TierBrain · Adventure", "lead": "Pick your way out of the crumbling keep, hall by hall. Every doorway sets a challenge — answer to pass. Three wrong and the dungeon claims you.", "pilot": "Hero name", "crew": "Champion", "goal": "GATE", "dest": "the gate", "winTitle": "You escaped the Keep", "loseTitle": "Slain in the Dungeon", "types": {"gate": {"label": "Gateway", "prefix": "", "glyph": "plain"}, "timed": {"label": "Portcullis", "prefix": "", "glyph": "clock"}, "enemy": {"label": "Knight", "prefix": "", "glyph": "burst"}, "sealed": {"label": "Locked Vault", "prefix": "", "glyph": "lock"}}, "crews": [{"name": "Knight", "col": "#8aa0b8"}, {"name": "Rogue", "col": "#7fc06a"}, {"name": "Mage", "col": "#b58be0"}, {"name": "Squire", "col": "#ff9d3c"}]};
   var BANK={"1": [{"q": "What is the capital of France?", "correct": "Paris", "wrong": ["London", "Rome", "Madrid"]}, {"q": "How many days are there in a week?", "correct": "Seven", "wrong": ["Five", "Ten", "Twelve"]}, {"q": "What colour do you get by mixing blue and yellow?", "correct": "Green", "wrong": ["Purple", "Orange", "Brown"]}, {"q": "Which planet do we live on?", "correct": "Earth", "wrong": ["Mars", "Venus", "Jupiter"]}, {"q": "What is the largest ocean on Earth?", "correct": "The Pacific", "wrong": ["The Atlantic", "The Indian", "The Arctic"]}, {"q": "How many legs does a spider have?", "correct": "Eight", "wrong": ["Six", "Four", "Ten"]}, {"q": "What is the freezing point of water in Celsius?", "correct": "0 degrees", "wrong": ["10 degrees", "32 degrees", "100 degrees"]}, {"q": "Which animal is often called 'man's best friend'?", "correct": "The dog", "wrong": ["The cat", "The horse", "The cow"]}, {"q": "What is the capital of Italy?", "correct": "Rome", "wrong": ["Milan", "Venice", "Naples"]}, {"q": "How many continents are there?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What do bees make?", "correct": "Honey", "wrong": ["Milk", "Silk", "Butter"]}, {"q": "Which is the tallest land animal?", "correct": "The giraffe", "wrong": ["The elephant", "The horse", "The camel"]}, {"q": "What is H2O more commonly known as?", "correct": "Water", "wrong": ["Salt", "Oxygen", "Acid"]}, {"q": "Which gas do humans need to breathe to survive?", "correct": "Oxygen", "wrong": ["Carbon dioxide", "Helium", "Nitrogen"]}, {"q": "How many sides does a triangle have?", "correct": "Three", "wrong": ["Four", "Five", "Two"]}, {"q": "What is the capital of Japan?", "correct": "Tokyo", "wrong": ["Kyoto", "Osaka", "Seoul"]}, {"q": "Which fruit is in the saying about keeping the doctor away?", "correct": "Apple", "wrong": ["Banana", "Orange", "Pear"]}, {"q": "What is the opposite of 'hot'?", "correct": "Cold", "wrong": ["Warm", "Dry", "Loud"]}, {"q": "Which sea creature has eight arms?", "correct": "The octopus", "wrong": ["The shark", "The dolphin", "The jellyfish"]}, {"q": "What is the largest planet in the solar system?", "correct": "Jupiter", "wrong": ["Saturn", "Earth", "Mars"]}, {"q": "What do caterpillars turn into?", "correct": "Butterflies", "wrong": ["Spiders", "Beetles", "Frogs"]}, {"q": "Which country is famous for the Eiffel Tower?", "correct": "France", "wrong": ["Italy", "Spain", "Germany"]}, {"q": "How many colours are in a rainbow, traditionally?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What is the main language spoken in Brazil?", "correct": "Portuguese", "wrong": ["Spanish", "English", "French"]}, {"q": "Which is the fastest land animal?", "correct": "The cheetah", "wrong": ["The lion", "The horse", "The leopard"]}, {"q": "What is frozen water called?", "correct": "Ice", "wrong": ["Steam", "Mud", "Fog"]}, {"q": "How many minutes are in an hour?", "correct": "60", "wrong": ["30", "100", "24"]}, {"q": "Which planet is known as the Red Planet?", "correct": "Mars", "wrong": ["Venus", "Mercury", "Saturn"]}, {"q": "What is the capital of England?", "correct": "London", "wrong": ["Manchester", "Birmingham", "Liverpool"]}, {"q": "Which instrument has black and white keys?", "correct": "The piano", "wrong": ["The violin", "The guitar", "The flute"]}], "2": [{"q": "What is the capital of Australia?", "correct": "Canberra", "wrong": ["Sydney", "Melbourne", "Perth"]}, {"q": "Who painted the Mona Lisa?", "correct": "Leonardo da Vinci", "wrong": ["Michelangelo", "Raphael", "Donatello"]}, {"q": "What is the chemical symbol for gold?", "correct": "Au", "wrong": ["Ag", "Gd", "Go"]}, {"q": "How many bones are in the adult human body?", "correct": "206", "wrong": ["201", "256", "196"]}, {"q": "Which country gifted the Statue of Liberty to the USA?", "correct": "France", "wrong": ["Britain", "Spain", "Italy"]}, {"q": "What is the longest river in Africa?", "correct": "The Nile", "wrong": ["The Congo", "The Niger", "The Zambezi"]}, {"q": "In which year did World War II end?", "correct": "1945", "wrong": ["1944", "1939", "1918"]}, {"q": "What is the hardest natural substance?", "correct": "Diamond", "wrong": ["Gold", "Iron", "Quartz"]}, {"q": "Who wrote the play 'Romeo and Juliet'?", "correct": "William Shakespeare", "wrong": ["Charles Dickens", "Jane Austen", "Mark Twain"]}, {"q": "What is the smallest country in the world?", "correct": "Vatican City", "wrong": ["Monaco", "San Marino", "Liechtenstein"]}, {"q": "Which metal is liquid at room temperature?", "correct": "Mercury", "wrong": ["Iron", "Lead", "Aluminium"]}, {"q": "How many strings does a standard guitar have?", "correct": "Six", "wrong": ["Four", "Five", "Seven"]}, {"q": "What is the capital of Canada?", "correct": "Ottawa", "wrong": ["Toronto", "Vancouver", "Montreal"]}, {"q": "Which planet has the most prominent ring system?", "correct": "Saturn", "wrong": ["Jupiter", "Uranus", "Neptune"]}, {"q": "What currency is used in Japan?", "correct": "The yen", "wrong": ["The won", "The yuan", "The ringgit"]}, {"q": "Who developed the theory of general relativity?", "correct": "Albert Einstein", "wrong": ["Isaac Newton", "Niels Bohr", "Galileo"]}, {"q": "What is the largest hot desert in the world?", "correct": "The Sahara", "wrong": ["The Gobi", "The Kalahari", "The Arabian"]}, {"q": "How many players from one team are on a soccer pitch?", "correct": "Eleven", "wrong": ["Nine", "Ten", "Twelve"]}, {"q": "What is the chemical symbol for sodium?", "correct": "Na", "wrong": ["So", "Sd", "Sn"]}, {"q": "Which ancient civilisation built the pyramids at Giza?", "correct": "The Egyptians", "wrong": ["The Romans", "The Greeks", "The Aztecs"]}, {"q": "What is the capital of Russia?", "correct": "Moscow", "wrong": ["St Petersburg", "Kazan", "Sochi"]}, {"q": "Who is said to have formulated gravity after seeing an apple fall?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo", "Charles Darwin"]}, {"q": "What is the tallest mountain on Earth above sea level?", "correct": "Mount Everest", "wrong": ["K2", "Kilimanjaro", "Mont Blanc"]}, {"q": "Which organ produces insulin in the human body?", "correct": "The pancreas", "wrong": ["The liver", "The kidney", "The spleen"]}, {"q": "Which language has the most native speakers worldwide?", "correct": "Mandarin Chinese", "wrong": ["English", "Spanish", "Hindi"]}, {"q": "In which country is the Taj Mahal?", "correct": "India", "wrong": ["Pakistan", "Iran", "Bangladesh"]}, {"q": "The speed of light is approximately how fast?", "correct": "300,000 km per second", "wrong": ["30,000 km per second", "3,000 km per second", "3 million km per second"]}, {"q": "Who was the first person to walk on the Moon?", "correct": "Neil Armstrong", "wrong": ["Buzz Aldrin", "Yuri Gagarin", "Michael Collins"]}, {"q": "Which gas makes up most of the air we breathe?", "correct": "Nitrogen", "wrong": ["Oxygen", "Carbon dioxide", "Hydrogen"]}, {"q": "Which Italian city is famous for its canals and gondolas?", "correct": "Venice", "wrong": ["Florence", "Rome", "Milan"]}], "3": [{"q": "What is the capital of New Zealand?", "correct": "Wellington", "wrong": ["Auckland", "Christchurch", "Dunedin"]}, {"q": "Which element has the atomic number 1?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who wrote 'War and Peace'?", "correct": "Leo Tolstoy", "wrong": ["Fyodor Dostoevsky", "Anton Chekhov", "Boris Pasternak"]}, {"q": "In which year did the Berlin Wall fall?", "correct": "1989", "wrong": ["1991", "1987", "1985"]}, {"q": "What is the longest bone in the human body?", "correct": "The femur", "wrong": ["The tibia", "The humerus", "The fibula"]}, {"q": "Which painter cut off part of his own ear?", "correct": "Vincent van Gogh", "wrong": ["Claude Monet", "Pablo Picasso", "Paul Cezanne"]}, {"q": "What is the currency of South Korea?", "correct": "The won", "wrong": ["The yen", "The yuan", "The baht"]}, {"q": "Which planet rotates on its side?", "correct": "Uranus", "wrong": ["Neptune", "Saturn", "Venus"]}, {"q": "Who composed 'The Four Seasons'?", "correct": "Antonio Vivaldi", "wrong": ["Johann Sebastian Bach", "Mozart", "Beethoven"]}, {"q": "What is the capital of Egypt?", "correct": "Cairo", "wrong": ["Alexandria", "Giza", "Luxor"]}, {"q": "Which body of water is famous for being so salty you float easily?", "correct": "The Dead Sea", "wrong": ["The Red Sea", "The Black Sea", "The Caspian Sea"]}, {"q": "What is the study of fungi called?", "correct": "Mycology", "wrong": ["Botany", "Zoology", "Ecology"]}, {"q": "Who painted the ceiling of the Sistine Chapel?", "correct": "Michelangelo", "wrong": ["Leonardo da Vinci", "Raphael", "Caravaggio"]}, {"q": "What is the smallest unit of an element that keeps its properties?", "correct": "The atom", "wrong": ["The molecule", "The cell", "The proton"]}, {"q": "Which country has the most natural lakes?", "correct": "Canada", "wrong": ["Russia", "Finland", "The USA"]}, {"q": "In Greek mythology, who is the king of the gods?", "correct": "Zeus", "wrong": ["Poseidon", "Hades", "Apollo"]}, {"q": "In which year did the Titanic sink?", "correct": "1912", "wrong": ["1905", "1918", "1920"]}, {"q": "What is the capital of Argentina?", "correct": "Buenos Aires", "wrong": ["Santiago", "Lima", "Montevideo"]}, {"q": "Who wrote the novel '1984'?", "correct": "George Orwell", "wrong": ["Aldous Huxley", "Ray Bradbury", "H.G. Wells"]}, {"q": "What is the chemical symbol for potassium?", "correct": "K", "wrong": ["P", "Po", "Pt"]}, {"q": "Which mountain range is the traditional boundary between Europe and Asia?", "correct": "The Urals", "wrong": ["The Alps", "The Caucasus", "The Carpathians"]}, {"q": "What is the largest island in the world?", "correct": "Greenland", "wrong": ["New Guinea", "Borneo", "Madagascar"]}, {"q": "Who is the Greek goddess of wisdom?", "correct": "Athena", "wrong": ["Hera", "Aphrodite", "Artemis"]}, {"q": "What does 'CPU' stand for in computing?", "correct": "Central Processing Unit", "wrong": ["Computer Processing Unit", "Central Power Unit", "Core Programming Unit"]}, {"q": "Which artist painted the melting clocks of 'The Persistence of Memory'?", "correct": "Salvador Dali", "wrong": ["Pablo Picasso", "Rene Magritte", "Joan Miro"]}, {"q": "What is the capital of Greece?", "correct": "Athens", "wrong": ["Thessaloniki", "Sparta", "Corinth"]}, {"q": "Which gas makes up the majority of the Sun?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who is credited with discovering penicillin?", "correct": "Alexander Fleming", "wrong": ["Louis Pasteur", "Joseph Lister", "Robert Koch"]}, {"q": "What is the official language of Austria?", "correct": "German", "wrong": ["Austrian", "Hungarian", "Czech"]}, {"q": "Which sea creature is the largest animal ever known to have lived?", "correct": "The blue whale", "wrong": ["The whale shark", "The giant squid", "The orca"]}], "4": [{"q": "What is the capital of Kazakhstan?", "correct": "Astana", "wrong": ["Almaty", "Tashkent", "Bishkek"]}, {"q": "What is the smallest prime number?", "correct": "2", "wrong": ["1", "3", "0"]}, {"q": "Who wrote 'Crime and Punishment'?", "correct": "Fyodor Dostoevsky", "wrong": ["Leo Tolstoy", "Anton Chekhov", "Nikolai Gogol"]}, {"q": "What is the chemical symbol for tungsten?", "correct": "W", "wrong": ["Tu", "Tn", "Tg"]}, {"q": "Which planet is the hottest in the solar system?", "correct": "Venus", "wrong": ["Mercury", "Mars", "Jupiter"]}, {"q": "In what year did the French Revolution begin?", "correct": "1789", "wrong": ["1776", "1799", "1804"]}, {"q": "Which is the longest-running animated TV series in the USA?", "correct": "The Simpsons", "wrong": ["South Park", "Family Guy", "Arthur"]}, {"q": "Who proposed the three laws of motion?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo Galilei", "Johannes Kepler"]}, {"q": "What is the capital of Mongolia?", "correct": "Ulaanbaatar", "wrong": ["Astana", "Bishkek", "Tashkent"]}, {"q": "Which element takes its name from the Greek word for the Sun?", "correct": "Helium", "wrong": ["Selenium", "Neon", "Argon"]}, {"q": "Who is generally regarded as the first Roman emperor?", "correct": "Augustus", "wrong": ["Julius Caesar", "Nero", "Caligula"]}, {"q": "What is the SI unit of electrical resistance?", "correct": "The ohm", "wrong": ["The volt", "The watt", "The ampere"]}, {"q": "Which sea lies between Europe and Africa, entered via the Strait of Gibraltar?", "correct": "The Mediterranean", "wrong": ["The Adriatic", "The Aegean", "The Black Sea"]}, {"q": "Who painted the anti-war mural 'Guernica'?", "correct": "Pablo Picasso", "wrong": ["Salvador Dali", "Joan Miro", "Francisco Goya"]}, {"q": "What is the most abundant element in the universe?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Which country was formerly known as Siam?", "correct": "Thailand", "wrong": ["Vietnam", "Cambodia", "Myanmar"]}, {"q": "What is the term for a word that reads the same backwards?", "correct": "A palindrome", "wrong": ["An anagram", "A homonym", "An acronym"]}, {"q": "Who developed an early polio vaccine in the 1950s?", "correct": "Jonas Salk", "wrong": ["Alexander Fleming", "Louis Pasteur", "Edward Jenner"]}, {"q": "What is the largest internal organ in the human body?", "correct": "The liver", "wrong": ["The brain", "The lungs", "The heart"]}, {"q": "Which composer was almost completely deaf in his later life?", "correct": "Ludwig van Beethoven", "wrong": ["Mozart", "Bach", "Chopin"]}, {"q": "What is the capital of Iceland?", "correct": "Reykjavik", "wrong": ["Oslo", "Helsinki", "Bergen"]}, {"q": "Which Wonder of the Ancient World stood in the harbour of Rhodes?", "correct": "The Colossus of Rhodes", "wrong": ["The Hanging Gardens", "The Lighthouse of Alexandria", "The Temple of Artemis"]}, {"q": "What is the chemical symbol for iron?", "correct": "Fe", "wrong": ["Ir", "In", "Fr"]}, {"q": "Who wrote 'The Divine Comedy'?", "correct": "Dante Alighieri", "wrong": ["Petrarch", "Boccaccio", "Virgil"]}, {"q": "Which blood type is known as the universal donor?", "correct": "O negative", "wrong": ["AB positive", "A positive", "O positive"]}, {"q": "What is the largest moon of Saturn?", "correct": "Titan", "wrong": ["Europa", "Ganymede", "Io"]}, {"q": "In which modern country are the ruins of ancient Carthage?", "correct": "Tunisia", "wrong": ["Egypt", "Libya", "Morocco"]}, {"q": "What is the scientific study of earthquakes called?", "correct": "Seismology", "wrong": ["Geology", "Volcanology", "Meteorology"]}, {"q": "Which Egyptian queen was famously allied with Mark Antony?", "correct": "Cleopatra", "wrong": ["Nefertiti", "Hatshepsut", "Helen"]}, {"q": "What is the smallest two-digit prime number?", "correct": "11", "wrong": ["13", "10", "12"]}]};
   var $=function(id){return document.getElementById(id);};
-  function show(id){ ['menu','game','result','boardScreen'].forEach(function(s){ var el=$(s); if(el) el.classList.toggle('hidden', s!==id); }); }
+  function show(id){ ['menu','game','result','boardScreen','lobby'].forEach(function(s){ var el=$(s); if(el) el.classList.toggle('hidden', s!==id); }); }
   var TIERS=[{name:'Explorer',rows:5,base:1},{name:'Voyager',rows:6,base:2},{name:'Pioneer',rows:7,base:3},{name:'Legend',rows:8,base:4}];
   var TYPE={gate:{time:22,delta:0,pass:1},timed:{time:8,delta:0,pass:1},enemy:{time:18,delta:1,pass:1},sealed:{time:16,delta:0,pass:2}};
   var HOWDESC={gate:'a straight question',timed:'same question, fast clock',enemy:'a tougher question',sealed:'two right in a row'};
@@ -212,20 +237,67 @@
 
   // ---- map gen (pure) ----
   function rnd(n){ return Math.floor(Math.random()*n); }
-  function pickType(){ var r=Math.random(); if(r<0.54) return 'gate'; if(r<0.76) return 'timed'; if(r<0.94) return 'enemy'; return 'sealed'; }
+  function pickType(rng){ var r=rng(); if(r<0.54) return 'gate'; if(r<0.76) return 'timed'; if(r<0.94) return 'enemy'; return 'sealed'; }
   function link(a,b){ if(a.out.indexOf(b.id)<0){ a.out.push(b.id); b.in.push(a.id); } }
-  function connect(A,B){ A.forEach(function(a){ var t=Math.round(a.frac*(B.length+1))-1; t=Math.max(0,Math.min(B.length-1,t)); link(a,B[t]); if(B.length>1&&Math.random()<0.5){ var t2=t+(Math.random()<0.5?-1:1); if(t2>=0&&t2<B.length) link(a,B[t2]); } });
+  function connect(A,B,rng){ A.forEach(function(a){ var t=Math.round(a.frac*(B.length+1))-1; t=Math.max(0,Math.min(B.length-1,t)); link(a,B[t]); if(B.length>1&&rng()<0.5){ var t2=t+(rng()<0.5?-1:1); if(t2>=0&&t2<B.length) link(a,B[t2]); } });
     B.forEach(function(b,bi){ if(b.in.length===0){ var ai=Math.round(((bi+1)/(B.length+1))*(A.length+1))-1; ai=Math.max(0,Math.min(A.length-1,ai)); link(A[ai],b); } }); }
-  function genMap(tier){ var R=TIERS[tier].rows,base=TIERS[tier].base,nodes={},rows=[],idc=0;
+  function genMap(tier,rng){ rng=rng||Math.random; var R=TIERS[tier].rows,base=TIERS[tier].base,nodes={},rows=[],idc=0;
     var start={id:'n0',row:0,type:'start',out:[],in:[]}; nodes[start.id]=start; rows.push([start]); idc=1;
-    for(var r=1;r<=R;r++){ var last=(r===R); var w=last?1:(r===1?2:(2+(Math.random()<0.5?1:0))); var row=[];
-      for(var c=0;c<w;c++){ var ty=last?'sealed':pickType(); var nd={id:'n'+idc++,row:r,type:ty,out:[],in:[]}; nodes[nd.id]=nd; row.push(nd); } rows.push(row); }
+    for(var r=1;r<=R;r++){ var last=(r===R); var w=last?1:(r===1?2:(2+(rng()<0.5?1:0))); var row=[];
+      for(var c=0;c<w;c++){ var ty=last?'sealed':pickType(rng); var nd={id:'n'+idc++,row:r,type:ty,out:[],in:[]}; nodes[nd.id]=nd; row.push(nd); } rows.push(row); }
     var core={id:'n'+idc++,row:R+1,type:'core',out:[],in:[]}; nodes[core.id]=core; rows.push([core]);
     for(var i=0;i<rows.length;i++){ var n=rows[i].length; rows[i].forEach(function(nd,j){ nd.frac=(j+1)/(n+1); }); }
-    for(var k=0;k<rows.length-1;k++){ connect(rows[k],rows[k+1]); }
+    for(var k=0;k<rows.length-1;k++){ connect(rows[k],rows[k+1],rng); }
     return {nodes:nodes,rows:rows,startId:start.id,coreId:core.id,R:R,base:base}; }
 
   var S=null, charIdx=0, tierIdx=0, timerRAF=null, used={};
+
+  // ---------- multiplayer (race) ----------
+  var mode='solo', mpOn=false, myName='Player', room='', MPID=W.id+'_mp', raceTier=0;
+  var lobbyId=null, pollId=null, resultsId=null;
+  function hstr(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function mpInsert(o){ o.quiz_id=MPID; o.group_code=room; return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify([o])}).catch(function(){}); }
+  function mpPing(depth,lives,state){ return mpInsert({name:myName,correct:depth,level:lives,time_left:state}); }
+  function mpGO(tier){ return mpInsert({name:'__GO__',correct:0,level:tier,time_left:0}); }
+  function mpPoll(){ var url=sbBase()+'?select=name,correct,level,time_left,created_at&quiz_id=eq.'+encodeURIComponent(MPID)+'&group_code=eq.'+encodeURIComponent(room)+'&order=created_at.desc&limit=120'; return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; }); }
+  function digest(rows){ var goStart=null,tier=0,latest={},finals={},maxT=0;
+    rows.forEach(function(r){ var t=Date.parse(r.created_at); if(t>maxT) maxT=t;
+      if(r.name==='__GO__'){ if(goStart===null||t<goStart){ goStart=t; tier=r.level; } return; }
+      if(!latest[r.name]||t>latest[r.name].t) latest[r.name]={depth:r.correct,lives:r.level,state:r.time_left,t:t};
+      if(r.time_left===1){ if(finals[r.name]==null||t<finals[r.name]) finals[r.name]=t; } });
+    var players=Object.keys(latest).map(function(n){ return {name:n,depth:latest[n].depth,lives:latest[n].lives,state:latest[n].state,t:latest[n].t,fin:(finals[n]!=null?finals[n]:null)}; });
+    return {go:goStart!=null,start:goStart,tier:tier,maxT:maxT,players:players}; }
+  function sortStandings(ps){ return ps.slice().sort(function(a,b){ var af=a.fin!=null,bf=b.fin!=null; if(af&&bf) return a.fin-b.fin; if(af) return -1; if(bf) return 1; var ae=a.state===2,be=b.state===2; if(ae!==be) return ae?1:-1; return b.depth-a.depth; }); }
+  function stopLobby(){ if(lobbyId){ clearInterval(lobbyId); lobbyId=null; } }
+  function stopRacePoll(){ if(pollId){ clearInterval(pollId); pollId=null; } }
+  function stopResults(){ if(resultsId){ clearInterval(resultsId); resultsId=null; } }
+  function stopAllNet(){ stopLobby(); stopRacePoll(); stopResults(); }
+  function enterLobby(){ mpOn=false; show('lobby'); $('lobbyCode').textContent=room; $('lobbyStatus').textContent='Waiting for players\u2026'; mpPing(0,LIVES,0); stopLobby(); lobbyId=setInterval(lobbyTick,1500); lobbyTick(); }
+  function lobbyTick(){ mpPing(0,LIVES,0); mpPoll().then(function(rows){ var d=digest(rows);
+    var present=d.players.filter(function(p){ return (d.maxT-p.t)<12000; }).map(function(p){ return p.name; });
+    if(present.indexOf(myName)<0) present.push(myName); renderLobby(present);
+    if(d.go && (d.maxT-d.start)<15000){ stopLobby(); beginCountdown(d.tier); } }); }
+  function renderLobby(list){ var ul=$('lobbyList'); ul.innerHTML=''; list.forEach(function(n){ var li=document.createElement('li'); li.className='prow'; li.innerHTML='<span class="dot" style="background:var(--gate)"></span>'+escapeHtml(n)+(n===myName?' <small>(you)</small>':''); ul.appendChild(li); });
+    $('lobbyStatus').textContent = list.length>1 ? (list.length+' in the room \u2014 anyone can start') : 'Waiting for players\u2026 share the room code'; }
+  function beginCountdown(tier){ raceTier=tier; var ov=$('countdown'); ov.classList.remove('hidden'); var n=3; ov.textContent='3'; beep(440,.1,'sine',.12);
+    var iv=setInterval(function(){ n--; if(n>0){ ov.textContent=String(n); beep(440,.1,'sine',.12); } else if(n===0){ ov.textContent='GO!'; beep(720,.16,'sine',.14); } else { clearInterval(iv); ov.classList.add('hidden'); startRaceGame(); } },800); }
+  function startRaceGame(){ mpOn=true; beginGame(raceTier, mulberry32(hstr(room))); mpPing(0,LIVES,0); stopRacePoll(); pollId=setInterval(racePollTick,1600); racePollTick(); }
+  function racePollTick(){ mpPoll().then(function(rows){ renderMpBar(digest(rows)); }); }
+  function renderMpBar(d){ var bar=$('mpBar'); if(!mpOn){ bar.classList.add('hidden'); return; } bar.classList.remove('hidden');
+    var R=(S?S.map.R+1:1), ord=sortStandings(d.players);
+    bar.innerHTML=ord.slice(0,5).map(function(p){ var pct=Math.round(Math.min(1,p.depth/R)*100); var mark=p.fin!=null?' \u2713':(p.state===2?' \u2717':'');
+      return '<div class="mprow'+(p.name===myName?' me':'')+'"><span class="mpn">'+escapeHtml(p.name)+mark+'</span><span class="mpt"><span class="mpf" style="width:'+pct+'%"></span></span></div>'; }).join(''); }
+  function mpResults(outcome){ stopRacePoll(); show('result'); $('saveArea').classList.add('hidden'); $('againBtn').classList.add('hidden');
+    $('resTitle').textContent = outcome==='win'?W.winTitle:'Out of the race'; $('resTitle').style.color = outcome==='win'?'var(--gold)':'var(--wrong)';
+    stopResults(); resultsId=setInterval(resultsTick,1600); resultsTick(); }
+  function resultsTick(){ mpPoll().then(function(rows){ var ord=sortStandings(digest(rows).players); var winner=(ord.length&&ord[0].fin!=null)?ord[0].name:null;
+    var html=''; if(winner) html+='<div style="margin-bottom:10px;font-weight:800;color:var(--gold);">'+(winner===myName?'You won the race!':escapeHtml(winner)+' won the race')+'</div>';
+    html+='<ul style="list-style:none;padding:0;margin:0 auto;display:flex;flex-direction:column;gap:6px;max-width:340px;">';
+    ord.forEach(function(p,i){ var tag=p.fin!=null?('#'+(i+1)+' in'):(p.state===2?'out':('depth '+p.depth)); html+='<li class="brow'+(p.name===myName?' me':'')+'"><span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(p.name)+'</span><span class="bsc">'+tag+'</span></li>'; });
+    html+='</ul>'; $('resStats').innerHTML=html; }); }
+  function buildModeRow(){ var mr=$('modeRow'); mr.innerHTML=''; [['solo','Solo'],['race','Race a friend']].forEach(function(m){ var b=document.createElement('button'); b.className='chip'+(mode===m[0]?' sel':''); b.style.setProperty('--cc','var(--gate)'); b.textContent=m[1]; b.addEventListener('click',function(){ mode=m[0]; buildModeRow(); updateModeUI(); ensureAudio(); }); mr.appendChild(b); }); }
+  function updateModeUI(){ var race=(mode==='race'); $('codeLbl').innerHTML = race?'Room code (required)':'Squad code (optional &mdash; share a board with friends)'; $('startBtn').textContent = race?'Find players':'Begin'; }
   function pickQuestion(t){ t=Math.max(1,Math.min(4,t)); var arr=BANK[String(t)]; if(!used[t]) used[t]={}; var tries=0,idx;
     do{ idx=rnd(arr.length); tries++; }while(used[t][idx]&&tries<40); if(Object.keys(used[t]).length>=arr.length) used[t]={}; used[t][idx]=1;
     var q=arr[idx]; var opts=[{text:q.correct,ok:true}]; q.wrong.forEach(function(w){ opts.push({text:w,ok:false}); });
@@ -254,9 +326,10 @@
     var ms=$('mapScroll'); ms.scrollTop=Math.max(0,cur.py-ms.clientHeight*0.62); $('statCorrect').textContent=S.correct; renderLives(); }
   function renderLives(){ var box=$('livesBox'); box.innerHTML=''; for(var i=0;i<LIVES;i++){ var sp=document.createElement('span'); sp.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" class="'+(i<S.lives?'':'lost')+'"><path d="M12 3l6.5 17L12 16.4 5.5 20z"/></svg>'; box.appendChild(sp.firstChild); } }
 
-  function startRun(){ used={}; S={map:genMap(tierIdx),pos:null,lives:LIVES,correct:0,wrongs:0,t0:Date.now(),pending:null,visited:{}}; S.pos=S.map.startId; S.visited[S.pos]=1;
-    $('tierPill').textContent=TIERS[tierIdx].name.toUpperCase(); show('game');
+  function beginGame(tier,rng){ used={}; S={map:genMap(tier,rng),pos:null,lives:LIVES,correct:0,wrongs:0,t0:Date.now(),pending:null,visited:{},done:false}; S.pos=S.map.startId; S.visited[S.pos]=1;
+    $('tierPill').textContent=TIERS[tier].name.toUpperCase(); $('mpBar').classList.toggle('hidden',!mpOn); show('game');
     requestAnimationFrame(function(){ buildMap(); refreshMap(); startRunTimer(); $('hint').textContent='Tap a glowing node to advance.'; }); }
+  function startRun(){ mpOn=false; $('againBtn').classList.remove('hidden'); beginGame(tierIdx, Math.random); }
   var runTimerId=null; function startRunTimer(){ stopRunTimer(); runTimerId=setInterval(function(){ $('runTimer').textContent=fmt((Date.now()-S.t0)/1000); },500); }
   function stopRunTimer(){ if(runTimerId){ clearInterval(runTimerId); runTimerId=null; } }
   function onNodeTap(id){ if(!S||S.pending) return; var node=S.map.nodes[id],cur=S.map.nodes[S.pos]; if(cur.out.indexOf(id)<0||S.visited[id]) return;
@@ -280,13 +353,13 @@
       S.lives--; S.wrongs++; S.pending.have=0; renderLives();
       if(S.lives<=0){ $('obFx').textContent='Defeated.'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ defeat(S.pending.node); },900); }
       else { $('obFx').textContent=(btn?'Wrong!':'Out of time!')+' \u2212 a life'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ S.pending.locked=false; nextQuestion(); },1000); } } }
-  function passNode(node){ S.visited[node.id]=1; S.pos=node.id; S.pending=null; $('obWrap').classList.add('hidden'); refreshMap();
+  function passNode(node){ S.visited[node.id]=1; S.pos=node.id; S.pending=null; $('obWrap').classList.add('hidden'); refreshMap(); if(mpOn) mpPing(S.map.nodes[S.pos].row,S.lives,0);
     var cur=S.map.nodes[S.pos]; if(cur.out.length===1&&S.map.nodes[cur.out[0]].type==='core') $('hint').textContent=W.dest.charAt(0).toUpperCase()+W.dest.slice(1)+' is in reach \u2014 make the final move!'; else $('hint').textContent='Cleared! Choose your next move.'; }
-  function win(){ stopRunTimer(); stopObTimer(); var el=(Date.now()-S.t0)/1000; lastRun={correct:S.correct,level:S.lives,timeLeft:el,t:Date.now()};
+  function win(){ stopRunTimer(); stopObTimer(); if(mpOn){ S.done=true; mpPing(S.map.R+1,S.lives,1); mpResults('win'); return; } var el=(Date.now()-S.t0)/1000; lastRun={correct:S.correct,level:S.lives,timeLeft:el,t:Date.now()};
     $('resTitle').textContent=W.winTitle; $('resTitle').style.color='var(--gold)';
     $('resStats').innerHTML='Reached '+W.dest+' in <b>'+fmt(el)+'</b><br>'+S.lives+' \u2665 remaining \u00b7 '+S.correct+' obstacles cleared';
     boardCtx='result'; $('saveArea').classList.remove('hidden'); $('saveSummary').textContent=fmtScore(lastRun); var nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm; show('result'); showBoard(); }
-  function defeat(node){ stopRunTimer(); stopObTimer(); S.pending=null; $('obWrap').classList.add('hidden'); lastRun=null; var depth=node?node.row:0;
+  function defeat(node){ stopRunTimer(); stopObTimer(); S.pending=null; $('obWrap').classList.add('hidden'); if(mpOn){ S.done=true; mpPing(node?node.row:0,S.lives,2); mpResults('lose'); return; } lastRun=null; var depth=node?node.row:0;
     $('resTitle').textContent=W.loseTitle; $('resTitle').style.color='var(--wrong)';
     $('resStats').innerHTML='Your run ended at depth <b>'+depth+'</b> of '+S.map.R+'<br>'+S.correct+' obstacles cleared \u00b7 '+fmt((Date.now()-S.t0)/1000);
     boardCtx='result'; $('saveArea').classList.add('hidden'); show('result'); showBoard(); }
@@ -296,19 +369,26 @@
     var tr=$('tierRow'); tr.innerHTML=''; TIERS.forEach(function(t,i){ var b=document.createElement('button'); b.className='chip'+(i===tierIdx?' sel':''); b.textContent=t.name; b.addEventListener('click',function(){ tierIdx=i; buildMenu(); ensureAudio(); }); tr.appendChild(b); }); }
   function fillTexts(){ $('subEl').textContent=W.sub; $('titleEl').textContent=W.brand; $('leadEl').textContent=W.lead; $('pilotLbl').textContent=W.pilot; $('crewLbl').textContent=W.crew;
     var how=$('howEl'); how.innerHTML=''; ['gate','timed','enemy','sealed'].forEach(function(t){ var d=document.createElement('div'); d.className='howline'; d.innerHTML='<span class="pip" style="background:var(--'+t+')"></span>'+W.types[t].label+' <small>&mdash; '+HOWDESC[t]+'</small>'; how.appendChild(d); }); }
-  function init(){ fillTexts(); var nm=lsGet(NAME_KEY); if(nm) $('nameIn').value=nm; var gc=lsGet(GROUP_KEY); if(gc) $('codeIn').value=gc; buildMenu();
-    $('startBtn').addEventListener('click',function(){ ensureAudio(); var name=($('nameIn').value||'').trim().slice(0,14); if(name) lsSet(NAME_KEY,name); lsSet(GROUP_KEY,($('codeIn').value||'').trim()); startRun(); });
+  function init(){ fillTexts(); var nm=lsGet(NAME_KEY); if(nm) $('nameIn').value=nm; var gc=lsGet(GROUP_KEY); if(gc) $('codeIn').value=gc; buildMenu(); buildModeRow(); updateModeUI();
+    $('startBtn').addEventListener('click',function(){ ensureAudio(); myName=($('nameIn').value||'').trim().slice(0,14)||'Player'; lsSet(NAME_KEY,myName); var code=($('codeIn').value||'').trim(); lsSet(GROUP_KEY,code);
+      if(mode==='race'){ room=code.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24); if(!room){ $('menuErr').textContent='Enter a room code to race.'; return; } $('menuErr').textContent=''; enterLobby(); }
+      else { startRun(); } });
+    $('startRaceBtn').addEventListener('click',function(){ ensureAudio(); mpGO(tierIdx); $('lobbyStatus').textContent='Starting\u2026'; });
+    $('leaveLobby').addEventListener('click',function(){ stopAllNet(); show('menu'); });
     $('boardBtn').addEventListener('click',function(){ ensureAudio(); boardCtx='menu'; show('boardScreen'); showBoard(); });
     $('boardBack').addEventListener('click',function(){ show('menu'); });
     $('boardSave').addEventListener('click',saveScore);
     $('againBtn').addEventListener('click',function(){ ensureAudio(); startRun(); });
-    $('menuBtn2').addEventListener('click',function(){ show('menu'); }); }
+    $('menuBtn2').addEventListener('click',function(){ stopAllNet(); show('menu'); }); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 
   window.__core_test=function(cmd,arg){
     if(cmd==='gencheck'){ for(var t=0;t<TIERS.length;t++){ for(var k=0;k<60;k++){ var m=genMap(t); var v=validateMap(m); if(v!=='ok') return 'FAIL t'+t+':'+v; } } return 'OK'; }
     if(cmd==='simulate'){ return simulate(arg); }
     if(cmd==='world'){ return W.id+'|'+W.brand+'|'+W.types.enemy.label; }
+    if(cmd==='seedcheck'){ function sig(m){ return m.rows.map(function(r){ return r.map(function(n){ return n.type[0]; }).join(''); }).join('|'); }
+      var A=sig(genMap(2,mulberry32(hstr('ROOM')))),B=sig(genMap(2,mulberry32(hstr('ROOM')))),C=sig(genMap(2,mulberry32(hstr('ROOM2')))); return (A===B&&A!==C)?'OK':('FAIL '+A+' :: '+C); }
+    if(cmd==='digest'){ var d=digest(arg); return JSON.stringify({go:d.go,tier:d.tier,n:d.players.length,order:sortStandings(d.players).map(function(p){ return p.name+':'+(p.fin!=null?'F':p.state)+':'+p.depth; })}); }
     return 'unknown'; };
   function validateMap(m){ var idsl=Object.keys(m.nodes); for(var i=0;i<idsl.length;i++){ var n=m.nodes[idsl[i]]; if(n.type!=='start'&&n.in.length===0) return 'in'; if(n.type!=='core'&&n.out.length===0) return 'out'; }
     var seen={},q=[m.startId]; seen[m.startId]=1; while(q.length){ var c=m.nodes[q.shift()]; c.out.forEach(function(b){ if(!seen[b]){ seen[b]=1; q.push(b); } }); }
