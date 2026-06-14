@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Escape the Keep — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Cinzel:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg0:#14131c;--bg1:#211f2c;--card:#1c1a26;--card2:#262433;--line:#3a3650;--ink:#f0ead9;--mut:#a99f86;--gate:#8aa0b8;--timed:#ff9d3c;--enemy:#e0594d;--sealed:#b58be0;--start:#7ec4a0;--core:#ffce5c;--coreA:#fff0c8;--coreB:#c9921f;--coreInk:#3a2600;--coreGlow:rgba(255,206,92,.55);--coreGlow2:rgba(255,206,92,.95);--right:#7fc06a;--wrong:#e0594d;--gold:#ffce5c;--edge:#3a3650;--nodebg:#16141f;--mapglow:rgba(255,157,60,.12);--disp:'Cinzel',serif;--titlegrad:linear-gradient(110deg,#ffe6a8,#ff9d3c);--titleglow:rgba(255,157,60,.4);--ctaA:#ffd98a;--ctaB:#ff9d3c;--ctaSh:#a85f1e;--ctaGlow:rgba(255,157,60,.4);--ctaInk:#2a1605; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:radial-gradient(60% 40% at 50% -6%, rgba(255,157,60,.18), transparent 60%),radial-gradient(50% 40% at 14% 22%, rgba(120,140,170,.10), transparent 60%),linear-gradient(160deg,#100f17,#211f2c);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:820px;min-height:600px;display:flex;flex-direction:column;padding:16px;}
+  .display{font-family:var(--disp);letter-spacing:1px;}
+  .hidden{display:none !important;}
+  .screen{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:13px;overflow-y:auto;}
+  h1.title{font-family:var(--disp);font-weight:900;font-size:clamp(26px,7.6vw,38px);margin:6px 0 0;line-height:1.05;
+    background:var(--titlegrad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px var(--titleglow));}
+  .sub{font-family:var(--disp);font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:11px;color:var(--gold);}
+  .lead{color:var(--mut);font-size:14px;line-height:1.5;font-weight:600;margin:2px 0 4px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-left:3px;}
+  input{width:100%;font-family:inherit;font-weight:800;font-size:16px;padding:13px 15px;border-radius:13px;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);}
+  input:focus{outline:none;border-color:var(--gate);}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-family:inherit;font-weight:800;font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.04);border:2px solid var(--line);border-radius:30px;padding:9px 15px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:8px;}
+  .chip .dot{width:11px;height:11px;border-radius:50%;background:var(--cc,#888);}
+  .chip.sel{color:#0b1030;background:var(--cc,#888);border-color:var(--cc,#888);}
+  .tier .chip.sel{background:var(--gold);border-color:var(--gold);color:var(--ctaInk);}
+  .cta{font-family:var(--disp);font-weight:800;font-size:clamp(18px,5vw,22px);color:var(--ctaInk);border:none;cursor:pointer;
+    background:linear-gradient(180deg,var(--ctaA),var(--ctaB));border-radius:16px;padding:16px;margin-top:4px;
+    box-shadow:0 0 22px var(--ctaGlow),0 7px 0 var(--ctaSh);transition:transform .08s,box-shadow .08s;}
+  .cta:active{transform:translateY(4px);box-shadow:0 0 16px var(--ctaGlow),0 3px 0 var(--ctaSh);}
+  .linkbtn{background:none;border:none;color:var(--mut);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;text-decoration:underline;padding:8px;}
+  .err{color:var(--wrong);font-weight:800;font-size:13px;min-height:1em;}
+  .howto{display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:12px 14px;}
+  .howline{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:var(--ink);}
+  .howline .pip{width:13px;height:13px;border-radius:50%;flex:none;}
+  .howline small{color:var(--mut);font-weight:600;}
+  #game{padding:12px;}
+  #hud{display:flex;align-items:center;gap:10px;padding:4px 4px 10px;}
+  #livesBox{display:flex;gap:4px;}
+  #livesBox svg{width:22px;height:22px;color:var(--start);}
+  #livesBox svg.lost{color:var(--line);}
+  .hstat{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--mut);}
+  .hstat b{color:var(--ink);}
+  #runTimer{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:16px;color:var(--gate);}
+  #tierPill{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--ctaInk);background:var(--gold);border-radius:20px;padding:4px 10px;}
+  #mapScroll{flex:1;overflow-y:auto;overflow-x:hidden;border-radius:14px;position:relative;background:radial-gradient(80% 50% at 50% 0%, var(--mapglow), transparent 60%);}
+  #mapInner{position:relative;width:100%;}
+  #edgesSvg{position:absolute;left:0;top:0;}
+  .node{position:absolute;width:46px;height:46px;transform:translate(-50%,-50%);border-radius:50%;border:2.5px solid var(--c,#888);color:var(--c,#888);background:var(--nodebg);display:flex;align-items:center;justify-content:center;transition:box-shadow .2s,opacity .2s,transform .1s;z-index:2;}
+  .node svg{width:23px;height:23px;}
+  .t-gate{--c:var(--gate)} .t-timed{--c:var(--timed)} .t-enemy{--c:var(--enemy)} .t-sealed{--c:var(--sealed)} .t-start{--c:var(--start)}
+  .node.done{opacity:.5;} .node.locked{opacity:.3;}
+  .node.reachable{cursor:pointer;box-shadow:0 0 16px var(--c),0 0 0 2px var(--c);animation:nodepulse 1.3s ease-in-out infinite;}
+  .node.reachable:active{transform:translate(-50%,-50%) scale(.92);}
+  .node.current{box-shadow:0 0 0 4px var(--me,#fff),0 0 22px var(--me,#fff);z-index:4;}
+  @keyframes nodepulse{0%,100%{box-shadow:0 0 12px var(--c),0 0 0 2px var(--c);}50%{box-shadow:0 0 22px var(--c),0 0 0 3px var(--c);}}
+  .node.core{width:64px;height:64px;border-color:var(--coreA);color:var(--coreInk);font-family:var(--disp);font-weight:800;font-size:12px;background:radial-gradient(circle,var(--coreA),var(--core) 62%,var(--coreB));box-shadow:0 0 34px var(--coreGlow);}
+  .node.core.reachable{animation:corepulse 1.1s ease-in-out infinite;}
+  @keyframes corepulse{0%,100%{box-shadow:0 0 30px var(--coreGlow);}50%{box-shadow:0 0 48px var(--coreGlow2);}}
+  .edge{stroke:var(--edge);stroke-width:3;}
+  .edge.live{stroke:var(--gold);stroke-width:4;filter:drop-shadow(0 0 4px var(--gold));}
+  #hint{text-align:center;color:var(--mut);font-weight:700;font-size:13px;padding:8px 0 2px;min-height:1.2em;}
+  #obWrap{position:absolute;inset:0;background:rgba(5,4,12,.78);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;}
+  #obCard{width:100%;max-width:460px;background:linear-gradient(180deg,var(--card2),var(--card));border:2px solid var(--c,#888);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:13px;box-shadow:0 0 34px rgba(0,0,0,.5),0 0 22px color-mix(in srgb,var(--c,#888) 40%,transparent);}
+  #obBanner{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:1px;color:var(--c,#888);text-align:center;text-transform:uppercase;}
+  #obStreak{text-align:center;font-weight:800;font-size:13px;color:var(--gold);min-height:1em;}
+  .obTimerWrap{height:7px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;}
+  #obTimer{height:100%;width:100%;background:linear-gradient(90deg,var(--c,#888),#fff);border-radius:6px;}
+  #obQ{font-weight:800;font-size:clamp(17px,4.6vw,21px);line-height:1.3;text-align:center;}
+  #obOpts{display:flex;flex-direction:column;gap:9px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:16px;color:var(--ink);background:rgba(255,255,255,.05);border:2px solid var(--line);border-radius:13px;padding:13px 15px;cursor:pointer;text-align:left;transition:all .1s;}
+  .opt:active{transform:scale(.98);}
+  .opt.good{background:rgba(110,200,120,.2);border-color:var(--right);}
+  .opt.bad{background:rgba(220,80,90,.18);border-color:var(--wrong);}
+  #obFx{text-align:center;font-weight:800;min-height:1.2em;font-size:15px;}
+  #result{align-items:center;text-align:center;justify-content:center;}
+  #resTitle{font-family:var(--disp);font-weight:900;font-size:clamp(25px,7.2vw,36px);}
+  #resStats{color:var(--ink);font-weight:700;font-size:16px;line-height:1.6;}
+  #resStats b{color:var(--gold);}
+  .board{width:100%;max-width:420px;margin:6px auto 0;text-align:left;}
+  .board h3{font-family:var(--disp);font-size:13px;color:var(--gold);letter-spacing:2px;margin:8px 0;text-align:center;}
+  #boardList,#boardList2{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .brow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:9px 13px;font-weight:800;}
+  .brow.me{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-family:var(--disp);font-size:13px;color:var(--gold);}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .bempty,.bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;}
+  .saveArea{display:flex;flex-direction:column;gap:9px;width:100%;max-width:420px;margin:6px auto;}
+  .saverow{display:flex;gap:8px;}
+  .saverow input{flex:1;text-align:center;}
+  button.save{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--ctaInk);border:none;cursor:pointer;background:linear-gradient(180deg,var(--ctaA),var(--ctaB));border-radius:13px;padding:0 18px;}
+  .savesum{color:var(--mut);font-weight:700;font-size:13px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="menu" class="screen">
+    <div class="sub" id="subEl"></div>
+    <h1 class="title" id="titleEl"></h1>
+    <p class="lead" id="leadEl"></p>
+    <div class="howto" id="howEl"></div>
+    <div class="field"><label id="pilotLbl"></label><input id="nameIn" maxlength="14" placeholder="Your name" autocomplete="off"></div>
+    <div class="field"><label id="crewLbl"></label><div class="chips" id="charRow"></div></div>
+    <div class="field"><label>Difficulty</label><div class="chips tier" id="tierRow"></div></div>
+    <div class="field"><label>Squad code (optional &mdash; share a board with friends)</label><input id="codeIn" maxlength="24" placeholder="e.g. ORION" autocomplete="off"></div>
+    <button id="startBtn" class="cta">Begin</button>
+    <button id="boardBtn" class="linkbtn">View leaderboard</button>
+    <div class="err" id="menuErr"></div>
+  </section>
+  <section id="game" class="screen hidden">
+    <div id="hud"><div id="livesBox"></div><span class="hstat">Cleared <b id="statCorrect">0</b></span><span id="tierPill">EXPLORER</span><span id="runTimer">0:00</span></div>
+    <div id="mapScroll"><div id="mapInner"><svg id="edgesSvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+    <div id="hint"></div>
+  </section>
+  <div id="obWrap" class="hidden"><div id="obCard">
+    <div id="obBanner"></div><div id="obStreak" class="hidden"></div>
+    <div class="obTimerWrap"><div id="obTimer"></div></div>
+    <div id="obQ"></div><div id="obOpts"></div><div id="obFx"></div>
+  </div></div>
+  <section id="result" class="screen hidden">
+    <h1 id="resTitle" class="display"></h1>
+    <div id="resStats"></div>
+    <div class="saveArea hidden" id="saveArea">
+      <div class="savesum" id="saveSummary"></div>
+      <div class="saverow"><input id="boardName" maxlength="14" placeholder="Your name"><button class="save" id="boardSave">Save</button></div>
+    </div>
+    <div class="board"><h3 id="boardTitle">This device</h3><ul id="boardList"></ul><div class="bempty hidden" id="boardEmpty"></div></div>
+    <button id="againBtn" class="cta" style="max-width:320px;width:100%;">Play again</button>
+    <button id="menuBtn2" class="linkbtn">Back to menu</button>
+  </section>
+  <section id="boardScreen" class="screen hidden" style="justify-content:center;align-items:center;">
+    <div class="sub">Leaderboard</div>
+    <div class="board"><h3 id="boardTitle2">This device</h3><ul id="boardList2"></ul><div class="bempty hidden" id="boardEmpty2"></div></div>
+    <button id="boardBack" class="cta" style="max-width:320px;width:100%;">Back</button>
+  </section>
+</div>
+<script>
+(function(){
+  "use strict";
+  var W={"id": "qc_keep", "brand": "Escape the Keep", "sub": "TierBrain · Adventure", "lead": "Pick your way out of the crumbling keep, hall by hall. Every doorway sets a challenge — answer to pass. Three wrong and the dungeon claims you.", "pilot": "Hero name", "crew": "Champion", "goal": "GATE", "dest": "the gate", "winTitle": "You escaped the Keep", "loseTitle": "Slain in the Dungeon", "types": {"gate": {"label": "Gateway", "prefix": "", "glyph": "plain"}, "timed": {"label": "Portcullis", "prefix": "", "glyph": "clock"}, "enemy": {"label": "Knight", "prefix": "", "glyph": "burst"}, "sealed": {"label": "Locked Vault", "prefix": "", "glyph": "lock"}}, "crews": [{"name": "Knight", "col": "#8aa0b8"}, {"name": "Rogue", "col": "#7fc06a"}, {"name": "Mage", "col": "#b58be0"}, {"name": "Squire", "col": "#ff9d3c"}]};
+  var BANK={"1": [{"q": "What is the capital of France?", "correct": "Paris", "wrong": ["London", "Rome", "Madrid"]}, {"q": "How many days are there in a week?", "correct": "Seven", "wrong": ["Five", "Ten", "Twelve"]}, {"q": "What colour do you get by mixing blue and yellow?", "correct": "Green", "wrong": ["Purple", "Orange", "Brown"]}, {"q": "Which planet do we live on?", "correct": "Earth", "wrong": ["Mars", "Venus", "Jupiter"]}, {"q": "What is the largest ocean on Earth?", "correct": "The Pacific", "wrong": ["The Atlantic", "The Indian", "The Arctic"]}, {"q": "How many legs does a spider have?", "correct": "Eight", "wrong": ["Six", "Four", "Ten"]}, {"q": "What is the freezing point of water in Celsius?", "correct": "0 degrees", "wrong": ["10 degrees", "32 degrees", "100 degrees"]}, {"q": "Which animal is often called 'man's best friend'?", "correct": "The dog", "wrong": ["The cat", "The horse", "The cow"]}, {"q": "What is the capital of Italy?", "correct": "Rome", "wrong": ["Milan", "Venice", "Naples"]}, {"q": "How many continents are there?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What do bees make?", "correct": "Honey", "wrong": ["Milk", "Silk", "Butter"]}, {"q": "Which is the tallest land animal?", "correct": "The giraffe", "wrong": ["The elephant", "The horse", "The camel"]}, {"q": "What is H2O more commonly known as?", "correct": "Water", "wrong": ["Salt", "Oxygen", "Acid"]}, {"q": "Which gas do humans need to breathe to survive?", "correct": "Oxygen", "wrong": ["Carbon dioxide", "Helium", "Nitrogen"]}, {"q": "How many sides does a triangle have?", "correct": "Three", "wrong": ["Four", "Five", "Two"]}, {"q": "What is the capital of Japan?", "correct": "Tokyo", "wrong": ["Kyoto", "Osaka", "Seoul"]}, {"q": "Which fruit is in the saying about keeping the doctor away?", "correct": "Apple", "wrong": ["Banana", "Orange", "Pear"]}, {"q": "What is the opposite of 'hot'?", "correct": "Cold", "wrong": ["Warm", "Dry", "Loud"]}, {"q": "Which sea creature has eight arms?", "correct": "The octopus", "wrong": ["The shark", "The dolphin", "The jellyfish"]}, {"q": "What is the largest planet in the solar system?", "correct": "Jupiter", "wrong": ["Saturn", "Earth", "Mars"]}, {"q": "What do caterpillars turn into?", "correct": "Butterflies", "wrong": ["Spiders", "Beetles", "Frogs"]}, {"q": "Which country is famous for the Eiffel Tower?", "correct": "France", "wrong": ["Italy", "Spain", "Germany"]}, {"q": "How many colours are in a rainbow, traditionally?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What is the main language spoken in Brazil?", "correct": "Portuguese", "wrong": ["Spanish", "English", "French"]}, {"q": "Which is the fastest land animal?", "correct": "The cheetah", "wrong": ["The lion", "The horse", "The leopard"]}, {"q": "What is frozen water called?", "correct": "Ice", "wrong": ["Steam", "Mud", "Fog"]}, {"q": "How many minutes are in an hour?", "correct": "60", "wrong": ["30", "100", "24"]}, {"q": "Which planet is known as the Red Planet?", "correct": "Mars", "wrong": ["Venus", "Mercury", "Saturn"]}, {"q": "What is the capital of England?", "correct": "London", "wrong": ["Manchester", "Birmingham", "Liverpool"]}, {"q": "Which instrument has black and white keys?", "correct": "The piano", "wrong": ["The violin", "The guitar", "The flute"]}], "2": [{"q": "What is the capital of Australia?", "correct": "Canberra", "wrong": ["Sydney", "Melbourne", "Perth"]}, {"q": "Who painted the Mona Lisa?", "correct": "Leonardo da Vinci", "wrong": ["Michelangelo", "Raphael", "Donatello"]}, {"q": "What is the chemical symbol for gold?", "correct": "Au", "wrong": ["Ag", "Gd", "Go"]}, {"q": "How many bones are in the adult human body?", "correct": "206", "wrong": ["201", "256", "196"]}, {"q": "Which country gifted the Statue of Liberty to the USA?", "correct": "France", "wrong": ["Britain", "Spain", "Italy"]}, {"q": "What is the longest river in Africa?", "correct": "The Nile", "wrong": ["The Congo", "The Niger", "The Zambezi"]}, {"q": "In which year did World War II end?", "correct": "1945", "wrong": ["1944", "1939", "1918"]}, {"q": "What is the hardest natural substance?", "correct": "Diamond", "wrong": ["Gold", "Iron", "Quartz"]}, {"q": "Who wrote the play 'Romeo and Juliet'?", "correct": "William Shakespeare", "wrong": ["Charles Dickens", "Jane Austen", "Mark Twain"]}, {"q": "What is the smallest country in the world?", "correct": "Vatican City", "wrong": ["Monaco", "San Marino", "Liechtenstein"]}, {"q": "Which metal is liquid at room temperature?", "correct": "Mercury", "wrong": ["Iron", "Lead", "Aluminium"]}, {"q": "How many strings does a standard guitar have?", "correct": "Six", "wrong": ["Four", "Five", "Seven"]}, {"q": "What is the capital of Canada?", "correct": "Ottawa", "wrong": ["Toronto", "Vancouver", "Montreal"]}, {"q": "Which planet has the most prominent ring system?", "correct": "Saturn", "wrong": ["Jupiter", "Uranus", "Neptune"]}, {"q": "What currency is used in Japan?", "correct": "The yen", "wrong": ["The won", "The yuan", "The ringgit"]}, {"q": "Who developed the theory of general relativity?", "correct": "Albert Einstein", "wrong": ["Isaac Newton", "Niels Bohr", "Galileo"]}, {"q": "What is the largest hot desert in the world?", "correct": "The Sahara", "wrong": ["The Gobi", "The Kalahari", "The Arabian"]}, {"q": "How many players from one team are on a soccer pitch?", "correct": "Eleven", "wrong": ["Nine", "Ten", "Twelve"]}, {"q": "What is the chemical symbol for sodium?", "correct": "Na", "wrong": ["So", "Sd", "Sn"]}, {"q": "Which ancient civilisation built the pyramids at Giza?", "correct": "The Egyptians", "wrong": ["The Romans", "The Greeks", "The Aztecs"]}, {"q": "What is the capital of Russia?", "correct": "Moscow", "wrong": ["St Petersburg", "Kazan", "Sochi"]}, {"q": "Who is said to have formulated gravity after seeing an apple fall?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo", "Charles Darwin"]}, {"q": "What is the tallest mountain on Earth above sea level?", "correct": "Mount Everest", "wrong": ["K2", "Kilimanjaro", "Mont Blanc"]}, {"q": "Which organ produces insulin in the human body?", "correct": "The pancreas", "wrong": ["The liver", "The kidney", "The spleen"]}, {"q": "Which language has the most native speakers worldwide?", "correct": "Mandarin Chinese", "wrong": ["English", "Spanish", "Hindi"]}, {"q": "In which country is the Taj Mahal?", "correct": "India", "wrong": ["Pakistan", "Iran", "Bangladesh"]}, {"q": "The speed of light is approximately how fast?", "correct": "300,000 km per second", "wrong": ["30,000 km per second", "3,000 km per second", "3 million km per second"]}, {"q": "Who was the first person to walk on the Moon?", "correct": "Neil Armstrong", "wrong": ["Buzz Aldrin", "Yuri Gagarin", "Michael Collins"]}, {"q": "Which gas makes up most of the air we breathe?", "correct": "Nitrogen", "wrong": ["Oxygen", "Carbon dioxide", "Hydrogen"]}, {"q": "Which Italian city is famous for its canals and gondolas?", "correct": "Venice", "wrong": ["Florence", "Rome", "Milan"]}], "3": [{"q": "What is the capital of New Zealand?", "correct": "Wellington", "wrong": ["Auckland", "Christchurch", "Dunedin"]}, {"q": "Which element has the atomic number 1?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who wrote 'War and Peace'?", "correct": "Leo Tolstoy", "wrong": ["Fyodor Dostoevsky", "Anton Chekhov", "Boris Pasternak"]}, {"q": "In which year did the Berlin Wall fall?", "correct": "1989", "wrong": ["1991", "1987", "1985"]}, {"q": "What is the longest bone in the human body?", "correct": "The femur", "wrong": ["The tibia", "The humerus", "The fibula"]}, {"q": "Which painter cut off part of his own ear?", "correct": "Vincent van Gogh", "wrong": ["Claude Monet", "Pablo Picasso", "Paul Cezanne"]}, {"q": "What is the currency of South Korea?", "correct": "The won", "wrong": ["The yen", "The yuan", "The baht"]}, {"q": "Which planet rotates on its side?", "correct": "Uranus", "wrong": ["Neptune", "Saturn", "Venus"]}, {"q": "Who composed 'The Four Seasons'?", "correct": "Antonio Vivaldi", "wrong": ["Johann Sebastian Bach", "Mozart", "Beethoven"]}, {"q": "What is the capital of Egypt?", "correct": "Cairo", "wrong": ["Alexandria", "Giza", "Luxor"]}, {"q": "Which body of water is famous for being so salty you float easily?", "correct": "The Dead Sea", "wrong": ["The Red Sea", "The Black Sea", "The Caspian Sea"]}, {"q": "What is the study of fungi called?", "correct": "Mycology", "wrong": ["Botany", "Zoology", "Ecology"]}, {"q": "Who painted the ceiling of the Sistine Chapel?", "correct": "Michelangelo", "wrong": ["Leonardo da Vinci", "Raphael", "Caravaggio"]}, {"q": "What is the smallest unit of an element that keeps its properties?", "correct": "The atom", "wrong": ["The molecule", "The cell", "The proton"]}, {"q": "Which country has the most natural lakes?", "correct": "Canada", "wrong": ["Russia", "Finland", "The USA"]}, {"q": "In Greek mythology, who is the king of the gods?", "correct": "Zeus", "wrong": ["Poseidon", "Hades", "Apollo"]}, {"q": "In which year did the Titanic sink?", "correct": "1912", "wrong": ["1905", "1918", "1920"]}, {"q": "What is the capital of Argentina?", "correct": "Buenos Aires", "wrong": ["Santiago", "Lima", "Montevideo"]}, {"q": "Who wrote the novel '1984'?", "correct": "George Orwell", "wrong": ["Aldous Huxley", "Ray Bradbury", "H.G. Wells"]}, {"q": "What is the chemical symbol for potassium?", "correct": "K", "wrong": ["P", "Po", "Pt"]}, {"q": "Which mountain range is the traditional boundary between Europe and Asia?", "correct": "The Urals", "wrong": ["The Alps", "The Caucasus", "The Carpathians"]}, {"q": "What is the largest island in the world?", "correct": "Greenland", "wrong": ["New Guinea", "Borneo", "Madagascar"]}, {"q": "Who is the Greek goddess of wisdom?", "correct": "Athena", "wrong": ["Hera", "Aphrodite", "Artemis"]}, {"q": "What does 'CPU' stand for in computing?", "correct": "Central Processing Unit", "wrong": ["Computer Processing Unit", "Central Power Unit", "Core Programming Unit"]}, {"q": "Which artist painted the melting clocks of 'The Persistence of Memory'?", "correct": "Salvador Dali", "wrong": ["Pablo Picasso", "Rene Magritte", "Joan Miro"]}, {"q": "What is the capital of Greece?", "correct": "Athens", "wrong": ["Thessaloniki", "Sparta", "Corinth"]}, {"q": "Which gas makes up the majority of the Sun?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who is credited with discovering penicillin?", "correct": "Alexander Fleming", "wrong": ["Louis Pasteur", "Joseph Lister", "Robert Koch"]}, {"q": "What is the official language of Austria?", "correct": "German", "wrong": ["Austrian", "Hungarian", "Czech"]}, {"q": "Which sea creature is the largest animal ever known to have lived?", "correct": "The blue whale", "wrong": ["The whale shark", "The giant squid", "The orca"]}], "4": [{"q": "What is the capital of Kazakhstan?", "correct": "Astana", "wrong": ["Almaty", "Tashkent", "Bishkek"]}, {"q": "What is the smallest prime number?", "correct": "2", "wrong": ["1", "3", "0"]}, {"q": "Who wrote 'Crime and Punishment'?", "correct": "Fyodor Dostoevsky", "wrong": ["Leo Tolstoy", "Anton Chekhov", "Nikolai Gogol"]}, {"q": "What is the chemical symbol for tungsten?", "correct": "W", "wrong": ["Tu", "Tn", "Tg"]}, {"q": "Which planet is the hottest in the solar system?", "correct": "Venus", "wrong": ["Mercury", "Mars", "Jupiter"]}, {"q": "In what year did the French Revolution begin?", "correct": "1789", "wrong": ["1776", "1799", "1804"]}, {"q": "Which is the longest-running animated TV series in the USA?", "correct": "The Simpsons", "wrong": ["South Park", "Family Guy", "Arthur"]}, {"q": "Who proposed the three laws of motion?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo Galilei", "Johannes Kepler"]}, {"q": "What is the capital of Mongolia?", "correct": "Ulaanbaatar", "wrong": ["Astana", "Bishkek", "Tashkent"]}, {"q": "Which element takes its name from the Greek word for the Sun?", "correct": "Helium", "wrong": ["Selenium", "Neon", "Argon"]}, {"q": "Who is generally regarded as the first Roman emperor?", "correct": "Augustus", "wrong": ["Julius Caesar", "Nero", "Caligula"]}, {"q": "What is the SI unit of electrical resistance?", "correct": "The ohm", "wrong": ["The volt", "The watt", "The ampere"]}, {"q": "Which sea lies between Europe and Africa, entered via the Strait of Gibraltar?", "correct": "The Mediterranean", "wrong": ["The Adriatic", "The Aegean", "The Black Sea"]}, {"q": "Who painted the anti-war mural 'Guernica'?", "correct": "Pablo Picasso", "wrong": ["Salvador Dali", "Joan Miro", "Francisco Goya"]}, {"q": "What is the most abundant element in the universe?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Which country was formerly known as Siam?", "correct": "Thailand", "wrong": ["Vietnam", "Cambodia", "Myanmar"]}, {"q": "What is the term for a word that reads the same backwards?", "correct": "A palindrome", "wrong": ["An anagram", "A homonym", "An acronym"]}, {"q": "Who developed an early polio vaccine in the 1950s?", "correct": "Jonas Salk", "wrong": ["Alexander Fleming", "Louis Pasteur", "Edward Jenner"]}, {"q": "What is the largest internal organ in the human body?", "correct": "The liver", "wrong": ["The brain", "The lungs", "The heart"]}, {"q": "Which composer was almost completely deaf in his later life?", "correct": "Ludwig van Beethoven", "wrong": ["Mozart", "Bach", "Chopin"]}, {"q": "What is the capital of Iceland?", "correct": "Reykjavik", "wrong": ["Oslo", "Helsinki", "Bergen"]}, {"q": "Which Wonder of the Ancient World stood in the harbour of Rhodes?", "correct": "The Colossus of Rhodes", "wrong": ["The Hanging Gardens", "The Lighthouse of Alexandria", "The Temple of Artemis"]}, {"q": "What is the chemical symbol for iron?", "correct": "Fe", "wrong": ["Ir", "In", "Fr"]}, {"q": "Who wrote 'The Divine Comedy'?", "correct": "Dante Alighieri", "wrong": ["Petrarch", "Boccaccio", "Virgil"]}, {"q": "Which blood type is known as the universal donor?", "correct": "O negative", "wrong": ["AB positive", "A positive", "O positive"]}, {"q": "What is the largest moon of Saturn?", "correct": "Titan", "wrong": ["Europa", "Ganymede", "Io"]}, {"q": "In which modern country are the ruins of ancient Carthage?", "correct": "Tunisia", "wrong": ["Egypt", "Libya", "Morocco"]}, {"q": "What is the scientific study of earthquakes called?", "correct": "Seismology", "wrong": ["Geology", "Volcanology", "Meteorology"]}, {"q": "Which Egyptian queen was famously allied with Mark Antony?", "correct": "Cleopatra", "wrong": ["Nefertiti", "Hatshepsut", "Helen"]}, {"q": "What is the smallest two-digit prime number?", "correct": "11", "wrong": ["13", "10", "12"]}]};
+  var $=function(id){return document.getElementById(id);};
+  function show(id){ ['menu','game','result','boardScreen'].forEach(function(s){ var el=$(s); if(el) el.classList.toggle('hidden', s!==id); }); }
+  var TIERS=[{name:'Explorer',rows:5,base:1},{name:'Voyager',rows:6,base:2},{name:'Pioneer',rows:7,base:3},{name:'Legend',rows:8,base:4}];
+  var TYPE={gate:{time:22,delta:0,pass:1},timed:{time:8,delta:0,pass:1},enemy:{time:18,delta:1,pass:1},sealed:{time:16,delta:0,pass:2}};
+  var HOWDESC={gate:'a straight question',timed:'same question, fast clock',enemy:'a tougher question',sealed:'two right in a row'};
+  var LIVES=3;
+  var GLYPH={
+    plain:'',
+    clock:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="7" stroke="currentColor" stroke-width="2.3"/><path d="M12 9.5V13l2.6 1.7" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M9.5 3h5" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>',
+    burst:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.3 5 5.4.5-4.1 3.6 1.2 5.3L12 19.6 7.2 22l1.2-5.3L4.3 13.1l5.4-.5z"/></svg>',
+    lock:'<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="10.5" width="12" height="9.5" rx="2.2" fill="currentColor"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5" stroke="currentColor" stroke-width="2.3"/></svg>',
+    ship:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l6.5 17L12 16.4 5.5 20z"/></svg>'
+  };
+  var CHARS=W.crews;
+
+  // ---- supabase / board ----
+  var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+  var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+  var QUIZ_ID=W.id, NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  var lastRun=null, BOARD=[], boardBusy=false, boardCtx='result';
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function fmt(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); }
+  function cmpRun(a,b){ return (b.level-a.level)||(a.timeLeft-b.timeLeft)||(b.correct-a.correct)||(a.t-b.t); }
+  function fmtScore(r){ return 'Out \u00b7 '+r.level+' \u2665 left \u00b7 '+fmt(r.timeLeft); }
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  function sbLoad(){
+    var url=sbBase()+'?select=name,correct,level,time_left&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)+'&group_code=eq.'+encodeURIComponent(groupCode())+'&order=level.desc,time_left.asc,correct.desc&limit=10';
+    return fetch(url,{headers:sbHeaders()}).then(function(res){ if(!res.ok) throw 0; return res.json(); }).then(function(rows){ return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; }); });
+  }
+  function sbSave(e){
+    var body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).then(function(res){ if(!res.ok) throw 0; });
+  }
+  function ids(){ return boardCtx==='result'?{l:'boardList',e:'boardEmpty',t:'boardTitle'}:{l:'boardList2',e:'boardEmpty2',t:'boardTitle2'}; }
+  function renderRows(rows,hi){ var I=ids(),list=$(I.l); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){ var li=document.createElement('li'); li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span><span class="bsc">'+r.level+' \u2665<br><span class="bmeta">'+fmt(r.timeLeft)+'</span></span>'; list.appendChild(li); }); }
+  function setMode(){ var I=ids(),t=$(I.t); if(t) t.textContent=shared()?('Squad \u00b7 '+groupCode()):'This device'; }
+  function renderLocal(hi){ var I=ids(); renderRows(BOARD,hi); var e=$(I.e); e.textContent='No runs yet \u2014 be the first!'; e.classList.toggle('hidden',BOARD.length>0); setMode(); }
+  function refreshShared(hi){ var I=ids(); setMode(); var list=$(I.l); $(I.e).classList.add('hidden'); list.innerHTML='<li class="bload">Loading\u2026</li>';
+    return sbLoad().then(function(b){ BOARD=b; renderRows(BOARD,hi); $(I.e).textContent='No runs in this squad yet \u2014 be the first!'; $(I.e).classList.toggle('hidden',BOARD.length>0); })
+      .catch(function(){ list.innerHTML=''; $(I.e).textContent='Couldn\u2019t reach the shared board \u2014 check your connection.'; $(I.e).classList.remove('hidden'); }); }
+  function showBoard(hi){ if(shared()) refreshShared(hi); else { loadLocal(); renderLocal(hi); } }
+  function saveScore(){ if(!lastRun||boardBusy) return; var name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player'; lsSet(NAME_KEY,name);
+    var entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){ var btn=$('boardSave'); boardBusy=true; btn.disabled=true; var old=btn.textContent; btn.textContent='Saving\u2026';
+      sbSave(entry).then(function(){ lastRun=null; $('saveArea').classList.add('hidden'); beep(720,.09,'sine',.12); return refreshShared(entry.t); }).catch(function(){ btn.textContent='Try again'; }).then(function(){ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }); }
+    else { BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10); lsSet(QUIZ_ID,JSON.stringify(BOARD)); lastRun=null; $('saveArea').classList.add('hidden'); beep(720,.09,'sine',.12); renderLocal(entry.t); } }
+
+  // ---- audio ----
+  var AC=null;
+  function ensureAudio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
+  function beep(f,d,type,vol){ if(!AC) return; try{ var o=AC.createOscillator(),g=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; g.gain.value=vol||.1; o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(d||.1)); o.stop(AC.currentTime+(d||.1)); }catch(e){} }
+  function sfxGood(){ beep(620,.08,'sine',.12); setTimeout(function(){beep(880,.1,'sine',.12);},70); }
+  function sfxBad(){ beep(200,.18,'sawtooth',.12); }
+
+  // ---- map gen (pure) ----
+  function rnd(n){ return Math.floor(Math.random()*n); }
+  function pickType(){ var r=Math.random(); if(r<0.54) return 'gate'; if(r<0.76) return 'timed'; if(r<0.94) return 'enemy'; return 'sealed'; }
+  function link(a,b){ if(a.out.indexOf(b.id)<0){ a.out.push(b.id); b.in.push(a.id); } }
+  function connect(A,B){ A.forEach(function(a){ var t=Math.round(a.frac*(B.length+1))-1; t=Math.max(0,Math.min(B.length-1,t)); link(a,B[t]); if(B.length>1&&Math.random()<0.5){ var t2=t+(Math.random()<0.5?-1:1); if(t2>=0&&t2<B.length) link(a,B[t2]); } });
+    B.forEach(function(b,bi){ if(b.in.length===0){ var ai=Math.round(((bi+1)/(B.length+1))*(A.length+1))-1; ai=Math.max(0,Math.min(A.length-1,ai)); link(A[ai],b); } }); }
+  function genMap(tier){ var R=TIERS[tier].rows,base=TIERS[tier].base,nodes={},rows=[],idc=0;
+    var start={id:'n0',row:0,type:'start',out:[],in:[]}; nodes[start.id]=start; rows.push([start]); idc=1;
+    for(var r=1;r<=R;r++){ var last=(r===R); var w=last?1:(r===1?2:(2+(Math.random()<0.5?1:0))); var row=[];
+      for(var c=0;c<w;c++){ var ty=last?'sealed':pickType(); var nd={id:'n'+idc++,row:r,type:ty,out:[],in:[]}; nodes[nd.id]=nd; row.push(nd); } rows.push(row); }
+    var core={id:'n'+idc++,row:R+1,type:'core',out:[],in:[]}; nodes[core.id]=core; rows.push([core]);
+    for(var i=0;i<rows.length;i++){ var n=rows[i].length; rows[i].forEach(function(nd,j){ nd.frac=(j+1)/(n+1); }); }
+    for(var k=0;k<rows.length-1;k++){ connect(rows[k],rows[k+1]); }
+    return {nodes:nodes,rows:rows,startId:start.id,coreId:core.id,R:R,base:base}; }
+
+  var S=null, charIdx=0, tierIdx=0, timerRAF=null, used={};
+  function pickQuestion(t){ t=Math.max(1,Math.min(4,t)); var arr=BANK[String(t)]; if(!used[t]) used[t]={}; var tries=0,idx;
+    do{ idx=rnd(arr.length); tries++; }while(used[t][idx]&&tries<40); if(Object.keys(used[t]).length>=arr.length) used[t]={}; used[t][idx]=1;
+    var q=arr[idx]; var opts=[{text:q.correct,ok:true}]; q.wrong.forEach(function(w){ opts.push({text:w,ok:false}); });
+    for(var i=opts.length-1;i>0;i--){ var j=rnd(i+1); var tmp=opts[i]; opts[i]=opts[j]; opts[j]=tmp; } return {q:q.q,opts:opts}; }
+
+  var ROWGAP=96;
+  function glyphFor(nd){ if(nd.type==='core') return W.goal; if(nd.type==='start') return GLYPH.ship; return GLYPH[W.types[nd.type].glyph]||''; }
+  function buildMap(){ var inner=$('mapInner'),svg=$('edgesSvg');
+    inner.querySelectorAll('.node').forEach(function(n){ n.remove(); }); while(svg.firstChild) svg.removeChild(svg.firstChild);
+    var mapW=inner.clientWidth||320, totalH=(S.map.R+2)*ROWGAP; inner.style.height=totalH+'px';
+    svg.setAttribute('width',mapW); svg.setAttribute('height',totalH); svg.setAttribute('viewBox','0 0 '+mapW+' '+totalH);
+    Object.keys(S.map.nodes).forEach(function(id){ var nd=S.map.nodes[id]; nd.px=mapW*nd.frac; nd.py=totalH-ROWGAP*(nd.row+0.7); });
+    S.edgeEls={}; S.map.rows.forEach(function(row){ row.forEach(function(a){ a.out.forEach(function(bid){ var b=S.map.nodes[bid];
+      var ln=document.createElementNS('http://www.w3.org/2000/svg','line'); ln.setAttribute('x1',a.px); ln.setAttribute('y1',a.py); ln.setAttribute('x2',b.px); ln.setAttribute('y2',b.py); ln.setAttribute('class','edge'); svg.appendChild(ln); S.edgeEls[a.id+'>'+bid]=ln; }); }); });
+    S.nodeEls={}; Object.keys(S.map.nodes).forEach(function(id){ var nd=S.map.nodes[id]; var el=document.createElement('button'); el.type='button';
+      el.className='node t-'+nd.type+(nd.type==='core'?' core':''); el.style.left=nd.px+'px'; el.style.top=nd.py+'px'; el.innerHTML=glyphFor(nd);
+      el.addEventListener('click',function(){ onNodeTap(id); }); inner.appendChild(el); S.nodeEls[id]=el; }); }
+  function refreshMap(){ var cur=S.map.nodes[S.pos];
+    Object.keys(S.map.nodes).forEach(function(id){ var nd=S.map.nodes[id],el=S.nodeEls[id]; el.classList.remove('done','locked','reachable','current'); el.style.removeProperty('--me');
+      if(S.visited[id]) el.classList.add('done');
+      if(id===S.pos){ el.classList.add('current'); el.style.setProperty('--me',CHARS[charIdx].col); el.innerHTML=nd.type==='core'?W.goal:GLYPH.ship; }
+      else el.innerHTML=glyphFor(nd); });
+    var reach=cur.out.slice(); Object.keys(S.edgeEls).forEach(function(k){ S.edgeEls[k].classList.remove('live'); });
+    reach.forEach(function(bid){ if(!S.visited[bid]) S.nodeEls[bid].classList.add('reachable'); var e=S.edgeEls[S.pos+'>'+bid]; if(e) e.classList.add('live'); });
+    Object.keys(S.map.nodes).forEach(function(id){ if(id!==S.pos&&reach.indexOf(id)<0&&!S.visited[id]) S.nodeEls[id].classList.add('locked'); });
+    var ms=$('mapScroll'); ms.scrollTop=Math.max(0,cur.py-ms.clientHeight*0.62); $('statCorrect').textContent=S.correct; renderLives(); }
+  function renderLives(){ var box=$('livesBox'); box.innerHTML=''; for(var i=0;i<LIVES;i++){ var sp=document.createElement('span'); sp.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" class="'+(i<S.lives?'':'lost')+'"><path d="M12 3l6.5 17L12 16.4 5.5 20z"/></svg>'; box.appendChild(sp.firstChild); } }
+
+  function startRun(){ used={}; S={map:genMap(tierIdx),pos:null,lives:LIVES,correct:0,wrongs:0,t0:Date.now(),pending:null,visited:{}}; S.pos=S.map.startId; S.visited[S.pos]=1;
+    $('tierPill').textContent=TIERS[tierIdx].name.toUpperCase(); show('game');
+    requestAnimationFrame(function(){ buildMap(); refreshMap(); startRunTimer(); $('hint').textContent='Tap a glowing node to advance.'; }); }
+  var runTimerId=null; function startRunTimer(){ stopRunTimer(); runTimerId=setInterval(function(){ $('runTimer').textContent=fmt((Date.now()-S.t0)/1000); },500); }
+  function stopRunTimer(){ if(runTimerId){ clearInterval(runTimerId); runTimerId=null; } }
+  function onNodeTap(id){ if(!S||S.pending) return; var node=S.map.nodes[id],cur=S.map.nodes[S.pos]; if(cur.out.indexOf(id)<0||S.visited[id]) return;
+    if(node.type==='core'){ S.visited[id]=1; S.pos=id; win(); return; } beginAttempt(node); }
+  function beginAttempt(node){ var cfg=TYPE[node.type]; S.pending={node:node,cfg:cfg,need:cfg.pass,have:0}; $('obCard').style.setProperty('--c','var(--'+node.type+')'); $('obWrap').classList.remove('hidden'); nextQuestion(); }
+  function nextQuestion(){ var p=S.pending,cfg=p.cfg,qt=Math.max(1,Math.min(4,S.map.base+cfg.delta)),qd=pickQuestion(qt); S.cur=qd;
+    var td=W.types[p.node.type]; $('obBanner').textContent=(td.prefix||'')+td.label;
+    var sk=$('obStreak'); if(p.need>1){ sk.classList.remove('hidden'); sk.textContent=p.have>0?('Held '+p.have+' of '+p.need+' \u2014 keep going!'):'Two correct in a row to break through.'; } else sk.classList.add('hidden');
+    $('obFx').textContent=''; $('obQ').textContent=qd.q; var box=$('obOpts'); box.innerHTML='';
+    qd.opts.forEach(function(o){ var b=document.createElement('button'); b.className='opt'; b.textContent=o.text; b.addEventListener('click',function(){ answer(o.ok,b); }); box.appendChild(b); }); startObTimer(cfg.time); }
+  function startObTimer(sec){ stopObTimer(); var bar=$('obTimer'),t0=Date.now(),ms=sec*1000; bar.style.width='100%';
+    (function tick(){ var left=ms-(Date.now()-t0),pct=Math.max(0,left/ms*100); bar.style.width=pct+'%'; if(left<=0){ answer(false,null); return; } timerRAF=requestAnimationFrame(tick); })(); }
+  function stopObTimer(){ if(timerRAF){ cancelAnimationFrame(timerRAF); timerRAF=null; } }
+  function answer(ok,btn){ if(!S.pending||S.pending.locked) return; S.pending.locked=true; stopObTimer();
+    Array.prototype.forEach.call($('obOpts').children,function(b){ b.style.pointerEvents='none'; });
+    if(ok){ if(btn) btn.classList.add('good'); sfxGood(); S.correct++; S.pending.have++;
+      if(S.pending.have>=S.pending.need){ $('obFx').textContent='Through!'; $('obFx').style.color='var(--right)'; setTimeout(function(){ passNode(S.pending.node); },620); }
+      else { $('obFx').textContent='1 down, 1 to go!'; $('obFx').style.color='var(--gold)'; setTimeout(function(){ S.pending.locked=false; nextQuestion(); },720); } }
+    else { if(btn) btn.classList.add('bad'); sfxBad();
+      Array.prototype.forEach.call($('obOpts').children,function(b,i){ if(S.cur.opts[i].ok) b.classList.add('good'); });
+      S.lives--; S.wrongs++; S.pending.have=0; renderLives();
+      if(S.lives<=0){ $('obFx').textContent='Defeated.'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ defeat(S.pending.node); },900); }
+      else { $('obFx').textContent=(btn?'Wrong!':'Out of time!')+' \u2212 a life'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ S.pending.locked=false; nextQuestion(); },1000); } } }
+  function passNode(node){ S.visited[node.id]=1; S.pos=node.id; S.pending=null; $('obWrap').classList.add('hidden'); refreshMap();
+    var cur=S.map.nodes[S.pos]; if(cur.out.length===1&&S.map.nodes[cur.out[0]].type==='core') $('hint').textContent=W.dest.charAt(0).toUpperCase()+W.dest.slice(1)+' is in reach \u2014 make the final move!'; else $('hint').textContent='Cleared! Choose your next move.'; }
+  function win(){ stopRunTimer(); stopObTimer(); var el=(Date.now()-S.t0)/1000; lastRun={correct:S.correct,level:S.lives,timeLeft:el,t:Date.now()};
+    $('resTitle').textContent=W.winTitle; $('resTitle').style.color='var(--gold)';
+    $('resStats').innerHTML='Reached '+W.dest+' in <b>'+fmt(el)+'</b><br>'+S.lives+' \u2665 remaining \u00b7 '+S.correct+' obstacles cleared';
+    boardCtx='result'; $('saveArea').classList.remove('hidden'); $('saveSummary').textContent=fmtScore(lastRun); var nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm; show('result'); showBoard(); }
+  function defeat(node){ stopRunTimer(); stopObTimer(); S.pending=null; $('obWrap').classList.add('hidden'); lastRun=null; var depth=node?node.row:0;
+    $('resTitle').textContent=W.loseTitle; $('resTitle').style.color='var(--wrong)';
+    $('resStats').innerHTML='Your run ended at depth <b>'+depth+'</b> of '+S.map.R+'<br>'+S.correct+' obstacles cleared \u00b7 '+fmt((Date.now()-S.t0)/1000);
+    boardCtx='result'; $('saveArea').classList.add('hidden'); show('result'); showBoard(); }
+
+  function buildMenu(){ var cr=$('charRow'); cr.innerHTML='';
+    CHARS.forEach(function(c,i){ var b=document.createElement('button'); b.className='chip'+(i===charIdx?' sel':''); b.style.setProperty('--cc',c.col); b.innerHTML='<span class="dot"></span>'+c.name; b.addEventListener('click',function(){ charIdx=i; buildMenu(); ensureAudio(); }); cr.appendChild(b); });
+    var tr=$('tierRow'); tr.innerHTML=''; TIERS.forEach(function(t,i){ var b=document.createElement('button'); b.className='chip'+(i===tierIdx?' sel':''); b.textContent=t.name; b.addEventListener('click',function(){ tierIdx=i; buildMenu(); ensureAudio(); }); tr.appendChild(b); }); }
+  function fillTexts(){ $('subEl').textContent=W.sub; $('titleEl').textContent=W.brand; $('leadEl').textContent=W.lead; $('pilotLbl').textContent=W.pilot; $('crewLbl').textContent=W.crew;
+    var how=$('howEl'); how.innerHTML=''; ['gate','timed','enemy','sealed'].forEach(function(t){ var d=document.createElement('div'); d.className='howline'; d.innerHTML='<span class="pip" style="background:var(--'+t+')"></span>'+W.types[t].label+' <small>&mdash; '+HOWDESC[t]+'</small>'; how.appendChild(d); }); }
+  function init(){ fillTexts(); var nm=lsGet(NAME_KEY); if(nm) $('nameIn').value=nm; var gc=lsGet(GROUP_KEY); if(gc) $('codeIn').value=gc; buildMenu();
+    $('startBtn').addEventListener('click',function(){ ensureAudio(); var name=($('nameIn').value||'').trim().slice(0,14); if(name) lsSet(NAME_KEY,name); lsSet(GROUP_KEY,($('codeIn').value||'').trim()); startRun(); });
+    $('boardBtn').addEventListener('click',function(){ ensureAudio(); boardCtx='menu'; show('boardScreen'); showBoard(); });
+    $('boardBack').addEventListener('click',function(){ show('menu'); });
+    $('boardSave').addEventListener('click',saveScore);
+    $('againBtn').addEventListener('click',function(){ ensureAudio(); startRun(); });
+    $('menuBtn2').addEventListener('click',function(){ show('menu'); }); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+
+  window.__core_test=function(cmd,arg){
+    if(cmd==='gencheck'){ for(var t=0;t<TIERS.length;t++){ for(var k=0;k<60;k++){ var m=genMap(t); var v=validateMap(m); if(v!=='ok') return 'FAIL t'+t+':'+v; } } return 'OK'; }
+    if(cmd==='simulate'){ return simulate(arg); }
+    if(cmd==='world'){ return W.id+'|'+W.brand+'|'+W.types.enemy.label; }
+    return 'unknown'; };
+  function validateMap(m){ var idsl=Object.keys(m.nodes); for(var i=0;i<idsl.length;i++){ var n=m.nodes[idsl[i]]; if(n.type!=='start'&&n.in.length===0) return 'in'; if(n.type!=='core'&&n.out.length===0) return 'out'; }
+    var seen={},q=[m.startId]; seen[m.startId]=1; while(q.length){ var c=m.nodes[q.shift()]; c.out.forEach(function(b){ if(!seen[b]){ seen[b]=1; q.push(b); } }); }
+    if(!seen[m.coreId]) return 'core'; for(var j=0;j<idsl.length;j++){ if(!seen[idsl[j]]) return 'island'; } return 'ok'; }
+  function simulate(policy){ var m=genMap(0),pos=m.startId,lives=LIVES,cleared=0,wrongs=0,steps=0;
+    while(true){ steps++; if(steps>500) return 'loop'; var cur=m.nodes[pos]; if(cur.type==='core') return 'WIN cleared='+cleared+' lives='+lives;
+      var nid=cur.out[0],node=m.nodes[nid]; if(node.type==='core'){ pos=nid; continue; } var need=TYPE[node.type].pass,have=0;
+      while(have<need){ if(policy==='win') have++; else { lives--; wrongs++; have=0; if(lives<=0) return 'DEFEAT cleared='+cleared+' wrongs='+wrongs; } } cleared++; pos=nid; } }
+})();
+</script>
+</body>
+</html>
