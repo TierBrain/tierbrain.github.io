@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Claim the Board — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Rye&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper0:#e6d3ad; --paper1:#cdb78f; --card:#ecdcb8; --line:#b39a6f; --ink:#3a2a1c; --mut:#7c6243;
+    --you:#1f9e8f; --youD:#14756a; --riv:#c4502e; --rivD:#9a3c20; --brass:#b3873a; --brassD:#8a6526;
+    --free:#d8c6a0; --dash:#9c8456; --cream:#f7eed6; --right:#2f9e6e; --wrong:#c4502e;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(70% 50% at 50% -8%, rgba(179,135,58,.18), transparent 60%),
+      radial-gradient(90% 60% at 50% 120%, rgba(90,60,30,.22), transparent 60%),
+      linear-gradient(165deg,var(--paper0),var(--paper1));
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:820px;min-height:600px;display:flex;flex-direction:column;padding:16px;}
+  .display{font-family:'Rye',serif;}
+  .hidden{display:none !important;}
+  .screen{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:13px;overflow-y:auto;}
+  h1.title{font-family:'Rye',serif;font-weight:400;font-size:clamp(28px,8vw,40px);margin:4px 0 0;line-height:1.05;color:var(--ink);text-shadow:1px 1px 0 rgba(255,255,255,.35),2px 2px 0 rgba(120,80,40,.25);}
+  .sub{font-family:'Rye',serif;letter-spacing:2px;text-transform:uppercase;font-size:12px;color:var(--brassD);}
+  .lead{color:var(--mut);font-size:14px;line-height:1.5;font-weight:700;margin:2px 0 4px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-left:3px;}
+  input{width:100%;font-family:inherit;font-weight:800;font-size:16px;padding:13px 15px;border-radius:12px;border:2px solid var(--line);background:rgba(255,255,255,.4);color:var(--ink);}
+  input:focus{outline:none;border-color:var(--you);}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-family:inherit;font-weight:800;font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.35);border:2px solid var(--line);border-radius:30px;padding:9px 15px;cursor:pointer;transition:all .12s;}
+  .chip.sel{color:var(--cream);background:var(--brass);border-color:var(--brassD);}
+  .cta{font-family:'Rye',serif;font-size:clamp(17px,4.6vw,20px);color:#2a1808;border:none;cursor:pointer;background:linear-gradient(180deg,#d8aa4e,#a8772e);border-radius:14px;padding:15px;margin-top:4px;box-shadow:0 6px 0 #7a531c, 0 9px 16px rgba(80,50,20,.3);transition:transform .08s,box-shadow .08s;}
+  .cta:active{transform:translateY(4px);box-shadow:0 2px 0 #7a531c;}
+  .linkbtn{background:none;border:none;color:var(--mut);font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;text-decoration:underline;padding:8px;}
+  .err{color:var(--wrong);font-weight:800;font-size:13px;min-height:1em;}
+  .howto{display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.28);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .howline{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;color:var(--ink);}
+  .howline .pip{width:14px;height:14px;border-radius:4px;flex:none;}
+  .howline small{color:var(--mut);font-weight:700;}
+  /* game */
+  #game{padding:14px;}
+  #gtop{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;margin-bottom:4px;}
+  #gtop .you{color:var(--youD);} #gtop .riv{color:var(--rivD);} #gtop .open{color:var(--mut);}
+  #tierPill{margin-left:auto;font-family:'Rye',serif;font-size:11px;letter-spacing:1px;color:var(--cream);background:var(--brass);border-radius:20px;padding:4px 11px;}
+  #ctrl{display:flex;height:12px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px;background:var(--free);}
+  #ctrl .seg{height:100%;transition:width .35s;}
+  #ctrl .cy{background:var(--you);} #ctrl .cr{background:var(--riv);}
+  #boardWrap{flex:1;display:flex;align-items:center;justify-content:center;}
+  #board{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:380px;aspect-ratio:1;}
+  .cell{position:relative;border-radius:11px;background:var(--free);border:2px solid transparent;display:flex;align-items:center;justify-content:center;cursor:default;transition:transform .12s, box-shadow .2s;box-shadow:0 2px 4px rgba(80,50,20,.18);}
+  .cell.free{border:2px dashed var(--dash);background:var(--free);}
+  .cell.you{background:var(--you);border-color:var(--youD);}
+  .cell.riv{background:var(--riv);border-color:var(--rivD);}
+  .cell .star{width:46%;height:46%;color:var(--cream);}
+  .cell.can{cursor:pointer;border-color:var(--you);box-shadow:0 0 0 2px var(--you), 0 2px 6px rgba(80,50,20,.25);animation:bob 1.2s ease-in-out infinite;}
+  .cell.jump{cursor:pointer;box-shadow:0 0 0 3px var(--you);}
+  .cell.jump::after{content:"";position:absolute;inset:-6px;border:2px dashed var(--you);border-radius:14px;}
+  .cell.cool{opacity:.55;}
+  .cell.can:active,.cell.jump:active{transform:scale(.93);}
+  @keyframes bob{0%,100%{box-shadow:0 0 0 2px var(--you),0 2px 6px rgba(80,50,20,.25);}50%{box-shadow:0 0 0 4px var(--you),0 2px 10px rgba(31,158,143,.5);}}
+  #hint{text-align:center;color:var(--mut);font-weight:800;font-size:13px;padding:10px 0 2px;min-height:1.2em;}
+  /* question modal */
+  #qWrap{position:absolute;inset:0;background:rgba(46,30,14,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;}
+  #qCard{width:100%;max-width:460px;background:var(--card);border:2px solid var(--brassD);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 14px 30px rgba(40,25,10,.4);}
+  #qBanner{font-family:'Rye',serif;font-size:14px;letter-spacing:1px;color:var(--brassD);text-align:center;text-transform:uppercase;}
+  #qStreak{text-align:center;font-weight:800;font-size:13px;color:var(--you);min-height:1em;}
+  .qTimerWrap{height:7px;background:rgba(120,90,50,.2);border-radius:6px;overflow:hidden;}
+  #qTimer{height:100%;width:100%;background:linear-gradient(90deg,var(--you),var(--brass));border-radius:6px;}
+  #qText{font-weight:800;font-size:clamp(17px,4.6vw,21px);line-height:1.3;text-align:center;}
+  #qOpts{display:flex;flex-direction:column;gap:9px;}
+  .opt{font-family:'Nunito';font-weight:800;font-size:16px;color:var(--ink);background:rgba(255,255,255,.45);border:2px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;text-align:left;transition:all .1s;}
+  .opt:active{transform:scale(.98);}
+  .opt.good{background:rgba(47,158,110,.22);border-color:var(--right);}
+  .opt.bad{background:rgba(196,80,46,.18);border-color:var(--wrong);}
+  #qFx{text-align:center;font-weight:800;min-height:1.2em;font-size:15px;}
+  /* result + board */
+  #result{align-items:center;text-align:center;justify-content:center;}
+  #resTitle{font-family:'Rye',serif;font-size:clamp(24px,7vw,34px);line-height:1.1;}
+  #resStats{color:var(--ink);font-weight:800;font-size:16px;line-height:1.6;}
+  #resStats b{color:var(--brassD);}
+  .board{width:100%;max-width:420px;margin:6px auto 0;text-align:left;}
+  .board h3{font-family:'Rye',serif;font-size:13px;color:var(--brassD);letter-spacing:1px;margin:8px 0;text-align:center;}
+  #boardList,#boardList2{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .brow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.35);border:1px solid var(--line);border-radius:11px;padding:9px 13px;font-weight:800;}
+  .brow.me{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass);}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-family:'Rye',serif;font-size:12px;color:var(--brassD);}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:700;}
+  .bempty,.bload{color:var(--mut);font-weight:700;text-align:center;padding:14px;}
+  .saveArea{display:flex;flex-direction:column;gap:9px;width:100%;max-width:420px;margin:6px auto;}
+  .saverow{display:flex;gap:8px;}
+  .saverow input{flex:1;text-align:center;}
+  button.save{font-family:'Rye',serif;font-size:14px;color:#2a1808;border:none;cursor:pointer;background:linear-gradient(180deg,#d8aa4e,#a8772e);border-radius:12px;padding:0 18px;}
+  .savesum{color:var(--mut);font-weight:800;font-size:13px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="menu" class="screen">
+    <div class="sub">TierBrain &middot; Land Rush</div>
+    <h1 class="title">Claim the Board</h1>
+    <p class="lead">Stake your claim across the frontier. Tap open land on your border and answer to claim it; jump the Rustler&rsquo;s plots with two right in a row. Hold the most land when the dust settles.</p>
+    <div class="howto">
+      <div class="howline"><span class="pip" style="background:var(--you)"></span>Your border <small>&mdash; answer to claim open land</small></div>
+      <div class="howline"><span class="pip" style="background:var(--riv)"></span>Rustler&rsquo;s land <small>&mdash; two in a row to jump the claim</small></div>
+      <div class="howline"><span class="pip" style="background:var(--free);border:1px dashed var(--dash)"></span>Most plots when the board&rsquo;s full wins</div>
+    </div>
+    <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="Your name" autocomplete="off"></div>
+    <div class="field"><label>Frontier</label><div class="chips" id="tierRow"></div></div>
+    <div class="field"><label>Posse code (optional &mdash; share a board)</label><input id="codeIn" maxlength="24" placeholder="e.g. DEADWOOD" autocomplete="off"></div>
+    <button id="startBtn" class="cta">Ride out</button>
+    <button id="boardBtn" class="linkbtn">View leaderboard</button>
+    <div class="err" id="menuErr"></div>
+  </section>
+
+  <section id="game" class="screen hidden">
+    <div id="gtop"><span class="you">You <b id="youCount">1</b></span><span class="riv">Rustler <b id="rivCount">1</b></span><span class="open"><b id="openCount">23</b> open</span><span id="tierPill">GREENHORN</span></div>
+    <div id="ctrl"><span class="seg cy" id="segYou"></span><span class="seg cr" id="segRiv"></span></div>
+    <div id="boardWrap"><div id="board"></div></div>
+    <div id="hint"></div>
+  </section>
+
+  <div id="qWrap" class="hidden"><div id="qCard">
+    <div id="qBanner"></div><div id="qStreak" class="hidden"></div>
+    <div class="qTimerWrap"><div id="qTimer"></div></div>
+    <div id="qText"></div><div id="qOpts"></div><div id="qFx"></div>
+  </div></div>
+
+  <section id="result" class="screen hidden">
+    <h1 id="resTitle" class="display"></h1>
+    <div id="resStats"></div>
+    <div class="saveArea hidden" id="saveArea">
+      <div class="savesum" id="saveSummary"></div>
+      <div class="saverow"><input id="boardName" maxlength="14" placeholder="Your name"><button class="save" id="boardSave">Save</button></div>
+    </div>
+    <div class="board"><h3 id="boardTitle">This device</h3><ul id="boardList"></ul><div class="bempty hidden" id="boardEmpty"></div></div>
+    <button id="againBtn" class="cta" style="max-width:320px;width:100%;">Ride again</button>
+    <button id="menuBtn2" class="linkbtn">Back to camp</button>
+  </section>
+
+  <section id="boardScreen" class="screen hidden" style="justify-content:center;align-items:center;">
+    <div class="sub">Leaderboard</div>
+    <div class="board"><h3 id="boardTitle2">This device</h3><ul id="boardList2"></ul><div class="bempty hidden" id="boardEmpty2"></div></div>
+    <button id="boardBack" class="cta" style="max-width:320px;width:100%;">Back</button>
+  </section>
+</div>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  function show(id){ ['menu','game','result','boardScreen'].forEach(function(s){ var el=$(s); if(el) el.classList.toggle('hidden', s!==id); }); }
+  var BANK={"1": [{"q": "What is the capital of France?", "correct": "Paris", "wrong": ["London", "Rome", "Madrid"]}, {"q": "How many days are there in a week?", "correct": "Seven", "wrong": ["Five", "Ten", "Twelve"]}, {"q": "What colour do you get by mixing blue and yellow?", "correct": "Green", "wrong": ["Purple", "Orange", "Brown"]}, {"q": "Which planet do we live on?", "correct": "Earth", "wrong": ["Mars", "Venus", "Jupiter"]}, {"q": "What is the largest ocean on Earth?", "correct": "The Pacific", "wrong": ["The Atlantic", "The Indian", "The Arctic"]}, {"q": "How many legs does a spider have?", "correct": "Eight", "wrong": ["Six", "Four", "Ten"]}, {"q": "What is the freezing point of water in Celsius?", "correct": "0 degrees", "wrong": ["10 degrees", "32 degrees", "100 degrees"]}, {"q": "Which animal is often called 'man's best friend'?", "correct": "The dog", "wrong": ["The cat", "The horse", "The cow"]}, {"q": "What is the capital of Italy?", "correct": "Rome", "wrong": ["Milan", "Venice", "Naples"]}, {"q": "How many continents are there?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What do bees make?", "correct": "Honey", "wrong": ["Milk", "Silk", "Butter"]}, {"q": "Which is the tallest land animal?", "correct": "The giraffe", "wrong": ["The elephant", "The horse", "The camel"]}, {"q": "What is H2O more commonly known as?", "correct": "Water", "wrong": ["Salt", "Oxygen", "Acid"]}, {"q": "Which gas do humans need to breathe to survive?", "correct": "Oxygen", "wrong": ["Carbon dioxide", "Helium", "Nitrogen"]}, {"q": "How many sides does a triangle have?", "correct": "Three", "wrong": ["Four", "Five", "Two"]}, {"q": "What is the capital of Japan?", "correct": "Tokyo", "wrong": ["Kyoto", "Osaka", "Seoul"]}, {"q": "Which fruit is in the saying about keeping the doctor away?", "correct": "Apple", "wrong": ["Banana", "Orange", "Pear"]}, {"q": "What is the opposite of 'hot'?", "correct": "Cold", "wrong": ["Warm", "Dry", "Loud"]}, {"q": "Which sea creature has eight arms?", "correct": "The octopus", "wrong": ["The shark", "The dolphin", "The jellyfish"]}, {"q": "What is the largest planet in the solar system?", "correct": "Jupiter", "wrong": ["Saturn", "Earth", "Mars"]}, {"q": "What do caterpillars turn into?", "correct": "Butterflies", "wrong": ["Spiders", "Beetles", "Frogs"]}, {"q": "Which country is famous for the Eiffel Tower?", "correct": "France", "wrong": ["Italy", "Spain", "Germany"]}, {"q": "How many colours are in a rainbow, traditionally?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What is the main language spoken in Brazil?", "correct": "Portuguese", "wrong": ["Spanish", "English", "French"]}, {"q": "Which is the fastest land animal?", "correct": "The cheetah", "wrong": ["The lion", "The horse", "The leopard"]}, {"q": "What is frozen water called?", "correct": "Ice", "wrong": ["Steam", "Mud", "Fog"]}, {"q": "How many minutes are in an hour?", "correct": "60", "wrong": ["30", "100", "24"]}, {"q": "Which planet is known as the Red Planet?", "correct": "Mars", "wrong": ["Venus", "Mercury", "Saturn"]}, {"q": "What is the capital of England?", "correct": "London", "wrong": ["Manchester", "Birmingham", "Liverpool"]}, {"q": "Which instrument has black and white keys?", "correct": "The piano", "wrong": ["The violin", "The guitar", "The flute"]}], "2": [{"q": "What is the capital of Australia?", "correct": "Canberra", "wrong": ["Sydney", "Melbourne", "Perth"]}, {"q": "Who painted the Mona Lisa?", "correct": "Leonardo da Vinci", "wrong": ["Michelangelo", "Raphael", "Donatello"]}, {"q": "What is the chemical symbol for gold?", "correct": "Au", "wrong": ["Ag", "Gd", "Go"]}, {"q": "How many bones are in the adult human body?", "correct": "206", "wrong": ["201", "256", "196"]}, {"q": "Which country gifted the Statue of Liberty to the USA?", "correct": "France", "wrong": ["Britain", "Spain", "Italy"]}, {"q": "What is the longest river in Africa?", "correct": "The Nile", "wrong": ["The Congo", "The Niger", "The Zambezi"]}, {"q": "In which year did World War II end?", "correct": "1945", "wrong": ["1944", "1939", "1918"]}, {"q": "What is the hardest natural substance?", "correct": "Diamond", "wrong": ["Gold", "Iron", "Quartz"]}, {"q": "Who wrote the play 'Romeo and Juliet'?", "correct": "William Shakespeare", "wrong": ["Charles Dickens", "Jane Austen", "Mark Twain"]}, {"q": "What is the smallest country in the world?", "correct": "Vatican City", "wrong": ["Monaco", "San Marino", "Liechtenstein"]}, {"q": "Which metal is liquid at room temperature?", "correct": "Mercury", "wrong": ["Iron", "Lead", "Aluminium"]}, {"q": "How many strings does a standard guitar have?", "correct": "Six", "wrong": ["Four", "Five", "Seven"]}, {"q": "What is the capital of Canada?", "correct": "Ottawa", "wrong": ["Toronto", "Vancouver", "Montreal"]}, {"q": "Which planet has the most prominent ring system?", "correct": "Saturn", "wrong": ["Jupiter", "Uranus", "Neptune"]}, {"q": "What currency is used in Japan?", "correct": "The yen", "wrong": ["The won", "The yuan", "The ringgit"]}, {"q": "Who developed the theory of general relativity?", "correct": "Albert Einstein", "wrong": ["Isaac Newton", "Niels Bohr", "Galileo"]}, {"q": "What is the largest hot desert in the world?", "correct": "The Sahara", "wrong": ["The Gobi", "The Kalahari", "The Arabian"]}, {"q": "How many players from one team are on a soccer pitch?", "correct": "Eleven", "wrong": ["Nine", "Ten", "Twelve"]}, {"q": "What is the chemical symbol for sodium?", "correct": "Na", "wrong": ["So", "Sd", "Sn"]}, {"q": "Which ancient civilisation built the pyramids at Giza?", "correct": "The Egyptians", "wrong": ["The Romans", "The Greeks", "The Aztecs"]}, {"q": "What is the capital of Russia?", "correct": "Moscow", "wrong": ["St Petersburg", "Kazan", "Sochi"]}, {"q": "Who is said to have formulated gravity after seeing an apple fall?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo", "Charles Darwin"]}, {"q": "What is the tallest mountain on Earth above sea level?", "correct": "Mount Everest", "wrong": ["K2", "Kilimanjaro", "Mont Blanc"]}, {"q": "Which organ produces insulin in the human body?", "correct": "The pancreas", "wrong": ["The liver", "The kidney", "The spleen"]}, {"q": "Which language has the most native speakers worldwide?", "correct": "Mandarin Chinese", "wrong": ["English", "Spanish", "Hindi"]}, {"q": "In which country is the Taj Mahal?", "correct": "India", "wrong": ["Pakistan", "Iran", "Bangladesh"]}, {"q": "The speed of light is approximately how fast?", "correct": "300,000 km per second", "wrong": ["30,000 km per second", "3,000 km per second", "3 million km per second"]}, {"q": "Who was the first person to walk on the Moon?", "correct": "Neil Armstrong", "wrong": ["Buzz Aldrin", "Yuri Gagarin", "Michael Collins"]}, {"q": "Which gas makes up most of the air we breathe?", "correct": "Nitrogen", "wrong": ["Oxygen", "Carbon dioxide", "Hydrogen"]}, {"q": "Which Italian city is famous for its canals and gondolas?", "correct": "Venice", "wrong": ["Florence", "Rome", "Milan"]}], "3": [{"q": "What is the capital of New Zealand?", "correct": "Wellington", "wrong": ["Auckland", "Christchurch", "Dunedin"]}, {"q": "Which element has the atomic number 1?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who wrote 'War and Peace'?", "correct": "Leo Tolstoy", "wrong": ["Fyodor Dostoevsky", "Anton Chekhov", "Boris Pasternak"]}, {"q": "In which year did the Berlin Wall fall?", "correct": "1989", "wrong": ["1991", "1987", "1985"]}, {"q": "What is the longest bone in the human body?", "correct": "The femur", "wrong": ["The tibia", "The humerus", "The fibula"]}, {"q": "Which painter cut off part of his own ear?", "correct": "Vincent van Gogh", "wrong": ["Claude Monet", "Pablo Picasso", "Paul Cezanne"]}, {"q": "What is the currency of South Korea?", "correct": "The won", "wrong": ["The yen", "The yuan", "The baht"]}, {"q": "Which planet rotates on its side?", "correct": "Uranus", "wrong": ["Neptune", "Saturn", "Venus"]}, {"q": "Who composed 'The Four Seasons'?", "correct": "Antonio Vivaldi", "wrong": ["Johann Sebastian Bach", "Mozart", "Beethoven"]}, {"q": "What is the capital of Egypt?", "correct": "Cairo", "wrong": ["Alexandria", "Giza", "Luxor"]}, {"q": "Which body of water is famous for being so salty you float easily?", "correct": "The Dead Sea", "wrong": ["The Red Sea", "The Black Sea", "The Caspian Sea"]}, {"q": "What is the study of fungi called?", "correct": "Mycology", "wrong": ["Botany", "Zoology", "Ecology"]}, {"q": "Who painted the ceiling of the Sistine Chapel?", "correct": "Michelangelo", "wrong": ["Leonardo da Vinci", "Raphael", "Caravaggio"]}, {"q": "What is the smallest unit of an element that keeps its properties?", "correct": "The atom", "wrong": ["The molecule", "The cell", "The proton"]}, {"q": "Which country has the most natural lakes?", "correct": "Canada", "wrong": ["Russia", "Finland", "The USA"]}, {"q": "In Greek mythology, who is the king of the gods?", "correct": "Zeus", "wrong": ["Poseidon", "Hades", "Apollo"]}, {"q": "In which year did the Titanic sink?", "correct": "1912", "wrong": ["1905", "1918", "1920"]}, {"q": "What is the capital of Argentina?", "correct": "Buenos Aires", "wrong": ["Santiago", "Lima", "Montevideo"]}, {"q": "Who wrote the novel '1984'?", "correct": "George Orwell", "wrong": ["Aldous Huxley", "Ray Bradbury", "H.G. Wells"]}, {"q": "What is the chemical symbol for potassium?", "correct": "K", "wrong": ["P", "Po", "Pt"]}, {"q": "Which mountain range is the traditional boundary between Europe and Asia?", "correct": "The Urals", "wrong": ["The Alps", "The Caucasus", "The Carpathians"]}, {"q": "What is the largest island in the world?", "correct": "Greenland", "wrong": ["New Guinea", "Borneo", "Madagascar"]}, {"q": "Who is the Greek goddess of wisdom?", "correct": "Athena", "wrong": ["Hera", "Aphrodite", "Artemis"]}, {"q": "What does 'CPU' stand for in computing?", "correct": "Central Processing Unit", "wrong": ["Computer Processing Unit", "Central Power Unit", "Core Programming Unit"]}, {"q": "Which artist painted the melting clocks of 'The Persistence of Memory'?", "correct": "Salvador Dali", "wrong": ["Pablo Picasso", "Rene Magritte", "Joan Miro"]}, {"q": "What is the capital of Greece?", "correct": "Athens", "wrong": ["Thessaloniki", "Sparta", "Corinth"]}, {"q": "Which gas makes up the majority of the Sun?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Who is credited with discovering penicillin?", "correct": "Alexander Fleming", "wrong": ["Louis Pasteur", "Joseph Lister", "Robert Koch"]}, {"q": "What is the official language of Austria?", "correct": "German", "wrong": ["Austrian", "Hungarian", "Czech"]}, {"q": "Which sea creature is the largest animal ever known to have lived?", "correct": "The blue whale", "wrong": ["The whale shark", "The giant squid", "The orca"]}], "4": [{"q": "What is the capital of Kazakhstan?", "correct": "Astana", "wrong": ["Almaty", "Tashkent", "Bishkek"]}, {"q": "What is the smallest prime number?", "correct": "2", "wrong": ["1", "3", "0"]}, {"q": "Who wrote 'Crime and Punishment'?", "correct": "Fyodor Dostoevsky", "wrong": ["Leo Tolstoy", "Anton Chekhov", "Nikolai Gogol"]}, {"q": "What is the chemical symbol for tungsten?", "correct": "W", "wrong": ["Tu", "Tn", "Tg"]}, {"q": "Which planet is the hottest in the solar system?", "correct": "Venus", "wrong": ["Mercury", "Mars", "Jupiter"]}, {"q": "In what year did the French Revolution begin?", "correct": "1789", "wrong": ["1776", "1799", "1804"]}, {"q": "Which is the longest-running animated TV series in the USA?", "correct": "The Simpsons", "wrong": ["South Park", "Family Guy", "Arthur"]}, {"q": "Who proposed the three laws of motion?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo Galilei", "Johannes Kepler"]}, {"q": "What is the capital of Mongolia?", "correct": "Ulaanbaatar", "wrong": ["Astana", "Bishkek", "Tashkent"]}, {"q": "Which element takes its name from the Greek word for the Sun?", "correct": "Helium", "wrong": ["Selenium", "Neon", "Argon"]}, {"q": "Who is generally regarded as the first Roman emperor?", "correct": "Augustus", "wrong": ["Julius Caesar", "Nero", "Caligula"]}, {"q": "What is the SI unit of electrical resistance?", "correct": "The ohm", "wrong": ["The volt", "The watt", "The ampere"]}, {"q": "Which sea lies between Europe and Africa, entered via the Strait of Gibraltar?", "correct": "The Mediterranean", "wrong": ["The Adriatic", "The Aegean", "The Black Sea"]}, {"q": "Who painted the anti-war mural 'Guernica'?", "correct": "Pablo Picasso", "wrong": ["Salvador Dali", "Joan Miro", "Francisco Goya"]}, {"q": "What is the most abundant element in the universe?", "correct": "Hydrogen", "wrong": ["Helium", "Oxygen", "Carbon"]}, {"q": "Which country was formerly known as Siam?", "correct": "Thailand", "wrong": ["Vietnam", "Cambodia", "Myanmar"]}, {"q": "What is the term for a word that reads the same backwards?", "correct": "A palindrome", "wrong": ["An anagram", "A homonym", "An acronym"]}, {"q": "Who developed an early polio vaccine in the 1950s?", "correct": "Jonas Salk", "wrong": ["Alexander Fleming", "Louis Pasteur", "Edward Jenner"]}, {"q": "What is the largest internal organ in the human body?", "correct": "The liver", "wrong": ["The brain", "The lungs", "The heart"]}, {"q": "Which composer was almost completely deaf in his later life?", "correct": "Ludwig van Beethoven", "wrong": ["Mozart", "Bach", "Chopin"]}, {"q": "What is the capital of Iceland?", "correct": "Reykjavik", "wrong": ["Oslo", "Helsinki", "Bergen"]}, {"q": "Which Wonder of the Ancient World stood in the harbour of Rhodes?", "correct": "The Colossus of Rhodes", "wrong": ["The Hanging Gardens", "The Lighthouse of Alexandria", "The Temple of Artemis"]}, {"q": "What is the chemical symbol for iron?", "correct": "Fe", "wrong": ["Ir", "In", "Fr"]}, {"q": "Who wrote 'The Divine Comedy'?", "correct": "Dante Alighieri", "wrong": ["Petrarch", "Boccaccio", "Virgil"]}, {"q": "Which blood type is known as the universal donor?", "correct": "O negative", "wrong": ["AB positive", "A positive", "O positive"]}, {"q": "What is the largest moon of Saturn?", "correct": "Titan", "wrong": ["Europa", "Ganymede", "Io"]}, {"q": "In which modern country are the ruins of ancient Carthage?", "correct": "Tunisia", "wrong": ["Egypt", "Libya", "Morocco"]}, {"q": "What is the scientific study of earthquakes called?", "correct": "Seismology", "wrong": ["Geology", "Volcanology", "Meteorology"]}, {"q": "Which Egyptian queen was famously allied with Mark Antony?", "correct": "Cleopatra", "wrong": ["Nefertiti", "Hatshepsut", "Helen"]}, {"q": "What is the smallest two-digit prime number?", "correct": "11", "wrong": ["13", "10", "12"]}]};
+  var N=5, FREE=0, YOU=1, RIV=2;
+  var TIERS=[{name:'Greenhorn',ms:3600,q:1},{name:'Settler',ms:3000,q:2},{name:'Marshal',ms:2400,q:3},{name:'Outlaw',ms:1900,q:4}];
+  var COOLMS=2500, QSEC=14;
+  var STAR='<svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17.8 5.8 20.6l1.6-6.7L2.2 8.9l6.9-.6z"/></svg>';
+
+  // ---------- pure board model ----------
+  function newGame(){ var g=[]; for(var r=0;r<N;r++){ g.push([]); for(var c=0;c<N;c++) g[r].push(FREE); } g[N-1][0]=YOU; g[0][N-1]=RIV; return {g:g}; }
+  function nbrs(r,c){ var o=[]; if(r>0)o.push([r-1,c]); if(r<N-1)o.push([r+1,c]); if(c>0)o.push([r,c-1]); if(c<N-1)o.push([r,c+1]); return o; }
+  function adjTo(G,r,c,who){ var ns=nbrs(r,c); for(var i=0;i<ns.length;i++){ if(G.g[ns[i][0]][ns[i][1]]===who) return true; } return false; }
+  function eligible(G,who){ var out=[]; for(var r=0;r<N;r++) for(var c=0;c<N;c++){ if(G.g[r][c]!==who && adjTo(G,r,c,who)) out.push([r,c]); } return out; }
+  function counts(G){ var y=0,v=0,f=0; for(var r=0;r<N;r++) for(var c=0;c<N;c++){ var t=G.g[r][c]; if(t===YOU)y++; else if(t===RIV)v++; else f++; } return {you:y,riv:v,free:f}; }
+  function full(G){ return counts(G).free===0; }
+  function rustlerPick(G){ var e=eligible(G,RIV); if(!e.length) return null; var fre=e.filter(function(t){ return G.g[t[0]][t[1]]===FREE; });
+    if(fre.length && (Math.random()<0.82 || fre.length===e.length)) return fre[Math.floor(Math.random()*fre.length)];
+    return e[Math.floor(Math.random()*e.length)]; }
+
+  // ---------- supabase / board ----------
+  var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+  var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+  var QUIZ_ID='qc_claim', NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  var lastRun=null, BOARD=[], boardBusy=false, boardCtx='result';
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function fmt(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); }
+  function cmpRun(a,b){ return (b.level-a.level)||(b.correct-a.correct)||(a.timeLeft-b.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+' plots \u00b7 '+(r.level?'won':'lost'); }
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  function sbLoad(){ var url=sbBase()+'?select=name,correct,level,time_left&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)+'&group_code=eq.'+encodeURIComponent(groupCode())+'&order=level.desc,correct.desc,time_left.asc&limit=10';
+    return fetch(url,{headers:sbHeaders()}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(rows){ return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; }); }); }
+  function sbSave(e){ var body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).then(function(r){ if(!r.ok) throw 0; }); }
+  function ids(){ return boardCtx==='result'?{l:'boardList',e:'boardEmpty',t:'boardTitle'}:{l:'boardList2',e:'boardEmpty2',t:'boardTitle2'}; }
+  function renderRows(rows,hi){ var I=ids(),list=$(I.l); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){ var li=document.createElement('li'); li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span><span class="bsc">'+r.correct+' plots<br><span class="bmeta">'+(r.level?'won':'lost')+'</span></span>'; list.appendChild(li); }); }
+  function setMode(){ var I=ids(),t=$(I.t); if(t) t.textContent=shared()?('Posse \u00b7 '+groupCode()):'This device'; }
+  function renderLocal(hi){ var I=ids(); renderRows(BOARD,hi); var e=$(I.e); e.textContent='No claims filed yet \u2014 stake the first!'; e.classList.toggle('hidden',BOARD.length>0); setMode(); }
+  function refreshShared(hi){ var I=ids(); setMode(); var list=$(I.l); $(I.e).classList.add('hidden'); list.innerHTML='<li class="bload">Loading\u2026</li>';
+    return sbLoad().then(function(b){ BOARD=b; renderRows(BOARD,hi); $(I.e).textContent='No claims in this posse yet \u2014 stake the first!'; $(I.e).classList.toggle('hidden',BOARD.length>0); })
+      .catch(function(){ list.innerHTML=''; $(I.e).textContent='Couldn\u2019t reach the shared board \u2014 check your connection.'; $(I.e).classList.remove('hidden'); }); }
+  function showBoard(hi){ if(shared()) refreshShared(hi); else { loadLocal(); renderLocal(hi); } }
+  function saveScore(){ if(!lastRun||boardBusy) return; var name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Drifter'; lsSet(NAME_KEY,name);
+    var entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){ var btn=$('boardSave'); boardBusy=true; btn.disabled=true; var old=btn.textContent; btn.textContent='Saving\u2026';
+      sbSave(entry).then(function(){ lastRun=null; $('saveArea').classList.add('hidden'); beep(660,.09,'sine',.12); return refreshShared(entry.t); }).catch(function(){ btn.textContent='Try again'; }).then(function(){ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }); }
+    else { BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10); lsSet(QUIZ_ID,JSON.stringify(BOARD)); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,.09,'sine',.12); renderLocal(entry.t); } }
+
+  // ---------- audio ----------
+  var AC=null;
+  function ensureAudio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
+  function beep(f,d,type,vol){ if(!AC) return; try{ var o=AC.createOscillator(),g=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; g.gain.value=vol||.1; o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(d||.1)); o.stop(AC.currentTime+(d||.1)); }catch(e){} }
+  function sfxClaim(){ beep(540,.07,'square',.10); setTimeout(function(){beep(760,.1,'square',.10);},60); }
+  function sfxMiss(){ beep(180,.16,'sawtooth',.10); }
+
+  // ---------- game state ----------
+  var G=null, tierIdx=0, used={}, t0=0, running=false, gameOver=false;
+  var cool={}, cells={}, rustlerId=null, uiId=null, qTimerRAF=null;
+  var modal=null; // {r,c,need,have}
+  function rnd(n){ return Math.floor(Math.random()*n); }
+  function pickQuestion(t){ t=Math.max(1,Math.min(4,t)); var arr=BANK[String(t)]; if(!used[t]) used[t]={}; var tr=0,idx; do{ idx=rnd(arr.length); tr++; }while(used[t][idx]&&tr<40); if(Object.keys(used[t]).length>=arr.length) used[t]={}; used[t][idx]=1;
+    var q=arr[idx]; var opts=[{text:q.correct,ok:true}]; q.wrong.forEach(function(w){ opts.push({text:w,ok:false}); }); for(var i=opts.length-1;i>0;i--){ var j=rnd(i+1); var tmp=opts[i]; opts[i]=opts[j]; opts[j]=tmp; } return {q:q.q,opts:opts}; }
+
+  function buildBoard(){ var b=$('board'); b.innerHTML=''; cells={};
+    for(var r=0;r<N;r++) for(var c=0;c<N;c++){ (function(r,c){ var el=document.createElement('div'); el.className='cell'; el.addEventListener('click',function(){ onTap(r,c); }); b.appendChild(el); cells[r+'-'+c]=el; })(r,c); } }
+  function refreshBoard(){ var elig=eligible(G,YOU); var eset={}; elig.forEach(function(t){ eset[t[0]+'-'+t[1]]=1; }); var now=Date.now();
+    for(var r=0;r<N;r++) for(var c=0;c<N;c++){ var el=cells[r+'-'+c],t=G.g[r][c],key=r+'-'+c; el.className='cell';
+      if(t===FREE) el.classList.add('free'); else if(t===YOU) el.classList.add('you'); else el.classList.add('riv');
+      el.innerHTML = (t===YOU||t===RIV) ? STAR : '';
+      var cooled=(cool[key]&&cool[key]>now);
+      if(cooled){ el.classList.add('cool'); }
+      else if(eset[key]){ el.classList.add(t===FREE?'can':'jump'); }
+    }
+    var cc=counts(G); $('youCount').textContent=cc.you; $('rivCount').textContent=cc.riv; $('openCount').textContent=cc.free;
+    var tot=N*N; $('segYou').style.width=(cc.you/tot*100)+'%'; $('segRiv').style.width=(cc.riv/tot*100)+'%'; }
+
+  function start(){ used={}; cool={}; G=newGame(); gameOver=false; running=true; t0=Date.now();
+    $('tierPill').textContent=TIERS[tierIdx].name.toUpperCase(); show('game'); buildBoard(); refreshBoard();
+    $('hint').textContent='Claim open land on your border.';
+    stopTimers(); rustlerId=setInterval(rustlerTurn, TIERS[tierIdx].ms); uiId=setInterval(refreshBoard, 450); }
+  function stopTimers(){ if(rustlerId){clearInterval(rustlerId);rustlerId=null;} if(uiId){clearInterval(uiId);uiId=null;} stopQTimer(); }
+  function rustlerTurn(){ if(!running||modal||gameOver) return; var p=rustlerPick(G); if(p){ G.g[p[0]][p[1]]=RIV; refreshBoard(); checkEnd(); } }
+
+  function onTap(r,c){ if(!running||modal||gameOver) return; var key=r+'-'+c; if(cool[key]&&cool[key]>Date.now()) return;
+    var t=G.g[r][c]; if(!adjTo(G,r,c,YOU)) return; if(t===YOU) return;
+    var need=(t===RIV)?2:1; modal={r:r,c:c,need:need,have:0}; $('qCard').scrollTop=0; $('qWrap').classList.remove('hidden'); nextQ(); }
+  function nextQ(){ var qd=pickQuestion(TIERS[tierIdx].q); modal.cur=qd;
+    $('qBanner').textContent = modal.need>1 ? 'Claim Jump' : 'Stake Your Claim';
+    var sk=$('qStreak'); if(modal.need>1){ sk.classList.remove('hidden'); sk.textContent = modal.have>0 ? 'One more to take it!' : 'Two right in a row to jump it.'; } else sk.classList.add('hidden');
+    $('qFx').textContent=''; $('qText').textContent=qd.q; var box=$('qOpts'); box.innerHTML='';
+    qd.opts.forEach(function(o){ var b=document.createElement('button'); b.className='opt'; b.textContent=o.text; b.addEventListener('click',function(){ answer(o.ok,b); }); box.appendChild(b); }); startQTimer(QSEC); }
+  function startQTimer(sec){ stopQTimer(); var bar=$('qTimer'),s=Date.now(),ms=sec*1000; bar.style.width='100%'; (function tick(){ var left=ms-(Date.now()-s); bar.style.width=Math.max(0,left/ms*100)+'%'; if(left<=0){ answer(false,null); return; } qTimerRAF=requestAnimationFrame(tick); })(); }
+  function stopQTimer(){ if(qTimerRAF){ cancelAnimationFrame(qTimerRAF); qTimerRAF=null; } }
+  function answer(ok,btn){ if(!modal||modal.locked) return; modal.locked=true; stopQTimer();
+    Array.prototype.forEach.call($('qOpts').children,function(b){ b.style.pointerEvents='none'; });
+    if(ok){ if(btn) btn.classList.add('good'); sfxClaim(); modal.have++;
+      if(modal.have>=modal.need){ $('qFx').textContent=modal.need>1?'Claim jumped!':'Claimed!'; $('qFx').style.color='var(--right)'; var R=modal.r,C=modal.c; setTimeout(function(){ G.g[R][C]=YOU; closeQ(); refreshBoard(); checkEnd(); },560); }
+      else { $('qFx').textContent='Got it \u2014 one more!'; $('qFx').style.color='var(--you)'; setTimeout(function(){ modal.locked=false; nextQ(); },680); } }
+    else { if(btn) btn.classList.add('bad'); sfxMiss(); Array.prototype.forEach.call($('qOpts').children,function(b,i){ if(modal.cur.opts[i].ok) b.classList.add('good'); });
+      cool[modal.r+'-'+modal.c]=Date.now()+COOLMS; $('qFx').textContent=(btn?'Missed!':'Too slow!')+' The claim cools off.'; $('qFx').style.color='var(--wrong)';
+      setTimeout(function(){ closeQ(); refreshBoard(); },1000); } }
+  function closeQ(){ modal=null; $('qWrap').classList.add('hidden'); }
+  function checkEnd(){ if(gameOver) return; if(full(G)) endGame(); }
+  function endGame(){ gameOver=true; running=false; stopTimers(); closeQ(); var cc=counts(G), el=(Date.now()-t0)/1000, win=cc.you>cc.riv, draw=cc.you===cc.riv;
+    lastRun={correct:cc.you, level:(win?1:0), timeLeft:el, t:Date.now()};
+    $('resTitle').textContent = draw?'A standoff':(win?'You won the land rush':'The Rustler took the frontier');
+    $('resTitle').style.color = win?'var(--youD)':(draw?'var(--brassD)':'var(--rivD)');
+    $('resStats').innerHTML='You held <b>'+cc.you+'</b> plots to the Rustler\u2019s <b>'+cc.riv+'</b><br>frontier settled in '+fmt(el);
+    boardCtx='result'; $('saveArea').classList.remove('hidden'); $('saveSummary').textContent=fmtScore(lastRun); var nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm; show('result'); showBoard(); }
+
+  function buildTiers(){ var tr=$('tierRow'); tr.innerHTML=''; TIERS.forEach(function(t,i){ var b=document.createElement('button'); b.className='chip'+(i===tierIdx?' sel':''); b.textContent=t.name; b.addEventListener('click',function(){ tierIdx=i; buildTiers(); ensureAudio(); }); tr.appendChild(b); }); }
+  function init(){ var nm=lsGet(NAME_KEY); if(nm) $('nameIn').value=nm; var gc=lsGet(GROUP_KEY); if(gc) $('codeIn').value=gc; buildTiers();
+    $('startBtn').addEventListener('click',function(){ ensureAudio(); var name=($('nameIn').value||'').trim().slice(0,14); if(name) lsSet(NAME_KEY,name); lsSet(GROUP_KEY,($('codeIn').value||'').trim()); start(); });
+    $('boardBtn').addEventListener('click',function(){ ensureAudio(); boardCtx='menu'; show('boardScreen'); showBoard(); });
+    $('boardBack').addEventListener('click',function(){ show('menu'); });
+    $('boardSave').addEventListener('click',saveScore);
+    $('againBtn').addEventListener('click',function(){ ensureAudio(); start(); });
+    $('menuBtn2').addEventListener('click',function(){ stopTimers(); show('menu'); }); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+
+  // ---------- test hook ----------
+  window.__claim_test=function(cmd){
+    if(cmd==='fill'){ for(var k=0;k<300;k++){ var g=newGame(),steps=0;
+        while(!full(g)&&steps<2000){ var e=eligible(g,YOU); if(e.length){ var fre=e.filter(function(t){return g.g[t[0]][t[1]]===FREE;}); var p=(fre.length?fre:e)[rnd((fre.length?fre:e).length)]; g.g[p[0]][p[1]]=YOU; }
+          if(full(g)) break; var rp=rustlerPick(g); if(rp) g.g[rp[0]][rp[1]]=RIV; else if(!e.length) break; steps++; }
+        var cc=counts(g); if(cc.free!==0) return 'FAIL free='+cc.free+' steps='+steps; if(cc.you+cc.riv!==25) return 'FAIL sum'; if(cc.you===cc.riv) return 'TIE (unexpected on odd board)'; }
+      return 'OK'; }
+    if(cmd==='elig'){ var g=newGame(); return JSON.stringify({you:eligible(g,YOU).length, riv:eligible(g,RIV).length, c:counts(g)}); }
+    return 'unknown'; };
+})();
+</script>
+</body>
+</html>
