@@ -156,6 +156,7 @@
   .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
   .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
 </style>
+  <script src="questions.js?v=1"></script>
 </head>
 <body>
 <div id="app">
@@ -256,7 +257,7 @@
 <script>
 (function(){
   // ============ QUESTION BANK (stable, settled facts) ============
-  const BANK={
+  const BANK_LOCAL={
     1:[
       {"q":"What is the capital of France?","correct":"Paris","wrong":["London","Rome","Berlin"]},
       {"q":"How many continents are there on Earth?","correct":"Seven","wrong":["Five","Six","Eight"]},
@@ -426,6 +427,7 @@
       {"q":"In which Shakespeare play do Rosencrantz and Guildenstern appear?","correct":"Hamlet","wrong":["Macbeth","Othello","King Lear"]}
     ]
   };
+  var BANK=(window.TB&&window.TB.bank&&Object.keys(window.TB.bank('gk')||{}).length)?window.TB.bank('gk'):BANK_LOCAL;
   const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
   const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
   function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
@@ -718,5 +720,7 @@
 
 })();
 </script>
+<div id="tb-bankinfo" style="position:fixed;left:8px;bottom:6px;font:700 11px system-ui,sans-serif;color:#fff;background:rgba(0,0,0,.5);padding:3px 7px;border-radius:6px;z-index:80;pointer-events:none;"></div>
+<script>(function(){var el=document.getElementById("tb-bankinfo");if(!el)return;if(window.TB&&window.TB.count){el.textContent="shared bank v"+(window.TB.v||"?")+" \u00b7 "+window.TB.count("gk")+" GK questions";}else{el.textContent="built-in questions (shared bank not loaded)";}})();</script>
 </body>
 </html>
