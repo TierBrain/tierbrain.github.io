@@ -129,6 +129,26 @@
   .support svg{width:16px;height:16px;}
   @keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
+  .controls{position:sticky;top:0;z-index:20;width:100%;max-width:680px;margin:0 0 18px;
+    background:linear-gradient(180deg,rgba(16,12,32,.94),rgba(16,12,32,.80));backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:12px;animation:rise .7s .15s cubic-bezier(.2,.8,.2,1) both;}
+  .search{width:100%;font-family:inherit;font-weight:700;font-size:15px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px 14px;}
+  .search::placeholder{color:var(--mut);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .chip{font-family:'Baloo 2';font-weight:700;font-size:13px;color:var(--ink);cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:30px;padding:7px 14px;}
+  .chip.on{background:linear-gradient(180deg,#ffe08a,#f2c95c);color:#0e0c1f;border-color:transparent;}
+  .crow{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:10px;}
+  .count{color:var(--mut);font-weight:700;font-size:12.5px;letter-spacing:.5px;}
+  .surprise{font-family:'Baloo 2';font-weight:700;font-size:13px;color:#0e0c1f;cursor:pointer;
+    background:linear-gradient(180deg,#b9f0ff,#5cc8ff);border:none;border-radius:30px;padding:8px 16px;}
+  .surprise:active{transform:scale(.97);}
+  .card.hidden,.cat.hidden{display:none!important;}
+  .noresults{grid-column:1/-1;text-align:center;color:var(--mut);font-weight:700;padding:30px 10px;display:none;}
+  .newtag{position:absolute;top:12px;right:12px;z-index:3;font-family:'Baloo 2';font-weight:800;font-size:10px;
+    letter-spacing:1.5px;text-transform:uppercase;color:#0e0c1f;background:linear-gradient(180deg,#9bffcf,#36c98a);
+    padding:3px 9px;border-radius:20px;box-shadow:0 3px 10px rgba(0,0,0,.35);}
 </style>
 </head>
 <body>
@@ -138,129 +158,140 @@
     <p class="tag">One challenge, two ways to play. Answer right to climb the difficulty, slip up and drop back — how far can you get before the clock or your luck runs out?</p>
   </header>
 
+  <div class="controls">
+    <input id="q" class="search" type="search" placeholder="Search games &amp; quizzes…" autocomplete="off">
+    <div class="chips">
+      <button class="chip on" data-f="all">All</button>
+      <button class="chip" data-f="quiz">Quizzes</button>
+      <button class="chip" data-f="game">Games</button>
+      <button class="chip" data-f="multiplayer">Multiplayer</button>
+      <button class="chip" data-f="puzzle">Puzzle</button>
+    </div>
+    <div class="crow"><span class="count" id="count">41 results</span><button class="surprise" id="surprise">🎲 Surprise me</button></div>
+  </div>
   <main class="grid">
     <h2 class="cat">Quizzes</h2>
 
-    <a class="card feature c5" href="general-knowledge-quiz.html">
+    <a class="card feature c5" href="general-knowledge-quiz.html" data-cat="quiz">
       <span class="badge">Super Quiz · 4 Tiers</span>
       <h2>General Knowledge</h2>
       <p>A big shuffled pool across four tiers — climb from Easy through Medium and Hard all the way to the new Legends tier.</p>
       <div class="meta"><span class="qn">160 questions &amp; growing · Legends tier</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c1" href="bible-quiz.html">
+    <a class="card c1" href="bible-quiz.html" data-cat="quiz">
       <span class="badge">Scripture</span>
       <h2>The Bible</h2>
       <p>Famous stories, parables, passages and people — from Genesis to Revelation.</p>
       <div class="meta"><span class="qn">128 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c12" href="religion-quiz.html">
+    <a class="card c12" href="religion-quiz.html" data-cat="quiz">
       <span class="badge">Faith</span>
       <h2>World Religions</h2>
       <p>The major faiths — texts, founders, festivals and figures, from Christianity to Buddhism.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c2" href="leeds-rhinos-quiz.html">
+    <a class="card c2" href="leeds-rhinos-quiz.html" data-cat="quiz">
       <span class="badge">Rugby League</span>
       <h2>Leeds Rhinos</h2>
       <p>Headingley legends, Grand Finals and the golden generation.</p>
       <div class="meta"><span class="qn">127 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c3" href="manutd-quiz.html">
+    <a class="card c3" href="manutd-quiz.html" data-cat="quiz">
       <span class="badge">Football</span>
       <h2>Manchester United</h2>
       <p>Newton Heath to the Theatre of Dreams — legends, finals and records.</p>
       <div class="meta"><span class="qn">127 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c4" href="rhousewives-quiz.html">
+    <a class="card c4" href="rhousewives-quiz.html" data-cat="quiz">
       <span class="badge">Reality TV</span>
       <h2>Real Housewives</h2>
       <p>Bravo's franchise — taglines, cast feuds and the table flip.</p>
       <div class="meta"><span class="qn">127 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c6" href="music-quiz.html">
+    <a class="card c6" href="music-quiz.html" data-cat="quiz">
       <span class="badge">Music</span>
       <h2>Music</h2>
       <p>Pop, rock, classical and jazz — instruments, artists and theory.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c7" href="film-screen-quiz.html">
+    <a class="card c7" href="film-screen-quiz.html" data-cat="quiz">
       <span class="badge">Film &amp; TV</span>
       <h2>Film &amp; Screen</h2>
       <p>Movies, TV, actors and directors — from blockbusters to world cinema.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c8" href="sport-quiz.html">
+    <a class="card c8" href="sport-quiz.html" data-cat="quiz">
       <span class="badge">Sport</span>
       <h2>Sport</h2>
       <p>Football, the Olympics, tennis, cricket, golf, boxing and F1.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c9" href="history-quiz.html">
+    <a class="card c9" href="history-quiz.html" data-cat="quiz">
       <span class="badge">History</span>
       <h2>History</h2>
       <p>Ancient empires to the modern world — figures, dates and events.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c10" href="science-quiz.html">
+    <a class="card c10" href="science-quiz.html" data-cat="quiz">
       <span class="badge">Science</span>
       <h2>Science</h2>
       <p>Biology, chemistry, physics and space — from cells to black holes.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c11" href="maths-quiz.html">
+    <a class="card c11" href="maths-quiz.html" data-cat="quiz">
       <span class="badge">Maths</span>
       <h2>Maths</h2>
       <p>Arithmetic, geometry, algebra and number facts to puzzle over.</p>
       <div class="meta"><span class="qn">160 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c13" href="arsenal-quiz.html">
+    <a class="card c13" href="arsenal-quiz.html" data-cat="quiz">
       <span class="badge">Football</span>
       <h2>Arsenal FC</h2>
       <p>Highbury to the Emirates — the Invincibles, the Gunners' legends and records.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c14" href="politics-quiz.html">
+    <a class="card c14" href="politics-quiz.html" data-cat="quiz">
       <span class="badge">Politics</span>
       <h2>Politics &amp; Government</h2>
       <p>Systems, institutions and thinkers — from ancient Athens to the modern state.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c15" href="premier-league-quiz.html">
+    <a class="card c15" href="premier-league-quiz.html" data-cat="quiz">
       <span class="badge">Football</span>
       <h2>Premier League</h2>
       <p>Clubs, managers and record-breakers — the famous moments since 1992.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c16" href="scifi-quiz.html">
+    <a class="card c16" href="scifi-quiz.html" data-cat="quiz">
       <span class="badge">Sci-Fi</span>
       <h2>Science Fiction</h2>
       <p>The books, films, authors and big ideas that built the genre.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c17" href="crypto-quiz.html">
+    <a class="card c17" href="crypto-quiz.html" data-cat="quiz">
       <span class="badge">Crypto</span>
       <h2>Crypto &amp; Blockchain</h2>
       <p>Bitcoin's origins, Ethereum and the fundamentals — history, not hype.</p>
       <div class="meta"><span class="qn">120 questions · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c27" href="wrestling-quiz.html">
+    <a class="card c27" href="wrestling-quiz.html" data-cat="quiz">
       <span class="badge">Wrestling</span>
       <h2>Wrestling</h2>
       <p>WWE, WCW and ECW to Japan, Lucha Libre and World of Sport — stars, world titles, events and matches.</p>
@@ -269,166 +300,169 @@
 
     <h2 class="cat">Games</h2>
 
-    <a class="card c28" href="five-clues.html">
+    <a class="card c28" href="five-clues.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Five Clues</h2>
       <p>Guess the hidden answer from clues revealed one at a time — the fewer you need, the more points you score.</p>
       <div class="meta"><span class="qn">Solve fast · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c29" href="five-clues-bible.html">
+    <a class="card c29" href="five-clues-bible.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Five Clues: Bible</h2>
       <p>The Five Clues format with a scripture twist — name the person, place or event from the Bible.</p>
       <div class="meta"><span class="qn">Solve fast · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c30" href="snap-sort.html">
+    <a class="card c30" href="snap-sort.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Snap Sort</h2>
       <p>Tap left or right to bin each item before its timer runs out — build a streak, but three misses ends your run.</p>
       <div class="meta"><span class="qn">Reflex + knowledge · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c31" href="call-your-shot.html">
+    <a class="card c31" href="call-your-shot.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Call Your Shot</h2>
       <p>Answer, then throw a dart at the bullseye to stake how sure you are — bold for big points, safe for small.</p>
       <div class="meta"><span class="qn">Confidence game · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c32" href="finish-line.html">
+    <a class="card c32" href="finish-line.html" data-cat="game multiplayer">
       <span class="badge">Live · 2+ players</span>
       <h2>Finish Line</h2>
       <p>A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.</p>
       <div class="meta"><span class="qn">Multiplayer race</span><span class="play">Race <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c33" href="tug-of-war.html">
+    <a class="card c33" href="tug-of-war.html" data-cat="game multiplayer">
       <span class="badge">Live · 2+ players</span>
       <h2>Tug of War</h2>
       <p>Two teams, one rope. Every right answer hauls it your way and a wrong one lets it slip — first side over the line wins.</p>
       <div class="meta"><span class="qn">Multiplayer · teams</span><span class="play">Pull <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c34" href="first-finger.html">
+    <a class="card c34" href="first-finger.html" data-cat="game multiplayer">
       <span class="badge">Live · 2+ players</span>
       <h2>First Finger</h2>
       <p>Same question for everyone at once — the first correct answer takes the point. A wrong buzz locks you out, so be quick but sure.</p>
       <div class="meta"><span class="qn">Multiplayer buzzer</span><span class="play">Buzz <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c35" href="first-finger-bible.html">
+    <a class="card c35" href="first-finger-bible.html" data-cat="game multiplayer">
       <span class="badge">Live · 2+ players</span>
       <h2>First Finger: Bible</h2>
       <p>The buzzer race with a Bible question bank — same fast, first-correct-wins format, scripture edition.</p>
       <div class="meta"><span class="qn">Multiplayer buzzer</span><span class="play">Buzz <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c36" href="core.html">
+    <a class="card c36" href="core.html" data-cat="game adventure">
       <span class="badge">Adventure</span>
       <h2>Reach the Core</h2>
       <p>Chart a branching route from the rim to the galactic core. Every jump throws an obstacle your way — answer to pass. Choose your path; three wrong and the run ends in the void.</p>
       <div class="meta"><span class="qn">Solo adventure</span><span class="play">Launch <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c37" href="castle.html">
+    <a class="card c37" href="castle.html" data-cat="game adventure">
       <span class="badge">Adventure</span>
       <h2>Escape the Keep</h2>
       <p>The same branching escape recast in a crumbling castle — gateways, portcullises, knights and locked vaults stand between you and the gate.</p>
       <div class="meta"><span class="qn">Solo adventure</span><span class="play">Enter <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c38" href="labyrinth.html">
+    <a class="card c38" href="labyrinth.html" data-cat="game adventure">
       <span class="badge">Adventure</span>
       <h2>Out of the Labyrinth</h2>
       <p>The branching escape as an ancient maze — passages, closing walls, and a Minotaur or two between you and the centre.</p>
       <div class="meta"><span class="qn">Solo adventure</span><span class="play">Enter <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c39" href="claim.html">
+    <a class="card c39" href="claim.html" data-cat="game strategy">
       <span class="badge">Strategy</span>
       <h2>Claim the Board</h2>
       <p>A frontier land rush — stake claims across a 5×5 board by answering, jump the Rustler's plots with two right in a row, and hold the most land when the dust settles.</p>
       <div class="meta"><span class="qn">Solo · vs the Rustler</span><span class="play">Ride out <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c25" href="wheel.html">
+    <a class="card c25" href="wheel.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Phrase Spinner</h2>
       <p>Spin the wheel, reveal the hidden phrase letter by letter, then call it before the clock — mind the Bankrupt!</p>
       <div class="meta"><span class="qn">Endless puzzles · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c26" href="matchup.html">
+    <a class="card c26" href="matchup.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Match Up</h2>
       <p>Link each item to its partner — capitals, authors, elements and more. Clear the board and climb the tiers.</p>
       <div class="meta"><span class="qn">Endless pairs · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c18" href="higher-lower.html">
+    <a class="card c18" href="higher-lower.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Higher or Lower</h2>
       <p>Which is bigger? Tallest, longest, fastest, oldest — the category keeps switching.</p>
       <div class="meta"><span class="qn">Endless rounds · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c19" href="odd-one-out.html">
+    <a class="card c19" href="odd-one-out.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Odd One Out</h2>
       <p>Three belong together, one doesn't — spot it. The hidden link is revealed after.</p>
       <div class="meta"><span class="qn">Endless puzzles · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c20" href="guess-the-year.html">
+    <a class="card c20" href="guess-the-year.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Guess the Year</h2>
       <p>Slide the timeline to date a moment in history. Get close — the window tightens as you climb.</p>
       <div class="meta"><span class="qn">Endless rounds · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c21" href="fact-fiction.html">
+    <a class="card c21" href="fact-fiction.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Fact or Fiction</h2>
       <p>True or false? Snap judgements, with famous myths waiting to trip you up near the top.</p>
       <div class="meta"><span class="qn">Endless rounds · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c22" href="spot-the-lie.html">
+    <a class="card c22" href="spot-the-lie.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Spot the Lie</h2>
       <p>Three statements, one is made up. Find the fib — they get sneakier as you climb.</p>
       <div class="meta"><span class="qn">Endless rounds · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c23" href="recall.html">
+    <a class="card c23" href="recall.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Recall</h2>
       <p>Watch the pattern light up, then tap it back. It grows every round — pure memory.</p>
       <div class="meta"><span class="qn">Endless rounds · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c24" href="unscramble.html">
+    <a class="card c24" href="unscramble.html" data-cat="game">
       <span class="badge">Game</span>
       <h2>Unscramble</h2>
       <p>Jumbled letters, one word. Tap them into order against the clock — hints if you're stuck.</p>
       <div class="meta"><span class="qn">Endless words · 4 tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c40" href="jigsaw.html">
+    <a class="card c40" href="jigsaw.html" data-cat="game puzzle" data-new="1">
+      <span class="newtag">New</span>
       <span class="badge">Puzzle</span>
       <h2>Jigsaw</h2>
       <p>Drag the scattered pieces home to rebuild a freshly generated picture — race the clock across four sizes, from a 12-piece warm-up to a 48-piece master.</p>
       <div class="meta"><span class="qn">Solo · 4 sizes</span><span class="play">Solve <span class="arr">›</span></span></div>
     </a>
 
-    <a class="card c41" href="piece-by-piece.html">
+    <a class="card c41" href="piece-by-piece.html" data-cat="game puzzle" data-new="1">
+      <span class="newtag">New</span>
       <span class="badge">Puzzle</span>
       <h2>Piece by Piece</h2>
       <p>A flag builds itself piece by piece — name the country before it finishes. Guess early off a few pieces for big points; one guess only.</p>
       <div class="meta"><span class="qn">Solo · climbing tiers</span><span class="play">Play <span class="arr">›</span></span></div>
     </a>
+    <p class="noresults" id="nores">No matches — try a different word or filter.</p>
   </main>
 
   <footer>
@@ -442,5 +476,37 @@
       Support this site
     </a>
   </footer>
+<script>
+(function(){
+  var grid=document.querySelector('main.grid');
+  var cards=[].slice.call(grid.querySelectorAll('.card'));
+  var cats=[].slice.call(grid.querySelectorAll('.cat'));
+  var q=document.getElementById('q'), chips=[].slice.call(document.querySelectorAll('.chip'));
+  var countEl=document.getElementById('count'), nores=document.getElementById('nores'), filter='all';
+  function apply(){
+    var query=(q.value||'').trim().toLowerCase(), vis=0;
+    cards.forEach(function(card){
+      var toks=(card.getAttribute('data-cat')||'').split(' ');
+      var okF=(filter==='all')||toks.indexOf(filter)>-1;
+      var okQ=!query||card.textContent.toLowerCase().indexOf(query)>-1;
+      var show=okF&&okQ; card.classList.toggle('hidden',!show); if(show)vis++;
+    });
+    cats.forEach(function(cat){
+      var n=cat.nextElementSibling, any=false;
+      while(n&&!n.classList.contains('cat')){ if(n.classList.contains('card')&&!n.classList.contains('hidden'))any=true; n=n.nextElementSibling; }
+      cat.classList.toggle('hidden',!any);
+    });
+    countEl.textContent=vis+(vis===1?' result':' results');
+    nores.style.display=vis?'none':'block';
+  }
+  chips.forEach(function(ch){ch.addEventListener('click',function(){chips.forEach(function(c){c.classList.remove('on');});ch.classList.add('on');filter=ch.getAttribute('data-f');apply();});});
+  q.addEventListener('input',apply);
+  document.getElementById('surprise').addEventListener('click',function(){
+    var pool=cards.filter(function(c){return !c.classList.contains('hidden');}); if(!pool.length)pool=cards;
+    var c=pool[(Math.random()*pool.length)|0]; if(c)window.location.href=c.getAttribute('href');
+  });
+  apply();
+})();
+</script>
 </body>
 </html>
