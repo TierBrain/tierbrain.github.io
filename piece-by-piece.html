@@ -294,7 +294,11 @@ var OBJECTS=[
  {n:'House',t:1,d:oHouse},{n:'Mug',t:1,d:oMug},{n:'Key',t:1,d:oKey},{n:'Umbrella',t:1,d:oUmbrella},
  {n:'Top Hat',t:2,d:oHat},{n:'Lamp',t:2,d:oLamp},{n:'Scissors',t:2,d:oScissors},{n:'Bell',t:2,d:oBell},
  {n:'Car',t:3,d:oCar},{n:'Sailboat',t:3,d:oBoat},{n:'Guitar',t:3,d:oGuitar},{n:'Anchor',t:3,d:oAnchor},
- {n:'Motorcycle',t:4,d:oMoto},{n:'Train',t:4,d:oTrain},{n:'Rocket',t:4,d:oRocket},{n:'Runner',t:4,d:oRunner}
+ {n:'Motorcycle',t:4,d:oMoto},{n:'Train',t:4,d:oTrain},{n:'Rocket',t:4,d:oRocket},{n:'Runner',t:4,d:oRunner},
+ {n:'Star',t:1,d:oStar},{n:'Heart',t:1,d:oHeart},{n:'Tree',t:1,d:oTree},{n:'Light Bulb',t:1,d:oBulb},
+ {n:'Bottle',t:2,d:oBottle},{n:'Crown',t:2,d:oCrown},{n:'Camera',t:2,d:oCamera},{n:'Clock',t:2,d:oClock},
+ {n:'Airplane',t:3,d:oAirplane},{n:'Sword',t:3,d:oSword},{n:'Trophy',t:3,d:oTrophy},{n:'Padlock',t:3,d:oPadlock},
+ {n:'Hot Air Balloon',t:4,d:oBalloon},{n:'Lighthouse',t:4,d:oLighthouse},{n:'Windmill',t:4,d:oWindmill},{n:'Cactus',t:4,d:oCactus}
 ];
 
 
@@ -328,6 +332,25 @@ var SPORTS=[
  {n:'Weightlifting',t:3,d:sWeight},{n:'Skiing',t:3,d:sSki},{n:'Archery',t:3,d:sArchery},{n:'Baseball',t:3,d:sBaseball},
  {n:'Gymnastics',t:4,d:sGym},{n:'Surfing',t:4,d:sSurf},{n:'Skateboarding',t:4,d:sSkate},{n:'Bowling',t:4,d:sBowling}
 ];
+
+
+/* ===================== OBJECTS BATCH 2 (16) ===================== */
+function oStar(g,w,h){objFit(g,w,h,function(g){star(g,0,0,0.92,OBJ,0);});}
+function oHeart(g,w,h){objFit(g,w,h,function(g){g.beginPath();g.moveTo(0,0.72);g.bezierCurveTo(-0.98,-0.05,-0.55,-0.88,0,-0.34);g.bezierCurveTo(0.55,-0.88,0.98,-0.05,0,0.72);g.closePath();g.fill();});}
+function oTree(g,w,h){objFit(g,w,h,function(g){g.fillRect(-0.12,0.1,0.24,0.72);aC(g,0,-0.28,0.55);aC(g,-0.42,0.04,0.38);aC(g,0.42,0.04,0.38);aC(g,0,0.16,0.4);});}
+function oBulb(g,w,h){objFit(g,w,h,function(g){aC(g,0,-0.22,0.5);aP(g,[[-0.3,0.18],[0.3,0.18],[0.22,0.28],[-0.22,0.28]]);g.fillRect(-0.22,0.28,0.44,0.14);g.fillRect(-0.18,0.44,0.36,0.12);g.fillRect(-0.13,0.58,0.26,0.12);});}
+function oBottle(g,w,h){objFit(g,w,h,function(g){g.fillRect(-0.13,-0.92,0.26,0.12);g.fillRect(-0.1,-0.82,0.2,0.32);aP(g,[[-0.1,-0.5],[0.1,-0.5],[0.34,-0.18],[0.34,0.8],[-0.34,0.8],[-0.34,-0.18]]);});}
+function oCrown(g,w,h){objFit(g,w,h,function(g){g.beginPath();g.moveTo(-0.7,0.4);g.lineTo(-0.7,-0.4);g.lineTo(-0.35,0.05);g.lineTo(0,-0.55);g.lineTo(0.35,0.05);g.lineTo(0.7,-0.4);g.lineTo(0.7,0.4);g.closePath();g.fill();g.fillRect(-0.72,0.4,1.44,0.2);aC(g,-0.7,-0.4,0.09);aC(g,0,-0.55,0.09);aC(g,0.7,-0.4,0.09);});}
+function oCamera(g,w,h){objFit(g,w,h,function(g){g.fillRect(-0.72,-0.3,1.44,0.8);g.fillRect(-0.5,-0.46,0.4,0.16);aC(g,0.05,0.1,0.3);g.fillStyle='#dde3ec';aC(g,0.05,0.1,0.17);g.fillStyle=OBJ;aC(g,0.05,0.1,0.08);g.fillRect(0.4,-0.24,0.18,0.12);});}
+function oClock(g,w,h){objFit(g,w,h,function(g){aC(g,-0.45,-0.5,0.18);aC(g,0.45,-0.5,0.18);aLn(g,[[-0.42,-0.45],[-0.2,-0.32]],0.06);aLn(g,[[0.42,-0.45],[0.2,-0.32]],0.06);aC(g,0,0.06,0.6);g.fillStyle='#dde3ec';aC(g,0,0.06,0.46);g.fillStyle=OBJ;aLn(g,[[0,0.06],[0,-0.26]],0.05);aLn(g,[[0,0.06],[0.26,0.06]],0.05);aC(g,0,0.06,0.05);aLn(g,[[-0.35,0.62],[-0.46,0.8]],0.07);aLn(g,[[0.35,0.62],[0.46,0.8]],0.07);});}
+function oAirplane(g,w,h){objFit(g,w,h,function(g){aE(g,0,0,0.15,0.85);aP(g,[[-0.05,-0.15],[-0.88,0.22],[-0.05,0.32]]);aP(g,[[0.05,-0.15],[0.88,0.22],[0.05,0.32]]);aP(g,[[-0.04,0.62],[-0.36,0.84],[-0.04,0.86]]);aP(g,[[0.04,0.62],[0.36,0.84],[0.04,0.86]]);});}
+function oSword(g,w,h){objFit(g,w,h,function(g){aP(g,[[-0.08,-0.85],[0.08,-0.85],[0.1,0.33],[0,0.45],[-0.1,0.33]]);g.fillRect(-0.36,0.33,0.72,0.13);g.fillRect(-0.07,0.46,0.14,0.34);aC(g,0,0.85,0.1);});}
+function oTrophy(g,w,h){objFit(g,w,h,function(g){g.beginPath();g.moveTo(-0.4,-0.55);g.lineTo(0.4,-0.55);g.lineTo(0.32,-0.1);g.bezierCurveTo(0.32,0.18,-0.32,0.18,-0.32,-0.1);g.closePath();g.fill();g.lineWidth=0.08;g.beginPath();g.arc(-0.42,-0.32,0.2,Math.PI*0.45,Math.PI*1.55,true);g.stroke();g.beginPath();g.arc(0.42,-0.32,0.2,Math.PI*1.55,Math.PI*0.45,true);g.stroke();g.fillRect(-0.08,0.12,0.16,0.4);g.fillRect(-0.3,0.5,0.6,0.14);g.fillRect(-0.42,0.66,0.84,0.16);});}
+function oPadlock(g,w,h){objFit(g,w,h,function(g){g.lineWidth=0.16;g.beginPath();g.arc(0,-0.2,0.38,Math.PI,2*Math.PI);g.stroke();g.fillRect(-0.55,-0.2,1.1,0.9);g.fillStyle='#dde3ec';aC(g,0,0.15,0.13);g.fillRect(-0.05,0.15,0.1,0.28);g.fillStyle=OBJ;});}
+function oBalloon(g,w,h){objFit(g,w,h,function(g){g.beginPath();g.moveTo(0,0.38);g.bezierCurveTo(-0.72,0.12,-0.62,-0.88,0,-0.88);g.bezierCurveTo(0.62,-0.88,0.72,0.12,0,0.38);g.closePath();g.fill();aLn(g,[[-0.2,0.34],[-0.15,0.62]],0.04);aLn(g,[[0.2,0.34],[0.15,0.62]],0.04);aP(g,[[-0.18,0.62],[0.18,0.62],[0.13,0.84],[-0.13,0.84]]);});}
+function oLighthouse(g,w,h){objFit(g,w,h,function(g){aP(g,[[-0.24,0.8],[0.24,0.8],[0.15,-0.3],[-0.15,-0.3]]);g.fillRect(-0.22,-0.44,0.44,0.14);aP(g,[[-0.17,-0.44],[0.17,-0.44],[0.1,-0.64],[-0.1,-0.64]]);aP(g,[[-0.13,-0.64],[0.13,-0.64],[0,-0.88]]);g.fillRect(-0.34,0.8,0.68,0.1);});}
+function oWindmill(g,w,h){objFit(g,w,h,function(g){aP(g,[[-0.26,0.85],[0.26,0.85],[0.14,-0.2],[-0.14,-0.2]]);aP(g,[[-0.14,-0.2],[0.14,-0.2],[0,-0.46]]);g.save();g.translate(0,-0.32);for(var i=0;i<4;i++){g.rotate(Math.PI/2);g.fillRect(-0.035,0,0.07,0.62);g.fillRect(-0.035,0.42,0.18,0.2);}g.restore();aC(g,0,-0.32,0.08);});}
+function oCactus(g,w,h){objFit(g,w,h,function(g){g.fillRect(-0.13,-0.75,0.26,1.55);aC(g,0,-0.75,0.13);g.fillRect(-0.5,0.0,0.4,0.13);g.fillRect(-0.5,-0.35,0.13,0.48);aC(g,-0.435,-0.35,0.065);g.fillRect(0.1,-0.2,0.4,0.13);g.fillRect(0.37,-0.55,0.13,0.48);aC(g,0.435,-0.55,0.065);});}
 
 var DECKS={flags:{label:'Flags',items:FLAGS,max:4},planets:{label:'Planets & Moons',items:PLANETS,max:3},animals:{label:'Animal Silhouettes',items:ANIMALS,max:4},objects:{label:'Objects',items:OBJECTS,max:4},sports:{label:'Sports',items:SPORTS,max:4}};
 var ITEMS=FLAGS, maxTier=4, deckKey='flags';
