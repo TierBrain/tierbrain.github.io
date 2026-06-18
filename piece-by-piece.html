@@ -82,6 +82,7 @@
     <button class="big deckbtn" id="deckPlanets">Planets &amp; Moons</button>
     <button class="big deckbtn" id="deckAnimals">Animal Silhouettes</button>
     <button class="big deckbtn" id="deckObjects">Objects</button>
+    <button class="big deckbtn" id="deckSports">Sports</button>
   </div>
   <p class="how">Tap a country at any time. Guess early off a few pieces for big points, or wait for safety and score less. Right answers climb the tiers; three misses ends the run.</p>
 </section>
@@ -197,7 +198,7 @@ var FLAGS=[
 
 
 /* ===================== PROMPTS + DECKS ===================== */
-var PROMPTS={flags:"Which country\u2019s flag is this?",planets:"Which planet or moon is this?",animals:"Which animal is this?",objects:"Which object is this?"};
+var PROMPTS={flags:"Which country\u2019s flag is this?",planets:"Which planet or moon is this?",animals:"Which animal is this?",objects:"Which object is this?",sports:"Which sport is this?"};
 
 /* ---- space / planet helpers ---- */
 function spaceBg(g,w,h){g.fillStyle='#060914';g.fillRect(0,0,w,h);for(var i=0;i<44;i++)disc(g,Math.random()*w,Math.random()*h,Math.random()*1.4+0.3,'rgba(255,255,255,'+(0.4+Math.random()*0.6)+')');}
@@ -296,7 +297,39 @@ var OBJECTS=[
  {n:'Motorcycle',t:4,d:oMoto},{n:'Train',t:4,d:oTrain},{n:'Rocket',t:4,d:oRocket},{n:'Runner',t:4,d:oRunner}
 ];
 
-var DECKS={flags:{label:'Flags',items:FLAGS,max:4},planets:{label:'Planets & Moons',items:PLANETS,max:3},animals:{label:'Animal Silhouettes',items:ANIMALS,max:4},objects:{label:'Objects',items:OBJECTS,max:4}};
+
+/* ===================== SPORTS (generic athlete silhouettes) ===================== */
+var SP='#16243f';
+function spBg(g,w,h){var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#eaf0ea');gr.addColorStop(1,'#dae2da');g.fillStyle=gr;g.fillRect(0,0,w,h);}
+function spFit(g,w,h,draw){spBg(g,w,h);var s=Math.min(w,h)*0.42;g.save();g.translate(w/2,h/2);g.scale(s,s);g.fillStyle=SP;g.strokeStyle=SP;g.lineJoin='round';g.lineCap='round';draw(g);g.restore();}
+function ringS(g,x,y,r,wd){g.lineWidth=wd;g.beginPath();g.arc(x,y,r,0,7);g.stroke();}
+function arcS(g,x,y,r,a0,a1,wd){g.lineWidth=wd;g.beginPath();g.arc(x,y,r,a0,a1);g.stroke();}
+
+function sRun(g,w,h){spFit(g,w,h,function(g){aC(g,0.28,-0.6,0.16);aLn(g,[[0.22,-0.45],[0.0,0.05]],0.2);aLn(g,[[0.12,-0.32],[0.42,-0.12]],0.11);aLn(g,[[0.06,-0.3],[-0.3,-0.42]],0.11);aLn(g,[[0.0,0.05],[0.36,0.2]],0.13);aLn(g,[[0.36,0.2],[0.56,0.55]],0.11);aLn(g,[[0.0,0.05],[-0.3,0.3]],0.13);aLn(g,[[-0.3,0.3],[-0.12,0.68]],0.11);});}
+function sSoccer(g,w,h){spFit(g,w,h,function(g){aC(g,-0.12,-0.62,0.15);aLn(g,[[-0.12,-0.48],[-0.05,0.0]],0.2);aLn(g,[[-0.1,-0.32],[-0.42,-0.2]],0.11);aLn(g,[[-0.08,-0.34],[0.22,-0.46]],0.11);aLn(g,[[-0.05,0.0],[-0.22,0.5]],0.13);aLn(g,[[-0.22,0.5],[-0.22,0.85]],0.11);aLn(g,[[-0.05,0.0],[0.3,0.12]],0.13);aLn(g,[[0.3,0.12],[0.6,0.32]],0.11);aC(g,0.82,0.5,0.15);g.fillStyle='#dde3df';aC(g,0.82,0.5,0.07);g.fillStyle=SP;});}
+function sBasket(g,w,h){spFit(g,w,h,function(g){aC(g,0,-0.45,0.15);aLn(g,[[-0.12,-0.34],[-0.06,-0.66]],0.11);aLn(g,[[0.12,-0.34],[0.06,-0.66]],0.11);aC(g,0,-0.86,0.18);g.fillStyle='#dde3df';arcS(g,0,-0.86,0.18,-0.5,0.8,0.03);g.fillStyle=SP;aLn(g,[[0,-0.34],[0,0.1]],0.2);aLn(g,[[0,0.1],[-0.26,0.4]],0.12);aLn(g,[[-0.26,0.4],[-0.12,0.66]],0.1);aLn(g,[[0,0.1],[0.26,0.42]],0.12);aLn(g,[[0.26,0.42],[0.36,0.72]],0.1);});}
+function sCycle(g,w,h){spFit(g,w,h,function(g){ringS(g,-0.58,0.5,0.28,0.08);ringS(g,0.58,0.5,0.28,0.08);g.lineWidth=0.05;g.beginPath();g.moveTo(-0.58,0.5);g.lineTo(0.0,0.5);g.lineTo(0.3,0.05);g.lineTo(0.58,0.5);g.moveTo(0.0,0.5);g.lineTo(0.3,0.05);g.stroke();aLn(g,[[0.3,0.05],[0.5,0.0]],0.05);aC(g,-0.05,-0.4,0.13);aLn(g,[[0.0,-0.28],[-0.18,0.05]],0.15);aLn(g,[[-0.1,-0.16],[0.45,0.02]],0.09);aLn(g,[[-0.16,0.05],[0.12,0.32]],0.1);aLn(g,[[0.12,0.32],[0.05,0.5]],0.09);});}
+function sTennis(g,w,h){spFit(g,w,h,function(g){aC(g,-0.12,-0.5,0.15);aLn(g,[[-0.12,-0.38],[-0.05,0.1]],0.2);aLn(g,[[-0.06,-0.32],[0.16,-0.72]],0.11);g.lineWidth=0.05;g.beginPath();g.ellipse(0.24,-0.86,0.13,0.17,0.3,0,7);g.stroke();aLn(g,[[-0.1,-0.32],[-0.36,-0.2]],0.1);g.fillStyle='#dde3df';g.fillStyle=SP;aC(g,0.5,-0.55,0.07);aLn(g,[[-0.05,0.1],[-0.26,0.55]],0.12);aLn(g,[[-0.05,0.1],[0.22,0.5]],0.12);});}
+function sGolf(g,w,h){spFit(g,w,h,function(g){aC(g,0.05,-0.55,0.15);aLn(g,[[0.05,-0.42],[0.12,0.05]],0.18);aLn(g,[[0.1,-0.3],[0.42,-0.16]],0.1);g.lineWidth=0.045;g.beginPath();g.moveTo(0.42,-0.16);g.lineTo(0.66,0.5);g.stroke();aC(g,0.72,0.62,0.07);aLn(g,[[0.12,0.05],[-0.12,0.55]],0.12);aLn(g,[[0.12,0.05],[0.34,0.55]],0.12);});}
+function sBox(g,w,h){spFit(g,w,h,function(g){aC(g,0,-0.5,0.15);aLn(g,[[0,-0.38],[0,0.1]],0.2);aLn(g,[[-0.04,-0.3],[0.24,-0.34]],0.1);aC(g,0.33,-0.34,0.13);aLn(g,[[0.04,-0.3],[0.3,-0.08]],0.1);aC(g,0.4,-0.05,0.13);aLn(g,[[0,0.1],[-0.26,0.55]],0.12);aLn(g,[[0,0.1],[0.26,0.55]],0.12);});}
+function sSwim(g,w,h){spFit(g,w,h,function(g){aLn(g,[[-0.55,-0.05],[0.5,0.0]],0.18);aC(g,0.6,-0.05,0.14);aLn(g,[[0.55,-0.08],[0.86,-0.34]],0.1);aLn(g,[[-0.4,-0.04],[-0.72,-0.24]],0.1);aLn(g,[[-0.5,-0.02],[-0.82,0.12]],0.1);g.lineWidth=0.04;g.strokeStyle='#9fb2c4';for(var i=0;i<3;i++){var y=0.45+i*0.16;g.beginPath();for(var x=-1;x<=1;x+=0.1){var yy=y+Math.sin(x*6)*0.03;(x===-1)?g.moveTo(x,yy):g.lineTo(x,yy);}g.stroke();}g.strokeStyle=SP;});}
+function sWeight(g,w,h){spFit(g,w,h,function(g){aC(g,0,-0.38,0.15);aLn(g,[[-0.1,-0.28],[-0.16,-0.66]],0.12);aLn(g,[[0.1,-0.28],[0.16,-0.66]],0.12);g.lineWidth=0.06;aLn(g,[[-0.78,-0.74],[0.78,-0.74]],0.06);aE(g,-0.72,-0.74,0.08,0.22);aE(g,0.72,-0.74,0.08,0.22);aE(g,-0.58,-0.74,0.06,0.17);aE(g,0.58,-0.74,0.06,0.17);aLn(g,[[0,-0.28],[0,0.12]],0.2);aLn(g,[[0,0.12],[-0.28,0.45]],0.13);aLn(g,[[-0.28,0.45],[-0.28,0.78]],0.11);aLn(g,[[0,0.12],[0.28,0.45]],0.13);aLn(g,[[0.28,0.45],[0.28,0.78]],0.11);});}
+function sSki(g,w,h){spFit(g,w,h,function(g){aC(g,0.08,-0.45,0.14);aLn(g,[[0.06,-0.34],[-0.04,0.05]],0.17);aLn(g,[[0.0,-0.2],[0.3,0.0]],0.09);aLn(g,[[0.3,0.0],[0.46,0.5]],0.035);aLn(g,[[-0.02,-0.2],[-0.3,0.05]],0.09);aLn(g,[[-0.3,0.05],[-0.2,0.5]],0.035);aLn(g,[[-0.04,0.05],[0.04,0.42]],0.12);aLn(g,[[-0.04,0.05],[-0.16,0.42]],0.12);aLn(g,[[-0.55,0.5],[0.5,0.46]],0.05);aLn(g,[[-0.58,0.6],[0.47,0.56]],0.05);});}
+function sArchery(g,w,h){spFit(g,w,h,function(g){aC(g,-0.05,-0.45,0.15);aLn(g,[[-0.05,-0.33],[-0.05,0.1]],0.2);aLn(g,[[-0.05,-0.2],[-0.45,-0.2]],0.1);g.lineWidth=0.05;g.beginPath();g.arc(-0.5,-0.2,0.34,-1.0,1.0);g.stroke();var ay=Math.sin(1.0)*0.34;g.lineWidth=0.02;g.beginPath();g.moveTo(-0.5+Math.cos(1.0)*0.34,-0.2+ay);g.lineTo(-0.18,-0.2);g.lineTo(-0.5+Math.cos(1.0)*0.34,-0.2-ay);g.stroke();g.lineWidth=0.025;aLn(g,[[-0.5,-0.2],[0.1,-0.2]],0.025);aLn(g,[[-0.04,-0.2],[0.18,-0.26]],0.1);aLn(g,[[-0.05,0.1],[-0.26,0.5]],0.12);aLn(g,[[-0.05,0.1],[0.2,0.5]],0.12);});}
+function sBaseball(g,w,h){spFit(g,w,h,function(g){aC(g,0,-0.5,0.15);aLn(g,[[0,-0.38],[0.06,0.05]],0.2);aLn(g,[[0.02,-0.3],[0.32,-0.44]],0.1);aLn(g,[[0.06,-0.3],[0.3,-0.4]],0.09);g.lineWidth=0.085;aLn(g,[[0.3,-0.42],[0.6,-0.92]],0.085);aLn(g,[[0.06,0.05],[-0.18,0.55]],0.12);aLn(g,[[0.06,0.05],[0.32,0.55]],0.12);});}
+function sGym(g,w,h){spFit(g,w,h,function(g){aC(g,0,0.58,0.15);aLn(g,[[-0.1,0.46],[-0.16,0.8]],0.12);aLn(g,[[0.1,0.46],[0.16,0.8]],0.12);aLn(g,[[0,0.46],[0,-0.2]],0.2);aLn(g,[[0,-0.2],[-0.34,-0.56]],0.12);aLn(g,[[-0.34,-0.56],[-0.46,-0.86]],0.1);aLn(g,[[0,-0.2],[0.34,-0.56]],0.12);aLn(g,[[0.34,-0.56],[0.46,-0.86]],0.1);});}
+function sSurf(g,w,h){spFit(g,w,h,function(g){g.lineWidth=0.06;g.strokeStyle='#9fb2c4';g.beginPath();g.moveTo(-0.85,0.72);g.bezierCurveTo(-0.3,0.42,0.3,0.85,0.88,0.5);g.stroke();g.strokeStyle=SP;aE(g,0.0,0.56,0.66,0.1);aC(g,0.0,-0.42,0.14);aLn(g,[[0.0,-0.3],[0.06,0.18]],0.17);aLn(g,[[0.0,-0.18],[0.4,-0.3]],0.1);aLn(g,[[0.0,-0.18],[-0.4,-0.08]],0.1);aLn(g,[[0.06,0.18],[-0.22,0.46]],0.12);aLn(g,[[0.06,0.18],[0.3,0.46]],0.12);});}
+function sSkate(g,w,h){spFit(g,w,h,function(g){aLn(g,[[-0.48,0.64],[0.48,0.64]],0.07);aC(g,-0.3,0.76,0.08);aC(g,0.3,0.76,0.08);aC(g,0.0,-0.42,0.14);aLn(g,[[0.0,-0.3],[0.0,0.18]],0.17);aLn(g,[[0.0,-0.18],[0.36,-0.32]],0.1);aLn(g,[[0.0,-0.18],[-0.36,-0.24]],0.1);aLn(g,[[0.0,0.18],[-0.26,0.55]],0.12);aLn(g,[[0.0,0.18],[0.26,0.55]],0.12);});}
+function sBowling(g,w,h){spFit(g,w,h,function(g){aC(g,0.12,-0.5,0.15);aLn(g,[[0.12,-0.38],[0.0,0.08]],0.2);aLn(g,[[0.06,-0.22],[-0.32,0.22]],0.11);aC(g,-0.4,0.36,0.16);g.fillStyle='#dde3df';aC(g,-0.43,0.3,0.03);aC(g,-0.36,0.3,0.03);aC(g,-0.4,0.36,0.03);g.fillStyle=SP;aLn(g,[[0.1,-0.26],[0.42,-0.34]],0.1);aLn(g,[[0.0,0.08],[0.28,0.5]],0.12);aLn(g,[[0.0,0.08],[-0.16,0.55]],0.12);});}
+
+var SPORTS=[
+ {n:'Running',t:1,d:sRun},{n:'Soccer',t:1,d:sSoccer},{n:'Basketball',t:1,d:sBasket},{n:'Cycling',t:1,d:sCycle},
+ {n:'Tennis',t:2,d:sTennis},{n:'Golf',t:2,d:sGolf},{n:'Boxing',t:2,d:sBox},{n:'Swimming',t:2,d:sSwim},
+ {n:'Weightlifting',t:3,d:sWeight},{n:'Skiing',t:3,d:sSki},{n:'Archery',t:3,d:sArchery},{n:'Baseball',t:3,d:sBaseball},
+ {n:'Gymnastics',t:4,d:sGym},{n:'Surfing',t:4,d:sSurf},{n:'Skateboarding',t:4,d:sSkate},{n:'Bowling',t:4,d:sBowling}
+];
+
+var DECKS={flags:{label:'Flags',items:FLAGS,max:4},planets:{label:'Planets & Moons',items:PLANETS,max:3},animals:{label:'Animal Silhouettes',items:ANIMALS,max:4},objects:{label:'Objects',items:OBJECTS,max:4},sports:{label:'Sports',items:SPORTS,max:4}};
 var ITEMS=FLAGS, maxTier=4, deckKey='flags';
 
 var lastFlag=-1;
@@ -436,7 +469,7 @@ function startGame(key){deckKey=key;ITEMS=DECKS[key].items;maxTier=DECKS[key].ma
   gameStartMs=Date.now();showScreen('game');updateHUD();
   requestAnimationFrame(nextRound);
 }
-document.getElementById('deckFlags').addEventListener('click',function(){startGame('flags');});document.getElementById('deckPlanets').addEventListener('click',function(){startGame('planets');});document.getElementById('deckAnimals').addEventListener('click',function(){startGame('animals');});document.getElementById('deckObjects').addEventListener('click',function(){startGame('objects');});
+document.getElementById('deckFlags').addEventListener('click',function(){startGame('flags');});document.getElementById('deckPlanets').addEventListener('click',function(){startGame('planets');});document.getElementById('deckAnimals').addEventListener('click',function(){startGame('animals');});document.getElementById('deckObjects').addEventListener('click',function(){startGame('objects');});document.getElementById('deckSports').addEventListener('click',function(){startGame('sports');});
 document.getElementById('againBtn').addEventListener('click',function(){startGame(deckKey);});
 document.getElementById('menuBtn').addEventListener('click',function(){clearInterval(intervalId);clearTimeout(graceId);showScreen('menu');});
 var rtid=null;
