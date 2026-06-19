@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wall of Fame · TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0c1030; --bg1:#171248; --bg2:#0a0c24;
+    --panel:rgba(255,255,255,.045); --panel-line:rgba(255,255,255,.10);
+    --ink:#eef0ff; --mut:#9aa0cf; --faint:#6f74a3;
+    --gold:#f4cf78; --gold-deep:#caa244; --gold-glow:rgba(244,207,120,.35);
+    --violet:#8a6cff; --violet-soft:rgba(138,108,255,.16);
+    --rad:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(138,108,255,.22), transparent 60%),
+      radial-gradient(900px 600px at 85% 10%, rgba(244,207,120,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg1) 0%, var(--bg0) 45%, var(--bg2) 100%);
+    background-attachment:fixed; min-height:100vh;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    padding:0 18px 64px;
+  }
+  .wrap{max-width:1000px;margin:0 auto}
+  a{color:inherit}
+
+  /* ---- top bar ---- */
+  .top{display:flex;align-items:center;justify-content:space-between;padding:20px 2px 8px}
+  .back{font-weight:800;font-size:.86rem;letter-spacing:.02em;color:var(--mut);text-decoration:none;
+    display:inline-flex;gap:.45em;align-items:center;padding:8px 12px;border-radius:999px;
+    border:1px solid var(--panel-line);background:rgba(255,255,255,.03);transition:.18s}
+  .back:hover{color:var(--ink);border-color:rgba(255,255,255,.22)}
+  .mark{font-family:'Baloo 2';font-weight:800;font-size:.95rem;color:var(--faint);letter-spacing:.02em}
+  .mark b{color:var(--gold)}
+
+  /* ---- hero ---- */
+  .hero{position:relative;text-align:center;padding:30px 14px 14px}
+  .eyebrow{font-weight:800;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--gold-deep)}
+  .title{font-family:'Baloo 2';font-weight:800;line-height:.98;margin:.18em 0 .1em;
+    font-size:clamp(2.5rem,10vw,4.6rem);
+    background:linear-gradient(180deg,#fff 8%, var(--gold) 62%, var(--gold-deep) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 6px 22px rgba(244,207,120,.18))}
+  .tagline{color:var(--mut);max-width:46ch;margin:0 auto;font-size:1.02rem}
+
+  /* ---- champion of the hall (spotlight) ---- */
+  .spot{position:relative;margin:26px auto 8px;max-width:560px;
+    border-radius:24px;padding:26px 22px 24px;text-align:center;
+    background:
+      radial-gradient(120% 120% at 50% 0%, rgba(244,207,120,.16), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    border:1px solid rgba(244,207,120,.28);
+    box-shadow:0 24px 60px -28px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08);
+    opacity:0;transform:translateY(14px);animation:rise .7s .05s cubic-bezier(.2,.7,.2,1) forwards}
+  .crown{width:54px;height:54px;margin:0 auto 6px;display:block;filter:drop-shadow(0 4px 10px var(--gold-glow))}
+  .spot .role{font-weight:800;font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-deep)}
+  .spot .who{font-family:'Baloo 2';font-weight:800;font-size:clamp(1.9rem,7vw,2.9rem);line-height:1.05;margin:.06em 0 .12em;
+    background:linear-gradient(180deg,#fff,#f6e6bd);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .spot .sub{color:var(--mut);font-size:.98rem}
+  .spot .sub b{color:var(--ink);font-weight:800}
+  .shine{position:relative;overflow:hidden}
+  .shine::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+    transform:skewX(-18deg);animation:sweep 4.4s 1s ease-in-out infinite}
+
+  /* ---- sections ---- */
+  .sec{margin-top:42px}
+  .sechd{display:flex;align-items:baseline;gap:12px;margin:0 4px 16px}
+  .sechd h2{font-family:'Baloo 2';font-weight:700;font-size:1.18rem;margin:0;letter-spacing:.01em}
+  .sechd .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--panel-line),transparent)}
+  .sechd .hint{color:var(--faint);font-size:.8rem;font-weight:700}
+
+  /* ---- champion grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .plaque{position:relative;border-radius:var(--rad);padding:16px 16px 15px;
+    background:var(--panel);border:1px solid var(--panel-line);
+    border-top:2px solid var(--gold-deep);transition:transform .16s,border-color .16s,box-shadow .16s;
+    text-decoration:none;display:block}
+  .plaque:hover{transform:translateY(-3px);border-top-color:var(--gold);box-shadow:0 18px 40px -26px rgba(0,0,0,.8)}
+  .plaque:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+  .cat{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.74rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold-deep)}
+  .cat .ic{font-size:1rem}
+  .holder{font-family:'Baloo 2';font-weight:700;font-size:1.5rem;line-height:1.1;margin:.32em 0 .08em;
+    overflow-wrap:anywhere}
+  .stat{font-variant-numeric:tabular-nums;font-weight:800;color:var(--ink);font-size:1.02rem}
+  .stat .u{color:var(--mut);font-weight:700;font-size:.85em}
+  .meta{margin-top:9px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .reign{font-size:.72rem;font-weight:800;letter-spacing:.02em;color:#0c0c14;
+    background:linear-gradient(180deg,var(--gold),var(--gold-deep));padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .takeit{font-size:.74rem;font-weight:800;color:var(--violet);opacity:.0;transition:.16s}
+  .plaque:hover .takeit{opacity:1}
+  .plaque.empty{border-top-color:rgba(255,255,255,.14);background:rgba(255,255,255,.02)}
+  .plaque.empty .holder{color:var(--faint);font-weight:600}
+  .plaque.empty .cat{color:var(--faint)}
+  .open{font-weight:800;font-size:.78rem;color:var(--violet)}
+
+  /* ---- records ---- */
+  .records{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .rec{border-radius:var(--rad);padding:16px;background:var(--violet-soft);border:1px solid rgba(138,108,255,.28)}
+  .rec .label{font-weight:800;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#b9a6ff}
+  .rec .big{font-family:'Baloo 2';font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums;margin:.18em 0 .04em}
+  .rec .by{color:var(--mut);font-size:.92rem}
+  .rec .by b{color:var(--ink)}
+
+  /* ---- feed ---- */
+  .feed{border-radius:var(--rad);border:1px solid var(--panel-line);overflow:hidden;background:rgba(255,255,255,.02)}
+  .frow{display:flex;align-items:center;gap:12px;padding:12px 15px;border-top:1px solid rgba(255,255,255,.05)}
+  .frow:first-child{border-top:0}
+  .fname{font-family:'Baloo 2';font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+  .fdesc{color:var(--mut);font-size:.9rem;flex:1}
+  .fdesc b{color:var(--ink);font-weight:700}
+  .fwhen{color:var(--faint);font-size:.78rem;font-weight:700;white-space:nowrap}
+
+  /* ---- states ---- */
+  .note{color:var(--mut);text-align:center;padding:30px 10px;font-size:.95rem}
+  .skel{height:128px;border-radius:var(--rad);background:linear-gradient(100deg,rgba(255,255,255,.03),rgba(255,255,255,.08),rgba(255,255,255,.03));
+    background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+
+  /* ---- footer ---- */
+  .foot{margin-top:46px;text-align:center;color:var(--mut)}
+  .foot p{margin:.2em 0 1em;font-size:.95rem}
+  .btn{display:inline-block;text-decoration:none;font-weight:800;padding:12px 22px;border-radius:999px;
+    color:#0c0c14;background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+    box-shadow:0 12px 30px -14px var(--gold-glow);transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .foot .small{font-size:.8rem;color:var(--faint);max-width:52ch;margin:18px auto 0;line-height:1.55}
+
+  @keyframes rise{to{opacity:1;transform:none}}
+  @keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
+  @keyframes shimmer{to{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){
+    .spot{animation:none;opacity:1;transform:none}
+    .shine::after{display:none}
+    .skel{animation:none}
+    .plaque,.btn{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="./index.html">‹ TierBrain</a>
+    <span class="mark">The <b>Hall</b> of Honours</span>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">TierBrain</div>
+    <h1 class="title">Wall of Fame</h1>
+    <p class="tagline">The names that hold the hall. Beat their best and the title is yours.</p>
+    <div id="spot"></div>
+  </header>
+
+  <section class="sec" id="champSec">
+    <div class="sechd"><h2>Reigning champions</h2><span class="rule"></span><span class="hint">one holder each</span></div>
+    <div class="grid" id="champs">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="recSec" hidden>
+    <div class="sechd"><h2>Hall of records</h2><span class="rule"></span><span class="hint">all-time best</span></div>
+    <div class="records" id="records"></div>
+  </section>
+
+  <section class="sec" id="feedSec" hidden>
+    <div class="sechd"><h2>Just crowned</h2><span class="rule"></span><span class="hint">latest results</span></div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <footer class="foot">
+    <p>Think you belong on the wall?</p>
+    <a class="btn" href="./index.html">Pick a game and play ›</a>
+    <p class="small">Titles update the moment someone beats the standing best. A private wall just for your group of friends is on the way — it needs a small tweak to the games first.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+  var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+  function sbBase(){return SB_URL+'/rest/v1/scores';}
+  function sbHeaders(){return {apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};}
+
+  // category config -------------------------------------------------
+  var DECKS=[
+    {key:'flags',   label:'Flags',             ic:'\u{1F3F3}'},
+    {key:'planets', label:'Planets & Moons',   ic:'\u{1FA90}'},
+    {key:'animals', label:'Animal Silhouettes',ic:'\u{1F43E}'},
+    {key:'objects', label:'Objects',           ic:'\u{1F4E6}'},
+    {key:'sports',  label:'Sports',            ic:'\u{1F3C5}'}
+  ];
+  var TIERS=[
+    {key:1,name:'Warm-Up',pieces:12},
+    {key:2,name:'Classic',pieces:24},
+    {key:3,name:'Tricky', pieces:35},
+    {key:4,name:'Master', pieces:48}
+  ];
+  var PBP='./piece-by-piece.html', JIG='./jigsaw.html';
+
+  // demo data (wall.html?demo=1) so the page can be previewed before real scores arrive
+  function buildDemo(){
+    var D=864e5, N=Date.now(), iso=function(d){return new Date(N-d).toISOString();};
+    return {
+      pbp:[
+        {quiz_id:'qc_piecebypiece',group_code:'flags',  name:'Priya', correct:960,level:12,time_left:7,created_at:iso(4*D)},
+        {quiz_id:'qc_piecebypiece',group_code:'objects',name:'Priya', correct:880,level:11,time_left:5,created_at:iso(9*D)},
+        {quiz_id:'qc_piecebypiece',group_code:'animals',name:'Marcus',correct:910,level:11,time_left:9,created_at:iso(1*D)},
+        {quiz_id:'qc_piecebypiece',group_code:'planets',name:'Dani',  correct:540,level:7, time_left:4,created_at:iso(2*D)},
+        {quiz_id:'qc_piecebypiece',group_code:'flags',  name:'Leo',   correct:720,level:9, time_left:6,created_at:iso(6*D)}
+      ],
+      jig:[
+        {quiz_id:'qc_jigsaw',group_code:'global',level:1,name:'Dani',  time_left:31, created_at:iso(3*D)},
+        {quiz_id:'qc_jigsaw',group_code:'global',level:2,name:'Marcus',time_left:58, created_at:iso(5*D)},
+        {quiz_id:'qc_jigsaw',group_code:'global',level:4,name:'Priya', time_left:171,created_at:iso(2*D)}
+      ],
+      recent:[
+        {quiz_id:'qc_piecebypiece',group_code:'animals',name:'Marcus',correct:910,created_at:iso(25*6e4)},
+        {quiz_id:'qc_jigsaw',level:4,name:'Priya',time_left:171,created_at:iso(2*36e5)},
+        {quiz_id:'qc_piecebypiece',group_code:'flags',name:'Leo',correct:720,created_at:iso(1*D)},
+        {quiz_id:'qc_piecebypiece',group_code:'planets',name:'Dani',correct:540,created_at:iso(2*D)}
+      ]
+    };
+  }
+
+  // helpers ---------------------------------------------------------
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function n(v){v=parseInt(v,10);return isNaN(v)?0:v;}
+  function fmtTime(s){s=n(s);var m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r;}
+  function ago(iso){
+    var t=Date.parse(iso); if(isNaN(t)) return '';
+    var d=Math.max(0,Date.now()-t), mins=Math.floor(d/6e4);
+    if(mins<1)return 'just now'; if(mins<60)return mins+'m ago';
+    var h=Math.floor(mins/60); if(h<24)return h+'h ago';
+    var days=Math.floor(h/24); if(days<7)return days+'d ago';
+    var wk=Math.floor(days/7); if(wk<5)return wk+'w ago';
+    return Math.floor(days/30)+'mo ago';
+  }
+  function reign(iso){
+    var t=Date.parse(iso); if(isNaN(t)) return 'reigning';
+    var days=Math.floor((Date.now()-t)/864e5);
+    if(days<=0)return 'crowned today';
+    if(days===1)return 'reigning 1 day';
+    if(days<30)return 'reigning '+days+' days';
+    var mo=Math.floor(days/30); return 'reigning '+mo+' mo';
+  }
+  function get(url){return fetch(url,{headers:sbHeaders()}).then(function(r){
+    if(!r.ok)throw new Error('http '+r.status); return r.json();});}
+
+  // fetch -----------------------------------------------------------
+  if(/[?&]demo\b/.test(location.search)){
+    var d=buildDemo(); render(d.pbp,d.jig,d.recent); return;
+  }
+  Promise.all([
+    get(sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500'),
+    get(sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500'),
+    get(sbBase()+'?order=created_at.desc&limit=18')
+  ]).then(function(res){
+    render(res[0]||[], res[1]||[], res[2]||[]);
+  }).catch(function(e){
+    document.getElementById('champs').innerHTML=
+      '<div class="note">The hall is resting — couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';
+  });
+
+  // render ----------------------------------------------------------
+  function render(pbp, jig, recent){
+    var titles=[]; // {holder, created_at}
+    var champHTML='';
+
+    // Piece by Piece — champion per deck (rows pre-sorted by score desc)
+    DECKS.forEach(function(d){
+      var row=null,i;
+      for(i=0;i<pbp.length;i++){ if(pbp[i].group_code===d.key){row=pbp[i];break;} }
+      if(row){
+        titles.push({holder:row.name,created_at:row.created_at});
+        champHTML+=plaque({
+          ic:d.ic, cat:d.label, name:row.name,
+          statNum:n(row.correct), statUnit:'pts',
+          extra:n(row.level)+' right',
+          reign:reign(row.created_at), href:PBP
+        });
+      } else {
+        champHTML+=emptyPlaque(d.ic,d.label,PBP);
+      }
+    });
+
+    // Jigsaw — fastest per tier (rows pre-sorted by time asc)
+    TIERS.forEach(function(t){
+      var row=null,i;
+      for(i=0;i<jig.length;i++){ if(n(jig[i].level)===t.key){row=jig[i];break;} }
+      if(row){
+        titles.push({holder:row.name,created_at:row.created_at});
+        champHTML+=plaque({
+          ic:'\u{1F9E9}', cat:'Jigsaw \u00b7 '+t.name, name:row.name,
+          statNum:fmtTime(row.time_left), statUnit:'', isTime:true,
+          extra:t.pieces+' pieces',
+          reign:reign(row.created_at), href:JIG
+        });
+      } else {
+        champHTML+=emptyPlaque('\u{1F9E9}','Jigsaw \u00b7 '+t.name,JIG);
+      }
+    });
+    document.getElementById('champs').innerHTML=champHTML;
+
+    // hero: champion of the hall = most titles held (tie -> earliest crowned)
+    renderSpot(titles);
+
+    // records
+    renderRecords(pbp, jig, titles);
+
+    // feed
+    renderFeed(recent);
+  }
+
+  function plaque(o){
+    var stat = o.isTime
+      ? '<span class="stat">'+esc(o.statNum)+'</span>'
+      : '<span class="stat">'+esc(o.statNum)+' <span class="u">'+esc(o.statUnit)+'</span></span>';
+    return '<a class="plaque" href="'+o.href+'">'
+      +'<div class="cat"><span class="ic">'+o.ic+'</span>'+esc(o.cat)+'</div>'
+      +'<div class="holder">'+esc(o.name)+'</div>'
+      +stat+(o.extra?' <span class="u" style="color:var(--faint)">\u00b7 '+esc(o.extra)+'</span>':'')
+      +'<div class="meta"><span class="reign">'+esc(o.reign)+'</span>'
+      +'<span class="takeit">Take the title ›</span></div></a>';
+  }
+  function emptyPlaque(ic,cat,href){
+    return '<a class="plaque empty" href="'+href+'">'
+      +'<div class="cat"><span class="ic">'+ic+'</span>'+esc(cat)+'</div>'
+      +'<div class="holder">Unclaimed</div>'
+      +'<div class="meta"><span class="open">Be the first to take it ›</span></div></a>';
+  }
+
+  function renderSpot(titles){
+    var el=document.getElementById('spot');
+    if(!titles.length){
+      el.innerHTML='<div class="spot"><div class="role">The hall awaits</div>'
+        +'<div class="who" style="-webkit-text-fill-color:var(--faint);color:var(--faint)">No champions yet</div>'
+        +'<div class="sub">Be the first name carved into the wall.</div></div>';
+      return;
+    }
+    var count={}, first={};
+    titles.forEach(function(t){
+      var k=t.holder||'\u2014';
+      count[k]=(count[k]||0)+1;
+      if(!first[k]||Date.parse(t.created_at)<Date.parse(first[k])) first[k]=t.created_at;
+    });
+    var best=null;
+    Object.keys(count).forEach(function(k){
+      if(!best || count[k]>count[best] || (count[k]===count[best] && Date.parse(first[k])<Date.parse(first[best]))) best=k;
+    });
+    var c=count[best];
+    var sub = c>1
+      ? 'Holds <b>'+c+' titles</b> across the hall.'
+      : 'Holds the top spot — for now.';
+    el.innerHTML='<div class="spot shine">'
+      +crownSVG()
+      +'<div class="role">Champion of the Hall</div>'
+      +'<div class="who">'+esc(best)+'</div>'
+      +'<div class="sub">'+sub+'</div></div>';
+  }
+
+  function renderRecords(pbp, jig, titles){
+    var cards=[];
+    // top score (PbP rows sorted desc)
+    if(pbp.length){
+      var ts=pbp[0];
+      cards.push(rec('Top score', n(ts.correct), '', '<b>'+esc(ts.name)+'</b> in '+esc(deckLabel(ts.group_code))));
+    }
+    // fastest Master solve (or fastest any tier as fallback)
+    var master=null,anyFast=jig.length?jig[0]:null,i;
+    for(i=0;i<jig.length;i++){ if(n(jig[i].level)===4){master=jig[i];break;} }
+    var fr=master||anyFast;
+    if(fr){
+      var tname=(TIERS.filter(function(t){return t.key===n(fr.level);})[0]||{}).name||'';
+      cards.push(rec('Fastest solve', fmtTime(fr.time_left), '', '<b>'+esc(fr.name)+'</b> \u00b7 '+esc(tname)+' jigsaw'));
+    }
+    // most decorated
+    if(titles.length){
+      var count={};
+      titles.forEach(function(t){var k=t.holder||'\u2014';count[k]=(count[k]||0)+1;});
+      var top=null;Object.keys(count).forEach(function(k){if(!top||count[k]>count[top])top=k;});
+      cards.push(rec('Most decorated', count[top], (count[top]===1?'title':'titles'), 'held by <b>'+esc(top)+'</b>'));
+    }
+    if(!cards.length) return;
+    document.getElementById('records').innerHTML=cards.join('');
+    document.getElementById('recSec').hidden=false;
+  }
+  function rec(label,big,unit,by){
+    return '<div class="rec"><div class="label">'+esc(label)+'</div>'
+      +'<div class="big">'+esc(big)+(unit?' <span class="u" style="font-size:.6em;color:var(--mut)">'+esc(unit)+'</span>':'')+'</div>'
+      +'<div class="by">'+by+'</div></div>';
+  }
+
+  function renderFeed(rows){
+    if(!rows.length) return;
+    var html='';
+    rows.forEach(function(r){
+      var desc;
+      if(r.quiz_id==='qc_piecebypiece'){
+        desc='scored <b>'+n(r.correct)+'</b> in '+esc(deckLabel(r.group_code));
+      } else if(r.quiz_id==='qc_jigsaw'){
+        var tn=(TIERS.filter(function(t){return t.key===n(r.level);})[0]||{}).name||'a';
+        desc='solved the <b>'+esc(tn)+'</b> jigsaw in '+fmtTime(r.time_left);
+      } else {
+        desc='scored <b>'+n(r.correct)+'</b>';
+      }
+      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2014')+'</span>'
+        +'<span class="fdesc">'+desc+'</span>'
+        +'<span class="fwhen">'+esc(ago(r.created_at))+'</span></div>';
+    });
+    document.getElementById('feed').innerHTML=html;
+    document.getElementById('feedSec').hidden=false;
+  }
+
+  function deckLabel(k){
+    var d=DECKS.filter(function(x){return x.key===k;})[0];
+    return d?d.label:(k||'a game');
+  }
+  function crownSVG(){
+    return '<svg class="crown" viewBox="0 0 64 64" fill="none" aria-hidden="true">'
+      +'<path d="M8 22l11 12 13-22 13 22 11-12-4 30H12z" fill="url(#g)" stroke="#caa244" stroke-width="2" stroke-linejoin="round"/>'
+      +'<circle cx="8" cy="20" r="4" fill="#f4cf78"/><circle cx="56" cy="20" r="4" fill="#f4cf78"/>'
+      +'<circle cx="32" cy="9" r="4.5" fill="#f4cf78"/>'
+      +'<defs><linearGradient id="g" x1="32" y1="12" x2="32" y2="52" gradientUnits="userSpaceOnUse">'
+      +'<stop stop-color="#f8e2a8"/><stop offset="1" stop-color="#e0b352"/></linearGradient></defs></svg>';
+  }
+})();
+</script>
+</body>
+</html>
