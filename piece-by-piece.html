@@ -77,7 +77,7 @@
   <h1><span class="star">&#10022;</span> Piece by Piece</h1>
   <p class="sub">An image builds itself, piece by piece. Name it before it finishes &mdash; the sooner you call it, the more you score. One guess. Pick a category:</p>
   <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
-  <input id="groupInput" class="name" maxlength="12" placeholder="Group code (optional)" autocomplete="off">
+  <input id="groupInput" class="name" maxlength="24" placeholder="Group code (optional)" autocomplete="off">
   <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional — friends who enter the same code share a private Wall of Fame.</p>
   <div class="decks">
     <button class="big deckbtn" id="deckFlags">Flags</button>
@@ -572,8 +572,8 @@ window.addEventListener('resize',function(){
 });
 
 
-function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);if(v){try{localStorage.setItem('tb_group',v);}catch(e){}}return v;}catch(e){return '';}}
-(function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('tb_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
+function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);if(v){try{localStorage.setItem('qc_group',v);}catch(e){}}return v;}catch(e){return '';}}
+(function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('qc_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
 </script>
 </body>
 </html>

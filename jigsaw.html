@@ -76,7 +76,7 @@
   <h1><span class="star">&#10022;</span> Jigsaw</h1>
   <p class="sub">Drag the scattered pieces home. Every picture is freshly generated &mdash; race the clock and climb the board.</p>
   <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
-  <input id="groupInput" class="name" maxlength="12" placeholder="Group code (optional)" autocomplete="off">
+  <input id="groupInput" class="name" maxlength="24" placeholder="Group code (optional)" autocomplete="off">
   <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional — friends who enter the same code share a private Wall of Fame.</p>
   <div class="tiers" id="tierList"></div>
   <p class="hint">Pieces snap when they&rsquo;re close to the right spot. The two easier puzzles show a faint picture to guide you; the harder two don&rsquo;t.</p>
@@ -435,8 +435,8 @@ window.addEventListener('resize',function(){
 });
 
 
-function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);if(v){try{localStorage.setItem('tb_group',v);}catch(e){}}return v;}catch(e){return '';}}
-(function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('tb_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
+function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);if(v){try{localStorage.setItem('qc_group',v);}catch(e){}}return v;}catch(e){return '';}}
+(function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('qc_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
 </script>
 </body>
 </html>

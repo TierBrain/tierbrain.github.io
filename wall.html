@@ -252,6 +252,111 @@
     };
   }
 
+  // ---- multi-game registry (private wall) ----
+  var REG=[
+    {id:'qc_general-knowledge-quiz',label:'General Knowledge',href:'./general-knowledge-quiz.html',mode:'score'},
+    {id:'qc_bible-quiz',label:'The Bible',href:'./bible-quiz.html',mode:'score'},
+    {id:'qc_religion-quiz',label:'World Religions',href:'./religion-quiz.html',mode:'score'},
+    {id:'qc_history-quiz',label:'History',href:'./history-quiz.html',mode:'score'},
+    {id:'qc_science-quiz',label:'Science',href:'./science-quiz.html',mode:'score'},
+    {id:'qc_maths-quiz',label:'Maths',href:'./maths-quiz.html',mode:'score'},
+    {id:'qc_music-quiz',label:'Music',href:'./music-quiz.html',mode:'score'},
+    {id:'qc_film-screen-quiz',label:'Film & Screen',href:'./film-screen-quiz.html',mode:'score'},
+    {id:'qc_sport-quiz',label:'Sport',href:'./sport-quiz.html',mode:'score'},
+    {id:'qc_politics-quiz',label:'Politics & Government',href:'./politics-quiz.html',mode:'score'},
+    {id:'qc_crypto-quiz',label:'Crypto & Blockchain',href:'./crypto-quiz.html',mode:'score'},
+    {id:'qc_scifi-quiz',label:'Science Fiction',href:'./scifi-quiz.html',mode:'score'},
+    {id:'qc_rhousewives-quiz',label:'Real Housewives',href:'./rhousewives-quiz.html',mode:'score'},
+    {id:'qc_wrestling-quiz',label:'Wrestling',href:'./wrestling-quiz.html',mode:'score'},
+    {id:'qc_arsenal-quiz',label:'Arsenal FC',href:'./arsenal-quiz.html',mode:'score'},
+    {id:'qc_manutd-quiz',label:'Manchester United',href:'./manutd-quiz.html',mode:'score'},
+    {id:'qc_premier-league-quiz',label:'Premier League',href:'./premier-league-quiz.html',mode:'score'},
+    {id:'qc_leeds-rhinos-quiz',label:'Leeds Rhinos',href:'./leeds-rhinos-quiz.html',mode:'score'},
+    {id:'qc_five-clues',label:'Five Clues',href:'./five-clues.html',mode:'score'},
+    {id:'qc_five-clues-bible',label:'Five Clues: Bible',href:'./five-clues-bible.html',mode:'score'},
+    {id:'qc_guess-year',label:'Guess the Year',href:'./guess-the-year.html',mode:'score'},
+    {id:'qc_higher-lower',label:'Higher or Lower',href:'./higher-lower.html',mode:'score'},
+    {id:'qc_odd-one-out',label:'Odd One Out',href:'./odd-one-out.html',mode:'score'},
+    {id:'qc_fact-fiction',label:'Fact or Fiction',href:'./fact-fiction.html',mode:'score'},
+    {id:'qc_spot-the-lie',label:'Spot the Lie',href:'./spot-the-lie.html',mode:'score'},
+    {id:'qc_snap-sort',label:'Snap Sort',href:'./snap-sort.html',mode:'score'},
+    {id:'qc_matchup',label:'Match Up',href:'./matchup.html',mode:'score'},
+    {id:'qc_recall',label:'Recall',href:'./recall.html',mode:'score'},
+    {id:'qc_unscramble',label:'Unscramble',href:'./unscramble.html',mode:'score'},
+    {id:'qc_wheel',label:'Phrase Spinner',href:'./wheel.html',mode:'score'},
+    {id:'qc_call-your-shot',label:'Call Your Shot',href:'./call-your-shot.html',mode:'score'},
+    {id:'qc_claim',label:'Claim the Board',href:'./claim.html',mode:'level'}
+  ];
+  var REGMAP={}; REG.forEach(function(r){REGMAP[r.id]=r;});
+  function scoreSort(a,b){return n(b.correct)-n(a.correct) || n(b.level)-n(a.level);}
+  function levelSort(a,b){return n(b.level)-n(a.level) || n(b.correct)-n(a.correct);}
+  function gameLabel(q,gc){
+    if(q==='qc_piecebypiece')return 'Piece by Piece \u00b7 '+deckLabel(gc);
+    if(q==='qc_jigsaw')return 'Jigsaw';
+    var g=REGMAP[q]; return g?g.label:'a game';
+  }
+  function renderGroup(rows){
+    var byQ={}; rows.forEach(function(r){ (byQ[r.quiz_id]=byQ[r.quiz_id]||[]).push(r); });
+    var titles=[], html='';
+    var pbp=byQ['qc_piecebypiece']||[];
+    if(pbp.length){ pbp.sort(scoreSort);
+      DECKS.forEach(function(d){ var row=null,i;
+        for(i=0;i<pbp.length;i++){ if(deckOf(pbp[i].group_code)===d.key){row=pbp[i];break;} }
+        if(row){ titles.push({holder:row.name,created_at:row.created_at});
+          html+=plaque({ic:d.ic,cat:'Piece by Piece \u00b7 '+d.label,name:row.name,statNum:n(row.correct),statUnit:'pts',extra:n(row.level)+' right',reign:reign(row.created_at),href:PBP}); } });
+    }
+    var jig=byQ['qc_jigsaw']||[];
+    if(jig.length){ jig.sort(function(a,b){return n(a.time_left)-n(b.time_left);});
+      TIERS.forEach(function(t){ var row=null,i;
+        for(i=0;i<jig.length;i++){ if(n(jig[i].level)===t.key){row=jig[i];break;} }
+        if(row){ titles.push({holder:row.name,created_at:row.created_at});
+          html+=plaque({ic:'\u{1F9E9}',cat:'Jigsaw \u00b7 '+t.name,name:row.name,statNum:fmtTime(row.time_left),isTime:true,extra:t.pieces+' pieces',reign:reign(row.created_at),href:JIG}); } });
+    }
+    REG.forEach(function(g){ var rs=byQ[g.id]; if(!rs||!rs.length)return;
+      rs.sort(g.mode==='level'?levelSort:scoreSort); var row=rs[0];
+      titles.push({holder:row.name,created_at:row.created_at});
+      var sn,su,ex;
+      if(g.mode==='level'){ sn='Level '+n(row.level); su=''; ex=n(row.correct)+' pts'; }
+      else { sn=n(row.correct); su='pts'; ex=''; }
+      html+=plaque({ic:'\u{1F3C5}',cat:g.label,name:row.name,statNum:sn,statUnit:su,extra:ex,reign:reign(row.created_at),href:g.href});
+    });
+    document.getElementById('champs').innerHTML = html || '<div class="note">No scores yet for this group. Share the code and start playing \u2014 the first result claims every title.</div>';
+    renderSpot(titles);
+    renderRecordsGroup(rows, titles);
+    renderFeedGroup(rows);
+  }
+  function renderRecordsGroup(rows, titles){
+    var cards=[], best=null, jf=null;
+    rows.forEach(function(r){
+      var reg=(r.quiz_id==='qc_piecebypiece')||REGMAP[r.quiz_id];
+      if(reg && r.quiz_id!=='qc_jigsaw' && (!best||n(r.correct)>n(best.correct))) best=r;
+      if(r.quiz_id==='qc_jigsaw' && (!jf||n(r.time_left)<n(jf.time_left))) jf=r;
+    });
+    if(best)
+      cards.push(rec('Top score', n(best.correct), '', '<b>'+esc(best.name)+'</b> in '+esc(gameLabel(best.quiz_id,best.group_code))));
+    if(jf){ var tn=(TIERS.filter(function(t){return t.key===n(jf.level);})[0]||{}).name||'';
+      cards.push(rec('Fastest solve', fmtTime(jf.time_left), '', '<b>'+esc(jf.name)+'</b> \u00b7 '+esc(tn)+' jigsaw')); }
+    if(titles.length){ var c={}; titles.forEach(function(t){var k=t.holder||'\u2014';c[k]=(c[k]||0)+1;});
+      var top=null; Object.keys(c).forEach(function(k){if(!top||c[k]>c[top])top=k;});
+      cards.push(rec('Most decorated', c[top], (c[top]===1?'title':'titles'), 'held by <b>'+esc(top)+'</b>')); }
+    if(!cards.length)return;
+    document.getElementById('records').innerHTML=cards.join('');
+    document.getElementById('recSec').hidden=false;
+  }
+  function renderFeedGroup(rows){
+    var html='',count=0,i;
+    for(i=0;i<rows.length && count<15;i++){ var r=rows[i],desc;
+      if(r.quiz_id==='qc_piecebypiece'){ desc='scored <b>'+n(r.correct)+'</b> in '+esc(deckLabel(r.group_code)); }
+      else if(r.quiz_id==='qc_jigsaw'){ var tn=(TIERS.filter(function(t){return t.key===n(r.level);})[0]||{}).name||'a'; desc='solved the <b>'+esc(tn)+'</b> jigsaw in '+fmtTime(r.time_left); }
+      else { var g=REGMAP[r.quiz_id]; if(!g)continue; desc=(g.mode==='level'?('reached <b>Level '+n(r.level)+'</b>'):('scored <b>'+n(r.correct)+'</b>'))+' in '+esc(g.label); }
+      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2014')+'</span><span class="fdesc">'+desc+'</span><span class="fwhen">'+esc(ago(r.created_at))+'</span></div>';
+      count++;
+    }
+    if(!html)return;
+    document.getElementById('feed').innerHTML=html;
+    document.getElementById('feedSec').hidden=false;
+  }
+
   // helpers ---------------------------------------------------------
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -276,7 +381,7 @@
   }
   function get(url){return fetch(url,{headers:sbHeaders()}).then(function(r){
     if(!r.ok)throw new Error('http '+r.status); return r.json();});}
-  function activeGroup(){var m=/[?&]group=([A-Za-z0-9]{1,12})/.exec(location.search||'');return m?m[1].toUpperCase():'';}
+  function activeGroup(){var m=/[?&]group=([A-Za-z0-9_-]{1,24})/.exec(location.search||'');return m?m[1].toUpperCase():'';}
   function deckOf(gc){return String(gc==null?'':gc).split('~')[0];}
 
   // scope + fetch ---------------------------------------------------
@@ -285,17 +390,15 @@
   if(/[?&]demo\b/.test(location.search)){
     var d=buildDemo(); render(d.pbp,d.jig,d.recent); return;
   }
-  var pbpU,jigU,recU;
   if(GROUP){
-    var suf='~'+GROUP;
-    pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&group_code=like.*'+suf+'&order=correct.desc,time_left.asc&limit=800';
-    jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&group_code=like.*'+suf+'&order=time_left.asc&limit=800';
-    recU=sbBase()+'?group_code=like.*'+suf+'&order=created_at.desc&limit=18';
-  } else {
-    pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
-    jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500';
-    recU=sbBase()+'?order=created_at.desc&limit=18';
+    var ins=DECKS.map(function(d){return d.key+'~'+GROUP;}).join(',');
+    var gurl=sbBase()+'?or=(group_code.eq.'+GROUP+',group_code.eq.global~'+GROUP+',group_code.in.('+ins+'))&order=created_at.desc&limit=2000';
+    get(gurl).then(function(rows){ renderGroup(rows||[]); }).catch(function(){document.getElementById('champs').innerHTML='<div class="note">The hall is resting \u2014 couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';});
+    return;
   }
+  var pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
+  var jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500';
+  var recU=sbBase()+'?quiz_id=in.(qc_jigsaw,qc_piecebypiece)&order=created_at.desc&limit=18';
   Promise.all([get(pbpU),get(jigU),get(recU)]).then(function(res){
     render(res[0]||[], res[1]||[], res[2]||[]);
   }).catch(function(e){
@@ -475,15 +578,15 @@
         } else { cp.textContent=url; }
       });
     } else {
-      var saved=''; try{saved=(localStorage.getItem('tb_group')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}catch(e){}
+      var saved=''; try{saved=(localStorage.getItem('qc_group')||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'');}catch(e){}
       el.innerHTML='<form class="grpform" id="grpForm">'
-        +'<input id="grpInput" class="grpinput" maxlength="12" placeholder="Group code" autocomplete="off" value="'+esc(saved)+'">'
+        +'<input id="grpInput" class="grpinput" maxlength="24" placeholder="Group code" autocomplete="off" value="'+esc(saved)+'">'
         +'<button class="grpbtn" type="submit">View group \u203a</button></form>'
         +'<div class="scopehint">Viewing the full hall \u2014 enter your group\u2019s code for a private wall.</div>';
       var f=document.getElementById('grpForm');
       if(f)f.addEventListener('submit',function(ev){ev.preventDefault();
-        var c=(document.getElementById('grpInput').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
-        if(!c)return; try{localStorage.setItem('tb_group',c);}catch(e){}
+        var c=(document.getElementById('grpInput').value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);
+        if(!c)return; try{localStorage.setItem('qc_group',c);}catch(e){}
         location.href='./wall.html?group='+c;
       });
     }
