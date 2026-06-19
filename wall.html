@@ -133,6 +133,24 @@
   .btn:hover{transform:translateY(-2px)}
   .foot .small{font-size:.8rem;color:var(--faint);max-width:52ch;margin:18px auto 0;line-height:1.55}
 
+  /* ---- scope / group ---- */
+  .scope{max-width:520px;margin:20px auto 0;text-align:center}
+  .grpform{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .grpinput{font-family:'Nunito';font-weight:700;font-size:.95rem;color:var(--ink);
+    background:rgba(255,255,255,.05);border:1px solid var(--panel-line);border-radius:999px;
+    padding:10px 16px;width:min(220px,60%);text-transform:uppercase;letter-spacing:.08em}
+  .grpinput::placeholder{color:var(--faint);letter-spacing:0;text-transform:none}
+  .grpinput:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .grpbtn{font-family:'Baloo 2';font-weight:700;font-size:.92rem;color:#0c0c14;cursor:pointer;
+    border:0;border-radius:999px;padding:10px 18px;background:linear-gradient(180deg,var(--gold),var(--gold-deep))}
+  .scopehint{color:var(--faint);font-size:.82rem;margin-top:9px}
+  .banner{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+    font-weight:700;color:var(--mut);background:var(--violet-soft);border:1px solid rgba(138,108,255,.32);
+    border-radius:999px;padding:9px 18px;font-size:.92rem}
+  .banner b{color:var(--ink);letter-spacing:.08em}
+  .lnk{font-family:'Nunito';font-weight:800;font-size:.82rem;color:var(--violet);background:none;
+    border:0;cursor:pointer;text-decoration:none;padding:0}
+  .lnk:hover{text-decoration:underline}
   @keyframes rise{to{opacity:1;transform:none}}
   @keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
   @keyframes shimmer{to{background-position:-200% 0}}
@@ -156,6 +174,7 @@
     <div class="eyebrow">TierBrain</div>
     <h1 class="title">Wall of Fame</h1>
     <p class="tagline">The names that hold the hall. Beat their best and the title is yours.</p>
+    <div class="scope" id="scope"></div>
     <div id="spot"></div>
   </header>
 
@@ -179,7 +198,7 @@
   <footer class="foot">
     <p>Think you belong on the wall?</p>
     <a class="btn" href="./index.html">Pick a game and play ›</a>
-    <p class="small">Titles update the moment someone beats the standing best. A private wall just for your group of friends is on the way — it needs a small tweak to the games first.</p>
+    <p class="small">Titles update the moment someone beats the standing best. Playing with friends? Enter the same group code in any game, then open this wall with that code for a private leaderboard of just your circle.</p>
   </footer>
 
 </div>
@@ -257,16 +276,27 @@
   }
   function get(url){return fetch(url,{headers:sbHeaders()}).then(function(r){
     if(!r.ok)throw new Error('http '+r.status); return r.json();});}
+  function activeGroup(){var m=/[?&]group=([A-Za-z0-9]{1,12})/.exec(location.search||'');return m?m[1].toUpperCase():'';}
+  function deckOf(gc){return String(gc==null?'':gc).split('~')[0];}
 
-  // fetch -----------------------------------------------------------
+  // scope + fetch ---------------------------------------------------
+  var GROUP=activeGroup();
+  renderScope();
   if(/[?&]demo\b/.test(location.search)){
     var d=buildDemo(); render(d.pbp,d.jig,d.recent); return;
   }
-  Promise.all([
-    get(sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500'),
-    get(sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500'),
-    get(sbBase()+'?order=created_at.desc&limit=18')
-  ]).then(function(res){
+  var pbpU,jigU,recU;
+  if(GROUP){
+    var suf='~'+GROUP;
+    pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&group_code=like.*'+suf+'&order=correct.desc,time_left.asc&limit=800';
+    jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&group_code=like.*'+suf+'&order=time_left.asc&limit=800';
+    recU=sbBase()+'?group_code=like.*'+suf+'&order=created_at.desc&limit=18';
+  } else {
+    pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
+    jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500';
+    recU=sbBase()+'?order=created_at.desc&limit=18';
+  }
+  Promise.all([get(pbpU),get(jigU),get(recU)]).then(function(res){
     render(res[0]||[], res[1]||[], res[2]||[]);
   }).catch(function(e){
     document.getElementById('champs').innerHTML=
@@ -281,7 +311,7 @@
     // Piece by Piece — champion per deck (rows pre-sorted by score desc)
     DECKS.forEach(function(d){
       var row=null,i;
-      for(i=0;i<pbp.length;i++){ if(pbp[i].group_code===d.key){row=pbp[i];break;} }
+      for(i=0;i<pbp.length;i++){ if(deckOf(pbp[i].group_code)===d.key){row=pbp[i];break;} }
       if(row){
         titles.push({holder:row.name,created_at:row.created_at});
         champHTML+=plaque({
@@ -344,9 +374,12 @@
   function renderSpot(titles){
     var el=document.getElementById('spot');
     if(!titles.length){
-      el.innerHTML='<div class="spot"><div class="role">The hall awaits</div>'
-        +'<div class="who" style="-webkit-text-fill-color:var(--faint);color:var(--faint)">No champions yet</div>'
-        +'<div class="sub">Be the first name carved into the wall.</div></div>';
+      var er=GROUP?'The wall awaits':'The hall awaits';
+      var ew=GROUP?('No scores yet for '+esc(GROUP)):'No champions yet';
+      var es=GROUP?'Share the code with your friends and start playing.':'Be the first name carved into the wall.';
+      el.innerHTML='<div class="spot"><div class="role">'+er+'</div>'
+        +'<div class="who" style="-webkit-text-fill-color:var(--faint);color:var(--faint)">'+ew+'</div>'
+        +'<div class="sub">'+es+'</div></div>';
       return;
     }
     var count={}, first={};
@@ -365,7 +398,7 @@
       : 'Holds the top spot — for now.';
     el.innerHTML='<div class="spot shine">'
       +crownSVG()
-      +'<div class="role">Champion of the Hall</div>'
+      +'<div class="role">Champion of '+(GROUP?esc(GROUP):'the Hall')+'</div>'
       +'<div class="who">'+esc(best)+'</div>'
       +'<div class="sub">'+sub+'</div></div>';
   }
@@ -424,8 +457,36 @@
   }
 
   function deckLabel(k){
+    k=deckOf(k);
     var d=DECKS.filter(function(x){return x.key===k;})[0];
     return d?d.label:(k||'a game');
+  }
+  function renderScope(){
+    var el=document.getElementById('scope'); if(!el) return;
+    if(GROUP){
+      el.innerHTML='<div class="banner"><span>\u{1F512} Private wall \u00b7 <b>'+esc(GROUP)+'</b></span>'
+        +'<button class="lnk" id="copyInvite" type="button">Copy invite link</button>'
+        +'<a class="lnk" href="./wall.html">Show everyone</a></div>';
+      var cp=document.getElementById('copyInvite');
+      if(cp)cp.addEventListener('click',function(){
+        var url=location.origin+location.pathname+'?group='+GROUP;
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(url).then(function(){cp.textContent='Link copied \u2713';},function(){cp.textContent='Copy failed';});
+        } else { cp.textContent=url; }
+      });
+    } else {
+      var saved=''; try{saved=(localStorage.getItem('tb_group')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}catch(e){}
+      el.innerHTML='<form class="grpform" id="grpForm">'
+        +'<input id="grpInput" class="grpinput" maxlength="12" placeholder="Group code" autocomplete="off" value="'+esc(saved)+'">'
+        +'<button class="grpbtn" type="submit">View group \u203a</button></form>'
+        +'<div class="scopehint">Viewing the full hall \u2014 enter your group\u2019s code for a private wall.</div>';
+      var f=document.getElementById('grpForm');
+      if(f)f.addEventListener('submit',function(ev){ev.preventDefault();
+        var c=(document.getElementById('grpInput').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+        if(!c)return; try{localStorage.setItem('tb_group',c);}catch(e){}
+        location.href='./wall.html?group='+c;
+      });
+    }
   }
   function crownSVG(){
     return '<svg class="crown" viewBox="0 0 64 64" fill="none" aria-hidden="true">'

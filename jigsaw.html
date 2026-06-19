@@ -76,6 +76,8 @@
   <h1><span class="star">&#10022;</span> Jigsaw</h1>
   <p class="sub">Drag the scattered pieces home. Every picture is freshly generated &mdash; race the clock and climb the board.</p>
   <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
+  <input id="groupInput" class="name" maxlength="12" placeholder="Group code (optional)" autocomplete="off">
+  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional — friends who enter the same code share a private Wall of Fame.</p>
   <div class="tiers" id="tierList"></div>
   <p class="hint">Pieces snap when they&rsquo;re close to the right spot. The two easier puzzles show a faint picture to guide you; the harder two don&rsquo;t.</p>
 </section>
@@ -393,10 +395,10 @@ function sbHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'C
 function submitAndLoad(secs){
   var nm=(document.getElementById('nameInput').value||'').trim().slice(0,16)||'Anon';
   var box=document.getElementById('winLb'); box.innerHTML='<div class="lbmsg">Saving your time\u2026</div>';
-  var body=[{quiz_id:QUIZ_ID,group_code:GROUP,name:nm,correct:pieces.length,level:tier.key,time_left:secs}];
+  var code=tbGroup(); var body=[{quiz_id:QUIZ_ID,group_code:GROUP+(code?'~'+code:''),name:nm,correct:pieces.length,level:tier.key,time_left:secs}];
   fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify(body)})
     .catch(function(){})
-    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+GROUP+'&level=eq.'+tier.key+'&order=time_left.asc&limit=8',{headers:sbHeaders()});})
+    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=like.'+GROUP+'*&level=eq.'+tier.key+'&order=time_left.asc&limit=8',{headers:sbHeaders()});})
     .then(function(r){return r.json();})
     .then(function(rows){
       if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No times yet \u2014 you\u2019re the first!</div>';return;}
@@ -432,6 +434,9 @@ window.addEventListener('resize',function(){
   rtid=setTimeout(function(){geometry(false);},200);
 });
 
+
+function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);if(v){try{localStorage.setItem('tb_group',v);}catch(e){}}return v;}catch(e){return '';}}
+(function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('tb_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
 </script>
 </body>
 </html>
