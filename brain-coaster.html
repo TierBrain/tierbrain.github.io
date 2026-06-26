@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Brain Coaster — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#fdf3ea; --mut:#cdbdd6; --gold:#ffc24a; --right:#37d18b; --wrong:#ff5d6e;
+    --panel:rgba(24,18,44,.82); --panel2:rgba(38,28,66,.92); --line:rgba(255,255,255,.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:#0e0b1e;
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:820px;overflow:hidden;}
+  #ride{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* HUD */
+  #hud{position:absolute;top:0;left:0;right:0;padding:14px 16px;display:none;
+    align-items:center;gap:10px;z-index:5;pointer-events:none;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:30px;
+    padding:7px 13px;display:flex;align-items:center;gap:7px;backdrop-filter:blur(6px);
+    box-shadow:0 4px 14px rgba(0,0,0,.35);}
+  .stat .lbl{font-size:11px;font-weight:800;letter-spacing:.7px;color:var(--mut);text-transform:uppercase;}
+  .stat .val{font-family:'Baloo 2';font-weight:800;font-size:18px;line-height:1;}
+  .stat.score .val{color:var(--gold);}
+  .stat.streak .val{color:#ff9b54;}
+  .brakes{margin-left:auto;display:flex;gap:6px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:30px;padding:8px 12px;backdrop-filter:blur(6px);}
+  .brk{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.3);transition:.25s;}
+  .brk.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,110,.7);}
+  #mute{pointer-events:auto;cursor:pointer;background:var(--panel);border:1px solid var(--line);
+    border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+    font-size:17px;backdrop-filter:blur(6px);}
+
+  /* question panel */
+  #qpanel{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+    z-index:6;display:none;}
+  .qchain{height:7px;border-radius:10px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:12px;}
+  .qchain>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),#ff7a3d);
+    border-radius:10px;transform-origin:left;transition:transform .12s linear;}
+  .qbox{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:18px 18px 14px;
+    backdrop-filter:blur(9px);box-shadow:0 14px 36px rgba(0,0,0,.45);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(18px,5vw,25px);line-height:1.22;
+    text-align:center;margin-bottom:14px;}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(14px,3.9vw,17px);color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:13px 12px;
+    text-align:center;cursor:pointer;transition:transform .08s,background .15s,border-color .15s;min-height:52px;
+    display:flex;align-items:center;justify-content:center;}
+  .opt:active{transform:scale(.96);}
+  .opt.right{background:rgba(55,209,139,.22);border-color:var(--right);color:#caffe6;}
+  .opt.wrong{background:rgba(255,93,110,.2);border-color:var(--wrong);color:#ffd4d9;}
+  .opt.dim{opacity:.4;}
+
+  /* overlays */
+  .scr{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:26px;gap:16px;
+    background:radial-gradient(120% 80% at 50% 8%,rgba(40,28,78,.55),rgba(10,8,26,.86));
+    backdrop-filter:blur(3px);}
+  .scr.hide{display:none;}
+  .logo{font-family:'Baloo 2';font-weight:800;letter-spacing:.5px;
+    font-size:clamp(34px,10vw,52px);line-height:1;
+    background:linear-gradient(95deg,#ffd36b,#ff7a3d 55%,#ff5db0);-webkit-background-clip:text;
+    background-clip:text;color:transparent;filter:drop-shadow(0 6px 18px rgba(255,120,90,.35));}
+  .tag{color:var(--mut);font-weight:700;max-width:23em;line-height:1.5;font-size:clamp(14px,4vw,16px);}
+  .how{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);
+    border-radius:18px;padding:16px 18px;max-width:23em;width:100%;backdrop-filter:blur(6px);}
+  .how .row{display:flex;align-items:center;gap:11px;text-align:left;font-weight:700;font-size:14px;color:var(--ink);}
+  .how .ic{flex:none;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:16px;background:rgba(255,255,255,.08);}
+  .btn{font-family:'Baloo 2';font-weight:800;font-size:20px;letter-spacing:.4px;color:#1a1030;
+    background:linear-gradient(180deg,#ffd36b,#ffac3e);border:none;border-radius:16px;
+    padding:15px 40px;cursor:pointer;box-shadow:0 10px 26px rgba(255,170,62,.4);transition:transform .1s;}
+  .btn:active{transform:translateY(2px) scale(.99);}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);box-shadow:none;}
+  .row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+  .rstat{display:flex;gap:22px;justify-content:center;margin:2px 0 2px;}
+  .rstat .b{display:flex;flex-direction:column;gap:2px;}
+  .rstat .n{font-family:'Baloo 2';font-weight:800;font-size:38px;line-height:1;color:var(--gold);}
+  .rstat .n.s{color:#ff9b54;}
+  .rstat .k{font-size:11px;font-weight:800;letter-spacing:.7px;color:var(--mut);text-transform:uppercase;}
+  .title2{font-family:'Baloo 2';font-weight:800;font-size:clamp(26px,8vw,38px);}
+  .inputs{display:flex;flex-direction:column;gap:9px;width:100%;max-width:21em;}
+  .inputs label{font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--mut);
+    text-transform:uppercase;text-align:left;margin-left:4px;}
+  .inputs input{font-family:'Nunito';font-weight:700;font-size:16px;color:var(--ink);
+    background:rgba(255,255,255,.07);border:2px solid var(--line);border-radius:13px;padding:12px 14px;width:100%;}
+  .inputs input:focus{outline:none;border-color:var(--gold);}
+  .board{width:100%;max-width:21em;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:12px 14px;backdrop-filter:blur(6px);}
+  .board h4{font-family:'Baloo 2';font-weight:700;font-size:13px;color:var(--mut);
+    text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .lrow{display:flex;align-items:center;gap:10px;padding:6px 2px;font-weight:700;font-size:14px;}
+  .lrow .rk{width:20px;color:var(--mut);font-family:'Baloo 2';}
+  .lrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lrow .sc{color:var(--gold);font-family:'Baloo 2';font-weight:800;}
+  .lrow.me{background:rgba(255,194,74,.12);border-radius:8px;}
+  .muted{color:var(--mut);font-size:13px;font-weight:700;}
+  @media (max-height:680px){ .how{display:none;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="ride"></canvas>
+
+  <div id="hud">
+    <div class="stat score"><span class="lbl">Hills</span><span class="val" id="hScore">0</span></div>
+    <div class="stat streak"><span class="lbl">Streak</span><span class="val" id="hStreak">0</span></div>
+    <div class="brakes" id="hBrakes"><span class="brk"></span><span class="brk"></span><span class="brk"></span></div>
+    <div id="mute">🔊</div>
+  </div>
+
+  <div id="qpanel">
+    <div class="qchain"><i id="chain"></i></div>
+    <div class="qbox">
+      <div class="qtext" id="qtext">—</div>
+      <div class="opts" id="opts"></div>
+    </div>
+  </div>
+
+  <!-- START -->
+  <div class="scr" id="startScr">
+    <div class="logo display">Brain&nbsp;Coaster</div>
+    <div class="tag">Every right answer powers the climb — crest the hill and <b>plunge</b>. Keep the chain rolling.</div>
+    <div class="how">
+      <div class="row"><span class="ic">✅</span><span>Answer right to crest the hill and drop — that's one hill cleared.</span></div>
+      <div class="row"><span class="ic">🛑</span><span>Wrong or too slow slams the brakes. Three brakes and the ride's over.</span></div>
+      <div class="row"><span class="ic">🔥</span><span>Answer fast and keep a streak for a faster, wilder ride.</span></div>
+    </div>
+    <button class="btn" id="startBtn">Start the ride ›</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="scr hide" id="overScr">
+    <div class="title2 display" id="overTitle">Ride over!</div>
+    <div class="rstat">
+      <div class="b"><span class="n" id="rHills">0</span><span class="k">Hills cleared</span></div>
+      <div class="b"><span class="n s" id="rStreak">0</span><span class="k">Best streak</span></div>
+    </div>
+    <div class="muted" id="rBest"></div>
+    <div class="inputs">
+      <label for="nameInput">Your name</label>
+      <input id="nameInput" type="text" maxlength="18" placeholder="Rider" autocomplete="off">
+      <label for="groupInput">Group code (optional — to share a leaderboard)</label>
+      <input id="groupInput" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    </div>
+    <div class="board" id="board">
+      <h4><span id="boardTitle">This device</span><span id="boardYou"></span></h4>
+      <div id="boardList"><div class="muted">—</div></div>
+    </div>
+    <div class="row2">
+      <button class="btn" id="againBtn">Ride again ›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------------- config ---------------- */
+const QUIZ_ID = 'qc_braincoaster';
+const SB_URL  = 'https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY  = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+const NAME_KEY='qc_name', GROUP_KEY='qc_group', BEST_KEY='bc_best';
+const MAX_BRAKES = 3;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- question bank ---------------- */
+const BANK = [
+ {q:"What is the capital of Italy?",correct:"Rome",wrong:["Milan","Venice","Naples"]},
+ {q:"How many days are in a leap year?",correct:"366",wrong:["365","364","367"]},
+ {q:"Which is the largest planet in our solar system?",correct:"Jupiter",wrong:["Saturn","Neptune","Mars"]},
+ {q:"What is the fastest land animal?",correct:"Cheetah",wrong:["Lion","Horse","Greyhound"]},
+ {q:"Which planet is known as the Red Planet?",correct:"Mars",wrong:["Venus","Jupiter","Mercury"]},
+ {q:"What is the currency of Japan?",correct:"Yen",wrong:["Won","Yuan","Baht"]},
+ {q:"What is the chemical symbol for gold?",correct:"Au",wrong:["Go","Gd","Ag"]},
+ {q:"How many sides does a triangle have?",correct:"Three",wrong:["Four","Five","Two"]},
+ {q:"What is the largest ocean on Earth?",correct:"Pacific",wrong:["Atlantic","Indian","Arctic"]},
+ {q:"What is the tallest animal in the world?",correct:"Giraffe",wrong:["Elephant","Horse","Camel"]},
+ {q:"Who wrote 'Romeo and Juliet'?",correct:"Shakespeare",wrong:["Dickens","Austen","Tolstoy"]},
+ {q:"What is the freezing point of water in Celsius?",correct:"0",wrong:["32","100","-10"]},
+ {q:"How many continents are there?",correct:"Seven",wrong:["Five","Six","Eight"]},
+ {q:"Which gas do humans need to breathe to live?",correct:"Oxygen",wrong:["Helium","Nitrogen","Hydrogen"]},
+ {q:"What is the capital of France?",correct:"Paris",wrong:["Lyon","Nice","Marseille"]},
+ {q:"What is the square root of 81?",correct:"9",wrong:["7","8","11"]},
+ {q:"Which big cat has a mane?",correct:"Lion",wrong:["Tiger","Leopard","Jaguar"]},
+ {q:"How many minutes are in an hour?",correct:"60",wrong:["30","90","100"]},
+ {q:"Which country is shaped like a boot?",correct:"Italy",wrong:["Spain","Greece","Portugal"]},
+ {q:"What is frozen water called?",correct:"Ice",wrong:["Steam","Mist","Frost"]},
+ {q:"What is the largest mammal on Earth?",correct:"Blue whale",wrong:["Elephant","Giraffe","Hippo"]},
+ {q:"What is 5 x 6?",correct:"30",wrong:["25","35","36"]},
+ {q:"How many legs does an insect have?",correct:"Six",wrong:["Eight","Four","Ten"]},
+ {q:"What is the capital of Spain?",correct:"Madrid",wrong:["Barcelona","Seville","Valencia"]},
+ {q:"Who painted the Mona Lisa?",correct:"Leonardo da Vinci",wrong:["Michelangelo","Picasso","Van Gogh"]},
+ {q:"What do bees make?",correct:"Honey",wrong:["Jam","Butter","Syrup"]},
+ {q:"Which planet is closest to the Sun?",correct:"Mercury",wrong:["Venus","Earth","Mars"]},
+ {q:"What is 12 x 12?",correct:"144",wrong:["120","132","148"]},
+ {q:"What is the hardest natural substance?",correct:"Diamond",wrong:["Gold","Iron","Granite"]},
+ {q:"How many colours are in a rainbow?",correct:"Seven",wrong:["Five","Six","Eight"]},
+ {q:"What is the largest country by area?",correct:"Russia",wrong:["Canada","China","United States"]},
+ {q:"Which sea creature has eight arms?",correct:"Octopus",wrong:["Squid","Crab","Starfish"]},
+ {q:"What is half of 50?",correct:"25",wrong:["20","30","15"]},
+ {q:"What is the capital of England?",correct:"London",wrong:["Manchester","Bristol","Leeds"]},
+ {q:"What does a thermometer measure?",correct:"Temperature",wrong:["Weight","Speed","Time"]},
+ {q:"Which metal is liquid at room temperature?",correct:"Mercury",wrong:["Iron","Tin","Lead"]},
+ {q:"How many strings does a standard guitar have?",correct:"Six",wrong:["Four","Five","Seven"]},
+ {q:"Which fruit is said to keep the doctor away?",correct:"Apple",wrong:["Banana","Orange","Pear"]},
+ {q:"What is the tallest mountain on Earth?",correct:"Everest",wrong:["K2","Kilimanjaro","Mont Blanc"]},
+ {q:"Which planet has the most prominent rings?",correct:"Saturn",wrong:["Mars","Venus","Mercury"]},
+ {q:"How many players are on a soccer team on the pitch?",correct:"Eleven",wrong:["Nine","Ten","Twelve"]},
+ {q:"What colour do blue and yellow make?",correct:"Green",wrong:["Purple","Orange","Brown"]},
+ {q:"What is the largest hot desert?",correct:"Sahara",wrong:["Gobi","Kalahari","Mojave"]},
+ {q:"Which organ pumps blood around the body?",correct:"Heart",wrong:["Lungs","Liver","Brain"]},
+ {q:"What is 7 + 8?",correct:"15",wrong:["13","16","14"]},
+ {q:"Kangaroos are native to which country?",correct:"Australia",wrong:["Brazil","India","Kenya"]},
+ {q:"What is 100 divided by 5?",correct:"20",wrong:["25","15","10"]},
+ {q:"Which ocean lies off California's coast?",correct:"Pacific",wrong:["Atlantic","Indian","Arctic"]},
+ {q:"What is the capital of Germany?",correct:"Berlin",wrong:["Munich","Hamburg","Cologne"]},
+ {q:"Which shape has no corners?",correct:"Circle",wrong:["Square","Triangle","Pentagon"]}
+];
+
+/* ---------------- helpers ---------------- */
+const $=function(id){return document.getElementById(id);};
+function lsGet(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+function lsSet(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function smooth(t){ return t*t*(3-2*t); }
+function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+
+/* ---------------- canvas / view ---------------- */
+const cv=$('ride'), ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1, groundY=0, valleyBase=0, crestMin=0, crestMax=0;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  const r=cv.getBoundingClientRect(); W=r.width; H=r.height;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  groundY=H*0.90; valleyBase=H*0.60; crestMin=H*0.17; crestMax=H*0.34;
+  rebuildValleyY();
+}
+window.addEventListener('resize',resize);
+
+/* ---------------- track ---------------- */
+let nodes=[]; // alternating valley(even) / crest(odd)
+function rebuildValleyY(){ for(let i=0;i<nodes.length;i+=2){ nodes[i].y=valleyBase + nodes[i].vj; } 
+  for(let i=1;i<nodes.length;i+=2){ nodes[i].y=valleyBase - nodes[i].h; } }
+function initTrack(){
+  nodes=[{x:0,y:valleyBase,vj:0}];
+  for(let i=0;i<5;i++) addHill();
+}
+function addHill(){
+  const vx=nodes[nodes.length-1].x;
+  const liftW=210+Math.random()*90, dropW=150+Math.random()*70;
+  const h=crestMin+Math.random()*(crestMax-crestMin);
+  nodes.push({x:vx+liftW, y:valleyBase-h, h:h});            // crest
+  const vj=Math.random()*22;
+  nodes.push({x:vx+liftW+dropW, y:valleyBase+vj, vj:vj});   // valley
+}
+function ensureHill(k){ while(nodes.length<=2*k+2) addHill(); }
+function segAt(x){
+  if(x<=nodes[0].x) return [nodes[0],nodes[0]];
+  for(let i=0;i<nodes.length-1;i++){ if(x>=nodes[i].x && x<=nodes[i+1].x) return [nodes[i],nodes[i+1]]; }
+  const n=nodes.length; return [nodes[n-1],nodes[n-1]];
+}
+function yTrack(x){
+  const s=segAt(x), a=s[0], b=s[1];
+  if(b.x===a.x) return a.y;
+  const t=clamp((x-a.x)/(b.x-a.x),0,1);
+  return lerp(a.y,b.y,smooth(t));
+}
+function slopeAt(x){ return (yTrack(x+3)-yTrack(x-3))/6; }
+function footX(k){ return nodes[2*k].x; }
+function crestX(k){ return nodes[2*k+1].x; }
+function climbTargetX(k){ return lerp(footX(k),crestX(k),0.62); }
+
+/* ---------------- game state ---------------- */
+let mode='start';            // start | climb | drop | brake | over
+let cartX=0, cartHill=0, vel=0;
+let score=0, streak=0, bestStreak=0, brakes=0;
+let q=null, qIndex=0, bag=[], qTime=0, qMax=0, locked=false;
+let shakeT=0, cam={x:0,y:0};
+let particles=[], floaters=[], lastTs=0;
+let brakePhase=0, brakeTimer=0;
+
+function newBag(){ bag=shuffle(BANK.slice()); qIndex=0; }
+function nextQuestion(){
+  if(qIndex>=bag.length) newBag();
+  const item=bag[qIndex++];
+  const opts=shuffle([{t:item.correct,c:true}].concat(item.wrong.map(function(w){return {t:w,c:false};})));
+  q={text:item.q, opts:opts, ci:opts.findIndex(function(o){return o.c;})};
+  qMax=Math.max(4.5, 10 - score*0.32); qTime=qMax; locked=false;
+  renderQuestion();
+  $('qpanel').style.display='block';
+}
+function renderQuestion(){
+  $('qtext').textContent=q.text;
+  const wrap=$('opts'); wrap.innerHTML='';
+  q.opts.forEach(function(o,i){
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=o.t;
+    b.addEventListener('click',function(){ answer(i,b); });
+    wrap.appendChild(b);
+  });
+  $('chain').style.transform='scaleX(1)';
+}
+
+/* ---------------- answering ---------------- */
+function answer(i,btn){
+  if(mode!=='climb'||locked) return;
+  locked=true;
+  const correct = (i===q.ci);
+  const buttons=$('opts').children;
+  for(let k=0;k<buttons.length;k++){
+    if(k===q.ci) buttons[k].classList.add('right');
+    else if(k===i) buttons[k].classList.add('wrong');
+    else buttons[k].classList.add('dim');
+  }
+  if(correct){ blip('good'); } else { blip('bad'); }
+  setTimeout(function(){
+    $('qpanel').style.display='none';
+    if(correct) onCorrect(); else onWrong();
+  }, correct?520:760);
+}
+function onCorrect(){
+  score++; streak++; if(streak>bestStreak) bestStreak=streak;
+  $('hScore').textContent=score; $('hStreak').textContent=streak;
+  floaters.push({x:cartX, y:yTrack(cartX)-46, txt:'+1', life:1, c:'#37d18b'});
+  sparkle(cartX, yTrack(cartX)-30, '#ffe08a', 14);
+  vel = 150 + Math.min(streak,12)*16;     // launch speed into the drop
+  mode='drop';
+  whoosh();
+}
+function onWrong(){
+  brakes++; streak=0; $('hStreak').textContent=0;
+  updateBrakes();
+  sparks(cartX, yTrack(cartX), 22);
+  screech();
+  mode='brake'; brakePhase=0; brakeTimer=0; vel=0;
+}
+function updateBrakes(){
+  const dots=$('hBrakes').children;
+  for(let i=0;i<dots.length;i++) dots[i].classList.toggle('used', i<brakes);
+}
+
+/* ---------------- update loop ---------------- */
+function update(dt){
+  if(mode==='climb'){
+    // creep up the lift hill
+    const tgt=climbTargetX(cartHill);
+    if(cartX<tgt) cartX=Math.min(tgt, cartX + 26*dt);
+    // question timer
+    qTime-=dt;
+    $('chain').style.transform='scaleX('+clamp(qTime/qMax,0,1)+')';
+    if(qTime<=0 && !locked){
+      // timed out = a brake
+      locked=true; $('qpanel').style.display='none'; blip('bad'); onWrong();
+    }
+  } else if(mode==='drop'){
+    vel += 950*dt;                                  // accelerate down
+    vel = Math.min(vel, 560 + Math.min(streak,12)*34);
+    cartX += vel*dt;
+    const nextFoot=footX(cartHill+1);
+    if(slopeAt(cartX)>0.02) shakeT=Math.min(0.5, shakeT+dt*1.4);  // shudder on the plunge
+    if(cartX>=nextFoot){
+      cartX=nextFoot; cartHill++; ensureHill(cartHill+1);
+      mode='climb'; nextQuestion();
+    }
+  } else if(mode==='brake'){
+    if(brakePhase===0){
+      // slip backwards, brakes screeching
+      cartX=Math.max(footX(cartHill)+6, cartX - 70*dt);
+      if(Math.random()<dt*30) sparks(cartX, yTrack(cartX), 3);
+      brakeTimer+=dt;
+      if(brakeTimer>0.7){ 
+        if(brakes>=MAX_BRAKES){ gameOver(); return; }
+        brakePhase=1;
+      }
+    } else {
+      // limp over the crest to the next foot (no thrill)
+      cartX += 95*dt;
+      const nextFoot=footX(cartHill+1);
+      if(cartX>=nextFoot){
+        cartX=nextFoot; cartHill++; ensureHill(cartHill+1);
+        mode='climb'; nextQuestion();
+      }
+    }
+  }
+  // effects decay
+  shakeT=Math.max(0, shakeT-dt*1.8);
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i];
+    p.life-=dt*1.6; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=380*dt; if(p.life<=0) particles.splice(i,1); }
+  for(let i=floaters.length-1;i>=0;i--){ const f=floaters[i]; f.life-=dt*0.9; f.y-=34*dt; if(f.life<=0) floaters.splice(i,1); }
+}
+
+/* particles */
+function sparks(x,y,n){ for(let i=0;i<n;i++){ const a=(-0.4-Math.random()*1.6); const sp=120+Math.random()*220;
+  particles.push({x:x,y:y,vx:Math.cos(a)*sp*(Math.random()<.5?-1:1),vy:Math.sin(a)*sp,life:.5+Math.random()*.4,c:Math.random()<.5?'#ff7a3d':'#ffd14a',r:1.5+Math.random()*2}); } }
+function sparkle(x,y,c,n){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=40+Math.random()*150;
+  particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-60,life:.6+Math.random()*.5,c:c,r:1.5+Math.random()*2.5}); } }
+
+/* ---------------- drawing ---------------- */
+function drawSky(){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#171544'); g.addColorStop(.42,'#3a2566'); g.addColorStop(.72,'#7d3b76');
+  g.addColorStop(.88,'#e9806b'); g.addColorStop(1,'#ffb27a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // sun low on horizon
+  const sx=W*0.5 - cam.x*0.02, sy=groundY-H*0.10;
+  const sg=ctx.createRadialGradient(sx,sy,4,sx,sy,120);
+  sg.addColorStop(0,'rgba(255,238,190,.95)'); sg.addColorStop(.5,'rgba(255,170,110,.5)'); sg.addColorStop(1,'rgba(255,170,110,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,120,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,243,210,.95)'; ctx.beginPath(); ctx.arc(sx,sy,30,0,Math.PI*2); ctx.fill();
+  // stars
+  ctx.fillStyle='rgba(255,255,255,.7)';
+  for(let i=0;i<26;i++){ const x=((i*97.3 - cam.x*0.05)%(W+20)+W+20)%(W+20); const y=(i*53)%(H*0.4);
+    ctx.globalAlpha=0.3+0.5*((i*7)%5)/5; ctx.fillRect(x,y,2,2); }
+  ctx.globalAlpha=1;
+}
+function drawHills(off,amp,base,col){
+  ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,H);
+  for(let x=0;x<=W;x+=18){ const wx=x+cam.x*off;
+    const y=base + Math.sin(wx*0.004)*amp + Math.sin(wx*0.013+2)*amp*0.4;
+    ctx.lineTo(x,y); }
+  ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+}
+function drawTrack(){
+  const x0=cam.x-40, x1=cam.x+W+40;
+  // support struts
+  ctx.strokeStyle='rgba(28,16,42,.55)'; ctx.lineWidth=4;
+  for(let wx=Math.floor(x0/46)*46; wx<x1; wx+=46){
+    const ty=yTrack(wx), sx=wx-cam.x;
+    ctx.beginPath(); ctx.moveTo(sx,ty+6); ctx.lineTo(sx,groundY); ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(28,16,42,.35)'; ctx.lineWidth=3;
+  for(let wx=Math.floor(x0/46)*46; wx<x1; wx+=46){
+    const sx=wx-cam.x; ctx.beginPath();
+    ctx.moveTo(sx,yTrack(wx)+6); ctx.lineTo(sx+46,groundY); ctx.stroke();
+  }
+  // rail shadow
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=9;
+  rail(x0,x1,4);
+  // ties
+  ctx.strokeStyle='rgba(255,194,74,.5)'; ctx.lineWidth=3;
+  for(let wx=Math.floor(x0/16)*16; wx<x1; wx+=16){
+    const ty=yTrack(wx), sl=slopeAt(wx), nx=-sl, ny=1, l=Math.hypot(nx,ny), ux=nx/l, uy=ny/l;
+    const sx=wx-cam.x; ctx.beginPath(); ctx.moveTo(sx-ux*5,ty-uy*5); ctx.lineTo(sx+ux*5,ty+uy*5); ctx.stroke();
+  }
+  // main rail
+  ctx.strokeStyle='#ffc24a'; ctx.lineWidth=5; rail(x0,x1,0);
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.5; rail(x0,x1,-3);
+}
+function rail(x0,x1,dy){
+  ctx.beginPath(); let first=true;
+  for(let wx=x0; wx<=x1; wx+=6){ const sx=wx-cam.x, sy=yTrack(wx)+dy; if(first){ctx.moveTo(sx,sy);first=false;} else ctx.lineTo(sx,sy); }
+  ctx.stroke();
+}
+function drawCart(){
+  drawCar(cartX-30, '#5a7bff');
+  drawCar(cartX, '#ff5db0');
+  // coupling
+}
+function drawCar(cx,color){
+  const sx=cx-cam.x, sy=yTrack(cx), ang=Math.atan(slopeAt(cx));
+  ctx.save(); ctx.translate(sx,sy); ctx.rotate(ang);
+  // wheels glow if braking
+  if(mode==='brake'){ ctx.fillStyle='rgba(255,80,60,.7)'; ctx.beginPath(); ctx.arc(-8,-3,5,0,7); ctx.arc(10,-3,5,0,7); ctx.fill(); }
+  ctx.fillStyle='#241433';
+  ctx.beginPath(); ctx.arc(-9,-3,3.4,0,Math.PI*2); ctx.arc(11,-3,3.4,0,Math.PI*2); ctx.fill();
+  // body
+  rr(-15,-24,30,21,7); ctx.fillStyle=color; ctx.fill();
+  rr(-15,-24,30,9,7); ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fill();
+  // rider
+  ctx.fillStyle='#ffe0c2'; ctx.beginPath(); ctx.arc(2,-26,5.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2a1840'; rr(-5,-22,14,9,4); ctx.fill();
+  // arms up if dropping fast
+  if(mode==='drop' && vel>260){ ctx.strokeStyle='#ffe0c2'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(-6,-34); ctx.moveTo(6,-20); ctx.lineTo(12,-34); ctx.stroke(); }
+  // safety bar
+  ctx.strokeStyle='rgba(255,194,74,.9)'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(-13,-15); ctx.lineTo(13,-15); ctx.stroke();
+  ctx.restore();
+}
+function rr(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawSpeed(){
+  if(reduceMotion) return;
+  const s=clamp((vel-180)/420,0,1); if(s<=0.02) return;
+  ctx.strokeStyle='rgba(255,255,255,'+(0.12+0.22*s)+')'; ctx.lineWidth=2;
+  const n=Math.floor(6+s*12);
+  for(let i=0;i<n;i++){ const y=(i*53+ (performance.now()*0.6))%H; const len=40+s*130;
+    const x=(i*131)%W; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-len,y); ctx.stroke(); }
+}
+function drawParticles(){
+  for(const p of particles){ ctx.globalAlpha=clamp(p.life,0,1); ctx.fillStyle=p.c;
+    ctx.beginPath(); ctx.arc(p.x-cam.x,p.y,p.r,0,Math.PI*2); ctx.fill(); }
+  ctx.globalAlpha=1;
+  ctx.font='800 22px Baloo 2, sans-serif'; ctx.textAlign='center';
+  for(const f of floaters){ ctx.globalAlpha=clamp(f.life,0,1); ctx.fillStyle=f.c;
+    ctx.fillText(f.txt, f.x-cam.x, f.y); }
+  ctx.globalAlpha=1; ctx.textAlign='left';
+}
+function render(){
+  // camera
+  cam.x = cartX - W*0.34;
+  cam.y = 0;
+  let ox=0, oy=0;
+  if(shakeT>0 && !reduceMotion){ const m=shakeT*7; ox=(Math.random()-.5)*m; oy=(Math.random()-.5)*m; }
+  ctx.save(); ctx.translate(ox,oy);
+  drawSky();
+  drawHills(0.15, H*0.05, groundY-H*0.16, 'rgba(40,26,70,.55)');
+  drawHills(0.32, H*0.06, groundY-H*0.06, 'rgba(28,18,52,.8)');
+  ctx.fillStyle='#17112b'; ctx.fillRect(0,groundY,W,H-groundY);
+  drawTrack();
+  drawCart();
+  drawParticles();
+  drawSpeed();
+  ctx.restore();
+}
+
+/* ---------------- main loop ---------------- */
+function frame(ts){
+  const dt=Math.min(0.05,(ts-lastTs)/1000||0); lastTs=ts;
+  if(mode!=='start' && mode!=='over') update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- flow ---------------- */
+function startGame(){
+  initTrack();
+  cartHill=0; cartX=footX(0); vel=0;
+  score=0; streak=0; bestStreak=0; brakes=0;
+  particles=[]; floaters=[]; shakeT=0;
+  $('hScore').textContent='0'; $('hStreak').textContent='0'; updateBrakes();
+  newBag();
+  $('startScr').classList.add('hide'); $('overScr').classList.add('hide');
+  $('hud').style.display='flex';
+  mode='climb'; nextQuestion();
+  audioOn();
+}
+function gameOver(){
+  mode='over';
+  $('qpanel').style.display='none'; $('hud').style.display='none';
+  $('rHills').textContent=score; $('rStreak').textContent=bestStreak;
+  let best=parseInt(lsGet(BEST_KEY)||'0',10); if(score>best){ best=score; lsSet(BEST_KEY,String(best)); }
+  $('rBest').textContent='Best on this device: '+best+' hills';
+  $('overTitle').textContent = score>=12?'Epic ride!' : (score>=6?'Nice run!':'Ride over!');
+  $('overScr').classList.remove('hide');
+  submitAndLoad();
+}
+
+/* ---------------- leaderboard ---------------- */
+function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+async function fetchTop(){
+  const url=sbBase()+'?select=name,correct,level'
+    +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+    +'&group_code=eq.'+encodeURIComponent(groupCode())
+    +'&order=correct.desc,level.desc&limit=10';
+  const res=await fetch(url,{headers:sbHeaders()});
+  if(!res.ok) throw new Error('load'); return await res.json();
+}
+async function submitScore(){
+  const name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider';
+  lsSet(NAME_KEY,name);
+  const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:name, correct:score, level:bestStreak, time_left:0}];
+  const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+  if(!res.ok) throw new Error('save');
+}
+function setBoardTitle(){ $('boardTitle').textContent = shared()? ('Group · '+groupCode()) : 'This device'; }
+async function submitAndLoad(){
+  setBoardTitle();
+  const list=$('boardList');
+  if(!shared()){
+    list.innerHTML='<div class="muted">Add a group code to share a live leaderboard with friends.</div>';
+    return;
+  }
+  list.innerHTML='<div class="muted">Saving your run…</div>';
+  try{ await submitScore(); }catch(e){}
+  try{
+    const rows=await fetchTop(); const me=(lsGet(NAME_KEY)||'').toLowerCase();
+    if(!rows.length){ list.innerHTML='<div class="muted">Be the first on the board!</div>'; return; }
+    let shown=false;
+    list.innerHTML=rows.map(function(r,i){
+      const mine=(r.name||'').toLowerCase()===me && !shown; if(mine) shown=true;
+      return '<div class="lrow'+(mine?' me':'')+'"><span class="rk">'+(i+1)+'</span>'
+        +'<span class="nm">'+esc(r.name||'—')+'</span>'
+        +'<span class="sc">'+(r.correct|0)+'</span></div>';
+    }).join('');
+  }catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard. Your best is saved on this device.</div>'; }
+}
+
+/* ---------------- audio (optional) ---------------- */
+let actx=null, muted=false;
+function audioOn(){ if(muted) return; try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
+function tone(f,dur,type,vol){ if(muted||!actx) return; try{
+  const o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=f;
+  g.gain.value=vol||0.05; o.connect(g); g.connect(actx.destination);
+  const t=actx.currentTime; o.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur);
+}catch(e){} }
+function blip(kind){ if(kind==='good') tone(660,0.12,'triangle',0.06); else tone(160,0.18,'sawtooth',0.05); }
+function whoosh(){ if(muted||!actx) return; try{
+  const o=actx.createOscillator(), g=actx.createGain(); o.type='sine';
+  const t=actx.currentTime; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(720,t+0.5);
+  g.gain.value=0.05; g.gain.exponentialRampToValueAtTime(0.0001,t+0.6); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+0.6);
+}catch(e){} }
+function screech(){ if(muted||!actx) return; try{
+  const o=actx.createOscillator(), g=actx.createGain(); o.type='square';
+  const t=actx.currentTime; o.frequency.setValueAtTime(380,t); o.frequency.linearRampToValueAtTime(120,t+0.35);
+  g.gain.value=0.04; g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+0.4);
+}catch(e){} }
+
+/* ---------------- wiring ---------------- */
+$('startBtn').addEventListener('click',startGame);
+$('againBtn').addEventListener('click',startGame);
+$('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
+(function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
+(function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+  gi.addEventListener('input',function(){ lsSet(GROUP_KEY, this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24)); setBoardTitle(); });
+  gi.addEventListener('change',function(){ if(mode==='over') submitAndLoad(); });
+})();
+
+resize();
+initTrack();
+cartX=footX(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
