@@ -63,7 +63,7 @@
   .scr{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
     align-items:center;justify-content:center;text-align:center;padding:26px;gap:16px;
     background:radial-gradient(120% 80% at 50% 8%,rgba(40,28,78,.55),rgba(10,8,26,.86));
-    backdrop-filter:blur(3px);}
+    backdrop-filter:blur(3px);overflow-y:auto;}
   .scr.hide{display:none;}
   .logo{font-family:'Baloo 2';font-weight:800;letter-spacing:.5px;
     font-size:clamp(34px,10vw,52px);line-height:1;
@@ -81,6 +81,18 @@
   .btn:active{transform:translateY(2px) scale(.99);}
   .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);box-shadow:none;}
   .row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .pickprompt{font-family:'Baloo 2';font-weight:700;font-size:13px;color:var(--mut);
+    text-transform:uppercase;letter-spacing:.9px;margin-top:2px;}
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:23em;}
+  .cat-btn{font-family:'Baloo 2';font-weight:700;font-size:15px;color:var(--ink);
+    background:rgba(255,255,255,.07);border:2px solid var(--line);border-radius:15px;
+    padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:9px;
+    transition:transform .08s,border-color .15s,background .15s;}
+  .cat-btn:active{transform:scale(.96);}
+  .cat-btn .ci{font-size:21px;line-height:1;}
+  .cat-btn.mixed{grid-column:1 / -1;justify-content:center;font-size:19px;color:#1a1030;
+    background:linear-gradient(180deg,#ffd36b,#ffac3e);border:none;
+    box-shadow:0 8px 22px rgba(255,170,62,.38);}
 
   .rstat{display:flex;gap:22px;justify-content:center;margin:2px 0 2px;}
   .rstat .b{display:flex;flex-direction:column;gap:2px;}
@@ -135,7 +147,8 @@
       <div class="row"><span class="ic">🛑</span><span>Wrong or too slow slams the brakes. Three brakes and the ride's over.</span></div>
       <div class="row"><span class="ic">🔥</span><span>Answer fast and keep a streak for a faster, wilder ride.</span></div>
     </div>
-    <button class="btn" id="startBtn">Start the ride ›</button>
+    <div class="pickprompt">Choose your track</div>
+    <div class="cats" id="cats"></div>
   </div>
 
   <!-- RESULTS -->
@@ -158,6 +171,7 @@
     </div>
     <div class="row2">
       <button class="btn" id="againBtn">Ride again ›</button>
+      <button class="btn ghost" id="changeBtn">Change topic</button>
     </div>
   </div>
 </div>
@@ -165,7 +179,8 @@
 <script>
 "use strict";
 /* ---------------- config ---------------- */
-const QUIZ_ID = 'qc_braincoaster';
+const QUIZ_BASE = 'qc_braincoaster';
+function quizId(){ return QUIZ_BASE + (activeCat && activeCat!=='mixed' ? '_'+activeCat : ''); }
 const SB_URL  = 'https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY  = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
 const NAME_KEY='qc_name', GROUP_KEY='qc_group', BEST_KEY='bc_best';
@@ -173,7 +188,7 @@ const MAX_BRAKES = 3;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------------- question bank ---------------- */
-const BANK = [
+const BANK_GENERAL = [
  {q:"What is the capital of Italy?",correct:"Rome",wrong:["Milan","Venice","Naples"]},
  {q:"How many days are in a leap year?",correct:"366",wrong:["365","364","367"]},
  {q:"Which is the largest planet in our solar system?",correct:"Jupiter",wrong:["Saturn","Neptune","Mars"]},
@@ -225,6 +240,153 @@ const BANK = [
  {q:"What is the capital of Germany?",correct:"Berlin",wrong:["Munich","Hamburg","Cologne"]},
  {q:"Which shape has no corners?",correct:"Circle",wrong:["Square","Triangle","Pentagon"]}
 ];
+const BANK_SCIENCE = [
+ {q:"What gas do plants release during photosynthesis?",correct:"Oxygen",wrong:["Carbon dioxide","Nitrogen","Hydrogen"]},
+ {q:"How many bones are in the adult human body?",correct:"206",wrong:["201","210","196"]},
+ {q:"What is the powerhouse of the cell?",correct:"Mitochondria",wrong:["Nucleus","Ribosome","Membrane"]},
+ {q:"Which planet is the hottest?",correct:"Venus",wrong:["Mercury","Mars","Jupiter"]},
+ {q:"What is the chemical symbol for sodium?",correct:"Na",wrong:["So","Sd","S"]},
+ {q:"What force keeps planets in orbit around the Sun?",correct:"Gravity",wrong:["Magnetism","Friction","Tension"]},
+ {q:"Which blood cells fight infection?",correct:"White blood cells",wrong:["Red blood cells","Platelets","Plasma"]},
+ {q:"What is the most abundant gas in Earth's atmosphere?",correct:"Nitrogen",wrong:["Oxygen","Carbon dioxide","Argon"]},
+ {q:"How many legs does a spider have?",correct:"Eight",wrong:["Six","Ten","Four"]},
+ {q:"What do you call animals that eat only plants?",correct:"Herbivores",wrong:["Carnivores","Omnivores","Predators"]},
+ {q:"What is H2O more commonly known as?",correct:"Water",wrong:["Salt","Hydrogen","Acid"]},
+ {q:"What is the closest star to Earth?",correct:"The Sun",wrong:["Proxima Centauri","Sirius","Polaris"]},
+ {q:"The speed of light is about how fast?",correct:"300,000 km/s",wrong:["30,000 km/s","3,000 km/s","3 million km/s"]},
+ {q:"Which organ filters blood to make urine?",correct:"Kidney",wrong:["Liver","Lung","Spleen"]},
+ {q:"Who proposed evolution by natural selection?",correct:"Charles Darwin",wrong:["Isaac Newton","Albert Einstein","Gregor Mendel"]},
+ {q:"Which planet has the most prominent rings?",correct:"Saturn",wrong:["Jupiter","Uranus","Neptune"]},
+ {q:"What gas do humans breathe out?",correct:"Carbon dioxide",wrong:["Oxygen","Helium","Nitrogen"]},
+ {q:"How many planets are in our solar system?",correct:"Eight",wrong:["Nine","Seven","Ten"]},
+ {q:"At what temperature does water boil (Celsius)?",correct:"100",wrong:["90","120","50"]},
+ {q:"What is the study of living things called?",correct:"Biology",wrong:["Geology","Chemistry","Physics"]},
+ {q:"Which vitamin does sunlight help your body make?",correct:"Vitamin D",wrong:["Vitamin C","Vitamin A","Vitamin B"]},
+ {q:"What is the centre of an atom called?",correct:"Nucleus",wrong:["Electron","Proton","Shell"]},
+ {q:"What word describes animals active at night?",correct:"Nocturnal",wrong:["Diurnal","Migratory","Dormant"]},
+ {q:"What do bees produce?",correct:"Honey",wrong:["Jam","Butter","Syrup"]}
+];
+const BANK_HISTORY = [
+ {q:"Who was the first President of the United States?",correct:"George Washington",wrong:["Abraham Lincoln","Thomas Jefferson","John Adams"]},
+ {q:"In which year did World War II end?",correct:"1945",wrong:["1939","1918","1950"]},
+ {q:"Which civilisation built the pyramids at Giza?",correct:"Ancient Egyptians",wrong:["Romans","Greeks","Mayans"]},
+ {q:"Who was British Prime Minister for most of WWII?",correct:"Winston Churchill",wrong:["Neville Chamberlain","Clement Attlee","Tony Blair"]},
+ {q:"In which year did the Titanic sink?",correct:"1912",wrong:["1905","1920","1898"]},
+ {q:"Who reached the Americas in 1492?",correct:"Christopher Columbus",wrong:["Ferdinand Magellan","James Cook","Amerigo Vespucci"]},
+ {q:"Which empire built the Colosseum?",correct:"Roman",wrong:["Greek","Ottoman","Persian"]},
+ {q:"Which US president was assassinated in 1865?",correct:"Abraham Lincoln",wrong:["John F. Kennedy","James Garfield","William McKinley"]},
+ {q:"In which year did the Berlin Wall fall?",correct:"1989",wrong:["1979","1991","1969"]},
+ {q:"Who led India's nonviolent independence movement?",correct:"Mahatma Gandhi",wrong:["Jawaharlal Nehru","Nelson Mandela","Subhas Bose"]},
+ {q:"Which queen had the longest reign in British history?",correct:"Elizabeth II",wrong:["Victoria","Elizabeth I","Anne"]},
+ {q:"In which year did the French Revolution begin?",correct:"1789",wrong:["1776","1812","1804"]},
+ {q:"Who painted the Sistine Chapel ceiling?",correct:"Michelangelo",wrong:["Leonardo da Vinci","Raphael","Donatello"]},
+ {q:"Which war was fought between the US North and South?",correct:"Civil War",wrong:["Revolutionary War","War of 1812","Cold War"]},
+ {q:"Which Egyptian queen allied with Caesar and Mark Antony?",correct:"Cleopatra",wrong:["Nefertiti","Hatshepsut","Isis"]},
+ {q:"Who was the first person to walk on the Moon?",correct:"Neil Armstrong",wrong:["Buzz Aldrin","Yuri Gagarin","John Glenn"]},
+ {q:"Which 1215 charter limited the English king's power?",correct:"Magna Carta",wrong:["Bill of Rights","Domesday Book","Doomsday Charter"]},
+ {q:"Which Macedonian king built a huge empire by age 30?",correct:"Alexander the Great",wrong:["Julius Caesar","Hannibal","Darius"]},
+ {q:"The Cold War was mainly between the USA and which country?",correct:"Soviet Union",wrong:["China","Germany","Japan"]},
+ {q:"Which deadly plague swept Europe in the 1340s?",correct:"The Black Death",wrong:["Spanish Flu","Cholera","Smallpox"]},
+ {q:"Which Roman wall was built across northern England?",correct:"Hadrian's Wall",wrong:["The Great Wall","The Berlin Wall","The Antonine Wall"]},
+ {q:"In which year was American independence declared?",correct:"1776",wrong:["1789","1812","1620"]},
+ {q:"Who is regarded as the first Roman Emperor?",correct:"Augustus",wrong:["Julius Caesar","Nero","Constantine"]},
+ {q:"Which ship carried the Pilgrims to America in 1620?",correct:"The Mayflower",wrong:["The Santa Maria","The Beagle","The Endeavour"]}
+];
+const BANK_GEO = [
+ {q:"What is the capital of Japan?",correct:"Tokyo",wrong:["Kyoto","Osaka","Seoul"]},
+ {q:"Which is the longest river in Africa?",correct:"Nile",wrong:["Congo","Niger","Zambezi"]},
+ {q:"Mount Everest lies in which mountain range?",correct:"Himalayas",wrong:["Andes","Alps","Rockies"]},
+ {q:"Which is the largest island in the world?",correct:"Greenland",wrong:["Australia","Madagascar","Borneo"]},
+ {q:"What is the capital of Australia?",correct:"Canberra",wrong:["Sydney","Melbourne","Perth"]},
+ {q:"The Amazon rainforest is mostly in which country?",correct:"Brazil",wrong:["Peru","Colombia","Venezuela"]},
+ {q:"Which is the coldest continent?",correct:"Antarctica",wrong:["Asia","Europe","South America"]},
+ {q:"Which ocean lies between Africa and Australia?",correct:"Indian",wrong:["Atlantic","Pacific","Arctic"]},
+ {q:"The Eiffel Tower is in which city?",correct:"Paris",wrong:["Rome","London","Berlin"]},
+ {q:"Which country spans Europe and Asia, with Istanbul?",correct:"Turkey",wrong:["Russia","Greece","Egypt"]},
+ {q:"What is the smallest country in the world?",correct:"Vatican City",wrong:["Monaco","Malta","Nauru"]},
+ {q:"Which US state is the largest by area?",correct:"Alaska",wrong:["Texas","California","Montana"]},
+ {q:"The Great Barrier Reef lies off which country?",correct:"Australia",wrong:["Brazil","Mexico","Indonesia"]},
+ {q:"What is the capital of Canada?",correct:"Ottawa",wrong:["Toronto","Vancouver","Montreal"]},
+ {q:"Which river runs through London?",correct:"Thames",wrong:["Seine","Danube","Tiber"]},
+ {q:"Mount Kilimanjaro is in which country?",correct:"Tanzania",wrong:["Kenya","Egypt","Morocco"]},
+ {q:"The Great Wall is in which country?",correct:"China",wrong:["Japan","India","Mongolia"]},
+ {q:"What is the capital of Brazil?",correct:"Brasilia",wrong:["Rio de Janeiro","Sao Paulo","Lima"]},
+ {q:"Which sea lies between Europe and Africa?",correct:"Mediterranean",wrong:["Caribbean","Baltic","Red"]},
+ {q:"On which continent is the Sahara Desert?",correct:"Africa",wrong:["Asia","Australia","South America"]},
+ {q:"Which strait separates Asia and North America?",correct:"Bering Strait",wrong:["Gibraltar","Bosphorus","Malacca"]},
+ {q:"What is the capital of Egypt?",correct:"Cairo",wrong:["Alexandria","Giza","Luxor"]},
+ {q:"What is the capital of Iceland?",correct:"Reykjavik",wrong:["Oslo","Helsinki","Dublin"]},
+ {q:"Which country is the Land of the Rising Sun?",correct:"Japan",wrong:["China","Thailand","Korea"]}
+];
+const BANK_SPORT = [
+ {q:"How many players are on a rugby union team?",correct:"Fifteen",wrong:["Thirteen","Eleven","Seven"]},
+ {q:"How often are the Summer Olympics held?",correct:"Every 4 years",wrong:["Every 2 years","Every year","Every 5 years"]},
+ {q:"In which sport do you score a 'try'?",correct:"Rugby",wrong:["Football","Cricket","Hockey"]},
+ {q:"How many points is a basketball free throw worth?",correct:"One",wrong:["Two","Three","Five"]},
+ {q:"Which country has won the most FIFA World Cups?",correct:"Brazil",wrong:["Germany","Italy","Argentina"]},
+ {q:"In tennis, what is a score of zero called?",correct:"Love",wrong:["Nil","Duck","Blank"]},
+ {q:"How many holes are in a full round of golf?",correct:"18",wrong:["9","12","24"]},
+ {q:"Which sport uses a shuttlecock?",correct:"Badminton",wrong:["Squash","Tennis","Table tennis"]},
+ {q:"The Tour de France is what kind of race?",correct:"Cycling",wrong:["Running","Sailing","Horse racing"]},
+ {q:"About how many miles is a marathon?",correct:"26.2",wrong:["13.1","50","10"]},
+ {q:"In which sport is 'the Ashes' contested?",correct:"Cricket",wrong:["Rugby","Golf","Tennis"]},
+ {q:"How many rings are on the Olympic flag?",correct:"Five",wrong:["Four","Six","Three"]},
+ {q:"Which boxer called himself 'The Greatest'?",correct:"Muhammad Ali",wrong:["Mike Tyson","George Foreman","Joe Frazier"]},
+ {q:"Usain Bolt is famous in which sport?",correct:"Sprinting",wrong:["Swimming","Cycling","Boxing"]},
+ {q:"How many players from each basketball team are on court?",correct:"Five",wrong:["Six","Seven","Four"]},
+ {q:"In American football, a touchdown is worth how many points?",correct:"Six",wrong:["Three","Seven","Five"]},
+ {q:"Which tennis Grand Slam is played on grass?",correct:"Wimbledon",wrong:["French Open","US Open","Australian Open"]},
+ {q:"The Stanley Cup is awarded in which sport?",correct:"Ice hockey",wrong:["Basketball","Baseball","American football"]},
+ {q:"Where were the first modern Olympics held in 1896?",correct:"Athens",wrong:["Paris","London","Rome"]},
+ {q:"How many bases are on a baseball field?",correct:"Four",wrong:["Three","Five","Two"]},
+ {q:"A 'scrum' is part of which sport?",correct:"Rugby",wrong:["American football","Wrestling","Hockey"]},
+ {q:"Lewis Hamilton competes in which motorsport?",correct:"Formula One",wrong:["MotoGP","Rally","NASCAR"]},
+ {q:"How many players are on a netball team on court?",correct:"Seven",wrong:["Five","Six","Nine"]},
+ {q:"In golf, one stroke under par on a hole is a?",correct:"Birdie",wrong:["Eagle","Bogey","Par"]}
+];
+const BANK_SCREEN = [
+ {q:"Who directed 'Jaws' and 'E.T.'?",correct:"Steven Spielberg",wrong:["Martin Scorsese","Quentin Tarantino","Christopher Nolan"]},
+ {q:"Which animated film features a young lion named Simba?",correct:"The Lion King",wrong:["Madagascar","Bambi","Tarzan"]},
+ {q:"Who is known as the 'King of Pop'?",correct:"Michael Jackson",wrong:["Elvis Presley","Prince","Usher"]},
+ {q:"Which band recorded 'Hey Jude'?",correct:"The Beatles",wrong:["The Rolling Stones","Queen","The Who"]},
+ {q:"Who starred as Jack in the 1997 film 'Titanic'?",correct:"Leonardo DiCaprio",wrong:["Brad Pitt","Tom Cruise","Johnny Depp"]},
+ {q:"Which instrument has 88 keys?",correct:"Piano",wrong:["Harp","Organ","Accordion"]},
+ {q:"Who played Iron Man in the Marvel films?",correct:"Robert Downey Jr.",wrong:["Chris Evans","Chris Hemsworth","Mark Ruffalo"]},
+ {q:"Which film series follows a wizard boy at Hogwarts?",correct:"Harry Potter",wrong:["Narnia","Eragon","Percy Jackson"]},
+ {q:"Who sang 'Rolling in the Deep' and 'Hello'?",correct:"Adele",wrong:["Beyonce","Rihanna","Sia"]},
+ {q:"Which studio made 'Toy Story'?",correct:"Pixar",wrong:["DreamWorks","Illumination","Studio Ghibli"]},
+ {q:"Which film series is set 'in a galaxy far, far away'?",correct:"Star Wars",wrong:["Star Trek","Avatar","Dune"]},
+ {q:"Which composer kept writing music after going deaf?",correct:"Beethoven",wrong:["Mozart","Bach","Chopin"]},
+ {q:"Which singer is called the 'Queen of Pop'?",correct:"Madonna",wrong:["Cher","Britney Spears","Lady Gaga"]},
+ {q:"In 'Frozen', which sister has ice powers?",correct:"Elsa",wrong:["Anna","Olaf","Kristoff"]},
+ {q:"Which band recorded 'Bohemian Rhapsody'?",correct:"Queen",wrong:["The Beatles","Led Zeppelin","U2"]},
+ {q:"Who directed 'Pulp Fiction'?",correct:"Quentin Tarantino",wrong:["Steven Spielberg","Martin Scorsese","Francis Ford Coppola"]},
+ {q:"Bob Marley is most associated with which music genre?",correct:"Reggae",wrong:["Jazz","Soul","Blues"]},
+ {q:"Which superhero protects Gotham City?",correct:"Batman",wrong:["Superman","Spider-Man","The Flash"]},
+ {q:"Who composed the opera 'The Magic Flute'?",correct:"Mozart",wrong:["Beethoven","Verdi","Bizet"]},
+ {q:"Which film features the line 'May the Force be with you'?",correct:"Star Wars",wrong:["Star Trek","Avatar","Alien"]},
+ {q:"Who is the folk-rock legend behind 'Like a Rolling Stone'?",correct:"Bob Dylan",wrong:["Elvis Presley","Bruce Springsteen","Neil Young"]},
+ {q:"Which Disney film features a mermaid named Ariel?",correct:"The Little Mermaid",wrong:["Moana","Frozen","Tangled"]},
+ {q:"Which composer wrote 'The Four Seasons'?",correct:"Vivaldi",wrong:["Mozart","Bach","Handel"]},
+ {q:"Which 1939 film features Dorothy and the Yellow Brick Road?",correct:"The Wizard of Oz",wrong:["Mary Poppins","Cinderella","Peter Pan"]}
+];
+const CATS = [
+  {key:'mixed',   label:'Mixed',            ic:'\u{1F3B2}'},
+  {key:'general', label:'General',          ic:'\u{1F9E0}', bank:BANK_GENERAL},
+  {key:'science', label:'Science & Nature', ic:'\u{1F52C}', bank:BANK_SCIENCE},
+  {key:'history', label:'History',          ic:'\u{1F3DB}', bank:BANK_HISTORY},
+  {key:'geo',     label:'Geography',        ic:'\u{1F30D}', bank:BANK_GEO},
+  {key:'sport',   label:'Sport',            ic:'\u26BD',    bank:BANK_SPORT},
+  {key:'screen',  label:'Movies & Music',   ic:'\u{1F3AC}', bank:BANK_SCREEN}
+];
+(function(){ // Mixed pool = every category, de-duplicated by question text
+  const seen={}, all=[];
+  CATS.forEach(function(c){ if(!c.bank) return; c.bank.forEach(function(it){ const k=it.q.trim().toLowerCase(); if(!seen[k]){seen[k]=1; all.push(it);} }); });
+  CATS[0].bank=all;
+})();
+let activeCat='mixed';
+function catOf(k){ for(var i=0;i<CATS.length;i++){ if(CATS[i].key===k) return CATS[i]; } return CATS[0]; }
+function catBank(){ return catOf(activeCat).bank; }
 
 /* ---------------- helpers ---------------- */
 const $=function(id){return document.getElementById(id);};
@@ -302,8 +464,10 @@ let shakeT=0, cam={x:0,y:0};
 let particles=[], floaters=[], lastTs=0;
 let brakePhase=0, brakeTimer=0;
 let dropLoop=false, dropSub='pre', loopA=0, lg=null;
+let tourDone={}, wrongInCat=0, perfectCat=true, catTotal=0, catResolved=0, tourComplete=false, celebTimer=null;
+const TOUR=['general','science','history','geo','sport','screen'];
 
-function newBag(){ bag=shuffle(BANK.slice()); qIndex=0; }
+function newBag(){ bag=shuffle(catBank().slice()); qIndex=0; catTotal=bag.length; catResolved=0; }
 function nextQuestion(){
   if(qIndex>=bag.length) newBag();
   const item=bag[qIndex++];
@@ -584,10 +748,12 @@ function frame(ts){
 }
 
 /* ---------------- flow ---------------- */
-function startGame(){
+function startGame(cat){
+  if(cat) activeCat=cat;
   initTrack();
   cartHill=0; cartX=footX(0); vel=0;
   score=0; streak=0; bestStreak=0; brakes=0;
+  dropLoop=false; dropSub='pre';
   particles=[]; floaters=[]; shakeT=0;
   $('hScore').textContent='0'; $('hStreak').textContent='0'; updateBrakes();
   newBag();
@@ -595,6 +761,10 @@ function startGame(){
   $('hud').style.display='flex';
   mode='climb'; nextQuestion();
   audioOn();
+}
+function showStart(){
+  $('overScr').classList.add('hide'); $('hud').style.display='none';
+  $('qpanel').style.display='none'; $('startScr').classList.remove('hide'); mode='start';
 }
 function gameOver(){
   mode='over';
@@ -613,7 +783,7 @@ function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'B
 function boardCode(){ return groupCode() || 'global'; }
 async function fetchTop(){
   const url=sbBase()+'?select=name,correct,level'
-    +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+    +'&quiz_id=eq.'+encodeURIComponent(quizId())
     +'&group_code=eq.'+encodeURIComponent(boardCode())
     +'&order=correct.desc,level.desc&limit=10';
   const res=await fetch(url,{headers:sbHeaders()});
@@ -622,11 +792,11 @@ async function fetchTop(){
 async function submitScore(){
   const name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider';
   lsSet(NAME_KEY,name);
-  const body=[{quiz_id:QUIZ_ID, group_code:boardCode(), name:name, correct:score, level:bestStreak, time_left:0}];
+  const body=[{quiz_id:quizId(), group_code:boardCode(), name:name, correct:score, level:bestStreak, time_left:0}];
   const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
   if(!res.ok) throw new Error('save');
 }
-function setBoardTitle(){ $('boardTitle').textContent = groupCode()? ('Group · '+groupCode()) : 'Global'; }
+function setBoardTitle(){ $('boardTitle').textContent = catOf(activeCat).label + ' · ' + (groupCode()? ('Group '+groupCode()) : 'Global'); }
 async function submitAndLoad(){
   setBoardTitle();
   const list=$('boardList');
@@ -666,8 +836,19 @@ function screech(){ if(muted||!actx) return; try{
 }catch(e){} }
 
 /* ---------------- wiring ---------------- */
-$('startBtn').addEventListener('click',startGame);
-$('againBtn').addEventListener('click',startGame);
+function buildCats(){
+  const wrap=$('cats'); if(!wrap) return; wrap.innerHTML='';
+  CATS.forEach(function(c){
+    const b=document.createElement('button');
+    b.className='cat-btn'+(c.key==='mixed'?' mixed':'');
+    b.innerHTML='<span class="ci">'+c.ic+'</span><span>'+(c.key==='mixed'?'Ride \u2014 Mixed':c.label)+'</span>';
+    b.addEventListener('click',function(){ startGame(c.key); });
+    wrap.appendChild(b);
+  });
+}
+buildCats();
+$('againBtn').addEventListener('click',function(){ startGame(); });
+$('changeBtn').addEventListener('click',showStart);
 $('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
 (function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
 (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
