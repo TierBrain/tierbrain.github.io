@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hip Hop & Rap Quiz — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#14100a; --bg1:#241a10; --card:#241a12; --card2:#30241a;
+    --ink:#fdf2e6; --mut:#c9b49a; --line:#4a3a28;
+    --l1:#36c98a; --l2:#f6b73c; --l3:#ff7a3d; --l4:#ff5db0;
+    --gold:#ffc24a; --right:#36c98a; --wrong:#ff5d6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(255,140,60,.20), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,93,176,.16), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
+    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
+  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#10142e;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#10142e;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#10142e;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Hip Hop &amp; Rap Trivia</div>
+    <h1 class="big display">TierBrain</h1>
+    <p class="lead">20 questions from a big pool — the pioneers, the classics, the eras and the culture of hip hop and rap, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code — optional</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"Hip hop was born in which New York City borough in the 1970s?","correct":"The Bronx","wrong":["Brooklyn","Queens","Manhattan"]},
+      {"q":"Which Jamaican-American DJ is called the 'Father of Hip-Hop'?","correct":"DJ Kool Herc","wrong":["Grandmaster Flash","Dr. Dre","Jay-Z"]},
+      {"q":"Eminem grew up in which US city?","correct":"Detroit","wrong":["New York","Atlanta","Los Angeles"]},
+      {"q":"Which rapper's real name is Marshall Mathers?","correct":"Eminem","wrong":["50 Cent","Jay-Z","Snoop Dogg"]},
+      {"q":"'Walk This Way' paired Run-DMC with which rock band?","correct":"Aerosmith","wrong":["Guns N' Roses","Bon Jovi","KISS"]},
+      {"q":"Snoop Dogg is most closely associated with which West Coast producer?","correct":"Dr. Dre","wrong":["Jay-Z","Nas","Diddy"]},
+      {"q":"Which Compton rapper headlined the 2025 Super Bowl halftime show?","correct":"Kendrick Lamar","wrong":["J. Cole","Travis Scott","Tyler, the Creator"]},
+      {"q":"In hip hop, what does 'MC' stand for?","correct":"Master of Ceremonies","wrong":["Music Conductor","Main Composer","Mixing Champion"]},
+      {"q":"Which rapper co-founded Roc-A-Fella and became a billionaire mogul?","correct":"Jay-Z","wrong":["Diddy","Dr. Dre","50 Cent"]},
+      {"q":"Which legendary rapper was shot and killed in Las Vegas in 1996?","correct":"Tupac Shakur","wrong":["The Notorious B.I.G.","Eazy-E","Big L"]},
+      {"q":"'Hey Ya!' was a huge hit for which Atlanta duo?","correct":"OutKast","wrong":["Run-DMC","Mobb Deep","Three 6 Mafia"]},
+      {"q":"Which best-selling rapper is from Toronto, Canada?","correct":"Drake","wrong":["The Weeknd","Kanye West","Lil Wayne"]},
+      {"q":"Which of these is one of hip hop's four elements?","correct":"Breakdancing","wrong":["Tap dancing","Ballet","Salsa"]},
+      {"q":"50 Cent's blockbuster 2003 debut was 'Get Rich or Die ___'?","correct":"Tryin'","wrong":["Trying Hard","Crying","Flying"]},
+      {"q":"Which producer's 'Beats by Dre' headphones made him a business icon?","correct":"Dr. Dre","wrong":["RZA","Timbaland","Pharrell"]},
+      {"q":"Kanye West first made his name in hip hop doing what, before rapping?","correct":"Producing","wrong":["DJing","Dancing","Managing"]},
+      {"q":"'Old Town Road' fused country and rap for which artist?","correct":"Lil Nas X","wrong":["Lil Baby","DaBaby","Lil Yachty"]},
+      {"q":"Which Compton group included Dr. Dre and Ice Cube?","correct":"N.W.A","wrong":["Wu-Tang Clan","Public Enemy","Run-DMC"]},
+      {"q":"Which female rapper released 'Anaconda' and 'Super Bass'?","correct":"Nicki Minaj","wrong":["Cardi B","Megan Thee Stallion","Doja Cat"]},
+      {"q":"Wu-Tang Clan famously come from which NYC borough?","correct":"Staten Island","wrong":["The Bronx","Brooklyn","Queens"]},
+      {"q":"Which rapper loosely played himself in the film '8 Mile'?","correct":"Eminem","wrong":["Ice Cube","50 Cent","Common"]},
+      {"q":"'Empire State of Mind' paired Jay-Z with which singer?","correct":"Alicia Keys","wrong":["Beyonce","Rihanna","Mary J. Blige"]},
+      {"q":"Which mogul founded Bad Boy Records and once went by 'Puff Daddy'?","correct":"Diddy","wrong":["Suge Knight","Master P","Birdman"]},
+      {"q":"The Notorious B.I.G. represented which US city?","correct":"New York","wrong":["Los Angeles","Atlanta","Houston"]},
+      {"q":"Cardi B's breakout 2017 hit was 'Bodak ___'?","correct":"Yellow","wrong":["Red","Blue","Gold"]},
+      {"q":"'Sicko Mode' and the Astroworld era belong to which rapper?","correct":"Travis Scott","wrong":["Future","Lil Uzi Vert","Playboi Carti"]},
+      {"q":"Which pioneering rapper is known for 'Get Ur Freak On'?","correct":"Missy Elliott","wrong":["Lil' Kim","Eve","Foxy Brown"]},
+      {"q":"Which N.W.A member starred in the film 'Boyz n the Hood'?","correct":"Ice Cube","wrong":["Dr. Dre","Eazy-E","MC Ren"]},
+      {"q":"Hip hop celebrated which milestone anniversary in 2023?","correct":"50 years","wrong":["25 years","75 years","100 years"]},
+      {"q":"Which rapper leads Young Money and mentored Drake and Nicki Minaj?","correct":"Lil Wayne","wrong":["Birdman","Diddy","Dr. Dre"]},
+    ],
+    2:[
+      {"q":"'Rapper's Delight' (1979), the first big rap hit, was by?","correct":"The Sugarhill Gang","wrong":["Run-DMC","Grandmaster Flash","Kurtis Blow"]},
+      {"q":"Which group recorded the influential 1982 track 'The Message'?","correct":"Grandmaster Flash and the Furious Five","wrong":["N.W.A","Public Enemy","Run-DMC"]},
+      {"q":"Nas's classic 1994 debut album is titled?","correct":"Illmatic","wrong":["Ready to Die","Reasonable Doubt","The Chronic"]},
+      {"q":"The Notorious B.I.G.'s 1994 debut album was?","correct":"Ready to Die","wrong":["Life After Death","Doggystyle","Illmatic"]},
+      {"q":"Dr. Dre's landmark 1992 album, defining G-funk, was?","correct":"The Chronic","wrong":["Doggystyle","2001","The Predator"]},
+      {"q":"Which label did Suge Knight and Dr. Dre co-found?","correct":"Death Row Records","wrong":["Bad Boy","Def Jam","Roc-A-Fella"]},
+      {"q":"Sean 'Diddy' Combs founded which label that signed Biggie?","correct":"Bad Boy Records","wrong":["Death Row","Cash Money","Ruff Ryders"]},
+      {"q":"Wu-Tang Clan's 1993 debut was 'Enter the Wu-Tang: 36 ___'?","correct":"Chambers","wrong":["Shadows","Swords","Styles"]},
+      {"q":"Who is the de facto leader and main producer of Wu-Tang Clan?","correct":"RZA","wrong":["GZA","Method Man","Ghostface Killah"]},
+      {"q":"Jay-Z's 1996 debut album was?","correct":"Reasonable Doubt","wrong":["The Blueprint","Vol. 2","In My Lifetime"]},
+      {"q":"Which rapper won the first Oscar for a rap song, 'Lose Yourself' (2003)?","correct":"Eminem","wrong":["Jay-Z","Nelly","Ludacris"]},
+      {"q":"Andre 3000 and Big Boi make up which group?","correct":"OutKast","wrong":["Goodie Mob","UGK","Three 6 Mafia"]},
+      {"q":"Which 1998 album by Lauryn Hill swept the Grammys?","correct":"The Miseducation of Lauryn Hill","wrong":["The Score","Supa Dupa Fly","Baduizm"]},
+      {"q":"Lauryn Hill was a member of which group, with Wyclef Jean?","correct":"The Fugees","wrong":["A Tribe Called Quest","De La Soul","Bone Thugs-n-Harmony"]},
+      {"q":"Kanye West's 2004 debut album was?","correct":"The College Dropout","wrong":["Late Registration","808s & Heartbreak","Graduation"]},
+      {"q":"Which Long Beach rapper released 'Doggystyle' in 1993?","correct":"Snoop Dogg","wrong":["Warren G","Nate Dogg","Ice Cube"]},
+      {"q":"Herc, Bambaataa and Flash are called hip hop's 'holy ___'?","correct":"Trinity","wrong":["Triangle","Three Kings","Council"]},
+      {"q":"'Straight Outta Compton' (1988) was the debut album of which group?","correct":"N.W.A","wrong":["Geto Boys","Public Enemy","Cypress Hill"]},
+      {"q":"Which N.W.A member died in 1995 and co-owned Ruthless Records?","correct":"Eazy-E","wrong":["Ice Cube","Dr. Dre","MC Ren"]},
+      {"q":"A Tribe Called Quest belonged to which jazz-rap collective?","correct":"Native Tongues","wrong":["Wu-Tang","Dungeon Family","D12"]},
+      {"q":"Whose 'Get Rich or Die Tryin' (2003) was backed by Dr. Dre and Eminem?","correct":"50 Cent","wrong":["The Game","Young Buck","Lloyd Banks"]},
+      {"q":"Which Atlanta-born subgenre, built on 808s and rapid hi-hats, rules modern rap?","correct":"Trap","wrong":["Drill","Crunk","Bounce"]},
+      {"q":"Public Enemy's lead voice, known for political lyrics, is?","correct":"Chuck D","wrong":["Flavor Flav","Professor Griff","Terminator X"]},
+      {"q":"Which UK genre, born in the 2000s, gave rise to Stormzy and Skepta?","correct":"Grime","wrong":["Drill","Garage","Jungle"]},
+      {"q":"Which rapper released 'good kid, m.A.A.d city' in 2012?","correct":"Kendrick Lamar","wrong":["J. Cole","Schoolboy Q","Big Sean"]},
+      {"q":"Which rapper starred in and co-wrote the 1995 comedy 'Friday'?","correct":"Ice Cube","wrong":["Chris Tucker","Ice-T","Method Man"]},
+      {"q":"The East Coast-West Coast feud is most tied to which two rappers?","correct":"Tupac and Biggie","wrong":["Nas and Jay-Z","Drake and Meek Mill","50 Cent and Ja Rule"]},
+      {"q":"Which North Carolina rapper founded Dreamville Records?","correct":"J. Cole","wrong":["Kendrick Lamar","Big K.R.I.T.","Wale"]},
+      {"q":"Which 2024 Kendrick Lamar song became a massive Drake diss?","correct":"Not Like Us","wrong":["Euphoria","Family Matters","Push Ups"]},
+      {"q":"Which rapper released the 2018 album 'Astroworld'?","correct":"Travis Scott","wrong":["Future","Lil Uzi Vert","Don Toliver"]},
+    ],
+    3:[
+      {"q":"On which date is hip hop's 'birthday' marked (the 1973 Bronx party)?","correct":"August 11","wrong":["July 4","June 7","September 1"]},
+      {"q":"At which Bronx address did the legendary 1973 party take place?","correct":"1520 Sedgwick Avenue","wrong":["342 Lenox Avenue","90 Park Avenue","125th Street"]},
+      {"q":"DJ Kool Herc named his breakbeat technique the '___'?","correct":"Merry-Go-Round","wrong":["Quick Mix","Boom Bap","Cross Fade"]},
+      {"q":"Who founded the Universal Zulu Nation?","correct":"Afrika Bambaataa","wrong":["Grandmaster Flash","DJ Kool Herc","KRS-One"]},
+      {"q":"Which DJ is credited with inventing 'scratching'?","correct":"Grand Wizard Theodore","wrong":["Grandmaster Flash","Jam Master Jay","DJ Premier"]},
+      {"q":"Who assembled the Sugarhill Gang and ran Sugar Hill Records?","correct":"Sylvia Robinson","wrong":["Russell Simmons","Rick Rubin","Berry Gordy"]},
+      {"q":"Which label did Russell Simmons and Rick Rubin co-found in 1984?","correct":"Def Jam","wrong":["Death Row","Bad Boy","Tommy Boy"]},
+      {"q":"Tupac's sprawling 1996 double album was titled?","correct":"All Eyez on Me","wrong":["Me Against the World","The Don Killuminati","Strictly 4 My N.I.G.G.A.Z."]},
+      {"q":"The first rap Grammy (1989) went to DJ Jazzy Jeff & the Fresh Prince for?","correct":"Parents Just Don't Understand","wrong":["Summertime","Boom! Shake the Room","Brand New Funk"]},
+      {"q":"Which OutKast album won Album of the Year at the 2004 Grammys?","correct":"Speakerboxxx/The Love Below","wrong":["Stankonia","Aquemini","ATLiens"]},
+      {"q":"Eminem's mentor and label boss is?","correct":"Dr. Dre","wrong":["Jay-Z","50 Cent","Diddy"]},
+      {"q":"Which 1986 Run-DMC album, with 'Walk This Way', broke rap mainstream?","correct":"Raising Hell","wrong":["King of Rock","Tougher Than Leather","Run-D.M.C."]},
+      {"q":"Grandmaster Flash perfected which DJ method, marking records to repeat breaks?","correct":"Quick-mix theory","wrong":["Beat juggling","Needle drop","Crossfade theory"]},
+      {"q":"Which group released 'It Takes a Nation of Millions to Hold Us Back' (1988)?","correct":"Public Enemy","wrong":["N.W.A","Boogie Down Productions","EPMD"]},
+      {"q":"Afrika Bambaataa's 1982 electro classic was?","correct":"Planet Rock","wrong":["The Message","Rapper's Delight","Planet Patrol"]},
+      {"q":"Which rapper became the first hip-hop artist in the Songwriters Hall of Fame (2017)?","correct":"Jay-Z","wrong":["Eminem","Nas","LL Cool J"]},
+      {"q":"Grandmaster Flash and the Furious Five were the first hip hop act in which hall (2007)?","correct":"Rock and Roll Hall of Fame","wrong":["Songwriters Hall of Fame","Apollo Hall of Fame","Grammy Hall of Fame"]},
+      {"q":"Which female rapper became the first solo woman to win Best Rap Album (2019)?","correct":"Cardi B","wrong":["Nicki Minaj","Lauryn Hill","Lil' Kim"]},
+      {"q":"Who became the first female rapper in the Rock & Roll Hall of Fame (2023)?","correct":"Missy Elliott","wrong":["Queen Latifah","MC Lyte","Salt-N-Pepa"]},
+      {"q":"Kendrick Lamar's acclaimed 2015 album was?","correct":"To Pimp a Butterfly","wrong":["DAMN.","good kid, m.A.A.d city","Mr. Morale & the Big Steppers"]},
+      {"q":"Which Houston DJ pioneered the 'chopped and screwed' style?","correct":"DJ Screw","wrong":["Scarface","Bun B","Mike Jones"]},
+      {"q":"Which mogul founded No Limit Records in the 1990s?","correct":"Master P","wrong":["Birdman","J. Prince","Suge Knight"]},
+      {"q":"The Notorious B.I.G.'s posthumous 1997 album was titled?","correct":"Life After Death","wrong":["Ready to Die","Born Again","Duets"]},
+      {"q":"Which Detroit group did Eminem form with his friends?","correct":"D12","wrong":["G-Unit","Bone Thugs-n-Harmony","Slaughterhouse"]},
+      {"q":"Jay-Z's 'The Blueprint' was released on which notable date in 2001?","correct":"September 11","wrong":["July 4","December 25","January 1"]},
+      {"q":"Nas's famous diss track aimed at Jay-Z was titled?","correct":"Ether","wrong":["Takeover","Hit 'Em Up","No Vaseline"]},
+      {"q":"Lil Wayne's acclaimed 2008 album was?","correct":"Tha Carter III","wrong":["Tha Carter II","I Am Not a Human Being","Rebirth"]},
+      {"q":"Which Compton label, run by 'Top Dawg', is home to Kendrick Lamar?","correct":"Top Dawg Entertainment","wrong":["Maybach Music","Quality Control","Dreamville"]},
+      {"q":"Which 2018 honour did Kendrick Lamar win, a first for a rapper?","correct":"Pulitzer Prize for Music","wrong":["Nobel Prize","Mercury Prize","Polar Music Prize"]},
+      {"q":"Which song made Childish Gambino the first rapper to win Record of the Year (2019)?","correct":"This Is America","wrong":["Redbone","3005","Feels Like Summer"]},
+    ],
+    4:[
+      {"q":"What is DJ Kool Herc's birth name?","correct":"Clive Campbell","wrong":["Joseph Saddler","Kevin Donovan","Curtis Walker"]},
+      {"q":"Grandmaster Flash's real name is?","correct":"Joseph Saddler","wrong":["Clive Campbell","Lance Taylor","Curtis Walker"]},
+      {"q":"Who hosted the 1973 back-to-school party seen as hip hop's birth?","correct":"Cindy Campbell","wrong":["Sylvia Robinson","Sha-Rock","Roxanne Shante"]},
+      {"q":"Kurtis Blow's 1980 hit, the first gold-certified rap single, was?","correct":"The Breaks","wrong":["Christmas Rappin'","Basketball","8 Million Stories"]},
+      {"q":"Which group's 'King Tim III' (1979) preceded 'Rapper's Delight' as an early rap record?","correct":"The Fatback Band","wrong":["The Treacherous Three","Cold Crush Brothers","Funky 4 + 1"]},
+      {"q":"Sha-Rock, often called the first female MC, belonged to which group?","correct":"Funky 4 + 1","wrong":["The Sugarhill Gang","The Sequence","Furious Five"]},
+      {"q":"The first all-female rap group to release a record was?","correct":"The Sequence","wrong":["Salt-N-Pepa","TLC","Sister Sledge"]},
+      {"q":"Which early film, often called the first hip hop motion picture, featured Fab 5 Freddy?","correct":"Wild Style","wrong":["Beat Street","Breakin'","Krush Groove"]},
+      {"q":"Which duo revolutionised lyrical flow in the mid-1980s?","correct":"Eric B. & Rakim","wrong":["Run-D.M.C.","EPMD","Gang Starr"]},
+      {"q":"Which producer and DJ of Gang Starr was a boom-bap icon?","correct":"DJ Premier","wrong":["Pete Rock","Marley Marl","Large Professor"]},
+      {"q":"KRS-One fronted which group, alongside the late Scott La Rock?","correct":"Boogie Down Productions","wrong":["Public Enemy","EPMD","Ultramagnetic MCs"]},
+      {"q":"The mid-80s 'Roxanne Wars' answer records responded to a song by which group?","correct":"UTFO","wrong":["Run-D.M.C.","Whodini","Stetsasonic"]},
+      {"q":"Which producer led the Juice Crew and mentored Big Daddy Kane and Biz Markie?","correct":"Marley Marl","wrong":["Rick Rubin","Dr. Dre","DJ Premier"]},
+      {"q":"Which influential duo released 'Strictly Business' (1988)?","correct":"EPMD","wrong":["Eric B. & Rakim","Gang Starr","Pete Rock & CL Smooth"]},
+      {"q":"Melle Mel, who rapped 'The Message', was a member of which group?","correct":"The Furious Five","wrong":["Cold Crush Brothers","Treacherous Three","Funky 4 + 1"]},
+      {"q":"Whose rhymes were famously borrowed for parts of 'Rapper's Delight'?","correct":"Grandmaster Caz","wrong":["Melle Mel","Kurtis Blow","Spoonie Gee"]},
+      {"q":"Which 1981 Blondie song was the first US No. 1 to feature rapping?","correct":"Rapture","wrong":["Walk This Way","The Message","Planet Rock"]},
+      {"q":"The 1986 rap-rock fusion 'Walk This Way' was produced by?","correct":"Rick Rubin","wrong":["Russell Simmons","Jam Master Jay","Dr. Dre"]},
+      {"q":"Which Run-DMC member, a DJ, was killed in 2002?","correct":"Jam Master Jay","wrong":["DJ Run","Scott La Rock","DJ Yella"]},
+      {"q":"Which young battle rapper made 'Roxanne's Revenge'?","correct":"Roxanne Shante","wrong":["MC Lyte","Sha-Rock","Salt"]},
+      {"q":"Nas grew up in which NYC housing project, the largest in the US?","correct":"Queensbridge","wrong":["Marcy Houses","Cabrini-Green","Magnolia Projects"]},
+      {"q":"Which 1989 Beastie Boys album, made with the Dust Brothers, is a sampling landmark?","correct":"Paul's Boutique","wrong":["Licensed to Ill","Check Your Head","Ill Communication"]},
+      {"q":"Which group released '3 Feet High and Rising' (1989)?","correct":"De La Soul","wrong":["A Tribe Called Quest","Jungle Brothers","Digable Planets"]},
+      {"q":"The term 'hip hop' is often credited to which early MC?","correct":"Keith Cowboy","wrong":["Lovebug Starski","DJ Hollywood","Melle Mel"]},
+      {"q":"Which 1973 break record became the b-boy anthem 'Apache'?","correct":"The Incredible Bongo Band","wrong":["The Winstons","James Brown","Babe Ruth"]},
+      {"q":"Which drum break, from The Winstons, underpins countless hip hop tracks?","correct":"Amen break","wrong":["Funky Drummer","Apache break","Think break"]},
+      {"q":"Which James Brown track gave hip hop one of its most-sampled breaks?","correct":"Funky Drummer","wrong":["Sex Machine","I Got You","Cold Sweat"]},
+      {"q":"Kool Moe Dee was a member of which pioneering trio?","correct":"Treacherous Three","wrong":["Cold Crush Brothers","Furious Five","Fearless Four"]},
+      {"q":"Who became the most Grammy-awarded rapper ever, passing Jay-Z, by 2026?","correct":"Kendrick Lamar","wrong":["Eminem","Drake","Lil Wayne"]},
+      {"q":"Which female rapper's 1989 debut was 'All Hail the Queen'?","correct":"Queen Latifah","wrong":["MC Lyte","Salt-N-Pepa","Monie Love"]},
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_hiphop-rap';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+</body>
+</html>
