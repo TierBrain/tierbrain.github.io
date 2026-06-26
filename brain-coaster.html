@@ -252,20 +252,29 @@ function resize(){
 window.addEventListener('resize',resize);
 
 /* ---------------- track ---------------- */
-let nodes=[]; // alternating valley(even) / crest(odd)
+let nodes=[]; let hillCount=0; // alternating valley(even) / crest(odd)
 function rebuildValleyY(){ for(let i=0;i<nodes.length;i+=2){ nodes[i].y=valleyBase + nodes[i].vj; } 
   for(let i=1;i<nodes.length;i+=2){ nodes[i].y=valleyBase - nodes[i].h; } }
 function initTrack(){
-  nodes=[{x:0,y:valleyBase,vj:0}];
+  nodes=[{x:0,y:valleyBase,vj:0}]; hillCount=0;
   for(let i=0;i<5;i++) addHill();
 }
 function addHill(){
   const vx=nodes[nodes.length-1].x;
-  const liftW=210+Math.random()*90, dropW=150+Math.random()*70;
+  const liftW=210+Math.random()*90;
+  const isLoop=(hillCount>=3 && (hillCount-3)%4===0);
+  const dropW=(isLoop?260:150)+Math.random()*70;
   const h=crestMin+Math.random()*(crestMax-crestMin);
-  nodes.push({x:vx+liftW, y:valleyBase-h, h:h});            // crest
+  nodes.push({x:vx+liftW, y:valleyBase-h, h:h, isLoop:isLoop});  // crest
   const vj=Math.random()*22;
-  nodes.push({x:vx+liftW+dropW, y:valleyBase+vj, vj:vj});   // valley
+  nodes.push({x:vx+liftW+dropW, y:valleyBase+vj, vj:vj});        // valley
+  hillCount++;
+}
+function loopGeomFor(k){
+  const crest=nodes[2*k+1], nf=nodes[2*k+2]; if(!crest||!nf) return null;
+  const bx=lerp(crest.x, nf.x, 0.42), by=yTrack(bx);
+  const R=clamp((nf.x-crest.x)*0.30, H*0.10, H*0.15);
+  return {bx:bx, cx:bx, cy:by-R, R:R};
 }
 function ensureHill(k){ while(nodes.length<=2*k+2) addHill(); }
 function segAt(x){
@@ -292,6 +301,7 @@ let q=null, qIndex=0, bag=[], qTime=0, qMax=0, locked=false;
 let shakeT=0, cam={x:0,y:0};
 let particles=[], floaters=[], lastTs=0;
 let brakePhase=0, brakeTimer=0;
+let dropLoop=false, dropSub='pre', loopA=0, lg=null;
 
 function newBag(){ bag=shuffle(BANK.slice()); qIndex=0; }
 function nextQuestion(){
@@ -338,6 +348,9 @@ function onCorrect(){
   floaters.push({x:cartX, y:yTrack(cartX)-46, txt:'+1', life:1, c:'#37d18b'});
   sparkle(cartX, yTrack(cartX)-30, '#ffe08a', 14);
   vel = 150 + Math.min(streak,12)*16;     // launch speed into the drop
+  const crest=nodes[2*cartHill+1];
+  if(crest && crest.isLoop){ const g=loopGeomFor(cartHill); if(g){ dropLoop=true; dropSub='pre'; lg=g; } else dropLoop=false; }
+  else dropLoop=false;
   mode='drop';
   whoosh();
 }
@@ -351,6 +364,10 @@ function onWrong(){
 function updateBrakes(){
   const dots=$('hBrakes').children;
   for(let i=0;i<dots.length;i++) dots[i].classList.toggle('used', i<brakes);
+}
+function finishDrop(){
+  cartX=footX(cartHill+1); cartHill++; ensureHill(cartHill+1);
+  dropLoop=false; mode='climb'; nextQuestion();
 }
 
 /* ---------------- update loop ---------------- */
@@ -369,12 +386,24 @@ function update(dt){
   } else if(mode==='drop'){
     vel += 950*dt;                                  // accelerate down
     vel = Math.min(vel, 560 + Math.min(streak,12)*34);
-    cartX += vel*dt;
     const nextFoot=footX(cartHill+1);
-    if(slopeAt(cartX)>0.02) shakeT=Math.min(0.5, shakeT+dt*1.4);  // shudder on the plunge
-    if(cartX>=nextFoot){
-      cartX=nextFoot; cartHill++; ensureHill(cartHill+1);
-      mode='climb'; nextQuestion();
+    if(!dropLoop){
+      cartX += vel*dt;
+      if(slopeAt(cartX)>0.02) shakeT=Math.min(0.5, shakeT+dt*1.4);  // shudder on the plunge
+      if(cartX>=nextFoot) finishDrop();
+    } else if(dropSub==='pre'){
+      cartX += vel*dt;
+      if(cartX>=lg.bx){ cartX=lg.bx; dropSub='loop'; loopA=Math.PI/2;
+        floaters.push({x:lg.cx, y:lg.cy-lg.R-20, txt:'LOOP!', life:1.3, c:'#ffd36b'}); }
+    } else if(dropSub==='loop'){
+      const av=Math.min(vel/lg.R, 7.5);
+      loopA -= av*dt;
+      shakeT=Math.min(0.4, shakeT+dt*0.7);
+      if(loopA <= Math.PI/2 - Math.PI*2){ dropSub='post'; cartX=lg.bx;
+        sparkle(lg.bx, lg.cy+lg.R-8, '#ffe08a', 18); }
+    } else { // post
+      cartX += vel*dt;
+      if(cartX>=nextFoot) finishDrop();
     }
   } else if(mode==='brake'){
     if(brakePhase===0){
@@ -460,6 +489,17 @@ function drawTrack(){
   // main rail
   ctx.strokeStyle='#ffc24a'; ctx.lineWidth=5; rail(x0,x1,0);
   ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.5; rail(x0,x1,-3);
+  // loops
+  const hills=Math.floor(nodes.length/2);
+  for(let k=0;k<hills;k++){ const cr=nodes[2*k+1];
+    if(!cr||!cr.isLoop) continue;
+    if(cr.x<x0-160 || cr.x>x1+160) continue;
+    const g=loopGeomFor(k); if(!g) continue;
+    ctx.strokeStyle='rgba(255,194,74,.85)'; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.arc(g.cx-cam.x, g.cy, g.R, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(g.cx-cam.x, g.cy, g.R-3, 0, Math.PI*2); ctx.stroke();
+  }
 }
 function rail(x0,x1,dy){
   ctx.beginPath(); let first=true;
@@ -467,12 +507,17 @@ function rail(x0,x1,dy){
   ctx.stroke();
 }
 function drawCart(){
-  drawCar(cartX-30, '#5a7bff');
-  drawCar(cartX, '#ff5db0');
-  // coupling
+  if(mode==='drop' && dropLoop && dropSub==='loop'){
+    drawCarAt(lg.cx+lg.R*Math.cos(loopA+0.20), lg.cy+lg.R*Math.sin(loopA+0.20), loopA+0.20-Math.PI/2, '#5a7bff');
+    drawCarAt(lg.cx+lg.R*Math.cos(loopA), lg.cy+lg.R*Math.sin(loopA), loopA-Math.PI/2, '#ff5db0');
+  } else {
+    drawCar(cartX-30, '#5a7bff');
+    drawCar(cartX, '#ff5db0');
+  }
 }
-function drawCar(cx,color){
-  const sx=cx-cam.x, sy=yTrack(cx), ang=Math.atan(slopeAt(cx));
+function drawCar(cx,color){ drawCarAt(cx, yTrack(cx), Math.atan(slopeAt(cx)), color); }
+function drawCarAt(wx,wy,ang,color){
+  const sx=wx-cam.x, sy=wy;
   ctx.save(); ctx.translate(sx,sy); ctx.rotate(ang);
   // wheels glow if braking
   if(mode==='brake'){ ctx.fillStyle='rgba(255,80,60,.7)'; ctx.beginPath(); ctx.arc(-8,-3,5,0,7); ctx.arc(10,-3,5,0,7); ctx.fill(); }
@@ -514,7 +559,7 @@ function drawParticles(){
 }
 function render(){
   // camera
-  cam.x = cartX - W*0.34;
+  cam.x = (mode==='drop' && dropLoop && dropSub==='loop') ? (lg.bx - W*0.34) : (cartX - W*0.34);
   cam.y = 0;
   let ox=0, oy=0;
   if(shakeT>0 && !reduceMotion){ const m=shakeT*7; ox=(Math.random()-.5)*m; oy=(Math.random()-.5)*m; }
@@ -565,10 +610,11 @@ function gameOver(){
 /* ---------------- leaderboard ---------------- */
 function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
 function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+function boardCode(){ return groupCode() || 'global'; }
 async function fetchTop(){
   const url=sbBase()+'?select=name,correct,level'
     +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
-    +'&group_code=eq.'+encodeURIComponent(groupCode())
+    +'&group_code=eq.'+encodeURIComponent(boardCode())
     +'&order=correct.desc,level.desc&limit=10';
   const res=await fetch(url,{headers:sbHeaders()});
   if(!res.ok) throw new Error('load'); return await res.json();
@@ -576,20 +622,16 @@ async function fetchTop(){
 async function submitScore(){
   const name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider';
   lsSet(NAME_KEY,name);
-  const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:name, correct:score, level:bestStreak, time_left:0}];
+  const body=[{quiz_id:QUIZ_ID, group_code:boardCode(), name:name, correct:score, level:bestStreak, time_left:0}];
   const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
   if(!res.ok) throw new Error('save');
 }
-function setBoardTitle(){ $('boardTitle').textContent = shared()? ('Group · '+groupCode()) : 'This device'; }
+function setBoardTitle(){ $('boardTitle').textContent = groupCode()? ('Group · '+groupCode()) : 'Global'; }
 async function submitAndLoad(){
   setBoardTitle();
   const list=$('boardList');
-  if(!shared()){
-    list.innerHTML='<div class="muted">Add a group code to share a live leaderboard with friends.</div>';
-    return;
-  }
-  list.innerHTML='<div class="muted">Saving your run…</div>';
-  try{ await submitScore(); }catch(e){}
+  list.innerHTML='<div class="muted">Loading the leaderboard…</div>';
+  if(score>0){ try{ await submitScore(); }catch(e){} }
   try{
     const rows=await fetchTop(); const me=(lsGet(NAME_KEY)||'').toLowerCase();
     if(!rows.length){ list.innerHTML='<div class="muted">Be the first on the board!</div>'; return; }
@@ -600,7 +642,7 @@ async function submitAndLoad(){
         +'<span class="nm">'+esc(r.name||'—')+'</span>'
         +'<span class="sc">'+(r.correct|0)+'</span></div>';
     }).join('');
-  }catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard. Your best is saved on this device.</div>'; }
+  }catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard right now \u2014 your best is saved on this device.</div>'; }
 }
 
 /* ---------------- audio (optional) ---------------- */

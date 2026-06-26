@@ -285,7 +285,8 @@
     {id:'qc_unscramble',label:'Unscramble',href:'./unscramble.html',mode:'score'},
     {id:'qc_wheel',label:'Phrase Spinner',href:'./wheel.html',mode:'score'},
     {id:'qc_call-your-shot',label:'Call Your Shot',href:'./call-your-shot.html',mode:'score'},
-    {id:'qc_claim',label:'Claim the Board',href:'./claim.html',mode:'level'}
+    {id:'qc_claim',label:'Claim the Board',href:'./claim.html',mode:'level'},
+    {id:'qc_braincoaster',label:'Brain Coaster',href:'./brain-coaster.html',mode:'score'}
   ];
   var REGMAP={}; REG.forEach(function(r){REGMAP[r.id]=r;});
   function scoreSort(a,b){return n(b.correct)-n(a.correct) || n(b.level)-n(a.level);}
@@ -398,16 +399,17 @@
   }
   var pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
   var jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500';
-  var recU=sbBase()+'?quiz_id=in.(qc_jigsaw,qc_piecebypiece)&order=created_at.desc&limit=18';
-  Promise.all([get(pbpU),get(jigU),get(recU)]).then(function(res){
-    render(res[0]||[], res[1]||[], res[2]||[]);
+  var bcU=sbBase()+'?quiz_id=eq.qc_braincoaster&group_code=eq.global&order=correct.desc,level.desc&limit=50';
+  var recU=sbBase()+'?quiz_id=in.(qc_jigsaw,qc_piecebypiece,qc_braincoaster)&order=created_at.desc&limit=18';
+  Promise.all([get(pbpU),get(jigU),get(recU),get(bcU)]).then(function(res){
+    render(res[0]||[], res[1]||[], res[2]||[], res[3]||[]);
   }).catch(function(e){
     document.getElementById('champs').innerHTML=
       '<div class="note">The hall is resting — couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';
   });
 
   // render ----------------------------------------------------------
-  function render(pbp, jig, recent){
+  function render(pbp, jig, recent, bc){
     var titles=[]; // {holder, created_at}
     var champHTML='';
 
@@ -444,6 +446,12 @@
         champHTML+=emptyPlaque('\u{1F9E9}','Jigsaw \u00b7 '+t.name,JIG);
       }
     });
+    // Brain Coaster — top global score
+    bc=bc||[];
+    if(bc.length){ bc.sort(scoreSort); var brow=bc[0];
+      titles.push({holder:brow.name,created_at:brow.created_at});
+      champHTML+=plaque({ic:'\u{1F3A2}',cat:'Brain Coaster',name:brow.name,statNum:n(brow.correct),statUnit:'hills',extra:n(brow.level)+' streak',reign:reign(brow.created_at),href:'./brain-coaster.html'});
+    } else { champHTML+=emptyPlaque('\u{1F3A2}','Brain Coaster','./brain-coaster.html'); }
     document.getElementById('champs').innerHTML=champHTML;
 
     // hero: champion of the hall = most titles held (tie -> earliest crowned)
@@ -549,7 +557,8 @@
         var tn=(TIERS.filter(function(t){return t.key===n(r.level);})[0]||{}).name||'a';
         desc='solved the <b>'+esc(tn)+'</b> jigsaw in '+fmtTime(r.time_left);
       } else {
-        desc='scored <b>'+n(r.correct)+'</b>';
+        var g=REGMAP[r.quiz_id];
+        desc='scored <b>'+n(r.correct)+'</b>'+(g?(' in '+esc(g.label)):'');
       }
       html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2014')+'</span>'
         +'<span class="fdesc">'+desc+'</span>'
