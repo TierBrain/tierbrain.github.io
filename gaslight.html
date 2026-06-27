@@ -109,6 +109,23 @@
   .lrow .sc{color:var(--amber2);font-family:'Special Elite';}
   .lrow.me{background:rgba(232,176,106,.12);border-radius:8px;}
   .muted{color:var(--mut);font-size:13px;font-family:'Special Elite';}
+  .caselist{display:flex;flex-direction:column;gap:13px;width:100%;max-width:23em;margin-top:4px;}
+  .casecard{font-family:'Special Elite';text-align:left;border:none;border-radius:6px;cursor:pointer;
+    position:relative;padding:16px 16px 15px;color:#2a2519;
+    background:linear-gradient(180deg,#efe9d8,#e4ddc8);box-shadow:0 12px 28px rgba(0,0,0,.5);
+    transition:transform .08s;}
+  .casecard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:6px 0 0 6px;
+    background:repeating-linear-gradient(180deg,#caa86a 0 9px,#b8965a 9px 18px);}
+  .casecard:active{transform:scale(.985);}
+  .casecard .ct{font-size:18px;color:#5a3d1a;letter-spacing:.5px;}
+  .casecard .cg{font-size:13px;color:#7a6a4a;margin-top:3px;}
+  .casecard .cs{position:absolute;top:12px;right:12px;border:2px solid var(--crim);color:var(--crim);
+    font-size:9px;letter-spacing:1.5px;padding:2px 6px;border-radius:3px;transform:rotate(4deg);}
+  .casecard.solved .cs{border-color:#2f7d52;color:#2f7d52;}
+  .back{align-self:flex-start;color:var(--mut);font-size:13px;letter-spacing:1px;cursor:pointer;
+    text-transform:uppercase;}
+  .row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:23em;}
+  .row2 .btn{flex:1;min-width:9em;}
   #mute{position:absolute;top:14px;right:16px;z-index:11;cursor:pointer;background:var(--panel);
     border:1px solid var(--line);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;
     justify-content:center;font-size:15px;}
@@ -133,10 +150,20 @@
   </div>
 
   <!-- START -->
-  <div class="scr" id="startScr">
-    <div class="sub">A TierBrain Mystery</div>
-    <div class="title type">The Gaslight Affair</div>
-    <div class="hook">Clement Christie lies poisoned in his locked study. Four souls under one roof, and a city of rain outside. Read the scene, trust your deductions — your verdict writes the ending.</div>
+  <!-- CASE SELECT -->
+  <div class="scr" id="selectScr">
+    <div class="sub">GASLIGHT</div>
+    <div class="title type">Case Files</div>
+    <div class="hook">Pick a case. Each is a noir mystery where your deductions write the ending.</div>
+    <div class="caselist" id="caseList"></div>
+  </div>
+
+  <!-- BRIEFING -->
+  <div class="scr hide" id="startScr">
+    <div class="back type" id="backBtn">‹ Case files</div>
+    <div class="sub">Case File</div>
+    <div class="title type" id="caseTitle">The Gaslight Affair</div>
+    <div class="hook" id="caseHook">Clement Christie lies poisoned in his bolted study.</div>
     <div class="inputs">
       <label for="nameInput">Detective's name</label>
       <input id="nameInput" type="text" maxlength="18" placeholder="Inspector" autocomplete="off">
@@ -158,7 +185,10 @@
       <h4><span id="boardTitle">Top Detectives · Global</span><span id="boardYou"></span></h4>
       <div id="boardList"><div class="muted">—</div></div>
     </div>
-    <button class="btn" id="againBtn">New investigation ›</button>
+    <div class="row2">
+      <button class="btn" id="againBtn">Replay case ›</button>
+      <button class="btn ghost" id="casesBtn">Case files</button>
+    </div>
   </div>
 </div>
 
@@ -683,9 +713,12 @@ window.addEventListener('resize',rsize);
 
 /* ---------- wiring ---------- */
 $('startBtn').addEventListener('click',function(){ audioOn(); begin(); });
-$('againBtn').addEventListener('click',function(){ $('endScr').classList.add('hide'); $('startScr').classList.remove('hide'); });
+$('againBtn').addEventListener('click',function(){ begin(); });
+$('casesBtn').addEventListener('click',showSelect);
+$('backBtn').addEventListener('click',showSelect);
 $('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
 (function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
+buildSelect();
 rsize(); requestAnimationFrame(frame);
 </script>
 </body>
