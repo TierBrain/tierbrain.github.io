@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Gaslight Affair — TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#e7e0cf; --paper:#e9e3d2; --paperink:#221f18; --mut:#9aa6bd;
+    --amber:#e8b06a; --amber2:#ffcf8a; --crim:#d9485f; --good:#5fc28a;
+    --bg0:#0a0e18; --bg1:#121a2c; --line:rgba(255,255,255,.12);
+    --panel:rgba(16,22,38,.86);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:#070a12;
+    display:flex;align-items:center;justify-content:center;min-height:100%;overflow:hidden;
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:860px;overflow:hidden;
+    background:radial-gradient(130% 80% at 50% -10%,rgba(232,176,106,.16),transparent 55%),
+      linear-gradient(180deg,#121a2c,#0a0e18);}
+  #rain{position:absolute;inset:0;width:100%;height:100%;opacity:.7;pointer-events:none;}
+  #app::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:8;
+    background:radial-gradient(125% 95% at 50% 38%,transparent 58%,rgba(4,6,11,.5));}
+  .type{font-family:'Special Elite',Courier,monospace;}
+
+  /* scrolling content */
+  .view{position:absolute;inset:0;display:flex;flex-direction:column;overflow-y:auto;padding:0 18px 26px;}
+  .view.hide{display:none;}
+
+  /* HUD */
+  #hud{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:10px;
+    padding:14px 2px 12px;background:linear-gradient(180deg,rgba(10,14,24,.96),rgba(10,14,24,.0));}
+  #hud .chap{font-family:'Special Elite';font-size:12px;letter-spacing:1.5px;color:var(--amber);
+    text-transform:uppercase;}
+  #hud .ded{margin-left:auto;font-family:'Special Elite';font-size:12px;letter-spacing:1px;color:var(--mut);
+    display:flex;align-items:center;gap:6px;}
+  #hud .ded b{color:var(--amber2);}
+
+  /* case-file paper */
+  .file{background:linear-gradient(180deg,#efe9d8,#e4ddc8);color:var(--paperink);
+    border-radius:5px;padding:20px 20px 22px;margin-top:6px;position:relative;
+    box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(120,100,60,.25);
+    background-image:linear-gradient(180deg,#efe9d8,#e4ddc8);}
+  .file::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:5px 0 0 5px;
+    background:repeating-linear-gradient(180deg,#caa86a 0 9px,#b8965a 9px 18px);}
+  .file .head{font-family:'Special Elite';font-size:13px;letter-spacing:3px;text-transform:uppercase;
+    color:#7a5a2a;border-bottom:1px dashed rgba(120,90,40,.45);padding-bottom:8px;margin-bottom:12px;
+    display:flex;justify-content:space-between;align-items:center;}
+  .file .head .stamp{border:2px solid var(--crim);color:var(--crim);font-size:9px;letter-spacing:1.5px;
+    padding:2px 6px;border-radius:3px;transform:rotate(-5deg);opacity:.82;}
+  .file p{font-family:'Special Elite';font-size:16.5px;line-height:1.62;color:#2a2519;}
+  .file p + p{margin-top:11px;}
+
+  /* question + leads */
+  #qwrap{margin-top:16px;}
+  .qtext{font-family:'Special Elite';font-size:17px;line-height:1.5;color:var(--amber2);
+    text-align:center;margin-bottom:14px;}
+  .opts{display:flex;flex-direction:column;gap:10px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:16px;color:var(--ink);background:var(--panel);
+    border:1.5px solid var(--line);border-radius:13px;padding:14px 16px;text-align:left;cursor:pointer;
+    transition:transform .07s,border-color .15s,background .15s;display:flex;align-items:center;gap:11px;}
+  .opt::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;border:2px solid var(--amber);opacity:.8;}
+  .opt:active{transform:scale(.985);}
+  .opt.right{background:rgba(95,194,138,.16);border-color:var(--good);color:#d6ffe9;}
+  .opt.right::before{background:var(--good);border-color:var(--good);}
+  .opt.wrong{background:rgba(217,72,95,.16);border-color:var(--crim);color:#ffd6dc;}
+  .opt.wrong::before{background:var(--crim);border-color:var(--crim);}
+  .opt.dim{opacity:.42;}
+  .reply{font-family:'Special Elite';font-size:15px;line-height:1.5;margin-top:14px;padding:12px 14px;
+    border-left:3px solid var(--amber);background:rgba(232,176,106,.08);border-radius:0 10px 10px 0;color:var(--ink);}
+  .reply.bad{border-left-color:var(--crim);background:rgba(217,72,95,.08);}
+
+  .btn{font-family:'Special Elite';font-size:17px;letter-spacing:.5px;color:#1a130a;
+    background:linear-gradient(180deg,var(--amber2),var(--amber));border:none;border-radius:13px;
+    padding:15px 22px;cursor:pointer;box-shadow:0 10px 26px rgba(232,176,106,.32);width:100%;
+    transition:transform .1s;margin-top:16px;}
+  .btn:active{transform:translateY(2px) scale(.99);}
+  .btn.ghost{background:rgba(255,255,255,.07);color:var(--ink);border:1px solid var(--line);box-shadow:none;}
+
+  /* overlays */
+  .scr{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:26px 24px;gap:15px;overflow-y:auto;
+    background:radial-gradient(130% 80% at 50% 0%,rgba(232,176,106,.12),rgba(7,10,18,.9));}
+  .scr.hide{display:none;}
+  .title{font-family:'Special Elite';font-size:clamp(30px,9vw,46px);line-height:1.1;color:var(--amber2);
+    letter-spacing:1px;text-shadow:0 4px 24px rgba(232,176,106,.35);}
+  .sub{font-family:'Special Elite';font-size:14px;letter-spacing:3px;text-transform:uppercase;color:var(--mut);}
+  .hook{font-family:'Special Elite';font-size:16px;line-height:1.6;color:var(--ink);max-width:25em;}
+  .inputs{display:flex;flex-direction:column;gap:8px;width:100%;max-width:20em;text-align:left;}
+  .inputs label{font-family:'Special Elite';font-size:11px;letter-spacing:1.4px;color:var(--mut);
+    text-transform:uppercase;margin-left:3px;}
+  .inputs input{font-family:'Special Elite';font-size:15px;color:var(--ink);background:rgba(255,255,255,.06);
+    border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;width:100%;}
+  .inputs input:focus{outline:none;border-color:var(--amber);}
+  .verdict{font-family:'Special Elite';font-size:clamp(24px,7vw,34px);color:var(--amber2);line-height:1.15;}
+  .stat{font-family:'Special Elite';font-size:15px;color:var(--mut);}
+  .stat b{color:var(--amber2);}
+  .board{width:100%;max-width:21em;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;}
+  .board h4{font-family:'Special Elite';font-size:12px;letter-spacing:1.5px;color:var(--mut);
+    text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .lrow{display:flex;align-items:center;gap:10px;padding:6px 2px;font-weight:700;font-size:14px;}
+  .lrow .rk{width:18px;color:var(--mut);font-family:'Special Elite';}
+  .lrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lrow .sc{color:var(--amber2);font-family:'Special Elite';}
+  .lrow.me{background:rgba(232,176,106,.12);border-radius:8px;}
+  .muted{color:var(--mut);font-size:13px;font-family:'Special Elite';}
+  #mute{position:absolute;top:14px;right:16px;z-index:11;cursor:pointer;background:var(--panel);
+    border:1px solid var(--line);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;
+    justify-content:center;font-size:15px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="rain"></canvas>
+  <div id="mute">🔊</div>
+
+  <!-- STORY VIEW -->
+  <div class="view hide" id="storyView">
+    <div id="hud">
+      <span class="chap type" id="chap">CASE FILE</span>
+      <span class="ded">🔍 <b id="dedN">0</b>&nbsp;/&nbsp;<span id="dedT">8</span></span>
+    </div>
+    <div class="file" id="file">
+      <div class="head"><span id="fileHead">THE BODY</span><span class="stamp">CONFIDENTIAL</span></div>
+      <div id="fileText"></div>
+    </div>
+    <div id="qwrap"></div>
+  </div>
+
+  <!-- START -->
+  <div class="scr" id="startScr">
+    <div class="sub">A TierBrain Mystery</div>
+    <div class="title type">The Gaslight Affair</div>
+    <div class="hook">Clement Christie lies poisoned in his locked study. Four souls under one roof, and a city of rain outside. Read the scene, trust your deductions — your verdict writes the ending.</div>
+    <div class="inputs">
+      <label for="nameInput">Detective's name</label>
+      <input id="nameInput" type="text" maxlength="18" placeholder="Inspector" autocomplete="off">
+    </div>
+    <button class="btn" id="startBtn">Open the case ›</button>
+    <div class="muted">Wrong calls won't end your case — they cost you the truth.</div>
+  </div>
+
+  <!-- ENDING -->
+  <div class="scr hide" id="endScr">
+    <div class="sub" id="endKicker">VERDICT</div>
+    <div class="verdict type" id="endVerdict">Case Closed</div>
+    <div class="file" id="endFile" style="max-width:25em;width:100%;">
+      <div class="head"><span>THE SOLUTION</span><span class="stamp" id="endStamp">CLOSED</span></div>
+      <div id="endText"></div>
+    </div>
+    <div class="stat">Deductions: <b id="endDed">0</b> / <span id="endDedT">8</span> &nbsp;·&nbsp; <span id="endTier">—</span></div>
+    <div class="board" id="board">
+      <h4><span id="boardTitle">Top Detectives · Global</span><span id="boardYou"></span></h4>
+      <div id="boardList"><div class="muted">—</div></div>
+    </div>
+    <button class="btn" id="againBtn">New investigation ›</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- config ---------- */
+let QUIZ_ID='', TOTAL_DED=0, STORY=null, ENDINGS=null, CASE=null;
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- the case ---------- */
+const STORY_GASLIGHT={
+ start:'intro',
+ scenes:{
+  intro:{head:'CHRISTIE MANOR', text:[
+    "Rain hammers the windows of Christie Manor. In the study, Clement Christie — collector, recluse, millionaire — lies dead at his desk, the door bolted from within.",
+    "Four people slept under this roof tonight, and not one of them will meet your eye. They sent for you. They always send for you.",
+    "Light a cigarette. The work begins."],
+    cont:'body'},
+
+  body:{head:'THE BODY', text:[
+    "Christie is slumped over his ledgers, lips tinged faintly blue. The study is cold, and something sweetish hangs in that cold air — bitter almonds."],
+    q:"That bitter-almond odour is the calling card of which poison?",
+    opts:[{t:"Cyanide",correct:true},{t:"Arsenic"},{t:"Strychnine"},{t:"Belladonna"}],
+    replyOk:"Cyanide. The almond ghost on the air never lies. This was no natural death.",
+    replyNo:"You scribble 'heart failure' — until the coroner leans in, sniffs, and mutters: 'Almonds. Cyanide.' A poisoning, then.",
+    ok:'lockedroom', no:'lockedroom'},
+
+  lockedroom:{head:'THE LOCKED ROOM', text:[
+    "The door was bolted from the inside, the brass key still in the lock. The windows are painted shut; the mud beneath them undisturbed. No passages — you check the panelling twice."],
+    q:"If no one could enter or leave, the poison must have been—",
+    opts:[{t:"Given before he bolted the door",correct:true},{t:"Posted through the keyhole"},{t:"The work of a ghost"},{t:"Proof of suicide"}],
+    replyOk:"The killer never needed to be in the room. The poison arrived earlier — and waited for the lock to turn.",
+    replyNo:"You hunt for trapdoors until your nails are full of splinters. There are none. The poison came in before the bolt slid home.",
+    ok:'tonic', no:'tonic'},
+
+  tonic:{head:'THE TONIC', text:[
+    "On the desk: a medicine bottle, half empty. 'Christie's Nightly Heart Tonic — compounded by Dr. R. English.' He took a dose each night, then bolted the door behind him."],
+    q:"To lace a nightly tonic without raising alarm, the killer needed—",
+    opts:[{t:"Regular, trusted access to the bottle",correct:true},{t:"A key to the city"},{t:"Brute strength"},{t:"To break in at midnight"}],
+    replyOk:"Someone close. Someone trusted. Hands on that bottle, week after week.",
+    replyNo:"You chase a midnight burglar — but the mud outside is smooth and untrodden. No one climbed in. They were welcomed through the front door.",
+    ok:'diary', no:'diary'},
+
+  diary:{head:'THE DIARY', text:[
+    "In a locked drawer, Christie's diary. The last entry is half in plain hand — 'He will not silence me' — and ends in the private cipher he used for names: a pair of numbers, 18-5.",
+    "You've seen this trick. He numbered the alphabet, A is 1."],
+    q:"In Christie's cipher (A=1, B=2, C=3...), 18-5 spells which initials?",
+    opts:[{t:"R. E.",correct:true},{t:"S. F."},{t:"Q. D."},{t:"A. E."}],
+    replyOk:"R.E. He was naming the man he feared would silence him. Initials R.E. — keep them close.",
+    replyNo:"You fumble the count. Eighteen is R, five is E — R.E. He named someone, in his last hour. Remember it.",
+    ok:'widow', no:'widow'},
+
+  widow:{head:'THE WIDOW', text:[
+    "Alana Christie, the young widow, dabs at dry eyes. 'I was at the opera all evening,' she says. 'Carmen. I wept at the final curtain.'",
+    "But the coat hung by the door is soaked through — and the rain only began at ten, an hour before he died."],
+    q:"Her coat is drenched, yet she claims she was inside the opera all night. That means—",
+    opts:[{t:"She was out in the rain, not at the opera all evening",correct:true},{t:"The opera was rained out"},{t:"She is telling the whole truth"},{t:"The coat is not hers"}],
+    replyOk:"She lied about something. She was out in tonight's rain, near the hour he died. The widow just became interesting.",
+    replyNo:"You almost let it pass — then see the puddle spreading beneath her coat. She was out in the rain, not weeping in a dry opera box. She lied.",
+    ok:'widow2', no:'widow2'},
+
+  widow2:{head:"THE WIDOW'S SECRET", text:[
+    "Pressed, Alana breaks. She slipped out at the interval — to meet a divorce lawyer. Clement was cruel and controlling, and she wanted free of him. In a divorce, she'd have left with nothing.",
+    "Motive enough to kill. But the lawyer kept her across the city until well past midnight."],
+    q:"She had a motive and a lie. And yet—",
+    opts:[{t:"Motive isn't proof; the lawyer's alibi clears her",correct:true},{t:"The lie alone convicts her"},{t:"She must be the poisoner"},{t:"A divorce is a kind of murder"}],
+    replyOk:"A motive and a secret don't make a murderer. The lawyer swears she never left his sight. Cross her off — reluctantly.",
+    replyNo:"You nearly charge her on the lie alone. Then the lawyer's statement lands: she was streets away when the tonic did its work. Guilty only of wanting to be free.",
+    ok:'nephew', no:'nephew'},
+
+  nephew:{head:'THE NEPHEW', text:[
+    "Julian Christie reeks of cigarettes and debt. In his coat you find a 'suicide note' in Clement's own hand — but the ink is wet and fresh, and Clement has been dead since nightfall."],
+    q:"Fresh ink on a note from a man dead for hours tells you—",
+    opts:[{t:"The note was forged after death",correct:true},{t:"Clement faked his death"},{t:"The note is genuine"},{t:"Nothing at all"}],
+    replyOk:"Forged — and recently. Someone wanted this death read as suicide.",
+    replyNo:"You nearly file it as suicide, until your thumb smears the wet ink. Dead men don't write fresh. Forged, and tonight.",
+    ok:'nephew2', no:'nephew2'},
+
+  nephew2:{head:'THE CONFESSION', text:[
+    "Julian crumbles. He came at eleven to beg for money, found Clement already slumped and blue, and panicked. He forged the note to stage a suicide — so the will would pay out clean and fast, before his creditors closed in.",
+    "He forged. He lied. He robbed a dead man of the truth. But the cyanide was already in Clement when Julian climbed the stairs."],
+    q:"Julian forged the note. Does that make him the poisoner?",
+    opts:[{t:"No — tampering isn't poisoning; the cyanide was already working",correct:true},{t:"Yes, the forger is the killer"},{t:"Only if he inherits"},{t:"Impossible to say"}],
+    replyOk:"A coward and a forger — but not your poisoner. He walked in on a corpse and made it worse. The real killer was long gone.",
+    replyNo:"You're ready to hang him for the note. But forgery isn't cyanide, and the poison was in Clement before Julian ever reached the door.",
+    ok:'butler', no:'butler'},
+
+  butler:{head:'THE BUTLER', text:[
+    "Hollis, the butler, was demoted last month and has crept about ashen-faced since. In his quarters: a fan of pawn tickets — for his own gold watch, sold off quietly."],
+    q:"He pawned his own watch, not the Christie silver. His guilt is—",
+    opts:[{t:"Shame over his private debt, not murder",correct:true},{t:"Proof that he's the killer"},{t:"A clever double-bluff"},{t:"Tied to the poison"}],
+    replyOk:"A proud old man, too ashamed to admit he's broke. Loyal to the last. Not your killer.",
+    replyNo:"You snap the cuffs on Hollis; he weeps for a pawned watch and an empty purse, not for murder. Let him go.",
+    ok:'butler2', no:'butler2'},
+
+  butler2:{head:'A LOYAL EYE', text:[
+    "Grateful that you believed him, Hollis lowers his voice. 'There's a thing I held back, sir. Twice this week I saw Dr. English at the medicine cabinet after hours — past midnight — with the tonic in his hands. Refilling it, he said.'",
+    "A doctor has every reason to handle a tonic. And every chance to lace it."],
+    cont:'clock'},
+
+  clock:{head:'THE CLOCK', text:[
+    "The study clock stopped when Christie fell against the desk, its hands frozen at the Roman numerals — XI. His tonic was taken at the same hour every night."],
+    q:"The clock reads 'XI'. What time did Clement die?",
+    opts:[{t:"11 o'clock",correct:true},{t:"9 o'clock"},{t:"12 o'clock"},{t:"6 o'clock"}],
+    replyOk:"Eleven — tonic hour. He died as the poisoned dose took hold.",
+    replyNo:"You misread the numerals and nothing fits. 'XI is eleven, detective,' sighs the coroner. Tonic hour.",
+    ok:'contradiction', no:'contradiction'},
+
+  contradiction:{head:'THE MIDNIGHT WITNESS', text:[
+    "But a delivery boy swears he saw Clement at the lit study window at midnight — a full hour after the clock says he died.",
+    "You step into the rain and look up. The study window faces a tall gilt mirror on the far wall, and the gaslamp throws a man-shaped shadow against the glass."],
+    q:"How can Christie be dead at eleven yet 'seen' at midnight?",
+    opts:[{t:"The boy saw a reflection or another figure, not the living man",correct:true},{t:"Christie rose from the dead"},{t:"The clock is lying"},{t:"He truly died at midnight"}],
+    replyOk:"A trick of glass and lamplight — or someone else moving in that room at midnight. The clock holds. He died at eleven, by the tonic.",
+    replyNo:"You let the boy rewrite your timeline. But the dose, the stopped clock, and the cold of the body all say eleven. He saw a shadow, not a man.",
+    ok:'doctor', no:'doctor'},
+
+  doctor:{head:'THE DOCTOR', text:[
+    "Dr. Roland English — R.E. — compounded that tonic. You dig into him.",
+    "Years ago he signed off a patient's death as natural; in truth his own blunder had killed her. Clement learned of it and, weeks ago, swore to lay the proof before the medical board. It would have ended English — his licence, his liberty, his name.",
+    "And still the doctor kept calling. Kept refilling the tonic. Drop by drop."],
+    cont:'method'},
+
+  method:{head:'THE METHOD', text:[
+    "The autopsy returns. This was no single fatal glass. Cyanide had been building in Christie for weeks — small doses, climbing, until the last one stopped his heart."],
+    q:"Weeks of rising doses hidden in a nightly tonic point to—",
+    opts:[{t:"A patient, premeditated hand with weekly access",correct:true},{t:"A sudden crime of passion"},{t:"An accidental overdose"},{t:"A stranger off the street"}],
+    replyOk:"Not rage. Not chance. A cold, methodical hand that refilled that bottle week after week.",
+    replyNo:"You picture one frantic poisoning. But the body tells of weeks of creeping doses — patient, planned, by someone who held that bottle again and again.",
+    ok:'motive', no:'motive'},
+
+  motive:{head:'MEANS & MOTIVE', text:[
+    "Means: he mixed the tonic himself. Opportunity: he refilled it weekly, and Hollis saw him at it past midnight. Motive: Clement could destroy him with a word — and the diary named R.E."],
+    q:"Means, motive, and opportunity all converge on—",
+    opts:[{t:"Dr. English",correct:true},{t:"Alana Christie"},{t:"Julian the nephew"},{t:"Hollis the butler"}],
+    replyOk:"The doctor. The cure was the poison all along. Now make it stick.",
+    replyNo:"You drift back to the forged note — but forgery isn't cyanide. Only one hand mixed that tonic, week after week. Back to English.",
+    ok:'frame', no:'frame'},
+
+  frame:{head:'THE FRAME', text:[
+    "English is calm, helpful, almost eager — and he keeps steering you toward Julian. 'The boy forged a note, inspector. The boy was drowning in debt. Surely it is plain...'",
+    "It would be so easy to take the forged note as proof of murder and close the case on the frightened nephew."],
+    q:"Why does English keep pointing you at Julian?",
+    opts:[{t:"To pin his own murder on the panicking forger",correct:true},{t:"Because Julian is the real killer"},{t:"Out of honest concern"},{t:"He is trying to confess"}],
+    replyOk:"The killer wants the forger to hang in his place. Julian's note is a frightened man's crime, not proof of poison. You won't bite.",
+    replyNo:"You almost take the bait and charge Julian. But forgery isn't cyanide — and why would English push so hard, unless he had a reason to fear the truth?",
+    ok:'accuse', no:'accuse'},
+
+  accuse:{head:'THE ACCUSATION', text:[
+    "The household gathers in the parlour. The rain has not let up. Every eye turns to you.",
+    "Name the murderer of Clement Christie."],
+    q:"Who killed Clement Christie?",
+    opts:[{t:"Dr. English",correct:true},{t:"Julian Christie"},{t:"Alana Christie"},{t:"Hollis the butler"}],
+    accuse:true}
+ }
+};
+
+const STORY_MIDNIGHT={
+ start:'intro',
+ scenes:{
+  intro:{head:'THE MIDNIGHT LINE', text:[
+    "The night express tears north through the storm, rain raking the windows like gravel. In Sleeper Seven, the passenger booked as 'Mr. Grey' lies dead — a single wound, the door bolted from the inside, the window latched against the gale.",
+    "The conductor woke you because you are the only detective aboard. Beyond the glass, the dark country flies past. No one steps off until dawn.",
+    "Light a cigarette. The work begins."],
+    cont:'body'},
+
+  body:{head:'THE WOUND', text:[
+    "Grey lies crumpled between the berths, one thin wound below the ribs. There is a great deal of blood — and no weapon anywhere in the compartment."],
+    q:"A thin, deep wound and no blade left behind suggests—",
+    opts:[{t:"A slender weapon, easily hidden or carried away",correct:true},{t:"A heavy axe"},{t:"No weapon at all"},{t:"A simple accident"}],
+    replyOk:"Something narrow and sharp — a stiletto, a long pin. The kind of thing that slides into a sleeve or a hatband and is gone.",
+    replyNo:"You search for a dropped knife and find none. The wound is narrow and deep — a slender thing, carried off on the killer's person.",
+    ok:'lockedcar', no:'lockedcar'},
+
+  lockedcar:{head:'SLEEPER SEVEN', text:[
+    "The door was bolted from the inside; you broke it to get in. The window is latched and painted half shut — and at this speed, in this gale, no one is leaving by it."],
+    q:"Bolted within, the window useless — the killer must have—",
+    opts:[{t:"Left by some route not yet found",correct:true},{t:"Vanished into thin air"},{t:"Never existed; it was suicide"},{t:"Leapt from the window at full speed"}],
+    replyOk:"No one walks through a bolted door. There is another way out of Sleeper Seven — and you haven't found it yet.",
+    replyNo:"You toy with suicide, but a man does not stab himself and spirit away the blade. There is another way out of this room. Find it.",
+    ok:'ledger', no:'ledger'},
+
+  ledger:{head:'THE LEDGER', text:[
+    "Sewn into the lining of Grey's case: a slim ledger. Columns of initials and sums — large sums — paid month after month by a dozen different hands."],
+    q:"A hidden ledger of names and steady secret payments means Grey was—",
+    opts:[{t:"A blackmailer, with many who'd want him dead",correct:true},{t:"A generous banker"},{t:"A humble railway clerk"},{t:"A lucky gambler"}],
+    replyOk:"Blackmail. 'Grey' bled a dozen people dry. Half this train may have wished him into the ground.",
+    replyNo:"You take it for honest accounts — until you see the same names bleed money monthly for nothing in return. Blackmail. He had no shortage of enemies.",
+    ok:'alias', no:'alias'},
+
+  alias:{head:'MR. GREY', text:[
+    "His ticket says 'Grey,' but the silver cigarette case in his pocket is monogrammed with a curling 'S,' and a card tucked in the lining bears a name his victims would whisper in fear: Sable."],
+    q:"'Mr. Grey' carrying Sable's monogram and calling card tells you—",
+    opts:[{t:"He was travelling under a false name",correct:true},{t:"He stole the cigarette case"},{t:"Grey and Sable are brothers"},{t:"The card is a forgery"}],
+    replyOk:"Grey is Sable — a blackmailer riding incognito, hunting fresh prey or fleeing old. A man with everything to hide.",
+    replyNo:"You assume a borrowed case, until the hidden card names him plainly: Sable. 'Grey' was a mask the blackmailer wore aboard this train.",
+    ok:'actress', no:'actress'},
+
+  actress:{head:'THE ACTRESS', text:[
+    "Miss Verne, a fading stage actress, is named in the ledger for a tidy monthly sum — an old scandal, she admits, that Sable held over her. Motive enough.",
+    "But the lounge steward swears she sat beneath his eye, sipping gin, from midnight until the alarm was raised."],
+    q:"Motive in the ledger, but a steward's alibi. So—",
+    opts:[{t:"Her alibi clears her, motive or not",correct:true},{t:"The motive alone convicts her"},{t:"Stewards always lie"},{t:"She killed him from the lounge"}],
+    replyOk:"A real motive, an unshakeable alibi. She hated him; she did not kill him. On.",
+    replyNo:"You lean on the motive and ignore the steward who never lost sight of her. She wanted Sable gone — but she was three carriages away when it happened.",
+    ok:'jeweller', no:'jeweller'},
+
+  jeweller:{head:'THE JEWELLER', text:[
+    "Mr. Hahn, a jeweller, is bled worst of all in the ledger — and he threatened Sable loudly at dinner, before a dozen witnesses, swearing he'd 'see him in the ground.'",
+    "It is almost too neat. And those same witnesses had him at the card table through the small hours."],
+    q:"Hahn made the loudest threat of all. Does that make him the killer?",
+    opts:[{t:"No — the loud threat and a card-table alibi point away from him",correct:true},{t:"Yes, he as good as confessed"},{t:"Only if he lost at cards"},{t:"Certainly; he is the obvious man"}],
+    replyOk:"Men who shout their hatred rarely creep off to kill in the dark. And the cards held him all night. Too obvious — set him aside.",
+    replyNo:"You seize on the loud threat, but he was dealing hands in full view when Sable died. The obvious man is so rarely the right one.",
+    ok:'soldier', no:'soldier'},
+
+  soldier:{head:'THE SOLDIER', text:[
+    "Lieutenant Cross, young and sweating, paid Sable to bury a charge of desertion. He cannot meet your eye.",
+    "But he spent the night being violently ill in the washroom — the porter held the door and the basin both."],
+    q:"A trembling soldier with motive, and a porter for a witness. He is—",
+    opts:[{t:"Guilty of cowardice, not of murder",correct:true},{t:"Plainly the killer"},{t:"Faking the illness"},{t:"Beyond all suspicion"}],
+    replyOk:"A coward with a secret, not a killer. The porter never left his side. Another motive, another dead end.",
+    replyNo:"You press him hard and he weeps — but the porter swears he never left the washroom. Guilty of fear, not of poison or blade.",
+    ok:'tunnel', no:'tunnel'},
+
+  tunnel:{head:'THE TUNNEL', text:[
+    "The conductor marks the time: the train ran into Marsden Tunnel at fourteen minutes past one, and the old carriage lamps gutter and die in the tunnels. Three full minutes of perfect dark."],
+    q:"Sable died in those three minutes. Why does the tunnel matter?",
+    opts:[{t:"The killer struck under cover of total darkness",correct:true},{t:"The tunnel fouled the air"},{t:"Its roar hid a gunshot"},{t:"It proves nothing at all"}],
+    replyOk:"Three minutes of blackout — enough to slip in, strike, and be gone before the lamps caught. The killer knew the timetable by heart.",
+    replyNo:"You overlook the dark. But the lamps died in Marsden Tunnel at 1:14, and in those black minutes a blade found Sable. The killer knew this line.",
+    ok:'connecting', no:'connecting'},
+
+  connecting:{head:'THE CONNECTING DOOR', text:[
+    "You go over Sleeper Seven inch by inch — and behind the wardrobe, papered over but real, is a connecting door to Sleeper Eight. On Seven's side, the bolt is drawn back."],
+    q:"A bolted main door, but an open connecting door to Sleeper Eight, means—",
+    opts:[{t:"The killer locked Seven, then slipped through to Eight",correct:true},{t:"The door is purely decorative"},{t:"No one ever used it"},{t:"Sable unlocked it himself"}],
+    replyOk:"There it is. Lock the main door from inside, step through into Eight, and the 'sealed' room seals itself behind you. So — who had Sleeper Eight?",
+    replyNo:"You nearly miss it behind the wardrobe: a connecting door, unbolted on Seven's side. The locked room was never locked to the killer. Who held Eight?",
+    ok:'manifest', no:'manifest'},
+
+  manifest:{head:'THE MANIFEST', text:[
+    "The conductor's manifest: Sleeper Eight was booked — and paid in cash — under the name 'Miss Lark.' Yet no passenger by that name has shown her face all night."],
+    q:"Sleeper Eight booked by a 'Miss Lark' no one has seen suggests—",
+    opts:[{t:"A passenger aboard under a false name",correct:true},{t:"A simple clerical error"},{t:"An empty, wasted booking"},{t:"A stowaway with no ticket"}],
+    replyOk:"Someone aboard is travelling as two people — her own seat, and 'Miss Lark' in Eight, with a quiet door between Eight and the dead man. Find the woman with two names.",
+    replyNo:"You shrug it off as a wasted berth. But 'Miss Lark' paid cash and never appeared — because she is already aboard, under another name, in another seat.",
+    ok:'governess', no:'governess'},
+
+  governess:{head:'THE GOVERNESS', text:[
+    "You walk the carriages. The actress, the jeweller, the soldier — all watched, all placed. Only one passenger sits unwatched and alone: Miss Wren, a soft-spoken governess travelling, oddly, with no children in her charge.",
+    "In her glove lies a locket. Inside, the photograph of a man — and on its back a name you have read tonight: it stands in Sable's ledger, beside a final entry marked 'deceased — by his own hand.'"],
+    q:"The man in the governess's locket appears in Sable's ledger as a suicide. That makes her—",
+    opts:[{t:"Bound to Sable by a death he caused — a motive of revenge",correct:true},{t:"A grieving stranger, unconnected"},{t:"Merely one more blackmail victim"},{t:"Impossible to place"}],
+    replyOk:"Her father, surely — ruined and driven to his death by Sable's blackmail. She did not board this train by chance. She came for him.",
+    replyNo:"You take the locket for sentiment, until the name on its back matches the ledger's last line: a man Sable hounded to his grave. The quiet governess has the oldest motive of all.",
+    ok:'weapon', no:'weapon'},
+
+  weapon:{head:'THE HATPIN', text:[
+    "Miss Wren's travelling hat lies on the berth in Sleeper Eight — Eight, which she swore she had never entered. Two long steel hatpins are tucked in its band. There is room for a third, and it is gone."],
+    q:"A missing hatpin, and a thin deep wound that fits one exactly—",
+    opts:[{t:"The hatpin is the weapon; she is the killer",correct:true},{t:"Hatpins could never kill"},{t:"A mere coincidence of fashion"},{t:"The pin was simply mislaid"}],
+    replyOk:"A nine-inch steel pin, slid home and drawn out clean — the wound's perfect twin, and hers. The pieces lock together.",
+    replyNo:"You call the missing pin chance, but the wound is its exact shape, and the hat sits in a room she swore she never entered. The weapon is hers.",
+    ok:'motive', no:'motive'},
+
+  motive:{head:'MEANS, MOTIVE, MOMENT', text:[
+    "Means: the hatpin. Moment: the three black minutes in Marsden Tunnel. Opportunity: the connecting door from Eight, which 'Miss Lark' had paid for in cash. Motive: a father in the ledger, dead by his own hand."],
+    q:"Every thread — pin, tunnel, connecting door, locket — draws tight around—",
+    opts:[{t:"Miss Wren, the governess",correct:true},{t:"Mr. Hahn, the jeweller"},{t:"Miss Verne, the actress"},{t:"Lieutenant Cross"}],
+    replyOk:"The woman no one watched, travelling as two, who came aboard for one purpose. Now name her in the open.",
+    replyNo:"You drift back to the loud jeweller — but he never left the cards. Only one passenger held Eight, the pin, and the grief. Back to the governess.",
+    ok:'accuse', no:'accuse'},
+
+  accuse:{head:'THE ACCUSATION', text:[
+    "At dawn the train slows for the first station. The passengers gather in the swaying corridor, watching you.",
+    "Name the killer aboard the Midnight Line."],
+    q:"Who killed the blackmailer Sable?",
+    opts:[{t:"Miss Wren, the governess",correct:true},{t:"Mr. Hahn, the jeweller"},{t:"Miss Verne, the actress"},{t:"Lieutenant Cross"}],
+    accuse:true}
+ }
+};
+
+/* ---------- helpers ---------- */
+const $=function(id){return document.getElementById(id);};
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function groupCode(){return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24);}
+function boardCode(){return groupCode()||'global';}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+/* ---------- state ---------- */
+let cur=null, deductions=0, answered=0, accusedRight=false, chosen='', locked=false;
+
+/* ---------- engine ---------- */
+function begin(){
+  deductions=0; answered=0; accusedRight=false; chosen=''; locked=false;
+  $('dedN').textContent='0'; $('dedT').textContent=TOTAL_DED;
+  $('startScr').classList.add('hide'); $('endScr').classList.add('hide');
+  $('storyView').classList.remove('hide');
+  goTo(STORY.start);
+}
+function goTo(id){
+  cur=STORY.scenes[id]; locked=false;
+  $('storyView').scrollTop=0;
+  $('fileHead').textContent=cur.head||'CASE FILE';
+  $('chap').textContent=cur.head||'CASE FILE';
+  $('fileText').innerHTML=(cur.text||[]).map(function(p){return '<p>'+esc(p)+'</p>';}).join('');
+  renderQ();
+}
+function renderQ(){
+  const w=$('qwrap'); w.innerHTML='';
+  if(cur.cont){
+    const b=document.createElement('button'); b.className='btn'; b.textContent='Continue ›';
+    b.addEventListener('click',function(){ goTo(cur.cont); });
+    w.appendChild(b); return;
+  }
+  if(cur.q){
+    const qt=document.createElement('div'); qt.className='qtext'; qt.textContent=cur.q; w.appendChild(qt);
+    const ow=document.createElement('div'); ow.className='opts';
+    cur._shown=shuffle(cur.opts.slice());
+    cur._shown.forEach(function(o,i){
+      const b=document.createElement('button'); b.className='opt'; b.textContent=o.t;
+      b.addEventListener('click',function(){ choose(i,b); });
+      ow.appendChild(b);
+    });
+    w.appendChild(ow);
+  }
+}
+function choose(i,btn){
+  if(locked) return; locked=true;
+  const list=cur._shown||cur.opts;
+  const o=list[i], correct=!!o.correct;
+  const kids=btn.parentNode.children, ci=list.findIndex(function(x){return x.correct;});
+  for(let k=0;k<kids.length;k++){
+    if(k===ci) kids[k].classList.add('right');
+    else if(k===i) kids[k].classList.add('wrong');
+    else kids[k].classList.add('dim');
+  }
+  if(cur.accuse){
+    accusedRight=correct; chosen=o.t; blip(correct?'good':'bad'); flicker(0.95);
+    setTimeout(function(){ resolveEnding(); }, 900);
+    return;
+  }
+  answered++;
+  if(correct){ deductions++; $('dedN').textContent=deductions; blip('good'); }
+  else { blip('bad'); flicker(0.55); }
+  const r=document.createElement('div'); r.className='reply'+(correct?'':' bad');
+  r.textContent=correct?(cur.replyOk||''):(cur.replyNo||'');
+  $('qwrap').appendChild(r);
+  const b=document.createElement('button'); b.className='btn'+(correct?'':' ghost');
+  b.textContent= correct ? 'Follow the lead ›' : 'Pick up the trail ›';
+  b.addEventListener('click',function(){ goTo(correct?cur.ok:cur.no); });
+  $('qwrap').appendChild(b);
+  $('storyView').scrollTo({top:$('storyView').scrollHeight,behavior:reduceMotion?'auto':'smooth'});
+}
+
+/* ---------- ending ---------- */
+const ENDINGS_GASLIGHT={
+  master:{verdict:'Master Detective', stamp:'SOLVED', tier:4, kicker:'AN AIRTIGHT CASE',
+    text:["You lay it out thread by thread — the weeks of creeping doses, the diary's last word 'R.E.', the butler's midnight glimpse, the frame English tried to hang on a panicking boy.",
+          "The forged note? A frightened heir, no more. The widow? Free, only guilty of wanting to be. Every strand in your hand. English's composure cracks as the cuffs close — they'll hang him by spring."]},
+  closed:{verdict:'Case Closed', stamp:'CLOSED', tier:3, kicker:'JUSTICE, A LITTLE RUMPLED',
+    text:["You name English, and most of it holds — the tonic, the motive, the method. But a thread or two slipped through your fingers, and the prosecutor frowns at the gaps.",
+          "The jury sees enough. Justice is done — if you don't look too closely at the seams."]},
+  hunch:{verdict:'A Lucky Hunch', stamp:'SHAKY', tier:2, kicker:'RIGHT MAN, FLIMSY NET',
+    text:["You point at the doctor on instinct more than evidence. He's led away — but his lawyer is already smiling at the holes in your case.",
+          "Right man. Weak net. He may yet walk free."]},
+  wrong:{verdict:'The Wrong Man', stamp:'UNSOLVED', tier:1, kicker:'THE KILLER WALKS',
+    text:["The cuffs close on an innocent. Across the parlour, Dr. English allows himself the faintest smile, turns up his collar, and steps out into the rain.",
+          "The cure was the poison — and you never caught it. He is never seen again."]}
+};
+const ENDINGS_MIDNIGHT={
+  master:{verdict:'Master Detective', stamp:'SOLVED', tier:4, kicker:'EVERY THREAD IN HAND',
+    text:["You walk them through it — the false name, the ledger, the three dark minutes in Marsden Tunnel, the connecting door from a berth booked in cash by a woman no one ever saw.",
+          "The locket. The missing pin. Miss Wren does not deny it; she only says he deserved worse. The cuffs are almost gentle, and even the conductor looks away."]},
+  closed:{verdict:'Case Closed', stamp:'CLOSED', tier:3, kicker:'JUSTICE ON THE DAWN RAILS',
+    text:["You name Miss Wren, and most of it holds — the pin, the connecting door, the grief in the locket. A thread or two slips, and a clever counsel may worry at the gaps.",
+          "But the locket damns her. Justice is done, swaying into the morning."]},
+  hunch:{verdict:'A Lucky Hunch', stamp:'SHAKY', tier:2, kicker:'RIGHT WOMAN, FRAYED NET',
+    text:["You point to the governess on instinct more than proof. She is taken at the platform — but half your case is air, and a sharp barrister will pick at every seam.",
+          "Right woman. Weak net. She may yet step down free."]},
+  wrong:{verdict:'The Wrong Passenger', stamp:'UNSOLVED', tier:1, kicker:'THE KILLER STEPS DOWN',
+    text:["The cuffs close on the wrong passenger as the train sighs into the station.",
+          "In the crowd on the platform, a quiet woman in grey adjusts her hat — one pin short — and walks free into the morning. You had the blackmailer's killer in your carriage, and you let her go."]}
+};
+const CASES=[
+ {key:'gaslight', id:'qc_gaslight', title:'The Gaslight Affair', tag:'A locked-room poisoning', total:14,
+  hook:"Clement Christie lies poisoned in his bolted study. Four souls under one roof, a city of rain outside. Read the scene, trust your deductions \u2014 your verdict writes the ending.",
+  story:STORY_GASLIGHT, endings:ENDINGS_GASLIGHT},
+ {key:'midnight', id:'qc_midnight', title:'The Midnight Line', tag:'Murder aboard the night express', total:13,
+  hook:"A blackmailer lies dead in a bolted sleeper as the night express tears through the storm. No one steps off until dawn. Find the killer in your carriage.",
+  story:STORY_MIDNIGHT, endings:ENDINGS_MIDNIGHT}
+];
+function buildSelect(){ var w=$('caseList'); if(!w) return; w.innerHTML='';
+  CASES.forEach(function(c){ var solved=lsGet('gl_solved_'+c.id)==='1';
+    var b=document.createElement('button'); b.className='casecard'+(solved?' solved':'');
+    b.innerHTML='<div class="ct">'+esc(c.title)+'</div><div class="cg">'+esc(c.tag)+'</div><span class="cs">'+(solved?'SOLVED':'UNSOLVED')+'</span>';
+    b.addEventListener('click',function(){ openCase(c); });
+    w.appendChild(b); });
+}
+function showSelect(){ $('startScr').classList.add('hide'); $('endScr').classList.add('hide'); $('storyView').classList.add('hide'); buildSelect(); $('selectScr').classList.remove('hide'); }
+function openCase(c){ CASE=c; STORY=c.story; ENDINGS=c.endings; TOTAL_DED=c.total; QUIZ_ID=c.id;
+  $('caseTitle').textContent=c.title; $('caseHook').textContent=c.hook;
+  $('selectScr').classList.add('hide'); $('endScr').classList.add('hide'); $('storyView').classList.add('hide'); $('startScr').classList.remove('hide'); }
+function resolveEnding(){
+  let key;
+  if(!accusedRight) key='wrong';
+  else if(deductions>=12) key='master';
+  else if(deductions>=8) key='closed';
+  else key='hunch';
+  const e=ENDINGS[key];
+  if(accusedRight) lsSet('gl_solved_'+QUIZ_ID,'1');
+  $('endKicker').textContent=e.kicker;
+  $('endVerdict').textContent=e.verdict;
+  $('endStamp').textContent=e.stamp;
+  let txt=e.text.slice();
+  if(!accusedRight) txt.unshift('You accuse '+chosen+'.');
+  $('endText').innerHTML=txt.map(function(p){return '<p>'+esc(p)+'</p>';}).join('');
+  $('endDed').textContent=deductions; $('endDedT').textContent=TOTAL_DED;
+  $('endTier').textContent=e.verdict;
+  $('storyView').classList.add('hide'); $('endScr').classList.remove('hide');
+  const score=deductions+(accusedRight?2:0);
+  submitAndLoad(score, e.tier);
+}
+
+/* ---------- leaderboard ---------- */
+function sbBase(){return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores';}
+function sbHeaders(x){return Object.assign({apikey:SB_KEY,Authorization:'Bearer '+SB_KEY},x||{});}
+async function submitRow(name,corr,lvl){
+  const body=[{quiz_id:QUIZ_ID,group_code:boardCode(),name:name,correct:corr,level:lvl,time_left:0}];
+  const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+  if(!res.ok) throw new Error('save');
+}
+async function fetchTop(){
+  const url=sbBase()+'?select=name,correct,level&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+    +'&group_code=eq.'+encodeURIComponent(boardCode())+'&order=correct.desc,level.desc&limit=10';
+  const res=await fetch(url,{headers:sbHeaders()}); if(!res.ok) throw new Error('load'); return await res.json();
+}
+function renderBoard(rows){
+  const list=$('boardList'), me=(lsGet(NAME_KEY)||'').toLowerCase();
+  if(!rows.length){ list.innerHTML='<div class="muted">Be the first name on the case.</div>'; return; }
+  let shown=false;
+  list.innerHTML=rows.map(function(r,i){ const mine=(r.name||'').toLowerCase()===me&&!shown; if(mine)shown=true;
+    return '<div class="lrow'+(mine?' me':'')+'"><span class="rk">'+(i+1)+'</span>'
+      +'<span class="nm">'+esc(r.name||'—')+'</span><span class="sc">'+(r.correct|0)+'</span></div>';
+  }).join('');
+}
+async function submitAndLoad(score,tier){
+  $('boardTitle').textContent='Top Detectives · '+(groupCode()?('Group '+groupCode()):'Global');
+  const list=$('boardList'); list.innerHTML='<div class="muted">Filing your report…</div>';
+  const name=($('nameInput').value||'Inspector').trim().slice(0,18)||'Inspector'; lsSet(NAME_KEY,name);
+  try{ await submitRow(name,score,tier); }catch(e){}
+  try{ const rows=await fetchTop(); renderBoard(rows); }
+  catch(e){ list.innerHTML='<div class="muted">The wire is down — your report is saved here on the desk.</div>'; }
+}
+
+/* ---------- audio ---------- */
+let actx=null, muted=false;
+function audioOn(){ if(muted) return; try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
+function blip(kind){ if(muted||!actx) return; try{
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type=kind==='good'?'sine':'sawtooth'; o.frequency.value=kind==='good'?540:150;
+  g.gain.value=0.05; o.connect(g); g.connect(actx.destination);
+  const t=actx.currentTime; o.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.2); o.stop(t+0.2);
+}catch(e){} }
+
+/* ---------- atmosphere: gaslamp, fog, rain, smoke ---------- */
+const cv=$('rain'), rctx=cv.getContext('2d');
+let W=0,H=0,drops=[],fog=[],smoke=[],smokeT=0,lamp=1,lampTarget=1,gutter=0;
+function rsize(){
+  const r=cv.getBoundingClientRect(); W=r.width;H=r.height;
+  const dpr=Math.min(window.devicePixelRatio||1,2); cv.width=W*dpr; cv.height=H*dpr; rctx.setTransform(dpr,0,0,dpr,0,0);
+  drops=[]; const n=reduceMotion?0:Math.round(W*0.16);
+  for(let i=0;i<n;i++) drops.push({x:Math.random()*W,y:Math.random()*H,l:6+Math.random()*14,s:240+Math.random()*260});
+  fog=[]; for(let i=0;i<4;i++) fog.push({x:Math.random()*W,y:H*(0.32+Math.random()*0.55),r:110+Math.random()*130,s:reduceMotion?0:(5+Math.random()*9),a:0.045+Math.random()*0.05});
+  smoke=[];
+}
+function lampGlow(){
+  const cx=W*0.5, cy=-H*0.03, R=H*0.62*(0.92+lamp*0.1), a=0.24*lamp;
+  const g=rctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  g.addColorStop(0,'rgba(255,198,122,'+a+')');
+  g.addColorStop(0.45,'rgba(230,150,88,'+(a*0.42)+')');
+  g.addColorStop(1,'rgba(230,150,88,0)');
+  rctx.fillStyle=g; rctx.fillRect(0,0,W,H);
+}
+function flicker(s){ gutter=Math.max(gutter,s||0.5); }
+function draw(dt){
+  rctx.clearRect(0,0,W,H);
+  if(gutter>0){ gutter-=dt; if(Math.random()<0.6) lampTarget=0.4+Math.random()*0.45; if(gutter<=0) lampTarget=1; }
+  else if(!reduceMotion){ lampTarget=0.9+0.1*Math.sin(performance.now()*0.005); if(Math.random()<0.014) lampTarget*=0.65; }
+  else lampTarget=1;
+  lamp += (lampTarget-lamp)*Math.min(1,dt*8);
+  lampGlow();
+  // fog
+  for(const f of fog){ f.x+=f.s*dt; if(f.x-f.r>W) f.x=-f.r;
+    const g=rctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r);
+    g.addColorStop(0,'rgba(126,144,172,'+f.a+')'); g.addColorStop(1,'rgba(126,144,172,0)');
+    rctx.fillStyle=g; rctx.beginPath(); rctx.arc(f.x,f.y,f.r,0,7); rctx.fill(); }
+  // rain
+  rctx.strokeStyle='rgba(170,190,220,.22)'; rctx.lineWidth=1;
+  for(const d of drops){ rctx.beginPath(); rctx.moveTo(d.x,d.y); rctx.lineTo(d.x-1.2,d.y+d.l); rctx.stroke();
+    d.y+=d.s*dt; d.x-=d.s*dt*0.08; if(d.y>H){ d.y=-d.l; d.x=Math.random()*W; } }
+  // cigarette smoke, curling up
+  if(!reduceMotion){ smokeT-=dt; if(smokeT<=0 && smoke.length<18){ smokeT=0.28;
+    smoke.push({x:W*0.5+(Math.random()-0.5)*34,y:H+10,r:9+Math.random()*8,vy:-15-Math.random()*12,t:Math.random()*6,life:1}); } }
+  for(let i=smoke.length-1;i>=0;i--){ const p=smoke[i];
+    p.y+=p.vy*dt; p.t+=dt; p.x+=Math.sin(p.t)*10*dt; p.r+=7*dt; p.life-=dt*0.17;
+    if(p.life<=0||p.y<-p.r){ smoke.splice(i,1); continue; }
+    const a=p.life*0.06, g=rctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,'rgba(192,202,218,'+a+')'); g.addColorStop(1,'rgba(192,202,218,0)');
+    rctx.fillStyle=g; rctx.beginPath(); rctx.arc(p.x,p.y,p.r,0,7); rctx.fill(); }
+}
+let last=0;
+function frame(ts){ const dt=Math.min(0.05,(ts-last)/1000||0); last=ts; draw(dt); requestAnimationFrame(frame); }
+window.addEventListener('resize',rsize);
+
+/* ---------- wiring ---------- */
+$('startBtn').addEventListener('click',function(){ audioOn(); begin(); });
+$('againBtn').addEventListener('click',function(){ $('endScr').classList.add('hide'); $('startScr').classList.remove('hide'); });
+$('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
+(function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
+rsize(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
