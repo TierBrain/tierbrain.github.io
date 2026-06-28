@@ -49,9 +49,17 @@
     background:repeating-linear-gradient(180deg,#caa86a 0 9px,#b8965a 9px 18px);}
   .file .head{font-family:'Special Elite';font-size:13px;letter-spacing:3px;text-transform:uppercase;
     color:#7a5a2a;border-bottom:1px dashed rgba(120,90,40,.45);padding-bottom:8px;margin-bottom:12px;
-    display:flex;justify-content:space-between;align-items:center;}
+    display:flex;align-items:center;gap:9px;}
   .file .head .stamp{border:2px solid var(--crim);color:var(--crim);font-size:9px;letter-spacing:1.5px;
-    padding:2px 6px;border-radius:3px;transform:rotate(-5deg);opacity:.82;}
+    padding:2px 6px;border-radius:3px;transform:rotate(-5deg);opacity:.82;margin-left:auto;}
+  .emblem{color:#7a5a2a;display:inline-flex;flex:0 0 auto;width:34px;height:34px;}
+  .emblem svg{width:34px;height:34px;animation:embIn .55s cubic-bezier(.2,.8,.3,1) both;}
+  @keyframes embIn{from{opacity:0;transform:translateY(5px) scale(.8) rotate(-6deg);}to{opacity:1;transform:none;}}
+  .emblem .flame{transform-origin:24px 22px;animation:flicker 1.7s ease-in-out infinite;}
+  @keyframes flicker{0%,100%{opacity:.95;transform:scaleY(1);}30%{opacity:.6;transform:scaleY(.82);}55%{opacity:1;transform:scaleY(1.05);}75%{opacity:.7;transform:scaleY(.9);}}
+  .emblem .glint{opacity:.25;animation:glint 2.6s ease-in-out infinite;}
+  @keyframes glint{0%,100%{opacity:.18;}50%{opacity:.95;}}
+  @media (prefers-reduced-motion: reduce){.emblem svg,.emblem .flame,.emblem .glint{animation:none;}}
   .file p{font-family:'Special Elite';font-size:16.5px;line-height:1.62;color:#2a2519;}
   .file p + p{margin-top:11px;}
 
@@ -126,6 +134,19 @@
     text-transform:uppercase;}
   .row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:23em;}
   .row2 .btn{flex:1;min-width:9em;}
+  .cut{position:fixed;inset:0;z-index:60;background:#070a10;display:flex;align-items:flex-end;justify-content:center;cursor:pointer;}
+  .cut.hide{display:none;}
+  .cast.hide{display:none;}
+  #cutCv{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .cutcap{position:relative;z-index:2;text-align:center;padding:0 22px 12vh;pointer-events:none;}
+  .cuttitle{font-size:30px;letter-spacing:1px;color:#f3ead8;text-shadow:0 2px 18px rgba(0,0,0,.9);}
+  .cutsub{font-size:13px;letter-spacing:2px;color:#c9b08a;margin-top:8px;text-transform:uppercase;text-shadow:0 2px 10px rgba(0,0,0,.9);}
+  .cuthint{margin-top:22px;font-size:13px;letter-spacing:2px;color:#9fb0c8;text-transform:uppercase;
+    pointer-events:auto;cursor:pointer;animation:cutpulse 1.8s ease-in-out infinite;}
+  @keyframes cutpulse{0%,100%{opacity:.45;}50%{opacity:1;}}
+  .cast{display:block;width:100%;height:128px;border-radius:6px;margin:2px 0 13px;
+    background:#06080c;border:1px solid rgba(120,90,40,.28);box-shadow:inset 0 0 26px rgba(0,0,0,.6);}
+  @media (prefers-reduced-motion: reduce){.cuthint{animation:none;}}
   #mute{position:absolute;top:14px;right:16px;z-index:11;cursor:pointer;background:var(--panel);
     border:1px solid var(--line);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;
     justify-content:center;font-size:15px;}
@@ -136,6 +157,16 @@
   <canvas id="rain"></canvas>
   <div id="mute">🔊</div>
 
+  <!-- CUTSCENE -->
+  <div class="cut hide" id="cutScr">
+    <canvas id="cutCv"></canvas>
+    <div class="cutcap">
+      <div class="cuttitle type" id="cutTitle"></div>
+      <div class="cutsub type" id="cutSub"></div>
+      <div class="cuthint type" id="cutSkip">tap to begin ›</div>
+    </div>
+  </div>
+
   <!-- STORY VIEW -->
   <div class="view hide" id="storyView">
     <div id="hud">
@@ -143,7 +174,8 @@
       <span class="ded">🔍 <b id="dedN">0</b>&nbsp;/&nbsp;<span id="dedT">8</span></span>
     </div>
     <div class="file" id="file">
-      <div class="head"><span id="fileHead">THE BODY</span><span class="stamp">CONFIDENTIAL</span></div>
+      <div class="head"><span class="emblem" id="emblem"></span><span id="fileHead">THE BODY</span><span class="stamp">CONFIDENTIAL</span></div>
+      <canvas class="cast hide" id="castCv"></canvas>
       <div id="fileText"></div>
     </div>
     <div id="qwrap"></div>
@@ -206,13 +238,13 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const STORY_GASLIGHT={
  start:'intro',
  scenes:{
-  intro:{head:'CHRISTIE MANOR', text:[
+  intro:{head:'CHRISTIE MANOR', art:'lamp', text:[
     "Rain hammers the windows of Christie Manor. In the study, Clement Christie — collector, recluse, millionaire — lies dead at his desk, the door bolted from within.",
     "Four people slept under this roof tonight, and not one of them will meet your eye. They sent for you. They always send for you.",
     "Light a cigarette. The work begins."],
     cont:'body'},
 
-  body:{head:'THE BODY', text:[
+  body:{head:'THE BODY', art:'skull', text:[
     "Christie is slumped over his ledgers, lips tinged faintly blue. The study is cold, and something sweetish hangs in that cold air — bitter almonds."],
     q:"That bitter-almond odour is the calling card of which poison?",
     opts:[{t:"Cyanide",correct:true},{t:"Arsenic"},{t:"Strychnine"},{t:"Belladonna"}],
@@ -220,7 +252,7 @@ const STORY_GASLIGHT={
     replyNo:"You scribble 'heart failure' — until the coroner leans in, sniffs, and mutters: 'Almonds. Cyanide.' A poisoning, then.",
     ok:'lockedroom', no:'lockedroom'},
 
-  lockedroom:{head:'THE LOCKED ROOM', text:[
+  lockedroom:{head:'THE LOCKED ROOM', art:'door', text:[
     "The door was bolted from the inside, the brass key still in the lock. The windows are painted shut; the mud beneath them undisturbed. No passages — you check the panelling twice."],
     q:"If no one could enter or leave, the poison must have been—",
     opts:[{t:"Given before he bolted the door",correct:true},{t:"Posted through the keyhole"},{t:"The work of a ghost"},{t:"Proof of suicide"}],
@@ -228,7 +260,7 @@ const STORY_GASLIGHT={
     replyNo:"You hunt for trapdoors until your nails are full of splinters. There are none. The poison came in before the bolt slid home.",
     ok:'tonic', no:'tonic'},
 
-  tonic:{head:'THE TONIC', text:[
+  tonic:{head:'THE TONIC', art:'bottle', text:[
     "On the desk: a medicine bottle, half empty. 'Christie's Nightly Heart Tonic — compounded by Dr. R. English.' He took a dose each night, then bolted the door behind him."],
     q:"To lace a nightly tonic without raising alarm, the killer needed—",
     opts:[{t:"Regular, trusted access to the bottle",correct:true},{t:"A key to the city"},{t:"Brute strength"},{t:"To break in at midnight"}],
@@ -236,7 +268,7 @@ const STORY_GASLIGHT={
     replyNo:"You chase a midnight burglar — but the mud outside is smooth and untrodden. No one climbed in. They were welcomed through the front door.",
     ok:'diary', no:'diary'},
 
-  diary:{head:'THE DIARY', text:[
+  diary:{head:'THE DIARY', art:'book', text:[
     "In a locked drawer, Christie's diary. The last entry is half in plain hand — 'He will not silence me' — and ends in the private cipher he used for names: a pair of numbers, 18-5.",
     "You've seen this trick. He numbered the alphabet, A is 1."],
     q:"In Christie's cipher (A=1, B=2, C=3...), 18-5 spells which initials?",
@@ -245,7 +277,7 @@ const STORY_GASLIGHT={
     replyNo:"You fumble the count. Eighteen is R, five is E — R.E. He named someone, in his last hour. Remember it.",
     ok:'widow', no:'widow'},
 
-  widow:{head:'THE WIDOW', text:[
+  widow:{head:'THE WIDOW', art:'mask', cast:'widow', text:[
     "Alana Christie, the young widow, dabs at dry eyes. 'I was at the opera all evening,' she says. 'Carmen. I wept at the final curtain.'",
     "But the coat hung by the door is soaked through — and the rain only began at ten, an hour before he died."],
     q:"Her coat is drenched, yet she claims she was inside the opera all night. That means—",
@@ -254,7 +286,7 @@ const STORY_GASLIGHT={
     replyNo:"You almost let it pass — then see the puddle spreading beneath her coat. She was out in the rain, not weeping in a dry opera box. She lied.",
     ok:'widow2', no:'widow2'},
 
-  widow2:{head:"THE WIDOW'S SECRET", text:[
+  widow2:{head:"THE WIDOW'S SECRET", art:'mask', text:[
     "Pressed, Alana breaks. She slipped out at the interval — to meet a divorce lawyer. Clement was cruel and controlling, and she wanted free of him. In a divorce, she'd have left with nothing.",
     "Motive enough to kill. But the lawyer kept her across the city until well past midnight."],
     q:"She had a motive and a lie. And yet—",
@@ -263,7 +295,7 @@ const STORY_GASLIGHT={
     replyNo:"You nearly charge her on the lie alone. Then the lawyer's statement lands: she was streets away when the tonic did its work. Guilty only of wanting to be free.",
     ok:'nephew', no:'nephew'},
 
-  nephew:{head:'THE NEPHEW', text:[
+  nephew:{head:'THE NEPHEW', art:'note', cast:'nephew', text:[
     "Julian Christie reeks of cigarettes and debt. In his coat you find a 'suicide note' in Clement's own hand — but the ink is wet and fresh, and Clement has been dead since nightfall."],
     q:"Fresh ink on a note from a man dead for hours tells you—",
     opts:[{t:"The note was forged after death",correct:true},{t:"Clement faked his death"},{t:"The note is genuine"},{t:"Nothing at all"}],
@@ -271,7 +303,7 @@ const STORY_GASLIGHT={
     replyNo:"You nearly file it as suicide, until your thumb smears the wet ink. Dead men don't write fresh. Forged, and tonight.",
     ok:'nephew2', no:'nephew2'},
 
-  nephew2:{head:'THE CONFESSION', text:[
+  nephew2:{head:'THE CONFESSION', art:'note', text:[
     "Julian crumbles. He came at eleven to beg for money, found Clement already slumped and blue, and panicked. He forged the note to stage a suicide — so the will would pay out clean and fast, before his creditors closed in.",
     "He forged. He lied. He robbed a dead man of the truth. But the cyanide was already in Clement when Julian climbed the stairs."],
     q:"Julian forged the note. Does that make him the poisoner?",
@@ -280,7 +312,7 @@ const STORY_GASLIGHT={
     replyNo:"You're ready to hang him for the note. But forgery isn't cyanide, and the poison was in Clement before Julian ever reached the door.",
     ok:'butler', no:'butler'},
 
-  butler:{head:'THE BUTLER', text:[
+  butler:{head:'THE BUTLER', art:'watch', cast:'butler', text:[
     "Hollis, the butler, was demoted last month and has crept about ashen-faced since. In his quarters: a fan of pawn tickets — for his own gold watch, sold off quietly."],
     q:"He pawned his own watch, not the Christie silver. His guilt is—",
     opts:[{t:"Shame over his private debt, not murder",correct:true},{t:"Proof that he's the killer"},{t:"A clever double-bluff"},{t:"Tied to the poison"}],
@@ -288,12 +320,12 @@ const STORY_GASLIGHT={
     replyNo:"You snap the cuffs on Hollis; he weeps for a pawned watch and an empty purse, not for murder. Let him go.",
     ok:'butler2', no:'butler2'},
 
-  butler2:{head:'A LOYAL EYE', text:[
+  butler2:{head:'A LOYAL EYE', art:'eye', text:[
     "Grateful that you believed him, Hollis lowers his voice. 'There's a thing I held back, sir. Twice this week I saw Dr. English at the medicine cabinet after hours — past midnight — with the tonic in his hands. Refilling it, he said.'",
     "A doctor has every reason to handle a tonic. And every chance to lace it."],
     cont:'clock'},
 
-  clock:{head:'THE CLOCK', text:[
+  clock:{head:'THE CLOCK', art:'clock', text:[
     "The study clock stopped when Christie fell against the desk, its hands frozen at the Roman numerals — XI. His tonic was taken at the same hour every night."],
     q:"The clock reads 'XI'. What time did Clement die?",
     opts:[{t:"11 o'clock",correct:true},{t:"9 o'clock"},{t:"12 o'clock"},{t:"6 o'clock"}],
@@ -301,7 +333,7 @@ const STORY_GASLIGHT={
     replyNo:"You misread the numerals and nothing fits. 'XI is eleven, detective,' sighs the coroner. Tonic hour.",
     ok:'contradiction', no:'contradiction'},
 
-  contradiction:{head:'THE MIDNIGHT WITNESS', text:[
+  contradiction:{head:'THE MIDNIGHT WITNESS', art:'eye', text:[
     "But a delivery boy swears he saw Clement at the lit study window at midnight — a full hour after the clock says he died.",
     "You step into the rain and look up. The study window faces a tall gilt mirror on the far wall, and the gaslamp throws a man-shaped shadow against the glass."],
     q:"How can Christie be dead at eleven yet 'seen' at midnight?",
@@ -310,13 +342,13 @@ const STORY_GASLIGHT={
     replyNo:"You let the boy rewrite your timeline. But the dose, the stopped clock, and the cold of the body all say eleven. He saw a shadow, not a man.",
     ok:'doctor', no:'doctor'},
 
-  doctor:{head:'THE DOCTOR', text:[
+  doctor:{head:'THE DOCTOR', art:'bag', cast:'doctor', text:[
     "Dr. Roland English — R.E. — compounded that tonic. You dig into him.",
     "Years ago he signed off a patient's death as natural; in truth his own blunder had killed her. Clement learned of it and, weeks ago, swore to lay the proof before the medical board. It would have ended English — his licence, his liberty, his name.",
     "And still the doctor kept calling. Kept refilling the tonic. Drop by drop."],
     cont:'method'},
 
-  method:{head:'THE METHOD', text:[
+  method:{head:'THE METHOD', art:'bottle', text:[
     "The autopsy returns. This was no single fatal glass. Cyanide had been building in Christie for weeks — small doses, climbing, until the last one stopped his heart."],
     q:"Weeks of rising doses hidden in a nightly tonic point to—",
     opts:[{t:"A patient, premeditated hand with weekly access",correct:true},{t:"A sudden crime of passion"},{t:"An accidental overdose"},{t:"A stranger off the street"}],
@@ -324,7 +356,7 @@ const STORY_GASLIGHT={
     replyNo:"You picture one frantic poisoning. But the body tells of weeks of creeping doses — patient, planned, by someone who held that bottle again and again.",
     ok:'motive', no:'motive'},
 
-  motive:{head:'MEANS & MOTIVE', text:[
+  motive:{head:'MEANS & MOTIVE', art:'scales', text:[
     "Means: he mixed the tonic himself. Opportunity: he refilled it weekly, and Hollis saw him at it past midnight. Motive: Clement could destroy him with a word — and the diary named R.E."],
     q:"Means, motive, and opportunity all converge on—",
     opts:[{t:"Dr. English",correct:true},{t:"Alana Christie"},{t:"Julian the nephew"},{t:"Hollis the butler"}],
@@ -332,7 +364,7 @@ const STORY_GASLIGHT={
     replyNo:"You drift back to the forged note — but forgery isn't cyanide. Only one hand mixed that tonic, week after week. Back to English.",
     ok:'frame', no:'frame'},
 
-  frame:{head:'THE FRAME', text:[
+  frame:{head:'THE FRAME', art:'lens', text:[
     "English is calm, helpful, almost eager — and he keeps steering you toward Julian. 'The boy forged a note, inspector. The boy was drowning in debt. Surely it is plain...'",
     "It would be so easy to take the forged note as proof of murder and close the case on the frightened nephew."],
     q:"Why does English keep pointing you at Julian?",
@@ -341,7 +373,7 @@ const STORY_GASLIGHT={
     replyNo:"You almost take the bait and charge Julian. But forgery isn't cyanide — and why would English push so hard, unless he had a reason to fear the truth?",
     ok:'accuse', no:'accuse'},
 
-  accuse:{head:'THE ACCUSATION', text:[
+  accuse:{head:'THE ACCUSATION', art:'lens', text:[
     "The household gathers in the parlour. The rain has not let up. Every eye turns to you.",
     "Name the murderer of Clement Christie."],
     q:"Who killed Clement Christie?",
@@ -353,13 +385,13 @@ const STORY_GASLIGHT={
 const STORY_MIDNIGHT={
  start:'intro',
  scenes:{
-  intro:{head:'THE MIDNIGHT LINE', text:[
+  intro:{head:'THE MIDNIGHT LINE', art:'train', text:[
     "The night express tears north through the storm, rain raking the windows like gravel. In Sleeper Seven, the passenger booked as 'Mr. Grey' lies dead — a single wound, the door bolted from the inside, the window latched against the gale.",
     "The conductor woke you because you are the only detective aboard. Beyond the glass, the dark country flies past. No one steps off until dawn.",
     "Light a cigarette. The work begins."],
     cont:'body'},
 
-  body:{head:'THE WOUND', text:[
+  body:{head:'THE WOUND', art:'skull', text:[
     "Grey lies crumpled between the berths, one thin wound below the ribs. There is a great deal of blood — and no weapon anywhere in the compartment."],
     q:"A thin, deep wound and no blade left behind suggests—",
     opts:[{t:"A slender weapon, easily hidden or carried away",correct:true},{t:"A heavy axe"},{t:"No weapon at all"},{t:"A simple accident"}],
@@ -367,7 +399,7 @@ const STORY_MIDNIGHT={
     replyNo:"You search for a dropped knife and find none. The wound is narrow and deep — a slender thing, carried off on the killer's person.",
     ok:'lockedcar', no:'lockedcar'},
 
-  lockedcar:{head:'SLEEPER SEVEN', text:[
+  lockedcar:{head:'SLEEPER SEVEN', art:'door', text:[
     "The door was bolted from the inside; you broke it to get in. The window is latched and painted half shut — and at this speed, in this gale, no one is leaving by it."],
     q:"Bolted within, the window useless — the killer must have—",
     opts:[{t:"Left by some route not yet found",correct:true},{t:"Vanished into thin air"},{t:"Never existed; it was suicide"},{t:"Leapt from the window at full speed"}],
@@ -375,7 +407,7 @@ const STORY_MIDNIGHT={
     replyNo:"You toy with suicide, but a man does not stab himself and spirit away the blade. There is another way out of this room. Find it.",
     ok:'ledger', no:'ledger'},
 
-  ledger:{head:'THE LEDGER', text:[
+  ledger:{head:'THE LEDGER', art:'book', text:[
     "Sewn into the lining of Grey's case: a slim ledger. Columns of initials and sums — large sums — paid month after month by a dozen different hands."],
     q:"A hidden ledger of names and steady secret payments means Grey was—",
     opts:[{t:"A blackmailer, with many who'd want him dead",correct:true},{t:"A generous banker"},{t:"A humble railway clerk"},{t:"A lucky gambler"}],
@@ -383,7 +415,7 @@ const STORY_MIDNIGHT={
     replyNo:"You take it for honest accounts — until you see the same names bleed money monthly for nothing in return. Blackmail. He had no shortage of enemies.",
     ok:'alias', no:'alias'},
 
-  alias:{head:'MR. GREY', text:[
+  alias:{head:'MR. GREY', art:'note', text:[
     "His ticket says 'Grey,' but the silver cigarette case in his pocket is monogrammed with a curling 'S,' and a card tucked in the lining bears a name his victims would whisper in fear: Sable."],
     q:"'Mr. Grey' carrying Sable's monogram and calling card tells you—",
     opts:[{t:"He was travelling under a false name",correct:true},{t:"He stole the cigarette case"},{t:"Grey and Sable are brothers"},{t:"The card is a forgery"}],
@@ -391,7 +423,7 @@ const STORY_MIDNIGHT={
     replyNo:"You assume a borrowed case, until the hidden card names him plainly: Sable. 'Grey' was a mask the blackmailer wore aboard this train.",
     ok:'actress', no:'actress'},
 
-  actress:{head:'THE ACTRESS', text:[
+  actress:{head:'THE ACTRESS', art:'mask', cast:'actress', text:[
     "Miss Verne, a fading stage actress, is named in the ledger for a tidy monthly sum — an old scandal, she admits, that Sable held over her. Motive enough.",
     "But the lounge steward swears she sat beneath his eye, sipping gin, from midnight until the alarm was raised."],
     q:"Motive in the ledger, but a steward's alibi. So—",
@@ -400,7 +432,7 @@ const STORY_MIDNIGHT={
     replyNo:"You lean on the motive and ignore the steward who never lost sight of her. She wanted Sable gone — but she was three carriages away when it happened.",
     ok:'jeweller', no:'jeweller'},
 
-  jeweller:{head:'THE JEWELLER', text:[
+  jeweller:{head:'THE JEWELLER', art:'lens', cast:'jeweller', text:[
     "Mr. Hahn, a jeweller, is bled worst of all in the ledger — and he threatened Sable loudly at dinner, before a dozen witnesses, swearing he'd 'see him in the ground.'",
     "It is almost too neat. And those same witnesses had him at the card table through the small hours."],
     q:"Hahn made the loudest threat of all. Does that make him the killer?",
@@ -409,7 +441,7 @@ const STORY_MIDNIGHT={
     replyNo:"You seize on the loud threat, but he was dealing hands in full view when Sable died. The obvious man is so rarely the right one.",
     ok:'soldier', no:'soldier'},
 
-  soldier:{head:'THE SOLDIER', text:[
+  soldier:{head:'THE SOLDIER', art:'eye', cast:'soldier', text:[
     "Lieutenant Cross, young and sweating, paid Sable to bury a charge of desertion. He cannot meet your eye.",
     "But he spent the night being violently ill in the washroom — the porter held the door and the basin both."],
     q:"A trembling soldier with motive, and a porter for a witness. He is—",
@@ -418,7 +450,7 @@ const STORY_MIDNIGHT={
     replyNo:"You press him hard and he weeps — but the porter swears he never left the washroom. Guilty of fear, not of poison or blade.",
     ok:'tunnel', no:'tunnel'},
 
-  tunnel:{head:'THE TUNNEL', text:[
+  tunnel:{head:'THE TUNNEL', art:'lamp', text:[
     "The conductor marks the time: the train ran into Marsden Tunnel at fourteen minutes past one, and the old carriage lamps gutter and die in the tunnels. Three full minutes of perfect dark."],
     q:"Sable died in those three minutes. Why does the tunnel matter?",
     opts:[{t:"The killer struck under cover of total darkness",correct:true},{t:"The tunnel fouled the air"},{t:"Its roar hid a gunshot"},{t:"It proves nothing at all"}],
@@ -426,7 +458,7 @@ const STORY_MIDNIGHT={
     replyNo:"You overlook the dark. But the lamps died in Marsden Tunnel at 1:14, and in those black minutes a blade found Sable. The killer knew this line.",
     ok:'connecting', no:'connecting'},
 
-  connecting:{head:'THE CONNECTING DOOR', text:[
+  connecting:{head:'THE CONNECTING DOOR', art:'key', text:[
     "You go over Sleeper Seven inch by inch — and behind the wardrobe, papered over but real, is a connecting door to Sleeper Eight. On Seven's side, the bolt is drawn back."],
     q:"A bolted main door, but an open connecting door to Sleeper Eight, means—",
     opts:[{t:"The killer locked Seven, then slipped through to Eight",correct:true},{t:"The door is purely decorative"},{t:"No one ever used it"},{t:"Sable unlocked it himself"}],
@@ -434,7 +466,7 @@ const STORY_MIDNIGHT={
     replyNo:"You nearly miss it behind the wardrobe: a connecting door, unbolted on Seven's side. The locked room was never locked to the killer. Who held Eight?",
     ok:'manifest', no:'manifest'},
 
-  manifest:{head:'THE MANIFEST', text:[
+  manifest:{head:'THE MANIFEST', art:'ticket', text:[
     "The conductor's manifest: Sleeper Eight was booked — and paid in cash — under the name 'Miss Lark.' Yet no passenger by that name has shown her face all night."],
     q:"Sleeper Eight booked by a 'Miss Lark' no one has seen suggests—",
     opts:[{t:"A passenger aboard under a false name",correct:true},{t:"A simple clerical error"},{t:"An empty, wasted booking"},{t:"A stowaway with no ticket"}],
@@ -442,7 +474,7 @@ const STORY_MIDNIGHT={
     replyNo:"You shrug it off as a wasted berth. But 'Miss Lark' paid cash and never appeared — because she is already aboard, under another name, in another seat.",
     ok:'governess', no:'governess'},
 
-  governess:{head:'THE GOVERNESS', text:[
+  governess:{head:'THE GOVERNESS', art:'mask', cast:'governess', text:[
     "You walk the carriages. The actress, the jeweller, the soldier — all watched, all placed. Only one passenger sits unwatched and alone: Miss Wren, a soft-spoken governess travelling, oddly, with no children in her charge.",
     "In her glove lies a locket. Inside, the photograph of a man — and on its back a name you have read tonight: it stands in Sable's ledger, beside a final entry marked 'deceased — by his own hand.'"],
     q:"The man in the governess's locket appears in Sable's ledger as a suicide. That makes her—",
@@ -451,7 +483,7 @@ const STORY_MIDNIGHT={
     replyNo:"You take the locket for sentiment, until the name on its back matches the ledger's last line: a man Sable hounded to his grave. The quiet governess has the oldest motive of all.",
     ok:'weapon', no:'weapon'},
 
-  weapon:{head:'THE HATPIN', text:[
+  weapon:{head:'THE HATPIN', art:'pin', text:[
     "Miss Wren's travelling hat lies on the berth in Sleeper Eight — Eight, which she swore she had never entered. Two long steel hatpins are tucked in its band. There is room for a third, and it is gone."],
     q:"A missing hatpin, and a thin deep wound that fits one exactly—",
     opts:[{t:"The hatpin is the weapon; she is the killer",correct:true},{t:"Hatpins could never kill"},{t:"A mere coincidence of fashion"},{t:"The pin was simply mislaid"}],
@@ -459,7 +491,7 @@ const STORY_MIDNIGHT={
     replyNo:"You call the missing pin chance, but the wound is its exact shape, and the hat sits in a room she swore she never entered. The weapon is hers.",
     ok:'motive', no:'motive'},
 
-  motive:{head:'MEANS, MOTIVE, MOMENT', text:[
+  motive:{head:'MEANS, MOTIVE, MOMENT', art:'scales', text:[
     "Means: the hatpin. Moment: the three black minutes in Marsden Tunnel. Opportunity: the connecting door from Eight, which 'Miss Lark' had paid for in cash. Motive: a father in the ledger, dead by his own hand."],
     q:"Every thread — pin, tunnel, connecting door, locket — draws tight around—",
     opts:[{t:"Miss Wren, the governess",correct:true},{t:"Mr. Hahn, the jeweller"},{t:"Miss Verne, the actress"},{t:"Lieutenant Cross"}],
@@ -467,7 +499,7 @@ const STORY_MIDNIGHT={
     replyNo:"You drift back to the loud jeweller — but he never left the cards. Only one passenger held Eight, the pin, and the grief. Back to the governess.",
     ok:'accuse', no:'accuse'},
 
-  accuse:{head:'THE ACCUSATION', text:[
+  accuse:{head:'THE ACCUSATION', art:'lens', text:[
     "At dawn the train slows for the first station. The passengers gather in the swaying corridor, watching you.",
     "Name the killer aboard the Midnight Line."],
     q:"Who killed the blackmailer Sable?",
@@ -488,6 +520,26 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.rand
 /* ---------- state ---------- */
 let cur=null, deductions=0, answered=0, accusedRight=false, chosen='', locked=false;
 
+const ART={
+ lamp:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6v5"/><path d="M16 13h16l-2 18H18z"/><path d="M18 31h12l-1 7H19z"/><path class="flame" d="M24 16c3 3 3 6 0 9-3-3-3-6 0-9z" fill="currentColor" stroke="none"/></svg>',
+ skull:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 23a10 10 0 1 1 20 0v5l-2 3h-2l-2 3-2-3h-2l-2-3z"/><circle cx="19" cy="23" r="2.6" fill="currentColor" stroke="none"/><circle cx="29" cy="23" r="2.6" fill="currentColor" stroke="none"/><path d="M24 28v3"/></svg>',
+ door:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="14" y="8" width="20" height="32" rx="1"/><circle cx="28" cy="23" r="2.2" fill="currentColor" stroke="none"/><path d="M28 25v4" stroke-linecap="round"/></svg>',
+ bottle:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 8h8v5l3 4v20a3 3 0 0 1-3 3H20a3 3 0 0 1-3-3V17l3-4z"/><path d="M21 25l6 6m0-6l-6 6" stroke-linecap="round"/></svg>',
+ book:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M24 14c-4-3-9-3-13-2v22c4-1 9-1 13 2 4-3 9-3 13-2V12c-4-1-9-1-13 2z"/><path d="M24 14v24"/></svg>',
+ mask:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 14c8-2 16-2 24 0 0 10-4 20-12 20S12 24 12 14z"/><path d="M18 22c1.4-1.4 3.6-1.4 5 0M25 22c1.4-1.4 3.6-1.4 5 0" stroke-linecap="round"/></svg>',
+ note:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 8h14l6 6v26H14z"/><path d="M28 8v6h6"/><path d="M18 24h12M18 30h12M18 18h6" stroke-linecap="round"/></svg>',
+ watch:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="24" cy="27" r="12"/><path d="M24 11v4M21 10h6"/><path d="M24 27v-6M24 27l4 3" stroke-linecap="round"/></svg>',
+ eye:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 24c5-8 27-8 32 0-5 8-27 8-32 0z"/><circle cx="24" cy="24" r="4.5" fill="currentColor" stroke="none"/></svg>',
+ clock:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="24" cy="24" r="15"/><path d="M24 24V13M24 24l-7-4" stroke-linecap="round"/><circle cx="24" cy="24" r="1.6" fill="currentColor" stroke="none"/></svg>',
+ bag:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 18h24v18a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2z"/><path d="M19 18c0-4 2-6 5-6s5 2 5 6"/><path d="M24 24v8M20 28h8" stroke-linecap="round"/></svg>',
+ scales:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M24 10v26M16 36h16M12 16h24"/><path d="M12 16l-4 8h8zM36 16l-4 8h8z"/></svg>',
+ lens:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="21" cy="21" r="11"/><path d="M29 29l9 9" stroke-linecap="round"/><path class="glint" d="M17 17a6 6 0 0 1 5-3" stroke-linecap="round"/></svg>',
+ train:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="12" y="10" width="24" height="28" rx="3"/><rect x="17" y="15" width="14" height="9" rx="1"/><circle cx="19" cy="31" r="2.1"/><circle cx="29" cy="31" r="2.1"/><path d="M18 38v3M30 38v3" stroke-linecap="round"/></svg>',
+ key:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="17" cy="24" r="7"/><path d="M24 24h16M36 24v5M32 24v4" stroke-linecap="round"/></svg>',
+ ticket:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 16h28v6a2 2 0 0 0 0 4v6H10v-6a2 2 0 0 0 0-4z"/><path d="M28 16v16" stroke-dasharray="3 3"/></svg>',
+ pin:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="16" cy="16" r="4" fill="currentColor" stroke="none"/><path d="M19 19L36 36"/></svg>'
+};
+
 /* ---------- engine ---------- */
 function begin(){
   deductions=0; answered=0; accusedRight=false; chosen=''; locked=false;
@@ -500,8 +552,10 @@ function goTo(id){
   cur=STORY.scenes[id]; locked=false;
   $('storyView').scrollTop=0;
   $('fileHead').textContent=cur.head||'CASE FILE';
+  var em=$('emblem'); if(em) em.innerHTML=(cur.art&&ART[cur.art])||'';
   $('chap').textContent=cur.head||'CASE FILE';
   $('fileText').innerHTML=(cur.text||[]).map(function(p){return '<p>'+esc(p)+'</p>';}).join('');
+  if(cur.cast) startCast(cur.cast); else stopCast();
   renderQ();
 }
 function renderQ(){
@@ -581,10 +635,10 @@ const ENDINGS_MIDNIGHT={
           "In the crowd on the platform, a quiet woman in grey adjusts her hat — one pin short — and walks free into the morning. You had the blackmailer's killer in your carriage, and you let her go."]}
 };
 const CASES=[
- {key:'gaslight', id:'qc_gaslight', title:'The Gaslight Affair', tag:'A locked-room poisoning', total:14,
+ {key:'gaslight', id:'qc_gaslight', title:'The Gaslight Affair', tag:'A locked-room poisoning', total:14, cut:'manor',
   hook:"Clement Christie lies poisoned in his bolted study. Four souls under one roof, a city of rain outside. Read the scene, trust your deductions \u2014 your verdict writes the ending.",
   story:STORY_GASLIGHT, endings:ENDINGS_GASLIGHT},
- {key:'midnight', id:'qc_midnight', title:'The Midnight Line', tag:'Murder aboard the night express', total:13,
+ {key:'midnight', id:'qc_midnight', title:'The Midnight Line', tag:'Murder aboard the night express', total:13, cut:'train',
   hook:"A blackmailer lies dead in a bolted sleeper as the night express tears through the storm. No one steps off until dawn. Find the killer in your carriage.",
   story:STORY_MIDNIGHT, endings:ENDINGS_MIDNIGHT}
 ];
@@ -709,11 +763,220 @@ function draw(dt){
 }
 let last=0;
 function frame(ts){ const dt=Math.min(0.05,(ts-last)/1000||0); last=ts; draw(dt); requestAnimationFrame(frame); }
-window.addEventListener('resize',rsize);
+window.addEventListener('resize',function(){ rsize(); if(cutRunning) sizeCut(); if(castRunning) sizeCast(); });
+
+/* ---------- cinematic cutscenes + character cameos ---------- */
+function rgb(r,g,b){return 'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';}
+let cutCv=null,cctx=null,cutW=0,cutH=0,cutKind='',cutT0=0,cutPrev=0,cutDone=null,cutRunning=false;
+let cDrops=[],cPuffs=[],cFlash=0,cFlashNext=1.2,cScroll=0,cWheel=0,cBolt=null,cBoltLife=0,cFunnelX=0,cFunnelY=0;
+function cutDPR(){return Math.min(window.devicePixelRatio||1,2);}
+function sizeCut(){ if(!cutCv) return; var r=cutCv.getBoundingClientRect(); cutW=r.width||W||390; cutH=r.height||H||760;
+  var d=cutDPR(); cutCv.width=cutW*d; cutCv.height=cutH*d; cctx.setTransform(d,0,0,d,0,0);
+  cDrops=[]; var n=reduceMotion?0:Math.round(cutW*0.5);
+  for(var i=0;i<n;i++) cDrops.push({x:Math.random()*cutW,y:Math.random()*cutH,l:10+Math.random()*22,s:520+Math.random()*420}); }
+function makeBolt(){ var x=cutW*(0.2+Math.random()*0.6),y=0,pts=[[x,y]],seg=cutH/(8+Math.random()*4);
+  while(y<cutH*0.62){ y+=seg; x+=(Math.random()-0.5)*cutW*0.13; pts.push([x,y]); } return pts; }
+function playCutscene(kind,done){ cutDone=done||null; cutCv=$('cutCv');
+  if(!cutCv||reduceMotionCut()){ skipCut(); return; }
+  if(!cctx) cctx=cutCv.getContext('2d'); cutKind=kind||'manor';
+  $('cutTitle').textContent = cutKind==='train' ? 'The Midnight Line' : 'The Gaslight Affair';
+  $('cutSub').textContent = cutKind==='train' ? 'The night express · murder aboard' : 'Christie Manor · a death behind locked doors';
+  $('cutScr').classList.remove('hide'); sizeCut();
+  cFlash=0; cFlashNext=0.6+Math.random()*0.9; cScroll=0; cWheel=0; cPuffs=[]; cBolt=null; cBoltLife=0;
+  cutT0=0; cutPrev=0; cutRunning=true; requestAnimationFrame(cutFrame); }
+function reduceMotionCut(){ return reduceMotion; }
+function skipCut(){ if(cutCv) $('cutScr').classList.add('hide'); var d=cutDone; cutDone=null; if(d) d(); }
+function finishCut(){ if(!cutRunning){ if($('cutScr')) $('cutScr').classList.add('hide'); return; }
+  cutRunning=false; $('cutScr').classList.add('hide'); var d=cutDone; cutDone=null; if(d) d(); }
+function cutFrame(ts){ if(!cutRunning) return;
+  if(!cutT0){cutT0=ts;cutPrev=ts;} var dt=Math.min(0.05,(ts-cutPrev)/1000||0); cutPrev=ts; var el=(ts-cutT0)/1000;
+  cFlashNext-=dt; if(cFlashNext<=0){ cFlash=1; cBolt=makeBolt(); cBoltLife=0.22; cFlashNext=1.8+Math.random()*3.4; thunder(0.2+Math.random()*0.7); }
+  if(cFlash>0){ cFlash-=dt*(cFlash>0.55?2.6:1.5); if(cFlash<0)cFlash=0; }
+  if(cBoltLife>0) cBoltLife-=dt;
+  cctx.clearRect(0,0,cutW,cutH);
+  if(cutKind==='train') drawTrainScene(dt,el); else drawManorScene(dt,el);
+  drawCutRain(dt); drawCutVignette();
+  requestAnimationFrame(cutFrame); }
+function drawCutRain(dt){ cctx.strokeStyle='rgba(180,200,230,'+(0.30+cFlash*0.4)+')'; cctx.lineWidth=1.1;
+  for(var i=0;i<cDrops.length;i++){ var d=cDrops[i]; cctx.beginPath(); cctx.moveTo(d.x,d.y); cctx.lineTo(d.x-2.6,d.y+d.l); cctx.stroke();
+    d.y+=d.s*dt; d.x-=d.s*dt*0.17; if(d.y>cutH){ d.y=-d.l; d.x=Math.random()*cutW; } } }
+function drawCutVignette(){ var g=cctx.createRadialGradient(cutW/2,cutH*0.5,cutH*0.18,cutW/2,cutH*0.5,cutH*0.78);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.62)'); cctx.fillStyle=g; cctx.fillRect(0,0,cutW,cutH);
+  if(cFlash>0){ cctx.fillStyle='rgba(205,218,242,'+(cFlash*0.16)+')'; cctx.fillRect(0,0,cutW,cutH); }
+  if(cBolt&&cBoltLife>0){ var a=Math.min(1,cBoltLife*5); cctx.strokeStyle='rgba(225,233,255,'+a+')'; cctx.lineWidth=2.4;
+    cctx.beginPath(); cctx.moveTo(cBolt[0][0],cBolt[0][1]); for(var i=1;i<cBolt.length;i++) cctx.lineTo(cBolt[i][0],cBolt[i][1]); cctx.stroke();
+    cctx.strokeStyle='rgba(225,233,255,'+(a*0.4)+')'; cctx.lineWidth=5; cctx.stroke(); } }
+function roundRect(x,y,w,h,r){ r=Math.min(r,w/2,h/2); cctx.beginPath(); cctx.moveTo(x+r,y); cctx.lineTo(x+w-r,y);
+  cctx.quadraticCurveTo(x+w,y,x+w,y+r); cctx.lineTo(x+w,y+h-r); cctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  cctx.lineTo(x+r,y+h); cctx.quadraticCurveTo(x,y+h,x,y+h-r); cctx.lineTo(x,y+r); cctx.quadraticCurveTo(x,y,x+r,y); cctx.closePath(); }
+function warmWin(x,y,w,h,a){ if(a<=0)a=0.05; var g=cctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'rgba(255,196,120,'+(0.95*a)+')'); g.addColorStop(1,'rgba(220,150,70,'+(0.75*a)+')'); cctx.fillStyle=g; cctx.fillRect(x,y,w,h);
+  var gg=cctx.createRadialGradient(x+w/2,y+h/2,0,x+w/2,y+h/2,w*2); gg.addColorStop(0,'rgba(255,180,90,'+(0.18*a)+')'); gg.addColorStop(1,'rgba(255,180,90,0)');
+  cctx.fillStyle=gg; cctx.fillRect(x-w,y-h,w*3,h*3); }
+function drawMoon(x,y,r){ var g=cctx.createRadialGradient(x,y,0,x,y,r*5); g.addColorStop(0,'rgba(210,220,240,0.5)');
+  g.addColorStop(0.4,'rgba(160,175,205,0.12)'); g.addColorStop(1,'rgba(160,175,205,0)'); cctx.fillStyle=g; cctx.beginPath(); cctx.arc(x,y,r*5,0,7); cctx.fill();
+  cctx.fillStyle='rgba(225,232,245,0.85)'; cctx.beginPath(); cctx.arc(x,y,r,0,7); cctx.fill();
+  cctx.fillStyle='rgba(18,22,32,0.45)'; roundRect(x-r*2.4,y-r*0.3,r*4.8,r*0.5,r*0.25); cctx.fill(); }
+function drawHills(baseY,off,color,amp){ cctx.fillStyle=color; cctx.beginPath(); cctx.moveTo(0,cutH); var step=24;
+  for(var x=0;x<=cutW+step;x+=step){ var y=baseY+Math.sin((x+off)*0.012)*amp+Math.sin((x+off)*0.031)*amp*0.4; cctx.lineTo(x,y); }
+  cctx.lineTo(cutW,cutH); cctx.closePath(); cctx.fill(); }
+/* --- MANOR --- */
+function drawManorScene(dt,el){ var cw=cutW,ch=cutH,b=cFlash*0.5;
+  var sky=cctx.createLinearGradient(0,0,0,ch); sky.addColorStop(0,rgb(14+40*b,18+44*b,34+50*b));
+  sky.addColorStop(0.62,rgb(30+40*b,32+40*b,50+40*b)); sky.addColorStop(1,rgb(8,9,14)); cctx.fillStyle=sky; cctx.fillRect(0,0,cw,ch);
+  drawMoon(cw*0.26,ch*0.20,ch*0.045); drawHills(ch*0.60,40,'rgba(10,14,20,0.9)',ch*0.04);
+  var base=ch*0.70; cctx.fillStyle='rgb(7,8,12)'; cctx.fillRect(0,base,cw,ch-base);
+  drawManor(cw,ch,base,b); drawTree(cw*0.93,ch); drawLampPost(cw*0.12,base,ch);
+  for(var i=0;i<3;i++){ var fx=((el*8+i*cw*0.45)%(cw*1.4))-cw*0.2; var fy=base-ch*0.015;
+    var g=cctx.createRadialGradient(fx,fy,0,fx,fy,ch*0.17); g.addColorStop(0,'rgba(120,138,166,0.10)'); g.addColorStop(1,'rgba(120,138,166,0)');
+    cctx.fillStyle=g; cctx.beginPath(); cctx.arc(fx,fy,ch*0.17,0,7); cctx.fill(); } }
+function drawManor(cw,ch,base,b){ var mL=cw*0.30,mR=cw*0.70,bodyTop=base-ch*0.20; cctx.fillStyle='rgb(5,6,10)';
+  cctx.fillRect(cw*0.20,base-ch*0.13,cw*0.12,ch*0.13);
+  cctx.fillRect(mL,bodyTop,mR-mL,base-bodyTop);
+  cctx.beginPath(); cctx.moveTo(mL-cw*0.02,bodyTop); cctx.lineTo((mL+mR)/2,bodyTop-ch*0.10); cctx.lineTo(mR+cw*0.02,bodyTop); cctx.closePath(); cctx.fill();
+  cctx.beginPath(); cctx.moveTo(cw*0.19,base-ch*0.13); cctx.lineTo(cw*0.26,base-ch*0.185); cctx.lineTo(cw*0.33,base-ch*0.13); cctx.closePath(); cctx.fill();
+  var tL=cw*0.62,tW=cw*0.10,tTop=base-ch*0.32; cctx.fillRect(tL,tTop,tW,base-tTop);
+  cctx.beginPath(); cctx.moveTo(tL-cw*0.01,tTop); cctx.lineTo(tL+tW/2,tTop-ch*0.10); cctx.lineTo(tL+tW+cw*0.01,tTop); cctx.closePath(); cctx.fill();
+  cctx.fillRect(mL+(mR-mL)*0.2,bodyTop-ch*0.055,cw*0.02,ch*0.055); cctx.fillRect(mL+(mR-mL)*0.72,bodyTop-ch*0.045,cw*0.02,ch*0.045);
+  if(b>0){ cctx.strokeStyle='rgba(150,180,220,'+(b*0.9)+')'; cctx.lineWidth=1.4;
+    cctx.beginPath(); cctx.moveTo(mL-cw*0.02,bodyTop); cctx.lineTo((mL+mR)/2,bodyTop-ch*0.10); cctx.lineTo(mR+cw*0.02,bodyTop); cctx.stroke();
+    cctx.beginPath(); cctx.moveTo(tL-cw*0.01,tTop); cctx.lineTo(tL+tW/2,tTop-ch*0.10); cctx.lineTo(tL+tW+cw*0.01,tTop); cctx.stroke(); }
+  var t=performance.now()*0.001; function fl(i){ return (0.7+0.3*Math.sin(t*7+i*1.7))*(Math.random()<0.04?0.5:1); }
+  warmWin(mL+(mR-mL)*0.16,bodyTop+ch*0.05,cw*0.05,ch*0.06,0.85*fl(0));
+  warmWin(mL+(mR-mL)*0.60,bodyTop+ch*0.05,cw*0.05,ch*0.06,0.85*fl(1));
+  warmWin(tL+tW*0.2,tTop+ch*0.045,tW*0.6,ch*0.05,0.9*fl(2));
+  cctx.fillStyle='rgba(40,52,70,0.5)'; cctx.fillRect(mL+(mR-mL)*0.40,bodyTop+ch*0.05,cw*0.05,ch*0.06);
+  cctx.fillStyle='rgba(40,52,70,0.5)'; cctx.fillRect(cw*0.23,base-ch*0.09,cw*0.05,ch*0.05); }
+function drawTree(x,ch){ cctx.strokeStyle='rgb(4,5,8)'; cctx.lineCap='round'; cctx.lineWidth=ch*0.013;
+  cctx.beginPath(); cctx.moveTo(x,0); cctx.quadraticCurveTo(x-ch*0.06,ch*0.10,x-ch*0.18,ch*0.15); cctx.stroke();
+  cctx.lineWidth=ch*0.006; cctx.beginPath(); cctx.moveTo(x-ch*0.05,ch*0.07); cctx.quadraticCurveTo(x-ch*0.10,ch*0.06,x-ch*0.17,ch*0.02); cctx.stroke();
+  cctx.beginPath(); cctx.moveTo(x-ch*0.12,ch*0.12); cctx.quadraticCurveTo(x-ch*0.15,ch*0.17,x-ch*0.24,ch*0.17); cctx.stroke(); cctx.lineCap='butt'; }
+function drawLampPost(x,base,ch){ cctx.strokeStyle='rgb(6,7,11)'; cctx.lineWidth=ch*0.01;
+  cctx.beginPath(); cctx.moveTo(x,base); cctx.lineTo(x,base-ch*0.22); cctx.stroke();
+  cctx.fillStyle='rgb(8,9,13)'; cctx.fillRect(x-ch*0.018,base-ch*0.255,ch*0.036,ch*0.04);
+  var fl=0.7+0.3*Math.sin(performance.now()*0.012)+(Math.random()<0.08?-0.3:0); var gx=x,gy=base-ch*0.235;
+  var g=cctx.createRadialGradient(gx,gy,0,gx,gy,ch*0.14); g.addColorStop(0,'rgba(255,196,120,'+(0.5*fl)+')'); g.addColorStop(1,'rgba(255,196,120,0)');
+  cctx.fillStyle=g; cctx.beginPath(); cctx.arc(gx,gy,ch*0.14,0,7); cctx.fill();
+  cctx.fillStyle='rgba(255,212,144,'+(0.85*fl)+')'; cctx.beginPath(); cctx.arc(gx,gy,ch*0.006,0,7); cctx.fill(); }
+/* --- TRAIN --- */
+function drawTrainScene(dt,el){ var cw=cutW,ch=cutH,b=cFlash*0.5; var speed=cw*0.55;
+  cScroll+=speed*dt; cWheel+=(speed/(ch*0.05))*dt;
+  var sky=cctx.createLinearGradient(0,0,0,ch); sky.addColorStop(0,rgb(16+44*b,20+46*b,36+50*b));
+  sky.addColorStop(0.55,rgb(28+44*b,30+44*b,46+44*b)); sky.addColorStop(1,rgb(6,7,11)); cctx.fillStyle=sky; cctx.fillRect(0,0,cw,ch);
+  drawMoon(cw*0.78,ch*0.20,ch*0.05);
+  drawHills(ch*0.52,cScroll*0.12,'rgba(12,16,24,0.9)',ch*0.05); drawHills(ch*0.60,cScroll*0.22,'rgb(8,11,17)',ch*0.08);
+  drawPoles(); var trackY=ch*0.72; drawTrack(trackY); drawTrain(cw*0.5,trackY); drawSteam(dt); }
+function drawPoles(){ var D=cutW*0.5,off=(cScroll*0.5)%D,topY=cutH*0.30,baseY=cutH*0.70;
+  var n=Math.ceil(cutW/D)+2; cctx.strokeStyle='rgba(6,8,12,0.95)'; cctx.lineWidth=3;
+  for(var i=-1;i<=n;i++){ var x=i*D-off; cctx.beginPath(); cctx.moveTo(x,baseY); cctx.lineTo(x,topY); cctx.stroke();
+    cctx.beginPath(); cctx.moveTo(x-12,topY+8); cctx.lineTo(x+12,topY+8); cctx.stroke(); }
+  cctx.strokeStyle='rgba(6,8,12,0.55)'; cctx.lineWidth=1.2;
+  for(var j=-1;j<=n;j++){ var x2=j*D-off; cctx.beginPath(); cctx.moveTo(x2,topY+8); cctx.quadraticCurveTo(x2+D*0.5,topY+24,x2+D,topY+8); cctx.stroke(); } }
+function drawTrack(y){ cctx.fillStyle='rgb(7,9,13)'; cctx.fillRect(0,y,cutW,cutH-y);
+  var tg=34,off=cScroll%tg; cctx.strokeStyle='rgba(40,44,54,0.8)'; cctx.lineWidth=6;
+  for(var x=-tg;x<cutW+tg;x+=tg){ var px=x-off; cctx.beginPath(); cctx.moveTo(px,y+10); cctx.lineTo(px-8,y+22); cctx.stroke(); }
+  cctx.strokeStyle='rgba(120,130,150,'+(0.5+cFlash*0.4)+')'; cctx.lineWidth=2;
+  cctx.beginPath(); cctx.moveTo(0,y+8); cctx.lineTo(cutW,y+8); cctx.stroke(); cctx.beginPath(); cctx.moveTo(0,y+18); cctx.lineTo(cutW,y+18); cctx.stroke(); }
+function wheel(x,y,r){ cctx.fillStyle='rgb(14,16,22)'; cctx.beginPath(); cctx.arc(x,y,r,0,7); cctx.fill();
+  cctx.strokeStyle='rgba(90,100,120,0.7)'; cctx.lineWidth=1.4; cctx.beginPath(); cctx.arc(x,y,r,0,7); cctx.stroke();
+  cctx.save(); cctx.translate(x,y); cctx.rotate(cWheel); cctx.strokeStyle='rgba(70,78,96,0.7)'; cctx.lineWidth=1.2;
+  for(var s=0;s<6;s++){ cctx.rotate(Math.PI/3); cctx.beginPath(); cctx.moveTo(0,0); cctx.lineTo(0,-r*0.82); cctx.stroke(); } cctx.restore();
+  cctx.fillStyle='rgba(120,130,150,0.8)'; cctx.beginPath(); cctx.arc(x,y,r*0.16,0,7); cctx.fill(); }
+function drawCar(x1,x2,top,bot,wy,wr,idx){ var w=x2-x1; cctx.fillStyle='rgb(12,14,20)'; roundRect(x1,top,w,bot-top,5); cctx.fill();
+  cctx.strokeStyle='rgba(90,100,120,'+(0.3+cFlash*0.4)+')'; cctx.lineWidth=1.4; cctx.beginPath(); cctx.moveTo(x1+4,top); cctx.lineTo(x2-4,top); cctx.stroke();
+  var n=4,pad=w*0.10,gapw=(w-pad*2)/n,ww=gapw*0.62,wh=(bot-top)*0.34,wy0=top+(bot-top)*0.22;
+  for(var i=0;i<n;i++){ var wx=x1+pad+i*gapw+(gapw-ww)/2; var dark=(idx===1&&i===2); var fl=dark?(Math.random()<0.5?0:1):1; warmWin(wx,wy0,ww,wh,dark?0.06:0.85*fl); }
+  wheel(x1+w*0.26,wy,wr); wheel(x2-w*0.26,wy,wr);
+  cctx.strokeStyle='rgb(20,22,30)'; cctx.lineWidth=3; cctx.beginPath(); cctx.moveTo(x2,bot-6); cctx.lineTo(x2+8,bot-6); cctx.stroke(); }
+function drawLoco(L,R,top,bot,wy,wr){ var w=R-L,h=bot-top; cctx.fillStyle='rgb(12,14,20)';
+  var cabW=w*0.26; roundRect(L,top-h*0.18,cabW,h*1.18,5); cctx.fill();
+  roundRect(L+cabW*0.7,top+h*0.16,w*0.78,h*0.66,h*0.32); cctx.fill();
+  cctx.beginPath(); cctx.moveTo(R-2,top+h*0.5); cctx.lineTo(R+w*0.07,bot); cctx.lineTo(R-w*0.06,bot); cctx.closePath(); cctx.fill();
+  var fx=L+cabW*0.9+w*0.10; cctx.fillRect(fx,top-h*0.18,w*0.07,h*0.36); cctx.fillRect(fx-w*0.013,top-h*0.20,w*0.096,h*0.05);
+  cFunnelX=fx+w*0.035; cFunnelY=top-h*0.18;
+  cctx.beginPath(); cctx.arc(fx+w*0.20,top+h*0.16,h*0.12,Math.PI,0); cctx.fill();
+  warmWin(L+cabW*0.2,top,cabW*0.6,h*0.32,0.8);
+  var hx=R-w*0.02,hy=top+h*0.44;
+  var beam=cctx.createLinearGradient(hx,hy,hx+w*0.6,hy); beam.addColorStop(0,'rgba(255,224,150,0.22)'); beam.addColorStop(1,'rgba(255,224,150,0)');
+  cctx.fillStyle=beam; cctx.beginPath(); cctx.moveTo(hx,hy); cctx.lineTo(hx+w*0.7,hy-h*0.55); cctx.lineTo(hx+w*0.7,hy+h*0.55); cctx.closePath(); cctx.fill();
+  var hg=cctx.createRadialGradient(hx,hy,0,hx,hy,h*1.2); hg.addColorStop(0,'rgba(255,224,150,0.95)'); hg.addColorStop(1,'rgba(255,224,150,0)');
+  cctx.fillStyle=hg; cctx.beginPath(); cctx.arc(hx,hy,h*1.1,0,7); cctx.fill();
+  wheel(L+w*0.52,wy,wr*1.5); wheel(L+w*0.16,wy,wr*0.8); wheel(R-w*0.20,wy,wr*0.8); }
+function drawTrain(cx,trackY){ var ch=cutH,cw=cutW; var bodyH=ch*0.13,bodyBot=trackY-2,bodyTop=bodyBot-bodyH;
+  var wy=bodyBot+bodyH*0.16,wr=bodyH*0.26; var locoR=cx+cw*0.32,locoL=cx+cw*0.06,carW=cw*0.25,gap=cw*0.014;
+  var rightEdge=locoL-gap; for(var c=0;c<3;c++){ var x1=rightEdge-carW; drawCar(x1,rightEdge,bodyTop,bodyBot,wy,wr,c); rightEdge=x1-gap; }
+  drawLoco(locoL,locoR,bodyTop,bodyBot,wy,wr); }
+function drawSteam(dt){ if(!reduceMotion && cFunnelX && cPuffs.length<34) cPuffs.push({x:cFunnelX,y:cFunnelY,r:cutH*0.012,vx:-cutW*0.11-Math.random()*cutW*0.05,vy:-cutH*0.04-Math.random()*cutH*0.03,life:1,t:Math.random()*6});
+  for(var i=cPuffs.length-1;i>=0;i--){ var p=cPuffs[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.t+=dt; p.x+=Math.sin(p.t)*6*dt; p.r+=cutH*0.03*dt; p.life-=dt*0.32;
+    if(p.life<=0){ cPuffs.splice(i,1); continue; } var a=p.life*0.22*(0.6+cFlash*0.6);
+    var g=cctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r); g.addColorStop(0,'rgba(200,210,225,'+a+')'); g.addColorStop(1,'rgba(200,210,225,0)');
+    cctx.fillStyle=g; cctx.beginPath(); cctx.arc(p.x,p.y,p.r,0,7); cctx.fill(); } }
+function thunder(delay){ if(muted||!actx) return; try{ var t0=actx.currentTime+(delay||0); var dur=1.5+Math.random()*0.8;
+  var sr=actx.sampleRate||44100; var buf=actx.createBuffer(1,Math.floor(sr*dur),sr); var d=buf.getChannelData(0);
+  for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  var src=actx.createBufferSource(); src.buffer=buf; var lp=actx.createBiquadFilter(); lp.type='lowpass';
+  lp.frequency.setValueAtTime(700,t0); lp.frequency.exponentialRampToValueAtTime(90,t0+dur);
+  var g=actx.createGain(); g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(0.42,t0+0.06); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  src.connect(lp); lp.connect(g); g.connect(actx.destination);
+  var o=actx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(56,t0); o.frequency.exponentialRampToValueAtTime(30,t0+dur);
+  var og=actx.createGain(); og.gain.setValueAtTime(0.0001,t0); og.gain.linearRampToValueAtTime(0.30,t0+0.08); og.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(og); og.connect(actx.destination); src.start(t0); src.stop(t0+dur); o.start(t0); o.stop(t0+dur);
+}catch(e){} }
+/* ---------- character cameos ---------- */
+let castCv=null,cctx2=null,castW=0,castH=0,castKind='',castT0=0,castPrev=0,castRunning=false;
+function sizeCast(){ if(!castCv) return; var r=castCv.getBoundingClientRect(); castW=r.width||280; castH=r.height||128;
+  var d=cutDPR(); castCv.width=castW*d; castCv.height=castH*d; cctx2.setTransform(d,0,0,d,0,0); }
+function startCast(kind){ castCv=$('castCv'); if(!castCv) return; if(!cctx2) cctx2=castCv.getContext('2d');
+  castKind=kind; castCv.classList.remove('hide'); sizeCast(); castT0=0; castPrev=0;
+  if(reduceMotion){ castFrameDraw(0,0); return; } castRunning=true; requestAnimationFrame(castFrame); }
+function stopCast(){ castRunning=false; if(castCv) castCv.classList.add('hide'); }
+function castFrame(ts){ if(!castRunning) return; if(!castT0){castT0=ts;castPrev=ts;}
+  var dt=Math.min(0.05,(ts-castPrev)/1000||0); castPrev=ts; var el=(ts-castT0)/1000; castFrameDraw(dt,el); requestAnimationFrame(castFrame); }
+function glint(X,x,y,r,el){ var a=0.5+0.5*Math.sin((el||0)*4); X.fillStyle='rgba(255,240,200,'+a+')'; X.beginPath(); X.arc(x,y,r,0,7); X.fill(); }
+function rrX(X,x,y,w,h,r){ X.beginPath(); X.moveTo(x+r,y); X.lineTo(x+w-r,y); X.quadraticCurveTo(x+w,y,x+w,y+r); X.lineTo(x+w,y+h-r);
+  X.quadraticCurveTo(x+w,y+h,x+w-r,y+h); X.lineTo(x+r,y+h); X.quadraticCurveTo(x,y+h,x,y+h-r); X.lineTo(x,y+r); X.quadraticCurveTo(x,y,x+r,y); X.closePath(); }
+function castFrameDraw(dt,el){ var cw=castW,ch=castH,X=cctx2; if(!X) return;
+  var bg=X.createLinearGradient(0,0,0,ch); bg.addColorStop(0,'rgb(18,20,28)'); bg.addColorStop(1,'rgb(6,7,11)'); X.fillStyle=bg; X.fillRect(0,0,cw,ch);
+  var sway=reduceMotion?0:Math.sin(el*0.8)*cw*0.04; var lx=cw*0.5+sway;
+  var cone=X.createRadialGradient(lx,-ch*0.3,0,lx,ch*0.3,ch*1.4); cone.addColorStop(0,'rgba(255,236,196,0.17)'); cone.addColorStop(0.5,'rgba(255,236,196,0.05)'); cone.addColorStop(1,'rgba(255,236,196,0)');
+  X.fillStyle=cone; X.fillRect(0,0,cw,ch);
+  var fx=cw*0.5,baseY=ch*1.04,R=ch*0.17;
+  X.fillStyle='#04060a'; X.beginPath(); X.moveTo(fx-R*3.0,baseY); X.quadraticCurveTo(fx-R*1.7,baseY-R*2.0,fx,baseY-R*2.0); X.quadraticCurveTo(fx+R*1.7,baseY-R*2.0,fx+R*3.0,baseY); X.closePath(); X.fill();
+  X.fillRect(fx-R*0.42,baseY-R*2.4,R*0.84,R*0.9); var hy=baseY-R*3.0; X.beginPath(); X.arc(fx,hy,R,0,7); X.fill();
+  castAccessory(X,castKind,fx,hy,R,baseY,el);
+  var rim=0.22+0.16*Math.sin(el*2.2); X.strokeStyle='rgba(255,214,156,'+rim+')'; X.lineWidth=2.2;
+  X.beginPath(); X.arc(fx,hy,R,-1.15,0.35); X.stroke(); X.beginPath(); X.moveTo(fx+R*0.95,hy+R*0.3); X.quadraticCurveTo(fx+R*2.2,baseY-R*1.4,fx+R*2.9,baseY); X.stroke();
+  if(!reduceMotion){ X.strokeStyle='rgba(180,200,230,0.16)'; X.lineWidth=1; for(var i=0;i<14;i++){ var rx=(i*53+el*120)%cw; var ry=(i*97+el*260)%ch; X.beginPath(); X.moveTo(rx,ry); X.lineTo(rx-2,ry+8); X.stroke(); } } }
+function castAccessory(X,k,fx,hy,R,baseY,el){ X.fillStyle='#04060a';
+  if(k==='widow'){ X.beginPath(); X.arc(fx,hy-R*0.2,R*1.05,Math.PI,0); X.fill(); X.fillRect(fx-R*1.05,hy-R*0.2,R*2.1,R*0.16);
+    X.fillStyle='rgba(8,10,16,0.5)'; X.beginPath(); X.moveTo(fx-R*0.9,hy-R*0.05); X.quadraticCurveTo(fx,hy+R*1.0,fx+R*0.9,hy-R*0.05); X.lineTo(fx+R*0.9,hy+R*1.2); X.quadraticCurveTo(fx,hy+R*1.8,fx-R*0.9,hy+R*1.2); X.closePath(); X.fill();
+    glint(X,fx,baseY-R*1.6,R*0.12,el); }
+  else if(k==='nephew'){ X.beginPath(); X.arc(fx-R*0.4,hy-R*0.7,R*0.42,0,7); X.arc(fx+R*0.08,hy-R*0.9,R*0.46,0,7); X.arc(fx+R*0.5,hy-R*0.6,R*0.38,0,7); X.fill();
+    X.beginPath(); X.moveTo(fx-R*1.0,baseY-R*1.7); X.lineTo(fx-R*1.7,baseY-R*0.2); X.lineTo(fx-R*0.55,baseY-R*0.7); X.closePath();
+    X.moveTo(fx+R*1.0,baseY-R*1.7); X.lineTo(fx+R*1.7,baseY-R*0.2); X.lineTo(fx+R*0.55,baseY-R*0.7); X.closePath(); X.fill(); }
+  else if(k==='butler'){ X.fillStyle='rgba(228,230,238,0.85)'; X.beginPath(); X.moveTo(fx-R*0.7,baseY-R*1.95); X.lineTo(fx,baseY-R*1.2); X.lineTo(fx+R*0.7,baseY-R*1.95); X.closePath(); X.fill();
+    X.fillStyle='#04060a'; X.beginPath(); X.moveTo(fx-R*0.5,baseY-R*1.5); X.lineTo(fx-R*0.05,baseY-R*1.25); X.lineTo(fx-R*0.5,baseY-R*1.0); X.closePath();
+    X.moveTo(fx+R*0.5,baseY-R*1.5); X.lineTo(fx+R*0.05,baseY-R*1.25); X.lineTo(fx+R*0.5,baseY-R*1.0); X.closePath(); X.fill();
+    X.strokeStyle='rgba(200,210,225,0.5)'; X.lineWidth=2; X.beginPath(); X.moveTo(fx+R*2.1,baseY-R*0.4); X.lineTo(fx+R*2.9,baseY-R*1.0); X.stroke();
+    X.fillStyle='rgba(185,195,210,0.5)'; X.beginPath(); X.arc(fx+R*3.1,baseY-R*1.1,R*0.5,Math.PI,0,true); X.fill(); }
+  else if(k==='doctor'){ X.strokeStyle='rgba(220,225,235,0.7)'; X.lineWidth=2; X.beginPath(); X.arc(fx-R*0.38,hy+R*0.05,R*0.27,0,7); X.arc(fx+R*0.38,hy+R*0.05,R*0.27,0,7); X.moveTo(fx-R*0.11,hy+R*0.05); X.lineTo(fx+R*0.11,hy+R*0.05); X.stroke();
+    glint(X,fx-R*0.30,hy-R*0.04,R*0.08,el); X.fillStyle='#070a10'; rrX(X,fx+R*1.7,baseY-R*1.05,R*1.2,R*0.8,4); X.fill();
+    X.strokeStyle='rgba(120,130,150,0.5)'; X.lineWidth=2; X.beginPath(); X.moveTo(fx+R*2.0,baseY-R*1.05); X.quadraticCurveTo(fx+R*2.3,baseY-R*1.45,fx+R*2.6,baseY-R*1.05); X.stroke(); }
+  else if(k==='actress'){ X.beginPath(); X.moveTo(fx-R*2.1,hy-R*0.3); X.quadraticCurveTo(fx,hy-R*1.7,fx+R*2.1,hy-R*0.3); X.quadraticCurveTo(fx,hy-R*0.9,fx-R*2.1,hy-R*0.3); X.closePath(); X.fill();
+    X.beginPath(); X.arc(fx,hy-R*0.7,R*0.85,Math.PI,0); X.fill();
+    X.strokeStyle='rgb(18,20,28)'; X.lineWidth=R*0.20; X.lineCap='round'; X.beginPath(); X.moveTo(fx+R*0.8,hy-R*1.0); X.quadraticCurveTo(fx+R*2.1,hy-R*2.5,fx+R*1.1,hy-R*3.1); X.stroke(); X.lineCap='butt'; }
+  else if(k==='jeweller'){ var g=X.createRadialGradient(fx-R*0.2,hy-R*0.5,0,fx-R*0.2,hy-R*0.5,R*0.95); g.addColorStop(0,'rgba(120,128,144,0.22)'); g.addColorStop(1,'rgba(120,128,144,0)'); X.fillStyle=g; X.beginPath(); X.arc(fx,hy,R,0,7); X.fill();
+    X.strokeStyle='rgba(210,216,228,0.7)'; X.lineWidth=2.4; X.beginPath(); X.arc(fx+R*0.4,hy+R*0.05,R*0.3,0,7); X.stroke(); glint(X,fx+R*0.5,hy-R*0.05,R*0.1,el); }
+  else if(k==='soldier'){ X.fillStyle='#04060a'; X.fillRect(fx-R*1.0,hy-R*0.9,R*2.0,R*0.5); X.beginPath(); X.arc(fx,hy-R*0.9,R*1.0,Math.PI,0); X.fill();
+    X.beginPath(); X.moveTo(fx-R*1.0,hy-R*0.45); X.lineTo(fx-R*1.7,hy-R*0.2); X.lineTo(fx-R*0.9,hy-R*0.28); X.closePath(); X.fill(); glint(X,fx,hy-R*0.75,R*0.1,el); }
+  else if(k==='governess'){ X.beginPath(); X.arc(fx+R*0.05,hy-R*0.95,R*0.46,0,7); X.fill(); X.fillStyle='rgba(228,230,238,0.8)'; X.fillRect(fx-R*0.7,baseY-R*1.55,R*1.4,R*0.16); }
+  X.fillStyle='#04060a'; }
 
 /* ---------- wiring ---------- */
-$('startBtn').addEventListener('click',function(){ audioOn(); begin(); });
-$('againBtn').addEventListener('click',function(){ begin(); });
+$('startBtn').addEventListener('click',function(){ audioOn(); var c=CASE; playCutscene(c&&c.cut, begin); });
+$('againBtn').addEventListener('click',function(){ audioOn(); var c=CASE; playCutscene(c&&c.cut, begin); });
+$('cutScr').addEventListener('click',finishCut);
+$('cutSkip').addEventListener('click',function(e){e.stopPropagation();finishCut();});
 $('casesBtn').addEventListener('click',showSelect);
 $('backBtn').addEventListener('click',showSelect);
 $('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
