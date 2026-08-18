@@ -62,6 +62,11 @@
   .go .url{background:rgba(255,255,255,.06); padding:4px 12px; border-radius:8px; border:1px solid var(--board-line); color:var(--gold-hi); text-decoration:none; cursor:pointer;}
   .go a.url:hover{background:rgba(245,178,62,.16); text-decoration:underline;}
   .taphint{margin-top:8px; color:var(--ink-dim); font-size:13px; font-weight:700; opacity:.8;}
+  .joinrow{display:flex; gap:clamp(14px,2vw,28px); align-items:center; flex-wrap:wrap;}
+  .qrwrap{text-align:center;}
+  #qrImg{display:block; width:clamp(120px,15vw,210px); height:auto; aspect-ratio:1/1; background:#fff;
+    padding:9px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.45);}
+  .qrcap{margin-top:8px; font-weight:800; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim);}
   .count{margin-top:14px; font-size:clamp(15px,1.7vw,20px); font-weight:800; color:var(--ink-dim);}
   .count b{color:var(--ink); font-size:1.25em;}
 
@@ -123,12 +128,18 @@
 
     <div class="join">
       <h2>Join the show</h2>
-      <p class="sub">On your phone, open the page and enter this code.</p>
-      <div class="hymn">
-        <div class="cap">Tonight's code</div>
-        <div class="slots" id="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+      <p class="sub">On your phone: scan the QR, or open the page and type the code.</p>
+      <div class="joinrow">
+        <div class="hymn">
+          <div class="cap">Tonight's code</div>
+          <div class="slots" id="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+        </div>
+        <div class="qrwrap" id="qrwrap">
+          <img id="qrImg" alt="QR code to join the show">
+          <div class="qrcap">Scan to join</div>
+        </div>
       </div>
-      <div class="go">Go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
+      <div class="go">or go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
       <div class="taphint">On this device you can just tap the link above to open the player page.</div>
       <div class="count"><b id="count">0</b> in the room</div>
     </div>
@@ -178,7 +189,11 @@ function renderCode(code){
   const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
   const disp=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play.html';
   const a=$('joinUrl'); a.textContent=disp;
-  a.setAttribute('href', (base||'https://tierbrain.github.io')+'/play.html?c='+code);
+  const joinLink=(base||'https://tierbrain.github.io')+'/play.html?c='+code;
+  a.setAttribute('href', joinLink);
+  const qi=$('qrImg'), qw=$('qrwrap');
+  if(qi){ qw.style.display=''; qi.onerror=()=>{ qw.style.display='none'; }; // fallback: URL + code stay visible
+    qi.src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=10&data='+encodeURIComponent(joinLink); }
 }
 
 async function createRoom(){
