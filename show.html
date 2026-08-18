@@ -113,6 +113,12 @@
   .rlabel{font-family:'Fraunces',serif; font-weight:700; color:var(--gold-hi); font-size:clamp(16px,1.9vw,24px);}
   .qnum{font-weight:800; color:var(--ink-dim); font-size:clamp(14px,1.5vw,19px);}
   .qtext{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(22px,3vw,40px); line-height:1.2; margin-bottom:clamp(12px,1.8vw,22px);}
+  .qprompt{font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--teal-hi); font-size:clamp(12px,1.3vw,16px); min-height:1.1em; margin-bottom:6px;}
+  .qtext.verse{font-style:italic; font-size:clamp(21px,2.7vw,36px); line-height:1.34; color:#fbf3e2;
+    border-left:3px solid var(--gold); padding-left:clamp(12px,1.4vw,20px);}
+  .qtext .blank{display:inline-block; min-width:2.6em; border-bottom:3px solid var(--gold-hi); margin:0 .12em;
+    text-align:center; font-style:normal; color:var(--gold-hi); font-weight:700; line-height:1;}
+  .qtext .blank.filled{border-bottom-color:#57d38a; color:#8be6ab;}
   .opts{display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,14px);}
   .opt{display:flex; align-items:center; gap:12px; padding:clamp(11px,1.4vw,17px) clamp(12px,1.5vw,18px);
     border-radius:14px; background:var(--board); border:2px solid transparent; font-weight:800;
@@ -167,6 +173,7 @@
 
       <div id="qPanel" class="hide">
         <div class="qtop"><span class="rlabel" id="rLabel">Round 1 · Rapid-Fire</span><span class="qnum" id="qNum">1 / 8</span></div>
+        <div class="qprompt" id="qPrompt"></div>
         <div class="qtext" id="qText">Get ready…</div>
         <div class="opts" id="opts"></div>
         <div class="timerbar"><div class="fill" id="timerFill"></div></div>
@@ -190,6 +197,7 @@
     <button class="btn go-btn" id="startShow">Start the show ▸</button>
     <button class="btn hide" id="pauseBtn">Pause</button>
     <button class="btn hide" id="skipBtn">Skip ▸</button>
+    <button class="btn go-btn hide" id="nextRoundBtn">Next round ▸</button>
     <button class="btn" id="copyBtn">Copy join link</button>
     <button class="btn warn" id="newBtn">New room</button>
     <span class="hint">The show runs itself once it starts — this desk is just here if you need it.</span>
@@ -308,7 +316,7 @@ start();
 </script>
 
 <script>
-/* ---- Chapter & Verse — Round 1 engine (rapid-fire) ---- */
+/* ---- Chapter & Verse — round engine (Round 1 Rapid-Fire + Round 2 Verse) ---- */
   const BANK_RAPID={
     1:[
       {"q":"Who built an ark to survive a great flood?","correct":"Noah","wrong":["Moses","Abraham","David"]},
@@ -375,83 +383,129 @@ start();
       {"q":"In which garden did Jesus pray on the night of his arrest?","correct":"Gethsemane","wrong":["Eden","Bethany","Siloam"]}
     ]
   };
-const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
-const QWIN=15000, REVEAL=4600, INTRO=4200;
-const G={phase:'lobby', qi:0, questions:[], correct:0, deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
+  const VB_BLANK=[
+   {vref:'John 3:16', text:'For God so loved the {b}, that he gave his one and only Son\u2026', answer:'world', wrong:['earth','people','nations']},
+   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the {b}.', answer:'earth', wrong:['world','seas','skies']},
+   {vref:'Genesis 1:3', text:'God said, \u201cLet there be {b},\u201d and there was light.', answer:'light', wrong:['day','life','sun']},
+   {vref:'Matthew 5:14', text:'You are the {b} of the world.', answer:'light', wrong:['salt','hope','way']},
+   {vref:'John 11:35', text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','spoke']},
+   {vref:'Philippians 4:13', text:'I can do all things through {b}, who strengthens me.', answer:'Christ', wrong:['God','faith','hope']},
+   {vref:'1 Corinthians 13:4', text:'Love is {b} and is kind.', answer:'patient', wrong:['gentle','humble','faithful']},
+   {vref:'John 1:1', text:'In the beginning was the {b}, and the Word was with God\u2026', answer:'Word', wrong:['Light','Son','Truth']},
+   {vref:'Exodus 20:13', text:'You shall not {b}.', answer:'murder', wrong:['steal','lie','covet']},
+   {vref:'Matthew 4:4', text:'Man shall not live by {b} alone\u2026', answer:'bread', wrong:['food','wealth','work']}
+  ];
+  const VB_REF=[
+   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the earth.', wrong:['John 1:1','Genesis 2:1','Psalm 1:1']},
+   {vref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', wrong:['John 1:16','Romans 3:16','1 John 3:16']},
+   {vref:'John 11:35', text:'Jesus wept.', wrong:['Luke 19:41','John 11:33','Matthew 26:75']},
+   {vref:'Philippians 4:13', text:'I can do all things through Christ, who strengthens me.', wrong:['Ephesians 4:13','Philippians 3:14','2 Timothy 4:7']},
+   {vref:'1 Corinthians 13:4', text:'Love is patient and is kind. Love doesn\u2019t envy.', wrong:['1 John 4:8','Romans 13:8','1 Corinthians 13:13']},
+   {vref:'Matthew 5:14', text:'You are the light of the world. A city located on a hill can\u2019t be hidden.', wrong:['John 8:12','Matthew 5:13','Philippians 2:15']},
+   {vref:'John 1:1', text:'In the beginning was the Word, and the Word was with God, and the Word was God.', wrong:['Genesis 1:1','John 3:1','Colossians 1:1']},
+   {vref:'Genesis 1:3', text:'God said, \u201cLet there be light,\u201d and there was light.', wrong:['Genesis 1:1','John 1:5','Psalm 27:1']}
+  ];
 
-function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
-function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-function buildRound(seed){ const r=rng(seed); const out=[];
-  ['1','2','3','4'].forEach(t=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,2).forEach(o=>out.push(o)); });
-  return out.map((o,i)=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {id:'r1q'+i, q:o.q, opts, correct:opts.indexOf(o.correct)}; });
-}
-function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
-  return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
-function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); }
+  const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
+  const INTRO=4200, REVEAL=4600;
+  const ROUND_SEQ=['rapidfire','verse'];
+  const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.'},
+                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse. Name the verse, or fill the blank.'} };
+  const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
-function renderQuestion(q){
-  $('rLabel').textContent='Round 1 · Rapid-Fire';
-  $('qNum').textContent=(G.qi+1)+' / '+G.questions.length;
-  $('qText').textContent=q.q;
-  const box=$('opts'); box.innerHTML='';
-  q.opts.forEach((opt,i)=>{ const m=OPTMETA[i]; const d=document.createElement('div'); d.className='opt';
-    const k=document.createElement('span'); k.className='k'; k.style.background=m.c; k.textContent=m.k;
-    const t=document.createElement('span'); t.className='t'; t.textContent=opt;
-    d.appendChild(k); d.appendChild(t); box.appendChild(d); });
-  $('ansCount').textContent='0'; const f=$('timerFill'); f.style.width='100%'; f.classList.remove('low');
-}
-function renderReveal(q){ const cards=$('opts').children;
-  for(let i=0;i<cards.length;i++){ if(i===q.correct) cards[i].classList.add('correct'); else cards[i].classList.add('dim'); } }
-function renderTimer(now){ const frac=Math.max(0,Math.min(1,(G.deadline-now)/QWIN));
-  const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25); }
-async function pollAnsCount(){ const now=Date.now(); if(now-G.lastAnsPoll<800) return; G.lastAnsPoll=now;
-  try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.questions[G.qi].id+'&select=player_id');
-    const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
+  function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+  function buildRapid(seed){ const r=rng(seed); const out=[];
+    ['1','2','3','4'].forEach(t=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,2).forEach(o=>out.push(o)); });
+    return out.map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
+  function buildVerse(seed){ const r=rng(seed);
+    const blanks=shuf(VB_BLANK.slice(),r).slice(0,4); const used={}; blanks.forEach(b=>used[b.vref]=1);
+    const refs=shuf(VB_REF.slice(),r).filter(x=>!used[x.vref]).slice(0,4);
+    const items=[];
+    blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer)}); });
+    refs.forEach(v=>{ const opts=shuf([v.vref].concat(v.wrong),r); items.push({kind:'verse-ref', ref:v.vref, text:v.text, opts, correct:opts.indexOf(v.vref)}); });
+    return shuf(items,r); }
 
-function startShow(){ if(!room){ alert('Still connecting — give it a second.'); return; }
-  G.questions=buildRound((room.seed|0)||Date.now()); G.qi=0; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
-  showPanel('q'); $('rLabel').textContent='Round 1 · Rapid-Fire'; $('qNum').textContent='';
-  $('qText').textContent='Welcome, everyone! First up \u2014 Rapid-Fire.'; $('opts').innerHTML=''; $('timerFill').style.width='100%';
-  if(window.HOST) window.HOST.set('welcome');
-  $('startShow').classList.add('hide'); $('pauseBtn').classList.remove('hide'); $('skipBtn').classList.remove('hide');
-  setRoom({phase:'round_intro', round_type:'rapidfire', round_index:0, q_index:0, q_id:'', deadline:null, state:{round:'Round 1 \u00b7 Rapid-Fire'}});
-}
-function presentQuestion(){ const q=G.questions[G.qi]; G.correct=q.correct; G.scored=false; G.phase='question'; G.deadline=Date.now()+QWIN;
-  showPanel('q'); renderQuestion(q); if(window.HOST) window.HOST.set('ask');
-  setRoom({phase:'question', q_id:q.id, q_index:G.qi, deadline:new Date(G.deadline).toISOString(),
-    state:{opts:q.opts, round:'Round 1 \u00b7 Rapid-Fire', qnum:G.qi+1, qtotal:G.questions.length}}); }
-async function closeQuestion(){ if(G.scored) return; G.scored=true; const q=G.questions[G.qi]; G.phase='scoring';
-  let ans=[], players=[];
-  try{ ans=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+q.id+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
-  try{ players=(await sb('players?code=eq.'+room.code+'&select=id,score'))||[]; }catch(e){}
-  const byId={}; players.forEach(p=>byId[p.id]=p.score);
-  const seen={}, deltas={};
-  ans.forEach(a=>{ if(seen[a.player_id]) return; seen[a.player_id]=1;
-    if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/QWIN)); deltas[a.player_id]=10+Math.round(5*frac); } });
-  for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
-  G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate');
-  setRoom({phase:'reveal', q_id:q.id, state:{opts:q.opts, correct:q.correct, round:'Round 1 \u00b7 Rapid-Fire', qnum:G.qi+1, qtotal:G.questions.length}});
-  poll(); }
-function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
-function endRound(){ G.phase='round_scores'; showPanel('q'); $('qText').textContent='Round 1 complete! Here are the scores.';
-  $('opts').innerHTML=''; $('qNum').textContent=''; $('rLabel').textContent='Round 1 \u00b7 Rapid-Fire'; $('timerFill').style.width='0%';
-  if(window.HOST) window.HOST.set('celebrate');
-  setRoom({phase:'round_scores', q_id:'', state:{round:'Round 1 complete'}}); poll();
-  $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); }
+  function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
+    return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
+  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); }
 
-function gameTick(){ const now=Date.now();
-  if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250; return; }
-  if(G.phase==='round_intro'){ if(now>=G.introUntil) presentQuestion(); }
-  else if(G.phase==='question'){ renderTimer(now); pollAnsCount(); if(now>=G.deadline) closeQuestion(); }
-  else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); } }
-setInterval(gameTick, 250);
+  function renderBlank(node, text){ node.textContent=''; const parts=text.split('{b}');
+    parts.forEach((p,i)=>{ node.appendChild(document.createTextNode(p)); if(i<parts.length-1){ const b=document.createElement('span'); b.className='blank'; node.appendChild(b); } }); }
+  function renderQuestion(q){
+    $('rLabel').textContent=G.label; $('qNum').textContent=(G.qi+1)+' / '+G.questions.length;
+    const prompt=$('qPrompt'), qt=$('qText'); prompt.textContent=''; qt.classList.remove('verse');
+    if(q.kind==='verse-blank'){ prompt.textContent='Fill in the missing word'; qt.classList.add('verse'); renderBlank(qt, q.text); }
+    else if(q.kind==='verse-ref'){ prompt.textContent='Which reference is this?'; qt.classList.add('verse'); qt.textContent='\u201c'+q.text+'\u201d'; }
+    else { qt.textContent=q.q; }
+    const box=$('opts'); box.innerHTML='';
+    q.opts.forEach((opt,i)=>{ const m=OPTMETA[i]; const d=document.createElement('div'); d.className='opt';
+      const k=document.createElement('span'); k.className='k'; k.style.background=m.c; k.textContent=m.k;
+      const t=document.createElement('span'); t.className='t'; t.textContent=opt;
+      d.appendChild(k); d.appendChild(t); box.appendChild(d); });
+    $('ansCount').textContent='0'; const f=$('timerFill'); f.style.width='100%'; f.classList.remove('low');
+  }
+  function renderReveal(q){ const cards=$('opts').children;
+    for(let i=0;i<cards.length;i++){ cards[i].classList.add(i===q.correct?'correct':'dim'); }
+    if(q.kind && q.kind.indexOf('verse')===0){ $('qPrompt').textContent='\u2014 '+q.ref;
+      if(q.kind==='verse-blank'){ const bl=$('qText').querySelector('.blank'); if(bl){ bl.textContent=q.opts[q.correct]; bl.classList.add('filled'); } } } }
+  function renderTimer(now){ const frac=Math.max(0,Math.min(1,(G.deadline-now)/G.win));
+    const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25); }
+  async function pollAnsCount(){ const now=Date.now(); if(now-G.lastAnsPoll<800) return; G.lastAnsPoll=now;
+    try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id');
+      const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
 
-$('startShow').addEventListener('click', startShow);
-$('pauseBtn').addEventListener('click', ()=>{ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
-$('skipBtn').addEventListener('click', ()=>{ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro') presentQuestion(); });
-// on load, once the room exists, make sure it starts in lobby
-const _waitRoom=setInterval(()=>{ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } } }, 400);
+  function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; } G.ptr=0; startRoundByPtr(); }
+  function startRoundByPtr(){ const type=ROUND_SEQ[G.ptr], meta=RMETA[type];
+    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now()); G.qi=0;
+    G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
+    showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent=''; $('qPrompt').textContent='';
+    $('qText').classList.remove('verse'); $('qText').textContent=meta.intro; $('opts').innerHTML=''; $('timerFill').style.width='100%';
+    if(window.HOST) window.HOST.set('welcome');
+    $('startShow').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
+    $('pauseBtn').classList.remove('hide'); $('skipBtn').classList.remove('hide');
+    setRoom({phase:'round_intro', round_type:type, round_index:G.ptr, q_index:0, q_id:'', deadline:null, state:{round:G.label}});
+  }
+  function presentQuestion(){ const q=G.questions[G.qi]; G.scored=false; G.phase='question'; G.curId='p'+G.ptr+'q'+G.qi; G.deadline=Date.now()+G.win;
+    showPanel('q'); renderQuestion(q); if(window.HOST) window.HOST.set('ask');
+    setRoom({phase:'question', q_id:G.curId, q_index:G.qi, deadline:new Date(G.deadline).toISOString(),
+      state:{opts:q.opts, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}}); }
+  async function closeQuestion(){ if(G.scored) return; G.scored=true; const q=G.questions[G.qi]; G.phase='scoring';
+    let ans=[], players=[];
+    try{ ans=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
+    try{ players=(await sb('players?code=eq.'+room.code+'&select=id,score'))||[]; }catch(e){}
+    const byId={}; players.forEach(p=>byId[p.id]=p.score); const seen={}, deltas={};
+    ans.forEach(a=>{ if(seen[a.player_id]) return; seen[a.player_id]=1;
+      if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/G.win)); deltas[a.player_id]=10+Math.round(5*frac); } });
+    for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
+    G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate');
+    setRoom({phase:'reveal', q_id:G.curId, state:{opts:q.opts, correct:q.correct, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}});
+    poll(); }
+  function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
+  function endRound(){ G.phase='round_scores'; showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
+    $('qPrompt').textContent=''; $('qText').classList.remove('verse'); $('opts').innerHTML=''; $('timerFill').style.width='0%';
+    if(window.HOST) window.HOST.set('celebrate');
+    $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide');
+    if(G.ptr < ROUND_SEQ.length-1){ $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
+      const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[ROUND_SEQ[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide'); }
+    else { $('qText').textContent='That\u2019s the end \u2014 great playing! (Final scoreboard comes in a later step.)'; }
+    setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
+
+  function gameTick(){ const now=Date.now();
+    if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250; return; }
+    if(G.phase==='round_intro'){ if(now>=G.introUntil) presentQuestion(); }
+    else if(G.phase==='question'){ renderTimer(now); pollAnsCount(); if(now>=G.deadline) closeQuestion(); }
+    else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); } }
+  setInterval(gameTick, 250);
+
+  $('startShow').addEventListener('click', startShow);
+  $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
+  $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
+  $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro') presentQuestion(); });
+  const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } } }, 400);
+  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,get G(){return G;}};
 </script>
+
 
 <script>
 /* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
