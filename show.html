@@ -42,6 +42,7 @@
     background:radial-gradient(circle at 50% 42%, rgba(255,212,122,.22), rgba(255,212,122,.05) 45%, transparent 68%);}
   .host svg{position:absolute; inset:0; margin:auto; width:56%; height:56%; filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));}
   .host .lbl{position:absolute; bottom:2%; left:0; right:0; text-align:center; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim);}
+  .host canvas{position:absolute; inset:0; width:100%; height:100%;}
 
   .join{}
   .join h2{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(20px,2.4vw,30px); margin:0 0 4px;}
@@ -58,7 +59,9 @@
   .slot::before{content:""; position:absolute; top:8%; left:8%; right:8%; height:6px; border-radius:3px; background:rgba(0,0,0,.08);}
   .go{margin-top:18px; font-size:clamp(15px,1.7vw,21px); font-weight:800;}
   .go b{color:var(--gold-hi);}
-  .go .url{background:rgba(255,255,255,.06); padding:4px 12px; border-radius:8px; border:1px solid var(--board-line);}
+  .go .url{background:rgba(255,255,255,.06); padding:4px 12px; border-radius:8px; border:1px solid var(--board-line); color:var(--gold-hi); text-decoration:none; cursor:pointer;}
+  .go a.url:hover{background:rgba(245,178,62,.16); text-decoration:underline;}
+  .taphint{margin-top:8px; color:var(--ink-dim); font-size:13px; font-weight:700; opacity:.8;}
   .count{margin-top:14px; font-size:clamp(15px,1.7vw,20px); font-weight:800; color:var(--ink-dim);}
   .count b{color:var(--ink); font-size:1.25em;}
 
@@ -113,17 +116,8 @@
   <div class="stage">
     <div class="host">
       <div class="spot"></div>
-      <!-- placeholder host: animated puppet arrives in the next build -->
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <ellipse cx="60" cy="112" rx="34" ry="6" fill="rgba(0,0,0,.35)"/>
-        <path d="M34 116 Q30 74 44 66 L76 66 Q90 74 86 116 Z" fill="#2a2f57"/>
-        <path d="M44 66 Q60 60 76 66 L72 78 Q60 72 48 78 Z" fill="#f6efe0" opacity=".9"/>
-        <circle cx="60" cy="46" r="20" fill="#e7b487"/>
-        <path d="M40 44 a20 20 0 0 1 40 0 v-6 a20 20 0 0 0 -40 0 Z" fill="#3a2b22"/>
-        <circle cx="52" cy="46" r="2.4" fill="#2a211c"/><circle cx="68" cy="46" r="2.4" fill="#2a211c"/>
-        <path d="M53 55 Q60 59 67 55" stroke="#a9603f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-        <g><path d="M60 20 q4 5 0 10 q-4 -5 0 -10Z" fill="#ffd47a"><animate attributeName="opacity" values="1;.6;1" dur="1.8s" repeatCount="indefinite"/></path></g>
-      </svg>
+      <!-- animated host (first pass) -->
+      <canvas id="hostCv"></canvas>
       <div class="lbl">Your host</div>
     </div>
 
@@ -134,7 +128,8 @@
         <div class="cap">Tonight's code</div>
         <div class="slots" id="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
       </div>
-      <div class="go">Go to <span class="url" id="joinUrl">tierbrain.github.io/play.html</span></div>
+      <div class="go">Go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
+      <div class="taphint">On this device you can just tap the link above to open the player page.</div>
       <div class="count"><b id="count">0</b> in the room</div>
     </div>
   </div>
@@ -181,7 +176,9 @@ function renderCode(code){
   const slots=$('slots'); slots.innerHTML='';
   code.split('').forEach(ch=>{ const d=document.createElement('div'); d.className='slot'; d.textContent=ch; slots.appendChild(d); });
   const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
-  $('joinUrl').textContent=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play.html';
+  const disp=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play.html';
+  const a=$('joinUrl'); a.textContent=disp;
+  a.setAttribute('href', (base||'https://tierbrain.github.io')+'/play.html?c='+code);
 }
 
 async function createRoom(){
@@ -261,5 +258,141 @@ $('copyBtn').addEventListener('click', ()=>{
 
 start();
 </script>
+
+<script>
+/* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
+(function(){
+  const HCV=document.getElementById('hostCv'); if(!HCV) return;
+  const X=HCV.getContext('2d');
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let HW=0,HH=0,HDPR=1,started=false;
+  function hsize(){ const r=HCV.parentElement.getBoundingClientRect(); if(!r.width) return;
+    HW=r.width; HH=r.height; HDPR=Math.min(2,window.devicePixelRatio||1);
+    HCV.width=HW*HDPR; HCV.height=HH*HDPR; X.setTransform(HDPR,0,0,HDPR,0,0); }
+  window.addEventListener('resize',hsize);
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp01=x=>x<0?0:x>1?1:x, ease=x=>{x=clamp01(x);return x*x*(3-2*x);};
+  const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+  const rgba=(c,a)=>'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+  const shade=(c,f)=>[c[0]*f,c[1]*f,c[2]*f];
+  function circ(x,y,r){X.beginPath();X.arc(x,y,r,0,7);X.fill();}
+  function rrp(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();}
+  const SKIN=[150,96,60], SKSH=shade(SKIN,0.80), HAIR=[38,28,24];
+  const JACKET=[214,158,54], JKSH=shade(JACKET,0.72), LAPEL=[26,30,66], SHIRT=[245,238,224], TIE=[176,60,80], TIESH=shade(TIE,0.75);
+  const POSES={
+    idle:     {lUp:.02,lOut:.10,rUp:.02,rOut:.10,smile:.45,browR:.12,browA:0,  look:0,  open:0, point:0},
+    welcome:  {lUp:.82,lOut:.85,rUp:.82,rOut:.85,smile:1,  browR:.55,browA:.12,look:0,  open:.4,point:0},
+    present:  {lUp:.06,lOut:.12,rUp:.55,rOut:1.0,smile:.75,browR:.4, browA:.05,look:.55,open:0, point:0},
+    point:    {lUp:.05,lOut:.10,rUp:1.0,rOut:.35,smile:.85,browR:.65,browA:.18,look:.15,open:.4,point:1},
+    celebrate:{lUp:1.0,lOut:.7, rUp:1.0,rOut:.7, smile:1,  browR:.6, browA:.12,look:0,  open:.5,point:0}
+  };
+  const REEL=[{p:'idle',d:2600},{p:'welcome',d:3200,say:1},{p:'present',d:3000},{p:'point',d:2600,say:1},{p:'celebrate',d:2600}];
+  const FIELDS=['lUp','lOut','rUp','rOut','smile','browR','browA','look','open','point'];
+  const TRANS=650;
+  let A=Object.assign({},POSES.idle), from=Object.assign({},POSES.idle), ri=0, stepStart=0;
+
+  function drawArm(side,sx,sy,s,up,out,point,T){
+    const sway=Math.sin(T*0.0016+side)*s*0.03;
+    const hx=sx+side*s*(0.5+out*0.55), hy=sy+s*(0.9-up*2.0)+sway;
+    const ex=sx+side*s*(0.34+out*0.4), ey=sy+s*(0.5-up*0.95);
+    X.lineCap='round'; X.lineJoin='round';
+    X.strokeStyle=rgb(JKSH); X.lineWidth=s*0.36;
+    X.beginPath(); X.moveTo(sx,sy); X.lineTo(ex,ey); X.lineTo(hx,hy); X.stroke();
+    X.fillStyle=rgb(SHIRT); circ(hx,hy,s*0.12);
+    X.fillStyle=rgb(SKIN); circ(hx,hy,s*0.15);
+    if(point>0.5){ X.save(); X.translate(hx,hy); X.rotate(Math.atan2(hy-ey,hx-ex));
+      X.fillStyle=rgb(SKIN); rrp(0,-s*0.07,s*0.34*point,s*0.14,s*0.07); X.fill(); X.restore(); }
+  }
+  function star(x,y,r){ X.save(); X.translate(x,y); X.beginPath();
+    for(let i=0;i<8;i++){ const a=i/8*Math.PI*2, rr=(i%2? r*0.4:r); const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
+      if(i===0) X.moveTo(px,py); else X.lineTo(px,py); }
+    X.closePath(); X.fill(); X.restore(); }
+
+  function draw(P,T,openNow){
+    X.clearRect(0,0,HW,HH);
+    const s=Math.min(HW,HH)*0.15, cx=HW/2;
+    const br=Math.sin(T*0.0022)*s*0.03, tilt=Math.sin(T*0.0013)*0.02;
+    const shoulderY=HH*0.60, shHalf=s*1.18;
+    const gg=X.createRadialGradient(cx,HH*0.30,0,cx,HH*0.34,HH*0.8);
+    gg.addColorStop(0,'rgba(255,214,140,0.20)'); gg.addColorStop(0.5,'rgba(255,214,140,0.05)'); gg.addColorStop(1,'rgba(255,214,140,0)');
+    X.fillStyle=gg; X.fillRect(0,0,HW,HH);
+    X.fillStyle='rgba(0,0,0,0.28)'; X.save(); X.translate(cx,HH*0.99); X.scale(1,0.16); circ(0,0,s*1.5); X.restore();
+    drawArm(-1, cx-shHalf*0.86, shoulderY+br, s, P.lUp, P.lOut, 0, T);
+    X.fillStyle=rgb(JACKET);
+    X.beginPath(); X.moveTo(cx-shHalf,shoulderY+br);
+    X.quadraticCurveTo(cx-shHalf*1.2,HH*0.9,cx-shHalf*1.25,HH+s); X.lineTo(cx+shHalf*1.25,HH+s);
+    X.quadraticCurveTo(cx+shHalf*1.2,HH*0.9,cx+shHalf,shoulderY+br); X.closePath(); X.fill();
+    const collarY=shoulderY+br+s*0.05;
+    X.fillStyle=rgb(SHIRT); X.beginPath(); X.moveTo(cx-s*0.5,collarY); X.lineTo(cx+s*0.5,collarY); X.lineTo(cx,HH+s); X.closePath(); X.fill();
+    X.fillStyle=rgb(LAPEL);
+    X.beginPath(); X.moveTo(cx-shHalf*0.9,shoulderY+br); X.lineTo(cx-s*0.12,collarY+s*0.1); X.lineTo(cx-s*0.55,HH*0.98); X.lineTo(cx-shHalf*1.05,HH*0.9); X.closePath(); X.fill();
+    X.beginPath(); X.moveTo(cx+shHalf*0.9,shoulderY+br); X.lineTo(cx+s*0.12,collarY+s*0.1); X.lineTo(cx+s*0.55,HH*0.98); X.lineTo(cx+shHalf*1.05,HH*0.9); X.closePath(); X.fill();
+    X.fillStyle=rgb(TIE);
+    X.beginPath(); X.moveTo(cx,collarY+s*0.18); X.lineTo(cx-s*0.42,collarY-s*0.02); X.lineTo(cx-s*0.42,collarY+s*0.38); X.closePath(); X.fill();
+    X.beginPath(); X.moveTo(cx,collarY+s*0.18); X.lineTo(cx+s*0.42,collarY-s*0.02); X.lineTo(cx+s*0.42,collarY+s*0.38); X.closePath(); X.fill();
+    X.fillStyle=rgb(TIESH); circ(cx,collarY+s*0.18,s*0.1);
+    drawArm(1, cx+shHalf*0.86, shoulderY+br, s, P.rUp, P.rOut, P.point, T);
+    const headCY=shoulderY+br - s*1.02, headR=s*0.66;
+    X.fillStyle=rgb(SKSH); rrp(cx-s*0.22, headCY+headR*0.5, s*0.44, s*0.6, s*0.16); X.fill();
+    X.save(); X.translate(cx+P.look*s*0.12, headCY+br*0.5); X.rotate(tilt+P.look*0.03);
+    X.fillStyle=rgb(SKIN); circ(0,0,headR);
+    X.save(); X.beginPath(); X.arc(0,0,headR,0,7); X.clip(); X.fillStyle=rgba(SKSH,0.5); circ(headR*0.5,headR*0.2,headR); X.restore();
+    X.fillStyle=rgb(SKIN); circ(-headR*0.98,0,headR*0.16); circ(headR*0.98,0,headR*0.16);
+    X.fillStyle=rgb(HAIR);
+    X.beginPath(); X.arc(0,-headR*0.12,headR*0.99,Math.PI*1.04,Math.PI*1.96);
+    X.quadraticCurveTo(headR*0.7,-headR*1.1,0,-headR*1.02); X.quadraticCurveTo(-headR*0.7,-headR*1.1,-headR*0.98,-headR*0.2); X.fill();
+    const eY=-headR*0.02, eX=headR*0.36, bl=((T*0.001+0.3)%3.6)>3.42;
+    const px=P.look*headR*0.14;
+    for(const sx of [-1,1]){
+      if(bl){ X.strokeStyle=rgb(SKSH); X.lineWidth=Math.max(1.4,s*0.05); X.lineCap='round';
+        X.beginPath(); X.arc(sx*eX,eY,headR*0.17,0.2,Math.PI-0.2); X.stroke(); }
+      else{ X.fillStyle='#f7f3ea'; X.beginPath(); X.ellipse(sx*eX,eY,headR*0.17,headR*0.2,0,0,7); X.fill();
+        X.fillStyle='#241e1a'; circ(sx*eX+px,eY+headR*0.02,headR*0.09);
+        X.fillStyle='#fff'; circ(sx*eX+px+headR*0.03,eY-headR*0.03,headR*0.03); }
+    }
+    const byy=eY-headR*0.30-P.browR*headR*0.16;
+    X.strokeStyle=rgb(shade(HAIR,0.9)); X.lineWidth=Math.max(1.6,s*0.06); X.lineCap='round';
+    for(const sx of [-1,1]){ X.beginPath();
+      X.moveTo(sx*eX-headR*0.13, byy + sx*P.browA*headR*0.10);
+      X.lineTo(sx*eX+headR*0.15, byy - sx*P.browA*headR*0.10); X.stroke(); }
+    X.strokeStyle=rgb(SKSH); X.lineWidth=Math.max(1.4,s*0.045); X.lineCap='round';
+    X.beginPath(); X.moveTo(0,eY+headR*0.14); X.lineTo(-headR*0.06,eY+headR*0.30); X.lineTo(headR*0.03,eY+headR*0.32); X.stroke();
+    if(P.smile>0.5){ X.fillStyle=rgba([176,96,74],(P.smile-0.5)*0.38); circ(-headR*0.5,headR*0.34,headR*0.16); circ(headR*0.5,headR*0.34,headR*0.16); }
+    const my=headR*0.5;
+    if(openNow>0.06){
+      const mw=headR*(0.30+P.smile*0.12), mh=headR*(0.10+openNow*0.34);
+      X.fillStyle='#5a2230'; X.beginPath(); X.ellipse(0,my,mw,mh,0,0,7); X.fill();
+      X.fillStyle='#fff'; X.beginPath(); X.ellipse(0,my-mh*0.55,mw*0.8,mh*0.32,0,0,Math.PI,true); X.fill();
+      X.strokeStyle=rgb([126,68,66]); X.lineWidth=Math.max(1.4,s*0.04); X.beginPath(); X.ellipse(0,my,mw,mh,0,0,7); X.stroke();
+    } else {
+      X.strokeStyle=rgb([126,68,66]); X.lineWidth=Math.max(1.6,s*0.05); X.lineCap='round';
+      X.beginPath(); X.moveTo(-headR*0.26,my-P.smile*headR*0.02);
+      X.quadraticCurveTo(0,my+P.smile*headR*0.30, headR*0.26,my-P.smile*headR*0.02); X.stroke();
+    }
+    X.restore();
+    if(P.smile>0.92 && P.lUp>0.8){ X.fillStyle='rgba(255,224,150,0.9)';
+      for(let i=0;i<3;i++){ const a=T*0.004+i*2.1; star(cx+Math.cos(a)*s*2.0, headCY+Math.sin(a*1.3)*s*1.4, s*0.12); } }
+  }
+
+  function frame(ts){
+    if(HW===0||HCV.width===0){ hsize(); if(HW===0){ requestAnimationFrame(frame); return; } }
+    if(!stepStart) stepStart=ts;
+    const step=REEL[ri], to=POSES[step.p];
+    const k=ease(Math.min(1,(ts-stepStart)/TRANS));
+    for(const f of FIELDS) A[f]=lerp(from[f],to[f],k);
+    let openNow=A.open;
+    if(step.say) openNow=Math.max(to.open,0.12+0.22*(0.5+0.5*Math.sin(ts*0.02)));
+    const look=A.look + Math.sin(ts*0.0006)*0.15;
+    draw(Object.assign({},A,{look}), ts, openNow);
+    if(ts-stepStart>=step.d){ from=Object.assign({},A); ri=(ri+1)%REEL.length; stepStart=ts; }
+    requestAnimationFrame(frame);
+  }
+  function startHost(){ if(started) return; started=true; hsize();
+    if(RM){ A=Object.assign({},POSES.welcome); draw(A,0,0.15); return; }
+    requestAnimationFrame(frame); }
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(startHost); setTimeout(startHost,400); }
+  else startHost();
+})();
+</script>
+
 </body>
 </html>
