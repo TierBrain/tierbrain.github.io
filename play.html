@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Chapter &amp; Verse — Join</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4eede; --ink-dim:#b7b0a2;
+    --indigo:#0e1230; --indigo2:#080a1c;
+    --gold:#f5b23e; --gold-hi:#ffd47a; --gold-ink:#3a2a10;
+    --teal:#2fb6a6; --teal-hi:#79e6d8; --teal-ink:#0c2c29;
+    --card:#151936; --line:rgba(245,178,62,.16); --ruby:#c0455e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%; margin:0;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
+    background:radial-gradient(120% 70% at 50% -10%, rgba(245,178,62,.10), transparent 55%),
+      linear-gradient(180deg,var(--indigo),var(--indigo2)); background-attachment:fixed;
+    -webkit-tap-highlight-color:transparent; overscroll-behavior:none;
+  }
+  .app{min-height:100%; max-width:520px; margin:0 auto; padding:22px; display:flex; flex-direction:column;}
+  .brand{font-family:'Fraunces',serif; font-weight:700; font-size:26px; text-align:center; margin:6px 0 2px;}
+  .brand .amp{color:var(--gold);}
+  .tagline{text-align:center; color:var(--ink-dim); font-weight:700; font-size:14px; margin-bottom:20px;}
+
+  .screen{flex:1; display:flex; flex-direction:column; justify-content:center; gap:16px;}
+  label{font-weight:800; font-size:14px; letter-spacing:.3px; color:var(--ink-dim); display:block; margin:0 0 7px 2px;}
+  input{width:100%; font-family:'Nunito'; font-weight:800; font-size:20px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:14px; padding:15px 16px; outline:none;}
+  input:focus{border-color:var(--gold);}
+  #code{font-family:'Fraunces',serif; letter-spacing:8px; text-align:center; font-size:30px; text-transform:uppercase;}
+  .field{margin-bottom:4px;}
+
+  .teams{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:6px;}
+  .team-btn{border:none; border-radius:16px; padding:22px 12px; font-family:'Fraunces',serif; font-weight:700; font-size:22px;
+    cursor:pointer; line-height:1.1; display:flex; flex-direction:column; align-items:center; gap:6px; transition:transform .08s;}
+  .team-btn small{font-family:'Nunito'; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; opacity:.8;}
+  .team-btn:active{transform:scale(.97);}
+  .team-btn.youth{background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:var(--gold-ink);}
+  .team-btn.adult{background:linear-gradient(180deg,var(--teal-hi),var(--teal)); color:var(--teal-ink);}
+  .hint{color:var(--ink-dim); font-size:13px; font-weight:700; text-align:center; margin-top:2px;}
+  .err{background:rgba(192,69,94,.16); border:1px solid rgba(192,69,94,.5); color:#f4c3cc; padding:12px 14px;
+    border-radius:12px; font-weight:700; font-size:14px; display:none;}
+  .err.show{display:block;}
+
+  /* waiting */
+  .badge{align-self:center; padding:7px 18px; border-radius:999px; font-family:'Nunito'; font-weight:800; font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;}
+  .badge.youth{background:rgba(245,178,62,.18); color:var(--gold-hi); border:1px solid rgba(245,178,62,.5);}
+  .badge.adult{background:rgba(47,182,166,.16); color:var(--teal-hi); border:1px solid rgba(47,182,166,.5);}
+  .in-card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 22px; text-align:center;}
+  .in-card .hi{font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--ink-dim); letter-spacing:1px;}
+  .in-card .who{font-family:'Fraunces',serif; font-weight:700; font-size:34px; margin:4px 0 14px; line-height:1.1;}
+  .score-pill{display:inline-flex; align-items:baseline; gap:8px; background:rgba(255,255,255,.05); border-radius:14px; padding:10px 18px;}
+  .score-pill b{font-size:30px;} .score-pill span{color:var(--ink-dim); font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase;}
+  .waitline{margin-top:20px; color:var(--ink-dim); font-weight:700;}
+  .heart{display:inline-block; width:9px; height:9px; border-radius:50%; background:#57d38a; margin-right:7px; vertical-align:middle; animation:beat 2s infinite;}
+  @keyframes beat{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .room-note{color:var(--ink-dim); font-weight:800; font-size:13px; text-align:center; margin-top:22px; letter-spacing:1px;}
+  .leave{background:none; border:none; color:var(--ink-dim); font-weight:800; font-size:13px; text-decoration:underline; cursor:pointer; margin-top:14px; align-self:center;}
+  .big-btn{width:100%; border:none; border-radius:16px; padding:17px; font-family:'Fraunces',serif; font-weight:700; font-size:20px;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:var(--gold-ink); cursor:pointer;}
+  .hide{display:none!important;}
+  @media (prefers-reduced-motion:reduce){ .heart{animation:none;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">Chapter <span class="amp">&amp;</span> Verse</div>
+  <div class="tagline">a Bible game show</div>
+
+  <!-- JOIN -->
+  <div class="screen" id="joinScreen">
+    <div class="err" id="err"></div>
+    <div class="field">
+      <label for="code">Room code (on the big screen)</label>
+      <input id="code" maxlength="5" autocomplete="off" autocapitalize="characters" inputmode="text" placeholder="•••••">
+    </div>
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" maxlength="16" autocomplete="off" placeholder="e.g. Sam">
+    </div>
+    <div>
+      <label>Which team?</label>
+      <div class="teams">
+        <button class="team-btn youth" data-tag="youth">Youth<small>ages 13–18</small></button>
+        <button class="team-btn adult" data-tag="adult">Adult<small>parent / grown-up</small></button>
+      </div>
+    </div>
+    <div class="hint">Tap your team to join.</div>
+  </div>
+
+  <!-- WAITING -->
+  <div class="screen hide" id="waitScreen">
+    <div class="badge" id="teamBadge">YOUTH</div>
+    <div class="in-card">
+      <div class="hi">You're in!</div>
+      <div class="who" id="whoName">—</div>
+      <div class="score-pill"><b id="myScore">0</b><span>points</span></div>
+      <div class="waitline"><span class="heart"></span><span id="waitMsg">Waiting for the show to start…</span></div>
+    </div>
+    <div class="room-note">Room <span id="roomTag">—</span> · keep this screen open</div>
+    <button class="leave" id="leaveBtn">Leave the game</button>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const $=id=>document.getElementById(id);
+const KEY='cv_player';
+let me=null, hb=null, pollTimer=null;
+
+async function sb(path, opts={}){
+  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({headers:H}, opts));
+  const txt=await r.text();
+  if(!r.ok) throw new Error(r.status+': '+txt);
+  return txt?JSON.parse(txt):null;
+}
+function showErr(msg){ const e=$('err'); e.textContent=msg; e.classList.add('show'); }
+function clearErr(){ $('err').classList.remove('show'); }
+
+function prefillCode(){
+  const m=location.search.match(/[?&]c=([^&]+)/) || location.hash.match(/#([A-Za-z0-9]+)/);
+  if(m) $('code').value=decodeURIComponent(m[1]).toUpperCase().slice(0,5);
+}
+
+async function roomExists(code){
+  const rows=await sb('rooms?code=eq.'+encodeURIComponent(code)+'&select=code,phase');
+  return rows&&rows.length?rows[0]:null;
+}
+
+async function join(tag){
+  clearErr();
+  const code=($('code').value||'').trim().toUpperCase();
+  const name=($('name').value||'').trim();
+  if(code.length<4){ showErr('Enter the room code shown on the big screen.'); return; }
+  if(!name){ showErr('Enter your name so it can appear on the board.'); return; }
+  try{
+    const rm=await roomExists(code);
+    if(!rm){ showErr("No show found with code “"+code+"”. Check the big screen and try again."); return; }
+    const rows=await sb('players', {method:'POST', headers:Object.assign({Prefer:'return=representation'},H),
+      body:JSON.stringify({code, name, tag})});
+    me={code, id:rows[0].id, name, tag};
+    localStorage.setItem(KEY, JSON.stringify(me));
+    enterWaiting();
+  }catch(e){
+    if(/relation .* does not exist|42P01/i.test(e.message)) showErr('The game isn\'t set up yet. Ask the host.');
+    else showErr('Could not join — check your connection and try again.');
+  }
+}
+
+function enterWaiting(){
+  $('joinScreen').classList.add('hide');
+  $('waitScreen').classList.remove('hide');
+  $('whoName').textContent=me.name;
+  $('roomTag').textContent=me.code;
+  const badge=$('teamBadge'); badge.textContent = me.tag==='youth'?'YOUTH':'ADULT / PARENT';
+  badge.className='badge '+me.tag;
+  startHeartbeat(); startPoll();
+}
+
+function startHeartbeat(){
+  clearInterval(hb);
+  const beat=()=> sb('players?id=eq.'+me.id, {method:'PATCH', body:JSON.stringify({last_seen:new Date().toISOString()})}).catch(()=>{});
+  beat(); hb=setInterval(beat, 12000);
+}
+async function pollState(){
+  if(!me) return;
+  try{
+    const rows=await sb('players?id=eq.'+me.id+'&select=score');
+    if(rows&&rows.length) $('myScore').textContent=rows[0].score;
+    const rm=await sb('rooms?code=eq.'+encodeURIComponent(me.code)+'&select=phase');
+    if(!rm||!rm.length){ // room gone -> reset
+      $('waitMsg').textContent='The room has closed. Rejoin when the host opens a new one.';
+    }else{
+      $('waitMsg').textContent = rm[0].phase==='lobby' ? 'Waiting for the show to start…' : 'The show is underway — watch the screen!';
+    }
+  }catch(e){/* transient */}
+}
+function startPoll(){ clearInterval(pollTimer); pollState(); pollTimer=setInterval(pollState, 2500); }
+
+async function tryResume(){
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(!saved||!saved.id) return false;
+  try{
+    const rm=await roomExists(saved.code);
+    const rows=await sb('players?id=eq.'+saved.id+'&select=id,name,tag,score');
+    if(rm && rows && rows.length){ me=saved; enterWaiting(); return true; }
+  }catch(e){}
+  localStorage.removeItem(KEY); return false;
+}
+
+document.querySelectorAll('.team-btn').forEach(b=> b.addEventListener('click', ()=>join(b.dataset.tag)));
+$('leaveBtn').addEventListener('click', ()=>{
+  if(!confirm('Leave the game? Your name will drop off the board.')) return;
+  clearInterval(hb); clearInterval(pollTimer);
+  if(me) sb('players?id=eq.'+me.id, {method:'DELETE'}).catch(()=>{});
+  localStorage.removeItem(KEY); me=null;
+  $('waitScreen').classList.add('hide'); $('joinScreen').classList.remove('hide');
+});
+$('code').addEventListener('input', e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5); });
+
+prefillCode();
+tryResume();
+</script>
+</body>
+</html>

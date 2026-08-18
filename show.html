@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chapter &amp; Verse — Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4eede; --ink-dim:#c9c2b3;
+    --indigo:#0e1230; --indigo2:#080a1c;
+    --gold:#f5b23e; --gold-hi:#ffd47a;
+    --teal:#2fb6a6; --teal-hi:#79e6d8;
+    --board:#141834; --board-line:rgba(245,178,62,.16);
+    --ruby:#c0455e;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(245,178,62,.10), transparent 55%),
+      linear-gradient(180deg,var(--indigo) 0%, var(--indigo2) 100%);
+    background-attachment:fixed; min-height:100%; overflow-x:hidden;
+  }
+  .wrap{max-width:1400px; margin:0 auto; padding:clamp(14px,2.2vw,30px); min-height:100vh; display:flex; flex-direction:column;}
+  /* top bar */
+  .top{display:flex; align-items:baseline; justify-content:space-between; gap:16px; border-bottom:1px solid var(--board-line); padding-bottom:12px;}
+  .brand{font-family:'Fraunces',serif; font-weight:700; letter-spacing:.5px; font-size:clamp(22px,3vw,40px); line-height:1;}
+  .brand .amp{color:var(--gold);}
+  .status{font-weight:800; font-size:clamp(13px,1.3vw,17px); color:var(--ink-dim); display:flex; align-items:center; gap:8px; white-space:nowrap;}
+  .dot{width:11px;height:11px;border-radius:50%; background:var(--ruby); box-shadow:0 0 0 0 rgba(192,69,94,.6);}
+  .dot.live{background:#57d38a; animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(87,211,138,.5);}70%{box-shadow:0 0 0 10px rgba(87,211,138,0);}100%{box-shadow:0 0 0 0 rgba(87,211,138,0);}}
+
+  /* lobby hero */
+  .stage{flex:1; display:grid; grid-template-columns:0.9fr 1.1fr; gap:clamp(16px,2.5vw,40px); align-items:center; padding:clamp(16px,2.5vw,36px) 0;}
+  .host{position:relative; aspect-ratio:1/1; max-height:44vh; margin:0 auto; width:100%;}
+  .spot{position:absolute; inset:0; border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, rgba(255,212,122,.22), rgba(255,212,122,.05) 45%, transparent 68%);}
+  .host svg{position:absolute; inset:0; margin:auto; width:56%; height:56%; filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));}
+  .host .lbl{position:absolute; bottom:2%; left:0; right:0; text-align:center; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim);}
+
+  .join{}
+  .join h2{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(20px,2.4vw,30px); margin:0 0 4px;}
+  .join .sub{color:var(--ink-dim); font-weight:700; margin:0 0 18px; font-size:clamp(14px,1.5vw,18px);}
+  /* hymn board */
+  .hymn{background:linear-gradient(180deg,#241a12,#160f0a); border:2px solid #3a2a1c; border-radius:14px;
+    padding:clamp(12px,1.6vw,20px); box-shadow:inset 0 2px 0 rgba(255,255,255,.05), 0 16px 40px rgba(0,0,0,.5); display:inline-block;}
+  .hymn .cap{font-size:12px; letter-spacing:3px; text-transform:uppercase; color:#c39a5e; text-align:center; margin-bottom:10px;}
+  .slots{display:flex; gap:clamp(6px,.8vw,12px); justify-content:center;}
+  .slot{width:clamp(46px,6.4vw,92px); height:clamp(64px,9vw,128px); background:linear-gradient(180deg,#faf5e9,#e9dcc2);
+    border-radius:8px; color:#241a12; font-family:'Fraunces',serif; font-weight:700; font-size:clamp(38px,5.4vw,80px);
+    display:flex; align-items:center; justify-content:center; box-shadow:inset 0 -6px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.4);
+    position:relative;}
+  .slot::before{content:""; position:absolute; top:8%; left:8%; right:8%; height:6px; border-radius:3px; background:rgba(0,0,0,.08);}
+  .go{margin-top:18px; font-size:clamp(15px,1.7vw,21px); font-weight:800;}
+  .go b{color:var(--gold-hi);}
+  .go .url{background:rgba(255,255,255,.06); padding:4px 12px; border-radius:8px; border:1px solid var(--board-line);}
+  .count{margin-top:14px; font-size:clamp(15px,1.7vw,20px); font-weight:800; color:var(--ink-dim);}
+  .count b{color:var(--ink); font-size:1.25em;}
+
+  /* boards */
+  .boards{display:grid; grid-template-columns:1.25fr 1fr; gap:clamp(14px,2vw,28px); padding-top:8px;}
+  .team{background:var(--board); border-radius:16px; border:1px solid var(--board-line); overflow:hidden; display:flex; flex-direction:column; min-height:26vh;}
+  .team .hd{display:flex; align-items:center; justify-content:space-between; padding:clamp(10px,1.3vw,16px) clamp(14px,1.6vw,20px); font-family:'Fraunces',serif; font-weight:700;}
+  .team.youth{box-shadow:0 0 0 2px rgba(245,178,62,.35), 0 20px 50px rgba(0,0,0,.35);}
+  .team.youth .hd{background:linear-gradient(90deg, rgba(245,178,62,.28), rgba(245,178,62,.05)); color:var(--gold-hi); font-size:clamp(19px,2.2vw,30px);}
+  .team.adult .hd{background:linear-gradient(90deg, rgba(47,182,166,.22), rgba(47,182,166,.04)); color:var(--teal-hi); font-size:clamp(16px,1.8vw,24px);}
+  .team .hd .tag{font-family:'Nunito'; font-weight:800; font-size:.5em; letter-spacing:2px; text-transform:uppercase; opacity:.75;}
+  .roster{list-style:none; margin:0; padding:8px; display:flex; flex-direction:column; gap:6px; overflow:auto;}
+  .roster li{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:clamp(7px,.9vw,11px) clamp(10px,1.2vw,15px);
+    background:rgba(255,255,255,.03); border-radius:10px; font-weight:800; font-size:clamp(15px,1.6vw,21px); animation:pop .35s ease both;}
+  .youth .roster li{border-left:4px solid var(--gold);}
+  .adult .roster li{border-left:4px solid var(--teal);}
+  .roster .sc{font-variant-numeric:tabular-nums; color:var(--ink-dim);}
+  @keyframes pop{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:none;}}
+  .empty{color:var(--ink-dim); font-weight:700; padding:18px; text-align:center; opacity:.7;}
+
+  /* operator strip */
+  .ops{display:flex; gap:10px; align-items:center; justify-content:center; padding-top:14px; border-top:1px solid var(--board-line); margin-top:12px; flex-wrap:wrap;}
+  .btn{font-family:'Nunito'; font-weight:800; font-size:14px; color:var(--ink); background:rgba(255,255,255,.06);
+    border:1px solid var(--board-line); border-radius:10px; padding:9px 16px; cursor:pointer;}
+  .btn:hover{background:rgba(255,255,255,.12);}
+  .btn.warn{border-color:rgba(192,69,94,.5); color:#f0a6b4;}
+  .ops .hint{color:var(--ink-dim); font-size:13px; font-weight:700;}
+
+  .banner{display:none; background:rgba(192,69,94,.16); border:1px solid rgba(192,69,94,.5); color:#f4c3cc;
+    padding:12px 16px; border-radius:12px; font-weight:700; margin-bottom:12px; line-height:1.5;}
+  .banner.show{display:block;}
+  .banner code{background:rgba(0,0,0,.3); padding:1px 6px; border-radius:4px;}
+
+  @media (max-width:900px){
+    .stage{grid-template-columns:1fr; gap:18px;}
+    .host{max-height:30vh; order:2;}
+    .boards{grid-template-columns:1fr;}
+    .team.youth{order:0;} .team.adult{order:1;}
+  }
+  @media (prefers-reduced-motion:reduce){ .dot.live{animation:none;} .roster li{animation:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Chapter <span class="amp">&amp;</span> Verse</div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="stage">
+    <div class="host">
+      <div class="spot"></div>
+      <!-- placeholder host: animated puppet arrives in the next build -->
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <ellipse cx="60" cy="112" rx="34" ry="6" fill="rgba(0,0,0,.35)"/>
+        <path d="M34 116 Q30 74 44 66 L76 66 Q90 74 86 116 Z" fill="#2a2f57"/>
+        <path d="M44 66 Q60 60 76 66 L72 78 Q60 72 48 78 Z" fill="#f6efe0" opacity=".9"/>
+        <circle cx="60" cy="46" r="20" fill="#e7b487"/>
+        <path d="M40 44 a20 20 0 0 1 40 0 v-6 a20 20 0 0 0 -40 0 Z" fill="#3a2b22"/>
+        <circle cx="52" cy="46" r="2.4" fill="#2a211c"/><circle cx="68" cy="46" r="2.4" fill="#2a211c"/>
+        <path d="M53 55 Q60 59 67 55" stroke="#a9603f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <g><path d="M60 20 q4 5 0 10 q-4 -5 0 -10Z" fill="#ffd47a"><animate attributeName="opacity" values="1;.6;1" dur="1.8s" repeatCount="indefinite"/></path></g>
+      </svg>
+      <div class="lbl">Your host</div>
+    </div>
+
+    <div class="join">
+      <h2>Join the show</h2>
+      <p class="sub">On your phone, open the page and enter this code.</p>
+      <div class="hymn">
+        <div class="cap">Tonight's code</div>
+        <div class="slots" id="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+      </div>
+      <div class="go">Go to <span class="url" id="joinUrl">tierbrain.github.io/play.html</span></div>
+      <div class="count"><b id="count">0</b> in the room</div>
+    </div>
+  </div>
+
+  <div class="boards">
+    <div class="team youth">
+      <div class="hd"><span>Youth</span><span class="tag">ages 13–18</span></div>
+      <ul class="roster" id="youthList"><li class="empty">Waiting for players…</li></ul>
+    </div>
+    <div class="team adult">
+      <div class="hd"><span>Adults &amp; Parents</span><span class="tag">alongside</span></div>
+      <ul class="roster" id="adultList"><li class="empty">Waiting for players…</li></ul>
+    </div>
+  </div>
+
+  <div class="ops">
+    <button class="btn" id="copyBtn">Copy join link</button>
+    <button class="btn warn" id="newBtn">New room</button>
+    <span class="hint">The show runs itself once it starts — this desk is just here if you need it.</span>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const $=id=>document.getElementById(id);
+const CODE_KEY='cv_stage_room';
+const ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I,L,O,0,1
+let room=null, polling=null;
+
+async function sb(path, opts={}){
+  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({headers:H}, opts));
+  const txt=await r.text();
+  if(!r.ok) throw new Error(r.status+': '+txt);
+  return txt?JSON.parse(txt):null;
+}
+function genCode(n){ let s=''; for(let i=0;i<n;i++) s+=ALPHABET[Math.floor(Math.random()*ALPHABET.length)]; return s; }
+function setStatus(text, live){ $('statusText').textContent=text; $('dot').classList.toggle('live', !!live); }
+function showBanner(html){ const b=$('banner'); b.innerHTML=html; b.classList.add('show'); }
+function hideBanner(){ $('banner').classList.remove('show'); }
+
+function renderCode(code){
+  const slots=$('slots'); slots.innerHTML='';
+  code.split('').forEach(ch=>{ const d=document.createElement('div'); d.className='slot'; d.textContent=ch; slots.appendChild(d); });
+  const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
+  $('joinUrl').textContent=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play.html';
+}
+
+async function createRoom(){
+  hideBanner();
+  for(let attempt=0; attempt<6; attempt++){
+    const code=genCode(5);
+    try{
+      const rows=await sb('rooms', {method:'POST', headers:Object.assign({Prefer:'return=representation'},H),
+        body:JSON.stringify({code, phase:'lobby', seed:Math.floor(Math.random()*1e9), state:{}})});
+      room=rows[0]; localStorage.setItem(CODE_KEY, code); return room;
+    }catch(e){
+      if(/relation .* does not exist|does not exist|42P01/i.test(e.message)){
+        showBanner("<b>Setup needed.</b> The database tables aren't there yet. Run the setup SQL (in the Supabase SQL editor) once, then reload this page.");
+        throw e;
+      }
+      if(/duplicate|409|23505/i.test(e.message)) continue; // code clash, try another
+      showBanner("Couldn't reach the scoreboard service. Check the laptop's internet and reload."); throw e;
+    }
+  }
+  throw new Error('could not allocate a room code');
+}
+async function resumeRoom(){
+  const code=localStorage.getItem(CODE_KEY); if(!code) return null;
+  try{ const rows=await sb('rooms?code=eq.'+code+'&select=code,phase,seed'); if(rows&&rows.length){ room=rows[0]; return room; } }
+  catch(e){ /* fall through to create */ }
+  return null;
+}
+
+function renderBoards(players){
+  const youth=players.filter(p=>p.tag==='youth');
+  const adult=players.filter(p=>p.tag==='adult');
+  function fill(el, arr){
+    if(!arr.length){ el.innerHTML='<li class="empty">Waiting for players…</li>'; return; }
+    arr.sort((a,b)=> (b.score-a.score) || (new Date(a.joined_at)-new Date(b.joined_at)) );
+    el.innerHTML='';
+    arr.forEach(p=>{ const li=document.createElement('li');
+      const nm=document.createElement('span'); nm.textContent=p.name;
+      const sc=document.createElement('span'); sc.className='sc'; sc.textContent=p.score;
+      li.appendChild(nm); li.appendChild(sc); el.appendChild(li); });
+  }
+  fill($('youthList'), youth); fill($('adultList'), adult);
+  $('count').textContent=players.length;
+}
+
+async function poll(){
+  if(!room) return;
+  try{
+    const players=await sb('players?code=eq.'+room.code+'&select=name,tag,score,joined_at&order=joined_at.asc');
+    renderBoards(players||[]);
+    setStatus('Live · room '+room.code, true);
+    hideBanner();
+  }catch(e){ setStatus('Reconnecting…', false); }
+}
+
+async function start(){
+  setStatus('Connecting…', false);
+  try{
+    let r=await resumeRoom();
+    if(!r) r=await createRoom();
+    renderCode(room.code);
+    await poll();
+    clearInterval(polling); polling=setInterval(poll, 1500);
+  }catch(e){ setStatus('Not connected', false); }
+}
+
+$('newBtn').addEventListener('click', async ()=>{
+  if(!confirm('Start a brand-new room? Players in the current room will need to rejoin with the new code.')) return;
+  localStorage.removeItem(CODE_KEY); room=null;
+  try{ await createRoom(); renderCode(room.code); await poll(); }catch(e){}
+});
+$('copyBtn').addEventListener('click', ()=>{
+  const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
+  const url=(base||'https://tierbrain.github.io')+'/play.html?c='+(room?room.code:'');
+  navigator.clipboard&&navigator.clipboard.writeText(url);
+  $('copyBtn').textContent='Copied!'; setTimeout(()=>$('copyBtn').textContent='Copy join link', 1400);
+});
+
+start();
+</script>
+</body>
+</html>
