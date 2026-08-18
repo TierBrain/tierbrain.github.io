@@ -107,6 +107,26 @@
     .team.youth{order:0;} .team.adult{order:1;}
   }
   @media (prefers-reduced-motion:reduce){ .dot.live{animation:none;} .roster li{animation:none;} }
+
+  /* question panel */
+  #qPanel .qtop{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
+  .rlabel{font-family:'Fraunces',serif; font-weight:700; color:var(--gold-hi); font-size:clamp(16px,1.9vw,24px);}
+  .qnum{font-weight:800; color:var(--ink-dim); font-size:clamp(14px,1.5vw,19px);}
+  .qtext{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(22px,3vw,40px); line-height:1.2; margin-bottom:clamp(12px,1.8vw,22px);}
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,14px);}
+  .opt{display:flex; align-items:center; gap:12px; padding:clamp(11px,1.4vw,17px) clamp(12px,1.5vw,18px);
+    border-radius:14px; background:var(--board); border:2px solid transparent; font-weight:800;
+    font-size:clamp(15px,1.7vw,22px); transition:opacity .3s, border-color .3s, transform .3s;}
+  .opt .k{flex:0 0 auto; width:clamp(30px,3vw,44px); height:clamp(30px,3vw,44px); border-radius:9px; color:#0e1230;
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:clamp(16px,1.8vw,24px);}
+  .opt.correct{border-color:#57d38a; background:rgba(87,211,138,.14);}
+  .opt.dim{opacity:.4;}
+  .timerbar{height:10px; background:rgba(255,255,255,.08); border-radius:6px; margin:clamp(12px,1.8vw,20px) 0 8px; overflow:hidden;}
+  .timerbar .fill{height:100%; width:100%; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); border-radius:6px; transition:width .3s linear;}
+  .timerbar .fill.low{background:linear-gradient(90deg,#c0455e,#e0728a);}
+  .answered{color:var(--ink-dim); font-weight:800; font-size:clamp(14px,1.5vw,19px);}
+  .answered b{color:var(--ink); font-size:1.15em;}
+  .go-btn{border-color:rgba(87,211,138,.5)!important; color:#bff0d0!important; font-size:15px;}
 </style>
 </head>
 <body>
@@ -128,6 +148,7 @@
 
     <div class="join">
       <h2>Join the show</h2>
+      <div id="joinPanel">
       <p class="sub">On your phone: scan the QR, or open the page and type the code.</p>
       <div class="joinrow">
         <div class="hymn">
@@ -142,6 +163,15 @@
       <div class="go">or go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
       <div class="taphint">On this device you can just tap the link above to open the player page.</div>
       <div class="count"><b id="count">0</b> in the room</div>
+      </div>
+
+      <div id="qPanel" class="hide">
+        <div class="qtop"><span class="rlabel" id="rLabel">Round 1 · Rapid-Fire</span><span class="qnum" id="qNum">1 / 8</span></div>
+        <div class="qtext" id="qText">Get ready…</div>
+        <div class="opts" id="opts"></div>
+        <div class="timerbar"><div class="fill" id="timerFill"></div></div>
+        <div class="answered"><b id="ansCount">0</b> answered</div>
+      </div>
     </div>
   </div>
 
@@ -157,6 +187,9 @@
   </div>
 
   <div class="ops">
+    <button class="btn go-btn" id="startShow">Start the show ▸</button>
+    <button class="btn hide" id="pauseBtn">Pause</button>
+    <button class="btn hide" id="skipBtn">Skip ▸</button>
     <button class="btn" id="copyBtn">Copy join link</button>
     <button class="btn warn" id="newBtn">New room</button>
     <span class="hint">The show runs itself once it starts — this desk is just here if you need it.</span>
@@ -275,6 +308,152 @@ start();
 </script>
 
 <script>
+/* ---- Chapter & Verse — Round 1 engine (rapid-fire) ---- */
+  const BANK_RAPID={
+    1:[
+      {"q":"Who built an ark to survive a great flood?","correct":"Noah","wrong":["Moses","Abraham","David"]},
+      {"q":"In the Bible, who were the first man and woman?","correct":"Adam and Eve","wrong":["Cain and Abel","Abraham and Sarah","Isaac and Rebekah"]},
+      {"q":"Which young shepherd defeated the giant Goliath?","correct":"David","wrong":["Samson","Saul","Solomon"]},
+      {"q":"Who was swallowed by a great fish (often called a whale)?","correct":"Jonah","wrong":["Job","Joshua","Jeremiah"]},
+      {"q":"God created the world in how many days, resting on the seventh?","correct":"Six","wrong":["Three","Seven","Ten"]},
+      {"q":"Who led the Israelites out of slavery in Egypt?","correct":"Moses","wrong":["Aaron","Joshua","Joseph"]},
+      {"q":"What did God give Moses on Mount Sinai?","correct":"The Ten Commandments","wrong":["The Golden Calf","The Ark of the Covenant","The Book of Psalms"]},
+      {"q":"Who was born in a manger in Bethlehem?","correct":"Jesus","wrong":["John the Baptist","Moses","Isaac"]},
+      {"q":"How many disciples (apostles) did Jesus choose?","correct":"Twelve","wrong":["Ten","Seven","Three"]},
+      {"q":"Who baptised Jesus in the River Jordan?","correct":"John the Baptist","wrong":["Peter","Paul","Andrew"]},
+      {"q":"What is the first book of the Bible?","correct":"Genesis","wrong":["Exodus","Psalms","Matthew"]},
+      {"q":"Which garden did Adam and Eve live in?","correct":"The Garden of Eden","wrong":["Gethsemane","Babylon","Canaan"]},
+      {"q":"In Eden, who tempted Eve to eat the forbidden fruit?","correct":"The serpent","wrong":["A lion","An angel","A raven"]},
+      {"q":"Jesus turned water into what at a wedding in Cana?","correct":"Wine","wrong":["Bread","Oil","Milk"]}
+    ],
+    2:[
+      {"q":"In the Parable of the Good Samaritan, who finally helped the injured man?","correct":"A Samaritan","wrong":["A priest","A Levite","A Roman soldier"]},
+      {"q":"The Parable of the Prodigal Son is about a father and his…?","correct":"Two sons","wrong":["Three daughters","Twelve disciples","Seven servants"]},
+      {"q":"Who wrote many of the Psalms and was a king of Israel?","correct":"David","wrong":["Solomon","Saul","Samuel"]},
+      {"q":"Which king was famed for his wisdom and built the first Temple in Jerusalem?","correct":"Solomon","wrong":["David","Saul","Hezekiah"]},
+      {"q":"Jesus delivered a famous sermon known as the Sermon on the…?","correct":"Mount","wrong":["Plain","Sea","Hill"]},
+      {"q":"The Beatitudes ('Blessed are…') come from which teaching?","correct":"The Sermon on the Mount","wrong":["The Last Supper","The Road to Emmaus","Pentecost"]},
+      {"q":"Which brother killed Abel in the first murder?","correct":"Cain","wrong":["Seth","Esau","Ishmael"]},
+      {"q":"God asked Abraham to sacrifice which son, before stopping him?","correct":"Isaac","wrong":["Ishmael","Jacob","Joseph"]},
+      {"q":"Which prophet was taken up to heaven in a chariot of fire?","correct":"Elijah","wrong":["Elisha","Isaiah","Ezekiel"]},
+      {"q":"Who interpreted Pharaoh's dreams and rose to power in Egypt?","correct":"Joseph","wrong":["Moses","Daniel","Aaron"]},
+      {"q":"The walls of which city fell after the Israelites marched around them?","correct":"Jericho","wrong":["Babylon","Nineveh","Jerusalem"]},
+      {"q":"Who was the first king of Israel?","correct":"Saul","wrong":["David","Solomon","Samuel"]},
+      {"q":"In the Parable of the Sower, the seed falls on different kinds of…?","correct":"Soil","wrong":["Water","Sand","Snow"]},
+      {"q":"Which Gospel is the first book of the New Testament?","correct":"Matthew","wrong":["Mark","Luke","John"]}
+    ],
+    3:[
+      {"q":"Which king is traditionally credited with writing Psalm 23?","correct":"David","wrong":["Solomon","Asaph","Moses"]},
+      {"q":"The Parable of the Good Samaritan appears in which Gospel?","correct":"Luke","wrong":["Matthew","Mark","John"]},
+      {"q":"The Parable of the Prodigal Son appears only in which Gospel?","correct":"Luke","wrong":["Matthew","Mark","John"]},
+      {"q":"How many books are there in the Protestant Bible?","correct":"66","wrong":["27","39","100"]},
+      {"q":"How many books are in the New Testament?","correct":"27","wrong":["12","39","50"]},
+      {"q":"Who was the father of John the Baptist, a priest struck mute?","correct":"Zechariah","wrong":["Zebedee","Zacchaeus","Zerubbabel"]},
+      {"q":"Which disciple was chosen to replace Judas Iscariot among the Twelve?","correct":"Matthias","wrong":["Barnabas","Stephen","Silas"]},
+      {"q":"On the road to Emmaus, the disciples recognised the risen Jesus when he…?","correct":"Broke bread","wrong":["Spoke their names","Healed them","Walked on water"]},
+      {"q":"Which prophet saw a vision of a valley of dry bones?","correct":"Ezekiel","wrong":["Isaiah","Jeremiah","Daniel"]},
+      {"q":"Who was the tax collector that climbed a sycamore tree to see Jesus?","correct":"Zacchaeus","wrong":["Matthew","Nicodemus","Bartimaeus"]},
+      {"q":"Abel offered animals from his flock; Cain offered what?","correct":"Crops","wrong":["Fish","Gold","Wine"]},
+      {"q":"On which mountain did Noah's ark come to rest?","correct":"Mount Ararat","wrong":["Mount Sinai","Mount Carmel","Mount Nebo"]},
+      {"q":"On which mountain did Moses die, viewing the Promised Land?","correct":"Mount Nebo","wrong":["Mount Sinai","Mount Ararat","Mount Tabor"]},
+      {"q":"How many plagues did God send upon Egypt?","correct":"Ten","wrong":["Seven","Twelve","Three"]}
+    ],
+    4:[
+      {"q":"In what language was most of the Old Testament originally written?","correct":"Hebrew","wrong":["Greek","Aramaic","Latin"]},
+      {"q":"The shortest verse in the King James Bible, “Jesus wept,” is in which Gospel?","correct":"John","wrong":["Matthew","Mark","Luke"]},
+      {"q":"Who succeeded Moses to lead Israel into the Promised Land?","correct":"Joshua","wrong":["Aaron","Caleb","Gideon"]},
+      {"q":"Which book of the Bible never once mentions God by name?","correct":"Esther","wrong":["Ruth","Job","Jonah"]},
+      {"q":"The mysterious “writing on the wall” appeared at whose feast in Babylon?","correct":"Belshazzar","wrong":["Nebuchadnezzar","Darius","Cyrus"]},
+      {"q":"Methuselah, the longest-lived man, was the grandfather of which ark-builder?","correct":"Noah","wrong":["Abraham","Enoch","Lot"]},
+      {"q":"Who interpreted Pharaoh's dreams of seven fat and seven lean cows?","correct":"Joseph","wrong":["Daniel","Moses","Aaron"]},
+      {"q":"The Ten Commandments are recorded in Exodus and which other book?","correct":"Deuteronomy","wrong":["Leviticus","Numbers","Genesis"]},
+      {"q":"Which prophet was told to marry Gomer, an unfaithful wife, as a living parable?","correct":"Hosea","wrong":["Amos","Joel","Micah"]},
+      {"q":"Goliath was a champion of which people?","correct":"The Philistines","wrong":["The Amalekites","The Moabites","The Canaanites"]},
+      {"q":"How many days had Lazarus been dead before Jesus raised him?","correct":"Four","wrong":["Three","Two","Seven"]},
+      {"q":"On which island was Paul shipwrecked and bitten by a snake?","correct":"Malta","wrong":["Cyprus","Crete","Patmos"]},
+      {"q":"Which Roman governor sentenced Jesus to crucifixion?","correct":"Pontius Pilate","wrong":["Herod Antipas","Felix","Festus"]},
+      {"q":"In which garden did Jesus pray on the night of his arrest?","correct":"Gethsemane","wrong":["Eden","Bethany","Siloam"]}
+    ]
+  };
+const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
+const QWIN=15000, REVEAL=4600, INTRO=4200;
+const G={phase:'lobby', qi:0, questions:[], correct:0, deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
+
+function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function buildRound(seed){ const r=rng(seed); const out=[];
+  ['1','2','3','4'].forEach(t=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,2).forEach(o=>out.push(o)); });
+  return out.map((o,i)=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {id:'r1q'+i, q:o.q, opts, correct:opts.indexOf(o.correct)}; });
+}
+function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
+  return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
+function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); }
+
+function renderQuestion(q){
+  $('rLabel').textContent='Round 1 · Rapid-Fire';
+  $('qNum').textContent=(G.qi+1)+' / '+G.questions.length;
+  $('qText').textContent=q.q;
+  const box=$('opts'); box.innerHTML='';
+  q.opts.forEach((opt,i)=>{ const m=OPTMETA[i]; const d=document.createElement('div'); d.className='opt';
+    const k=document.createElement('span'); k.className='k'; k.style.background=m.c; k.textContent=m.k;
+    const t=document.createElement('span'); t.className='t'; t.textContent=opt;
+    d.appendChild(k); d.appendChild(t); box.appendChild(d); });
+  $('ansCount').textContent='0'; const f=$('timerFill'); f.style.width='100%'; f.classList.remove('low');
+}
+function renderReveal(q){ const cards=$('opts').children;
+  for(let i=0;i<cards.length;i++){ if(i===q.correct) cards[i].classList.add('correct'); else cards[i].classList.add('dim'); } }
+function renderTimer(now){ const frac=Math.max(0,Math.min(1,(G.deadline-now)/QWIN));
+  const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25); }
+async function pollAnsCount(){ const now=Date.now(); if(now-G.lastAnsPoll<800) return; G.lastAnsPoll=now;
+  try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.questions[G.qi].id+'&select=player_id');
+    const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
+
+function startShow(){ if(!room){ alert('Still connecting — give it a second.'); return; }
+  G.questions=buildRound((room.seed|0)||Date.now()); G.qi=0; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
+  showPanel('q'); $('rLabel').textContent='Round 1 · Rapid-Fire'; $('qNum').textContent='';
+  $('qText').textContent='Welcome, everyone! First up \u2014 Rapid-Fire.'; $('opts').innerHTML=''; $('timerFill').style.width='100%';
+  if(window.HOST) window.HOST.set('welcome');
+  $('startShow').classList.add('hide'); $('pauseBtn').classList.remove('hide'); $('skipBtn').classList.remove('hide');
+  setRoom({phase:'round_intro', round_type:'rapidfire', round_index:0, q_index:0, q_id:'', deadline:null, state:{round:'Round 1 \u00b7 Rapid-Fire'}});
+}
+function presentQuestion(){ const q=G.questions[G.qi]; G.correct=q.correct; G.scored=false; G.phase='question'; G.deadline=Date.now()+QWIN;
+  showPanel('q'); renderQuestion(q); if(window.HOST) window.HOST.set('ask');
+  setRoom({phase:'question', q_id:q.id, q_index:G.qi, deadline:new Date(G.deadline).toISOString(),
+    state:{opts:q.opts, round:'Round 1 \u00b7 Rapid-Fire', qnum:G.qi+1, qtotal:G.questions.length}}); }
+async function closeQuestion(){ if(G.scored) return; G.scored=true; const q=G.questions[G.qi]; G.phase='scoring';
+  let ans=[], players=[];
+  try{ ans=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+q.id+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
+  try{ players=(await sb('players?code=eq.'+room.code+'&select=id,score'))||[]; }catch(e){}
+  const byId={}; players.forEach(p=>byId[p.id]=p.score);
+  const seen={}, deltas={};
+  ans.forEach(a=>{ if(seen[a.player_id]) return; seen[a.player_id]=1;
+    if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/QWIN)); deltas[a.player_id]=10+Math.round(5*frac); } });
+  for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
+  G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate');
+  setRoom({phase:'reveal', q_id:q.id, state:{opts:q.opts, correct:q.correct, round:'Round 1 \u00b7 Rapid-Fire', qnum:G.qi+1, qtotal:G.questions.length}});
+  poll(); }
+function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
+function endRound(){ G.phase='round_scores'; showPanel('q'); $('qText').textContent='Round 1 complete! Here are the scores.';
+  $('opts').innerHTML=''; $('qNum').textContent=''; $('rLabel').textContent='Round 1 \u00b7 Rapid-Fire'; $('timerFill').style.width='0%';
+  if(window.HOST) window.HOST.set('celebrate');
+  setRoom({phase:'round_scores', q_id:'', state:{round:'Round 1 complete'}}); poll();
+  $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); }
+
+function gameTick(){ const now=Date.now();
+  if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250; return; }
+  if(G.phase==='round_intro'){ if(now>=G.introUntil) presentQuestion(); }
+  else if(G.phase==='question'){ renderTimer(now); pollAnsCount(); if(now>=G.deadline) closeQuestion(); }
+  else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); } }
+setInterval(gameTick, 250);
+
+$('startShow').addEventListener('click', startShow);
+$('pauseBtn').addEventListener('click', ()=>{ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
+$('skipBtn').addEventListener('click', ()=>{ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro') presentQuestion(); });
+// on load, once the room exists, make sure it starts in lobby
+const _waitRoom=setInterval(()=>{ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } } }, 400);
+</script>
+
+<script>
 /* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
 (function(){
   const HCV=document.getElementById('hostCv'); if(!HCV) return;
@@ -298,12 +477,15 @@ start();
     welcome:  {lUp:.82,lOut:.85,rUp:.82,rOut:.85,smile:1,  browR:.55,browA:.12,look:0,  open:.4,point:0},
     present:  {lUp:.06,lOut:.12,rUp:.55,rOut:1.0,smile:.75,browR:.4, browA:.05,look:.55,open:0, point:0},
     point:    {lUp:.05,lOut:.10,rUp:1.0,rOut:.35,smile:.85,browR:.65,browA:.18,look:.15,open:.4,point:1},
-    celebrate:{lUp:1.0,lOut:.7, rUp:1.0,rOut:.7, smile:1,  browR:.6, browA:.12,look:0,  open:.5,point:0}
+    celebrate:{lUp:1.0,lOut:.7, rUp:1.0,rOut:.7, smile:1,  browR:.6, browA:.12,look:0,  open:.5,point:0},
+    ask:      {lUp:.06,lOut:.12,rUp:.5, rOut:.9, smile:.5, browR:.35,browA:.05,look:.35,open:0, point:0},
+    wince:    {lUp:.08,lOut:.16,rUp:.12,rOut:.22,smile:-.4,browR:-.12,browA:.35,look:0,  open:0, point:0}
   };
   const REEL=[{p:'idle',d:2600},{p:'welcome',d:3200,say:1},{p:'present',d:3000},{p:'point',d:2600,say:1},{p:'celebrate',d:2600}];
   const FIELDS=['lUp','lOut','rUp','rOut','smile','browR','browA','look','open','point'];
   const TRANS=650;
   let A=Object.assign({},POSES.idle), from=Object.assign({},POSES.idle), ri=0, stepStart=0;
+  let mode='reel', holdPose='idle'; const TALK={welcome:1,ask:1,celebrate:1};
 
   function drawArm(side,sx,sy,s,up,out,point,T){
     const sway=Math.sin(T*0.0016+side)*s*0.03;
@@ -391,19 +573,26 @@ start();
   function frame(ts){
     if(HW===0||HCV.width===0){ hsize(); if(HW===0){ requestAnimationFrame(frame); return; } }
     if(!stepStart) stepStart=ts;
-    const step=REEL[ri], to=POSES[step.p];
+    let to, say=false;
+    if(mode==='reel'){ const step=REEL[ri]; to=POSES[step.p]; say=!!step.say; }
+    else { to=POSES[holdPose]||POSES.idle; say=!!(TALK[holdPose] && (ts-stepStart<1700)); }
     const k=ease(Math.min(1,(ts-stepStart)/TRANS));
     for(const f of FIELDS) A[f]=lerp(from[f],to[f],k);
     let openNow=A.open;
-    if(step.say) openNow=Math.max(to.open,0.12+0.22*(0.5+0.5*Math.sin(ts*0.02)));
+    if(say) openNow=Math.max(to.open,0.12+0.22*(0.5+0.5*Math.sin(ts*0.02)));
     const look=A.look + Math.sin(ts*0.0006)*0.15;
     draw(Object.assign({},A,{look}), ts, openNow);
-    if(ts-stepStart>=step.d){ from=Object.assign({},A); ri=(ri+1)%REEL.length; stepStart=ts; }
+    if(mode==='reel'){ const step=REEL[ri]; if(ts-stepStart>=step.d){ from=Object.assign({},A); ri=(ri+1)%REEL.length; stepStart=ts; } }
     requestAnimationFrame(frame);
   }
   function startHost(){ if(started) return; started=true; hsize();
     if(RM){ A=Object.assign({},POSES.welcome); draw(A,0,0.15); return; }
     requestAnimationFrame(frame); }
+  window.HOST={
+    set:function(n){ holdPose=n; mode='pose'; from=Object.assign({},A); stepStart=(window.performance&&performance.now())||0;
+      if(RM){ A=Object.assign({},POSES[n]||POSES.idle); draw(A,0, TALK[n]?0.2:((POSES[n]||POSES.idle).open)); } },
+    reel:function(){ if(mode==='reel')return; mode='reel'; from=Object.assign({},A); ri=0; stepStart=(window.performance&&performance.now())||0; }
+  };
   if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(startHost); setTimeout(startHost,400); }
   else startHost();
 })();

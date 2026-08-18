@@ -66,6 +66,28 @@
   .big-btn{width:100%; border:none; border-radius:16px; padding:17px; font-family:'Fraunces',serif; font-weight:700; font-size:20px;
     background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:var(--gold-ink); cursor:pointer;}
   .hide{display:none!important;}
+  /* game screen */
+  .topbar{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .who2{font-family:'Fraunces',serif; font-weight:700; font-size:18px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .playarea{flex:1; display:flex; flex-direction:column; justify-content:center; gap:14px; min-height:52vh;}
+  .pa-title{font-family:'Fraunces',serif; font-weight:700; font-size:30px; text-align:center;}
+  .pa-msg{color:var(--ink-dim); font-weight:700; font-size:17px; text-align:center;}
+  .pa-hint{color:var(--ink-dim); font-weight:800; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; text-align:center;}
+  .pa-good{font-family:'Fraunces',serif; font-weight:700; font-size:28px; text-align:center; color:#7fe0a6;}
+  .pa-bad{font-family:'Fraunces',serif; font-weight:700; font-size:28px; text-align:center; color:#f0a6b4;}
+  .pgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .pbtn{border:none; border-radius:18px; padding:20px 12px; min-height:88px; cursor:pointer; text-align:left;
+    background:var(--card); border:2px solid transparent; display:flex; flex-direction:column; gap:8px; align-items:flex-start;
+    color:var(--ink); font-family:'Nunito'; transition:transform .08s, opacity .3s;}
+  .pbtn:active{transform:scale(.97);}
+  .pbtn .pk{width:34px; height:34px; border-radius:9px; background:var(--oc); color:#0e1230;
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:19px;}
+  .pbtn .pt{font-weight:800; font-size:16px; line-height:1.15;}
+  .pbtn.mine{border-color:var(--oc); box-shadow:0 0 0 3px color-mix(in srgb, var(--oc) 35%, transparent);}
+  .pbtn.good{border-color:#57d38a; background:rgba(87,211,138,.15);}
+  .pbtn.bad{border-color:#c0455e; background:rgba(192,69,94,.15);}
+  .pbtn.dim{opacity:.4;}
+  .locked-note{text-align:center; font-weight:800; color:var(--gold-hi); font-size:15px; letter-spacing:.5px;}
   @media (prefers-reduced-motion:reduce){ .heart{animation:none;} }
 </style>
 </head>
@@ -97,13 +119,12 @@
 
   <!-- WAITING -->
   <div class="screen hide" id="waitScreen">
-    <div class="badge" id="teamBadge">YOUTH</div>
-    <div class="in-card">
-      <div class="hi">You're in!</div>
-      <div class="who" id="whoName">—</div>
-      <div class="score-pill"><b id="myScore">0</b><span>points</span></div>
-      <div class="waitline"><span class="heart"></span><span id="waitMsg">Waiting for the show to start…</span></div>
+    <div class="topbar">
+      <span class="badge" id="teamBadge">YOUTH</span>
+      <span class="who2" id="whoName">—</span>
+      <span class="score-pill"><b id="myScore">0</b><span>pts</span></span>
     </div>
+    <div id="playArea" class="playarea"></div>
     <div class="room-note">Room <span id="roomTag">—</span> · keep this screen open</div>
     <button class="leave" id="leaveBtn">Leave the game</button>
   </div>
@@ -171,20 +192,72 @@ function startHeartbeat(){
   const beat=()=> sb('players?id=eq.'+me.id, {method:'PATCH', body:JSON.stringify({last_seen:new Date().toISOString()})}).catch(()=>{});
   beat(); hb=setInterval(beat, 12000);
 }
+const OPTC=['#f5b23e','#2fb6a6','#8f7be6','#e0728a'], OPTL=['A','B','C','D'];
+let curQid=null, answered=false, myChoice=-1, lastSig='';
+function area(){ return $('playArea'); }
+function setArea(html){ area().innerHTML=html; }
+function renderActive(opts){
+  const wrap=document.createElement('div');
+  const hint=document.createElement('div'); hint.className='pa-hint'; hint.textContent='Tap your answer'; wrap.appendChild(hint);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='pbtn'; b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i];
+    const t=document.createElement('span'); t.className='pt'; t.textContent=o;
+    b.appendChild(k); b.appendChild(t); b.addEventListener('click',()=>sendAnswer(i,opts)); grid.appendChild(b); });
+  wrap.appendChild(grid); area().innerHTML=''; area().appendChild(wrap);
+}
+function renderLocked(opts){
+  const wrap=document.createElement('div');
+  const note=document.createElement('div'); note.className='locked-note'; note.textContent='Locked in \u2713'; wrap.appendChild(note);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach((o,i)=>{ const b=document.createElement('div'); b.className='pbtn '+(i===myChoice?'mine':'dim'); b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i];
+    const t=document.createElement('span'); t.className='pt'; t.textContent=o; b.appendChild(k); b.appendChild(t); grid.appendChild(b); });
+  wrap.appendChild(grid);
+  const hint=document.createElement('div'); hint.className='pa-hint'; hint.textContent='Waiting for the timer…'; wrap.appendChild(hint);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+function renderReveal(st,qid){
+  const opts=st.opts||[], c=st.correct;
+  const mineThis=(curQid===qid && myChoice>=0);
+  const wrap=document.createElement('div');
+  const v=document.createElement('div');
+  if(mineThis){ v.className=myChoice===c?'pa-good':'pa-bad'; v.textContent=myChoice===c?'\u2713 Correct!':'\u2717 Not this time'; }
+  else { v.className='pa-msg'; v.textContent='The answer is…'; }
+  wrap.appendChild(v);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach((o,i)=>{ const cls=i===c?'good':(i===myChoice?'bad':'dim'); const b=document.createElement('div'); b.className='pbtn '+cls; b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i];
+    const t=document.createElement('span'); t.className='pt'; t.textContent=o; b.appendChild(k); b.appendChild(t); grid.appendChild(b); });
+  wrap.appendChild(grid);
+  const hint=document.createElement('div'); hint.className='pa-hint'; hint.textContent='Next question coming…'; wrap.appendChild(hint);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+async function sendAnswer(i,opts){ if(answered) return; answered=true; myChoice=i; lastSig=''; renderLocked(opts);
+  try{ await sb('answers',{method:'POST', body:JSON.stringify({code:me.code,q_id:curQid,player_id:me.id,tag:me.tag,choice:i})}); }catch(e){} }
+
 async function pollState(){
   if(!me) return;
-  try{
-    const rows=await sb('players?id=eq.'+me.id+'&select=score');
-    if(rows&&rows.length) $('myScore').textContent=rows[0].score;
-    const rm=await sb('rooms?code=eq.'+encodeURIComponent(me.code)+'&select=phase');
-    if(!rm||!rm.length){ // room gone -> reset
-      $('waitMsg').textContent='The room has closed. Rejoin when the host opens a new one.';
-    }else{
-      $('waitMsg').textContent = rm[0].phase==='lobby' ? 'Waiting for the show to start…' : 'The show is underway — watch the screen!';
-    }
-  }catch(e){/* transient */}
+  try{ const rows=await sb('players?id=eq.'+me.id+'&select=score'); if(rows&&rows.length) $('myScore').textContent=rows[0].score; }catch(e){}
+  let rm;
+  try{ const r=await sb('rooms?code=eq.'+encodeURIComponent(me.code)+'&select=phase,q_id,deadline,state'); rm=r&&r[0]; }catch(e){ return; }
+  if(!rm){ if(lastSig!=='gone'){ lastSig='gone'; setArea('<div class="pa-msg">The room has closed. Rejoin when the host opens a new one.</div>'); } return; }
+  const st=rm.state||{}, phase=rm.phase;
+  if(phase==='question'){
+    if(rm.q_id!==curQid){ curQid=rm.q_id; answered=false; myChoice=-1; lastSig=''; }
+    const sig='q:'+curQid+':'+answered;
+    if(sig!==lastSig){ lastSig=sig; if(answered) renderLocked(st.opts||[]); else renderActive(st.opts||[]); }
+  } else if(phase==='reveal'){
+    const sig='r:'+rm.q_id; if(sig!==lastSig){ lastSig=sig; renderReveal(st, rm.q_id); }
+  } else if(phase==='round_intro'){
+    if(lastSig!=='intro'){ lastSig='intro'; setArea('<div class="pa-title">Round 1</div><div class="pa-msg">Rapid-Fire — get ready!</div>'); }
+  } else if(phase==='round_scores'){
+    if(lastSig!=='scores'){ lastSig='scores'; setArea('<div class="pa-title">Round complete!</div><div class="pa-msg">Watch the big screen.</div>'); }
+  } else {
+    if(lastSig!=='lobby'){ lastSig='lobby'; setArea('<div class="pa-msg"><span class="heart"></span>Waiting for the show to start…</div>'); }
+  }
 }
-function startPoll(){ clearInterval(pollTimer); pollState(); pollTimer=setInterval(pollState, 2500); }
+function startPoll(){ clearInterval(pollTimer); pollState(); pollTimer=setInterval(pollState, 1500); }
 
 async function tryResume(){
   let saved=null; try{ saved=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
