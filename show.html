@@ -133,6 +133,13 @@
   .answered{color:var(--ink-dim); font-weight:800; font-size:clamp(14px,1.5vw,19px);}
   .answered b{color:var(--ink); font-size:1.15em;}
   .go-btn{border-color:rgba(87,211,138,.5)!important; color:#bff0d0!important; font-size:15px;}
+  .lineup{margin-top:12px; color:var(--gold-hi); font-weight:800; font-size:clamp(13px,1.4vw,17px); letter-spacing:.3px; min-height:1.2em;}
+  .admin{display:inline-flex; align-items:center; gap:8px; color:var(--ink-dim); font-weight:800; font-size:13px;
+    background:rgba(255,255,255,.04); border:1px solid var(--board-line); border-radius:10px; padding:6px 12px;}
+  .admin b{color:var(--ink); min-width:1.2em; text-align:center; font-size:16px;}
+  .admin .mini{width:26px; height:26px; border-radius:7px; border:1px solid var(--board-line); background:rgba(255,255,255,.06);
+    color:var(--ink); font-weight:800; font-size:16px; cursor:pointer; line-height:1;}
+  .admin .mini:hover{background:rgba(255,255,255,.14);}
 </style>
 </head>
 <body>
@@ -169,6 +176,7 @@
       <div class="go">or go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
       <div class="taphint">On this device you can just tap the link above to open the player page.</div>
       <div class="count"><b id="count">0</b> in the room</div>
+      <div class="lineup" id="lineup"></div>
       </div>
 
       <div id="qPanel" class="hide">
@@ -194,6 +202,7 @@
   </div>
 
   <div class="ops">
+    <span class="admin">Rounds <button class="mini" id="rMinus">–</button><b id="rCount">2</b><button class="mini" id="rPlus">+</button></span>
     <button class="btn go-btn" id="startShow">Start the show ▸</button>
     <button class="btn hide" id="pauseBtn">Pause</button>
     <button class="btn hide" id="skipBtn">Skip ▸</button>
@@ -408,12 +417,23 @@ start();
 
   const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
   const INTRO=4200, REVEAL=4600;
-  const ROUND_SEQ=['rapidfire','verse'];
+  const POOL=['rapidfire','verse'];   /* middle-round pool — Five Clues joins here later */
+  const FINALE=null;                  /* the buzzer round becomes the pinned finale later */
+  let SHOW_ORDER=[];
+  const ADMIN_KEY='cv_rounds';
+  let ADMIN_ROUNDS=parseInt(localStorage.getItem(ADMIN_KEY),10)||(POOL.length+(FINALE?1:0));
+  function maxRounds(){ return POOL.length+(FINALE?1:0); }
+  function buildShowOrder(seed){ const r=rng(seed); const pool=shuf(POOL.slice(),r); const fin=FINALE?1:0;
+    const mid=Math.max(1,Math.min(ADMIN_ROUNDS-fin, pool.length)); const order=pool.slice(0,mid); if(FINALE) order.push(FINALE); return order; }
+  function lineupSentence(order){ const t=order.map(x=>RMETA[x].title);
+    if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
+    return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
   const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.'},
                 verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse. Name the verse, or fill the blank.'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
-  function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
+    return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
   function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
   function buildRapid(seed){ const r=rng(seed); const out=[];
     ['1','2','3','4'].forEach(t=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,2).forEach(o=>out.push(o)); });
@@ -455,12 +475,13 @@ start();
     try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id');
       const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
 
-  function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; } G.ptr=0; startRoundByPtr(); }
-  function startRoundByPtr(){ const type=ROUND_SEQ[G.ptr], meta=RMETA[type];
+  function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
+    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; startRoundByPtr(); }
+  function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now()); G.qi=0;
     G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
     showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent=''; $('qPrompt').textContent='';
-    $('qText').classList.remove('verse'); $('qText').textContent=meta.intro; $('opts').innerHTML=''; $('timerFill').style.width='100%';
+    $('qText').classList.remove('verse'); $('qText').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : meta.intro); $('opts').innerHTML=''; $('timerFill').style.width='100%';
     if(window.HOST) window.HOST.set('welcome');
     $('startShow').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
     $('pauseBtn').classList.remove('hide'); $('skipBtn').classList.remove('hide');
@@ -486,8 +507,8 @@ start();
     $('qPrompt').textContent=''; $('qText').classList.remove('verse'); $('opts').innerHTML=''; $('timerFill').style.width='0%';
     if(window.HOST) window.HOST.set('celebrate');
     $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide');
-    if(G.ptr < ROUND_SEQ.length-1){ $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
-      const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[ROUND_SEQ[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide'); }
+    if(G.ptr < SHOW_ORDER.length-1){ $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
+      const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide'); }
     else { $('qText').textContent='That\u2019s the end \u2014 great playing! (Final scoreboard comes in a later step.)'; }
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
 
@@ -499,11 +520,19 @@ start();
   setInterval(gameTick, 250);
 
   $('startShow').addEventListener('click', startShow);
+  function refreshLineup(){ const el=$('lineup'); if(!el) return; if(typeof room==='undefined'||!room){ el.textContent=''; return; }
+    const order=buildShowOrder((room.seed|0)||1); el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 '); }
+  function updateAdminUI(){ ADMIN_ROUNDS=Math.max(1,Math.min(ADMIN_ROUNDS,maxRounds())); const c=$('rCount'); if(c) c.textContent=ADMIN_ROUNDS;
+    localStorage.setItem(ADMIN_KEY,ADMIN_ROUNDS); refreshLineup(); }
+  { const rmB=$('rMinus'), rpB=$('rPlus');
+    if(rmB) rmB.addEventListener('click', function(){ ADMIN_ROUNDS--; updateAdminUI(); });
+    if(rpB) rpB.addEventListener('click', function(){ ADMIN_ROUNDS++; updateAdminUI(); }); }
+  updateAdminUI();
   $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
   $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro') presentQuestion(); });
-  const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } } }, 400);
-  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,get G(){return G;}};
+  const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } refreshLineup(); } }, 400);
+  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},get order(){return SHOW_ORDER;},get G(){return G;}};
 </script>
 
 
