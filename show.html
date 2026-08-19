@@ -147,6 +147,30 @@
   .bzlane.none{opacity:.6;}
   @keyframes bzpulse{0%,100%{box-shadow:0 0 0 0 rgba(245,178,62,.0);}50%{box-shadow:0 0 0 6px rgba(245,178,62,.18);}}
   @media (prefers-reduced-motion:reduce){ .bzlane.live{animation:none;} }
+  /* five clues */
+  .fccat{font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--teal-hi); font-size:clamp(12px,1.3vw,16px); margin-bottom:10px;}
+  .fcclues{display:flex; flex-direction:column; gap:clamp(6px,1vw,11px); margin-bottom:clamp(10px,1.4vw,16px);}
+  .clue{display:flex; gap:12px; align-items:baseline; font-family:'Fraunces',serif; font-size:clamp(17px,2vw,27px); line-height:1.25;
+    animation:cluein .45s ease both;}
+  .clue .clueno{flex:0 0 auto; width:clamp(24px,2.6vw,36px); height:clamp(24px,2.6vw,36px); border-radius:50%; background:rgba(245,178,62,.18);
+    color:var(--gold-hi); font-weight:700; font-size:clamp(13px,1.4vw,18px); display:inline-flex; align-items:center; justify-content:center;}
+  @keyframes cluein{from{opacity:0; transform:translateY(-6px);}to{opacity:1; transform:none;}}
+  .fcpts{font-family:'Fraunces',serif; font-weight:700; color:var(--gold-hi); font-size:clamp(18px,2.2vw,30px); margin-bottom:8px; min-height:1.2em;}
+  @media (prefers-reduced-motion:reduce){ .clue{animation:none;} }
+  /* finale */
+  #finalePanel{text-align:center;}
+  .finhd{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(28px,3.4vw,48px); color:var(--gold-hi); margin-bottom:clamp(14px,2vw,26px);}
+  .fincards{display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,1.8vw,24px);}
+  .fincard{border-radius:18px; padding:clamp(16px,2.2vw,30px); background:var(--board); border:2px solid var(--board-line); animation:finpop .6s cubic-bezier(.2,.8,.3,1) both;}
+  .fincard.youth{box-shadow:0 0 0 2px rgba(245,178,62,.4); animation-delay:.1s;}
+  .fincard.adult{box-shadow:0 0 0 2px rgba(47,182,166,.3); animation-delay:.3s;}
+  .fincard .finteam{font-weight:800; letter-spacing:2px; text-transform:uppercase; font-size:clamp(12px,1.3vw,16px);}
+  .fincard.youth .finteam{color:var(--gold-hi);} .fincard.adult .finteam{color:var(--teal-hi);}
+  .fincard .finname{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(24px,3vw,42px); margin:8px 0 4px; line-height:1.1;}
+  .fincard .finscore{font-weight:800; color:var(--ink-dim); font-size:clamp(16px,1.8vw,24px);}
+  .finfoot{margin-top:clamp(16px,2.2vw,28px); font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:clamp(15px,1.7vw,22px);}
+  @keyframes finpop{from{opacity:0; transform:translateY(14px) scale(.94);}to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .fincard{animation:none;} }
   .lineup{margin-top:12px; color:var(--gold-hi); font-weight:800; font-size:clamp(13px,1.4vw,17px); letter-spacing:.3px; min-height:1.2em;}
   .admin{display:inline-flex; align-items:center; gap:8px; color:var(--ink-dim); font-weight:800; font-size:13px;
     background:rgba(255,255,255,.04); border:1px solid var(--board-line); border-radius:10px; padding:6px 12px;}
@@ -214,6 +238,25 @@
         </div>
         <div class="timerbar"><div class="fill" id="bzBar"></div></div>
         <div class="opts hide" id="bzOpts"></div>
+      </div>
+
+      <div id="fcPanel" class="hide">
+        <div class="qtop"><span class="rlabel" id="fcLabel">Five Clues</span><span class="qnum" id="fcNum"></span></div>
+        <div class="fccat" id="fcCat"></div>
+        <div class="fcclues" id="fcClues"></div>
+        <div class="fcpts" id="fcPts"></div>
+        <div class="timerbar"><div class="fill" id="fcBar"></div></div>
+        <div class="opts" id="fcOpts"></div>
+        <div class="answered"><b id="fcAns">0</b> locked in</div>
+      </div>
+
+      <div id="finalePanel" class="hide">
+        <div class="finhd">🏆 Final Scores</div>
+        <div class="fincards">
+          <div class="fincard youth"><div class="finteam">Youth Champion</div><div class="finname" id="finYouth">—</div><div class="finscore" id="finYouthScore"></div></div>
+          <div class="fincard adult"><div class="finteam">Adult Champion</div><div class="finname" id="finAdult">—</div><div class="finscore" id="finAdultScore"></div></div>
+        </div>
+        <div class="finfoot">Well played, everyone — thank you for coming!</div>
       </div>
     </div>
   </div>
@@ -446,8 +489,35 @@ start();
   ];
 
   const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
-  const INTRO=4200, REVEAL=4600;
-  const POOL=['rapidfire','verse'];   /* middle-round pool — Five Clues joins here later */
+  /* ---- SFX: procedural show audio (no files) ---- */
+  const SFX=(function(){
+    let ac=null, master=null, muted=false;
+    function ctx(){ try{ if(!ac){ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=0.9; master.connect(ac.destination); } if(ac.state==='suspended') ac.resume(); }catch(e){ return null; } return ac; }
+    function tone(freq,t0,dur,type,vol){ try{ const a=ctx(); if(!a) return null; const o=a.createOscillator(), g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
+      g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(vol||0.2,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur); o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur+0.03); return o; }catch(e){ return null; } }
+    function noise(t0,dur,vol,ff){ try{ const a=ctx(); if(!a) return; const n=Math.max(1,Math.floor(a.sampleRate*dur)); const buf=a.createBuffer(1,n,a.sampleRate); const d=buf.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n); const src=a.createBufferSource(); src.buffer=buf; const f=a.createBiquadFilter(); f.type='bandpass'; f.frequency.value=ff||1200; const g=a.createGain(); g.gain.value=vol||0.15;
+      src.connect(f); f.connect(g); g.connect(master); src.start(t0); src.stop(t0+dur+0.02); }catch(e){} }
+    function now(){ const a=ctx(); return a?a.currentTime:0; }
+    return {
+      on:function(){ ctx(); },
+      setMuted:function(m){ muted=m; if(master){ try{ master.gain.value=m?0:0.9; }catch(e){} } },
+      isMuted:function(){ return muted; },
+      theme:function(){ const t=now(); [0,4,7,12].forEach(function(n,i){ tone(330*Math.pow(2,n/12), t+i*0.11, 0.5, 'triangle', 0.22); }); tone(660, t+0.46, 0.7, 'sine', 0.16); },
+      sting:function(){ const t=now(); tone(392,t,0.14,'triangle',0.2); tone(523,t+0.1,0.28,'triangle',0.2); },
+      tick:function(){ tone(880,now(),0.05,'square',0.07); },
+      correct:function(){ const t=now(); tone(659,t,0.12,'sine',0.22); tone(988,t+0.09,0.32,'sine',0.2); },
+      wrong:function(){ const t=now(); tone(220,t,0.18,'sawtooth',0.15); tone(160,t+0.12,0.3,'sawtooth',0.15); },
+      buzz:function(){ const t=now(); const o=tone(180,t,0.3,'square',0.18); try{ if(o) o.frequency.exponentialRampToValueAtTime(90,t+0.2); }catch(e){} },
+      drumroll:function(){ const t=now(); for(let i=0;i<24;i++){ noise(t+i*0.05, 0.05, 0.12, 220); } },
+      cymbal:function(){ noise(now(),0.6,0.18,6000); },
+      fanfare:function(){ const t=now(); [523,659,784,1047].forEach(function(f,i){ tone(f,t+i*0.12,0.5,'triangle',0.22); }); },
+      applause:function(){ const t=now(); for(let i=0;i<64;i++){ noise(t+Math.random()*1.7, 0.04+Math.random()*0.05, 0.04+Math.random()*0.05, 1500+Math.random()*3200); } }
+    };
+  })();
+
+  const INTRO=5200, REVEAL=4600;
+  const POOL=['rapidfire','verse','fiveclues'];   /* middle-round pool */
   const FINALE='buzzer';              /* buzzer is the pinned finale */
   let SHOW_ORDER=[];
   const ADMIN_KEY='cv_rounds', QPR_KEY='cv_qpr', PICK_KEY='cv_pick';
@@ -462,9 +532,10 @@ start();
   function lineupSentence(order){ const t=order.map(x=>RMETA[x].title);
     if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
-  const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.'},
-                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse. Name the verse, or fill the blank.'},
-                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer! Fastest finger wins. Youth and adults race separately.'} };
+  const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right \u2014 tap fast, because quicker correct answers score bonus points!'},
+                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices \u2014 pick the right one.'},
+                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
+                fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure \u2014 the earlier you\u2019re right, the more points you score (5 down to 1).'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
@@ -484,7 +555,7 @@ start();
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
     return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
-  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); }
+  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); var fp=$('fcPanel'); if(fp) fp.classList.toggle('hide', which!=='fc'); var vp=$('finalePanel'); if(vp) vp.classList.toggle('hide', which!=='final'); }
 
   function renderBlank(node, text){ node.textContent=''; const parts=text.split('{b}');
     parts.forEach((p,i)=>{ node.appendChild(document.createTextNode(p)); if(i<parts.length-1){ const b=document.createElement('span'); b.className='blank'; node.appendChild(b); } }); }
@@ -506,25 +577,27 @@ start();
     if(q.kind && q.kind.indexOf('verse')===0){ $('qPrompt').textContent='\u2014 '+q.ref;
       if(q.kind==='verse-blank'){ const bl=$('qText').querySelector('.blank'); if(bl){ bl.textContent=q.opts[q.correct]; bl.classList.add('filled'); } } } }
   function renderTimer(now){ const frac=Math.max(0,Math.min(1,(G.deadline-now)/G.win));
-    const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25); }
+    const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25);
+    const secs=Math.ceil((G.deadline-now)/1000); if(secs>0 && secs<=5 && secs!==G.lastTick){ G.lastTick=secs; SFX.tick(); } }
   async function pollAnsCount(){ const now=Date.now(); if(now-G.lastAnsPoll<800) return; G.lastAnsPoll=now;
     try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id');
       const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
-    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; startRoundByPtr(); }
+    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; SFX.on(); SFX.theme(); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR); G.qi=0;
-    G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
-    showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent=''; $('qPrompt').textContent='';
-    $('qText').classList.remove('verse'); $('qText').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : meta.intro); $('opts').innerHTML=''; $('timerFill').style.width='100%';
+    G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0) SFX.sting();
+    showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
+    $('qPrompt').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : 'How this round works');
+    $('qText').classList.remove('verse'); $('qText').textContent=meta.rules; $('opts').innerHTML=''; $('timerFill').style.width='100%';
     if(window.HOST) window.HOST.set('welcome');
     $('startShow').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
     $('pauseBtn').classList.remove('hide'); $('skipBtn').classList.remove('hide');
-    setRoom({phase:'round_intro', round_type:type, round_index:G.ptr, q_index:0, q_id:'', deadline:null, state:{round:G.label}});
+    setRoom({phase:'round_intro', round_type:type, round_index:G.ptr, q_index:0, q_id:'', deadline:null, state:{round:G.label, rules:meta.rules}});
   }
   function presentQuestion(){ const q=G.questions[G.qi]; G.scored=false; G.phase='question'; G.curId='p'+G.ptr+'q'+G.qi; G.deadline=Date.now()+G.win;
-    showPanel('q'); renderQuestion(q); if(window.HOST) window.HOST.set('ask');
+    showPanel('q'); G.lastTick=99; renderQuestion(q); if(window.HOST) window.HOST.set('ask');
     setRoom({phase:'question', q_id:G.curId, q_index:G.qi, deadline:new Date(G.deadline).toISOString(),
       state:{opts:q.opts, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}}); }
   async function closeQuestion(){ if(G.scored) return; G.scored=true; const q=G.questions[G.qi]; G.phase='scoring';
@@ -535,18 +608,33 @@ start();
     ans.forEach(a=>{ if(seen[a.player_id]) return; seen[a.player_id]=1;
       if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/G.win)); deltas[a.player_id]=10+Math.round(5*frac); } });
     for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
-    G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate');
+    G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate'); SFX.correct();
     setRoom({phase:'reveal', q_id:G.curId, state:{opts:q.opts, correct:q.correct, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}});
     poll(); }
   function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
-  function endRound(){ G.phase='round_scores'; showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
+  function endRound(){
+    if(G.ptr >= SHOW_ORDER.length-1){ finaleShow(); return; }
+    G.phase='round_scores'; showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
     $('qPrompt').textContent=''; $('qText').classList.remove('verse'); $('opts').innerHTML=''; $('timerFill').style.width='0%';
     if(window.HOST) window.HOST.set('celebrate');
     $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide');
-    if(G.ptr < SHOW_ORDER.length-1){ $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
-      const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide'); }
-    else { $('qText').textContent='That\u2019s the end \u2014 great playing! (Final scoreboard comes in a later step.)'; }
+    $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
+    const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide');
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
+  async function finaleShow(){ G.phase='final'; showPanel('final'); if(window.HOST) window.HOST.set('celebrate'); SFX.drumroll();
+    $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
+    let players=[]; try{ players=(await sb('players?code=eq.'+room.code+'&select=name,tag,score,joined_at'))||[]; }catch(e){}
+    function champ(tag){ const arr=players.filter(function(p){return p.tag===tag;}).sort(function(a,b){ return (b.score-a.score)||(new Date(a.joined_at)-new Date(b.joined_at)); });
+      if(!arr.length||arr[0].score<=0) return null; const top=arr[0].score; const tied=arr.filter(function(p){return p.score===top;});
+      return { name:(tied.length>1? tied.map(function(p){return p.name;}).join(' & ') : arr[0].name), score:top, tie:tied.length>1 }; }
+    const fin={ youth:champ('youth'), adult:champ('adult') };
+    renderFinale(fin); setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();
+    setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); }, 1300); }
+  function renderFinale(fin){ const y=fin.youth, a=fin.adult;
+    if($('finYouth')) $('finYouth').textContent = y? (y.tie?('Tied: '+y.name):y.name) : 'No scores yet';
+    if($('finYouthScore')) $('finYouthScore').textContent = y? (y.score+' pts') : '';
+    if($('finAdult')) $('finAdult').textContent = a? (a.tie?('Tied: '+a.name):a.name) : 'No scores yet';
+    if($('finAdultScore')) $('finAdultScore').textContent = a? (a.score+' pts') : ''; }
 
   /* ---- The Buzzer round ---- */
   const BUZZ_BANK=[
@@ -573,10 +661,7 @@ start();
   const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600;
   let bzActx=null;
   function stageAudio(){ if(!bzActx){ try{ bzActx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return bzActx; }
-  function playStageBuzz(){ const a=stageAudio(); if(!a) return; try{ const o=a.createOscillator(), g=a.createGain();
-    o.type='square'; o.frequency.setValueAtTime(170,a.currentTime); o.frequency.exponentialRampToValueAtTime(90,a.currentTime+0.18);
-    g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.linearRampToValueAtTime(0.16,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.32);
-    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.34); }catch(e){} }
+  function playStageBuzz(){ SFX.buzz(); }
   function newLane(){ return {st:'open', bid:null, bname:null, adl:0, out:{}, winStart:0, win:null}; }
   function startBuzzerQuestion(){ const q=G.questions[G.qi]; G.curId='p'+G.ptr+'q'+G.qi;
     G.buzz={ q:q, correct:q.correct, opts:q.opts, phase:'arm', armAt:Date.now()+BUZZ_ARM, lanes:{youth:newLane(),adult:newLane()}, revealUntil:0, lastPoll:0 };
@@ -610,6 +695,7 @@ start();
       }
     });
     if(hit) playStageBuzz();
+    if(awarded) SFX.correct(); else if(missed) SFX.wrong();
     if(changed){ if(window.HOST) window.HOST.set(awarded?'celebrate':(missed?'wince':'ask')); writeBuzzRoom(); renderBuzzerStage(); poll(); }
   }
   function buzzerReveal(){ const bz=G.buzz; bz.phase='reveal'; bz.revealUntil=Date.now()+BUZZ_REVEAL; renderBuzzerStage();
@@ -649,16 +735,77 @@ start();
     bar.style.width=(frac*100).toFixed(1)+'%';
   }
 
+  /* ---- Five Clues round ---- */
+  const CLUES_BANK=[
+   {answer:'Noah',cat:'Person',clues:['I lived a very long time ago.','God chose to speak with me.','I was told to build something enormous.','I gathered the animals two by two.','I survived a great flood in an ark.'],wrong:['Moses','Abraham','Job']},
+   {answer:'Moses',cat:'Person',clues:['I was born during hard times in Egypt.','As a baby I was hidden in a basket.','I grew up in Pharaoh\u2019s palace.','I saw a bush that burned but was not consumed.','I led the Israelites out of Egypt.'],wrong:['Aaron','Joshua','Joseph']},
+   {answer:'David',cat:'Person',clues:['I began life as a shepherd.','I played the harp to calm a king.','I was anointed while still young.','I defeated a giant with a sling and stone.','I became the second king of Israel.'],wrong:['Saul','Samson','Solomon']},
+   {answer:'Jonah',cat:'Person',clues:['God gave me a mission I tried to escape.','I boarded a ship going the other way.','A violent storm arose because of me.','The sailors threw me into the sea.','A great fish swallowed me for three days.'],wrong:['Job','Elijah','Amos']},
+   {answer:'Daniel',cat:'Person',clues:['I served in a foreign kingdom.','I refused to eat the king\u2019s rich food.','I interpreted dreams and strange writing.','I kept praying despite a royal decree.','I was thrown into a den of lions.'],wrong:['Ezekiel','Joseph','Nehemiah']},
+   {answer:'Solomon',cat:'Person',clues:['I was a king of Israel.','I was famous for great wisdom.','I judged two women claiming one baby.','I built the first temple in Jerusalem.','I was the son of David.'],wrong:['Rehoboam','Hezekiah','Josiah']},
+   {answer:'Goliath',cat:'Person',clues:['I was known across the land for my size.','I was a champion of the Philistines.','I taunted the army of Israel for days.','I mocked the God of Israel.','A shepherd boy felled me with a stone.'],wrong:['Samson','Og','Saul']},
+   {answer:'Bethlehem',cat:'Place',clues:['I am only a small town.','Prophets spoke of me long before.','I am known as the City of David.','Shepherds hurried to visit me one night.','Jesus was born here.'],wrong:['Nazareth','Jerusalem','Capernaum']},
+   {answer:'Egypt',cat:'Place',clues:['I am an ancient and mighty land.','A famine once drew families to me.','Joseph rose to great power here.','The Israelites were enslaved within me.','Ten plagues struck me before the Exodus.'],wrong:['Babylon','Canaan','Assyria']},
+   {answer:'Jericho',cat:'Place',clues:['I am a very old city.','I was protected by great walls.','Spies were once hidden inside me.','Israel marched around me for seven days.','My walls fell down flat at a shout.'],wrong:['Ai','Hebron','Gibeon']}
+  ];
+  function buildClues(seed,n){ n=n||6; const r=rng(seed); const pool=shuf(CLUES_BANK.slice(),r).slice(0,Math.min(n,CLUES_BANK.length));
+    return pool.map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer)}; }); }
+
+  const CLUE_TIME=6500, CLUES_REVEAL=5000;
+  function awardN(id,n,players){ const p=(players||[]).find(function(x){return x.id===id;}); const ns=(p?p.score:0)+n;
+    return sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(function(){}); }
+  function startCluesQuestion(){ const q=G.questions[G.qi]; G.curId='p'+G.ptr+'q'+G.qi; const now=Date.now();
+    G.fc={ phase:'clue', clueIdx:0, clueTimes:[now], clueDeadline:now+CLUE_TIME, revealUntil:0, scored:false, lastPoll:0, answered:0, playerCount:0 };
+    G.phase='fc'; showPanel('fc'); renderCluesStage(); if(window.HOST) window.HOST.set('ask'); writeCluesRoom(); }
+  function writeCluesRoom(){ const fc=G.fc; const q=G.questions[G.qi]; setRoom({phase:'fiveclues', q_id:G.curId, q_index:G.qi,
+    state:{ round:G.label, qnum:G.qi+1, qtotal:G.questions.length,
+      fc:{ phase:fc.phase, opts:q.opts, clueIdx:fc.clueIdx, pointsNow:5-fc.clueIdx, correct:(fc.phase==='reveal'?q.correct:null) } } }); }
+  async function pollCluesCount(){ const fc=G.fc; let a=[],p=[];
+    try{ a=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id'))||[]; }catch(e){}
+    try{ p=(await sb('players?code=eq.'+room.code+'&select=id'))||[]; }catch(e){}
+    fc.answered=new Set(a.map(function(x){return x.player_id;})).size; fc.playerCount=p.length;
+    if($('fcAns')) $('fcAns').textContent=fc.answered;
+    if(fc.playerCount>0 && fc.answered>=fc.playerCount && fc.phase==='clue') closeClues(); }
+  async function closeClues(){ const fc=G.fc; if(fc.scored) return; fc.scored=true; const q=G.questions[G.qi];
+    let answers=[],players=[];
+    try{ answers=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
+    try{ players=(await sb('players?code=eq.'+room.code+'&select=id,score'))||[]; }catch(e){}
+    const seen={};
+    for(const a of answers){ if(seen[a.player_id]) continue; seen[a.player_id]=1;
+      if(a.choice===q.correct){ let lvl=0; const t=Date.parse(a.created_at); for(const ct of fc.clueTimes){ if(ct<=t) lvl++; } lvl=Math.max(1,Math.min(5,lvl)); await awardN(a.player_id, 6-lvl, players); } }
+    fc.phase='reveal'; fc.revealUntil=Date.now()+CLUES_REVEAL; renderCluesStage(); if(window.HOST) window.HOST.set('celebrate'); SFX.correct(); writeCluesRoom(); poll(); }
+  function nextCluesQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else startCluesQuestion(); }
+  function cluesTick(){ const fc=G.fc; if(!fc) return; const now=Date.now();
+    if(fc.phase==='reveal'){ if(now>=fc.revealUntil) nextCluesQuestion(); return; }
+    renderCluesTimer(now);
+    if(now>=fc.clueDeadline){ if(fc.clueIdx<4){ fc.clueIdx++; fc.clueTimes.push(now); fc.clueDeadline=now+CLUE_TIME; renderCluesStage(); writeCluesRoom(); } else { closeClues(); return; } }
+    if(now-fc.lastPoll>=1000){ fc.lastPoll=now; pollCluesCount(); } }
+  function renderCluesStage(){ const fc=G.fc; if(!fc) return; const q=G.questions[G.qi];
+    if($('fcLabel')) $('fcLabel').textContent=G.label; if($('fcNum')) $('fcNum').textContent=(G.qi+1)+' / '+G.questions.length;
+    if($('fcCat')) $('fcCat').textContent='Who or what am I?  \u00b7  '+q.cat;
+    const cl=$('fcClues'); if(cl){ cl.innerHTML=''; for(let i=0;i<=fc.clueIdx;i++){ const d=document.createElement('div'); d.className='clue';
+      const n=document.createElement('span'); n.className='clueno'; n.textContent=(i+1); const t=document.createElement('span'); t.className='cluetx'; t.textContent=q.clues[i];
+      d.appendChild(n); d.appendChild(t); cl.appendChild(d); } }
+    const pts=5-fc.clueIdx; if($('fcPts')) $('fcPts').textContent = (fc.phase==='reveal') ? ('The answer: '+q.answer) : ('Answer now for '+pts+' point'+(pts>1?'s':'')+'!');
+    const box=$('fcOpts'); if(box){ box.innerHTML='';
+      q.opts.forEach(function(opt,i){ const m=OPTMETA[i]; const d=document.createElement('div'); d.className='opt'+(fc.phase==='reveal'?(i===q.correct?' correct':' dim'):'');
+        const k=document.createElement('span'); k.className='k'; k.style.background=m.c; k.textContent=m.k; const t=document.createElement('span'); t.className='t'; t.textContent=opt;
+        d.appendChild(k); d.appendChild(t); box.appendChild(d); }); } }
+  function renderCluesTimer(now){ const fc=G.fc; const bar=$('fcBar'); if(!bar||!fc) return; const frac=Math.max(0,Math.min(1,(fc.clueDeadline-now)/CLUE_TIME)); bar.style.width=(frac*100).toFixed(1)+'%'; }
+
   function gameTick(){ const now=Date.now();
     if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250;
-      if(G.phase==='bz'&&G.buzz){ const b=G.buzz; b.armAt+=250; if(b.revealUntil) b.revealUntil+=250; if(b.lanes.youth.adl) b.lanes.youth.adl+=250; if(b.lanes.adult.adl) b.lanes.adult.adl+=250; } return; }
-    if(G.phase==='round_intro'){ if(now>=G.introUntil){ if(G.type==='buzzer') startBuzzerQuestion(); else presentQuestion(); } }
+      if(G.phase==='bz'&&G.buzz){ const b=G.buzz; b.armAt+=250; if(b.revealUntil) b.revealUntil+=250; if(b.lanes.youth.adl) b.lanes.youth.adl+=250; if(b.lanes.adult.adl) b.lanes.adult.adl+=250; }
+      if(G.phase==='fc'&&G.fc){ G.fc.clueDeadline+=250; if(G.fc.revealUntil) G.fc.revealUntil+=250; } return; }
+    if(G.phase==='round_intro'){ if(now>=G.introUntil){ if(G.type==='buzzer') startBuzzerQuestion(); else if(G.type==='fiveclues') startCluesQuestion(); else presentQuestion(); } }
     else if(G.phase==='question'){ renderTimer(now); pollAnsCount(); if(now>=G.deadline) closeQuestion(); }
     else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); }
-    else if(G.phase==='bz'){ buzzerTick(); } }
+    else if(G.phase==='bz'){ buzzerTick(); }
+    else if(G.phase==='fc'){ cluesTick(); } }
   setInterval(gameTick, 250);
 
   $('startShow').addEventListener('click', startShow);
+  { const mb=$('mute'); if(mb) mb.addEventListener('click', function(){ const m=!SFX.isMuted(); SFX.setMuted(m); mb.textContent=m?'🔇':'🔊'; }); }
   function refreshLineup(){ const el=$('lineup'); if(!el) return; if(typeof room==='undefined'||!room){ el.textContent=''; return; }
     const order=buildShowOrder((room.seed|0)||1);
     el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 ')+' \u00b7 '+QPR+' questions'+(order.length>1?' each':''); }
@@ -679,9 +826,9 @@ start();
   populatePick(); updateAdminUI();
   $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
-  $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } });
+  $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else if(G.type==='fiveclues') startCluesQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } else if(G.phase==='fc'){ if(G.fc&&G.fc.phase==='reveal') nextCluesQuestion(); else closeClues(); } });
   const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } refreshLineup(); } }, 400);
-  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},buildBuzzer:buildBuzzer,startBuzzerQuestion:startBuzzerQuestion,resolveLanes:resolveLanes,buzzerReveal:buzzerReveal,nextBuzzerQuestion:nextBuzzerQuestion,get order(){return SHOW_ORDER;},get buzz(){return G.buzz;},get G(){return G;}};
+  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},buildBuzzer:buildBuzzer,buildClues:buildClues,startBuzzerQuestion:startBuzzerQuestion,startCluesQuestion:startCluesQuestion,closeClues:closeClues,nextCluesQuestion:nextCluesQuestion,get fc(){return G.fc;},finaleShow:finaleShow,resolveLanes:resolveLanes,buzzerReveal:buzzerReveal,nextBuzzerQuestion:nextBuzzerQuestion,get order(){return SHOW_ORDER;},get buzz(){return G.buzz;},get G(){return G;}};
 </script>
 
 

@@ -205,6 +205,7 @@ function startHeartbeat(){
 const OPTC=['#f5b23e','#2fb6a6','#8f7be6','#e0728a'], OPTL=['A','B','C','D'];
 let curQid=null, answered=false, myChoice=-1, lastSig='';
 let bzBuzzedQid=null, bzAnsQid=-1, bzAnsChoice=-1;
+let cluesAnsQid=-1, cluesAnsChoice=-1, cluesMyLevel=0;
 function area(){ return $('playArea'); }
 function setArea(html){ area().innerHTML=html; }
 function renderActive(opts){
@@ -314,6 +315,46 @@ function renderBuzzReveal(bz,lane,qid){ clearBzTimer(); const c=bz.correct, opts
   area().innerHTML=''; area().appendChild(wrap);
 }
 
+function renderClues(fc, qid){ clearBzTimer();
+  if(fc.phase==='reveal'){ renderCluesReveal(fc,qid); return; }
+  if(cluesAnsQid===qid && cluesAnsChoice>=0){ renderCluesLocked(fc.opts||[]); return; }
+  const pts=fc.pointsNow||1; const opts=fc.opts||[];
+  const wrap=document.createElement('div');
+  const t=document.createElement('div'); t.className='pa-title'; t.textContent='Answer now for '+pts+' point'+(pts>1?'s':'')+'!'; wrap.appendChild(t);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach(function(o,i){ const b=document.createElement('button'); b.className='pbtn'; b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i]; const tx=document.createElement('span'); tx.className='pt'; tx.textContent=o;
+    b.appendChild(k); b.appendChild(tx); b.addEventListener('click', function(){ sendCluesAnswer(i,qid,fc,opts); }); grid.appendChild(b); });
+  wrap.appendChild(grid);
+  const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Guess as soon as you\u2019re sure \u2014 earlier is worth more!'; wrap.appendChild(h);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+function renderCluesLocked(opts){
+  const wrap=document.createElement('div'); const n=document.createElement('div'); n.className='locked-note'; n.textContent='Locked in \u2713'; wrap.appendChild(n);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach(function(o,i){ const b=document.createElement('div'); b.className='pbtn '+(i===cluesAnsChoice?'mine':'dim'); b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i]; const tx=document.createElement('span'); tx.className='pt'; tx.textContent=o; b.appendChild(k); b.appendChild(tx); grid.appendChild(b); });
+  wrap.appendChild(grid);
+  const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Waiting for the answer\u2026'; wrap.appendChild(h);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+async function sendCluesAnswer(i,qid,fc,opts){ if(cluesAnsQid===qid && cluesAnsChoice>=0) return;
+  cluesAnsQid=qid; cluesAnsChoice=i; cluesMyLevel=fc.clueIdx||0; lastSig=''; renderCluesLocked(opts);
+  try{ await sb('answers',{method:'POST', body:JSON.stringify({code:me.code,q_id:qid,player_id:me.id,tag:me.tag,choice:i})}); }catch(e){} }
+function renderCluesReveal(fc,qid){ const c=fc.correct, opts=fc.opts||[];
+  const wrap=document.createElement('div'); const v=document.createElement('div');
+  const mineThis=(cluesAnsQid===qid && cluesAnsChoice>=0);
+  if(mineThis && cluesAnsChoice===c){ v.className='pa-good'; v.textContent='\u2713 Correct! +'+(5-cluesMyLevel); }
+  else if(mineThis){ v.className='pa-bad'; v.textContent='\u2717 Not this time'; }
+  else { v.className='pa-msg'; v.textContent='The answer is\u2026'; }
+  wrap.appendChild(v);
+  const grid=document.createElement('div'); grid.className='pgrid';
+  opts.forEach(function(o,i){ const cls=i===c?'good':(i===cluesAnsChoice?'bad':'dim'); const b=document.createElement('div'); b.className='pbtn '+cls; b.style.setProperty('--oc',OPTC[i]);
+    const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i]; const tx=document.createElement('span'); tx.className='pt'; tx.textContent=o; b.appendChild(k); b.appendChild(tx); grid.appendChild(b); });
+  wrap.appendChild(grid); const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Next up soon\u2026'; wrap.appendChild(h);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+
 async function pollState(){
   if(!me) return;
   try{ const rows=await sb('players?id=eq.'+me.id+'&select=score'); if(rows&&rows.length) $('myScore').textContent=rows[0].score; }catch(e){}
@@ -331,8 +372,16 @@ async function pollState(){
     const bz=st.bz||{lanes:{}}; const lane=(bz.lanes&&bz.lanes[me.tag])||{st:'open',out:[]};
     const sig='bz:'+rm.q_id+':'+bz.phase+':'+lane.st+':'+(lane.bid||'')+':'+(bzBuzzedQid===rm.q_id)+':'+(bzAnsChoice>=0&&bzAnsQid===rm.q_id)+':'+((lane.out||[]).indexOf(me.id)>=0);
     if(sig!==lastSig){ lastSig=sig; renderBuzzer(bz, rm.q_id); }
+  } else if(phase==='fiveclues'){
+    const fc=st.fc||{}; const sig='fc:'+rm.q_id+':'+fc.phase+':'+fc.clueIdx+':'+(cluesAnsChoice>=0&&cluesAnsQid===rm.q_id);
+    if(sig!==lastSig){ lastSig=sig; renderClues(fc, rm.q_id); }
   } else if(phase==='round_intro'){
-    if(lastSig!=='intro'){ lastSig='intro'; setArea('<div class="pa-title">Round 1</div><div class="pa-msg">Rapid-Fire — get ready!</div>'); }
+    const sig='intro:'+(st.round||'')+':'+(st.rules||'');
+    if(sig!==lastSig){ lastSig=sig; setArea('<div class="pa-title">'+esc(st.round||'Get ready')+'</div><div class="pa-msg" style="margin-top:6px">'+esc(st.rules||'')+'</div>'); }
+  } else if(phase==='final'){
+    if(lastSig!=='final'){ lastSig='final'; const fin=st.fin||{}; const mine=fin[me.tag];
+      const champ = mine ? ((mine.tie?'Tied: ':'')+esc(mine.name)+' \u2014 '+mine.score+' pts') : 'No scores this time';
+      setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-msg">Your team\u2019s champion:</div><div class="pa-good" style="font-size:24px">'+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
   } else if(phase==='round_scores'){
     if(lastSig!=='scores'){ lastSig='scores'; setArea('<div class="pa-title">Round complete!</div><div class="pa-msg">Watch the big screen.</div>'); }
   } else {
