@@ -133,6 +133,20 @@
   .answered{color:var(--ink-dim); font-weight:800; font-size:clamp(14px,1.5vw,19px);}
   .answered b{color:var(--ink); font-size:1.15em;}
   .go-btn{border-color:rgba(87,211,138,.5)!important; color:#bff0d0!important; font-size:15px;}
+  /* buzzer lanes */
+  .bzlanes{display:grid; grid-template-columns:1.25fr 1fr; gap:clamp(12px,1.6vw,22px); margin:clamp(10px,1.4vw,18px) 0;}
+  .bzlane{border-radius:16px; padding:clamp(14px,1.8vw,24px); background:var(--board); border:2px solid var(--board-line); text-align:center; transition:border-color .2s, background .2s, transform .2s;}
+  .bzlane.youth{box-shadow:0 0 0 2px rgba(245,178,62,.3);}
+  .bzlane .bzhd{font-family:'Nunito'; font-weight:800; letter-spacing:2px; text-transform:uppercase; font-size:clamp(12px,1.3vw,16px);}
+  .bzlane.youth .bzhd{color:var(--gold-hi);} .bzlane.adult .bzhd{color:var(--teal-hi);}
+  .bzlane .bzstat{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(20px,2.4vw,32px); margin-top:8px; min-height:1.2em;}
+  .bzlane .bzname{font-weight:800; color:var(--ink-dim); font-size:clamp(15px,1.7vw,22px); min-height:1.1em;}
+  .bzlane.live{border-color:var(--gold); background:rgba(245,178,62,.10); animation:bzpulse 1s ease-in-out infinite;}
+  .bzlane.ans{border-color:var(--teal); background:rgba(47,182,166,.10);}
+  .bzlane.won{border-color:#57d38a; background:rgba(87,211,138,.14);} .bzlane.won .bzstat{color:#8be6ab;}
+  .bzlane.none{opacity:.6;}
+  @keyframes bzpulse{0%,100%{box-shadow:0 0 0 0 rgba(245,178,62,.0);}50%{box-shadow:0 0 0 6px rgba(245,178,62,.18);}}
+  @media (prefers-reduced-motion:reduce){ .bzlane.live{animation:none;} }
   .lineup{margin-top:12px; color:var(--gold-hi); font-weight:800; font-size:clamp(13px,1.4vw,17px); letter-spacing:.3px; min-height:1.2em;}
   .admin{display:inline-flex; align-items:center; gap:8px; color:var(--ink-dim); font-weight:800; font-size:13px;
     background:rgba(255,255,255,.04); border:1px solid var(--board-line); border-radius:10px; padding:6px 12px;}
@@ -140,6 +154,9 @@
   .admin .mini{width:26px; height:26px; border-radius:7px; border:1px solid var(--board-line); background:rgba(255,255,255,.06);
     color:var(--ink); font-weight:800; font-size:16px; cursor:pointer; line-height:1;}
   .admin .mini:hover{background:rgba(255,255,255,.14);}
+  .admin label{color:var(--ink-dim); font-weight:800;}
+  .admin select{background:rgba(255,255,255,.06); color:var(--ink); border:1px solid var(--board-line); border-radius:8px;
+    padding:5px 8px; font-family:'Nunito'; font-weight:800; font-size:13px;}
 </style>
 </head>
 <body>
@@ -187,6 +204,17 @@
         <div class="timerbar"><div class="fill" id="timerFill"></div></div>
         <div class="answered"><b id="ansCount">0</b> answered</div>
       </div>
+
+      <div id="bzPanel" class="hide">
+        <div class="qtop"><span class="rlabel" id="bzLabel">The Buzzer</span><span class="qnum" id="bzNum"></span></div>
+        <div class="qtext" id="bzText">Get ready…</div>
+        <div class="bzlanes">
+          <div class="bzlane youth" id="bzYouth"><div class="bzhd">Youth</div><div class="bzstat"></div><div class="bzname"></div></div>
+          <div class="bzlane adult" id="bzAdult"><div class="bzhd">Adults</div><div class="bzstat"></div><div class="bzname"></div></div>
+        </div>
+        <div class="timerbar"><div class="fill" id="bzBar"></div></div>
+        <div class="opts hide" id="bzOpts"></div>
+      </div>
     </div>
   </div>
 
@@ -202,7 +230,9 @@
   </div>
 
   <div class="ops">
-    <span class="admin">Rounds <button class="mini" id="rMinus">–</button><b id="rCount">2</b><button class="mini" id="rPlus">+</button></span>
+    <span class="admin"><label for="roundPick">Play</label><select id="roundPick"></select></span>
+    <span class="admin" id="roundsAdmin">Rounds <button class="mini" id="rMinus">–</button><b id="rCount">2</b><button class="mini" id="rPlus">+</button></span>
+    <span class="admin">Questions <button class="mini" id="qMinus">–</button><b id="qCount">8</b><button class="mini" id="qPlus">+</button></span>
     <button class="btn go-btn" id="startShow">Start the show ▸</button>
     <button class="btn hide" id="pauseBtn">Pause</button>
     <button class="btn hide" id="skipBtn">Skip ▸</button>
@@ -418,29 +448,35 @@ start();
   const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
   const INTRO=4200, REVEAL=4600;
   const POOL=['rapidfire','verse'];   /* middle-round pool — Five Clues joins here later */
-  const FINALE=null;                  /* the buzzer round becomes the pinned finale later */
+  const FINALE='buzzer';              /* buzzer is the pinned finale */
   let SHOW_ORDER=[];
-  const ADMIN_KEY='cv_rounds';
+  const ADMIN_KEY='cv_rounds', QPR_KEY='cv_qpr', PICK_KEY='cv_pick';
   let ADMIN_ROUNDS=parseInt(localStorage.getItem(ADMIN_KEY),10)||(POOL.length+(FINALE?1:0));
+  let QPR=parseInt(localStorage.getItem(QPR_KEY),10)||8;
+  let PICK=localStorage.getItem(PICK_KEY)||'random';
+  function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function maxRounds(){ return POOL.length+(FINALE?1:0); }
-  function buildShowOrder(seed){ const r=rng(seed); const pool=shuf(POOL.slice(),r); const fin=FINALE?1:0;
+  function buildShowOrder(seed){ if(PICK!=='random' && RMETA[PICK]) return [PICK];
+    const r=rng(seed); const pool=shuf(POOL.slice(),r); const fin=FINALE?1:0;
     const mid=Math.max(1,Math.min(ADMIN_ROUNDS-fin, pool.length)); const order=pool.slice(0,mid); if(FINALE) order.push(FINALE); return order; }
   function lineupSentence(order){ const t=order.map(x=>RMETA[x].title);
     if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
   const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.'},
-                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse. Name the verse, or fill the blank.'} };
+                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse. Name the verse, or fill the blank.'},
+                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer! Fastest finger wins. Youth and adults race separately.'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
     return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
   function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-  function buildRapid(seed){ const r=rng(seed); const out=[];
-    ['1','2','3','4'].forEach(t=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,2).forEach(o=>out.push(o)); });
+  function buildRapid(seed,n){ n=n||8; const r=rng(seed); const per=[0,0,0,0]; for(let i=0;i<n;i++) per[i%4]++;
+    const out=[]; ['1','2','3','4'].forEach((t,ti)=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,per[ti]).forEach(o=>out.push(o)); });
     return out.map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
-  function buildVerse(seed){ const r=rng(seed);
-    const blanks=shuf(VB_BLANK.slice(),r).slice(0,4); const used={}; blanks.forEach(b=>used[b.vref]=1);
-    const refs=shuf(VB_REF.slice(),r).filter(x=>!used[x.vref]).slice(0,4);
+  function buildVerse(seed,n){ n=n||8; const r=rng(seed); const nb=Math.min(Math.ceil(n/2), VB_BLANK.length); const nr=n-nb;
+    const blanks=shuf(VB_BLANK.slice(),r).slice(0,nb); const used={}; blanks.forEach(b=>used[b.vref]=1);
+    const refPool=shuf(VB_REF.slice(),r); const refs=refPool.filter(x=>!used[x.vref]).slice(0,nr);
+    if(refs.length<nr){ const have=new Set(refs.map(x=>x.vref)); for(const x of refPool){ if(refs.length>=nr) break; if(!have.has(x.vref)){ refs.push(x); have.add(x.vref);} } }
     const items=[];
     blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer)}); });
     refs.forEach(v=>{ const opts=shuf([v.vref].concat(v.wrong),r); items.push({kind:'verse-ref', ref:v.vref, text:v.text, opts, correct:opts.indexOf(v.vref)}); });
@@ -448,7 +484,7 @@ start();
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
     return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
-  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); }
+  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); }
 
   function renderBlank(node, text){ node.textContent=''; const parts=text.split('{b}');
     parts.forEach((p,i)=>{ node.appendChild(document.createTextNode(p)); if(i<parts.length-1){ const b=document.createElement('span'); b.className='blank'; node.appendChild(b); } }); }
@@ -478,7 +514,7 @@ start();
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
     SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
-    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now()); G.qi=0;
+    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR); G.qi=0;
     G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO;
     showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent=''; $('qPrompt').textContent='';
     $('qText').classList.remove('verse'); $('qText').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : meta.intro); $('opts').innerHTML=''; $('timerFill').style.width='100%';
@@ -512,27 +548,140 @@ start();
     else { $('qText').textContent='That\u2019s the end \u2014 great playing! (Final scoreboard comes in a later step.)'; }
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
 
+  /* ---- The Buzzer round ---- */
+  const BUZZ_BANK=[
+   {q:'Who was thrown into the lions\u2019 den but not harmed?',correct:'Daniel',wrong:['David','Joseph','Elijah']},
+   {q:'Who led the Israelites out of Egypt?',correct:'Moses',wrong:['Aaron','Joshua','Abraham']},
+   {q:'On what were the Ten Commandments written?',correct:'Stone tablets',wrong:['A scroll','Papyrus','Wood']},
+   {q:'Who baptised Jesus in the Jordan River?',correct:'John the Baptist',wrong:['Peter','Paul','Andrew']},
+   {q:'How many disciples did Jesus choose?',correct:'Twelve',wrong:['Ten','Seven','Forty']},
+   {q:'Who denied Jesus three times before the rooster crowed?',correct:'Peter',wrong:['Judas','Thomas','John']},
+   {q:'What did God create on the first day?',correct:'Light',wrong:['The sea','Animals','The stars']},
+   {q:'Who was swallowed by a great fish?',correct:'Jonah',wrong:['Noah','Job','Amos']},
+   {q:'Which sea did Moses part for the Israelites?',correct:'The Red Sea',wrong:['The Dead Sea','The Sea of Galilee','The Jordan']},
+   {q:'Who was the strong man betrayed by Delilah?',correct:'Samson',wrong:['Gideon','Saul','Goliath']},
+   {q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Capernaum']},
+   {q:'How many days and nights did it rain during the flood?',correct:'Forty',wrong:['Seven','Twelve','Thirty']},
+   {q:'Who was the first king of Israel?',correct:'Saul',wrong:['David','Solomon','Samuel']},
+   {q:'What was Jesus\u2019 first miracle?',correct:'Turning water into wine',wrong:['Healing a leper','Walking on water','Feeding 5,000']},
+   {q:'Who built the ark?',correct:'Noah',wrong:['Moses','Abraham','Enoch']},
+   {q:'Which Gospel comes first in the New Testament?',correct:'Matthew',wrong:['Mark','Luke','John']}
+  ];
+  function buildBuzzer(seed,n){ n=n||8; const r=rng(seed); const pool=shuf(BUZZ_BANK.slice(),r).slice(0,Math.min(n,BUZZ_BANK.length));
+    return pool.map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
+
+  const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600;
+  let bzActx=null;
+  function stageAudio(){ if(!bzActx){ try{ bzActx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return bzActx; }
+  function playStageBuzz(){ const a=stageAudio(); if(!a) return; try{ const o=a.createOscillator(), g=a.createGain();
+    o.type='square'; o.frequency.setValueAtTime(170,a.currentTime); o.frequency.exponentialRampToValueAtTime(90,a.currentTime+0.18);
+    g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.linearRampToValueAtTime(0.16,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.32);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.34); }catch(e){} }
+  function newLane(){ return {st:'open', bid:null, bname:null, adl:0, out:{}, winStart:0, win:null}; }
+  function startBuzzerQuestion(){ const q=G.questions[G.qi]; G.curId='p'+G.ptr+'q'+G.qi;
+    G.buzz={ q:q, correct:q.correct, opts:q.opts, phase:'arm', armAt:Date.now()+BUZZ_ARM, lanes:{youth:newLane(),adult:newLane()}, revealUntil:0, lastPoll:0 };
+    G.phase='bz'; showPanel('bz'); renderBuzzerStage(); if(window.HOST) window.HOST.set('ask'); writeBuzzRoom(); }
+  function laneOut(l){ return {st:l.st, bid:l.bid, bname:l.bname, adl:l.adl?new Date(l.adl).toISOString():null, out:Object.keys(l.out), win:l.win}; }
+  function writeBuzzRoom(){ const bz=G.buzz; setRoom({phase:'buzzer', q_id:G.curId, q_index:G.qi,
+    state:{ round:G.label, qnum:G.qi+1, qtotal:G.questions.length,
+      bz:{ phase:bz.phase, opts:bz.opts, correct:(bz.phase==='reveal'?bz.correct:null),
+        lanes:{ youth:laneOut(bz.lanes.youth), adult:laneOut(bz.lanes.adult) } } } }); }
+  function award(id, players){ const p=(players||[]).find(x=>x.id===id); const ns=(p?p.score:0)+10;
+    return sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
+  async function resolveLanes(now){ const bz=G.buzz;
+    let buzzes=[], answers=[], players=[];
+    try{ buzzes=(await sb('buzzes?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,name,tag,created_at&order=created_at.asc'))||[]; }catch(e){}
+    try{ answers=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
+    try{ players=(await sb('players?code=eq.'+room.code+'&select=id,tag,score'))||[]; }catch(e){}
+    const ansBy={}; answers.forEach(a=>{ if(!(a.player_id in ansBy)) ansBy[a.player_id]=a; });
+    const tagCount={youth:0,adult:0}; players.forEach(p=>{ tagCount[p.tag]=(tagCount[p.tag]||0)+1; });
+    let changed=false, hit=false, awarded=false, missed=false;
+    ['youth','adult'].forEach(function(tag){ const lane=bz.lanes[tag]; if(lane.st==='done') return;
+      const lb=buzzes.filter(function(b){ return b.tag===tag && !lane.out[b.player_id]; });
+      if(lane.st==='open'){
+        if(lb.length){ if(!lane.winStart) lane.winStart=Date.parse(lb[0].created_at);
+          if(now-lane.winStart>=BUZZ_WINDOW){ lane.bid=lb[0].player_id; lane.bname=lb[0].name; lane.st='answering'; lane.adl=now+BUZZ_ANSWER; lane.winStart=0; changed=true; hit=true; } }
+        const oc=Object.keys(lane.out).length; if(oc>0 && oc>=tagCount[tag]){ lane.st='done'; lane.win=null; changed=true; }
+      } else if(lane.st==='answering'){
+        const ans=ansBy[lane.bid];
+        if(ans){ if(ans.choice===bz.correct){ award(lane.bid, players); lane.win=lane.bname; lane.st='done'; changed=true; awarded=true; }
+          else { lane.out[lane.bid]=1; lane.bid=null; lane.bname=null; lane.adl=0; lane.st='open'; lane.winStart=0; changed=true; missed=true; } }
+        else if(now>=lane.adl){ lane.out[lane.bid]=1; lane.bid=null; lane.bname=null; lane.adl=0; lane.st='open'; lane.winStart=0; changed=true; missed=true; }
+      }
+    });
+    if(hit) playStageBuzz();
+    if(changed){ if(window.HOST) window.HOST.set(awarded?'celebrate':(missed?'wince':'ask')); writeBuzzRoom(); renderBuzzerStage(); poll(); }
+  }
+  function buzzerReveal(){ const bz=G.buzz; bz.phase='reveal'; bz.revealUntil=Date.now()+BUZZ_REVEAL; renderBuzzerStage();
+    if(window.HOST) window.HOST.set('celebrate'); writeBuzzRoom(); poll(); }
+  function nextBuzzerQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else startBuzzerQuestion(); }
+  function buzzerTick(){ const bz=G.buzz; if(!bz) return; const now=Date.now();
+    if(bz.phase==='arm'){ renderBuzzTimer(now); if(now>=bz.armAt){ bz.phase='open'; playStageBuzz(); writeBuzzRoom(); renderBuzzerStage(); } return; }
+    if(bz.phase==='reveal'){ if(now>=bz.revealUntil) nextBuzzerQuestion(); return; }
+    renderBuzzTimer(now);
+    if(now-bz.lastPoll>=500){ bz.lastPoll=now; resolveLanes(now); }
+    if(bz.lanes.youth.st==='done' && bz.lanes.adult.st==='done') buzzerReveal();
+  }
+  function renderBuzzerStage(){ const bz=G.buzz; if(!bz) return;
+    if($('bzLabel')) $('bzLabel').textContent=G.label; if($('bzNum')) $('bzNum').textContent=(G.qi+1)+' / '+G.questions.length;
+    if($('bzText')) $('bzText').textContent=bz.q.q;
+    renderLane('bzYouth', bz.lanes.youth, bz); renderLane('bzAdult', bz.lanes.adult, bz);
+    const opts=$('bzOpts'); if(!opts) return;
+    if(bz.phase==='reveal'){ opts.classList.remove('hide'); opts.innerHTML='';
+      bz.opts.forEach(function(o,i){ const d=document.createElement('div'); d.className='opt'+(i===bz.correct?' correct':' dim');
+        const k=document.createElement('span'); k.className='k'; k.style.background=OPTMETA[i].c; k.textContent=OPTMETA[i].k;
+        const t=document.createElement('span'); t.className='t'; t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); }); }
+    else { opts.classList.add('hide'); opts.innerHTML=''; }
+  }
+  function renderLane(id, lane, bz){ const el=$(id); if(!el) return; let status='', name='', cls='';
+    if(bz.phase==='arm'){ status='Get ready\u2026'; }
+    else if(lane.st==='open'){ status='BUZZ NOW!'; cls='live'; }
+    else if(lane.st==='answering'){ status='Answering\u2026'; name=lane.bname||''; cls='ans'; }
+    else if(lane.st==='done'){ if(lane.win){ status='\u2713 got it!'; name=lane.win; cls='won'; } else { status='No answer'; cls='none'; } }
+    el.className='bzlane '+(id==='bzYouth'?'youth':'adult')+(cls?(' '+cls):'');
+    const s=el.querySelector('.bzstat'), n=el.querySelector('.bzname'); if(s) s.textContent=status; if(n) n.textContent=name;
+  }
+  function renderBuzzTimer(now){ const bz=G.buzz; if(!bz) return; const bar=$('bzBar'); if(!bar) return;
+    let frac=0;
+    if(bz.phase==='arm'){ frac=Math.max(0,Math.min(1,(bz.armAt-now)/BUZZ_ARM)); }
+    else { const ls=[bz.lanes.youth,bz.lanes.adult].filter(function(l){return l.st==='answering';}); 
+      if(ls.length){ frac=Math.max.apply(null, ls.map(function(l){ return Math.max(0,Math.min(1,(l.adl-now)/BUZZ_ANSWER)); })); } else frac=0; }
+    bar.style.width=(frac*100).toFixed(1)+'%';
+  }
+
   function gameTick(){ const now=Date.now();
-    if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250; return; }
-    if(G.phase==='round_intro'){ if(now>=G.introUntil) presentQuestion(); }
+    if(G.paused){ if(G.phase==='question') G.deadline+=250; if(G.phase==='round_intro') G.introUntil+=250; if(G.phase==='reveal') G.revealUntil+=250;
+      if(G.phase==='bz'&&G.buzz){ const b=G.buzz; b.armAt+=250; if(b.revealUntil) b.revealUntil+=250; if(b.lanes.youth.adl) b.lanes.youth.adl+=250; if(b.lanes.adult.adl) b.lanes.adult.adl+=250; } return; }
+    if(G.phase==='round_intro'){ if(now>=G.introUntil){ if(G.type==='buzzer') startBuzzerQuestion(); else presentQuestion(); } }
     else if(G.phase==='question'){ renderTimer(now); pollAnsCount(); if(now>=G.deadline) closeQuestion(); }
-    else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); } }
+    else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); }
+    else if(G.phase==='bz'){ buzzerTick(); } }
   setInterval(gameTick, 250);
 
   $('startShow').addEventListener('click', startShow);
   function refreshLineup(){ const el=$('lineup'); if(!el) return; if(typeof room==='undefined'||!room){ el.textContent=''; return; }
-    const order=buildShowOrder((room.seed|0)||1); el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 '); }
-  function updateAdminUI(){ ADMIN_ROUNDS=Math.max(1,Math.min(ADMIN_ROUNDS,maxRounds())); const c=$('rCount'); if(c) c.textContent=ADMIN_ROUNDS;
-    localStorage.setItem(ADMIN_KEY,ADMIN_ROUNDS); refreshLineup(); }
-  { const rmB=$('rMinus'), rpB=$('rPlus');
+    const order=buildShowOrder((room.seed|0)||1);
+    el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 ')+' \u00b7 '+QPR+' questions'+(order.length>1?' each':''); }
+  function populatePick(){ const sel=$('roundPick'); if(!sel||sel._done) return; sel._done=1;
+    const types=['random'].concat(POOL, FINALE?[FINALE]:[]);
+    types.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=(t==='random'?'Random (recommended)':RMETA[t].title); sel.appendChild(o); });
+    sel.value=PICK; sel.addEventListener('change', function(){ PICK=sel.value; localStorage.setItem(PICK_KEY,PICK); updateAdminUI(); }); }
+  function updateAdminUI(){ ADMIN_ROUNDS=clamp(ADMIN_ROUNDS,1,maxRounds()); QPR=clamp(QPR,4,12);
+    if($('rCount')) $('rCount').textContent=ADMIN_ROUNDS; if($('qCount')) $('qCount').textContent=QPR;
+    localStorage.setItem(ADMIN_KEY,ADMIN_ROUNDS); localStorage.setItem(QPR_KEY,QPR);
+    const rc=$('roundsAdmin'); if(rc) rc.style.opacity=(PICK==='random')?'1':'.4';
+    refreshLineup(); }
+  { const rmB=$('rMinus'), rpB=$('rPlus'), qmB=$('qMinus'), qpB=$('qPlus');
     if(rmB) rmB.addEventListener('click', function(){ ADMIN_ROUNDS--; updateAdminUI(); });
-    if(rpB) rpB.addEventListener('click', function(){ ADMIN_ROUNDS++; updateAdminUI(); }); }
-  updateAdminUI();
+    if(rpB) rpB.addEventListener('click', function(){ ADMIN_ROUNDS++; updateAdminUI(); });
+    if(qmB) qmB.addEventListener('click', function(){ QPR-=1; updateAdminUI(); });
+    if(qpB) qpB.addEventListener('click', function(){ QPR+=1; updateAdminUI(); }); }
+  populatePick(); updateAdminUI();
   $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
-  $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro') presentQuestion(); });
+  $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } });
   const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } refreshLineup(); } }, 400);
-  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},get order(){return SHOW_ORDER;},get G(){return G;}};
+  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},buildBuzzer:buildBuzzer,startBuzzerQuestion:startBuzzerQuestion,resolveLanes:resolveLanes,buzzerReveal:buzzerReveal,nextBuzzerQuestion:nextBuzzerQuestion,get order(){return SHOW_ORDER;},get buzz(){return G.buzz;},get G(){return G;}};
 </script>
 
 
