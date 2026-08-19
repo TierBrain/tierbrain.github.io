@@ -43,6 +43,13 @@
   .host svg{position:absolute; inset:0; margin:auto; width:56%; height:56%; filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));}
   .host .lbl{position:absolute; bottom:2%; left:0; right:0; text-align:center; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim);}
   .host canvas{position:absolute; inset:0; width:100%; height:100%;}
+  .hostbubble{position:absolute; top:-2%; left:6%; right:6%; background:#f7efdd; color:#2a2519; font-family:'Fraunces',serif; font-weight:600;
+    font-size:clamp(14px,1.5vw,21px); padding:9px 15px; border-radius:15px; box-shadow:0 8px 22px rgba(0,0,0,.45); z-index:4; text-align:center; line-height:1.25;}
+  .hostbubble::after{content:""; position:absolute; bottom:-9px; left:50%; transform:translateX(-50%); border:9px solid transparent; border-top-color:#f7efdd; border-bottom:0;}
+  .hostbubble.hide{display:none;}
+  .hostbubble.pop{animation:bubpop .4s cubic-bezier(.2,1.3,.4,1) both;}
+  @keyframes bubpop{from{opacity:0; transform:translateY(-6px) scale(.85);}to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .hostbubble.pop{animation:none;} }
 
   .join{}
   .join h2{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(20px,2.4vw,30px); margin:0 0 4px;}
@@ -197,6 +204,7 @@
       <div class="spot"></div>
       <!-- animated host (first pass) -->
       <canvas id="hostCv"></canvas>
+      <div class="hostbubble hide" id="hostBubble"></div>
       <div class="lbl">Your host</div>
     </div>
 
@@ -512,9 +520,34 @@ start();
       drumroll:function(){ const t=now(); for(let i=0;i<24;i++){ noise(t+i*0.05, 0.05, 0.12, 220); } },
       cymbal:function(){ noise(now(),0.6,0.18,6000); },
       fanfare:function(){ const t=now(); [523,659,784,1047].forEach(function(f,i){ tone(f,t+i*0.12,0.5,'triangle',0.22); }); },
-      applause:function(){ const t=now(); for(let i=0;i<64;i++){ noise(t+Math.random()*1.7, 0.04+Math.random()*0.05, 0.04+Math.random()*0.05, 1500+Math.random()*3200); } }
+      applause:function(){ const t=now(); for(let i=0;i<64;i++){ noise(t+Math.random()*1.7, 0.04+Math.random()*0.05, 0.04+Math.random()*0.05, 1500+Math.random()*3200); } },
+      voice:function(mood){ try{ const a=ctx(); if(!a) return; const t=a.currentTime; const o=a.createOscillator(), g=a.createGain(), f=a.createBiquadFilter();
+        o.type='sawtooth'; f.type='bandpass'; f.frequency.value=1000; try{ f.Q.value=6; }catch(e){}
+        function seg(f0,f1,f2,d){ o.frequency.setValueAtTime(f0,t); o.frequency.linearRampToValueAtTime(f1,t+d*0.5); o.frequency.linearRampToValueAtTime(f2,t+d); }
+        var d=0.32, vol=0.15;
+        if(mood==='delight'){ seg(300,520,470,0.34); f.frequency.value=1300; }
+        else if(mood==='yay'){ seg(360,520,640,0.30); f.frequency.value=1400; }
+        else if(mood==='aww'){ seg(430,360,300,0.42); f.frequency.value=900; d=0.42; }
+        else if(mood==='huh'){ seg(300,430,430,0.22); d=0.24; }
+        else { seg(300,300,255,0.30); f.frequency.value=820; }
+        g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.03); g.gain.setValueAtTime(vol,t+d*0.6); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+        o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t+d+0.03);
+      }catch(e){} }
     };
   })();
+  const QUIPS={
+    welcome:['Welcome, everyone!','Here we go \u2014 let\u2019s play!','Great to see you all!'],
+    round:['Round time!','Here\u2019s the next one!','Let\u2019s go!'],
+    correct:['Brilliant!','Nice one!','Well played!','Yes! Lovely.'],
+    wrong:['Ooh, so close!','Not quite!','Next time!'],
+    buzzopen:['Buzzers are open!','Hit that buzzer!','Fastest finger \u2014 go!'],
+    got:['Got it!','Spot on!','Superb!'],
+    finale:['What a game!','Give it up for our champions!','Amazing, everyone!']
+  };
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function hostSay(text, mood){ const b=$('hostBubble'); if(b){ b.textContent=text; b.classList.remove('hide'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+      clearTimeout(hostSay._t); hostSay._t=setTimeout(function(){ b.classList.add('hide'); }, 2600); }
+    if(mood) SFX.voice(mood); }
 
   const INTRO=5200, REVEAL=4600;
   const POOL=['rapidfire','verse','fiveclues'];   /* middle-round pool */
@@ -584,10 +617,10 @@ start();
       const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
-    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; SFX.on(); SFX.theme(); startRoundByPtr(); }
+    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR); G.qi=0;
-    G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0) SFX.sting();
+    G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0){ SFX.sting(); hostSay(pick(QUIPS.round),'huh'); }
     showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
     $('qPrompt').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : 'How this round works');
     $('qText').classList.remove('verse'); $('qText').textContent=meta.rules; $('opts').innerHTML=''; $('timerFill').style.width='100%';
@@ -608,7 +641,7 @@ start();
     ans.forEach(a=>{ if(seen[a.player_id]) return; seen[a.player_id]=1;
       if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/G.win)); deltas[a.player_id]=10+Math.round(5*frac); } });
     for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
-    G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate'); SFX.correct();
+    G.phase='reveal'; G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate'); if(Object.keys(deltas).length){ SFX.correct(); hostSay(pick(QUIPS.correct),'delight'); } else { SFX.wrong(); hostSay(pick(QUIPS.wrong),'aww'); }
     setRoom({phase:'reveal', q_id:G.curId, state:{opts:q.opts, correct:q.correct, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}});
     poll(); }
   function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
@@ -629,7 +662,7 @@ start();
       return { name:(tied.length>1? tied.map(function(p){return p.name;}).join(' & ') : arr[0].name), score:top, tie:tied.length>1 }; }
     const fin={ youth:champ('youth'), adult:champ('adult') };
     renderFinale(fin); setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();
-    setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); }, 1300); }
+    setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); hostSay(pick(QUIPS.finale),'yay'); }, 1300); }
   function renderFinale(fin){ const y=fin.youth, a=fin.adult;
     if($('finYouth')) $('finYouth').textContent = y? (y.tie?('Tied: '+y.name):y.name) : 'No scores yet';
     if($('finYouthScore')) $('finYouthScore').textContent = y? (y.score+' pts') : '';
@@ -695,14 +728,14 @@ start();
       }
     });
     if(hit) playStageBuzz();
-    if(awarded) SFX.correct(); else if(missed) SFX.wrong();
+    if(awarded){ SFX.correct(); hostSay(pick(QUIPS.got),'yay'); } else if(missed){ SFX.wrong(); hostSay(pick(QUIPS.wrong),'aww'); }
     if(changed){ if(window.HOST) window.HOST.set(awarded?'celebrate':(missed?'wince':'ask')); writeBuzzRoom(); renderBuzzerStage(); poll(); }
   }
   function buzzerReveal(){ const bz=G.buzz; bz.phase='reveal'; bz.revealUntil=Date.now()+BUZZ_REVEAL; renderBuzzerStage();
     if(window.HOST) window.HOST.set('celebrate'); writeBuzzRoom(); poll(); }
   function nextBuzzerQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else startBuzzerQuestion(); }
   function buzzerTick(){ const bz=G.buzz; if(!bz) return; const now=Date.now();
-    if(bz.phase==='arm'){ renderBuzzTimer(now); if(now>=bz.armAt){ bz.phase='open'; playStageBuzz(); writeBuzzRoom(); renderBuzzerStage(); } return; }
+    if(bz.phase==='arm'){ renderBuzzTimer(now); if(now>=bz.armAt){ bz.phase='open'; playStageBuzz(); hostSay(pick(QUIPS.buzzopen),'huh'); writeBuzzRoom(); renderBuzzerStage(); } return; }
     if(bz.phase==='reveal'){ if(now>=bz.revealUntil) nextBuzzerQuestion(); return; }
     renderBuzzTimer(now);
     if(now-bz.lastPoll>=500){ bz.lastPoll=now; resolveLanes(now); }
@@ -770,10 +803,11 @@ start();
     let answers=[],players=[];
     try{ answers=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
     try{ players=(await sb('players?code=eq.'+room.code+'&select=id,score'))||[]; }catch(e){}
-    const seen={};
+    const seen={}; let anyC=false;
     for(const a of answers){ if(seen[a.player_id]) continue; seen[a.player_id]=1;
-      if(a.choice===q.correct){ let lvl=0; const t=Date.parse(a.created_at); for(const ct of fc.clueTimes){ if(ct<=t) lvl++; } lvl=Math.max(1,Math.min(5,lvl)); await awardN(a.player_id, 6-lvl, players); } }
-    fc.phase='reveal'; fc.revealUntil=Date.now()+CLUES_REVEAL; renderCluesStage(); if(window.HOST) window.HOST.set('celebrate'); SFX.correct(); writeCluesRoom(); poll(); }
+      if(a.choice===q.correct){ let lvl=0; const t=Date.parse(a.created_at); for(const ct of fc.clueTimes){ if(ct<=t) lvl++; } lvl=Math.max(1,Math.min(5,lvl)); await awardN(a.player_id, 6-lvl, players); anyC=true; } }
+    fc.phase='reveal'; fc.revealUntil=Date.now()+CLUES_REVEAL; renderCluesStage(); if(window.HOST) window.HOST.set('celebrate');
+    if(anyC){ SFX.correct(); hostSay(pick(QUIPS.correct),'delight'); } else { SFX.wrong(); hostSay(pick(QUIPS.wrong),'aww'); } writeCluesRoom(); poll(); }
   function nextCluesQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else startCluesQuestion(); }
   function cluesTick(){ const fc=G.fc; if(!fc) return; const now=Date.now();
     if(fc.phase==='reveal'){ if(now>=fc.revealUntil) nextCluesQuestion(); return; }
