@@ -178,6 +178,13 @@
   .finfoot{margin-top:clamp(16px,2.2vw,28px); font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:clamp(15px,1.7vw,22px);}
   @keyframes finpop{from{opacity:0; transform:translateY(14px) scale(.94);}to{opacity:1; transform:none;}}
   @media (prefers-reduced-motion:reduce){ .fincard{animation:none;} }
+  .finteams{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(18px,2.2vw,32px); color:#fff; margin-bottom:clamp(14px,2vw,24px);}
+  .podium{list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:7px; text-align:left;}
+  .podium li{display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(255,255,255,.04); border-radius:10px; font-weight:800; font-size:clamp(15px,1.7vw,22px);}
+  .podium .medal{flex:0 0 auto; width:1.4em; text-align:center;}
+  .podium .pnm{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .podium .psc{color:var(--ink-dim); font-variant-numeric:tabular-nums;}
+  .podium .pnone{color:var(--ink-dim); opacity:.7; justify-content:center;}
   .lineup{margin-top:12px; color:var(--gold-hi); font-weight:800; font-size:clamp(13px,1.4vw,17px); letter-spacing:.3px; min-height:1.2em;}
   .admin{display:inline-flex; align-items:center; gap:8px; color:var(--ink-dim); font-weight:800; font-size:13px;
     background:rgba(255,255,255,.04); border:1px solid var(--board-line); border-radius:10px; padding:6px 12px;}
@@ -260,9 +267,10 @@
 
       <div id="finalePanel" class="hide">
         <div class="finhd">🏆 Final Scores</div>
+        <div class="finteams" id="finTeams"></div>
         <div class="fincards">
-          <div class="fincard youth"><div class="finteam">Youth Champion</div><div class="finname" id="finYouth">—</div><div class="finscore" id="finYouthScore"></div></div>
-          <div class="fincard adult"><div class="finteam">Adult Champion</div><div class="finname" id="finAdult">—</div><div class="finscore" id="finAdultScore"></div></div>
+          <div class="fincard youth"><div class="finteam">Youth</div><ol class="podium" id="finYouthList"></ol></div>
+          <div class="fincard adult"><div class="finteam">Adults</div><ol class="podium" id="finAdultList"></ol></div>
         </div>
         <div class="finfoot">Well played, everyone — thank you for coming!</div>
       </div>
@@ -657,17 +665,22 @@ start();
   async function finaleShow(){ G.phase='final'; showPanel('final'); if(window.HOST) window.HOST.set('celebrate'); SFX.drumroll();
     $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
     let players=[]; try{ players=(await sb('players?code=eq.'+room.code+'&select=name,tag,score,joined_at'))||[]; }catch(e){}
-    function champ(tag){ const arr=players.filter(function(p){return p.tag===tag;}).sort(function(a,b){ return (b.score-a.score)||(new Date(a.joined_at)-new Date(b.joined_at)); });
-      if(!arr.length||arr[0].score<=0) return null; const top=arr[0].score; const tied=arr.filter(function(p){return p.score===top;});
-      return { name:(tied.length>1? tied.map(function(p){return p.name;}).join(' & ') : arr[0].name), score:top, tie:tied.length>1 }; }
-    const fin={ youth:champ('youth'), adult:champ('adult') };
+    function board(tag){ const arr=players.filter(function(p){return p.tag===tag;}).sort(function(a,b){ return (b.score-a.score)||(new Date(a.joined_at)-new Date(b.joined_at)); });
+      const total=arr.reduce(function(sm,p){return sm+(p.score||0);},0);
+      return { top:arr.slice(0,3).map(function(p){return {name:p.name,score:p.score};}), total:total, count:arr.length }; }
+    const youth=board('youth'), adult=board('adult');
+    let teamWin=null; if(youth.count||adult.count){ teamWin = youth.total>adult.total?'youth':(adult.total>youth.total?'adult':'tie'); }
+    const fin={ youth:youth, adult:adult, teamWin:teamWin };
     renderFinale(fin); setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();
     setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); hostSay(pick(QUIPS.finale),'yay'); }, 1300); }
-  function renderFinale(fin){ const y=fin.youth, a=fin.adult;
-    if($('finYouth')) $('finYouth').textContent = y? (y.tie?('Tied: '+y.name):y.name) : 'No scores yet';
-    if($('finYouthScore')) $('finYouthScore').textContent = y? (y.score+' pts') : '';
-    if($('finAdult')) $('finAdult').textContent = a? (a.tie?('Tied: '+a.name):a.name) : 'No scores yet';
-    if($('finAdultScore')) $('finAdultScore').textContent = a? (a.score+' pts') : ''; }
+  function renderFinale(fin){ const medals=['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
+    const teams=$('finTeams'); if(teams){ teams.textContent = fin.teamWin ? ('Youth '+fin.youth.total+'   \u2014   Adults '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Youth win it!':'Adults win it!'))) : ''; }
+    function fill(id,b){ const el=$(id); if(!el) return; el.innerHTML='';
+      if(!b.top.length){ const li=document.createElement('li'); li.className='pnone'; li.textContent='No players'; el.appendChild(li); return; }
+      b.top.forEach(function(p,i){ const li=document.createElement('li'); const m=document.createElement('span'); m.className='medal'; m.textContent=medals[i]||'';
+        const nm=document.createElement('span'); nm.className='pnm'; nm.textContent=p.name; const sc=document.createElement('span'); sc.className='psc'; sc.textContent=p.score;
+        li.appendChild(m); li.appendChild(nm); li.appendChild(sc); el.appendChild(li); }); }
+    fill('finYouthList', fin.youth); fill('finAdultList', fin.adult); }
 
   /* ---- The Buzzer round ---- */
   const BUZZ_BANK=[

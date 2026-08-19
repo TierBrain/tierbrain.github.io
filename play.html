@@ -97,6 +97,7 @@
   @keyframes buzzpulse{0%,100%{box-shadow:0 12px 0 #7c1626, 0 0 0 0 rgba(255,107,107,.5);}50%{box-shadow:0 12px 0 #7c1626, 0 0 0 22px rgba(255,107,107,0);}}
   .bzcd{height:10px; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; margin:6px 0 12px;}
   .bzcdfill{height:100%; width:100%; background:linear-gradient(90deg,#e0728a,#f5b23e); border-radius:6px;}
+  .buzzbtn.practice{width:min(46vw,170px); height:min(46vw,170px); font-size:min(9vw,32px);}
   @media (prefers-reduced-motion:reduce){ .buzzbtn{animation:none;} }
   @media (prefers-reduced-motion:reduce){ .heart{animation:none;} }
 </style>
@@ -355,6 +356,16 @@ function renderCluesReveal(fc,qid){ const c=fc.correct, opts=fc.opts||[];
   area().innerHTML=''; area().appendChild(wrap);
 }
 
+function renderLobby(){ const wrap=document.createElement('div');
+  const m=document.createElement('div'); m.className='pa-msg'; m.innerHTML='<span class="heart"></span>Waiting for the show to start\u2026'; wrap.appendChild(m);
+  const pw=document.createElement('div'); pw.className='buzzwrap'; pw.style.paddingTop='16px';
+  const b=document.createElement('button'); b.className='buzzbtn practice'; b.type='button'; b.textContent='Try it';
+  b.addEventListener('click', function(){ playBuzz(); try{ if(navigator.vibrate) navigator.vibrate(40); }catch(e){} b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); });
+  pw.appendChild(b); wrap.appendChild(pw);
+  const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Give the buzzer a practice press!'; wrap.appendChild(h);
+  area().innerHTML=''; area().appendChild(wrap);
+}
+
 async function pollState(){
   if(!me) return;
   try{ const rows=await sb('players?id=eq.'+me.id+'&select=score'); if(rows&&rows.length) $('myScore').textContent=rows[0].score; }catch(e){}
@@ -379,13 +390,15 @@ async function pollState(){
     const sig='intro:'+(st.round||'')+':'+(st.rules||'');
     if(sig!==lastSig){ lastSig=sig; setArea('<div class="pa-title">'+esc(st.round||'Get ready')+'</div><div class="pa-msg" style="margin-top:6px">'+esc(st.rules||'')+'</div>'); }
   } else if(phase==='final'){
-    if(lastSig!=='final'){ lastSig='final'; const fin=st.fin||{}; const mine=fin[me.tag];
-      const champ = mine ? ((mine.tie?'Tied: ':'')+esc(mine.name)+' \u2014 '+mine.score+' pts') : 'No scores this time';
-      setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-msg">Your team\u2019s champion:</div><div class="pa-good" style="font-size:24px">'+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
+    if(lastSig!=='final'){ lastSig='final'; const fin=st.fin||{}; const mine=fin[me.tag]||{top:[],total:0};
+      const champ = (mine.top&&mine.top[0]) ? (esc(mine.top[0].name)+' \u2014 '+mine.top[0].score+' pts') : 'No scores this time';
+      let team=''; if(fin.teamWin && fin.youth && fin.adult){ const line='Youth '+fin.youth.total+' \u2013 Adults '+fin.adult.total;
+        team = (fin.teamWin==='tie') ? ('It\u2019s a tie! '+line) : ((fin.teamWin===me.tag?'Your team wins! ':'')+line); }
+      setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
   } else if(phase==='round_scores'){
     if(lastSig!=='scores'){ lastSig='scores'; setArea('<div class="pa-title">Round complete!</div><div class="pa-msg">Watch the big screen.</div>'); }
   } else {
-    if(lastSig!=='lobby'){ lastSig='lobby'; setArea('<div class="pa-msg"><span class="heart"></span>Waiting for the show to start…</div>'); }
+    if(lastSig!=='lobby'){ lastSig='lobby'; renderLobby(); }
   }
 }
 function startPoll(){ clearInterval(pollTimer); pollState(); pollTimer=setInterval(pollState, 1500); }
