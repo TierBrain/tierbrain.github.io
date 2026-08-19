@@ -395,6 +395,9 @@ async function pollState(){
       let team=''; if(fin.teamWin && fin.youth && fin.adult){ const line='Youth '+fin.youth.total+' \u2013 Adults '+fin.adult.total;
         team = (fin.teamWin==='tie') ? ('It\u2019s a tie! '+line) : ((fin.teamWin===me.tag?'Your team wins! ':'')+line); }
       setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
+  } else if(phase==='closing'){
+    if(lastSig!=='closing'){ lastSig='closing'; const c=st.close||{};
+      setArea('<div class="pa-title">A closing word</div><div class="pa-msg" style="font-family:Fraunces,serif;font-style:italic;font-size:18px;line-height:1.4">\u201c'+esc(c.text||'')+'\u201d</div><div class="pa-hint" style="margin-top:8px">'+esc(c.ref||'')+'</div><div class="pa-hint" style="margin-top:16px">Thank you for coming!</div>'); }
   } else if(phase==='round_scores'){
     if(lastSig!=='scores'){ lastSig='scores'; setArea('<div class="pa-title">Round complete!</div><div class="pa-msg">Watch the big screen.</div>'); }
   } else {

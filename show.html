@@ -178,6 +178,14 @@
   .finfoot{margin-top:clamp(16px,2.2vw,28px); font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:clamp(15px,1.7vw,22px);}
   @keyframes finpop{from{opacity:0; transform:translateY(14px) scale(.94);}to{opacity:1; transform:none;}}
   @media (prefers-reduced-motion:reduce){ .fincard{animation:none;} }
+  #closingPanel{text-align:center; padding:clamp(10px,2vw,30px) 0;}
+  .closehd{font-weight:800; letter-spacing:3px; text-transform:uppercase; color:var(--gold-hi); font-size:clamp(13px,1.4vw,17px); margin-bottom:clamp(16px,2.4vw,30px);}
+  .closeverse{font-family:'Fraunces',serif; font-style:italic; font-weight:500; color:#fbf3e2; font-size:clamp(22px,2.9vw,40px); line-height:1.4;
+    max-width:24em; margin:0 auto; animation:closein 1.1s ease both;}
+  .closeref{font-family:'Fraunces',serif; font-weight:600; color:var(--gold-hi); font-size:clamp(16px,1.8vw,24px); margin-top:clamp(14px,2vw,24px); animation:closein 1.1s ease .3s both;}
+  .closefoot{margin-top:clamp(20px,3vw,40px); color:var(--ink-dim); font-weight:700; font-size:clamp(14px,1.5vw,19px);}
+  @keyframes closein{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .closeverse,.closeref{animation:none;} }
   .finteams{font-family:'Fraunces',serif; font-weight:700; font-size:clamp(18px,2.2vw,32px); color:#fff; margin-bottom:clamp(14px,2vw,24px);}
   .podium{list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:7px; text-align:left;}
   .podium li{display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(255,255,255,.04); border-radius:10px; font-weight:800; font-size:clamp(15px,1.7vw,22px);}
@@ -274,6 +282,13 @@
         </div>
         <div class="finfoot">Well played, everyone — thank you for coming!</div>
       </div>
+
+      <div id="closingPanel" class="hide">
+        <div class="closehd">A closing word</div>
+        <div class="closeverse" id="closeText"></div>
+        <div class="closeref" id="closeRef"></div>
+        <div class="closefoot">Thank you for joining us — go in peace.</div>
+      </div>
     </div>
   </div>
 
@@ -297,6 +312,7 @@
     <button class="btn hide" id="pauseBtn">Pause</button>
     <button class="btn hide" id="skipBtn">Skip ▸</button>
     <button class="btn go-btn hide" id="nextRoundBtn">Next round ▸</button>
+    <button class="btn go-btn hide" id="closingBtn">Closing word ▸</button>
     <button class="btn" id="copyBtn">Copy join link</button>
     <button class="btn warn" id="newBtn">New room</button>
     <span class="hint">The show runs itself once it starts — this desk is just here if you need it.</span>
@@ -676,7 +692,7 @@ start();
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
     return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
-  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); var fp=$('fcPanel'); if(fp) fp.classList.toggle('hide', which!=='fc'); var vp=$('finalePanel'); if(vp) vp.classList.toggle('hide', which!=='final'); }
+  function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); var fp=$('fcPanel'); if(fp) fp.classList.toggle('hide', which!=='fc'); var vp=$('finalePanel'); if(vp) vp.classList.toggle('hide', which!=='final'); var cp=$('closingPanel'); if(cp) cp.classList.toggle('hide', which!=='closing'); }
 
   function renderBlank(node, text){ node.textContent=''; const parts=text.split('{b}');
     parts.forEach((p,i)=>{ node.appendChild(document.createTextNode(p)); if(i<parts.length-1){ const b=document.createElement('span'); b.className='blank'; node.appendChild(b); } }); }
@@ -742,8 +758,31 @@ start();
     $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
     const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide');
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
+  const CLOSERS={
+    all:[
+      {ref:'Numbers 6:24-26', text:'The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace.'},
+      {ref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.'}
+    ],
+    christmas:[
+      {ref:'Luke 2:11', text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.'},
+      {ref:'Isaiah 9:6', text:'For to us a child is born, to us a son is given; and his name will be called Wonderful Counselor, Prince of Peace.'}
+    ],
+    easter:[
+      {ref:'Mark 16:6', text:'He has risen! He is not here. Do not be afraid.'},
+      {ref:'1 Corinthians 15:57', text:'But thanks be to God, who gives us the victory through our Lord Jesus Christ.'}
+    ]
+  };
+  const CLOSE_LINES=['Thank you for playing \u2014 go in peace.','Until next time \u2014 God bless you all!','Well played, everyone \u2014 see you soon!'];
+  function showClosing(){ G.phase='closing'; showPanel('closing');
+    const pool=CLOSERS[THEME]||CLOSERS.all; const v=pool[Math.floor(Math.random()*pool.length)];
+    if($('closeText')) $('closeText').textContent='\u201c'+v.text+'\u201d';
+    if($('closeRef')) $('closeRef').textContent='\u2014 '+v.ref;
+    if(window.HOST) window.HOST.set('calm'); hostSay(pick(CLOSE_LINES),'affirm');
+    $('closingBtn').classList.add('hide');
+    setRoom({phase:'closing', q_id:'', state:{round:'Closing', close:{ref:v.ref, text:v.text}}}); poll(); }
+
   async function finaleShow(){ G.phase='final'; showPanel('final'); if(window.HOST) window.HOST.set('celebrate'); SFX.drumroll();
-    $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); $('nextRoundBtn').classList.add('hide');
+    $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide'); $('nextRoundBtn').classList.add('hide'); $('closingBtn').classList.remove('hide');
     let players=[]; try{ players=(await sb('players?code=eq.'+room.code+'&select=name,tag,score,joined_at'))||[]; }catch(e){}
     function board(tag){ const arr=players.filter(function(p){return p.tag===tag;}).sort(function(a,b){ return (b.score-a.score)||(new Date(a.joined_at)-new Date(b.joined_at)); });
       const total=arr.reduce(function(sm,p){return sm+(p.score||0);},0);
@@ -934,6 +973,7 @@ start();
   setInterval(gameTick, 250);
 
   $('startShow').addEventListener('click', startShow);
+  { const cb=$('closingBtn'); if(cb) cb.addEventListener('click', showClosing); }
   { const mb=$('mute'); if(mb) mb.addEventListener('click', function(){ const m=!SFX.isMuted(); SFX.setMuted(m); mb.textContent=m?'🔇':'🔊'; }); }
   function refreshLineup(){ const el=$('lineup'); if(!el) return; if(typeof room==='undefined'||!room){ el.textContent=''; return; }
     const order=buildShowOrder((room.seed|0)||1);
@@ -990,7 +1030,8 @@ start();
     point:    {lUp:.05,lOut:.10,rUp:1.0,rOut:.35,smile:.85,browR:.65,browA:.18,look:.15,open:.4,point:1},
     celebrate:{lUp:1.0,lOut:.7, rUp:1.0,rOut:.7, smile:1,  browR:.6, browA:.12,look:0,  open:.5,point:0},
     ask:      {lUp:.06,lOut:.12,rUp:.5, rOut:.9, smile:.5, browR:.35,browA:.05,look:.35,open:0, point:0},
-    wince:    {lUp:.08,lOut:.16,rUp:.12,rOut:.22,smile:-.4,browR:-.12,browA:.35,look:0,  open:0, point:0}
+    wince:    {lUp:.08,lOut:.16,rUp:.12,rOut:.22,smile:-.4,browR:-.12,browA:.35,look:0,  open:0, point:0},
+    calm:     {lUp:.09,lOut:.18,rUp:.09,rOut:.18,smile:.42,browR:.12,browA:0,  look:0,  open:0, point:0}
   };
   const REEL=[{p:'idle',d:2600},{p:'welcome',d:3200,say:1},{p:'present',d:3000},{p:'point',d:2600,say:1},{p:'celebrate',d:2600}];
   const FIELDS=['lUp','lOut','rUp','rOut','smile','browR','browA','look','open','point'];
