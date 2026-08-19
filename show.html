@@ -290,6 +290,7 @@
 
   <div class="ops">
     <span class="admin"><label for="roundPick">Play</label><select id="roundPick"></select></span>
+    <span class="admin"><label for="themePick">Theme</label><select id="themePick"></select></span>
     <span class="admin" id="roundsAdmin">Rounds <button class="mini" id="rMinus">–</button><b id="rCount">2</b><button class="mini" id="rPlus">+</button></span>
     <span class="admin">Questions <button class="mini" id="qMinus">–</button><b id="qCount">8</b><button class="mini" id="qPlus">+</button></span>
     <button class="btn go-btn" id="startShow">Start the show ▸</button>
@@ -504,6 +505,80 @@ start();
    {vref:'Genesis 1:3', text:'God said, \u201cLet there be light,\u201d and there was light.', wrong:['Genesis 1:1','John 1:5','Psalm 27:1']}
   ];
 
+  const RAPID_GEN=[].concat(BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']);
+  const THEMED={
+    rapid:[
+     {th:'christmas',q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Bethany']},
+     {th:'christmas',q:'Who was the mother of Jesus?',correct:'Mary',wrong:['Martha','Elizabeth','Ruth']},
+     {th:'christmas',q:'Which angel told Mary she would have a son?',correct:'Gabriel',wrong:['Michael','Raphael','Uriel']},
+     {th:'christmas',q:'Where was the baby Jesus laid?',correct:'In a manger',wrong:['In a cradle','In a basket','In a bed']},
+     {th:'christmas',q:'Who followed a star to find Jesus?',correct:'The wise men',wrong:['The disciples','The Pharisees','The priests']},
+     {th:'christmas',q:'Which gifts did the wise men bring?',correct:'Gold, frankincense and myrrh',wrong:['Silver, spices and cloth','Bread, wine and oil','Gold, jewels and silk']},
+     {th:'christmas',q:'Which king tried to kill the baby Jesus?',correct:'Herod',wrong:['Pilate','Caesar','Nero']},
+     {th:'christmas',q:'What was the trade of Joseph, Mary\u2019s husband?',correct:'Carpenter',wrong:['Fisherman','Shepherd','Tax collector']},
+     {th:'christmas',q:'Who were told of Jesus\u2019 birth by angels in the fields?',correct:'Shepherds',wrong:['Soldiers','Merchants','Kings']},
+     {th:'christmas',q:'How many gifts are traditionally named from the wise men?',correct:'Three',wrong:['Two','Five','Seven']},
+     {th:'easter',q:'On which day did Jesus rise from the dead?',correct:'The third day',wrong:['The first day','The seventh day','The next day']},
+     {th:'easter',q:'Who betrayed Jesus for thirty pieces of silver?',correct:'Judas',wrong:['Peter','Thomas','John']},
+     {th:'easter',q:'In which garden did Jesus pray before his arrest?',correct:'Gethsemane',wrong:['The Garden of Eden','A garden in Galilee','The King\u2019s Garden']},
+     {th:'easter',q:'Which disciple denied Jesus three times?',correct:'Peter',wrong:['Judas','Andrew','Philip']},
+     {th:'easter',q:'Who sentenced Jesus to be crucified?',correct:'Pontius Pilate',wrong:['Herod','Caiaphas','Caesar']},
+     {th:'easter',q:'On what hill was Jesus crucified?',correct:'Golgotha',wrong:['Mount Sinai','Mount Zion','Mount Carmel']},
+     {th:'easter',q:'Which prisoner was released instead of Jesus?',correct:'Barabbas',wrong:['Lazarus','Stephen','Saul']},
+     {th:'easter',q:'Who first found the empty tomb?',correct:'Mary Magdalene',wrong:['Peter','John','Thomas']},
+     {th:'easter',q:'What was rolled away from the tomb?',correct:'The stone',wrong:['The curtain','The gate','The door']},
+     {th:'easter',q:'Which disciple doubted until he saw the risen Jesus?',correct:'Thomas',wrong:['Philip','James','Nathanael']}
+    ],
+    vblank:[
+     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a {b}, who is Christ the Lord.',answer:'Savior',wrong:['shepherd','teacher','prophet']},
+     {th:'christmas',vref:'Isaiah 9:6',text:'His name will be called {b}, Mighty God, Everlasting Father, Prince of Peace.',answer:'Wonderful Counselor',wrong:['Faithful Servant','Holy One','Good Shepherd']},
+     {th:'christmas',vref:'Luke 2:7',text:'She laid him in a manger, because there was no room for them in the {b}.',answer:'inn',wrong:['stable','town','house']},
+     {th:'christmas',vref:'Matthew 2:2',text:'Where is he who is born King of the {b}? For we saw his star in the east.',answer:'Jews',wrong:['world','Gentiles','nations']},
+     {th:'easter',vref:'Mark 16:6',text:'He has {b}! He is not here. Behold, the place where they laid him!',answer:'risen',wrong:['gone','departed','vanished']},
+     {th:'easter',vref:'John 11:25',text:'I am the {b} and the life. He who believes in me will still live, even if he dies.',answer:'resurrection',wrong:['way','truth','light']},
+     {th:'easter',vref:'Luke 23:34',text:'Father, {b} them, for they don\u2019t know what they are doing.',answer:'forgive',wrong:['free','save','help']},
+     {th:'easter',vref:'Matthew 27:46',text:'My God, my God, why have you {b} me?',answer:'forsaken',wrong:['forgotten','abandoned','left']}
+    ],
+    vref:[
+     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.',wrong:['Matthew 2:11','Luke 1:11','John 2:11']},
+     {th:'christmas',vref:'Isaiah 9:6',text:'For to us a child is born, to us a son is given; and the government will be on his shoulders.',wrong:['Micah 5:2','Luke 2:11','Isaiah 7:14']},
+     {th:'christmas',vref:'Micah 5:2',text:'But you, Bethlehem Ephrathah, out of you one will come who is to be ruler in Israel.',wrong:['Isaiah 9:6','Matthew 2:6','Luke 2:4']},
+     {th:'christmas',vref:'Matthew 1:23',text:'Behold, the virgin shall be with child, and shall give birth to a son. They shall call his name Immanuel.',wrong:['Isaiah 7:14','Luke 1:31','Matthew 2:2']},
+     {th:'easter',vref:'Mark 16:6',text:'He has risen! He is not here. Behold, the place where they laid him!',wrong:['Matthew 27:54','John 20:9','Luke 24:6']},
+     {th:'easter',vref:'John 11:25',text:'I am the resurrection and the life.',wrong:['John 14:6','John 1:4','Romans 6:5']},
+     {th:'easter',vref:'Luke 23:34',text:'Father, forgive them, for they don\u2019t know what they are doing.',wrong:['Matthew 26:39','John 19:30','Luke 22:42']},
+     {th:'easter',vref:'John 19:30',text:'When Jesus therefore had received the vinegar, he said, \u201cIt is finished.\u201d',wrong:['Luke 23:46','Matthew 27:50','Mark 15:34']}
+    ],
+    buzz:[
+     {th:'christmas',q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Bethany']},
+     {th:'christmas',q:'Which angel visited Mary?',correct:'Gabriel',wrong:['Michael','Raphael','Uriel']},
+     {th:'christmas',q:'What guided the wise men to Jesus?',correct:'A star',wrong:['An angel','A dream','A cloud']},
+     {th:'christmas',q:'Who was the earthly father of Jesus?',correct:'Joseph',wrong:['Zechariah','Simeon','Jacob']},
+     {th:'christmas',q:'Which king ordered infants to be killed?',correct:'Herod',wrong:['Pilate','Caesar','Saul']},
+     {th:'christmas',q:'Who heard the angels announce Jesus\u2019 birth?',correct:'The shepherds',wrong:['The soldiers','The priests','The merchants']},
+     {th:'christmas',q:'Which wise men\u2019s gift was a precious metal?',correct:'Gold',wrong:['Frankincense','Myrrh','Silver']},
+     {th:'christmas',q:'What was Jesus laid in at birth?',correct:'A manger',wrong:['A cradle','A basket','A bed']},
+     {th:'easter',q:'How many days until Jesus rose again?',correct:'Three',wrong:['One','Seven','Forty']},
+     {th:'easter',q:'Who betrayed Jesus?',correct:'Judas',wrong:['Peter','Thomas','John']},
+     {th:'easter',q:'Which disciple denied Jesus three times?',correct:'Peter',wrong:['Judas','James','Andrew']},
+     {th:'easter',q:'Who ordered Jesus\u2019 crucifixion?',correct:'Pontius Pilate',wrong:['Herod','Caiaphas','Caesar']},
+     {th:'easter',q:'On what was Jesus crucified?',correct:'A cross',wrong:['A tree','A stake','A pillar']},
+     {th:'easter',q:'Who was released instead of Jesus?',correct:'Barabbas',wrong:['Lazarus','Stephen','Judas']},
+     {th:'easter',q:'Who first saw the risen Jesus?',correct:'Mary Magdalene',wrong:['Peter','John','Thomas']},
+     {th:'easter',q:'What sealed Jesus\u2019 tomb?',correct:'A large stone',wrong:['A wooden door','A gate','A curtain']}
+    ],
+    clues:[
+     {th:'christmas',answer:'Mary',cat:'Person',clues:['An angel came to me with news.','I was engaged to a carpenter.','I was told I would have a son.','I travelled to Bethlehem.','I gave birth to Jesus.'],wrong:['Elizabeth','Martha','Ruth']},
+     {th:'christmas',answer:'The Wise Men',cat:'People',clues:['We came from the East.','We studied the night skies.','We followed a special star.','We brought three gifts.','We worshipped the baby Jesus.'],wrong:['The Shepherds','The Disciples','The Priests']},
+     {th:'christmas',answer:'Bethlehem',cat:'Place',clues:['I am only a small town.','The prophet Micah named me.','I am the City of David.','Shepherds came to me one night.','Jesus was born here.'],wrong:['Nazareth','Jerusalem','Bethany']},
+     {th:'easter',answer:'Judas',cat:'Person',clues:['I was one of the twelve.','I looked after the money bag.','I made a deal with the priests.','I was paid thirty pieces of silver.','I betrayed Jesus with a kiss.'],wrong:['Peter','Thomas','John']},
+     {th:'easter',answer:'Peter',cat:'Person',clues:['I was a fisherman by trade.','I once walked on water briefly.','I promised never to leave Jesus.','I denied him three times.','A rooster crowed, just as Jesus foretold.'],wrong:['Judas','Andrew','James']},
+     {th:'easter',answer:'The Empty Tomb',cat:'Event',clues:['It happened early on a Sunday.','A great stone was involved.','Women came carrying spices.','Angels were there to meet them.','Jesus was gone \u2014 he had risen!'],wrong:['The Last Supper','The Ascension','Pentecost']}
+    ]
+  };
+  function themedPick(themedArr, generalArr, theme, n, r){ let base=shuf(themedArr.filter(function(x){return x.th===theme;}), r);
+    if(base.length>=n) return base.slice(0,n); const extra=shuf(generalArr.slice(),r).filter(function(g){ return base.indexOf(g)<0; }); return base.concat(extra).slice(0,n); }
+
   const OPTMETA=[{k:'A',c:'#f5b23e'},{k:'B',c:'#2fb6a6'},{k:'C',c:'#8f7be6'},{k:'D',c:'#e0728a'}];
   /* ---- SFX: procedural show audio (no files) ---- */
   const SFX=(function(){
@@ -561,10 +636,12 @@ start();
   const POOL=['rapidfire','verse','fiveclues'];   /* middle-round pool */
   const FINALE='buzzer';              /* buzzer is the pinned finale */
   let SHOW_ORDER=[];
-  const ADMIN_KEY='cv_rounds', QPR_KEY='cv_qpr', PICK_KEY='cv_pick';
+  const ADMIN_KEY='cv_rounds', QPR_KEY='cv_qpr', PICK_KEY='cv_pick', THEME_KEY='cv_theme';
   let ADMIN_ROUNDS=parseInt(localStorage.getItem(ADMIN_KEY),10)||(POOL.length+(FINALE?1:0));
   let QPR=parseInt(localStorage.getItem(QPR_KEY),10)||8;
   let PICK=localStorage.getItem(PICK_KEY)||'random';
+  let THEME=localStorage.getItem(THEME_KEY)||'all';
+  const THEME_NAMES={all:'All topics', christmas:'Christmas', easter:'Easter'};
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function maxRounds(){ return POOL.length+(FINALE?1:0); }
   function buildShowOrder(seed){ if(PICK!=='random' && RMETA[PICK]) return [PICK];
@@ -582,13 +659,16 @@ start();
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
     return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
   function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-  function buildRapid(seed,n){ n=n||8; const r=rng(seed); const per=[0,0,0,0]; for(let i=0;i<n;i++) per[i%4]++;
-    const out=[]; ['1','2','3','4'].forEach((t,ti)=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,per[ti]).forEach(o=>out.push(o)); });
+  function buildRapid(seed,n,theme){ n=n||8; const r=rng(seed); let out=[];
+    if(theme && theme!=='all'){ out=themedPick(THEMED.rapid, RAPID_GEN, theme, n, r); }
+    else { const per=[0,0,0,0]; for(let i=0;i<n;i++) per[i%4]++; ['1','2','3','4'].forEach((t,ti)=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,per[ti]).forEach(o=>out.push(o)); }); }
     return out.map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
-  function buildVerse(seed,n){ n=n||8; const r=rng(seed); const nb=Math.min(Math.ceil(n/2), VB_BLANK.length); const nr=n-nb;
-    const blanks=shuf(VB_BLANK.slice(),r).slice(0,nb); const used={}; blanks.forEach(b=>used[b.vref]=1);
-    const refPool=shuf(VB_REF.slice(),r); const refs=refPool.filter(x=>!used[x.vref]).slice(0,nr);
-    if(refs.length<nr){ const have=new Set(refs.map(x=>x.vref)); for(const x of refPool){ if(refs.length>=nr) break; if(!have.has(x.vref)){ refs.push(x); have.add(x.vref);} } }
+  function buildVerse(seed,n,theme){ n=n||8; const r=rng(seed); const nb=Math.ceil(n/2); const nr=n-nb;
+    const blanks=(theme&&theme!=='all')? themedPick(THEMED.vblank, VB_BLANK, theme, nb, r) : shuf(VB_BLANK.slice(),r).slice(0,nb);
+    const used={}; blanks.forEach(b=>used[b.vref]=1);
+    let refs=[]; const themedRefs=(theme&&theme!=='all')? shuf(THEMED.vref.filter(x=>x.th===theme),r).filter(x=>!used[x.vref]) : [];
+    refs=themedRefs.slice(0,nr);
+    if(refs.length<nr){ const have=new Set(refs.map(x=>x.vref)); for(const x of shuf(VB_REF.slice(),r)){ if(refs.length>=nr) break; if(!used[x.vref]&&!have.has(x.vref)){ refs.push(x); have.add(x.vref);} } }
     const items=[];
     blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer)}); });
     refs.forEach(v=>{ const opts=shuf([v.vref].concat(v.wrong),r); items.push({kind:'verse-ref', ref:v.vref, text:v.text, opts, correct:opts.indexOf(v.vref)}); });
@@ -627,7 +707,7 @@ start();
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
     SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
-    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR); G.qi=0;
+    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR, THEME); G.qi=0;
     G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0){ SFX.sting(); hostSay(pick(QUIPS.round),'huh'); }
     showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
     $('qPrompt').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : 'How this round works');
@@ -701,7 +781,8 @@ start();
    {q:'Who built the ark?',correct:'Noah',wrong:['Moses','Abraham','Enoch']},
    {q:'Which Gospel comes first in the New Testament?',correct:'Matthew',wrong:['Mark','Luke','John']}
   ];
-  function buildBuzzer(seed,n){ n=n||8; const r=rng(seed); const pool=shuf(BUZZ_BANK.slice(),r).slice(0,Math.min(n,BUZZ_BANK.length));
+  function buildBuzzer(seed,n,theme){ n=n||8; const r=rng(seed);
+    const pool=(theme&&theme!=='all')? themedPick(THEMED.buzz, BUZZ_BANK, theme, n, r) : shuf(BUZZ_BANK.slice(),r).slice(0,Math.min(n,BUZZ_BANK.length));
     return pool.map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
 
   const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600;
@@ -794,7 +875,8 @@ start();
    {answer:'Egypt',cat:'Place',clues:['I am an ancient and mighty land.','A famine once drew families to me.','Joseph rose to great power here.','The Israelites were enslaved within me.','Ten plagues struck me before the Exodus.'],wrong:['Babylon','Canaan','Assyria']},
    {answer:'Jericho',cat:'Place',clues:['I am a very old city.','I was protected by great walls.','Spies were once hidden inside me.','Israel marched around me for seven days.','My walls fell down flat at a shout.'],wrong:['Ai','Hebron','Gibeon']}
   ];
-  function buildClues(seed,n){ n=n||6; const r=rng(seed); const pool=shuf(CLUES_BANK.slice(),r).slice(0,Math.min(n,CLUES_BANK.length));
+  function buildClues(seed,n,theme){ n=n||6; const r=rng(seed);
+    const pool=(theme&&theme!=='all')? themedPick(THEMED.clues, CLUES_BANK, theme, n, r) : shuf(CLUES_BANK.slice(),r).slice(0,Math.min(n,CLUES_BANK.length));
     return pool.map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer)}; }); }
 
   const CLUE_TIME=6500, CLUES_REVEAL=5000;
@@ -855,11 +937,14 @@ start();
   { const mb=$('mute'); if(mb) mb.addEventListener('click', function(){ const m=!SFX.isMuted(); SFX.setMuted(m); mb.textContent=m?'🔇':'🔊'; }); }
   function refreshLineup(){ const el=$('lineup'); if(!el) return; if(typeof room==='undefined'||!room){ el.textContent=''; return; }
     const order=buildShowOrder((room.seed|0)||1);
-    el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 ')+' \u00b7 '+QPR+' questions'+(order.length>1?' each':''); }
+    el.textContent='This show: '+order.map(t=>RMETA[t].title).join(' \u2192 ')+' \u00b7 '+QPR+' questions'+(order.length>1?' each':'')+(THEME!=='all'?(' \u00b7 '+THEME_NAMES[THEME]):''); }
   function populatePick(){ const sel=$('roundPick'); if(!sel||sel._done) return; sel._done=1;
     const types=['random'].concat(POOL, FINALE?[FINALE]:[]);
     types.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=(t==='random'?'Random (recommended)':RMETA[t].title); sel.appendChild(o); });
     sel.value=PICK; sel.addEventListener('change', function(){ PICK=sel.value; localStorage.setItem(PICK_KEY,PICK); updateAdminUI(); }); }
+  function populateTheme(){ const sel=$('themePick'); if(!sel||sel._done) return; sel._done=1;
+    ['all','christmas','easter'].forEach(function(t){ const o=document.createElement('option'); o.value=t; o.textContent=THEME_NAMES[t]; sel.appendChild(o); });
+    sel.value=THEME; sel.addEventListener('change', function(){ THEME=sel.value; localStorage.setItem(THEME_KEY,THEME); updateAdminUI(); }); }
   function updateAdminUI(){ ADMIN_ROUNDS=clamp(ADMIN_ROUNDS,1,maxRounds()); QPR=clamp(QPR,4,12);
     if($('rCount')) $('rCount').textContent=ADMIN_ROUNDS; if($('qCount')) $('qCount').textContent=QPR;
     localStorage.setItem(ADMIN_KEY,ADMIN_ROUNDS); localStorage.setItem(QPR_KEY,QPR);
@@ -870,7 +955,7 @@ start();
     if(rpB) rpB.addEventListener('click', function(){ ADMIN_ROUNDS++; updateAdminUI(); });
     if(qmB) qmB.addEventListener('click', function(){ QPR-=1; updateAdminUI(); });
     if(qpB) qpB.addEventListener('click', function(){ QPR+=1; updateAdminUI(); }); }
-  populatePick(); updateAdminUI();
+  populatePick(); populateTheme(); updateAdminUI();
   $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
   $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else if(G.type==='fiveclues') startCluesQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } else if(G.phase==='fc'){ if(G.fc&&G.fc.phase==='reveal') nextCluesQuestion(); else closeClues(); } });
