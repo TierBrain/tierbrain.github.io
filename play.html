@@ -252,9 +252,13 @@ async function sendAnswer(i,opts){ if(answered) return; answered=true; myChoice=
 let bzActx=null, bzTimer=null;
 function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
 function playBuzz(){ try{ if(!bzActx) bzActx=new (window.AudioContext||window.webkitAudioContext)(); const a=bzActx; if(a.state==='suspended') a.resume();
-  const o=a.createOscillator(), g=a.createGain(); o.type='square'; o.frequency.setValueAtTime(200,a.currentTime); o.frequency.exponentialRampToValueAtTime(110,a.currentTime+0.2);
-  g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.linearRampToValueAtTime(0.2,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.34);
-  o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.36); }catch(e){} }
+  const t=a.currentTime, dur=0.6;
+  const o1=a.createOscillator(), o2=a.createOscillator(); o1.type='sawtooth'; o2.type='sawtooth'; o1.frequency.value=150; o2.frequency.value=158;
+  const mix=a.createGain(); mix.gain.value=0.4;
+  const lfo=a.createOscillator(); lfo.type='square'; lfo.frequency.value=23; const ld=a.createGain(); ld.gain.value=0.4; lfo.connect(ld); ld.connect(mix.gain);
+  o1.connect(mix); o2.connect(mix);
+  const out=a.createGain(); out.gain.setValueAtTime(0.0001,t); out.gain.linearRampToValueAtTime(0.5,t+0.015); out.gain.setValueAtTime(0.5,t+dur-0.06); out.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  mix.connect(out); out.connect(a.destination); o1.start(t); o2.start(t); lfo.start(t); o1.stop(t+dur); o2.stop(t+dur); lfo.stop(t+dur); }catch(e){} }
 function clearBzTimer(){ if(bzTimer){ clearInterval(bzTimer); bzTimer=null; } }
 function renderBuzzer(bz, qid){ clearBzTimer();
   const lane=(bz.lanes&&bz.lanes[me.tag])||{st:'open',out:[]};
