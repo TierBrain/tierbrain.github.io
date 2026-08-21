@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chapter &amp; Verse — Stage</title>
+<title>The Big Quiz — Stage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -223,7 +223,7 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand">Chapter <span class="amp">&amp;</span> Verse</div>
+    <div class="brand">The Big <span class="amp">Quiz</span></div>
     <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
   </div>
 
@@ -252,7 +252,7 @@
           <div class="qrcap">Scan to join</div>
         </div>
       </div>
-      <div class="go">or go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play.html</a></div>
+      <div class="go">or go to <a class="url" id="joinUrl" target="_blank" rel="noopener">tierbrain.github.io/play-gen.html</a></div>
       <div class="taphint">On this device you can just tap the link above to open the player page.</div>
       <div class="count"><b id="count">0</b> in the room</div>
       <div class="lineup" id="lineup"></div>
@@ -271,8 +271,8 @@
         <div class="qtop"><span class="rlabel" id="bzLabel">The Buzzer</span><span class="qnum" id="bzNum"></span></div>
         <div class="qtext" id="bzText">Get ready…</div>
         <div class="bzlanes">
-          <div class="bzlane youth" id="bzYouth"><div class="bzhd">Youth</div><div class="bzstat"></div><div class="bzname"></div></div>
-          <div class="bzlane adult" id="bzAdult"><div class="bzhd">Adults</div><div class="bzstat"></div><div class="bzname"></div></div>
+          <div class="bzlane youth" id="bzYouth"><div class="bzhd">Team A</div><div class="bzstat"></div><div class="bzname"></div></div>
+          <div class="bzlane adult" id="bzAdult"><div class="bzhd">Team B</div><div class="bzstat"></div><div class="bzname"></div></div>
         </div>
         <div class="timerbar"><div class="fill" id="bzBar"></div></div>
         <div class="opts hide" id="bzOpts"></div>
@@ -292,8 +292,8 @@
         <div class="finhd">🏆 Final Scores</div>
         <div class="finteams" id="finTeams"></div>
         <div class="fincards">
-          <div class="fincard youth"><div class="finteam">Youth</div><ol class="podium" id="finYouthList"></ol></div>
-          <div class="fincard adult"><div class="finteam">Adults</div><ol class="podium" id="finAdultList"></ol></div>
+          <div class="fincard youth"><div class="finteam">Team A</div><ol class="podium" id="finYouthList"></ol></div>
+          <div class="fincard adult"><div class="finteam">Team B</div><ol class="podium" id="finAdultList"></ol></div>
         </div>
         <div class="finfoot">Well played, everyone — thank you for coming!</div>
       </div>
@@ -302,18 +302,18 @@
         <div class="closehd">A closing word</div>
         <div class="closeverse" id="closeText"></div>
         <div class="closeref" id="closeRef"></div>
-        <div class="closefoot">Thank you for joining us — go in peace.</div>
+        <div class="finfoot">Thanks for coming — see you next time!</div>
       </div>
     </div>
   </div>
 
   <div class="boards">
     <div class="team youth">
-      <div class="hd"><span>Youth</span><span class="team-total" id="youthTotal">0</span></div>
+      <div class="hd"><span>Team A</span><span class="team-total" id="youthTotal">0</span></div>
       <ul class="roster" id="youthList"><li class="empty">Waiting for players…</li></ul>
     </div>
     <div class="team adult">
-      <div class="hd"><span>Adults &amp; Parents</span><span class="team-total" id="adultTotal">0</span></div>
+      <div class="hd"><span>Team B</span><span class="team-total" id="adultTotal">0</span></div>
       <ul class="roster" id="adultList"><li class="empty">Waiting for players…</li></ul>
     </div>
   </div>
@@ -340,7 +340,7 @@ const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
 const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 const $=id=>document.getElementById(id);
-const CODE_KEY='cv_stage_room';
+const CODE_KEY='cv_stage_room_gen';
 const ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I,L,O,0,1
 let room=null, polling=null;
 
@@ -358,10 +358,10 @@ function hideBanner(){ $('banner').classList.remove('show'); }
 function renderCode(code){
   const slots=$('slots'); slots.innerHTML='';
   code.split('').forEach(ch=>{ const d=document.createElement('div'); d.className='slot'; d.textContent=ch; slots.appendChild(d); });
-  const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
-  const disp=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play.html';
+  const base=location.href.replace(/show-gen\.html.*$/,'').replace(/\/$/,'');
+  const disp=(base?base.replace(/^https?:\/\//,''):'tierbrain.github.io')+'/play-gen.html';
   const a=$('joinUrl'); a.textContent=disp;
-  const joinLink=(base||'https://tierbrain.github.io')+'/play.html?c='+code;
+  const joinLink=(base||'https://tierbrain.github.io')+'/play-gen.html?c='+code;
   a.setAttribute('href', joinLink);
   const qi=$('qrImg'), qw=$('qrwrap');
   if(qi){ qw.style.display=''; qi.onerror=()=>{ qw.style.display='none'; }; // fallback: URL + code stay visible
@@ -439,8 +439,8 @@ $('newBtn').addEventListener('click', async ()=>{
   try{ await createRoom(); renderCode(room.code); await poll(); }catch(e){}
 });
 $('copyBtn').addEventListener('click', ()=>{
-  const base=location.href.replace(/show\.html.*$/,'').replace(/\/$/,'');
-  const url=(base||'https://tierbrain.github.io')+'/play.html?c='+(room?room.code:'');
+  const base=location.href.replace(/show-gen\.html.*$/,'').replace(/\/$/,'');
+  const url=(base||'https://tierbrain.github.io')+'/play-gen.html?c='+(room?room.code:'');
   navigator.clipboard&&navigator.clipboard.writeText(url);
   $('copyBtn').textContent='Copied!'; setTimeout(()=>$('copyBtn').textContent='Copy join link', 1400);
 });
@@ -452,164 +452,53 @@ start();
 /* ---- Chapter & Verse — round engine (Round 1 Rapid-Fire + Round 2 Verse) ---- */
   const BANK_RAPID={
     1:[
-      {"q":"Who built an ark to survive a great flood?","correct":"Noah","wrong":["Moses","Abraham","David"]},
-      {"q":"In the Bible, who were the first man and woman?","correct":"Adam and Eve","wrong":["Cain and Abel","Abraham and Sarah","Isaac and Rebekah"]},
-      {"q":"Which young shepherd defeated the giant Goliath?","correct":"David","wrong":["Samson","Saul","Solomon"]},
-      {"q":"Who was swallowed by a great fish (often called a whale)?","correct":"Jonah","wrong":["Job","Joshua","Jeremiah"]},
-      {"q":"God created the world in how many days, resting on the seventh?","correct":"Six","wrong":["Three","Seven","Ten"]},
-      {"q":"Who led the Israelites out of slavery in Egypt?","correct":"Moses","wrong":["Aaron","Joshua","Joseph"]},
-      {"q":"What did God give Moses on Mount Sinai?","correct":"The Ten Commandments","wrong":["The Golden Calf","The Ark of the Covenant","The Book of Psalms"]},
-      {"q":"Who was born in a manger in Bethlehem?","correct":"Jesus","wrong":["John the Baptist","Moses","Isaac"]},
-      {"q":"How many disciples (apostles) did Jesus choose?","correct":"Twelve","wrong":["Ten","Seven","Three"]},
-      {"q":"Who baptised Jesus in the River Jordan?","correct":"John the Baptist","wrong":["Peter","Paul","Andrew"]},
-      {"q":"What is the first book of the Bible?","correct":"Genesis","wrong":["Exodus","Psalms","Matthew"]},
-      {"q":"Which garden did Adam and Eve live in?","correct":"The Garden of Eden","wrong":["Gethsemane","Babylon","Canaan"]},
-      {"q":"In Eden, who tempted Eve to eat the forbidden fruit?","correct":"The serpent","wrong":["A lion","An angel","A raven"]},
-      {"q":"Jesus turned water into what at a wedding in Cana?","correct":"Wine","wrong":["Bread","Oil","Milk"]}
+      {"q":"What is the capital of France?","correct":"Paris","wrong":["London","Rome","Berlin"]},
+      {"q":"How many days are there in a week?","correct":"Seven","wrong":["Five","Ten","Twelve"]},
+      {"q":"Which planet is known as the Red Planet?","correct":"Mars","wrong":["Venus","Jupiter","Saturn"]},
+      {"q":"What do you get if you mix blue and yellow?","correct":"Green","wrong":["Purple","Orange","Brown"]},
+      {"q":"How many legs does a spider have?","correct":"Eight","wrong":["Six","Four","Ten"]}
     ],
     2:[
-      {"q":"In the Parable of the Good Samaritan, who finally helped the injured man?","correct":"A Samaritan","wrong":["A priest","A Levite","A Roman soldier"]},
-      {"q":"The Parable of the Prodigal Son is about a father and his…?","correct":"Two sons","wrong":["Three daughters","Twelve disciples","Seven servants"]},
-      {"q":"Who wrote many of the Psalms and was a king of Israel?","correct":"David","wrong":["Solomon","Saul","Samuel"]},
-      {"q":"Which king was famed for his wisdom and built the first Temple in Jerusalem?","correct":"Solomon","wrong":["David","Saul","Hezekiah"]},
-      {"q":"Jesus delivered a famous sermon known as the Sermon on the…?","correct":"Mount","wrong":["Plain","Sea","Hill"]},
-      {"q":"The Beatitudes ('Blessed are…') come from which teaching?","correct":"The Sermon on the Mount","wrong":["The Last Supper","The Road to Emmaus","Pentecost"]},
-      {"q":"Which brother killed Abel in the first murder?","correct":"Cain","wrong":["Seth","Esau","Ishmael"]},
-      {"q":"God asked Abraham to sacrifice which son, before stopping him?","correct":"Isaac","wrong":["Ishmael","Jacob","Joseph"]},
-      {"q":"Which prophet was taken up to heaven in a chariot of fire?","correct":"Elijah","wrong":["Elisha","Isaiah","Ezekiel"]},
-      {"q":"Who interpreted Pharaoh's dreams and rose to power in Egypt?","correct":"Joseph","wrong":["Moses","Daniel","Aaron"]},
-      {"q":"The walls of which city fell after the Israelites marched around them?","correct":"Jericho","wrong":["Babylon","Nineveh","Jerusalem"]},
-      {"q":"Who was the first king of Israel?","correct":"Saul","wrong":["David","Solomon","Samuel"]},
-      {"q":"In the Parable of the Sower, the seed falls on different kinds of…?","correct":"Soil","wrong":["Water","Sand","Snow"]},
-      {"q":"Which Gospel is the first book of the New Testament?","correct":"Matthew","wrong":["Mark","Luke","John"]}
+      {"q":"What is the largest ocean on Earth?","correct":"The Pacific","wrong":["The Atlantic","The Indian","The Arctic"]},
+      {"q":"How many continents are there?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"What is the chemical symbol for gold?","correct":"Au","wrong":["Ag","Gd","Go"]},
+      {"q":"Which country is home to the Eiffel Tower?","correct":"France","wrong":["Italy","Spain","Germany"]},
+      {"q":"What is the freezing point of water in Celsius?","correct":"0 degrees","wrong":["10 degrees","32 degrees","-10 degrees"]}
     ],
     3:[
-      {"q":"Which king is traditionally credited with writing Psalm 23?","correct":"David","wrong":["Solomon","Asaph","Moses"]},
-      {"q":"The Parable of the Good Samaritan appears in which Gospel?","correct":"Luke","wrong":["Matthew","Mark","John"]},
-      {"q":"The Parable of the Prodigal Son appears only in which Gospel?","correct":"Luke","wrong":["Matthew","Mark","John"]},
-      {"q":"How many books are there in the Protestant Bible?","correct":"66","wrong":["27","39","100"]},
-      {"q":"How many books are in the New Testament?","correct":"27","wrong":["12","39","50"]},
-      {"q":"Who was the father of John the Baptist, a priest struck mute?","correct":"Zechariah","wrong":["Zebedee","Zacchaeus","Zerubbabel"]},
-      {"q":"Which disciple was chosen to replace Judas Iscariot among the Twelve?","correct":"Matthias","wrong":["Barnabas","Stephen","Silas"]},
-      {"q":"On the road to Emmaus, the disciples recognised the risen Jesus when he…?","correct":"Broke bread","wrong":["Spoke their names","Healed them","Walked on water"]},
-      {"q":"Which prophet saw a vision of a valley of dry bones?","correct":"Ezekiel","wrong":["Isaiah","Jeremiah","Daniel"]},
-      {"q":"Who was the tax collector that climbed a sycamore tree to see Jesus?","correct":"Zacchaeus","wrong":["Matthew","Nicodemus","Bartimaeus"]},
-      {"q":"Abel offered animals from his flock; Cain offered what?","correct":"Crops","wrong":["Fish","Gold","Wine"]},
-      {"q":"On which mountain did Noah's ark come to rest?","correct":"Mount Ararat","wrong":["Mount Sinai","Mount Carmel","Mount Nebo"]},
-      {"q":"On which mountain did Moses die, viewing the Promised Land?","correct":"Mount Nebo","wrong":["Mount Sinai","Mount Ararat","Mount Tabor"]},
-      {"q":"How many plagues did God send upon Egypt?","correct":"Ten","wrong":["Seven","Twelve","Three"]}
+      {"q":"What is the hardest natural substance on Earth?","correct":"Diamond","wrong":["Gold","Iron","Quartz"]},
+      {"q":"What is the largest planet in our solar system?","correct":"Jupiter","wrong":["Saturn","Neptune","Earth"]},
+      {"q":"Which gas do plants absorb from the air?","correct":"Carbon dioxide","wrong":["Oxygen","Nitrogen","Hydrogen"]},
+      {"q":"What is the fastest land animal?","correct":"The cheetah","wrong":["The lion","The horse","The leopard"]},
+      {"q":"How many strings does a standard guitar have?","correct":"Six","wrong":["Four","Five","Seven"]}
     ],
     4:[
-      {"q":"In what language was most of the Old Testament originally written?","correct":"Hebrew","wrong":["Greek","Aramaic","Latin"]},
-      {"q":"The shortest verse in the King James Bible, “Jesus wept,” is in which Gospel?","correct":"John","wrong":["Matthew","Mark","Luke"]},
-      {"q":"Who succeeded Moses to lead Israel into the Promised Land?","correct":"Joshua","wrong":["Aaron","Caleb","Gideon"]},
-      {"q":"Which book of the Bible never once mentions God by name?","correct":"Esther","wrong":["Ruth","Job","Jonah"]},
-      {"q":"The mysterious “writing on the wall” appeared at whose feast in Babylon?","correct":"Belshazzar","wrong":["Nebuchadnezzar","Darius","Cyrus"]},
-      {"q":"Methuselah, the longest-lived man, was the grandfather of which ark-builder?","correct":"Noah","wrong":["Abraham","Enoch","Lot"]},
-      {"q":"Who interpreted Pharaoh's dreams of seven fat and seven lean cows?","correct":"Joseph","wrong":["Daniel","Moses","Aaron"]},
-      {"q":"The Ten Commandments are recorded in Exodus and which other book?","correct":"Deuteronomy","wrong":["Leviticus","Numbers","Genesis"]},
-      {"q":"Which prophet was told to marry Gomer, an unfaithful wife, as a living parable?","correct":"Hosea","wrong":["Amos","Joel","Micah"]},
-      {"q":"Goliath was a champion of which people?","correct":"The Philistines","wrong":["The Amalekites","The Moabites","The Canaanites"]},
-      {"q":"How many days had Lazarus been dead before Jesus raised him?","correct":"Four","wrong":["Three","Two","Seven"]},
-      {"q":"On which island was Paul shipwrecked and bitten by a snake?","correct":"Malta","wrong":["Cyprus","Crete","Patmos"]},
-      {"q":"Which Roman governor sentenced Jesus to crucifixion?","correct":"Pontius Pilate","wrong":["Herod Antipas","Felix","Festus"]},
-      {"q":"In which garden did Jesus pray on the night of his arrest?","correct":"Gethsemane","wrong":["Eden","Bethany","Siloam"]}
+      {"q":"What is the smallest prime number?","correct":"Two","wrong":["One","Three","Zero"]},
+      {"q":"What is the currency of Japan?","correct":"The yen","wrong":["The won","The yuan","The ringgit"]},
+      {"q":"Who painted the Mona Lisa?","correct":"Leonardo da Vinci","wrong":["Michelangelo","Raphael","Vincent van Gogh"]},
+      {"q":"How many bones are in the adult human body?","correct":"206","wrong":["201","210","196"]},
+      {"q":"What is the largest country in the world by area?","correct":"Russia","wrong":["Canada","China","the USA"]}
     ]
   };
   const VB_BLANK=[
-   {vref:'John 3:16', text:'For God so loved the {b}, that he gave his one and only Son\u2026', answer:'world', wrong:['earth','people','nations']},
-   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the {b}.', answer:'earth', wrong:['world','seas','skies']},
-   {vref:'Genesis 1:3', text:'God said, \u201cLet there be {b},\u201d and there was light.', answer:'light', wrong:['day','life','sun']},
-   {vref:'Matthew 5:14', text:'You are the {b} of the world.', answer:'light', wrong:['salt','hope','way']},
-   {vref:'John 11:35', text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','spoke']},
-   {vref:'Philippians 4:13', text:'I can do all things through {b}, who strengthens me.', answer:'Christ', wrong:['God','faith','hope']},
-   {vref:'1 Corinthians 13:4', text:'Love is {b} and is kind.', answer:'patient', wrong:['gentle','humble','faithful']},
-   {vref:'John 1:1', text:'In the beginning was the {b}, and the Word was with God\u2026', answer:'Word', wrong:['Light','Son','Truth']},
-   {vref:'Exodus 20:13', text:'You shall not {b}.', answer:'murder', wrong:['steal','lie','covet']},
-   {vref:'Matthew 4:4', text:'Man shall not live by {b} alone\u2026', answer:'bread', wrong:['food','wealth','work']}
+   {vref:'The Great Wall of China', text:'The Great Wall of {b}.', answer:'China', wrong:['Japan','India','Korea']},
+   {vref:'A picture is worth a thousand words', text:'A picture is worth a thousand {b}.', answer:'words', wrong:['pictures','dreams','coins']},
+   {vref:'Better late than never', text:'Better late than {b}.', answer:'never', wrong:['sorry','early','ever']},
+   {vref:'The early bird catches the worm', text:'The early bird catches the {b}.', answer:'worm', wrong:['bus','fish','sun']},
+   {vref:'Light speed', text:'Light travels at about 300,000 {b} per second.', answer:'kilometres', wrong:['metres','miles','feet']},
+   {vref:'Water is H2O', text:'The chemical formula for water is H2{b}.', answer:'O', wrong:['O2','H','C']}
   ];
   const VB_REF=[
-   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the earth.', wrong:['John 1:1','Genesis 2:1','Psalm 1:1']},
-   {vref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', wrong:['John 1:16','Romans 3:16','1 John 3:16']},
-   {vref:'John 11:35', text:'Jesus wept.', wrong:['Luke 19:41','John 11:33','Matthew 26:75']},
-   {vref:'Philippians 4:13', text:'I can do all things through Christ, who strengthens me.', wrong:['Ephesians 4:13','Philippians 3:14','2 Timothy 4:7']},
-   {vref:'1 Corinthians 13:4', text:'Love is patient and is kind. Love doesn\u2019t envy.', wrong:['1 John 4:8','Romans 13:8','1 Corinthians 13:13']},
-   {vref:'Matthew 5:14', text:'You are the light of the world. A city located on a hill can\u2019t be hidden.', wrong:['John 8:12','Matthew 5:13','Philippians 2:15']},
-   {vref:'John 1:1', text:'In the beginning was the Word, and the Word was with God, and the Word was God.', wrong:['Genesis 1:1','John 3:1','Colossians 1:1']},
-   {vref:'Genesis 1:3', text:'God said, \u201cLet there be light,\u201d and there was light.', wrong:['Genesis 1:1','John 1:5','Psalm 27:1']}
+   {vref:'The Nile', text:'This great river flows through Egypt and empties into the Mediterranean Sea.', wrong:['The Amazon','The Yangtze','The Mississippi']},
+   {vref:'Mercury', text:'This is the closest planet to the Sun.', wrong:['Venus','Earth','Mars']},
+   {vref:'Mount Everest', text:'This is the highest mountain above sea level, in the Himalayas.', wrong:['K2','Kilimanjaro','Mont Blanc']},
+   {vref:'The Great Pyramid of Giza', text:'This ancient wonder is a vast stone pyramid built on a plateau in Egypt.', wrong:['The Colosseum','Stonehenge','The Taj Mahal']},
+   {vref:'Australia', text:'This country is also a continent, famous for kangaroos and the Outback.', wrong:['Brazil','Canada','India']},
+   {vref:'The heart', text:'This organ pumps blood around the human body.', wrong:['The liver','The lungs','The brain']}
   ];
 
   const RAPID_GEN=[].concat(BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']);
-  const THEMED={
-    rapid:[
-     {th:'christmas',q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Bethany']},
-     {th:'christmas',q:'Who was the mother of Jesus?',correct:'Mary',wrong:['Martha','Elizabeth','Ruth']},
-     {th:'christmas',q:'Which angel told Mary she would have a son?',correct:'Gabriel',wrong:['Michael','Raphael','Uriel']},
-     {th:'christmas',q:'Where was the baby Jesus laid?',correct:'In a manger',wrong:['In a cradle','In a basket','In a bed']},
-     {th:'christmas',q:'Who followed a star to find Jesus?',correct:'The wise men',wrong:['The disciples','The Pharisees','The priests']},
-     {th:'christmas',q:'Which gifts did the wise men bring?',correct:'Gold, frankincense and myrrh',wrong:['Silver, spices and cloth','Bread, wine and oil','Gold, jewels and silk']},
-     {th:'christmas',q:'Which king tried to kill the baby Jesus?',correct:'Herod',wrong:['Pilate','Caesar','Nero']},
-     {th:'christmas',q:'What was the trade of Joseph, Mary\u2019s husband?',correct:'Carpenter',wrong:['Fisherman','Shepherd','Tax collector']},
-     {th:'christmas',q:'Who were told of Jesus\u2019 birth by angels in the fields?',correct:'Shepherds',wrong:['Soldiers','Merchants','Kings']},
-     {th:'christmas',q:'How many gifts are traditionally named from the wise men?',correct:'Three',wrong:['Two','Five','Seven']},
-     {th:'easter',q:'On which day did Jesus rise from the dead?',correct:'The third day',wrong:['The first day','The seventh day','The next day']},
-     {th:'easter',q:'Who betrayed Jesus for thirty pieces of silver?',correct:'Judas',wrong:['Peter','Thomas','John']},
-     {th:'easter',q:'In which garden did Jesus pray before his arrest?',correct:'Gethsemane',wrong:['The Garden of Eden','A garden in Galilee','The King\u2019s Garden']},
-     {th:'easter',q:'Which disciple denied Jesus three times?',correct:'Peter',wrong:['Judas','Andrew','Philip']},
-     {th:'easter',q:'Who sentenced Jesus to be crucified?',correct:'Pontius Pilate',wrong:['Herod','Caiaphas','Caesar']},
-     {th:'easter',q:'On what hill was Jesus crucified?',correct:'Golgotha',wrong:['Mount Sinai','Mount Zion','Mount Carmel']},
-     {th:'easter',q:'Which prisoner was released instead of Jesus?',correct:'Barabbas',wrong:['Lazarus','Stephen','Saul']},
-     {th:'easter',q:'Who first found the empty tomb?',correct:'Mary Magdalene',wrong:['Peter','John','Thomas']},
-     {th:'easter',q:'What was rolled away from the tomb?',correct:'The stone',wrong:['The curtain','The gate','The door']},
-     {th:'easter',q:'Which disciple doubted until he saw the risen Jesus?',correct:'Thomas',wrong:['Philip','James','Nathanael']}
-    ],
-    vblank:[
-     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a {b}, who is Christ the Lord.',answer:'Savior',wrong:['shepherd','teacher','prophet']},
-     {th:'christmas',vref:'Isaiah 9:6',text:'His name will be called {b}, Mighty God, Everlasting Father, Prince of Peace.',answer:'Wonderful Counselor',wrong:['Faithful Servant','Holy One','Good Shepherd']},
-     {th:'christmas',vref:'Luke 2:7',text:'She laid him in a manger, because there was no room for them in the {b}.',answer:'inn',wrong:['stable','town','house']},
-     {th:'christmas',vref:'Matthew 2:2',text:'Where is he who is born King of the {b}? For we saw his star in the east.',answer:'Jews',wrong:['world','Gentiles','nations']},
-     {th:'easter',vref:'Mark 16:6',text:'He has {b}! He is not here. Behold, the place where they laid him!',answer:'risen',wrong:['gone','departed','vanished']},
-     {th:'easter',vref:'John 11:25',text:'I am the {b} and the life. He who believes in me will still live, even if he dies.',answer:'resurrection',wrong:['way','truth','light']},
-     {th:'easter',vref:'Luke 23:34',text:'Father, {b} them, for they don\u2019t know what they are doing.',answer:'forgive',wrong:['free','save','help']},
-     {th:'easter',vref:'Matthew 27:46',text:'My God, my God, why have you {b} me?',answer:'forsaken',wrong:['forgotten','abandoned','left']}
-    ],
-    vref:[
-     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.',wrong:['Matthew 2:11','Luke 1:11','John 2:11']},
-     {th:'christmas',vref:'Isaiah 9:6',text:'For to us a child is born, to us a son is given; and the government will be on his shoulders.',wrong:['Micah 5:2','Luke 2:11','Isaiah 7:14']},
-     {th:'christmas',vref:'Micah 5:2',text:'But you, Bethlehem Ephrathah, out of you one will come who is to be ruler in Israel.',wrong:['Isaiah 9:6','Matthew 2:6','Luke 2:4']},
-     {th:'christmas',vref:'Matthew 1:23',text:'Behold, the virgin shall be with child, and shall give birth to a son. They shall call his name Immanuel.',wrong:['Isaiah 7:14','Luke 1:31','Matthew 2:2']},
-     {th:'easter',vref:'Mark 16:6',text:'He has risen! He is not here. Behold, the place where they laid him!',wrong:['Matthew 27:54','John 20:9','Luke 24:6']},
-     {th:'easter',vref:'John 11:25',text:'I am the resurrection and the life.',wrong:['John 14:6','John 1:4','Romans 6:5']},
-     {th:'easter',vref:'Luke 23:34',text:'Father, forgive them, for they don\u2019t know what they are doing.',wrong:['Matthew 26:39','John 19:30','Luke 22:42']},
-     {th:'easter',vref:'John 19:30',text:'When Jesus therefore had received the vinegar, he said, \u201cIt is finished.\u201d',wrong:['Luke 23:46','Matthew 27:50','Mark 15:34']}
-    ],
-    buzz:[
-     {th:'christmas',q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Bethany']},
-     {th:'christmas',q:'Which angel visited Mary?',correct:'Gabriel',wrong:['Michael','Raphael','Uriel']},
-     {th:'christmas',q:'What guided the wise men to Jesus?',correct:'A star',wrong:['An angel','A dream','A cloud']},
-     {th:'christmas',q:'Who was the earthly father of Jesus?',correct:'Joseph',wrong:['Zechariah','Simeon','Jacob']},
-     {th:'christmas',q:'Which king ordered infants to be killed?',correct:'Herod',wrong:['Pilate','Caesar','Saul']},
-     {th:'christmas',q:'Who heard the angels announce Jesus\u2019 birth?',correct:'The shepherds',wrong:['The soldiers','The priests','The merchants']},
-     {th:'christmas',q:'Which wise men\u2019s gift was a precious metal?',correct:'Gold',wrong:['Frankincense','Myrrh','Silver']},
-     {th:'christmas',q:'What was Jesus laid in at birth?',correct:'A manger',wrong:['A cradle','A basket','A bed']},
-     {th:'easter',q:'How many days until Jesus rose again?',correct:'Three',wrong:['One','Seven','Forty']},
-     {th:'easter',q:'Who betrayed Jesus?',correct:'Judas',wrong:['Peter','Thomas','John']},
-     {th:'easter',q:'Which disciple denied Jesus three times?',correct:'Peter',wrong:['Judas','James','Andrew']},
-     {th:'easter',q:'Who ordered Jesus\u2019 crucifixion?',correct:'Pontius Pilate',wrong:['Herod','Caiaphas','Caesar']},
-     {th:'easter',q:'On what was Jesus crucified?',correct:'A cross',wrong:['A tree','A stake','A pillar']},
-     {th:'easter',q:'Who was released instead of Jesus?',correct:'Barabbas',wrong:['Lazarus','Stephen','Judas']},
-     {th:'easter',q:'Who first saw the risen Jesus?',correct:'Mary Magdalene',wrong:['Peter','John','Thomas']},
-     {th:'easter',q:'What sealed Jesus\u2019 tomb?',correct:'A large stone',wrong:['A wooden door','A gate','A curtain']}
-    ],
-    clues:[
-     {th:'christmas',answer:'Mary',cat:'Person',clues:['An angel came to me with news.','I was engaged to a carpenter.','I was told I would have a son.','I travelled to Bethlehem.','I gave birth to Jesus.'],wrong:['Elizabeth','Martha','Ruth']},
-     {th:'christmas',answer:'The Wise Men',cat:'People',clues:['We came from the East.','We studied the night skies.','We followed a special star.','We brought three gifts.','We worshipped the baby Jesus.'],wrong:['The Shepherds','The Disciples','The Priests']},
-     {th:'christmas',answer:'Bethlehem',cat:'Place',clues:['I am only a small town.','The prophet Micah named me.','I am the City of David.','Shepherds came to me one night.','Jesus was born here.'],wrong:['Nazareth','Jerusalem','Bethany']},
-     {th:'easter',answer:'Judas',cat:'Person',clues:['I was one of the twelve.','I looked after the money bag.','I made a deal with the priests.','I was paid thirty pieces of silver.','I betrayed Jesus with a kiss.'],wrong:['Peter','Thomas','John']},
-     {th:'easter',answer:'Peter',cat:'Person',clues:['I was a fisherman by trade.','I once walked on water briefly.','I promised never to leave Jesus.','I denied him three times.','A rooster crowed, just as Jesus foretold.'],wrong:['Judas','Andrew','James']},
-     {th:'easter',answer:'The Empty Tomb',cat:'Event',clues:['It happened early on a Sunday.','A great stone was involved.','Women came carrying spices.','Angels were there to meet them.','Jesus was gone \u2014 he had risen!'],wrong:['The Last Supper','The Ascension','Pentecost']}
-    ]
-  };
+  const THEMED={ rapid:[], vblank:[], vref:[], buzz:[], clues:[] };
   function themedPick(themedArr, generalArr, theme, n, r){ let base=shuf(themedArr.filter(function(x){return x.th===theme;}), r);
     if(base.length>=n) return base.slice(0,n); const extra=shuf(generalArr.slice(),r).filter(function(g){ return base.indexOf(g)<0; }); return base.concat(extra).slice(0,n); }
 
@@ -682,12 +571,12 @@ start();
   const POOL=['rapidfire','verse','fiveclues'];   /* middle-round pool */
   const FINALE='buzzer';              /* buzzer is the pinned finale */
   let SHOW_ORDER=[];
-  const ADMIN_KEY='cv_rounds', QPR_KEY='cv_qpr', PICK_KEY='cv_pick', THEME_KEY='cv_theme';
+  const ADMIN_KEY='cv_rounds_gen', QPR_KEY='cv_qpr_gen', PICK_KEY='cv_pick_gen', THEME_KEY='cv_theme_gen';
   let ADMIN_ROUNDS=parseInt(localStorage.getItem(ADMIN_KEY),10)||(POOL.length+(FINALE?1:0));
   let QPR=parseInt(localStorage.getItem(QPR_KEY),10)||8;
   let PICK=localStorage.getItem(PICK_KEY)||'random';
   let THEME=localStorage.getItem(THEME_KEY)||'all';
-  const THEME_NAMES={all:'All topics', christmas:'Christmas', easter:'Easter'};
+  const THEME_NAMES={all:'All topics'};
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function maxRounds(){ return POOL.length+(FINALE?1:0); }
   function buildShowOrder(seed){ if(PICK!=='random' && RMETA[PICK]) return [PICK];
@@ -697,8 +586,8 @@ start();
     if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
   const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right \u2014 tap fast, because quicker correct answers score bonus points!'},
-                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices \u2014 pick the right one.'},
-                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
+                verse:{title:'Fill the Gap', win:20000, build:buildVerse, intro:'Round \u2014 Fill the Gap!', rules:'A fact or saying appears with a word missing, or something is described. Pick the right answer from four.'},
+                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Each team races separately.'},
                 fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure \u2014 the earlier you\u2019re right, the more points you score (5 down to 1).'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
@@ -731,7 +620,7 @@ start();
     $('rLabel').textContent=G.label; $('qNum').textContent=(G.qi+1)+' / '+G.questions.length;
     const prompt=$('qPrompt'), qt=$('qText'); prompt.textContent=''; qt.classList.remove('verse');
     if(q.kind==='verse-blank'){ prompt.textContent='Fill in the missing word'; qt.classList.add('verse'); renderBlank(qt, q.text); }
-    else if(q.kind==='verse-ref'){ prompt.textContent='Which reference is this?'; qt.classList.add('verse'); qt.textContent='\u201c'+q.text+'\u201d'; }
+    else if(q.kind==='verse-ref'){ prompt.textContent='What is being described?'; qt.classList.add('verse'); qt.textContent='\u201c'+q.text+'\u201d'; }
     else { qt.textContent=q.q; }
     const box=$('opts'); box.innerHTML='';
     q.opts.forEach((opt,i)=>{ const m=OPTMETA[i]; const d=document.createElement('div'); d.className='opt';
@@ -791,23 +680,15 @@ start();
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
   const CLOSERS={
     all:[
-      {ref:'Numbers 6:24-26', text:'The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace.'},
-      {ref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.'}
-    ],
-    christmas:[
-      {ref:'Luke 2:11', text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.'},
-      {ref:'Isaiah 9:6', text:'For to us a child is born, to us a son is given; and his name will be called Wonderful Counselor, Prince of Peace.'}
-    ],
-    easter:[
-      {ref:'Mark 16:6', text:'He has risen! He is not here. Do not be afraid.'},
-      {ref:'1 Corinthians 15:57', text:'But thanks be to God, who gives us the victory through our Lord Jesus Christ.'}
+      {ref:'', text:'Whether you won or lost, thanks for playing — come back and beat your score!'},
+      {ref:'', text:'That’s all for tonight. Great playing, everyone — see you next time!'}
     ]
   };
-  const CLOSE_LINES=['Thank you for playing \u2014 go in peace.','Until next time \u2014 God bless you all!','Well played, everyone \u2014 see you soon!'];
+  const CLOSE_LINES=['Thanks for playing — see you next time!','What a game — well played, everyone!','That’s all, folks!'];
   function showClosing(){ G.phase='closing'; showPanel('closing');
     const pool=CLOSERS[THEME]||CLOSERS.all; const v=pool[Math.floor(Math.random()*pool.length)];
     if($('closeText')) $('closeText').textContent='\u201c'+v.text+'\u201d';
-    if($('closeRef')) $('closeRef').textContent='\u2014 '+v.ref;
+    if($('closeRef')) $('closeRef').textContent=v.ref?('\u2014 '+v.ref):'';
     if(window.HOST) window.HOST.set('calm'); hostSay(pick(CLOSE_LINES),'affirm');
     $('closingBtn').classList.add('hide');
     setRoom({phase:'closing', q_id:'', state:{round:'Closing', close:{ref:v.ref, text:v.text}}}); poll(); }
@@ -824,7 +705,7 @@ start();
     renderFinale(fin); setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();
     setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); hostSay(pick(QUIPS.finale),'yay'); }, 1300); }
   function renderFinale(fin){ const medals=['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
-    const teams=$('finTeams'); if(teams){ teams.textContent = fin.teamWin ? ('Youth '+fin.youth.total+'   \u2014   Adults '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Youth win it!':'Adults win it!'))) : ''; }
+    const teams=$('finTeams'); if(teams){ teams.textContent = fin.teamWin ? ('Team A '+fin.youth.total+'   \u2014   Team B '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Team A win it!':'Team B win it!'))) : ''; }
     function fill(id,b){ const el=$(id); if(!el) return; el.innerHTML='';
       if(!b.top.length){ const li=document.createElement('li'); li.className='pnone'; li.textContent='No players'; el.appendChild(li); return; }
       b.top.forEach(function(p,i){ const li=document.createElement('li'); const m=document.createElement('span'); m.className='medal'; m.textContent=medals[i]||'';
@@ -834,22 +715,22 @@ start();
 
   /* ---- The Buzzer round ---- */
   const BUZZ_BANK=[
-   {q:'Who was thrown into the lions\u2019 den but not harmed?',correct:'Daniel',wrong:['David','Joseph','Elijah']},
-   {q:'Who led the Israelites out of Egypt?',correct:'Moses',wrong:['Aaron','Joshua','Abraham']},
-   {q:'On what were the Ten Commandments written?',correct:'Stone tablets',wrong:['A scroll','Papyrus','Wood']},
-   {q:'Who baptised Jesus in the Jordan River?',correct:'John the Baptist',wrong:['Peter','Paul','Andrew']},
-   {q:'How many disciples did Jesus choose?',correct:'Twelve',wrong:['Ten','Seven','Forty']},
-   {q:'Who denied Jesus three times before the rooster crowed?',correct:'Peter',wrong:['Judas','Thomas','John']},
-   {q:'What did God create on the first day?',correct:'Light',wrong:['The sea','Animals','The stars']},
-   {q:'Who was swallowed by a great fish?',correct:'Jonah',wrong:['Noah','Job','Amos']},
-   {q:'Which sea did Moses part for the Israelites?',correct:'The Red Sea',wrong:['The Dead Sea','The Sea of Galilee','The Jordan']},
-   {q:'Who was the strong man betrayed by Delilah?',correct:'Samson',wrong:['Gideon','Saul','Goliath']},
-   {q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Capernaum']},
-   {q:'How many days and nights did it rain during the flood?',correct:'Forty',wrong:['Seven','Twelve','Thirty']},
-   {q:'Who was the first king of Israel?',correct:'Saul',wrong:['David','Solomon','Samuel']},
-   {q:'What was Jesus\u2019 first miracle?',correct:'Turning water into wine',wrong:['Healing a leper','Walking on water','Feeding 5,000']},
-   {q:'Who built the ark?',correct:'Noah',wrong:['Moses','Abraham','Enoch']},
-   {q:'Which Gospel comes first in the New Testament?',correct:'Matthew',wrong:['Mark','Luke','John']}
+   {q:'What is the capital of Italy?',correct:'Rome',wrong:['Milan','Venice','Naples']},
+   {q:'What is H2O more commonly known as?',correct:'Water',wrong:['Salt','Air','Ice']},
+   {q:'What is the largest mammal on Earth?',correct:'The blue whale',wrong:['The elephant','The giraffe','The hippo']},
+   {q:'How many sides does a hexagon have?',correct:'Six',wrong:['Five','Seven','Eight']},
+   {q:'How many minutes are there in an hour?',correct:'Sixty',wrong:['Thirty','Ninety','One hundred']},
+   {q:'What do bees primarily make?',correct:'Honey',wrong:['Milk','Silk','Butter']},
+   {q:'How many colours are in a rainbow?',correct:'Seven',wrong:['Five','Six','Eight']},
+   {q:'What is the capital of Japan?',correct:'Tokyo',wrong:['Beijing','Seoul','Bangkok']},
+   {q:'Which is the largest ocean?',correct:'The Pacific',wrong:['The Atlantic','The Indian','The Arctic']},
+   {q:'What is the tallest animal in the world?',correct:'The giraffe',wrong:['The elephant','The horse','The camel']},
+   {q:'How many players are on a football team on the pitch?',correct:'Eleven',wrong:['Nine','Ten','Twelve']},
+   {q:'What is frozen water called?',correct:'Ice',wrong:['Steam','Snow','Frost']},
+   {q:'Which planet do we live on?',correct:'Earth',wrong:['Mars','Venus','Jupiter']},
+   {q:'What is the opposite of hot?',correct:'Cold',wrong:['Warm','Wet','Dry']},
+   {q:'How many wheels does a standard car have?',correct:'Four',wrong:['Two','Three','Six']},
+   {q:'What colour is a banana when ripe?',correct:'Yellow',wrong:['Green','Red','Blue']}
   ];
   function buildBuzzer(seed,n,theme){ n=n||8; const r=rng(seed);
     const pool=(theme&&theme!=='all')? themedPick(THEMED.buzz, BUZZ_BANK, theme, n, r) : shuf(BUZZ_BANK.slice(),r).slice(0,Math.min(n,BUZZ_BANK.length));
@@ -934,16 +815,14 @@ start();
 
   /* ---- Five Clues round ---- */
   const CLUES_BANK=[
-   {answer:'Noah',cat:'Person',clues:['I lived a very long time ago.','God chose to speak with me.','I was told to build something enormous.','I gathered the animals two by two.','I survived a great flood in an ark.'],wrong:['Moses','Abraham','Job']},
-   {answer:'Moses',cat:'Person',clues:['I was born during hard times in Egypt.','As a baby I was hidden in a basket.','I grew up in Pharaoh\u2019s palace.','I saw a bush that burned but was not consumed.','I led the Israelites out of Egypt.'],wrong:['Aaron','Joshua','Joseph']},
-   {answer:'David',cat:'Person',clues:['I began life as a shepherd.','I played the harp to calm a king.','I was anointed while still young.','I defeated a giant with a sling and stone.','I became the second king of Israel.'],wrong:['Saul','Samson','Solomon']},
-   {answer:'Jonah',cat:'Person',clues:['God gave me a mission I tried to escape.','I boarded a ship going the other way.','A violent storm arose because of me.','The sailors threw me into the sea.','A great fish swallowed me for three days.'],wrong:['Job','Elijah','Amos']},
-   {answer:'Daniel',cat:'Person',clues:['I served in a foreign kingdom.','I refused to eat the king\u2019s rich food.','I interpreted dreams and strange writing.','I kept praying despite a royal decree.','I was thrown into a den of lions.'],wrong:['Ezekiel','Joseph','Nehemiah']},
-   {answer:'Solomon',cat:'Person',clues:['I was a king of Israel.','I was famous for great wisdom.','I judged two women claiming one baby.','I built the first temple in Jerusalem.','I was the son of David.'],wrong:['Rehoboam','Hezekiah','Josiah']},
-   {answer:'Goliath',cat:'Person',clues:['I was known across the land for my size.','I was a champion of the Philistines.','I taunted the army of Israel for days.','I mocked the God of Israel.','A shepherd boy felled me with a stone.'],wrong:['Samson','Og','Saul']},
-   {answer:'Bethlehem',cat:'Place',clues:['I am only a small town.','Prophets spoke of me long before.','I am known as the City of David.','Shepherds hurried to visit me one night.','Jesus was born here.'],wrong:['Nazareth','Jerusalem','Capernaum']},
-   {answer:'Egypt',cat:'Place',clues:['I am an ancient and mighty land.','A famine once drew families to me.','Joseph rose to great power here.','The Israelites were enslaved within me.','Ten plagues struck me before the Exodus.'],wrong:['Babylon','Canaan','Assyria']},
-   {answer:'Jericho',cat:'Place',clues:['I am a very old city.','I was protected by great walls.','Spies were once hidden inside me.','Israel marched around me for seven days.','My walls fell down flat at a shout.'],wrong:['Ai','Hebron','Gibeon']}
+   {answer:'The Sun',cat:'Thing',clues:['I am very big and very hot.','I am actually a star.','I sit at the centre of our solar system.','The planets travel around me.','I give the Earth light and warmth.'],wrong:['The Moon','A comet','Jupiter']},
+   {answer:'Egypt',cat:'Place',clues:['I am a country in Africa.','A famous long river runs through me.','I am home to ancient pyramids.','Pharaohs once ruled me.','My capital is Cairo.'],wrong:['Greece','Mexico','India']},
+   {answer:'Albert Einstein',cat:'Person',clues:['I was a scientist.','I was born in Germany.','I am known for wild, messy hair.','I developed the theory of relativity.','My famous equation is E = mc squared.'],wrong:['Isaac Newton','Charles Darwin','Galileo']},
+   {answer:'A penguin',cat:'Animal',clues:['I am a bird, but I cannot fly.','I am black and white.','I am an excellent swimmer.','I waddle when I walk.','I live where it is very cold.'],wrong:['A puffin','A dolphin','An ostrich']},
+   {answer:'The Moon',cat:'Thing',clues:['You can see me in the night sky.','I travel around the Earth.','I appear to change shape through the month.','Astronauts have walked on me.','I help create the ocean tides.'],wrong:['The Sun','Mars','A star']},
+   {answer:'William Shakespeare',cat:'Person',clues:['I was English.','I lived over 400 years ago.','I was a writer.','I wrote plays and sonnets.','My works include Romeo and Juliet.'],wrong:['Charles Dickens','Mark Twain','Jane Austen']},
+   {answer:'A volcano',cat:'Thing',clues:['I am a kind of mountain.','Pressure builds up inside me.','I can erupt.','I spew out hot lava.','Mount Vesuvius is one of me.'],wrong:['A glacier','A canyon','An earthquake']},
+   {answer:'The Amazon',cat:'Place',clues:['I am found in South America.','I am enormous.','I am famous as a rainforest.','A mighty river shares my name.','I am home to incredible wildlife.'],wrong:['The Sahara','The Alps','The Nile']}
   ];
   function buildClues(seed,n,theme){ n=n||6; const r=rng(seed);
     const pool=(theme&&theme!=='all')? themedPick(THEMED.clues, CLUES_BANK, theme, n, r) : shuf(CLUES_BANK.slice(),r).slice(0,Math.min(n,CLUES_BANK.length));
@@ -1016,7 +895,7 @@ start();
     types.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=(t==='random'?'Random (recommended)':RMETA[t].title); sel.appendChild(o); });
     sel.value=PICK; sel.addEventListener('change', function(){ PICK=sel.value; localStorage.setItem(PICK_KEY,PICK); updateAdminUI(); }); }
   function populateTheme(){ const sel=$('themePick'); if(!sel||sel._done) return; sel._done=1;
-    ['all','christmas','easter'].forEach(function(t){ const o=document.createElement('option'); o.value=t; o.textContent=THEME_NAMES[t]; sel.appendChild(o); });
+    ['all'].forEach(function(t){ const o=document.createElement('option'); o.value=t; o.textContent=THEME_NAMES[t]; sel.appendChild(o); });
     sel.value=THEME; sel.addEventListener('change', function(){ THEME=sel.value; localStorage.setItem(THEME_KEY,THEME); updateAdminUI(); }); }
   function updateAdminUI(){ ADMIN_ROUNDS=clamp(ADMIN_ROUNDS,1,maxRounds()); QPR=clamp(QPR,4,12);
     if($('rCount')) $('rCount').textContent=ADMIN_ROUNDS; if($('qCount')) $('qCount').textContent=QPR;
