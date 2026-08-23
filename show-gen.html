@@ -837,6 +837,146 @@ start();
    {answer:'A volcano',cat:'Thing',clues:['I am a kind of mountain.','Pressure builds up inside me.','I can erupt.','I spew out hot lava.','Mount Vesuvius is one of me.'],wrong:['A glacier','A canyon','An earthquake']},
    {answer:'The Amazon',cat:'Place',clues:['I am found in South America.','I am enormous.','I am famous as a rainforest.','A mighty river shares my name.','I am home to incredible wildlife.'],wrong:['The Sahara','The Alps','The Nile']}
   ];
+  (function augmentGeneral(){
+    const AUG_RAPID={
+      1:[
+       {q:'Which animal is often called \u2018man\u2019s best friend\u2019?',correct:'The dog',wrong:['The cat','The horse','The cow'],tag:'dog'},
+       {q:'How many wheels does a typical bicycle have?',correct:'Two',wrong:['Three','Four','One'],tag:'bicycle'},
+       {q:'What do you call a baby dog?',correct:'A puppy',wrong:['A kitten','A cub','A foal'],tag:'puppy'},
+       {q:'Which season comes straight after winter?',correct:'Spring',wrong:['Summer','Autumn','Harvest'],tag:'seasons'}
+      ],
+      2:[
+       {q:'What is the capital city of England?',correct:'London',wrong:['Manchester','Birmingham','Liverpool'],tag:'capital-england'},
+       {q:'Which sport is played at Wimbledon?',correct:'Tennis',wrong:['Golf','Cricket','Rugby'],tag:'wimbledon'},
+       {q:'What is the largest land animal on Earth?',correct:'The elephant',wrong:['The rhino','The giraffe','The hippo'],tag:'elephant'},
+       {q:'How many sides does a triangle have?',correct:'Three',wrong:['Four','Five','Two'],tag:'triangle'}
+      ],
+      3:[
+       {q:'In which country would you find the Colosseum?',correct:'Italy',wrong:['Greece','Spain','France'],tag:'colosseum'},
+       {q:'What is the chemical symbol for oxygen?',correct:'O',wrong:['Ox','Og','On'],tag:'oxygen'},
+       {q:'How many legs does an insect have?',correct:'Six',wrong:['Eight','Four','Ten'],tag:'insect-legs'},
+       {q:'Which river flows through London?',correct:'The Thames',wrong:['The Severn','The Mersey','The Tyne'],tag:'thames'}
+      ],
+      4:[
+       {q:'What is the capital city of Australia?',correct:'Canberra',wrong:['Sydney','Melbourne','Perth'],tag:'australia'},
+       {q:'Who is said to have discovered gravity after watching an apple fall?',correct:'Isaac Newton',wrong:['Albert Einstein','Galileo','Charles Darwin'],tag:'newton'},
+       {q:'How many years are there in a century?',correct:'One hundred',wrong:['Ten','Fifty','One thousand'],tag:'century'},
+       {q:'What is the currency of the United Kingdom?',correct:'The pound',wrong:['The euro','The dollar','The franc'],tag:'uk-currency'}
+      ]
+    };
+    const AUG_BLANK=[
+     {vref:'A well-known saying', text:'An apple a day keeps the {b} away.', answer:'doctor', wrong:['cold','winter','hunger'], tag:'apple-a-day'},
+     {vref:'A well-known saying', text:'Every cloud has a silver {b}.', answer:'lining', wrong:['sky','edge','glow'], tag:'silver-lining'},
+     {vref:'A well-known saying', text:'The grass is always greener on the other {b}.', answer:'side', wrong:['field','hill','fence'], tag:'grass-greener'},
+     {vref:'A well-known saying', text:'Practice makes {b}.', answer:'perfect', wrong:['progress','better','sense'], tag:'practice-perfect'},
+     {vref:'A well-known saying', text:'Too many cooks spoil the {b}.', answer:'broth', wrong:['dinner','soup','meal'], tag:'too-many-cooks'}
+    ];
+    const AUG_REF=[
+     {vref:'The Eiffel Tower', text:'This iron tower is the most famous landmark in Paris.', wrong:['Big Ben','The Statue of Liberty','The Leaning Tower'], tag:'eiffel-tower'},
+     {vref:'A spider', text:'This small creature has eight legs and spins webs to catch its food.', wrong:['An ant','A beetle','A fly'], tag:'spider'},
+     {vref:'The Moon', text:'This bright object orbits the Earth and lights up the night sky.', wrong:['The Sun','A star','Venus'], tag:'the-moon'},
+     {vref:'A dolphin', text:'This clever sea creature is a mammal, not a fish, and loves to leap from the water.', wrong:['A shark','A tuna','An octopus'], tag:'dolphin'},
+     {vref:'Big Ben', text:'This famous clock tower stands beside the Houses of Parliament in London.', wrong:['The Shard','Tower Bridge','The London Eye'], tag:'big-ben'}
+    ];
+    const AUG_BUZZ=[
+     {q:'What do you call a shape with five sides?',correct:'A pentagon',wrong:['A hexagon','A square','An octagon'],tag:'pentagon'},
+     {q:'Which planet is famous for its rings?',correct:'Saturn',wrong:['Mars','Venus','Mercury'],tag:'saturn'},
+     {q:'What is frozen rain called?',correct:'Hail',wrong:['Snow','Sleet','Dew'],tag:'hail'},
+     {q:'What is the name of our galaxy?',correct:'The Milky Way',wrong:['Andromeda','Orion','The Solar System'],tag:'milky-way'},
+     {q:'Which metal is a magnet most attracted to?',correct:'Iron',wrong:['Gold','Copper','Silver'],tag:'iron'},
+     {q:'How many months of the year have 31 days?',correct:'Seven',wrong:['Six','Five','Twelve'],tag:'months-31'},
+     {q:'What colour do you get by mixing red and white?',correct:'Pink',wrong:['Purple','Orange','Grey'],tag:'pink'},
+     {q:'Which fairy-tale character left behind a glass slipper?',correct:'Cinderella',wrong:['Snow White','Rapunzel','Sleeping Beauty'],tag:'cinderella'},
+     {q:'What do bees make in their hive?',correct:'Honey',wrong:['Milk','Silk','Jam'],tag:'honey'},
+     {q:'How many colours are there on a traffic light?',correct:'Three',wrong:['Two','Four','Five'],tag:'traffic-light'}
+    ];
+    const AUG_CLUES=[
+     {answer:'A lion',cat:'Animal',clues:['I am a very big cat.','I live mainly in Africa.','The males have a large mane.','I am called the king of the jungle.','I have a mighty roar.'],wrong:['A tiger','A leopard','A cheetah'],tag:'lion'},
+     {answer:'France',cat:'Place',clues:['I am a country in Europe.','I am famous for cheese and wine.','My capital is Paris.','The Eiffel Tower stands in me.','People here speak French.'],wrong:['Italy','Spain','Germany'],tag:'france'},
+     {answer:'A rainbow',cat:'Thing',clues:['I appear up in the sky.','I need both sunshine and rain.','I am shaped like an arch.','I am made of seven colours.','A pot of gold is said to lie at my end.'],wrong:['A cloud','A shooting star','Lightning'],tag:'rainbow'},
+     {answer:'Water',cat:'Thing',clues:['I have no colour, taste or smell.','I am essential for all living things.','My chemical formula is H2O.','I freeze into ice.','I cover most of the Earth.'],wrong:['Air','Oil','Milk'],tag:'water'},
+     {answer:'A clock',cat:'Thing',clues:['I sit on walls or desks.','I have a face but no eyes.','I have two or three hands.','I tick, and sometimes I chime.','I tell you the time.'],wrong:['A calendar','A compass','A mirror'],tag:'clock'}
+    ];
+    try{
+      Object.keys(AUG_RAPID).forEach(function(k){ BANK_RAPID[k].push.apply(BANK_RAPID[k], AUG_RAPID[k]); });
+      if(typeof RAPID_GEN!=='undefined') RAPID_GEN.push.apply(RAPID_GEN, [].concat(AUG_RAPID['1'],AUG_RAPID['2'],AUG_RAPID['3'],AUG_RAPID['4']));
+      VB_BLANK.push.apply(VB_BLANK, AUG_BLANK); VB_REF.push.apply(VB_REF, AUG_REF);
+      BUZZ_BANK.push.apply(BUZZ_BANK, AUG_BUZZ); CLUES_BANK.push.apply(CLUES_BANK, AUG_CLUES);
+    }catch(e){}
+  })();
+
+  (function augmentWorldMythHistory(){
+    const AUG_RAPID={
+      1:[
+       {q:'How many planets are there in our solar system?',correct:'Eight',wrong:['Seven','Nine','Ten'],tag:'planet-count'},
+       {q:'What do we call a person who travels into space?',correct:'An astronaut',wrong:['A pilot','A sailor','A diver'],tag:'astronaut'},
+       {q:'In Greek mythology, who was the king of the gods?',correct:'Zeus',wrong:['Hades','Apollo','Hermes'],tag:'zeus'},
+       {q:'Which ancient people built the pyramids of Giza?',correct:'The Egyptians',wrong:['The Romans','The Greeks','The Vikings'],tag:'ancient-egyptians'}
+      ],
+      2:[
+       {q:'What is the capital of Spain?',correct:'Madrid',wrong:['Barcelona','Lisbon','Seville'],tag:'capital-spain'},
+       {q:'Which is the hottest planet in our solar system?',correct:'Venus',wrong:['Mercury','Mars','Jupiter'],tag:'venus'},
+       {q:'In Norse mythology, who is the god of thunder?',correct:'Thor',wrong:['Odin','Loki','Freya'],tag:'thor'},
+       {q:'In which year did the Great Fire of London take place?',correct:'1666',wrong:['1066','1766','1600'],tag:'great-fire-london'}
+      ],
+      3:[
+       {q:'Which country is home to the Taj Mahal?',correct:'India',wrong:['Pakistan','Egypt','Turkey'],tag:'taj-mahal'},
+       {q:'Who was the first person to walk on the Moon?',correct:'Neil Armstrong',wrong:['Buzz Aldrin','Yuri Gagarin','John Glenn'],tag:'moon-landing'},
+       {q:'In Greek myth, what was the maze that held the Minotaur called?',correct:'The Labyrinth',wrong:['The Colosseum','The Underworld','Mount Olympus'],tag:'minotaur'},
+       {q:'Which English king famously had six wives?',correct:'Henry VIII',wrong:['Henry V','Richard III','George I'],tag:'henry-viii'}
+      ],
+      4:[
+       {q:'What is the smallest country in the world?',correct:'Vatican City',wrong:['Monaco','Malta','San Marino'],tag:'vatican-city'},
+       {q:'Which planet is the farthest from the Sun?',correct:'Neptune',wrong:['Uranus','Saturn','Pluto'],tag:'neptune'},
+       {q:'In which year was the Battle of Hastings?',correct:'1066',wrong:['1666','1215','1000'],tag:'battle-hastings'},
+       {q:'In Egyptian mythology, who was the sun god?',correct:'Ra',wrong:['Anubis','Osiris','Horus'],tag:'ra'}
+      ]
+    };
+    const AUG_BUZZ=[
+     {q:'In Greek myth, who is the god of the sea?',correct:'Poseidon',wrong:['Zeus','Hades','Apollo'],tag:'poseidon'},
+     {q:'Which winged horse appears in Greek mythology?',correct:'Pegasus',wrong:['The Minotaur','Cerberus','The Sphinx'],tag:'pegasus'},
+     {q:'What mythical bird is reborn from its own ashes?',correct:'The phoenix',wrong:['The griffin','The dragon','The eagle'],tag:'phoenix'},
+     {q:'In Greek myth, who was the goddess of wisdom?',correct:'Athena',wrong:['Hera','Aphrodite','Artemis'],tag:'athena'},
+     {q:'What is the largest hot desert in the world?',correct:'The Sahara',wrong:['The Gobi','The Kalahari','The Mojave'],tag:'sahara'},
+     {q:'Which is the coldest continent on Earth?',correct:'Antarctica',wrong:['Europe','Asia','Australia'],tag:'antarctica'},
+     {q:'Who led France as emperor in the early 1800s?',correct:'Napoleon',wrong:['Louis XIV','Charlemagne','Robespierre'],tag:'napoleon'},
+     {q:'Which famous ship sank in 1912 after hitting an iceberg?',correct:'The Titanic',wrong:['The Mayflower','The Bismarck','The Victory'],tag:'titanic'},
+     {q:'Who was the last queen of ancient Egypt?',correct:'Cleopatra',wrong:['Nefertiti','Hatshepsut','Boudicca'],tag:'cleopatra'},
+     {q:'In Norse mythology, who is the trickster god?',correct:'Loki',wrong:['Thor','Odin','Baldr'],tag:'loki'},
+     {q:'What do we call a rock from space that lands on Earth?',correct:'A meteorite',wrong:['A comet','An asteroid','A crater'],tag:'meteorite'},
+     {q:'Which explorer reached the Americas in 1492?',correct:'Christopher Columbus',wrong:['Ferdinand Magellan','Marco Polo','Captain Cook'],tag:'columbus'}
+    ];
+    const AUG_BLANK=[
+     {vref:'A space fact', text:'The Earth takes one {b} to travel all the way around the Sun.', answer:'year', wrong:['day','month','week'], tag:'earth-orbit'},
+     {vref:'A world fact', text:'The largest ocean on Earth is the {b} Ocean.', answer:'Pacific', wrong:['Atlantic','Indian','Arctic'], tag:'the-pacific'},
+     {vref:'A mythology fact', text:'In Norse legend, the mighty magic hammer belongs to {b}.', answer:'Thor', wrong:['Odin','Loki','Zeus'], tag:'thor'},
+     {vref:'A historical fact', text:'The Great {b} of London destroyed much of the city in 1666.', answer:'Fire', wrong:['Flood','Storm','Plague'], tag:'great-fire-london'},
+     {vref:'A world fact', text:'The vast Sahara Desert lies on the continent of {b}.', answer:'Africa', wrong:['Asia','Australia','Europe'], tag:'sahara'}
+    ];
+    const AUG_REF=[
+     {vref:'Medusa', text:'In Greek myth, I had snakes for hair, and one look at me could turn you to stone.', wrong:['Athena','Pandora','Hera'], tag:'medusa'},
+     {vref:'Hercules', text:'In Greek myth, I was famous for my great strength and my twelve labours.', wrong:['Achilles','Perseus','Jason'], tag:'hercules'},
+     {vref:'Anubis', text:'In Egyptian myth, I have the head of a jackal and I watch over the dead.', wrong:['Ra','Horus','Osiris'], tag:'anubis'},
+     {vref:'The Statue of Liberty', text:'I am a giant statue holding a torch, standing in New York harbour.', wrong:['The Eiffel Tower','Big Ben','The Colossus'], tag:'statue-of-liberty'},
+     {vref:'Stonehenge', text:'I am a ring of huge standing stones, raised long ago on a plain in England.', wrong:['The Colosseum','The Pyramids','Hadrian\u2019s Wall'], tag:'stonehenge'},
+     {vref:'The Vikings', text:'We were seafaring warriors from Scandinavia, known for our longships and raids.', wrong:['The Romans','The Egyptians','The Greeks'], tag:'vikings'}
+    ];
+    const AUG_CLUES=[
+     {answer:'Cleopatra',cat:'Person',clues:['I lived long ago.','I was a queen.','My kingdom was Egypt.','I was famed for my beauty and cleverness.','Legend says a snake ended my life.'],wrong:['Nefertiti','Helen of Troy','Boudicca'],tag:'cleopatra'},
+     {answer:'The Trojan Horse',cat:'Thing',clues:['I come from an ancient legend.','I was built of wood.','I was disguised as a gift.','Soldiers hid inside me.','I helped capture the city of Troy.'],wrong:['The Ark','Pandora\u2019s Box','The Labyrinth'],tag:'trojan-horse'},
+     {answer:'Julius Caesar',cat:'Person',clues:['I was a Roman leader and general.','I helped turn Rome into an empire.','A month of the year is named after me.','I was warned to \u201cbeware the Ides of March\u201d.','I was betrayed and assassinated.'],wrong:['Augustus','Nero','Mark Antony'],tag:'julius-caesar'},
+     {answer:'A dragon',cat:'Thing',clues:['I appear in myths across the world.','I am a huge, scaly reptile.','I often have great wings.','I can breathe fire.','Brave knights try to slay me.'],wrong:['A dinosaur','A serpent','A griffin'],tag:'dragon'},
+     {answer:'A pyramid',cat:'Thing',clues:['I am very ancient.','I am built of huge stone blocks.','I have a square base and a pointed top.','I was raised as a royal tomb.','You will find me in Egypt.'],wrong:['A castle','A temple','A tower'],tag:'pyramid'},
+     {answer:'Saturn',cat:'Thing',clues:['I am a planet.','I am a giant ball of gas.','I am the sixth planet from the Sun.','I am famous for my rings.','My rings are made of ice and rock.'],wrong:['Jupiter','Neptune','Uranus'],tag:'saturn'}
+    ];
+    try{
+      Object.keys(AUG_RAPID).forEach(function(k){ BANK_RAPID[k].push.apply(BANK_RAPID[k], AUG_RAPID[k]); });
+      if(typeof RAPID_GEN!=='undefined') RAPID_GEN.push.apply(RAPID_GEN, [].concat(AUG_RAPID['1'],AUG_RAPID['2'],AUG_RAPID['3'],AUG_RAPID['4']));
+      VB_BLANK.push.apply(VB_BLANK, AUG_BLANK); VB_REF.push.apply(VB_REF, AUG_REF);
+      BUZZ_BANK.push.apply(BUZZ_BANK, AUG_BUZZ); CLUES_BANK.push.apply(CLUES_BANK, AUG_CLUES);
+    }catch(e){}
+  })();
+
   function buildClues(seed,n,theme,used){ n=n||6; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.answer);
     const list=(theme&&theme!=='all')? shuf(THEMED.clues.filter(x=>x.th===theme),r).concat(shuf(CLUES_BANK.slice(),r)) : shuf(CLUES_BANK.slice(),r);
     return pickDistinct(list, used, n, tf).map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer), tag:tf(o)}; }); }
