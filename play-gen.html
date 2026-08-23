@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Chapter &amp; Verse — Join</title>
+<title>The Big Quiz — Join</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -111,8 +111,8 @@
 </head>
 <body>
 <div class="app">
-  <div class="brand">Chapter <span class="amp">&amp;</span> Verse</div>
-  <div class="tagline">a Bible game show</div>
+  <div class="brand">The Big <span class="amp">Quiz</span></div>
+  <div class="tagline">a general knowledge game show</div>
 
   <!-- JOIN -->
   <div class="screen" id="joinScreen">
@@ -128,8 +128,8 @@
     <div>
       <label>Which team?</label>
       <div class="teams">
-        <button class="team-btn youth" data-tag="youth">Youth<small>ages 13–18</small></button>
-        <button class="team-btn adult" data-tag="adult">Adult<small>parent / grown-up</small></button>
+        <button class="team-btn youth" data-tag="youth">Team A<small>gold</small></button>
+        <button class="team-btn adult" data-tag="adult">Team B<small>teal</small></button>
       </div>
     </div>
     <div class="hint">Tap your team to join.</div>
@@ -153,7 +153,7 @@ const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
 const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 const $=id=>document.getElementById(id);
-const KEY='cv_player';
+const KEY='cv_player_gen';
 let me=null, hb=null, pollTimer=null;
 
 async function sb(path, opts={}){
@@ -200,7 +200,7 @@ function enterWaiting(){
   $('waitScreen').classList.remove('hide');
   $('whoName').textContent=me.name;
   $('roomTag').textContent=me.code;
-  const badge=$('teamBadge'); badge.textContent = me.tag==='youth'?'YOUTH':'ADULT / PARENT';
+  const badge=$('teamBadge'); badge.textContent = me.tag==='youth'?'TEAM A':'TEAM B';
   badge.className='badge '+me.tag;
   startHeartbeat(); startPoll();
 }
@@ -421,7 +421,7 @@ async function pollState(){
   } else if(phase==='final'){
     if(lastSig!=='final'){ lastSig='final'; const fin=st.fin||{}; const mine=fin[me.tag]||{top:[],total:0};
       const champ = (mine.top&&mine.top[0]) ? (esc(mine.top[0].name)+' \u2014 '+mine.top[0].score+' pts') : 'No scores this time';
-      let team=''; if(fin.teamWin && fin.youth && fin.adult){ const line='Youth '+fin.youth.total+' \u2013 Adults '+fin.adult.total;
+      let team=''; if(fin.teamWin && fin.youth && fin.adult){ const line='Team A '+fin.youth.total+' \u2013 Team B '+fin.adult.total;
         team = (fin.teamWin==='tie') ? ('It\u2019s a tie! '+line) : ((fin.teamWin===me.tag?'Your team wins! ':'')+line); }
       setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
   } else if(phase==='closing'){

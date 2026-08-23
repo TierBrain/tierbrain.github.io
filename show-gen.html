@@ -321,6 +321,7 @@
   <div class="ops">
     <span class="admin"><label for="roundPick">Play</label><select id="roundPick"></select></span>
     <span class="admin"><label for="themePick">Theme</label><select id="themePick"></select></span>
+    <label class="admin livetog"><input type="checkbox" id="liveToggle"> Living-room</label>
     <span class="admin" id="roundsAdmin">Rounds <button class="mini" id="rMinus">–</button><b id="rCount">2</b><button class="mini" id="rPlus">+</button></span>
     <span class="admin">Questions <button class="mini" id="qMinus">–</button><b id="qCount">8</b><button class="mini" id="qPlus">+</button></span>
     <button class="btn go-btn" id="startShow">Start the show ▸</button>
@@ -576,6 +577,8 @@ start();
   let QPR=parseInt(localStorage.getItem(QPR_KEY),10)||8;
   let PICK=localStorage.getItem(PICK_KEY)||'random';
   let THEME=localStorage.getItem(THEME_KEY)||'all';
+  const LIVE_KEY='cv_live'; let LIVE=localStorage.getItem(LIVE_KEY)==='1'; const REF_PROMPT='What is being described?';
+  function liveState(q){ if(!q) return {live:LIVE}; var o={live:LIVE, qkind:q.kind}; if(q.kind==='verse-blank'){ o.qtext=q.text; o.prompt='Fill in the missing word'; } else if(q.kind==='verse-ref'){ o.qtext=q.text; o.prompt=REF_PROMPT; } else { o.qtext=q.q; } return o; }
   const THEME_NAMES={all:'All topics'};
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function maxRounds(){ return POOL.length+(FINALE?1:0); }
@@ -666,7 +669,7 @@ start();
   function presentQuestion(){ const q=G.questions[G.qi]; G.scored=false; G.phase='question'; G.curId='p'+G.ptr+'q'+G.qi; G.deadline=Date.now()+G.win;
     showPanel('q'); setCompact(true); G.lastTick=99; renderQuestion(q); if(window.HOST) window.HOST.set('ask');
     setRoom({phase:'question', q_id:G.curId, q_index:G.qi, deadline:new Date(G.deadline).toISOString(),
-      state:{opts:q.opts, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}}); }
+      state:Object.assign({opts:q.opts, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}, liveState(q))}); }
   async function closeQuestion(){ if(G.scored) return; G.scored=true; const q=G.questions[G.qi]; G.phase='scoring';
     let ans=[], players=[];
     try{ ans=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id,choice,created_at&order=created_at.asc'))||[]; }catch(e){}
@@ -676,7 +679,7 @@ start();
       if(a.choice===q.correct){ const remain=G.deadline-Date.parse(a.created_at); const frac=Math.max(0,Math.min(1,remain/G.win)); deltas[a.player_id]=10+Math.round(5*frac); } });
     for(const id in deltas){ const ns=(byId[id]||0)+deltas[id]; await sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
     G.phase='reveal'; setCompact(false); G.revealUntil=Date.now()+REVEAL; renderReveal(q); if(window.HOST) window.HOST.set('celebrate'); if(Object.keys(deltas).length){ SFX.correct(); hostSay(pick(QUIPS.correct),'delight'); } else { SFX.wrong(); hostSay(pick(QUIPS.wrong),'aww'); }
-    setRoom({phase:'reveal', q_id:G.curId, state:{opts:q.opts, correct:q.correct, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}});
+    setRoom({phase:'reveal', q_id:G.curId, state:Object.assign({opts:q.opts, correct:q.correct, round:G.label, qnum:G.qi+1, qtotal:G.questions.length}, liveState(q))});
     poll(); }
   function nextQuestion(){ G.qi++; if(G.qi>=G.questions.length) endRound(); else presentQuestion(); }
   function endRound(){ setCompact(false);
@@ -757,7 +760,7 @@ start();
   function laneOut(l){ return {st:l.st, bid:l.bid, bname:l.bname, adl:l.adl?new Date(l.adl).toISOString():null, out:Object.keys(l.out), win:l.win}; }
   function writeBuzzRoom(){ const bz=G.buzz; setRoom({phase:'buzzer', q_id:G.curId, q_index:G.qi,
     state:{ round:G.label, qnum:G.qi+1, qtotal:G.questions.length,
-      bz:{ phase:bz.phase, opts:bz.opts, correct:(bz.phase==='reveal'?bz.correct:null),
+      bz:{ phase:bz.phase, opts:bz.opts, correct:(bz.phase==='reveal'?bz.correct:null), live:LIVE, qtext:(bz.q?bz.q.q:''),
         lanes:{ youth:laneOut(bz.lanes.youth), adult:laneOut(bz.lanes.adult) } } } }); }
   function award(id, players){ const p=(players||[]).find(x=>x.id===id); const ns=(p?p.score:0)+10;
     return sb('players?id=eq.'+id, {method:'PATCH', body:JSON.stringify({score:ns})}).catch(()=>{}); }
@@ -846,7 +849,7 @@ start();
     G.phase='fc'; showPanel('fc'); setCompact(true); renderCluesStage(); if(window.HOST) window.HOST.set('ask'); writeCluesRoom(); }
   function writeCluesRoom(){ const fc=G.fc; const q=G.questions[G.qi]; setRoom({phase:'fiveclues', q_id:G.curId, q_index:G.qi,
     state:{ round:G.label, qnum:G.qi+1, qtotal:G.questions.length,
-      fc:{ phase:fc.phase, opts:q.opts, clueIdx:fc.clueIdx, pointsNow:5-fc.clueIdx, correct:(fc.phase==='reveal'?q.correct:null) } } }); }
+      fc:{ phase:fc.phase, opts:q.opts, clueIdx:fc.clueIdx, pointsNow:5-fc.clueIdx, correct:(fc.phase==='reveal'?q.correct:null), live:LIVE, cat:q.cat, clues:(q.clues||[]).slice(0,fc.clueIdx+1) } } }); }
   async function pollCluesCount(){ const fc=G.fc; let a=[],p=[];
     try{ a=(await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id'))||[]; }catch(e){}
     try{ p=(await sb('players?code=eq.'+room.code+'&select=id'))||[]; }catch(e){}
@@ -918,6 +921,7 @@ start();
     if(qmB) qmB.addEventListener('click', function(){ QPR-=1; updateAdminUI(); });
     if(qpB) qpB.addEventListener('click', function(){ QPR+=1; updateAdminUI(); }); }
   populatePick(); populateTheme(); updateAdminUI();
+  { const lt=$('liveToggle'); if(lt){ lt.checked=LIVE; lt.addEventListener('change', function(){ LIVE=lt.checked; localStorage.setItem(LIVE_KEY, LIVE?'1':'0'); }); } }
   $('nextRoundBtn').addEventListener('click', function(){ G.ptr++; startRoundByPtr(); });
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
   $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else if(G.type==='fiveclues') startCluesQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } else if(G.phase==='fc'){ if(G.fc&&G.fc.phase==='reveal') nextCluesQuestion(); else closeClues(); } });
