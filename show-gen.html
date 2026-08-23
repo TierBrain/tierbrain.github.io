@@ -977,6 +977,176 @@ start();
     }catch(e){}
   })();
 
+  (function augmentDiverse(){
+    const AUG_RAPID={
+      1:[
+       {q:'How many rings are on the Olympic flag?',correct:'Five',wrong:['Four','Six','Three'],tag:'olympic-rings'},
+       {q:'Which instrument has 88 black and white keys?',correct:'The piano',wrong:['The guitar','The violin','The organ'],tag:'piano'},
+       {q:'What is a baby kangaroo called?',correct:'A joey',wrong:['A cub','A kit','A calf'],tag:'joey'},
+       {q:'What is the largest organ in the human body?',correct:'The skin',wrong:['The heart','The liver','The brain'],tag:'skin'},
+       {q:'How many letters are there in the English alphabet?',correct:'26',wrong:['24','28','30'],tag:'alphabet'}
+      ],
+      2:[
+       {q:'In which sport would you use a shuttlecock?',correct:'Badminton',wrong:['Tennis','Squash','Cricket'],tag:'badminton'},
+       {q:'How many strings does a violin have?',correct:'Four',wrong:['Six','Five','Three'],tag:'violin-strings'},
+       {q:'What drink is made from crushed apples?',correct:'Cider',wrong:['Wine','Beer','Cordial'],tag:'cider'},
+       {q:'Which gas makes up most of the air we breathe?',correct:'Nitrogen',wrong:['Oxygen','Carbon dioxide','Hydrogen'],tag:'nitrogen'},
+       {q:'How many players are on a basketball team on court?',correct:'Five',wrong:['Six','Seven','Eleven'],tag:'basketball-team'}
+      ],
+      3:[
+       {q:'Who painted the ceiling of the Sistine Chapel?',correct:'Michelangelo',wrong:['Leonardo da Vinci','Raphael','Donatello'],tag:'michelangelo'},
+       {q:'What is the hardest substance in the human body?',correct:'Tooth enamel',wrong:['Bone','Cartilage','Nail'],tag:'enamel'},
+       {q:'Which nut is used to make marzipan?',correct:'Almonds',wrong:['Walnuts','Peanuts','Hazelnuts'],tag:'almonds'},
+       {q:'What is the largest species of shark?',correct:'The whale shark',wrong:['The great white','The hammerhead','The tiger shark'],tag:'whale-shark'},
+       {q:'How many holes are played in a full round of golf?',correct:'Eighteen',wrong:['Nine','Twelve','Twenty'],tag:'golf-holes'}
+      ],
+      4:[
+       {q:'Who is credited with inventing the telephone?',correct:'Alexander Graham Bell',wrong:['Thomas Edison','Nikola Tesla','Guglielmo Marconi'],tag:'telephone'},
+       {q:'Which composer wrote the famous \u2018Ode to Joy\u2019?',correct:'Beethoven',wrong:['Mozart','Bach','Chopin'],tag:'beethoven'},
+       {q:'What is molten rock beneath the Earth\u2019s surface called?',correct:'Magma',wrong:['Lava','Ash','Coal'],tag:'magma'},
+       {q:'What is the Roman numeral for the number 50?',correct:'L',wrong:['C','X','V'],tag:'roman-50'},
+       {q:'Which vitamin does the body make from sunlight?',correct:'Vitamin D',wrong:['Vitamin C','Vitamin A','Vitamin B'],tag:'vitamin-d'}
+      ]
+    };
+    const AUG_BUZZ=[
+     {q:'In tennis, what is a score of zero called?',correct:'Love',wrong:['Nil','Duck','Blank'],tag:'tennis-love'},
+     {q:'Which sport is played with a puck?',correct:'Ice hockey',wrong:['Lacrosse','Polo','Curling'],tag:'ice-hockey'},
+     {q:'What do you call an animal that eats only plants?',correct:'A herbivore',wrong:['A carnivore','An omnivore','A scavenger'],tag:'herbivore'},
+     {q:'Which is the only mammal that can truly fly?',correct:'The bat',wrong:['The flying squirrel','The owl','The sugar glider'],tag:'bat'},
+     {q:'How many teeth does a typical adult have?',correct:'32',wrong:['28','30','36'],tag:'adult-teeth'},
+     {q:'What is the centre of an atom called?',correct:'The nucleus',wrong:['The electron','The proton','The shell'],tag:'nucleus'},
+     {q:'What is frozen carbon dioxide commonly known as?',correct:'Dry ice',wrong:['Black ice','Frost','Sleet'],tag:'dry-ice'},
+     {q:'Which country is famous for inventing pizza?',correct:'Italy',wrong:['Greece','France','Spain'],tag:'pizza'},
+     {q:'What is a group of lions called?',correct:'A pride',wrong:['A pack','A herd','A flock'],tag:'pride-lions'},
+     {q:'How many sides does an octagon have?',correct:'Eight',wrong:['Six','Seven','Ten'],tag:'octagon'},
+     {q:'Which bird is a traditional symbol of peace?',correct:'The dove',wrong:['The eagle','The owl','The swan'],tag:'dove'},
+     {q:'Sound travels fastest through which of these?',correct:'Steel',wrong:['Air','Water','A vacuum'],tag:'sound-speed'},
+     {q:'Who is often credited with inventing the light bulb?',correct:'Thomas Edison',wrong:['Alexander Graham Bell','Isaac Newton','Michael Faraday'],tag:'edison'},
+     {q:'What is the tallest type of grass?',correct:'Bamboo',wrong:['Sugarcane','Wheat','Reed'],tag:'bamboo'},
+     {q:'How many days are there in a leap year?',correct:'366',wrong:['365','364','367'],tag:'leap-year'},
+     {q:'What is sushi traditionally wrapped in?',correct:'Seaweed',wrong:['Rice paper','Pastry','A banana leaf'],tag:'sushi'}
+    ];
+    const AUG_BLANK=[
+     {vref:'A science fact', text:'Water boils at 100 degrees {b}.', answer:'Celsius', wrong:['Fahrenheit','Kelvin','Newton'], tag:'boiling-point'},
+     {vref:'A world fact', text:'The Great {b} Reef, the world\u2019s largest coral reef, lies off Australia.', answer:'Barrier', wrong:['Coral','Ocean','Southern'], tag:'great-barrier-reef'},
+     {vref:'A saying', text:'A {b} in time saves nine.', answer:'stitch', wrong:['friend','coin','word'], tag:'stitch-in-time'},
+     {vref:'A music fact', text:'A group of four musicians playing together is called a {b}.', answer:'quartet', wrong:['trio','duet','choir'], tag:'quartet'},
+     {vref:'A saying', text:'Don\u2019t count your {b} before they hatch.', answer:'chickens', wrong:['eggs','coins','blessings'], tag:'count-chickens'},
+     {vref:'A body fact', text:'Humans breathe using a pair of organs called the {b}.', answer:'lungs', wrong:['kidneys','livers','hearts'], tag:'lungs'}
+    ];
+    const AUG_REF=[
+     {vref:'A kangaroo', text:'I am a large hopping animal from Australia, and I carry my baby in a pouch.', wrong:['A koala','A wallaby','A wombat'], tag:'kangaroo'},
+     {vref:'The violin', text:'I am a small wooden string instrument, played with a bow under the chin.', wrong:['The cello','The guitar','The harp'], tag:'violin'},
+     {vref:'The brain', text:'I am the organ inside your head that lets you think, remember and feel.', wrong:['The heart','The liver','The stomach'], tag:'brain'},
+     {vref:'Coffee', text:'I am a popular hot drink, made from roasted beans, that helps people wake up.', wrong:['Tea','Cocoa','Cola'], tag:'coffee'},
+     {vref:'A camel', text:'I am a desert animal with one or two humps, able to go a long time without water.', wrong:['A llama','A horse','A donkey'], tag:'camel'},
+     {vref:'Mount Fuji', text:'I am a famous snow-capped volcano and the highest mountain in Japan.', wrong:['Mount Everest','Kilimanjaro','Vesuvius'], tag:'mount-fuji'},
+     {vref:'A guitar', text:'I am a wooden string instrument, usually with six strings, played by strumming.', wrong:['The violin','The banjo','The ukulele'], tag:'guitar'},
+     {vref:'A rainbow', text:'I appear after rain and sun, an arch of seven colours across the sky.', wrong:['A cloud','A sunset','A comet'], tag:'rainbow'}
+    ];
+    const AUG_CLUES=[
+     {answer:'A cheetah',cat:'Animal',clues:['I am a big cat.','I live in Africa.','I am covered in spots.','I am the fastest animal on land.','I can sprint over 60 miles per hour.'],wrong:['A leopard','A jaguar','A lion'],tag:'the-cheetah'},
+     {answer:'A guitar',cat:'Thing',clues:['I am a musical instrument.','I am usually made of wood.','I have six strings.','You strum or pluck me.','Rock stars love to play me.'],wrong:['A violin','A banjo','A harp'],tag:'guitar'},
+     {answer:'Chocolate',cat:'Thing',clues:['I am a sweet treat.','I come from the cacao bean.','I can be dark, milk or white.','I melt in your hand.','I am popular at Easter and Christmas.'],wrong:['Toffee','Fudge','Caramel'],tag:'chocolate'},
+     {answer:'The Olympics',cat:'Event',clues:['I happen every four years.','Athletes from many nations take part.','I began in ancient Greece.','My symbol is five coloured rings.','Winners take home gold, silver and bronze.'],wrong:['The World Cup','The Commonwealth Games','Wimbledon'],tag:'olympics'},
+     {answer:'A skeleton',cat:'Thing',clues:['I am inside every person.','I am made of over 200 bones.','I give the body its shape.','I protect the organs.','You might see me at Halloween.'],wrong:['A ghost','A mummy','A statue'],tag:'skeleton'},
+     {answer:'A castle',cat:'Thing',clues:['I am a very old, large building.','I have thick stone walls.','I often have towers and a moat.','Kings and queens once lived in me.','Knights defended me long ago.'],wrong:['A cathedral','A palace','A barn'],tag:'castle'},
+     {answer:'A butterfly',cat:'Animal',clues:['I begin life as a caterpillar.','I form a chrysalis.','I emerge with colourful wings.','I sip nectar from flowers.','I flutter from bloom to bloom.'],wrong:['A moth','A bee','A dragonfly'],tag:'butterfly'},
+     {answer:'A camel',cat:'Animal',clues:['I live in hot, dry places.','I have one or two humps.','I can go a long time without water.','I am called the ship of the desert.','People ride me across the sand.'],wrong:['A horse','A llama','A donkey'],tag:'camel'}
+    ];
+    try{
+      Object.keys(AUG_RAPID).forEach(function(k){ BANK_RAPID[k].push.apply(BANK_RAPID[k], AUG_RAPID[k]); });
+      if(typeof RAPID_GEN!=='undefined') RAPID_GEN.push.apply(RAPID_GEN, [].concat(AUG_RAPID['1'],AUG_RAPID['2'],AUG_RAPID['3'],AUG_RAPID['4']));
+      VB_BLANK.push.apply(VB_BLANK, AUG_BLANK); VB_REF.push.apply(VB_REF, AUG_REF);
+      BUZZ_BANK.push.apply(BUZZ_BANK, AUG_BUZZ); CLUES_BANK.push.apply(CLUES_BANK, AUG_CLUES);
+    }catch(e){}
+  })();
+
+  (function augmentBooksArtWorld(){
+    const AUG_RAPID={
+      1:[
+       {q:'What is the capital of Germany?',correct:'Berlin',wrong:['Munich','Hamburg','Frankfurt'],tag:'capital-germany'},
+       {q:'What are baby frogs called?',correct:'Tadpoles',wrong:['Cubs','Chicks','Kits'],tag:'tadpoles'},
+       {q:'What do you call a painting you make of yourself?',correct:'A self-portrait',wrong:['A landscape','A still life','A mural'],tag:'self-portrait'},
+       {q:'What machine carries people between the floors of a building?',correct:'A lift',wrong:['A crane','A ladder','A ramp'],tag:'lift'},
+       {q:'How many centimetres are there in a metre?',correct:'100',wrong:['10','1,000','50'],tag:'cm-in-metre'}
+      ],
+      2:[
+       {q:'Who wrote \u2018A Christmas Carol\u2019?',correct:'Charles Dickens',wrong:['Jane Austen','Lewis Carroll','Roald Dahl'],tag:'dickens'},
+       {q:'What is the capital of Greece?',correct:'Athens',wrong:['Rome','Cairo','Istanbul'],tag:'capital-greece'},
+       {q:'What are the three primary colours?',correct:'Red, yellow and blue',wrong:['Red, green and blue','Black, white and grey','Orange, purple and green'],tag:'primary-colours'},
+       {q:'What is the largest bird in the world?',correct:'The ostrich',wrong:['The eagle','The albatross','The emu'],tag:'ostrich'},
+       {q:'What did the Wright brothers famously build and fly?',correct:'The aeroplane',wrong:['The car','The rocket','The helicopter'],tag:'wright-brothers'}
+      ],
+      3:[
+       {q:'Who created the detective Sherlock Holmes?',correct:'Arthur Conan Doyle',wrong:['Agatha Christie','Charles Dickens','Ian Fleming'],tag:'sherlock-holmes'},
+       {q:'What is the process by which plants make food from sunlight?',correct:'Photosynthesis',wrong:['Respiration','Digestion','Evaporation'],tag:'photosynthesis'},
+       {q:'What is the capital of Canada?',correct:'Ottawa',wrong:['Toronto','Vancouver','Montreal'],tag:'capital-canada'},
+       {q:'How many lines does a sonnet have?',correct:'14',wrong:['12','10','16'],tag:'sonnet'},
+       {q:'Which Dutch painter famously cut off part of his own ear?',correct:'Vincent van Gogh',wrong:['Rembrandt','Picasso','Monet'],tag:'van-gogh'}
+      ],
+      4:[
+       {q:'What did Johannes Gutenberg famously invent?',correct:'The printing press',wrong:['The telescope','The steam engine','The clock'],tag:'printing-press'},
+       {q:'What is the capital of the United States?',correct:'Washington, D.C.',wrong:['New York','Los Angeles','Chicago'],tag:'capital-usa'},
+       {q:'What is the value of pi to two decimal places?',correct:'3.14',wrong:['3.16','3.41','2.14'],tag:'pi'},
+       {q:'What do we call animals that have a backbone?',correct:'Vertebrates',wrong:['Invertebrates','Mammals','Molluscs'],tag:'vertebrates'},
+       {q:'What is the Roman numeral for 100?',correct:'C',wrong:['L','M','D'],tag:'roman-100'}
+      ]
+    };
+    const AUG_BUZZ=[
+     {q:'What is the capital of Scotland?',correct:'Edinburgh',wrong:['Glasgow','Aberdeen','Dundee'],tag:'capital-scotland'},
+     {q:'What is the capital of Ireland?',correct:'Dublin',wrong:['Belfast','Cork','Galway'],tag:'capital-ireland'},
+     {q:'Which country\u2019s flag features a red maple leaf?',correct:'Canada',wrong:['Norway','Switzerland','Turkey'],tag:'canada-flag'},
+     {q:'Who wrote \u2018Pride and Prejudice\u2019?',correct:'Jane Austen',wrong:['Charlotte Bront\u00eb','Mary Shelley','George Eliot'],tag:'austen'},
+     {q:'What do you call a machine that can be programmed to do tasks?',correct:'A robot',wrong:['A computer','An engine','A gadget'],tag:'robot'},
+     {q:'What is the study of stars and space called?',correct:'Astronomy',wrong:['Geology','Biology','Geography'],tag:'astronomy'},
+     {q:'What do you call words that sound the same but are spelled differently?',correct:'Homophones',wrong:['Synonyms','Antonyms','Rhymes'],tag:'homophones'},
+     {q:'What does \u2018WWW\u2019 stand for?',correct:'World Wide Web',wrong:['World Web Widget','Wide World Web','Web Wide World'],tag:'www'},
+     {q:'What tool does a painter use to mix their colours?',correct:'A palette',wrong:['A canvas','An easel','A brush'],tag:'palette'},
+     {q:'What is the capital of Egypt?',correct:'Cairo',wrong:['Alexandria','Giza','Luxor'],tag:'capital-egypt'},
+     {q:'What is a group of wolves called?',correct:'A pack',wrong:['A pride','A herd','A flock'],tag:'pack-wolves'},
+     {q:'What do you call a shape with ten sides?',correct:'A decagon',wrong:['A pentagon','An octagon','A hexagon'],tag:'decagon'},
+     {q:'What is the study of living things called?',correct:'Biology',wrong:['Chemistry','Physics','Ecology'],tag:'biology'},
+     {q:'Which blood cells help the body fight infection?',correct:'White blood cells',wrong:['Red blood cells','Platelets','Plasma'],tag:'white-blood-cells'},
+     {q:'What is 12 multiplied by 12?',correct:'144',wrong:['124','132','154'],tag:'twelve-squared'},
+     {q:'Which country has a flag with a single red circle on white?',correct:'Japan',wrong:['China','South Korea','Bangladesh'],tag:'japan-flag'}
+    ];
+    const AUG_BLANK=[
+     {vref:'A saying', text:'The {b} is mightier than the sword.', answer:'pen', wrong:['word','mind','truth'], tag:'pen-mightier'},
+     {vref:'A saying', text:'When in Rome, do as the {b} do.', answer:'Romans', wrong:['locals','kings','wise'], tag:'when-in-rome'},
+     {vref:'A saying', text:'Birds of a {b} flock together.', answer:'feather', wrong:['nest','wing','kind'], tag:'birds-feather'},
+     {vref:'A nature fact', text:'A young frog, before it grows legs, is called a {b}.', answer:'tadpole', wrong:['minnow','larva','fry'], tag:'tadpoles'},
+     {vref:'A maths fact', text:'A flat shape with three straight sides is called a {b}.', answer:'triangle', wrong:['square','circle','pentagon'], tag:'triangle'},
+     {vref:'A science fact', text:'Green plants make their own food by a process called {b}.', answer:'photosynthesis', wrong:['respiration','digestion','germination'], tag:'photosynthesis'}
+    ];
+    const AUG_REF=[
+     {vref:'An owl', text:'I am a bird active at night, known for my large eyes and my \u2018twit-twoo\u2019 call.', wrong:['An eagle','A hawk','A raven'], tag:'owl'},
+     {vref:'An octopus', text:'I am a sea creature with eight arms, and I squirt ink to escape danger.', wrong:['A squid','A jellyfish','A crab'], tag:'octopus'},
+     {vref:'A telescope', text:'I am a tube with lenses that helps you see faraway stars and planets.', wrong:['A microscope','A periscope','Binoculars'], tag:'telescope'},
+     {vref:'A compass', text:'I have a needle that always points north to help you find your way.', wrong:['A map','A clock','A ruler'], tag:'compass'},
+     {vref:'A cactus', text:'I am a prickly plant that grows in the desert and stores water inside me.', wrong:['A fern','A palm','A rose'], tag:'cactus'},
+     {vref:'A lighthouse', text:'I am a tall tower by the sea, and my bright light warns ships of danger.', wrong:['A windmill','A castle','A pier'], tag:'lighthouse'},
+     {vref:'A kilt', text:'I am a pleated, skirt-like garment traditionally worn by men in Scotland.', wrong:['A toga','A sarong','A poncho'], tag:'kilt'},
+     {vref:'A windmill', text:'I am a tall structure whose sails turn in the wind to grind grain or make power.', wrong:['A lighthouse','A water tower','A crane'], tag:'windmill'}
+    ];
+    const AUG_CLUES=[
+     {answer:'A snowflake',cat:'Thing',clues:['I fall from the sky in winter.','I am made of frozen water.','I am white and very light.','No two of us are exactly alike.','I have six sides.'],wrong:['A raindrop','A hailstone','Frost'],tag:'snowflake'},
+     {answer:'A knight',cat:'Person',clues:['I lived in the Middle Ages.','I wore a suit of armour.','I rode a horse into battle.','I carried a sword and shield.','I served a king by a code of chivalry.'],wrong:['A pirate','A Viking','A soldier'],tag:'knight'},
+     {answer:'A whale',cat:'Animal',clues:['I live in the ocean.','I am a mammal, not a fish.','I breathe air through a blowhole.','I can sing songs underwater.','The blue kind is the largest animal on Earth.'],wrong:['A shark','A dolphin','A walrus'],tag:'whale'},
+     {answer:'A library',cat:'Place',clues:['I am a quiet building.','I am full of shelves.','I hold thousands of books.','You can borrow from me for free.','Please whisper inside me.'],wrong:['A bookshop','A museum','A school'],tag:'library'},
+     {answer:'A pirate',cat:'Person',clues:['I sail the seas.','I fly a flag with a skull.','I hunt for buried treasure.','I might have a parrot on my shoulder.','\u201cArr!\u201d and \u201cAhoy!\u201d are my sayings.'],wrong:['A sailor','A Viking','A fisherman'],tag:'pirate'},
+     {answer:'A dinosaur',cat:'Thing',clues:['I lived millions of years ago.','I am now extinct.','Some of my kind were enormous.','My bones are found as fossils.','The T. rex was one of me.'],wrong:['A dragon','A mammoth','A crocodile'],tag:'dinosaur'},
+     {answer:'A ghost',cat:'Thing',clues:['I am rather spooky.','People say I haunt old houses.','I am said to be see-through.','I might whisper \u201cBoo!\u201d','I appear a lot at Halloween.'],wrong:['A witch','A zombie','A vampire'],tag:'ghost'},
+     {answer:'A submarine',cat:'Thing',clues:['I am a kind of vehicle.','I travel deep underwater.','I use a periscope to see above the surface.','The navy sails me.','The Beatles sang about a yellow one.'],wrong:['A ship','A jet','A tank'],tag:'submarine'}
+    ];
+    try{
+      Object.keys(AUG_RAPID).forEach(function(k){ BANK_RAPID[k].push.apply(BANK_RAPID[k], AUG_RAPID[k]); });
+      if(typeof RAPID_GEN!=='undefined') RAPID_GEN.push.apply(RAPID_GEN, [].concat(AUG_RAPID['1'],AUG_RAPID['2'],AUG_RAPID['3'],AUG_RAPID['4']));
+      VB_BLANK.push.apply(VB_BLANK, AUG_BLANK); VB_REF.push.apply(VB_REF, AUG_REF);
+      BUZZ_BANK.push.apply(BUZZ_BANK, AUG_BUZZ); CLUES_BANK.push.apply(CLUES_BANK, AUG_CLUES);
+    }catch(e){}
+  })();
+
   function buildClues(seed,n,theme,used){ n=n||6; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.answer);
     const list=(theme&&theme!=='all')? shuf(THEMED.clues.filter(x=>x.th===theme),r).concat(shuf(CLUES_BANK.slice(),r)) : shuf(CLUES_BANK.slice(),r);
     return pickDistinct(list, used, n, tf).map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer), tag:tf(o)}; }); }
