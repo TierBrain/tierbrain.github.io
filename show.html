@@ -705,19 +705,21 @@ start();
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
     return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
   function shuf(a,r){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-  function buildRapid(seed,n,theme){ n=n||8; const r=rng(seed); let out=[];
-    if(theme && theme!=='all'){ out=themedPick(THEMED.rapid, RAPID_GEN, theme, n, r); }
-    else { const per=[0,0,0,0]; for(let i=0;i<n;i++) per[i%4]++; ['1','2','3','4'].forEach((t,ti)=>{ const pool=BANK_RAPID[t].slice(); shuf(pool,r); pool.slice(0,per[ti]).forEach(o=>out.push(o)); }); }
-    return out.map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
-  function buildVerse(seed,n,theme){ n=n||8; const r=rng(seed); const nb=Math.ceil(n/2); const nr=n-nb;
-    const blanks=(theme&&theme!=='all')? themedPick(THEMED.vblank, VB_BLANK, theme, nb, r) : shuf(VB_BLANK.slice(),r).slice(0,nb);
-    const used={}; blanks.forEach(b=>used[b.vref]=1);
-    let refs=[]; const themedRefs=(theme&&theme!=='all')? shuf(THEMED.vref.filter(x=>x.th===theme),r).filter(x=>!used[x.vref]) : [];
-    refs=themedRefs.slice(0,nr);
-    if(refs.length<nr){ const have=new Set(refs.map(x=>x.vref)); for(const x of shuf(VB_REF.slice(),r)){ if(refs.length>=nr) break; if(!used[x.vref]&&!have.has(x.vref)){ refs.push(x); have.add(x.vref);} } }
+  function slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+  function interleave(arrs,r){ const cs=arrs.map(a=>shuf(a.slice(),r)); const out=[]; let go=true; while(go){ go=false; for(const c of cs){ if(c.length){ out.push(c.shift()); go=true; } } } return out; }
+  function pickDistinct(list, used, n, tagFn){ const taken=new Set(used); const out=[]; for(let i=0;i<list.length && out.length<n;i++){ const tg=tagFn(list[i]); if(taken.has(tg)) continue; taken.add(tg); out.push(list[i]); } return out; }
+  function buildRapid(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
+    const list=(theme&&theme!=='all')? shuf(THEMED.rapid.filter(x=>x.th===theme),r).concat(shuf(RAPID_GEN.slice(),r)) : interleave([BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']], r);
+    return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
+  function buildVerse(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=x=>x.tag||slug(x.vref); const taken=new Set(used); const nb=Math.ceil(n/2);
+    const blankList=(theme&&theme!=='all')? shuf(THEMED.vblank.filter(x=>x.th===theme),r).concat(shuf(VB_BLANK.slice(),r)) : shuf(VB_BLANK.slice(),r);
+    const blanks=pickDistinct(blankList, taken, nb, tf); blanks.forEach(b=>taken.add(tf(b)));
+    const nr=n-blanks.length;
+    const refList=(theme&&theme!=='all')? shuf(THEMED.vref.filter(x=>x.th===theme),r).concat(shuf(VB_REF.slice(),r)) : shuf(VB_REF.slice(),r);
+    const refs=pickDistinct(refList, taken, nr, tf); refs.forEach(v=>taken.add(tf(v)));
     const items=[];
-    blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer)}); });
-    refs.forEach(v=>{ const opts=shuf([v.vref].concat(v.wrong),r); items.push({kind:'verse-ref', ref:v.vref, text:v.text, opts, correct:opts.indexOf(v.vref)}); });
+    blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer), tag:tf(b)}); });
+    refs.forEach(v=>{ const opts=shuf([v.vref].concat(v.wrong),r); items.push({kind:'verse-ref', ref:v.vref, text:v.text, opts, correct:opts.indexOf(v.vref), tag:tf(v)}); });
     return shuf(items,r); }
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
@@ -760,9 +762,9 @@ start();
     }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
-    SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
+    G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder(G.gameSeed); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
-    G.type=type; G.win=meta.win; G.questions=meta.build(((room.seed|0)+G.ptr*7)||Date.now(), QPR, THEME); G.qi=0;
+    G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
     G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0){ SFX.sting(); hostSay(pick(QUIPS.round),'huh'); }
     showPanel('q'); $('rLabel').textContent=G.label; $('qNum').textContent='';
     $('qPrompt').textContent=(G.ptr===0? lineupSentence(SHOW_ORDER) : 'How this round works');
@@ -859,9 +861,9 @@ start();
    {q:'Who built the ark?',correct:'Noah',wrong:['Moses','Abraham','Enoch']},
    {q:'Which Gospel comes first in the New Testament?',correct:'Matthew',wrong:['Mark','Luke','John']}
   ];
-  function buildBuzzer(seed,n,theme){ n=n||8; const r=rng(seed);
-    const pool=(theme&&theme!=='all')? themedPick(THEMED.buzz, BUZZ_BANK, theme, n, r) : shuf(BUZZ_BANK.slice(),r).slice(0,Math.min(n,BUZZ_BANK.length));
-    return pool.map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct)}; }); }
+  function buildBuzzer(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
+    const list=(theme&&theme!=='all')? shuf(THEMED.buzz.filter(x=>x.th===theme),r).concat(shuf(BUZZ_BANK.slice(),r)) : shuf(BUZZ_BANK.slice(),r);
+    return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
 
   const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600;
   let bzActx=null;
@@ -953,9 +955,64 @@ start();
    {answer:'Egypt',cat:'Place',clues:['I am an ancient and mighty land.','A famine once drew families to me.','Joseph rose to great power here.','The Israelites were enslaved within me.','Ten plagues struck me before the Exodus.'],wrong:['Babylon','Canaan','Assyria']},
    {answer:'Jericho',cat:'Place',clues:['I am a very old city.','I was protected by great walls.','Spies were once hidden inside me.','Israel marched around me for seven days.','My walls fell down flat at a shout.'],wrong:['Ai','Hebron','Gibeon']}
   ];
-  function buildClues(seed,n,theme){ n=n||6; const r=rng(seed);
-    const pool=(theme&&theme!=='all')? themedPick(THEMED.clues, CLUES_BANK, theme, n, r) : shuf(CLUES_BANK.slice(),r).slice(0,Math.min(n,CLUES_BANK.length));
-    return pool.map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer)}; }); }
+  (function augmentBible(){
+    const AUG_RAPID={
+      1:[
+       {q:'Who built an ark to survive the flood?',correct:'Noah',wrong:['Moses','Abraham','David'],tag:'noah'},
+       {q:'Who was swallowed by a great fish?',correct:'Jonah',wrong:['Job','Joshua','Jeremiah'],tag:'jonah'},
+       {q:'In which garden did Adam and Eve live?',correct:'Eden',wrong:['Gethsemane','Babylon','Canaan'],tag:'eden'}
+      ],
+      2:[
+       {q:'Who led the Israelites out of Egypt?',correct:'Moses',wrong:['Aaron','Joshua','Joseph'],tag:'moses'},
+       {q:'Who was thrown into the lions\u2019 den?',correct:'Daniel',wrong:['David','Elijah','Samuel'],tag:'daniel'},
+       {q:'What did God create on the first day?',correct:'Light',wrong:['Animals','The sea','The stars'],tag:'creation-light'}
+      ],
+      3:[
+       {q:'Which giant did David defeat with a sling?',correct:'Goliath',wrong:['Saul','Samson','Og'],tag:'goliath'},
+       {q:'On which mountain did Moses receive the commandments?',correct:'Mount Sinai',wrong:['Mount Zion','Mount Carmel','Mount Nebo'],tag:'ten-commandments'},
+       {q:'Who was the wisest king of Israel?',correct:'Solomon',wrong:['Saul','David','Hezekiah'],tag:'solomon'}
+      ],
+      4:[
+       {q:'Who was the first king of Israel?',correct:'Saul',wrong:['David','Samuel','Solomon'],tag:'king-saul'},
+       {q:'Which book comes first in the New Testament?',correct:'Matthew',wrong:['Mark','Genesis','Acts'],tag:'gospel-matthew'},
+       {q:'Who baptised Jesus in the Jordan?',correct:'John the Baptist',wrong:['Peter','Andrew','Elijah'],tag:'john-baptist'}
+      ]
+    };
+    const AUG_BLANK=[
+     {vref:'Genesis 1:1', text:'In the beginning God created the heavens and the {b}.', answer:'earth', wrong:['sea','light','stars'], tag:'genesis-1-1'},
+     {vref:'Psalm 23:1', text:'The Lord is my {b}; I shall not want.', answer:'shepherd', wrong:['refuge','rock','light'], tag:'psalm-23'},
+     {vref:'John 11:35', text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','waited'], tag:'john-11-35'}
+    ];
+    const AUG_REF=[
+     {vref:'John 1:1', text:'In the beginning was the Word, and the Word was with God, and the Word was God.', wrong:['Genesis 1:1','John 3:16','Colossians 1:1'], tag:'john-1-1'},
+     {vref:'Romans 3:23', text:'For all have sinned, and fall short of the glory of God.', wrong:['Romans 6:23','1 John 1:9','John 3:16'], tag:'romans-3-23'},
+     {vref:'Matthew 5:9', text:'Blessed are the peacemakers, for they shall be called children of God.', wrong:['Matthew 6:9','Luke 6:20','Psalm 1:1'], tag:'matthew-5-9'}
+    ];
+    const AUG_BUZZ=[
+     {q:'Who built the ark?',correct:'Noah',wrong:['Moses','Abraham','Lot'],tag:'noah'},
+     {q:'Who was swallowed by a great fish?',correct:'Jonah',wrong:['Job','Joshua','Amos'],tag:'jonah'},
+     {q:'Who led Israel out of Egypt?',correct:'Moses',wrong:['Aaron','Joshua','Caleb'],tag:'moses'},
+     {q:'Who killed the giant Goliath?',correct:'David',wrong:['Saul','Samson','Jonathan'],tag:'goliath'},
+     {q:'Who was thrown into the lions\u2019 den?',correct:'Daniel',wrong:['David','Elijah','Shadrach'],tag:'daniel'},
+     {q:'Who was the wisest king of Israel?',correct:'Solomon',wrong:['David','Saul','Josiah'],tag:'solomon'}
+    ];
+    const AUG_CLUES=[
+     {answer:'Noah',cat:'Person',clues:['I lived long ago.','God gave me a huge task.','I built an enormous boat.','I gathered the animals two by two.','I survived a great flood.'],wrong:['Moses','Abraham','Job'],tag:'noah'},
+     {answer:'Moses',cat:'Person',clues:['I was found as a baby in a basket.','I grew up in Egypt.','I saw a burning bush.','I led my people out of slavery.','I received the Ten Commandments.'],wrong:['Aaron','Joshua','Joseph'],tag:'moses'},
+     {answer:'Abraham',cat:'Person',clues:['God made a great promise to me.','I left my homeland when God called.','I was promised descendants like the stars.','My wife was Sarah.','I trusted God even with my son Isaac.'],wrong:['Isaac','Jacob','Noah'],tag:'abraham'},
+     {answer:'Jonah',cat:'Person',clues:['God told me to go to Nineveh.','I ran away by boat instead.','A storm arose because of me.','I was thrown into the sea.','A great fish swallowed me for three days.'],wrong:['Noah','Job','Elijah'],tag:'jonah'}
+    ];
+    try{
+      Object.keys(AUG_RAPID).forEach(function(k){ BANK_RAPID[k].push.apply(BANK_RAPID[k], AUG_RAPID[k]); });
+      if(typeof RAPID_GEN!=='undefined') RAPID_GEN.push.apply(RAPID_GEN, [].concat(AUG_RAPID['1'],AUG_RAPID['2'],AUG_RAPID['3'],AUG_RAPID['4']));
+      VB_BLANK.push.apply(VB_BLANK, AUG_BLANK); VB_REF.push.apply(VB_REF, AUG_REF);
+      BUZZ_BANK.push.apply(BUZZ_BANK, AUG_BUZZ); CLUES_BANK.push.apply(CLUES_BANK, AUG_CLUES);
+    }catch(e){}
+  })();
+
+  function buildClues(seed,n,theme,used){ n=n||6; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.answer);
+    const list=(theme&&theme!=='all')? shuf(THEMED.clues.filter(x=>x.th===theme),r).concat(shuf(CLUES_BANK.slice(),r)) : shuf(CLUES_BANK.slice(),r);
+    return pickDistinct(list, used, n, tf).map(function(o){ const opts=shuf([o.answer].concat(o.wrong),r); return {kind:'clues', cat:o.cat, clues:o.clues, answer:o.answer, opts:opts, correct:opts.indexOf(o.answer), tag:tf(o)}; }); }
 
   const CLUE_TIME=6500, CLUES_REVEAL=5000;
   function awardN(id,n,players){ const p=(players||[]).find(function(x){return x.id===id;}); const ns=(p?p.score:0)+n;
