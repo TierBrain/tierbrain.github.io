@@ -696,7 +696,7 @@ start();
   function lineupSentence(order){ const t=order.map(x=>RMETA[x].title);
     if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
-  const RMETA={ rapidfire:{title:'Rapid-Fire', win:15000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right \u2014 tap fast, because quicker correct answers score bonus points!'},
+  const RMETA={ rapidfire:{title:'Rapid-Fire', win:8000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right \u2014 tap fast, because quicker correct answers score bonus points!'},
                 verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices \u2014 pick the right one.'},
                 buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
                 fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure \u2014 the earlier you\u2019re right, the more points you score (5 down to 1).'} };
@@ -749,7 +749,15 @@ start();
     const secs=Math.ceil((G.deadline-now)/1000); if(secs>0 && secs<=5 && secs!==G.lastTick){ G.lastTick=secs; SFX.tick(); } }
   async function pollAnsCount(){ const now=Date.now(); if(now-G.lastAnsPoll<800) return; G.lastAnsPoll=now;
     try{ const rows=await sb('answers?code=eq.'+room.code+'&q_id=eq.'+G.curId+'&select=player_id');
-      const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size; }catch(e){} }
+      const uniq=new Set((rows||[]).map(r=>r.player_id)); $('ansCount').textContent=uniq.size;
+      if(G.type==='rapidfire' && G.phase==='question' && !G.scored){
+        const ps=(await sb('players?code=eq.'+room.code+'&select=id,last_seen'))||[];
+        const cutoff=now-30000;
+        const connected=ps.filter(function(p){ return p.last_seen && Date.parse(p.last_seen)>=cutoff; });
+        const answeredConnected=connected.filter(function(p){ return uniq.has(p.id); }).length;
+        if(connected.length>0 && answeredConnected>=connected.length){ closeQuestion(); }
+      }
+    }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
     SHOW_ORDER=buildShowOrder((room.seed|0)||Date.now()); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
