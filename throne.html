@@ -33,6 +33,10 @@
   .hd{font-family:'Fraunces',serif;font-weight:700;font-size:20px;margin-bottom:12px;}
   .btn{border:0;border-radius:12px;padding:14px 22px;font-weight:900;font-size:17px;cursor:pointer;font-family:inherit;}
   .go{background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;}
+  a.url{display:inline-block;text-decoration:none;}
+  a.url:hover{text-decoration:underline;}
+  .btn.copy{margin-top:12px;background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);font-size:14px;padding:10px 16px;}
+  .btn.copy.done{background:rgba(87,211,138,.18);color:var(--good);}
   .btn:disabled{opacity:.4;cursor:default;}
   .row{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap;}
   .step{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--dim);}
@@ -89,7 +93,8 @@
         <div class="lab">Join code</div>
         <div class="code" id="code">·····</div>
         <div class="qr" id="qrwrap"><img id="qr" alt="Join QR"></div>
-        <div class="url" id="url">tierbrain.github.io/throne-play.html</div>
+        <a class="url" id="url" target="_blank" rel="noopener">tierbrain.github.io/throne-play.html</a>
+        <div><button class="btn copy" id="copyBtn" type="button">Copy join link</button></div>
       </div>
       <div class="card">
         <div class="hd">Challengers <span id="pcount" style="color:var(--dim)">(0)</span></div>
@@ -154,7 +159,8 @@ async function createRoom(){
   await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, seed:(Math.random()*1e9)|0, phase:'lobby', state:{game:'throne',phase:'lobby'}})});
   $('code').textContent=G.code;
   const link=baseUrl()+'/throne-play.html?c='+G.code;
-  $('url').textContent=link.replace(/^https?:\/\//,'');
+  const u=$('url'); u.textContent=link.replace(/^https?:\/\//,''); u.href=link;
+  G.joinLink=link;
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
   $('dot').classList.add('live'); $('stat').textContent='Live · room '+G.code;
   writeState();
@@ -296,6 +302,7 @@ $('startBtn').addEventListener('click', startGame);
 $('qMinus').addEventListener('click', ()=>{ G.qTotal=Math.max(3,G.qTotal-1); $('qTot').textContent=G.qTotal; });
 $('qPlus').addEventListener('click', ()=>{ G.qTotal=Math.min(20,G.qTotal+1); $('qTot').textContent=G.qTotal; });
 $('newBtn').addEventListener('click', ()=>{ clearTimeout(G._t); location.reload(); });
+{ const cb=$('copyBtn'); if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(G.joinLink||''); }catch(e){ try{ const t=document.createElement('textarea'); t.value=G.joinLink||''; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_){} } cb.textContent='Copied \u2713'; cb.classList.add('done'); setTimeout(()=>{ cb.textContent='Copy join link'; cb.classList.remove('done'); }, 1600); }); }
 
 createRoom();
 setInterval(tick, 300);
