@@ -75,6 +75,10 @@
   .queue .qq{display:flex;flex-wrap:wrap;gap:8px;}
   .queue .qq span{background:rgba(255,255,255,.05);border-radius:999px;padding:5px 12px;font-weight:800;font-size:14px;}
   .queue .empty{color:var(--dim);font-weight:700;}
+  .progress{height:7px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-bottom:14px;}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-hi));transition:width .3s;}
+  .beststreak{text-align:center;color:var(--dim);font-weight:800;margin-top:12px;font-size:14px;}
+  .beststreak b{color:var(--gold-hi);}
 
   .banner{text-align:center;font-family:'Fraunces',serif;font-weight:700;font-size:clamp(22px,3.2vw,40px);padding:26px;}
   .banner.good{color:var(--good);}.banner.bad{color:var(--bad);}
@@ -112,6 +116,7 @@
     <div class="arena" id="arena">
       <div id="playView">
         <div class="qhead"><span class="qnum" id="qnum">Question 1</span><span class="qmeta" id="qmeta">of 20</span></div>
+        <div class="progress"><i id="prog"></i></div>
         <div class="qbox">
           <div class="qtext" id="qtext">—</div>
           <div class="opts" id="opts"></div>
@@ -123,6 +128,7 @@
           <div class="seat" id="seatChal"><div class="role">Challenger</div><div class="who" id="chalName">—</div><div class="streak" id="chalTag"></div></div>
         </div>
         <div class="queue"><div class="lab">Queue</div><div class="qq" id="queue"><span class="empty">—</span></div></div>
+        <div class="beststreak" id="best"></div>
       </div>
       <div id="bannerView" class="hide"><div class="banner" id="banner">—</div></div>
     </div>
@@ -145,11 +151,13 @@ const POOL=[{"q": "What is the capital of France?", "correct": "Paris", "wrong":
 function slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
 const $=id=>document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 const BUZZ_MS=6000, ANS_MS=4000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
 let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIndex:0, qTotal:20,
         q:null, qId:null, answerer:null, buzzWin:0, ansWin:0, lockedOut:[], firstResolved:false,
-        outcome:null, pendingLoser:null, used:new Set(), players:[], _t:null, winner:null };
+        outcome:null, pendingLoser:null, used:new Set(), players:[], _t:null, winner:null,
+        bestStreak:{}, totalCorrect:{}, blemished:[], lastWinner:null, summary:null };
 
 function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
 function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.github.io'; }
@@ -206,10 +214,18 @@ async function win(p){
   const isChamp = G.champ && p.id===G.champ.id;
   G.pendingLoser = isChamp? G.chal : G.champ;
   if(isChamp){ G.streak++; } else { G.champ={id:p.id,name:p.name}; G.streak=1; }
+  G.totalCorrect[p.id]=(G.totalCorrect[p.id]||0)+1;
+  G.bestStreak[p.id]=Math.max(G.bestStreak[p.id]||0, G.streak);
+  G.lastWinner={id:p.id,name:p.name};
+  if(G.pendingLoser) blemish(G.pendingLoser.id);
   G.outcome='win';
-  banner(true, p.name+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
+  banner(true, esc(p.name)+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
 }
+function blemish(id){ if(id && G.blemished.indexOf(id)<0) G.blemished.push(id); }
+function nameFor(id){ if(G.champ&&G.champ.id===id) return G.champ.name; if(G.chal&&G.chal.id===id) return G.chal.name; const q=G.queue.find(p=>p.id===id); if(q) return q.name; const p=G.players.find(x=>x.id===id); return p?p.name:'\u2014'; }
+function streakKing(){ let best=null; Object.keys(G.bestStreak).forEach(function(id){ const sc=G.bestStreak[id]; if(!best || sc>best.s || (sc===best.s && (G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0))){ best={id:id, s:sc, name:nameFor(id)}; } }); return best; }
 async function bothMiss(){ G.outcome='bothmiss'; G.pendingLoser=null;
+  if(G.champ) blemish(G.champ.id); if(G.chal) blemish(G.chal.id);
   banner(false, 'Nobody got it!', 'Both step aside — two new challengers.');
 }
 function banner(ok,msg,sub){
@@ -220,7 +236,7 @@ function afterReveal(){
   if(G.outcome==='win'){ enqueue(G.pendingLoser); G.chal=dequeue(); }
   else if(G.outcome==='bothmiss'){ enqueue(G.champ); enqueue(G.chal); G.champ=dequeue(); G.chal=dequeue(); G.streak=0; }
   if(!G.champ || !G.chal){ G.phase='gameover'; G.winner=G.champ||G.chal; G.deadmsg='Not enough players left.'; writeState(); render(); return; }
-  G.phase='between'; G.betweenMsg = (G.streak>0? (G.champ.name+' holds — streak '+G.streak) : 'Fresh duel!')+' · Next: '+G.chal.name;
+  G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds — streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
   writeState(); render();
   clearTimeout(G._t); G._t=setTimeout(nextOrEnd, BETWEEN_MS);
 }
@@ -233,13 +249,16 @@ function nextQuestion(){
   G.answerer=null; G.buzzWin=Date.now()+BUZZ_MS; G.ansWin=0; G.lockedOut=[]; G.firstResolved=false; G.outcome=null;
   G.phase='live'; writeState(); render();
 }
-function endGame(){ G.phase='gameover'; G.winner=G.champ; writeState(); render(); }
+function endGame(){ G.phase='gameover'; const sk=streakKing(); G.winner=G.champ;
+  G.summary={ champ:G.champ, closer:G.lastWinner, streakKing:sk, flawless:(G.champ && G.blemished.indexOf(G.champ.id)<0) };
+  writeState(); render(); }
 
 async function startGame(){
   const live=livePlayers(); if(live.length<2){ return; }
   const order=shuffle(live.map(p=>({id:p.id,name:p.name})));
   G.champ=order[0]; G.chal=order[1]; G.queue=order.slice(2);
   G.streak=0; G.qIndex=0; G.used=new Set();
+  G.bestStreak={}; G.totalCorrect={}; G.blemished=[]; G.lastWinner=null; G.summary=null;
   $('lobby').style.display='none'; $('arena').style.display='block';
   nextQuestion();
 }
@@ -250,7 +269,7 @@ function writeState(){
     buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
     reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
     between:G.phase==='between'?{msg:G.betweenMsg}:null,
-    winner:G.phase==='gameover'?G.winner:null };
+    winner:G.phase==='gameover'?G.winner:null, summary:G.phase==='gameover'?G.summary:null };
   setRoom({phase:G.phase, q_id:G.qId||'', state:st});
 }
 
@@ -272,11 +291,15 @@ function render(){
     const b=$('banner');
     if(G.phase==='reveal'){ b.className='banner '+(G.revealOk?'good':'bad'); b.innerHTML=G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>'; }
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
-    else if(G.phase==='gameover'){ b.className='banner good'; b.innerHTML='👑 '+((G.winner&&G.winner.name)||'—')+' holds the throne!<div class="sub">'+(G.deadmsg||('After '+G.qTotal+' questions.'))+'</div>'; }
+    else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
+      let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A flawless run! 👑'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
+      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'—')+' holds the throne!<div class="sub">'+sub+'</div>'; }
     return;
   }
   // play view
   $('qnum').textContent='Question '+G.qIndex; $('qmeta').textContent='of '+G.qTotal;
+  { const pr=$('prog'); if(pr) pr.style.width=Math.min(100,(G.qIndex/G.qTotal)*100)+'%'; }
+  { const be=$('best'); if(be){ const sk=streakKing(); be.textContent = (sk&&sk.s>0)? ('Longest streak so far: '+sk.s+' — '+sk.name) : ''; } }
   $('qtext').textContent=G.q?G.q.q:'—';
   const opts=$('opts'); opts.innerHTML='';
   (G.q?G.q.opts:[]).forEach((o,i)=>{ const d=document.createElement('div'); d.className='opt c'+i; const k=document.createElement('span'); k.className='k'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); });
