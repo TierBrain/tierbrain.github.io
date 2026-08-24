@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hold The Throne — Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#161a38;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--good:#57d38a;--bad:#e0728a;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% 0%,rgba(245,178,62,.12),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;display:flex;flex-direction:column;}
+  .brand{text-align:center;padding:18px 16px 4px;font-family:'Fraunces',serif;font-weight:700;font-size:26px;}
+  .brand b{color:var(--gold-hi);}
+  .tag{text-align:center;color:var(--dim);font-weight:800;font-size:13px;margin-bottom:10px;}
+  .area{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 20px 40px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-weight:800;color:var(--dim);font-size:13px;margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;}
+  input{width:100%;background:var(--panel);border:1px solid rgba(245,178,62,.2);border-radius:12px;padding:16px;color:var(--ink);font-size:20px;font-weight:800;font-family:inherit;text-align:center;letter-spacing:.1em;}
+  .btn{width:100%;border:0;border-radius:14px;padding:17px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;margin-top:6px;}
+  .btn:disabled{opacity:.5;}
+  .err{color:var(--bad);font-weight:800;text-align:center;min-height:20px;margin-bottom:8px;}
+  .pa-title{font-family:'Fraunces',serif;font-weight:700;font-size:24px;text-align:center;margin-bottom:6px;}
+  .pa-msg{text-align:center;color:var(--dim);font-weight:800;font-size:16px;line-height:1.4;}
+  .pa-good{color:var(--good);font-weight:900;text-align:center;font-size:22px;}
+  .pa-bad{color:var(--bad);font-weight:900;text-align:center;font-size:22px;}
+  .pa-hint{text-align:center;color:var(--dim);font-weight:700;font-size:14px;margin-top:14px;}
+  .count{font-variant-numeric:tabular-nums;}
+  .buzzwrap{display:flex;justify-content:center;padding:14px 0;}
+  .buzzbtn{width:min(70vw,280px);height:min(70vw,280px);border-radius:50%;border:0;cursor:pointer;font-family:'Fraunces',serif;font-weight:700;font-size:min(15vw,60px);color:#fff;
+    background:radial-gradient(circle at 40% 34%,#ff6d7e,#d5324a 62%,#a3283b);box-shadow:0 14px 0 #7c1e2d,0 20px 34px rgba(0,0,0,.5);}
+  .buzzbtn:active{transform:translateY(8px);box-shadow:0 6px 0 #7c1e2d,0 10px 20px rgba(0,0,0,.5);}
+  .buzzbtn.hit{animation:hit .3s ease;}
+  @keyframes hit{50%{transform:scale(1.05);}}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+  .pbtn{display:flex;align-items:center;gap:10px;background:var(--panel);border:2px solid transparent;border-radius:14px;padding:16px 14px;font-weight:800;font-size:16px;color:var(--ink);cursor:pointer;text-align:left;font-family:inherit;}
+  .pbtn .pk{width:32px;height:32px;flex:0 0 auto;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#12162e;background:var(--oc);}
+  .pbtn:active{transform:scale(.97);}
+  .pbtn.dim{opacity:.5;}
+  .qtext{font-family:'Fraunces',serif;font-weight:600;font-size:20px;line-height:1.3;text-align:center;margin-bottom:6px;}
+  .seatline{text-align:center;color:var(--dim);font-weight:800;margin-top:10px;font-size:15px;}
+  .seatline b{color:var(--gold-hi);}
+  .foot{text-align:center;color:var(--dim);font-size:12px;font-weight:700;padding:12px;}
+  .leave{color:var(--dim);text-decoration:underline;background:none;border:0;font-weight:800;cursor:pointer;font-size:14px;font-family:inherit;}
+</style>
+</head>
+<body>
+  <div class="brand">Hold The <b>Throne</b></div>
+  <div class="tag">grab the buzzer</div>
+  <div class="area">
+    <div id="joinCard">
+      <div class="err" id="err"></div>
+      <div class="field"><label>Room code</label><input id="codeIn" maxlength="5" autocapitalize="characters" placeholder="ABCDE"></div>
+      <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="Your name" style="letter-spacing:normal"></div>
+      <button class="btn" id="joinBtn">Join ▸</button>
+    </div>
+    <div id="playCard" style="display:none"></div>
+  </div>
+  <div class="foot" id="foot"></div>
+
+<script>
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+async function sb(path, opts){ opts=opts||{}; try{
+  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
+  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
+  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
+  if(r.ok){ if(opts.method) return null; return await r.json(); }
+  return opts.method?null:[];
+}catch(e){ return opts.method?null:[]; } }
+
+const $=id=>document.getElementById(id);
+const OPTC=['#f5b23e','#2fb6a6','#8f7be6','#e0728a'];
+let myId=(crypto.randomUUID?crypto.randomUUID():('id'+Math.random().toString(36).slice(2)+Date.now()));
+let code='', myName='', joined=false;
+let lastSig='', curQid=null, buzzedQid=null, answeredQid=null, lastBeat=0;
+
+const params=new URLSearchParams(location.search);
+if(params.get('c')) $('codeIn').value=params.get('c').toUpperCase();
+
+// buzzer sound (klaxon)
+let actx=null;
+function playBuzz(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); const a=actx; if(a.state==='suspended')a.resume();
+  const t=a.currentTime,dur=0.5; const o1=a.createOscillator(),o2=a.createOscillator(); o1.type='sawtooth';o2.type='sawtooth';o1.frequency.value=150;o2.frequency.value=158;
+  const mix=a.createGain();mix.gain.value=0.4; const lfo=a.createOscillator();lfo.type='square';lfo.frequency.value=23;const lg=a.createGain();lg.gain.value=0.4;lfo.connect(lg);lg.connect(mix.gain);
+  o1.connect(mix);o2.connect(mix); const out=a.createGain();out.gain.setValueAtTime(0.0001,t);out.gain.linearRampToValueAtTime(0.5,t+0.015);out.gain.setValueAtTime(0.5,t+dur-0.06);out.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  mix.connect(out);out.connect(a.destination);o1.start(t);o2.start(t);lfo.start(t);o1.stop(t+dur);o2.stop(t+dur);lfo.stop(t+dur);}catch(e){} }
+
+async function join(){
+  code=$('codeIn').value.trim().toUpperCase(); myName=$('nameIn').value.trim();
+  if(code.length!==5){ $('err').textContent='Enter the 5-letter code.'; return; }
+  if(!myName){ $('err').textContent='Enter your name.'; return; }
+  $('joinBtn').disabled=true; $('err').textContent='';
+  const rooms=await sb('rooms?code=eq.'+code+'&select=code');
+  if(!rooms||!rooms.length){ $('err').textContent='Room not found. Check the code.'; $('joinBtn').disabled=false; return; }
+  const now=new Date().toISOString();
+  await sb('players',{method:'POST',body:JSON.stringify({id:myId, code, name:myName, tag:'throne', score:0, joined_at:now, last_seen:now})});
+  joined=true; $('joinCard').style.display='none'; $('playCard').style.display='block';
+  $('foot').innerHTML='Room '+code+' · <button class="leave" id="leaveBtn">Leave</button>';
+  $('leaveBtn').addEventListener('click', ()=>{ try{ sb('players?id=eq.'+myId,{method:'DELETE'}); }catch(e){} location.reload(); });
+  poll(); setInterval(poll, 300);
+}
+$('joinBtn').addEventListener('click', join);
+
+async function beat(){ const now=Date.now(); if(now-lastBeat<10000) return; lastBeat=now; try{ await sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){} }
+
+function role(st){ if(st.champ&&st.champ.id===myId) return 'champ'; if(st.chal&&st.chal.id===myId) return 'chal'; const i=(st.queue||[]).findIndex(p=>p.id===myId); if(i>=0) return 'q'+(i+1); return 'spec'; }
+function area(){ return $('playCard'); }
+function setHTML(h){ area().innerHTML=h; }
+
+async function poll(){
+  if(!joined) return; beat();
+  let rows=[]; try{ rows=await sb('rooms?code=eq.'+code+'&select=state,phase'); }catch(e){}
+  const st=(rows&&rows[0]&&rows[0].state)||{};
+  if(st.qId!==curQid){ curQid=st.qId; } // question changed
+  render(st);
+}
+
+function render(st){
+  const phase=st.phase||'lobby';
+  const r=role(st);
+  const up=(r==='champ'||r==='chal');
+  const sig=phase+'|'+r+'|'+st.qId+'|'+(st.answerer?st.answerer.id:'-')+'|'+((st.lockedOut||[]).indexOf(myId)>=0);
+
+  if(phase==='lobby'){ if(lastSig!=='lobby'){ lastSig='lobby'; setHTML('<div class="pa-title">You\u2019re in!</div><div class="pa-msg">Waiting for the host to start the game\u2026</div><div class="pa-hint">Sit tight \u2014 you\u2019ll be called up.</div>'); } return; }
+
+  if(phase==='reveal'){ if(lastSig!==sig){ lastSig=sig; const rv=st.reveal||{}; const correct=(st.q&&st.q.opts&&rv.correctIdx>=0)?st.q.opts[rv.correctIdx]:'';
+      let head = rv.ok?'<div class="pa-good">\u2713 '+esc(rv.msg||'')+'</div>':'<div class="pa-bad">'+esc(rv.msg||'')+'</div>';
+      setHTML(head+'<div class="pa-msg" style="margin-top:8px">'+esc(rv.sub||'')+'</div>'+(correct?'<div class="pa-hint">Answer: <b style="color:var(--gold-hi)">'+esc(correct)+'</b></div>':'')); } return; }
+
+  if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'); } return; }
+
+  if(phase==='gameover'){ if(lastSig!=='over'){ lastSig='over'; const w=st.winner||{}; const mine=w.id===myId;
+      setHTML('<div class="pa-title">\ud83d\udc51 Throne held!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win \u2014 you held the throne!':esc(w.name||'\u2014')+' holds the throne')+'</div><div class="pa-hint">Thanks for playing!</div>'); } return; }
+
+  if(phase==='live'){
+    // spectators / queue
+    if(!up){
+      if(lastSig!==sig){ lastSig=sig; const pos=(r[0]==='q')?r.slice(1):null;
+        const line='<div class="seatline"><b>'+esc(st.champ?st.champ.name:'\u2014')+'</b>'+(st.streak>1?' ('+st.streak+')':'')+' vs '+esc(st.chal?st.chal.name:'\u2014')+'</div>';
+        if(pos) setHTML('<div class="pa-title">In the queue</div><div class="pa-good" style="color:var(--gold-hi)">#'+pos+'</div><div class="pa-hint">Get ready \u2014 winner stays on.</div>'+line);
+        else setHTML('<div class="pa-title">Watching\u2026</div>'+line); }
+      return;
+    }
+    const iLocked=(st.lockedOut||[]).indexOf(myId)>=0;
+    const iAnswer=st.answerer&&st.answerer.id===myId;
+    const someoneAnswering=!!st.answerer;
+    // buzz phase, I can buzz
+    if(!someoneAnswering && !iLocked){
+      if(buzzedQid===st.qId){ if(lastSig!=='buzzwait|'+st.qId){ lastSig='buzzwait|'+st.qId; setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">Waiting\u2026</div>'); } return; }
+      if(lastSig!==sig){ lastSig=sig;
+        setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="buzzwrap"><button class="buzzbtn" id="bz">BUZZ</button></div><div class="pa-hint">First to buzz answers \u2014 but get it wrong and it\u2019s theirs!</div>');
+        $('bz').addEventListener('click', ()=>{ if(buzzedQid===st.qId) return; buzzedQid=st.qId; playBuzz(); try{ if(navigator.vibrate)navigator.vibrate(50);}catch(e){}
+          $('bz').classList.add('hit'); sb('buzzes',{method:'POST',body:JSON.stringify({code, q_id:st.qId, player_id:myId, name:myName, tag:''})});
+          setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">You\u2019re in \u2014 answering\u2026</div>'); lastSig='buzzwait|'+st.qId; }); }
+      return;
+    }
+    // I buzzed wrong / locked out
+    if(iLocked && !iAnswer){ if(lastSig!==sig){ lastSig=sig; setHTML('<div class="pa-bad">Not quite!</div><div class="pa-msg" style="margin-top:6px">Over to your opponent\u2026</div>'); } return; }
+    // I'm the answerer -> options
+    if(iAnswer){
+      if(answeredQid===st.qId){ if(lastSig!=='answered|'+st.qId){ lastSig='answered|'+st.qId; setHTML('<div class="pa-title">Locked in</div><div class="pa-msg">\u2026</div>'); } return; }
+      if(lastSig!==sig){ lastSig=sig;
+        let h='<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="pa-hint" style="margin-top:0">Quick \u2014 pick your answer!</div><div class="pgrid" id="grid"></div>';
+        setHTML(h); const opts=(st.q&&st.q.opts)||[]; const grid=$('grid');
+        opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='pbtn'; b.style.setProperty('--oc',OPTC[i]);
+          const k=document.createElement('span'); k.className='pk'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o;
+          b.appendChild(k); b.appendChild(t); b.addEventListener('click',()=>{ if(answeredQid===st.qId) return; answeredQid=st.qId;
+            sb('answers',{method:'POST',body:JSON.stringify({code, q_id:st.qId, player_id:myId, tag:'', choice:i})});
+            setHTML('<div class="pa-title">Locked in</div><div class="pa-msg">\u2026</div>'); lastSig='answered|'+st.qId; }); grid.appendChild(b); }); }
+      return;
+    }
+    // opponent is answering
+    if(someoneAnswering && !iAnswer){ if(lastSig!==sig){ lastSig=sig; setHTML('<div class="pa-title">'+esc(st.answerer.name||'Opponent')+' buzzed!</div><div class="pa-msg">They\u2019re answering\u2026 if they miss, it may come to you.</div>'); } return; }
+  }
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
