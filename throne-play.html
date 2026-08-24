@@ -128,10 +128,14 @@ function render(st){
       let head = rv.ok?'<div class="pa-good">\u2713 '+esc(rv.msg||'')+'</div>':'<div class="pa-bad">'+esc(rv.msg||'')+'</div>';
       setHTML(head+'<div class="pa-msg" style="margin-top:8px">'+esc(rv.sub||'')+'</div>'+(correct?'<div class="pa-hint">Answer: <b style="color:var(--gold-hi)">'+esc(correct)+'</b></div>':'')); } return; }
 
+  if(phase==='finintro'){ if(lastSig!=='finintro'){ lastSig='finintro'; const m=(st.finintro&&st.finintro.msg)||'Grand Finale!';
+      const mine=(st.champ&&st.champ.id===myId)||(st.chal&&st.chal.id===myId);
+      setHTML('<div class="pa-title">\ud83d\udc51 Grand Finale</div><div class="pa-msg">'+esc(m)+'</div>'+(mine?'<div class="pa-good" style="margin-top:8px">You\u2019re in it \u2014 get ready!</div>':'<div class="pa-hint">Watch the showdown!</div>')); } return; }
   if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'); } return; }
 
   if(phase==='gameover'){ if(lastSig!=='over'){ lastSig='over'; const w=st.winner||{}; const mine=w.id===myId;
-      setHTML('<div class="pa-title">\ud83d\udc51 Throne held!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win \u2014 you held the throne!':esc(w.name||'\u2014')+' holds the throne')+'</div><div class="pa-hint">Thanks for playing!</div>'); } return; }
+      const su=st.summary||{}; let extra=''; if(su.flawless){ extra='A flawless run! \ud83d\udc51'; } else if(su.finaleScore&&su.finalists){ extra='Finale: '+(su.finaleScore[su.finalists.closer.id]||0)+'\u2013'+(su.finaleScore[su.finalists.king.id]||0); }
+      setHTML('<div class="pa-title">\ud83d\udc51 Champion!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win the crown!':esc(w.name||'\u2014')+' takes the crown')+'</div>'+(extra?'<div class="pa-hint">'+esc(extra)+'</div>':'')+'<div class="pa-hint">Thanks for playing!</div>'); } return; }
 
   if(phase==='live'){
     // spectators / queue
