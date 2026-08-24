@@ -79,6 +79,14 @@
   .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-hi));transition:width .3s;}
   .beststreak{text-align:center;color:var(--dim);font-weight:800;margin-top:12px;font-size:14px;}
   .beststreak b{color:var(--gold-hi);}
+  .hoflist{display:flex;flex-direction:column;gap:8px;}
+  .hofempty{color:var(--dim);font-weight:700;}
+  .hofrow{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.04);border-radius:11px;padding:9px 13px;font-weight:800;}
+  .hofrow .em{font-size:18px;}
+  .hofrow .nm{flex:1;}
+  .hofrow .st{color:var(--dim);font-size:13px;font-weight:800;}
+  .hofrow.legend{background:rgba(245,178,62,.13);border:1px solid rgba(245,178,62,.32);}
+  .hofrow.legend .nm{color:var(--gold-hi);}
 
   .banner{text-align:center;font-family:'Fraunces',serif;font-weight:700;font-size:clamp(22px,3.2vw,40px);padding:26px;}
   .banner.good{color:var(--good);}.banner.bad{color:var(--bad);}
@@ -110,6 +118,10 @@
         </div>
         <div class="row"><button class="btn go" id="startBtn" disabled>Start the game ▸</button>
           <span style="color:var(--dim);font-weight:700;font-size:14px">Need 2+ players</span></div>
+      </div>
+      <div class="card hof" id="hofCard" style="grid-column:1/-1">
+        <div class="hd">🏆 Hall of Fame</div>
+        <div id="hofList" class="hoflist"><span class="hofempty">No champions yet — be the first!</span></div>
       </div>
     </div>
 
@@ -172,9 +184,17 @@ async function createRoom(){
   G.joinLink=link;
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
   $('dot').classList.add('live'); $('stat').textContent='Live · room '+G.code;
-  writeState();
+  writeState(); loadLegends();
 }
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
+async function writeLegend(winner, flawless){ if(!winner) return; try{ await sb('legends',{method:'POST',body:JSON.stringify({ name:winner.name, game:'throne', streak:(G.bestStreak[winner.id]||0), flawless:!!flawless, questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() })}); }catch(e){} loadLegends(); }
+async function loadLegends(){ let r=[]; try{ r=await sb('legends?game=eq.throne&select=name,streak,flawless,created_at&order=created_at.desc&limit=8')||[]; }catch(e){} renderLegends(r); }
+function renderLegends(list){ const el=$('hofList'); if(!el) return; if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet — be the first!</span>'; return; }
+  el.innerHTML=''; list.forEach(function(L){ const row=document.createElement('div'); row.className='hofrow'+(L.flawless?' legend':'');
+    const c=document.createElement('span'); c.className='em'; c.textContent=L.flawless?'👑':'🏅';
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||'—';
+    const st=document.createElement('span'); st.className='st'; st.textContent=(L.flawless?'Flawless legend':'Champion')+(L.streak?(' · streak '+L.streak):'');
+    row.appendChild(c); row.appendChild(nm); row.appendChild(st); el.appendChild(row); }); }
 
 function livePlayers(){ const now=Date.now(); return G.players.filter(p=>{ const t=p.last_seen?Date.parse(p.last_seen):0; return (now-t)<STALE_MS || !p.last_seen; }); }
 function isLive(id){ return livePlayers().some(p=>p.id===id); }
@@ -278,8 +298,9 @@ function gradeFinale(ok){
   }
 }
 function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=streakKing();
-  G.summary={ champ:winner, closer:G.closer, streakKing:sk, flawless:(winner && G.blemished.indexOf(winner.id)<0), finaleScore:G.finaleScore||null, finalists:G.finalists||null };
-  writeState(); render();
+  const flawless=(winner && G.blemished.indexOf(winner.id)<0);
+  G.summary={ champ:winner, closer:G.closer, streakKing:sk, flawless:flawless, finaleScore:G.finaleScore||null, finalists:G.finalists||null };
+  writeState(); render(); writeLegend(winner, flawless);
 }
 function pickQuestion(){ let cand=POOL.filter(o=>!G.used.has(o.tag||slug(o.correct))); if(!cand.length){ G.used=new Set(); cand=POOL.slice(); } const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(it.tag||slug(it.correct)); return it; }
 function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
@@ -336,7 +357,7 @@ function render(){
     else if(G.phase==='reveal'){ b.className='banner '+(G.revealOk?'good':'bad'); b.innerHTML=G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>'; }
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
-      let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A flawless run! 👑'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
+      let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
       b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'—')+' holds the throne!<div class="sub">'+sub+'</div>'; }
     return;
   }
