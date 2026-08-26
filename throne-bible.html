@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hold The Throne · Bible Edition — Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#151936;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--line:rgba(245,178,62,.18);--good:#57d38a;--bad:#e0728a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  .hide{display:none!important;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 70% at 50% -10%,rgba(245,178,62,.10),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;overflow-x:hidden;}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);}
+  .brand{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(20px,2.4vw,30px);}
+  .brand b{color:var(--gold-hi);}
+  .brand .ed{font-family:'Nunito';font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-hi);vertical-align:middle;margin-left:6px;}
+  .status{font-weight:800;font-size:14px;color:var(--dim);display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:50%;background:#555;}
+  .dot.live{background:var(--good);box-shadow:0 0 10px var(--good);}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 22px 60px;}
+
+  /* lobby */
+  .lobby{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;}
+  .hymn{text-align:center;}
+  .hymn .lab{font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-size:12px;}
+  .code{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(44px,7vw,84px);letter-spacing:.14em;color:var(--gold-hi);margin:6px 0;}
+  .qr{width:150px;height:150px;background:#fff;border-radius:12px;padding:8px;margin:12px auto 8px;}
+  .qr img{width:100%;height:100%;}
+  .url{font-weight:800;color:var(--teal-hi);font-size:15px;word-break:break-all;}
+  .plist{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .pchip{background:rgba(255,255,255,.06);border-radius:999px;padding:6px 14px;font-weight:800;}
+  .hd{font-family:'Fraunces',serif;font-weight:700;font-size:20px;margin-bottom:12px;}
+  .btn{border:0;border-radius:12px;padding:14px 22px;font-weight:900;font-size:17px;cursor:pointer;font-family:inherit;}
+  .go{background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;}
+  a.url{display:inline-block;text-decoration:none;}
+  a.url:hover{text-decoration:underline;}
+  .btn.copy{margin-top:12px;background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);font-size:14px;padding:10px 16px;}
+  .btn.copy.done{background:rgba(87,211,138,.18);color:var(--good);}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .row{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap;}
+  .step{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--dim);}
+  .step button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:18px;cursor:pointer;}
+
+  /* arena */
+  .arena{display:none;}
+  .qhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .qnum{font-weight:800;color:var(--gold-hi);letter-spacing:.06em;}
+  .qmeta{color:var(--dim);font-weight:800;}
+  .qbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;text-align:center;margin-bottom:14px;}
+  .qtext{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(22px,3vw,38px);line-height:1.25;}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+  .opt{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:2px solid transparent;border-radius:12px;padding:14px 16px;font-weight:800;font-size:clamp(15px,1.8vw,21px);text-align:left;}
+  .opt .k{width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#12162e;}
+  .opt.c0 .k{background:#f5b23e;}.opt.c1 .k{background:#2fb6a6;}.opt.c2 .k{background:#8f7be6;}.opt.c3 .k{background:#e0728a;}
+  .opt.right{border-color:var(--good);background:rgba(87,211,138,.14);}
+  .opt.wrong{border-color:var(--bad);opacity:.6;}
+  .timer{height:12px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:16px;}
+  .timer > i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transition:width .25s linear;}
+  .timer.ans > i{background:linear-gradient(90deg,var(--teal),var(--teal-hi));}
+
+  .seats{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:16px 0;}
+  .seat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center;position:relative;}
+  .seat.champ{border-color:rgba(245,178,62,.5);box-shadow:0 0 0 1px rgba(245,178,62,.25);}
+  .seat .role{font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--dim);}
+  .seat.champ .role{color:var(--gold-hi);}
+  .seat .who{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(20px,2.4vw,30px);margin-top:4px;}
+  .seat .streak{margin-top:6px;font-weight:900;color:var(--gold-hi);}
+  .seat.buzzed{outline:3px solid var(--teal-hi);}
+  .vs{font-family:'Fraunces',serif;font-weight:700;color:var(--dim);font-size:22px;}
+  .crown{font-size:26px;position:absolute;top:-14px;left:50%;transform:translateX(-50%);}
+
+  .queue{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;}
+  .queue .lab{font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:11px;color:var(--dim);margin-bottom:8px;}
+  .queue .qq{display:flex;flex-wrap:wrap;gap:8px;}
+  .queue .qq span{background:rgba(255,255,255,.05);border-radius:999px;padding:5px 12px;font-weight:800;font-size:14px;}
+  .queue .empty{color:var(--dim);font-weight:700;}
+  .progress{height:7px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-bottom:14px;}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-hi));transition:width .3s;}
+  .beststreak{text-align:center;color:var(--dim);font-weight:800;margin-top:12px;font-size:14px;}
+  .beststreak b{color:var(--gold-hi);}
+  .hostrow{display:flex;justify-content:center;margin-bottom:8px;}
+  .host{position:relative;width:clamp(150px,26vw,240px);height:clamp(140px,20vh,210px);}
+  .host canvas{position:absolute;inset:0;width:100%;height:100%;}
+  .hostbubble{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:#f7efdd;color:#2a2519;font-family:'Fraunces',serif;font-weight:600;font-size:14px;padding:7px 13px;border-radius:13px;box-shadow:0 6px 16px rgba(0,0,0,.4);white-space:nowrap;z-index:3;}
+  .hostbubble::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:7px solid transparent;border-top-color:#f7efdd;border-bottom:0;}
+  .hostbubble.hide{display:none;}
+  .hostbubble.pop{animation:bpop .35s cubic-bezier(.2,1.3,.4,1) both;}
+  @keyframes bpop{from{opacity:0;transform:translateX(-50%) translateY(-5px) scale(.85);}to{opacity:1;transform:translateX(-50%);}}
+  .banner.good{animation:bgood .5s ease both;} @keyframes bgood{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .hostbubble.pop,.banner.good{animation:none;} }
+  .hoflist{display:flex;flex-direction:column;gap:8px;}
+  .hofempty{color:var(--dim);font-weight:700;}
+  .hofrow{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.04);border-radius:11px;padding:9px 13px;font-weight:800;}
+  .hofrow .em{font-size:18px;}
+  .hofrow .nm{flex:1;}
+  .hofrow .st{color:var(--dim);font-size:13px;font-weight:800;}
+  .hofrow.legend{background:rgba(245,178,62,.13);border:1px solid rgba(245,178,62,.32);}
+  .hofrow.legend .nm{color:var(--gold-hi);}
+
+  .banner{text-align:center;font-family:'Fraunces',serif;font-weight:700;font-size:clamp(22px,3.2vw,40px);padding:26px;}
+  .banner.good{color:var(--good);}.banner.bad{color:var(--bad);}
+  .sub{color:var(--dim);font-weight:800;margin-top:8px;font-family:'Nunito';font-size:16px;}
+  .ops{position:fixed;bottom:14px;right:14px;display:flex;gap:8px;}
+  .ops button{border:1px solid var(--line);background:rgba(20,24,52,.9);color:var(--dim);border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:13px;}
+  @media(max-width:720px){.lobby{grid-template-columns:1fr;}.opts{grid-template-columns:1fr;}.seats{grid-template-columns:1fr;}.vs{display:none;}}
+</style>
+</head>
+<body>
+  <div class="top"><div class="brand">Hold The <b>Throne</b> <span class="ed">Bible Edition</span></div><div class="status"><span class="dot" id="dot"></span><span id="stat">starting…</span></div></div>
+  <div class="wrap">
+
+    <div class="lobby" id="lobby">
+      <div class="card hymn">
+        <div class="lab">Join code</div>
+        <div class="code" id="code">·····</div>
+        <div class="qr" id="qrwrap"><img id="qr" alt="Join QR"></div>
+        <a class="url" id="url" target="_blank" rel="noopener">tierbrain.github.io/throne-bible-play.html</a>
+        <div><button class="btn copy" id="copyBtn" type="button">Copy join link</button></div>
+      </div>
+      <div class="card">
+        <div class="hd">Challengers <span id="pcount" style="color:var(--dim)">(0)</span></div>
+        <div class="plist" id="plist"><span class="empty" style="color:var(--dim);font-weight:700">Waiting for players to join…</span></div>
+        <div class="row">
+          <div class="step">Questions
+            <button id="qMinus">–</button><span id="qTot">20</span><button id="qPlus">+</button>
+          </div>
+        </div>
+        <div class="row"><button class="btn go" id="startBtn" disabled>Start the game ▸</button>
+          <span style="color:var(--dim);font-weight:700;font-size:14px">Need 2+ players</span></div>
+      </div>
+      <div class="card hof" id="hofCard" style="grid-column:1/-1">
+        <div class="hd">🏆 Hall of Fame</div>
+        <div id="hofList" class="hoflist"><span class="hofempty">No champions yet — be the first!</span></div>
+      </div>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="hostrow"><div class="host"><canvas id="hostCv"></canvas><div class="hostbubble hide" id="hostBubble"></div></div></div>
+      <div id="playView">
+        <div class="qhead"><span class="qnum" id="qnum">Question 1</span><span class="qmeta" id="qmeta">of 20</span></div>
+        <div class="progress"><i id="prog"></i></div>
+        <div class="qbox">
+          <div class="qtext" id="qtext">—</div>
+          <div class="opts" id="opts"></div>
+          <div class="timer" id="timerWrap"><i id="timer"></i></div>
+        </div>
+        <div class="seats">
+          <div class="seat champ" id="seatChamp"><div class="crown">👑</div><div class="role">On the throne</div><div class="who" id="champName">—</div><div class="streak" id="champStreak"></div></div>
+          <div class="vs">vs</div>
+          <div class="seat" id="seatChal"><div class="role">Challenger</div><div class="who" id="chalName">—</div><div class="streak" id="chalTag"></div></div>
+        </div>
+        <div class="queue"><div class="lab">Queue</div><div class="qq" id="queue"><span class="empty">—</span></div></div>
+        <div class="beststreak" id="best"></div>
+      </div>
+      <div id="bannerView" class="hide"><div class="banner" id="banner">—</div></div>
+    </div>
+
+  </div>
+  <div class="ops"><button id="muteBtn" title="Sound">🔊</button><button id="newBtn">New room</button></div>
+
+<script>
+
+/* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
+(function(){
+  const HCV=document.getElementById('hostCv'); if(!HCV) return;
+  const X=HCV.getContext('2d');
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let HW=0,HH=0,HDPR=1,started=false;
+  function hsize(){ const r=HCV.parentElement.getBoundingClientRect(); if(!r.width) return;
+    HW=r.width; HH=r.height; HDPR=Math.min(2,window.devicePixelRatio||1);
+    HCV.width=HW*HDPR; HCV.height=HH*HDPR; X.setTransform(HDPR,0,0,HDPR,0,0); }
+  window.addEventListener('resize',hsize);
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp01=x=>x<0?0:x>1?1:x, ease=x=>{x=clamp01(x);return x*x*(3-2*x);};
+  const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+  const rgba=(c,a)=>'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+  const shade=(c,f)=>[c[0]*f,c[1]*f,c[2]*f];
+  function circ(x,y,r){X.beginPath();X.arc(x,y,r,0,7);X.fill();}
+  function rrp(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();}
+  const SKIN=[150,96,60], SKSH=shade(SKIN,0.80), HAIR=[38,28,24];
+  const JACKET=[214,158,54], JKSH=shade(JACKET,0.72), LAPEL=[26,30,66], SHIRT=[245,238,224], TIE=[176,60,80], TIESH=shade(TIE,0.75);
+  const POSES={
+    idle:     {lUp:.02,lOut:.10,rUp:.02,rOut:.10,smile:.45,browR:.12,browA:0,  look:0,  open:0, point:0},
+    welcome:  {lUp:.82,lOut:.85,rUp:.82,rOut:.85,smile:1,  browR:.55,browA:.12,look:0,  open:.4,point:0},
+    present:  {lUp:.06,lOut:.12,rUp:.55,rOut:1.0,smile:.75,browR:.4, browA:.05,look:.55,open:0, point:0},
+    point:    {lUp:.05,lOut:.10,rUp:1.0,rOut:.35,smile:.85,browR:.65,browA:.18,look:.15,open:.4,point:1},
+    celebrate:{lUp:1.0,lOut:.7, rUp:1.0,rOut:.7, smile:1,  browR:.6, browA:.12,look:0,  open:.5,point:0},
+    ask:      {lUp:.06,lOut:.12,rUp:.5, rOut:.9, smile:.5, browR:.35,browA:.05,look:.35,open:0, point:0},
+    wince:    {lUp:.08,lOut:.16,rUp:.12,rOut:.22,smile:-.4,browR:-.12,browA:.35,look:0,  open:0, point:0},
+    calm:     {lUp:.09,lOut:.18,rUp:.09,rOut:.18,smile:.42,browR:.12,browA:0,  look:0,  open:0, point:0}
+  };
+  const REEL=[{p:'idle',d:2600},{p:'welcome',d:3200,say:1},{p:'present',d:3000},{p:'point',d:2600,say:1},{p:'celebrate',d:2600}];
+  const FIELDS=['lUp','lOut','rUp','rOut','smile','browR','browA','look','open','point'];
+  const TRANS=650;
+  let A=Object.assign({},POSES.idle), from=Object.assign({},POSES.idle), ri=0, stepStart=0;
+  let mode='reel', holdPose='idle'; const TALK={welcome:1,ask:1,celebrate:1};
+
+  function drawArm(side,sx,sy,s,up,out,point,T){
+    const sway=Math.sin(T*0.0016+side)*s*0.03;
+    const hx=sx+side*s*(0.5+out*0.55), hy=sy+s*(0.9-up*2.0)+sway;
+    const ex=sx+side*s*(0.34+out*0.4), ey=sy+s*(0.5-up*0.95);
+    X.lineCap='round'; X.lineJoin='round';
+    X.strokeStyle=rgb(JKSH); X.lineWidth=s*0.36;
+    X.beginPath(); X.moveTo(sx,sy); X.lineTo(ex,ey); X.lineTo(hx,hy); X.stroke();
+    X.fillStyle=rgb(SHIRT); circ(hx,hy,s*0.12);
+    X.fillStyle=rgb(SKIN); circ(hx,hy,s*0.15);
+    if(point>0.5){ X.save(); X.translate(hx,hy); X.rotate(Math.atan2(hy-ey,hx-ex));
+      X.fillStyle=rgb(SKIN); rrp(0,-s*0.07,s*0.34*point,s*0.14,s*0.07); X.fill(); X.restore(); }
+  }
+  function star(x,y,r){ X.save(); X.translate(x,y); X.beginPath();
+    for(let i=0;i<8;i++){ const a=i/8*Math.PI*2, rr=(i%2? r*0.4:r); const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
+      if(i===0) X.moveTo(px,py); else X.lineTo(px,py); }
+    X.closePath(); X.fill(); X.restore(); }
+
+  function draw(P,T,openNow){
+    X.clearRect(0,0,HW,HH);
+    const s=Math.min(HW,HH)*0.15, cx=HW/2;
+    const br=Math.sin(T*0.0022)*s*0.03, tilt=Math.sin(T*0.0013)*0.02;
+    const shoulderY=HH*0.60, shHalf=s*1.18;
+    const gg=X.createRadialGradient(cx,HH*0.30,0,cx,HH*0.34,HH*0.8);
+    gg.addColorStop(0,'rgba(255,214,140,0.20)'); gg.addColorStop(0.5,'rgba(255,214,140,0.05)'); gg.addColorStop(1,'rgba(255,214,140,0)');
+    X.fillStyle=gg; X.fillRect(0,0,HW,HH);
+    X.fillStyle='rgba(0,0,0,0.28)'; X.save(); X.translate(cx,HH*0.99); X.scale(1,0.16); circ(0,0,s*1.5); X.restore();
+    drawArm(-1, cx-shHalf*0.86, shoulderY+br, s, P.lUp, P.lOut, 0, T);
+    X.fillStyle=rgb(JACKET);
+    X.beginPath(); X.moveTo(cx-shHalf,shoulderY+br);
+    X.quadraticCurveTo(cx-shHalf*1.2,HH*0.9,cx-shHalf*1.25,HH+s); X.lineTo(cx+shHalf*1.25,HH+s);
+    X.quadraticCurveTo(cx+shHalf*1.2,HH*0.9,cx+shHalf,shoulderY+br); X.closePath(); X.fill();
+    const collarY=shoulderY+br+s*0.05;
+    X.fillStyle=rgb(SHIRT); X.beginPath(); X.moveTo(cx-s*0.5,collarY); X.lineTo(cx+s*0.5,collarY); X.lineTo(cx,HH+s); X.closePath(); X.fill();
+    X.fillStyle=rgb(LAPEL);
+    X.beginPath(); X.moveTo(cx-shHalf*0.9,shoulderY+br); X.lineTo(cx-s*0.12,collarY+s*0.1); X.lineTo(cx-s*0.55,HH*0.98); X.lineTo(cx-shHalf*1.05,HH*0.9); X.closePath(); X.fill();
+    X.beginPath(); X.moveTo(cx+shHalf*0.9,shoulderY+br); X.lineTo(cx+s*0.12,collarY+s*0.1); X.lineTo(cx+s*0.55,HH*0.98); X.lineTo(cx+shHalf*1.05,HH*0.9); X.closePath(); X.fill();
+    X.fillStyle=rgb(TIE);
+    X.beginPath(); X.moveTo(cx,collarY+s*0.18); X.lineTo(cx-s*0.42,collarY-s*0.02); X.lineTo(cx-s*0.42,collarY+s*0.38); X.closePath(); X.fill();
+    X.beginPath(); X.moveTo(cx,collarY+s*0.18); X.lineTo(cx+s*0.42,collarY-s*0.02); X.lineTo(cx+s*0.42,collarY+s*0.38); X.closePath(); X.fill();
+    X.fillStyle=rgb(TIESH); circ(cx,collarY+s*0.18,s*0.1);
+    drawArm(1, cx+shHalf*0.86, shoulderY+br, s, P.rUp, P.rOut, P.point, T);
+    const headCY=shoulderY+br - s*1.02, headR=s*0.66;
+    X.fillStyle=rgb(SKSH); rrp(cx-s*0.22, headCY+headR*0.5, s*0.44, s*0.6, s*0.16); X.fill();
+    X.save(); X.translate(cx+P.look*s*0.12, headCY+br*0.5); X.rotate(tilt+P.look*0.03);
+    X.fillStyle=rgb(SKIN); circ(0,0,headR);
+    X.save(); X.beginPath(); X.arc(0,0,headR,0,7); X.clip(); X.fillStyle=rgba(SKSH,0.5); circ(headR*0.5,headR*0.2,headR); X.restore();
+    X.fillStyle=rgb(SKIN); circ(-headR*0.98,0,headR*0.16); circ(headR*0.98,0,headR*0.16);
+    X.fillStyle=rgb(HAIR);
+    X.beginPath(); X.arc(0,-headR*0.12,headR*0.99,Math.PI*1.04,Math.PI*1.96);
+    X.quadraticCurveTo(headR*0.7,-headR*1.1,0,-headR*1.02); X.quadraticCurveTo(-headR*0.7,-headR*1.1,-headR*0.98,-headR*0.2); X.fill();
+    const eY=-headR*0.02, eX=headR*0.36, bl=((T*0.001+0.3)%3.6)>3.42;
+    const px=P.look*headR*0.14;
+    for(const sx of [-1,1]){
+      if(bl){ X.strokeStyle=rgb(SKSH); X.lineWidth=Math.max(1.4,s*0.05); X.lineCap='round';
+        X.beginPath(); X.arc(sx*eX,eY,headR*0.17,0.2,Math.PI-0.2); X.stroke(); }
+      else{ X.fillStyle='#f7f3ea'; X.beginPath(); X.ellipse(sx*eX,eY,headR*0.17,headR*0.2,0,0,7); X.fill();
+        X.fillStyle='#241e1a'; circ(sx*eX+px,eY+headR*0.02,headR*0.09);
+        X.fillStyle='#fff'; circ(sx*eX+px+headR*0.03,eY-headR*0.03,headR*0.03); }
+    }
+    const byy=eY-headR*0.30-P.browR*headR*0.16;
+    X.strokeStyle=rgb(shade(HAIR,0.9)); X.lineWidth=Math.max(1.6,s*0.06); X.lineCap='round';
+    for(const sx of [-1,1]){ X.beginPath();
+      X.moveTo(sx*eX-headR*0.13, byy + sx*P.browA*headR*0.10);
+      X.lineTo(sx*eX+headR*0.15, byy - sx*P.browA*headR*0.10); X.stroke(); }
+    X.strokeStyle=rgb(SKSH); X.lineWidth=Math.max(1.4,s*0.045); X.lineCap='round';
+    X.beginPath(); X.moveTo(0,eY+headR*0.14); X.lineTo(-headR*0.06,eY+headR*0.30); X.lineTo(headR*0.03,eY+headR*0.32); X.stroke();
+    if(P.smile>0.5){ X.fillStyle=rgba([176,96,74],(P.smile-0.5)*0.38); circ(-headR*0.5,headR*0.34,headR*0.16); circ(headR*0.5,headR*0.34,headR*0.16); }
+    const my=headR*0.5;
+    if(openNow>0.06){
+      const mw=headR*(0.30+P.smile*0.12), mh=headR*(0.10+openNow*0.34);
+      X.fillStyle='#5a2230'; X.beginPath(); X.ellipse(0,my,mw,mh,0,0,7); X.fill();
+      X.fillStyle='#fff'; X.beginPath(); X.ellipse(0,my-mh*0.55,mw*0.8,mh*0.32,0,0,Math.PI,true); X.fill();
+      X.strokeStyle=rgb([126,68,66]); X.lineWidth=Math.max(1.4,s*0.04); X.beginPath(); X.ellipse(0,my,mw,mh,0,0,7); X.stroke();
+    } else {
+      X.strokeStyle=rgb([126,68,66]); X.lineWidth=Math.max(1.6,s*0.05); X.lineCap='round';
+      X.beginPath(); X.moveTo(-headR*0.26,my-P.smile*headR*0.02);
+      X.quadraticCurveTo(0,my+P.smile*headR*0.30, headR*0.26,my-P.smile*headR*0.02); X.stroke();
+    }
+    X.restore();
+    if(P.smile>0.92 && P.lUp>0.8){ X.fillStyle='rgba(255,224,150,0.9)';
+      for(let i=0;i<3;i++){ const a=T*0.004+i*2.1; star(cx+Math.cos(a)*s*2.0, headCY+Math.sin(a*1.3)*s*1.4, s*0.12); } }
+  }
+
+  function frame(ts){
+    if(HW===0||HCV.width===0){ hsize(); if(HW===0){ requestAnimationFrame(frame); return; } }
+    if(!stepStart) stepStart=ts;
+    let to, say=false;
+    if(mode==='reel'){ const step=REEL[ri]; to=POSES[step.p]; say=!!step.say; }
+    else { to=POSES[holdPose]||POSES.idle; say=!!(TALK[holdPose] && (ts-stepStart<1700)); }
+    const k=ease(Math.min(1,(ts-stepStart)/TRANS));
+    for(const f of FIELDS) A[f]=lerp(from[f],to[f],k);
+    let openNow=A.open;
+    if(say) openNow=Math.max(to.open,0.12+0.22*(0.5+0.5*Math.sin(ts*0.02)));
+    const look=A.look + Math.sin(ts*0.0006)*0.15;
+    draw(Object.assign({},A,{look}), ts, openNow);
+    if(mode==='reel'){ const step=REEL[ri]; if(ts-stepStart>=step.d){ from=Object.assign({},A); ri=(ri+1)%REEL.length; stepStart=ts; } }
+    requestAnimationFrame(frame);
+  }
+  function startHost(){ if(started) return; started=true; hsize();
+    if(RM){ A=Object.assign({},POSES.welcome); draw(A,0,0.15); return; }
+    requestAnimationFrame(frame); }
+  window.HOST={
+    set:function(n){ holdPose=n; mode='pose'; from=Object.assign({},A); stepStart=(window.performance&&performance.now())||0;
+      if(RM){ A=Object.assign({},POSES[n]||POSES.idle); draw(A,0, TALK[n]?0.2:((POSES[n]||POSES.idle).open)); } },
+    reel:function(){ if(mode==='reel')return; mode='reel'; from=Object.assign({},A); ri=0; stepStart=(window.performance&&performance.now())||0; }
+  };
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(startHost); setTimeout(startHost,400); }
+  else startHost();
+})();
+
+</script>
+<script>
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+async function sb(path, opts){ opts=opts||{}; try{
+  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
+  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
+  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
+  if(r.ok){ if(opts.method) return null; return await r.json(); }
+  return opts.method?null:[];
+}catch(e){ return opts.method?null:[]; } }
+
+const POOL=[{"q": "Who built an ark to survive a great flood?", "correct": "Noah", "wrong": ["Moses", "Abraham", "David"], "tag": null}, {"q": "In the Bible, who were the first man and woman?", "correct": "Adam and Eve", "wrong": ["Cain and Abel", "Abraham and Sarah", "Isaac and Rebekah"], "tag": null}, {"q": "Which young shepherd defeated the giant Goliath?", "correct": "David", "wrong": ["Samson", "Saul", "Solomon"], "tag": null}, {"q": "Who was swallowed by a great fish (often called a whale)?", "correct": "Jonah", "wrong": ["Job", "Joshua", "Jeremiah"], "tag": null}, {"q": "God created the world in how many days, resting on the seventh?", "correct": "Six", "wrong": ["Three", "Seven", "Ten"], "tag": null}, {"q": "Who led the Israelites out of slavery in Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Joseph"], "tag": null}, {"q": "What did God give Moses on Mount Sinai?", "correct": "The Ten Commandments", "wrong": ["The Golden Calf", "The Ark of the Covenant", "The Book of Psalms"], "tag": null}, {"q": "Who was born in a manger in Bethlehem?", "correct": "Jesus", "wrong": ["John the Baptist", "Moses", "Isaac"], "tag": null}, {"q": "How many disciples (apostles) did Jesus choose?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Three"], "tag": null}, {"q": "Who baptised Jesus in the River Jordan?", "correct": "John the Baptist", "wrong": ["Peter", "Paul", "Andrew"], "tag": null}, {"q": "What is the first book of the Bible?", "correct": "Genesis", "wrong": ["Exodus", "Psalms", "Matthew"], "tag": null}, {"q": "Which garden did Adam and Eve live in?", "correct": "The Garden of Eden", "wrong": ["Gethsemane", "Babylon", "Canaan"], "tag": null}, {"q": "In Eden, who tempted Eve to eat the forbidden fruit?", "correct": "The serpent", "wrong": ["A lion", "An angel", "A raven"], "tag": null}, {"q": "Jesus turned water into what at a wedding in Cana?", "correct": "Wine", "wrong": ["Bread", "Oil", "Milk"], "tag": null}, {"q": "Who built an ark to survive the flood?", "correct": "Noah", "wrong": ["Moses", "Abraham", "David"], "tag": "noah"}, {"q": "Who was swallowed by a great fish?", "correct": "Jonah", "wrong": ["Job", "Joshua", "Jeremiah"], "tag": "jonah"}, {"q": "In which garden did Adam and Eve live?", "correct": "Eden", "wrong": ["Gethsemane", "Babylon", "Canaan"], "tag": "eden"}, {"q": "In the Parable of the Good Samaritan, who finally helped the injured man?", "correct": "A Samaritan", "wrong": ["A priest", "A Levite", "A Roman soldier"], "tag": null}, {"q": "The Parable of the Prodigal Son is about a father and his…?", "correct": "Two sons", "wrong": ["Three daughters", "Twelve disciples", "Seven servants"], "tag": null}, {"q": "Who wrote many of the Psalms and was a king of Israel?", "correct": "David", "wrong": ["Solomon", "Saul", "Samuel"], "tag": null}, {"q": "Which king was famed for his wisdom and built the first Temple in Jerusalem?", "correct": "Solomon", "wrong": ["David", "Saul", "Hezekiah"], "tag": null}, {"q": "Jesus delivered a famous sermon known as the Sermon on the…?", "correct": "Mount", "wrong": ["Plain", "Sea", "Hill"], "tag": null}, {"q": "The Beatitudes ('Blessed are…') come from which teaching?", "correct": "The Sermon on the Mount", "wrong": ["The Last Supper", "The Road to Emmaus", "Pentecost"], "tag": null}, {"q": "Which brother killed Abel in the first murder?", "correct": "Cain", "wrong": ["Seth", "Esau", "Ishmael"], "tag": null}, {"q": "God asked Abraham to sacrifice which son, before stopping him?", "correct": "Isaac", "wrong": ["Ishmael", "Jacob", "Joseph"], "tag": null}, {"q": "Which prophet was taken up to heaven in a chariot of fire?", "correct": "Elijah", "wrong": ["Elisha", "Isaiah", "Ezekiel"], "tag": null}, {"q": "Who interpreted Pharaoh's dreams and rose to power in Egypt?", "correct": "Joseph", "wrong": ["Moses", "Daniel", "Aaron"], "tag": null}, {"q": "The walls of which city fell after the Israelites marched around them?", "correct": "Jericho", "wrong": ["Babylon", "Nineveh", "Jerusalem"], "tag": null}, {"q": "Who was the first king of Israel?", "correct": "Saul", "wrong": ["David", "Solomon", "Samuel"], "tag": null}, {"q": "In the Parable of the Sower, the seed falls on different kinds of…?", "correct": "Soil", "wrong": ["Water", "Sand", "Snow"], "tag": null}, {"q": "Which Gospel is the first book of the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Luke", "John"], "tag": null}, {"q": "Who led the Israelites out of Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Joseph"], "tag": "moses"}, {"q": "Who was thrown into the lions’ den?", "correct": "Daniel", "wrong": ["David", "Elijah", "Samuel"], "tag": "daniel"}, {"q": "What did God create on the first day?", "correct": "Light", "wrong": ["Animals", "The sea", "The stars"], "tag": "creation-light"}, {"q": "Which king is traditionally credited with writing Psalm 23?", "correct": "David", "wrong": ["Solomon", "Asaph", "Moses"], "tag": null}, {"q": "The Parable of the Good Samaritan appears in which Gospel?", "correct": "Luke", "wrong": ["Matthew", "Mark", "John"], "tag": null}, {"q": "The Parable of the Prodigal Son appears only in which Gospel?", "correct": "Luke", "wrong": ["Matthew", "Mark", "John"], "tag": null}, {"q": "How many books are there in the Protestant Bible?", "correct": "66", "wrong": ["27", "39", "100"], "tag": null}, {"q": "How many books are in the New Testament?", "correct": "27", "wrong": ["12", "39", "50"], "tag": null}, {"q": "Who was the father of John the Baptist, a priest struck mute?", "correct": "Zechariah", "wrong": ["Zebedee", "Zacchaeus", "Zerubbabel"], "tag": null}, {"q": "Which disciple was chosen to replace Judas Iscariot among the Twelve?", "correct": "Matthias", "wrong": ["Barnabas", "Stephen", "Silas"], "tag": null}, {"q": "On the road to Emmaus, the disciples recognised the risen Jesus when he…?", "correct": "Broke bread", "wrong": ["Spoke their names", "Healed them", "Walked on water"], "tag": null}, {"q": "Which prophet saw a vision of a valley of dry bones?", "correct": "Ezekiel", "wrong": ["Isaiah", "Jeremiah", "Daniel"], "tag": null}, {"q": "Who was the tax collector that climbed a sycamore tree to see Jesus?", "correct": "Zacchaeus", "wrong": ["Matthew", "Nicodemus", "Bartimaeus"], "tag": null}, {"q": "Abel offered animals from his flock; Cain offered what?", "correct": "Crops", "wrong": ["Fish", "Gold", "Wine"], "tag": null}, {"q": "On which mountain did Noah's ark come to rest?", "correct": "Mount Ararat", "wrong": ["Mount Sinai", "Mount Carmel", "Mount Nebo"], "tag": null}, {"q": "On which mountain did Moses die, viewing the Promised Land?", "correct": "Mount Nebo", "wrong": ["Mount Sinai", "Mount Ararat", "Mount Tabor"], "tag": null}, {"q": "How many plagues did God send upon Egypt?", "correct": "Ten", "wrong": ["Seven", "Twelve", "Three"], "tag": null}, {"q": "Which giant did David defeat with a sling?", "correct": "Goliath", "wrong": ["Saul", "Samson", "Og"], "tag": "goliath"}, {"q": "On which mountain did Moses receive the commandments?", "correct": "Mount Sinai", "wrong": ["Mount Zion", "Mount Carmel", "Mount Nebo"], "tag": "ten-commandments"}, {"q": "Who was the wisest king of Israel?", "correct": "Solomon", "wrong": ["Saul", "David", "Hezekiah"], "tag": "solomon"}, {"q": "In what language was most of the Old Testament originally written?", "correct": "Hebrew", "wrong": ["Greek", "Aramaic", "Latin"], "tag": null}, {"q": "The shortest verse in the King James Bible, “Jesus wept,” is in which Gospel?", "correct": "John", "wrong": ["Matthew", "Mark", "Luke"], "tag": null}, {"q": "Who succeeded Moses to lead Israel into the Promised Land?", "correct": "Joshua", "wrong": ["Aaron", "Caleb", "Gideon"], "tag": null}, {"q": "Which book of the Bible never once mentions God by name?", "correct": "Esther", "wrong": ["Ruth", "Job", "Jonah"], "tag": null}, {"q": "The mysterious “writing on the wall” appeared at whose feast in Babylon?", "correct": "Belshazzar", "wrong": ["Nebuchadnezzar", "Darius", "Cyrus"], "tag": null}, {"q": "Methuselah, the longest-lived man, was the grandfather of which ark-builder?", "correct": "Noah", "wrong": ["Abraham", "Enoch", "Lot"], "tag": null}, {"q": "Who interpreted Pharaoh's dreams of seven fat and seven lean cows?", "correct": "Joseph", "wrong": ["Daniel", "Moses", "Aaron"], "tag": null}, {"q": "The Ten Commandments are recorded in Exodus and which other book?", "correct": "Deuteronomy", "wrong": ["Leviticus", "Numbers", "Genesis"], "tag": null}, {"q": "Which prophet was told to marry Gomer, an unfaithful wife, as a living parable?", "correct": "Hosea", "wrong": ["Amos", "Joel", "Micah"], "tag": null}, {"q": "Goliath was a champion of which people?", "correct": "The Philistines", "wrong": ["The Amalekites", "The Moabites", "The Canaanites"], "tag": null}, {"q": "How many days had Lazarus been dead before Jesus raised him?", "correct": "Four", "wrong": ["Three", "Two", "Seven"], "tag": null}, {"q": "On which island was Paul shipwrecked and bitten by a snake?", "correct": "Malta", "wrong": ["Cyprus", "Crete", "Patmos"], "tag": null}, {"q": "Which Roman governor sentenced Jesus to crucifixion?", "correct": "Pontius Pilate", "wrong": ["Herod Antipas", "Felix", "Festus"], "tag": null}, {"q": "In which garden did Jesus pray on the night of his arrest?", "correct": "Gethsemane", "wrong": ["Eden", "Bethany", "Siloam"], "tag": null}, {"q": "Which book comes first in the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Genesis", "Acts"], "tag": "gospel-matthew"}, {"q": "Who baptised Jesus in the Jordan?", "correct": "John the Baptist", "wrong": ["Peter", "Andrew", "Elijah"], "tag": "john-baptist"}, {"q": "Who was thrown into the lions’ den but not harmed?", "correct": "Daniel", "wrong": ["David", "Joseph", "Elijah"], "tag": null}, {"q": "On what were the Ten Commandments written?", "correct": "Stone tablets", "wrong": ["A scroll", "Papyrus", "Wood"], "tag": null}, {"q": "Who baptised Jesus in the Jordan River?", "correct": "John the Baptist", "wrong": ["Peter", "Paul", "Andrew"], "tag": null}, {"q": "How many disciples did Jesus choose?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Forty"], "tag": null}, {"q": "Who denied Jesus three times before the rooster crowed?", "correct": "Peter", "wrong": ["Judas", "Thomas", "John"], "tag": null}, {"q": "Which sea did Moses part for the Israelites?", "correct": "The Red Sea", "wrong": ["The Dead Sea", "The Sea of Galilee", "The Jordan"], "tag": null}, {"q": "Who was the strong man betrayed by Delilah?", "correct": "Samson", "wrong": ["Gideon", "Saul", "Goliath"], "tag": null}, {"q": "In which town was Jesus born?", "correct": "Bethlehem", "wrong": ["Nazareth", "Jerusalem", "Capernaum"], "tag": null}, {"q": "How many days and nights did it rain during the flood?", "correct": "Forty", "wrong": ["Seven", "Twelve", "Thirty"], "tag": null}, {"q": "What was Jesus’ first miracle?", "correct": "Turning water into wine", "wrong": ["Healing a leper", "Walking on water", "Feeding 5,000"], "tag": null}, {"q": "Who built the ark?", "correct": "Noah", "wrong": ["Moses", "Abraham", "Enoch"], "tag": null}, {"q": "Which Gospel comes first in the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Luke", "John"], "tag": null}, {"q": "Who led Israel out of Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Caleb"], "tag": "moses"}, {"q": "Who killed the giant Goliath?", "correct": "David", "wrong": ["Saul", "Samson", "Jonathan"], "tag": "goliath"}, {"q": "Who was asked by God to leave his home and became the father of many nations?", "correct": "Abraham", "wrong": ["Isaac", "Jacob", "Lot"], "tag": "abraham"}, {"q": "What was the name of Abraham's wife, who laughed when told she would have a son?", "correct": "Sarah", "wrong": ["Rebekah", "Rachel", "Leah"], "tag": "sarah"}, {"q": "Which son did God ask Abraham to sacrifice, before providing a ram instead?", "correct": "Isaac", "wrong": ["Ishmael", "Jacob", "Esau"], "tag": "isaac-sacrifice"}, {"q": "Who sold his birthright to his brother for a bowl of stew?", "correct": "Esau", "wrong": ["Jacob", "Cain", "Reuben"], "tag": "esau"}, {"q": "Which patriarch dreamed of a ladder reaching up to heaven?", "correct": "Jacob", "wrong": ["Joseph", "Abraham", "Daniel"], "tag": "jacob-ladder"}, {"q": "What new name was Jacob given after wrestling through the night?", "correct": "Israel", "wrong": ["Isaac", "Ishmael", "Judah"], "tag": "jacob-israel"}, {"q": "Joseph was given a special coat of many what?", "correct": "Colours", "wrong": ["Patches", "Feathers", "Jewels"], "tag": "josephs-coat"}, {"q": "Who was the oldest man in the Bible, said to have lived 969 years?", "correct": "Methuselah", "wrong": ["Noah", "Adam", "Enoch"], "tag": "methuselah"}, {"q": "At which tower did God confuse the people's language?", "correct": "The Tower of Babel", "wrong": ["The Tower of David", "Jericho", "Nineveh"], "tag": "babel"}, {"q": "Who turned into a pillar of salt for looking back at the city she fled?", "correct": "Lot's wife", "wrong": ["Sarah", "Rebekah", "Miriam"], "tag": "lots-wife"}, {"q": "What sign did God set in the sky as a promise after the flood?", "correct": "A rainbow", "wrong": ["A star", "A cloud", "A dove"], "tag": "rainbow-promise"}, {"q": "Which bird did Noah send out that returned with an olive leaf?", "correct": "A dove", "wrong": ["A raven", "An eagle", "A sparrow"], "tag": "noahs-dove"}, {"q": "From what did God speak to Moses on the mountain?", "correct": "A burning bush", "wrong": ["A cloud", "A whirlwind", "A pillar of fire"], "tag": "burning-bush"}, {"q": "Who was the brother of Moses and Israel's first high priest?", "correct": "Aaron", "wrong": ["Joshua", "Caleb", "Hur"], "tag": "aaron"}, {"q": "What was the sister of Moses called?", "correct": "Miriam", "wrong": ["Deborah", "Zipporah", "Rachel"], "tag": "miriam"}, {"q": "What was the first plague that struck Egypt, turning the Nile red?", "correct": "Water into blood", "wrong": ["Locusts", "Frogs", "Darkness"], "tag": "plague-blood"}, {"q": "What food did God provide from heaven for Israel in the wilderness?", "correct": "Manna", "wrong": ["Quail only", "Bread of the land", "Honey"], "tag": "manna"}, {"q": "The idol the Israelites made while Moses was on the mountain was a golden what?", "correct": "Calf", "wrong": ["Bull", "Serpent", "Eagle"], "tag": "golden-calf"}, {"q": "On which mountain did Moses receive the Ten Commandments?", "correct": "Mount Sinai", "wrong": ["Mount Nebo", "Mount Carmel", "Mount Zion"], "tag": "mount-sinai"}, {"q": "The sacred chest that held the stone tablets was the Ark of the what?", "correct": "Covenant", "wrong": ["Testimony only", "Promise", "Law"], "tag": "ark-covenant"}, {"q": "Whose donkey spoke to warn him on the road?", "correct": "Balaam", "wrong": ["Balak", "Barak", "Boaz"], "tag": "balaam"}, {"q": "What meal marks the night the angel of death 'passed over' Israel's homes?", "correct": "The Passover", "wrong": ["The Feast of Booths", "Pentecost", "The Sabbath meal"], "tag": "passover"}, {"q": "Who hid the spies in Jericho and helped Israel take the city?", "correct": "Rahab", "wrong": ["Ruth", "Deborah", "Jael"], "tag": "rahab"}, {"q": "Which woman was both a judge and a prophetess of Israel?", "correct": "Deborah", "wrong": ["Miriam", "Esther", "Hannah"], "tag": "deborah"}, {"q": "With how many men did Gideon defeat the Midianite army?", "correct": "300", "wrong": ["600", "1,000", "100"], "tag": "gideon-300"}, {"q": "Whose strength lay in his uncut hair?", "correct": "Samson", "wrong": ["Goliath", "Saul", "Elijah"], "tag": "samson-hair"}, {"q": "Who cut Samson's hair and betrayed him?", "correct": "Delilah", "wrong": ["Jezebel", "Bathsheba", "Rahab"], "tag": "delilah"}, {"q": "Which loyal woman said, 'Where you go, I will go'?", "correct": "Ruth", "wrong": ["Naomi", "Esther", "Rachel"], "tag": "ruth"}, {"q": "Who was Ruth's mother-in-law?", "correct": "Naomi", "wrong": ["Sarah", "Hannah", "Leah"], "tag": "naomi"}, {"q": "Which man of Bethlehem married Ruth?", "correct": "Boaz", "wrong": ["Jesse", "Obed", "Elimelech"], "tag": "boaz"}, {"q": "Who was the boy that heard God calling him in the night and answered, 'Here I am'?", "correct": "Samuel", "wrong": ["David", "Daniel", "Samson"], "tag": "samuel"}, {"q": "Who prayed for a son and gave him, Samuel, to serve the Lord?", "correct": "Hannah", "wrong": ["Sarah", "Ruth", "Rebekah"], "tag": "hannah"}, {"q": "Which instrument did David play to soothe King Saul?", "correct": "The harp", "wrong": ["The lyre-drum", "The trumpet", "The flute"], "tag": "david-harp"}, {"q": "Who was David's close friend, the son of King Saul?", "correct": "Jonathan", "wrong": ["Absalom", "Samuel", "Nathan"], "tag": "jonathan"}, {"q": "Which king was famous for asking God for wisdom?", "correct": "Solomon", "wrong": ["David", "Saul", "Hezekiah"], "tag": "solomon-wisdom"}, {"q": "Which queen travelled far to test Solomon with hard questions?", "correct": "The Queen of Sheba", "wrong": ["Queen Esther", "Queen Jezebel", "Queen Vashti"], "tag": "queen-sheba"}, {"q": "Who built the first great temple in Jerusalem?", "correct": "Solomon", "wrong": ["David", "Nehemiah", "Herod"], "tag": "solomon-temple"}, {"q": "Who succeeded Elijah and received a double portion of his spirit?", "correct": "Elisha", "wrong": ["Elijah", "Isaiah", "Samuel"], "tag": "elisha"}, {"q": "Which army commander was healed of leprosy after dipping seven times in the Jordan?", "correct": "Naaman", "wrong": ["Nebuchadnezzar", "Goliath", "Cornelius"], "tag": "naaman"}, {"q": "Which three men were thrown into a fiery furnace but were unharmed?", "correct": "Shadrach, Meshach and Abednego", "wrong": ["Peter, James and John", "Cain, Abel and Seth", "Saul, David and Jonathan"], "tag": "fiery-furnace"}, {"q": "Daniel was thrown into a den of what?", "correct": "Lions", "wrong": ["Bears", "Wolves", "Snakes"], "tag": "lions-den"}, {"q": "Which Babylonian king had a dream that Daniel interpreted?", "correct": "Nebuchadnezzar", "wrong": ["Belshazzar", "Darius", "Cyrus"], "tag": "nebuchadnezzar"}, {"q": "Who rebuilt the walls of Jerusalem after the exile?", "correct": "Nehemiah", "wrong": ["Ezra", "Zerubbabel", "Nehushtan"], "tag": "nehemiah"}, {"q": "Which prophet was swallowed by a great fish for three days?", "correct": "Jonah", "wrong": ["Job", "Amos", "Hosea"], "tag": "jonah-fish"}, {"q": "Which man lost everything yet kept his faith, becoming a byword for patience?", "correct": "Job", "wrong": ["Jeremiah", "Elijah", "Hosea"], "tag": "job"}, {"q": "Which wicked queen opposed the prophet Elijah?", "correct": "Jezebel", "wrong": ["Athaliah", "Delilah", "Herodias"], "tag": "jezebel"}, {"q": "Which prophet saw a valley of dry bones come to life?", "correct": "Ezekiel", "wrong": ["Isaiah", "Daniel", "Jeremiah"], "tag": "dry-bones"}, {"q": "How many books are in the whole Bible?", "correct": "66", "wrong": ["72", "39", "27"], "tag": "bible-66"}, {"q": "How many books are in the Old Testament?", "correct": "39", "wrong": ["27", "46", "40"], "tag": "ot-39"}, {"q": "What is the last book of the Bible?", "correct": "Revelation", "wrong": ["Malachi", "Jude", "Acts"], "tag": "last-revelation"}, {"q": "The first four books of the New Testament are known as the what?", "correct": "The Gospels", "wrong": ["The Epistles", "The Law", "The Prophets"], "tag": "gospels"}, {"q": "Which day did God rest on after creating the world?", "correct": "The seventh", "wrong": ["The sixth", "The first", "The third"], "tag": "sabbath-rest"}, {"q": "How many tribes of Israel were there?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Forty"], "tag": "twelve-tribes"}, {"q": "Which book of the Bible is a collection of songs and prayers?", "correct": "Psalms", "wrong": ["Proverbs", "Judges", "Kings"], "tag": "psalms"}, {"q": "Which book is best known for its short sayings of wisdom?", "correct": "Proverbs", "wrong": ["Psalms", "Job", "Ruth"], "tag": "proverbs"}, {"q": "Which angel told Mary she would give birth to Jesus?", "correct": "Gabriel", "wrong": ["Michael", "Raphael", "Uriel"], "tag": "gabriel"}, {"q": "Who was the mother of Jesus?", "correct": "Mary", "wrong": ["Martha", "Elizabeth", "Anna"], "tag": "mary"}, {"q": "What was the trade of Joseph, the earthly father of Jesus?", "correct": "Carpenter", "wrong": ["Fisherman", "Shepherd", "Tax collector"], "tag": "joseph-carpenter"}, {"q": "What did the wise men follow to find Jesus?", "correct": "A star", "wrong": ["An angel", "A dove", "A cloud"], "tag": "star-bethlehem"}, {"q": "How many gifts did the wise men famously bring?", "correct": "Three", "wrong": ["Two", "Four", "Seven"], "tag": "three-gifts"}, {"q": "Which of these was a gift of the wise men?", "correct": "Frankincense", "wrong": ["Silver", "Bread", "Oil"], "tag": "gift-frankincense"}, {"q": "Which king ordered the killing of baby boys after Jesus was born?", "correct": "Herod", "wrong": ["Pilate", "Caesar", "Nebuchadnezzar"], "tag": "herod"}, {"q": "In which town did Jesus grow up?", "correct": "Nazareth", "wrong": ["Bethlehem", "Jerusalem", "Capernaum"], "tag": "nazareth"}, {"q": "What did John the Baptist eat in the wilderness?", "correct": "Locusts and wild honey", "wrong": ["Bread and fish", "Figs and dates", "Manna"], "tag": "john-locusts"}, {"q": "For how many days was Jesus tempted in the wilderness?", "correct": "Forty", "wrong": ["Seven", "Three", "Thirty"], "tag": "temptation-40"}, {"q": "Which disciple is remembered for doubting the resurrection until he saw Jesus?", "correct": "Thomas", "wrong": ["Peter", "Philip", "Andrew"], "tag": "doubting-thomas"}, {"q": "Which disciple betrayed Jesus?", "correct": "Judas Iscariot", "wrong": ["Peter", "Thomas", "John"], "tag": "judas"}, {"q": "For how many pieces of silver did Judas betray Jesus?", "correct": "Thirty", "wrong": ["Twenty", "Forty", "Fifty"], "tag": "thirty-silver"}, {"q": "How many times did Peter deny knowing Jesus?", "correct": "Three", "wrong": ["Two", "Once", "Seven"], "tag": "peter-denies"}, {"q": "Which brothers left their fishing nets to follow Jesus first?", "correct": "Peter and Andrew", "wrong": ["James and John", "Philip and Thomas", "Matthew and Mark"], "tag": "peter-andrew"}, {"q": "Which disciple had been a tax collector?", "correct": "Matthew", "wrong": ["Peter", "John", "Andrew"], "tag": "matthew-tax"}, {"q": "With how many loaves and fish did Jesus feed five thousand?", "correct": "Five loaves and two fish", "wrong": ["Two loaves and five fish", "Seven loaves", "Twelve loaves"], "tag": "feeding-5000"}, {"q": "On what did Jesus walk to reach his disciples' boat?", "correct": "Water", "wrong": ["A bridge", "The shore", "A cloud"], "tag": "walking-water"}, {"q": "What did Jesus calm with the words, 'Peace, be still'?", "correct": "A storm", "wrong": ["A crowd", "A fever", "A fire"], "tag": "calming-storm"}, {"q": "Whom did Jesus raise from the dead after four days in the tomb?", "correct": "Lazarus", "wrong": ["Jairus", "Stephen", "Nicodemus"], "tag": "lazarus"}, {"q": "At which wedding did Jesus turn water into wine?", "correct": "Cana", "wrong": ["Nazareth", "Bethany", "Capernaum"], "tag": "cana"}, {"q": "How many lepers did Jesus heal, of whom only one returned to thank him?", "correct": "Ten", "wrong": ["Seven", "Twelve", "Five"], "tag": "ten-lepers"}, {"q": "In one parable, a lost son who returns home is welcomed by his father. He is known as the what?", "correct": "The Prodigal Son", "wrong": ["The Lost Sheep", "The Good Son", "The Faithful Servant"], "tag": "prodigal-son"}, {"q": "In the parable of the sower, seed that fell on good soil produced what?", "correct": "A great harvest", "wrong": ["Thorns", "Nothing", "Weeds"], "tag": "parable-sower"}, {"q": "In one parable, a shepherd leaves 99 sheep to find how many lost?", "correct": "One", "wrong": ["Ten", "Three", "Seven"], "tag": "lost-sheep"}, {"q": "Jesus said faith as small as which tiny seed can move mountains?", "correct": "A mustard seed", "wrong": ["A wheat seed", "A poppy seed", "An acorn"], "tag": "mustard-seed"}, {"q": "Jesus's most famous prayer begins with which words?", "correct": "Our Father", "wrong": ["Praise the Lord", "Hear, O Israel", "Glory to God"], "tag": "lords-prayer"}, {"q": "The blessings Jesus taught on the mountain ('Blessed are...') are called the what?", "correct": "The Beatitudes", "wrong": ["The Commandments", "The Parables", "The Psalms"], "tag": "beatitudes"}, {"q": "On the night before he died, Jesus shared what meal with his disciples?", "correct": "The Last Supper", "wrong": ["The Passover lamb only", "A wedding feast", "Breakfast by the sea"], "tag": "last-supper"}, {"q": "In which garden was Jesus arrested?", "correct": "Gethsemane", "wrong": ["Eden", "Golgotha", "Bethany"], "tag": "gethsemane-arrest"}, {"q": "At which place, 'the place of the skull', was Jesus crucified?", "correct": "Golgotha", "wrong": ["Bethlehem", "Galilee", "Emmaus"], "tag": "golgotha"}, {"q": "Who was made to carry Jesus's cross?", "correct": "Simon of Cyrene", "wrong": ["Simon Peter", "Joseph of Arimathea", "Barabbas"], "tag": "simon-cyrene"}, {"q": "Which prisoner was released instead of Jesus?", "correct": "Barabbas", "wrong": ["Judas", "Lazarus", "Stephen"], "tag": "barabbas"}, {"q": "What was placed on Jesus's head at the crucifixion?", "correct": "A crown of thorns", "wrong": ["A golden crown", "A veil", "A helmet"], "tag": "crown-thorns"}, {"q": "On which day did Jesus rise from the dead?", "correct": "The third day", "wrong": ["The seventh day", "The next day", "The fortieth day"], "tag": "third-day"}, {"q": "Who was the first to see the risen Jesus at the tomb?", "correct": "Mary Magdalene", "wrong": ["Peter", "Thomas", "Mary the mother of Jesus"], "tag": "mary-magdalene"}, {"q": "On the road to which village did two disciples meet the risen Jesus?", "correct": "Emmaus", "wrong": ["Damascus", "Jericho", "Bethany"], "tag": "emmaus"}, {"q": "At which festival did the Holy Spirit come with tongues of fire?", "correct": "Pentecost", "wrong": ["Passover", "Tabernacles", "Epiphany"], "tag": "pentecost"}, {"q": "Who was the first Christian martyr, stoned for his faith?", "correct": "Stephen", "wrong": ["Paul", "Peter", "James"], "tag": "stephen"}, {"q": "On the road to which city was Saul blinded and converted?", "correct": "Damascus", "wrong": ["Jerusalem", "Antioch", "Rome"], "tag": "damascus-road"}, {"q": "By what name did Saul become better known as an apostle?", "correct": "Paul", "wrong": ["Silas", "Barnabas", "Timothy"], "tag": "paul"}, {"q": "Who travelled with Paul on his first missionary journey?", "correct": "Barnabas", "wrong": ["Luke", "Timothy", "Titus"], "tag": "barnabas"}, {"q": "Paul wrote many letters in the New Testament, also called what?", "correct": "Epistles", "wrong": ["Gospels", "Psalms", "Proverbs"], "tag": "epistles"}, {"q": "On which island was John when he received the visions of Revelation?", "correct": "Patmos", "wrong": ["Cyprus", "Crete", "Malta"], "tag": "patmos"}];
+function slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+const $=id=>document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+const SFX=(function(){ let ac=null,master=null,on=true;
+  function ctx(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=0.9; master.connect(ac.destination); }catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+  function tone(f,t,d,type,v){ const a=ctx(); if(!a) return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v||0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(master); o.start(t); o.stop(t+d+0.02); }
+  function noise(t,d,v,f){ const a=ctx(); if(!a) return; const n=a.createBuffer(1,Math.max(1,(a.sampleRate*d)|0),a.sampleRate); const ch=n.getChannelData(0); for(let i=0;i<ch.length;i++) ch[i]=Math.random()*2-1; const src=a.createBufferSource(); src.buffer=n; const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f||1200; const g=a.createGain(); g.gain.setValueAtTime(v||0.15,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); src.connect(bp); bp.connect(g); g.connect(master); src.start(t); src.stop(t+d); }
+  return {
+    on:function(){ on=true; ctx(); }, mute:function(m){ on=!m; if(master) master.gain.value=m?0:0.9; }, isOn:function(){ return on; },
+    theme:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [523,659,784,1047].forEach(function(f,i){ tone(f,t+i*0.1,0.32,'triangle',0.18); }); },
+    sting:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; tone(659,t,0.12,'triangle',0.16); tone(988,t+0.08,0.24,'triangle',0.15); },
+    tick:function(){ const a=ctx(); if(!a||!on)return; tone(1200,a.currentTime,0.05,'square',0.07); },
+    correct:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [880,1320,1760].forEach(function(f,i){ tone(f,t,0.9,'sine',i===0?0.22:(i===1?0.14:0.08)); }); },
+    wrong:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; function honk(t0,d,f){ const o1=a.createOscillator(),o2=a.createOscillator(); o1.type='sawtooth';o2.type='sawtooth';o1.frequency.value=f;o2.frequency.value=f*1.01; const g=a.createGain(); g.gain.setValueAtTime(0.0001,t0);g.gain.linearRampToValueAtTime(0.3,t0+0.015);g.gain.setValueAtTime(0.3,t0+d-0.05);g.gain.exponentialRampToValueAtTime(0.0001,t0+d); o1.connect(g);o2.connect(g);g.connect(master);o1.start(t0);o2.start(t0);o1.stop(t0+d);o2.stop(t0+d);} honk(t,0.18,196); honk(t+0.24,0.34,160); },
+    buzz:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime,dur=0.55; const o1=a.createOscillator(),o2=a.createOscillator(); o1.type='sawtooth';o2.type='sawtooth';o1.frequency.value=150;o2.frequency.value=158; const mix=a.createGain();mix.gain.value=0.4; const lfo=a.createOscillator();lfo.type='square';lfo.frequency.value=23;const lg=a.createGain();lg.gain.value=0.4;lfo.connect(lg);lg.connect(mix.gain); o1.connect(mix);o2.connect(mix); const out=a.createGain();out.gain.setValueAtTime(0.0001,t);out.gain.linearRampToValueAtTime(0.5,t+0.015);out.gain.setValueAtTime(0.5,t+dur-0.06);out.gain.exponentialRampToValueAtTime(0.0001,t+dur); mix.connect(out);out.connect(master);o1.start(t);o2.start(t);lfo.start(t);o1.stop(t+dur);o2.stop(t+dur);lfo.stop(t+dur); },
+    drumroll:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; for(let i=0;i<26;i++) noise(t+i*0.05,0.05,0.11,200+i*8); },
+    fanfare:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [[523,0],[659,0.12],[784,0.24],[1047,0.36]].forEach(function(p){ tone(p[0],t+p[1],0.5,'triangle',0.2); tone(p[0]*1.5,t+p[1],0.5,'triangle',0.08); }); },
+    applause:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; for(let i=0;i<60;i++) noise(t+Math.random()*1.6,0.04+Math.random()*0.05,0.04+Math.random()*0.05,1500+Math.random()*3000); }
+  };
+})();
+const QUIPS={ welcome:['Take your seats!','Who will hold the throne?','Let battle commence!'], correct:['Nice!','Taken!','Superb!'], wrong:['Ooh!','So close!','Nobody!'], finale:['Grand Finale!','This is it!'], win:['We have a champion!','What a game!'] };
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function HS(pose){ if(window.HOST&&window.HOST.set) window.HOST.set(pose); }
+function hostSay(text){ const b=$('hostBubble'); if(!b) return; b.textContent=text; b.classList.remove('hide'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); clearTimeout(hostSay._t); hostSay._t=setTimeout(function(){ b.classList.add('hide'); },2200); }
+
+const BUZZ_MS=6000, ANS_MS=4000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
+let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIndex:0, qTotal:20,
+        q:null, qId:null, answerer:null, buzzWin:0, ansWin:0, lockedOut:[], firstResolved:false,
+        outcome:null, pendingLoser:null, used:new Set(), players:[], _t:null, winner:null,
+        bestStreak:{}, totalCorrect:{}, blemished:[], lastWinner:null, summary:null,
+        mode:'spine', closer:null, finalists:null, finaleScore:null, finaleWinner:null, finIntroMsg:'' };
+
+function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
+function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.github.io'; }
+
+async function createRoom(){
+  G.code=code5(); G.phase='lobby';
+  await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, seed:(Math.random()*1e9)|0, phase:'lobby', state:{game:'throne',phase:'lobby'}})});
+  $('code').textContent=G.code;
+  const link=baseUrl()+'/throne-bible-play.html?c='+G.code;
+  const u=$('url'); u.textContent=link.replace(/^https?:\/\//,''); u.href=link;
+  G.joinLink=link;
+  $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
+  $('dot').classList.add('live'); $('stat').textContent='Live · room '+G.code;
+  writeState(); loadLegends();
+}
+function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
+async function writeLegend(winner, flawless){ if(!winner) return; try{ await sb('legends',{method:'POST',body:JSON.stringify({ name:winner.name, game:'throne-bible', streak:(G.bestStreak[winner.id]||0), flawless:!!flawless, questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() })}); }catch(e){} loadLegends(); }
+async function loadLegends(){ let r=[]; try{ r=await sb('legends?game=eq.throne-bible&select=name,streak,flawless,created_at&order=created_at.desc&limit=8')||[]; }catch(e){} renderLegends(r); }
+function renderLegends(list){ const el=$('hofList'); if(!el) return; if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet — be the first!</span>'; return; }
+  el.innerHTML=''; list.forEach(function(L){ const row=document.createElement('div'); row.className='hofrow'+(L.flawless?' legend':'');
+    const c=document.createElement('span'); c.className='em'; c.textContent=L.flawless?'👑':'🏅';
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||'—';
+    const st=document.createElement('span'); st.className='st'; st.textContent=(L.flawless?'Flawless legend':'Champion')+(L.streak?(' · streak '+L.streak):'');
+    row.appendChild(c); row.appendChild(nm); row.appendChild(st); el.appendChild(row); }); }
+
+function livePlayers(){ const now=Date.now(); return G.players.filter(p=>{ const t=p.last_seen?Date.parse(p.last_seen):0; return (now-t)<STALE_MS || !p.last_seen; }); }
+function isLive(id){ return livePlayers().some(p=>p.id===id); }
+function enqueue(p){ if(p) G.queue.push({id:p.id,name:p.name}); }
+function dequeue(){ while(G.queue.length){ const p=G.queue.shift(); if(isLive(p.id)) return p; } return null; }
+
+async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,last_seen&order=joined_at.asc'); if(r) G.players=r; }catch(e){} }
+
+async function tick(){
+  if(!G.code) return;
+  await pollPlayers();
+  if(G.phase==='lobby'){ renderLobby(); return; }
+  if(G.phase==='live'){ await liveTick(); }
+  render();
+}
+async function liveTick(){
+  const now=Date.now();
+  if(!G.answerer){
+    let bz=[]; try{ bz=await sb('buzzes?code=eq.'+G.code+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=player_id,created_at&order=created_at.asc')||[]; }catch(e){}
+    const first=bz.find(b=> (G.champ&&b.player_id===G.champ.id)||(G.chal&&b.player_id===G.chal.id) );
+    const elig = first && G.lockedOut.indexOf(first.player_id)<0 ? first : null;
+    if(elig){ const who=(elig.player_id===G.champ.id)?G.champ:G.chal; G.answerer={id:who.id,name:who.name}; G.ansWin=now+ANS_MS; SFX.buzz(); HS('point'); writeState(); }
+    else if(now>G.buzzWin){ await bothMiss(); }
+  } else {
+    let ans=[]; try{ ans=await sb('answers?code=eq.'+G.code+'&q_id=eq.'+encodeURIComponent(G.qId)+'&player_id=eq.'+G.answerer.id+'&select=choice,created_at&order=created_at.asc')||[]; }catch(e){}
+    if(ans.length){ await grade(ans[0].choice); }
+    else if(now>G.ansWin){ await grade(-1); }
+  }
+}
+async function grade(choice){
+  const ok = (choice===G.q.correctIdx);
+  if(G.mode==='finale'){ gradeFinale(ok); return; }
+  if(ok){ await win(G.answerer); return; }
+  if(!G.firstResolved){ G.firstResolved=true; G.lockedOut.push(G.answerer.id);
+    const opp=(G.answerer.id===G.champ.id)?G.chal:G.champ; G.answerer={id:opp.id,name:opp.name}; G.ansWin=Date.now()+ANS_MS; writeState();
+  } else { await bothMiss(); }
+}
+async function win(p){
+  const isChamp = G.champ && p.id===G.champ.id;
+  G.pendingLoser = isChamp? G.chal : G.champ;
+  if(isChamp){ G.streak++; } else { G.champ={id:p.id,name:p.name}; G.streak=1; }
+  G.totalCorrect[p.id]=(G.totalCorrect[p.id]||0)+1;
+  G.bestStreak[p.id]=Math.max(G.bestStreak[p.id]||0, G.streak);
+  G.lastWinner={id:p.id,name:p.name};
+  if(G.pendingLoser) blemish(G.pendingLoser.id);
+  SFX.correct(); HS('celebrate');
+  G.outcome='win';
+  banner(true, esc(p.name)+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
+}
+function blemish(id){ if(id && G.blemished.indexOf(id)<0) G.blemished.push(id); }
+function nameFor(id){ if(G.champ&&G.champ.id===id) return G.champ.name; if(G.chal&&G.chal.id===id) return G.chal.name; const q=G.queue.find(p=>p.id===id); if(q) return q.name; const p=G.players.find(x=>x.id===id); return p?p.name:'\u2014'; }
+function streakKing(){ let best=null; Object.keys(G.bestStreak).forEach(function(id){ const sc=G.bestStreak[id]; if(!best || sc>best.s || (sc===best.s && (G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0))){ best={id:id, s:sc, name:nameFor(id)}; } }); return best; }
+async function bothMiss(){ G.outcome='bothmiss'; G.pendingLoser=null;
+  if(G.champ) blemish(G.champ.id); if(G.chal) blemish(G.chal.id);
+  SFX.wrong(); HS('wince');
+  banner(false, 'Nobody got it!', 'Both step aside — two new challengers.');
+}
+function banner(ok,msg,sub){
+  G.phase='reveal'; G.revealOk=ok; G.revealMsg=msg; G.revealSub=sub; writeState(); render();
+  clearTimeout(G._t); G._t=setTimeout(afterReveal, REVEAL_MS);
+}
+function afterReveal(){
+  if(G.mode==='finale'){
+    if(G.outcome==='finalewin'){ finishGame(G.finaleWinner); return; }
+    G.phase='between'; G.betweenMsg=scoreStr(); writeState(); render();
+    clearTimeout(G._t); G._t=setTimeout(nextFinaleQuestion, BETWEEN_MS); return;
+  }
+  if(G.outcome==='win'){ enqueue(G.pendingLoser); G.chal=dequeue(); }
+  else if(G.outcome==='bothmiss'){ enqueue(G.champ); enqueue(G.chal); G.champ=dequeue(); G.chal=dequeue(); G.streak=0; }
+  if(!G.champ || !G.chal){ G.phase='gameover'; G.winner=G.champ||G.chal; G.deadmsg='Not enough players left.'; writeState(); render(); return; }
+  G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds — streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
+  writeState(); render();
+  clearTimeout(G._t); G._t=setTimeout(nextOrEnd, BETWEEN_MS);
+}
+function nextOrEnd(){
+  if(G.qIndex>=G.qTotal){
+    if(G.outcome==='win'){ G.closer=G.lastWinner; enterFinale(); return; }
+    nextQuestion(); return;   // both-miss on/after the final question -> sudden-death decider
+  }
+  nextQuestion();
+}
+function enterFinale(){
+  const sk=streakKing(); const closer=G.closer;
+  if(!closer){ finishGame(G.champ); return; }
+  if(!sk || sk.id===closer.id || !isLive(sk.id)){ finishGame({id:closer.id,name:closer.name}); return; }
+  if(!isLive(closer.id)){ finishGame({id:sk.id,name:sk.name}); return; }
+  G.mode='finale';
+  G.finalists={ closer:{id:closer.id,name:closer.name}, king:{id:sk.id,name:sk.name} };
+  G.champ={id:closer.id,name:closer.name}; G.chal={id:sk.id,name:sk.name}; G.queue=[]; G.streak=0;
+  G.finaleScore={}; G.finaleScore[closer.id]=0; G.finaleScore[sk.id]=0;
+  G.phase='finintro'; G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+' — first to 2 wins.';
+  SFX.sting(); HS('present'); hostSay(pick(QUIPS.finale));
+  writeState(); render();
+  clearTimeout(G._t); G._t=setTimeout(serveQuestion, 3200);
+}
+function scoreStr(){ const c=G.finalists.closer, k=G.finalists.king; return esc(c.name)+' '+(G.finaleScore[c.id]||0)+' — '+(G.finaleScore[k.id]||0)+' '+esc(k.name); }
+function gradeFinale(ok){
+  if(ok){ const id=G.answerer.id; G.finaleScore[id]=(G.finaleScore[id]||0)+1; SFX.correct(); HS('celebrate');
+    if(G.finaleScore[id]>=2){ G.finaleWinner={id:id,name:G.answerer.name}; G.outcome='finalewin'; banner(true, esc(G.answerer.name)+' wins the Finale!', scoreStr()); }
+    else { G.outcome='finalepoint'; banner(true, esc(G.answerer.name)+' scores!', scoreStr()); }
+  } else {
+    if(!G.firstResolved){ G.firstResolved=true; G.lockedOut.push(G.answerer.id); const opp=(G.answerer.id===G.champ.id)?G.chal:G.champ; G.answerer={id:opp.id,name:opp.name}; G.ansWin=Date.now()+ANS_MS; writeState(); }
+    else { G.outcome='finalemiss'; banner(false, 'Nobody got it!', scoreStr()+' — next question.'); }
+  }
+}
+function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=streakKing(); SFX.fanfare(); SFX.applause(); HS('celebrate'); hostSay(pick(QUIPS.win));
+  const flawless=(winner && G.blemished.indexOf(winner.id)<0);
+  G.summary={ champ:winner, closer:G.closer, streakKing:sk, flawless:flawless, finaleScore:G.finaleScore||null, finalists:G.finalists||null };
+  writeState(); render(); writeLegend(winner, flawless);
+}
+function pickQuestion(){ let cand=POOL.filter(o=>!G.used.has(o.tag||slug(o.correct))); if(!cand.length){ G.used=new Set(); cand=POOL.slice(); } const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(it.tag||slug(it.correct)); return it; }
+function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
+  G.q={ q:it.q, opts, correctIdx:opts.indexOf(it.correct) };
+  G.qId=G.code+':'+(G.mode==='finale'?'F':'')+G.qIndex+':'+Math.floor(Math.random()*1e6);
+  G.answerer=null; G.buzzWin=Date.now()+BUZZ_MS; G.ansWin=0; G.lockedOut=[]; G.firstResolved=false; G.outcome=null;
+  G.phase='live'; G._lastTick=null; HS('ask'); writeState(); render();
+}
+function nextQuestion(){ G.qIndex++; serveQuestion(); }
+function nextFinaleQuestion(){ serveQuestion(); }
+function endGame(){ G.phase='gameover'; const sk=streakKing(); G.winner=G.champ;
+  G.summary={ champ:G.champ, closer:G.lastWinner, streakKing:sk, flawless:(G.champ && G.blemished.indexOf(G.champ.id)<0) };
+  writeState(); render(); }
+
+async function startGame(){
+  const live=livePlayers(); if(live.length<2){ return; }
+  const order=shuffle(live.map(p=>({id:p.id,name:p.name})));
+  G.champ=order[0]; G.chal=order[1]; G.queue=order.slice(2);
+  G.streak=0; G.qIndex=0; G.used=new Set();
+  G.bestStreak={}; G.totalCorrect={}; G.blemished=[]; G.lastWinner=null; G.summary=null;
+  G.mode='spine'; G.closer=null; G.finalists=null; G.finaleScore=null; G.finaleWinner=null;
+  $('lobby').style.display='none'; $('arena').style.display='block';
+  try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  SFX.on(); SFX.theme(); HS('welcome'); hostSay(pick(QUIPS.welcome));
+  nextQuestion();
+}
+
+function writeState(){
+  const st={ game:'throne', phase:G.phase, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
+    qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, answerer:G.answerer, lockedOut:G.lockedOut,
+    buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
+    reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
+    between:G.phase==='between'?{msg:G.betweenMsg}:null,
+    mode:G.mode, finintro:G.phase==='finintro'?{msg:G.finIntroMsg}:null, finaleScore:G.finaleScore||null, finalists:G.finalists||null,
+    winner:G.phase==='gameover'?G.winner:null, summary:G.phase==='gameover'?G.summary:null };
+  setRoom({phase:G.phase, q_id:G.qId||'', state:st});
+}
+
+/* ---------- render ---------- */
+function renderLobby(){
+  const live=livePlayers();
+  $('pcount').textContent='('+live.length+')';
+  const pl=$('plist');
+  if(!live.length){ pl.innerHTML='<span class="empty" style="color:var(--dim);font-weight:700">Waiting for players to join…</span>'; }
+  else { pl.innerHTML=''; live.forEach(p=>{ const s=document.createElement('span'); s.className='pchip'; s.textContent=p.name; pl.appendChild(s); }); }
+  $('startBtn').disabled = live.length<2;
+}
+function render(){
+  if(G.phase==='lobby'){ renderLobby(); return; }
+  const showBanner = (G.phase==='reveal'||G.phase==='between'||G.phase==='gameover'||G.phase==='finintro');
+  $('playView').classList.toggle('hide', showBanner);
+  $('bannerView').classList.toggle('hide', !showBanner);
+  if(showBanner){
+    const b=$('banner');
+    if(G.phase==='finintro'){ b.className='banner good'; b.innerHTML='👑 Grand Finale<div class="sub">'+esc(G.finIntroMsg||'')+'</div>'; }
+    else if(G.phase==='reveal'){ b.className='banner '+(G.revealOk?'good':'bad'); b.innerHTML=G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>'; }
+    else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
+    else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
+      let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
+      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'—')+' holds the throne!<div class="sub">'+sub+'</div>'; }
+    return;
+  }
+  // play view
+  $('qnum').textContent='Question '+G.qIndex; $('qmeta').textContent='of '+G.qTotal;
+  { const pr=$('prog'); if(pr) pr.style.width=Math.min(100,(G.qIndex/G.qTotal)*100)+'%'; }
+  { const be=$('best'); if(be){ const sk=streakKing(); be.textContent = (sk&&sk.s>0)? ('Longest streak so far: '+sk.s+' — '+sk.name) : ''; } }
+  if(G.mode==='finale' && G.finalists){ $('qnum').textContent='Grand Finale'; $('qmeta').textContent='first to 2'; const pr=$('prog'); if(pr) pr.style.width='100%'; const be=$('best'); if(be) be.textContent=scoreStr(); }
+  $('qtext').textContent=G.q?G.q.q:'—';
+  const opts=$('opts'); opts.innerHTML='';
+  (G.q?G.q.opts:[]).forEach((o,i)=>{ const d=document.createElement('div'); d.className='opt c'+i; const k=document.createElement('span'); k.className='k'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); });
+  // timer
+  const now=Date.now(); const wrap=$('timerWrap'); const bar=$('timer');
+  if(G.answerer){ wrap.classList.add('ans'); const frac=Math.max(0,Math.min(1,(G.ansWin-now)/ANS_MS)); bar.style.width=(frac*100)+'%'; }
+  else { wrap.classList.remove('ans'); const remain=G.buzzWin-now; const frac=Math.max(0,Math.min(1,remain/BUZZ_MS)); bar.style.width=(frac*100)+'%';
+    if(remain>0 && remain<2600){ const sec=Math.ceil(remain/1000); if(G._lastTick!==sec){ G._lastTick=sec; SFX.tick(); } } }
+  // seats
+  $('champName').textContent=G.champ?G.champ.name:'—';
+  $('champStreak').textContent=(G.mode==='finale'&&G.finaleScore)?('Points: '+(G.finaleScore[G.champ.id]||0)):(G.streak>0?('Streak '+G.streak):'');
+  $('chalName').textContent=G.chal?G.chal.name:'—';
+  $('seatChamp').classList.toggle('buzzed', !!(G.answerer&&G.champ&&G.answerer.id===G.champ.id));
+  $('seatChal').classList.toggle('buzzed', !!(G.answerer&&G.chal&&G.answerer.id===G.chal.id));
+  $('chalTag').textContent = (G.mode==='finale'&&G.finaleScore&&G.chal)?('Points: '+(G.finaleScore[G.chal.id]||0)):(G.answerer? (G.answerer.id===(G.chal&&G.chal.id)?'answering…':'') : '');
+  // queue
+  const q=$('queue'); const liveQ=G.queue.filter(p=>isLive(p.id));
+  if(!liveQ.length){ q.innerHTML='<span class="empty">— nobody waiting —</span>'; }
+  else { q.innerHTML=''; liveQ.forEach((p,i)=>{ const s=document.createElement('span'); s.textContent=(i+1)+'. '+p.name; q.appendChild(s); }); }
+}
+
+/* ---------- controls ---------- */
+$('startBtn').addEventListener('click', startGame);
+$('qMinus').addEventListener('click', ()=>{ G.qTotal=Math.max(3,G.qTotal-1); $('qTot').textContent=G.qTotal; });
+$('qPlus').addEventListener('click', ()=>{ G.qTotal=Math.min(20,G.qTotal+1); $('qTot').textContent=G.qTotal; });
+$('newBtn').addEventListener('click', ()=>{ clearTimeout(G._t); location.reload(); });
+{ let muted=false; const mb=$('muteBtn'); if(mb) mb.addEventListener('click', ()=>{ muted=!muted; SFX.mute(muted); mb.textContent=muted?'🔇':'🔊'; }); }
+{ const cb=$('copyBtn'); if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(G.joinLink||''); }catch(e){ try{ const t=document.createElement('textarea'); t.value=G.joinLink||''; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_){} } cb.textContent='Copied \u2713'; cb.classList.add('done'); setTimeout(()=>{ cb.textContent='Copy join link'; cb.classList.remove('done'); }, 1600); }); }
+
+createRoom();
+setInterval(tick, 300);
+</script>
+</body>
+</html>
