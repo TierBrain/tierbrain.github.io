@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Creak &amp; Coil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#151936;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--line:rgba(245,178,62,.18);--good:#57d38a;--bad:#e0728a;--wood:#c9924e;--wood-dk:#8a5a2b;--snake:#57b26a;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% -5%,rgba(245,178,62,.10),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+  header{text-align:center;padding:16px 16px 6px;}
+  h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(26px,6vw,40px);letter-spacing:.01em;}
+  h1 b{color:var(--gold-hi);}
+  h1 .amp{color:var(--teal-hi);font-style:italic;}
+  .sub{color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;}
+  .wrap{width:100%;max-width:560px;padding:8px 16px 30px;display:flex;flex-direction:column;align-items:center;}
+  .boardwrap{width:100%;position:relative;}
+  canvas{width:100%;height:auto;display:block;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.4);}
+  .hud{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+  .status{font-weight:800;color:var(--dim);font-size:15px;flex:1;min-height:22px;}
+  .status b{color:var(--gold-hi);}
+  .die{width:58px;height:58px;flex:0 0 auto;border-radius:14px;background:#fff;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.4);}
+  .die .pip{position:absolute;width:11px;height:11px;border-radius:50%;background:#20233c;transform:translate(-50%,-50%);}
+  .die.rolling{animation:shake .5s ease;}
+  @keyframes shake{0%,100%{transform:none;}20%{transform:translateY(-6px) rotate(-8deg);}50%{transform:translateY(2px) rotate(9deg);}75%{transform:translateY(-3px) rotate(-5deg);}}
+  .btn{border:0;border-radius:14px;padding:16px 26px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;box-shadow:0 6px 0 #9c631f;margin-top:16px;width:100%;max-width:280px;}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #9c631f;}
+  .btn:disabled{opacity:.5;box-shadow:0 6px 0 #9c631f;transform:none;cursor:default;}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:none;border:1px solid var(--line);font-size:15px;padding:12px 20px;}
+  .overlay{position:fixed;inset:0;background:rgba(8,10,28,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;z-index:20;backdrop-filter:blur(3px);}
+  .overlay.hide{display:none;}
+  .overlay .big{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(30px,8vw,52px);color:var(--gold-hi);}
+  .overlay .line{color:var(--ink);font-weight:800;font-size:18px;}
+  .foot{color:var(--dim);font-size:12px;font-weight:700;padding:6px 16px 20px;text-align:center;}
+  .mute{position:fixed;top:12px;right:12px;border:1px solid var(--line);background:rgba(20,24,52,.85);color:var(--dim);border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;z-index:30;}
+  .stats{display:flex;gap:20px;margin:4px 0 2px;}
+  .st{display:flex;flex-direction:column;align-items:center;}
+  .st b{font-family:'Fraunces',serif;font-weight:700;font-size:26px;color:var(--gold-hi);}
+  .st span{font-size:11px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-top:2px;}
+  .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .confetti span{position:absolute;top:-8%;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(115vh) rotate(400deg);opacity:.35;}}
+  .qoverlay{position:fixed;inset:0;background:rgba(8,10,28,.86);display:flex;align-items:center;justify-content:center;padding:20px;z-index:25;backdrop-filter:blur(3px);}
+  .qoverlay.hide{display:none;}
+  .qcard{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.55);}
+  .qkind{text-align:center;font-weight:900;font-size:15px;margin-bottom:12px;}
+  .qkind.lad{color:var(--gold-hi);} .qkind.sna{color:var(--teal-hi);} .qkind.rock{color:#d0a978;} .qkind.storm{color:#9fb6e6;}
+  .qtimer{height:9px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-bottom:16px;}
+  .qtimer > i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transition:width .08s linear;}
+  .qtext{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(18px,4.5vw,23px);line-height:1.3;text-align:center;margin-bottom:16px;}
+  .qopts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .qopt{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);border:2px solid transparent;border-radius:12px;padding:13px 12px;font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;text-align:left;font-family:inherit;}
+  .qopt .qk{width:28px;height:28px;flex:0 0 auto;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#12162e;}
+  .qopt.c0 .qk{background:#f5b23e;} .qopt.c1 .qk{background:#2fb6a6;} .qopt.c2 .qk{background:#8f7be6;} .qopt.c3 .qk{background:#e0728a;}
+  .qopt:active{transform:scale(.98);}
+  .qopt.right{border-color:var(--good);background:rgba(87,211,138,.16);}
+  .qopt.wrong{border-color:var(--bad);opacity:.6;}
+  @media(max-width:380px){ .qopts{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Creak <span class="amp">&amp;</span> <b>Coil</b></h1>
+    <div class="sub">the long climb</div>
+  </header>
+  <button class="mute" id="mute" title="Sound">🔊</button>
+  <div class="wrap">
+    <div class="boardwrap"><canvas id="board"></canvas></div>
+    <div class="hud">
+      <div class="status" id="status">Roll to begin your climb.</div>
+      <div class="die" id="die"></div>
+    </div>
+    <button class="btn" id="roll">Roll</button>
+    <button class="btn ghost" id="newgame" style="margin-top:10px">New board</button>
+  </div>
+  <div class="foot">Ladders rot, snakes strike — and watch for the Roc that lifts you, the rockfalls, and storms that batter the ladders. 🔊 top-right.</div>
+
+  <div class="qoverlay hide" id="qoverlay">
+    <div class="qcard">
+      <div class="qkind" id="qkind"></div>
+      <div class="qtimer"><i id="qtimerbar"></i></div>
+      <div class="qtext" id="qtext"></div>
+      <div class="qopts" id="qopts"></div>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="overlay">
+    <div class="confetti" id="confetti"></div>
+    <div class="big" id="ovBig">🏔️ Summit!</div>
+    <div class="line" id="ovLine"></div>
+    <div class="stats" id="ovStats"></div>
+    <button class="btn" id="ovAgain" style="max-width:240px">Climb again</button>
+  </div>
+
+<script>
+const COLS=10, ROWS=10, TOP=COLS*ROWS; // 100 squares
+const ANSWER_MS=9000;
+const POOL=[{"q": "What is the capital of France?", "correct": "Paris", "wrong": ["London", "Rome", "Berlin"]}, {"q": "How many days are there in a week?", "correct": "Seven", "wrong": ["Five", "Ten", "Twelve"]}, {"q": "Which planet is known as the Red Planet?", "correct": "Mars", "wrong": ["Venus", "Jupiter", "Saturn"]}, {"q": "What do you get if you mix blue and yellow?", "correct": "Green", "wrong": ["Purple", "Orange", "Brown"]}, {"q": "How many legs does a spider have?", "correct": "Eight", "wrong": ["Six", "Four", "Ten"]}, {"q": "Which animal is often called ‘man’s best friend’?", "correct": "The dog", "wrong": ["The cat", "The horse", "The cow"], "tag": "dog"}, {"q": "How many wheels does a typical bicycle have?", "correct": "Two", "wrong": ["Three", "Four", "One"], "tag": "bicycle"}, {"q": "What do you call a baby dog?", "correct": "A puppy", "wrong": ["A kitten", "A cub", "A foal"], "tag": "puppy"}, {"q": "Which season comes straight after winter?", "correct": "Spring", "wrong": ["Summer", "Autumn", "Harvest"], "tag": "seasons"}, {"q": "How many planets are there in our solar system?", "correct": "Eight", "wrong": ["Seven", "Nine", "Ten"], "tag": "planet-count"}, {"q": "What do we call a person who travels into space?", "correct": "An astronaut", "wrong": ["A pilot", "A sailor", "A diver"], "tag": "astronaut"}, {"q": "In Greek mythology, who was the king of the gods?", "correct": "Zeus", "wrong": ["Hades", "Apollo", "Hermes"], "tag": "zeus"}, {"q": "Which ancient people built the pyramids of Giza?", "correct": "The Egyptians", "wrong": ["The Romans", "The Greeks", "The Vikings"], "tag": "ancient-egyptians"}, {"q": "How many rings are on the Olympic flag?", "correct": "Five", "wrong": ["Four", "Six", "Three"], "tag": "olympic-rings"}, {"q": "Which instrument has 88 black and white keys?", "correct": "The piano", "wrong": ["The guitar", "The violin", "The organ"], "tag": "piano"}, {"q": "What is a baby kangaroo called?", "correct": "A joey", "wrong": ["A cub", "A kit", "A calf"], "tag": "joey"}, {"q": "What is the largest organ in the human body?", "correct": "The skin", "wrong": ["The heart", "The liver", "The brain"], "tag": "skin"}, {"q": "How many letters are there in the English alphabet?", "correct": "26", "wrong": ["24", "28", "30"], "tag": "alphabet"}, {"q": "What is the capital of Germany?", "correct": "Berlin", "wrong": ["Munich", "Hamburg", "Frankfurt"], "tag": "capital-germany"}, {"q": "What are baby frogs called?", "correct": "Tadpoles", "wrong": ["Cubs", "Chicks", "Kits"], "tag": "tadpoles"}, {"q": "What do you call a painting you make of yourself?", "correct": "A self-portrait", "wrong": ["A landscape", "A still life", "A mural"], "tag": "self-portrait"}, {"q": "What machine carries people between the floors of a building?", "correct": "A lift", "wrong": ["A crane", "A ladder", "A ramp"], "tag": "lift"}, {"q": "How many centimetres are there in a metre?", "correct": "100", "wrong": ["10", "1,000", "50"], "tag": "cm-in-metre"}, {"q": "What is the largest ocean on Earth?", "correct": "The Pacific", "wrong": ["The Atlantic", "The Indian", "The Arctic"]}, {"q": "How many continents are there?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What is the chemical symbol for gold?", "correct": "Au", "wrong": ["Ag", "Gd", "Go"]}, {"q": "Which country is home to the Eiffel Tower?", "correct": "France", "wrong": ["Italy", "Spain", "Germany"]}, {"q": "What is the freezing point of water in Celsius?", "correct": "0 degrees", "wrong": ["10 degrees", "32 degrees", "-10 degrees"]}, {"q": "What is the capital city of England?", "correct": "London", "wrong": ["Manchester", "Birmingham", "Liverpool"], "tag": "capital-england"}, {"q": "Which sport is played at Wimbledon?", "correct": "Tennis", "wrong": ["Golf", "Cricket", "Rugby"], "tag": "wimbledon"}, {"q": "What is the largest land animal on Earth?", "correct": "The elephant", "wrong": ["The rhino", "The giraffe", "The hippo"], "tag": "elephant"}, {"q": "How many sides does a triangle have?", "correct": "Three", "wrong": ["Four", "Five", "Two"], "tag": "triangle"}, {"q": "What is the capital of Spain?", "correct": "Madrid", "wrong": ["Barcelona", "Lisbon", "Seville"], "tag": "capital-spain"}, {"q": "Which is the hottest planet in our solar system?", "correct": "Venus", "wrong": ["Mercury", "Mars", "Jupiter"], "tag": "venus"}, {"q": "In Norse mythology, who is the god of thunder?", "correct": "Thor", "wrong": ["Odin", "Loki", "Freya"], "tag": "thor"}, {"q": "In which year did the Great Fire of London take place?", "correct": "1666", "wrong": ["1066", "1766", "1600"], "tag": "great-fire-london"}, {"q": "In which sport would you use a shuttlecock?", "correct": "Badminton", "wrong": ["Tennis", "Squash", "Cricket"], "tag": "badminton"}, {"q": "How many strings does a violin have?", "correct": "Four", "wrong": ["Six", "Five", "Three"], "tag": "violin-strings"}, {"q": "What drink is made from crushed apples?", "correct": "Cider", "wrong": ["Wine", "Beer", "Cordial"], "tag": "cider"}, {"q": "Which gas makes up most of the air we breathe?", "correct": "Nitrogen", "wrong": ["Oxygen", "Carbon dioxide", "Hydrogen"], "tag": "nitrogen"}, {"q": "How many players are on a basketball team on court?", "correct": "Five", "wrong": ["Six", "Seven", "Eleven"], "tag": "basketball-team"}, {"q": "Who wrote ‘A Christmas Carol’?", "correct": "Charles Dickens", "wrong": ["Jane Austen", "Lewis Carroll", "Roald Dahl"], "tag": "dickens"}, {"q": "What is the capital of Greece?", "correct": "Athens", "wrong": ["Rome", "Cairo", "Istanbul"], "tag": "capital-greece"}, {"q": "What are the three primary colours?", "correct": "Red, yellow and blue", "wrong": ["Red, green and blue", "Black, white and grey", "Orange, purple and green"], "tag": "primary-colours"}, {"q": "What is the largest bird in the world?", "correct": "The ostrich", "wrong": ["The eagle", "The albatross", "The emu"], "tag": "ostrich"}, {"q": "What did the Wright brothers famously build and fly?", "correct": "The aeroplane", "wrong": ["The car", "The rocket", "The helicopter"], "tag": "wright-brothers"}, {"q": "What is the hardest natural substance on Earth?", "correct": "Diamond", "wrong": ["Gold", "Iron", "Quartz"]}, {"q": "What is the largest planet in our solar system?", "correct": "Jupiter", "wrong": ["Saturn", "Neptune", "Earth"]}, {"q": "Which gas do plants absorb from the air?", "correct": "Carbon dioxide", "wrong": ["Oxygen", "Nitrogen", "Hydrogen"]}, {"q": "What is the fastest land animal?", "correct": "The cheetah", "wrong": ["The lion", "The horse", "The leopard"]}, {"q": "How many strings does a standard guitar have?", "correct": "Six", "wrong": ["Four", "Five", "Seven"]}, {"q": "In which country would you find the Colosseum?", "correct": "Italy", "wrong": ["Greece", "Spain", "France"], "tag": "colosseum"}, {"q": "What is the chemical symbol for oxygen?", "correct": "O", "wrong": ["Ox", "Og", "On"], "tag": "oxygen"}, {"q": "How many legs does an insect have?", "correct": "Six", "wrong": ["Eight", "Four", "Ten"], "tag": "insect-legs"}, {"q": "Which river flows through London?", "correct": "The Thames", "wrong": ["The Severn", "The Mersey", "The Tyne"], "tag": "thames"}, {"q": "Which country is home to the Taj Mahal?", "correct": "India", "wrong": ["Pakistan", "Egypt", "Turkey"], "tag": "taj-mahal"}, {"q": "Who was the first person to walk on the Moon?", "correct": "Neil Armstrong", "wrong": ["Buzz Aldrin", "Yuri Gagarin", "John Glenn"], "tag": "moon-landing"}, {"q": "In Greek myth, what was the maze that held the Minotaur called?", "correct": "The Labyrinth", "wrong": ["The Colosseum", "The Underworld", "Mount Olympus"], "tag": "minotaur"}, {"q": "Which English king famously had six wives?", "correct": "Henry VIII", "wrong": ["Henry V", "Richard III", "George I"], "tag": "henry-viii"}, {"q": "Who painted the ceiling of the Sistine Chapel?", "correct": "Michelangelo", "wrong": ["Leonardo da Vinci", "Raphael", "Donatello"], "tag": "michelangelo"}, {"q": "What is the hardest substance in the human body?", "correct": "Tooth enamel", "wrong": ["Bone", "Cartilage", "Nail"], "tag": "enamel"}, {"q": "Which nut is used to make marzipan?", "correct": "Almonds", "wrong": ["Walnuts", "Peanuts", "Hazelnuts"], "tag": "almonds"}, {"q": "What is the largest species of shark?", "correct": "The whale shark", "wrong": ["The great white", "The hammerhead", "The tiger shark"], "tag": "whale-shark"}, {"q": "How many holes are played in a full round of golf?", "correct": "Eighteen", "wrong": ["Nine", "Twelve", "Twenty"], "tag": "golf-holes"}, {"q": "Who created the detective Sherlock Holmes?", "correct": "Arthur Conan Doyle", "wrong": ["Agatha Christie", "Charles Dickens", "Ian Fleming"], "tag": "sherlock-holmes"}, {"q": "What is the process by which plants make food from sunlight?", "correct": "Photosynthesis", "wrong": ["Respiration", "Digestion", "Evaporation"], "tag": "photosynthesis"}, {"q": "What is the capital of Canada?", "correct": "Ottawa", "wrong": ["Toronto", "Vancouver", "Montreal"], "tag": "capital-canada"}, {"q": "How many lines does a sonnet have?", "correct": "14", "wrong": ["12", "10", "16"], "tag": "sonnet"}, {"q": "Which Dutch painter famously cut off part of his own ear?", "correct": "Vincent van Gogh", "wrong": ["Rembrandt", "Picasso", "Monet"], "tag": "van-gogh"}, {"q": "What is the smallest prime number?", "correct": "Two", "wrong": ["One", "Three", "Zero"]}, {"q": "What is the currency of Japan?", "correct": "The yen", "wrong": ["The won", "The yuan", "The ringgit"]}, {"q": "Who painted the Mona Lisa?", "correct": "Leonardo da Vinci", "wrong": ["Michelangelo", "Raphael", "Vincent van Gogh"]}, {"q": "How many bones are in the adult human body?", "correct": "206", "wrong": ["201", "210", "196"]}, {"q": "What is the largest country in the world by area?", "correct": "Russia", "wrong": ["Canada", "China", "the USA"]}, {"q": "What is the capital city of Australia?", "correct": "Canberra", "wrong": ["Sydney", "Melbourne", "Perth"], "tag": "australia"}, {"q": "Who is said to have discovered gravity after watching an apple fall?", "correct": "Isaac Newton", "wrong": ["Albert Einstein", "Galileo", "Charles Darwin"], "tag": "newton"}, {"q": "How many years are there in a century?", "correct": "One hundred", "wrong": ["Ten", "Fifty", "One thousand"], "tag": "century"}, {"q": "What is the currency of the United Kingdom?", "correct": "The pound", "wrong": ["The euro", "The dollar", "The franc"], "tag": "uk-currency"}, {"q": "What is the smallest country in the world?", "correct": "Vatican City", "wrong": ["Monaco", "Malta", "San Marino"], "tag": "vatican-city"}, {"q": "Which planet is the farthest from the Sun?", "correct": "Neptune", "wrong": ["Uranus", "Saturn", "Pluto"], "tag": "neptune"}, {"q": "In which year was the Battle of Hastings?", "correct": "1066", "wrong": ["1666", "1215", "1000"], "tag": "battle-hastings"}, {"q": "In Egyptian mythology, who was the sun god?", "correct": "Ra", "wrong": ["Anubis", "Osiris", "Horus"], "tag": "ra"}, {"q": "Who is credited with inventing the telephone?", "correct": "Alexander Graham Bell", "wrong": ["Thomas Edison", "Nikola Tesla", "Guglielmo Marconi"], "tag": "telephone"}, {"q": "Which composer wrote the famous ‘Ode to Joy’?", "correct": "Beethoven", "wrong": ["Mozart", "Bach", "Chopin"], "tag": "beethoven"}, {"q": "What is molten rock beneath the Earth’s surface called?", "correct": "Magma", "wrong": ["Lava", "Ash", "Coal"], "tag": "magma"}, {"q": "What is the Roman numeral for the number 50?", "correct": "L", "wrong": ["C", "X", "V"], "tag": "roman-50"}, {"q": "Which vitamin does the body make from sunlight?", "correct": "Vitamin D", "wrong": ["Vitamin C", "Vitamin A", "Vitamin B"], "tag": "vitamin-d"}, {"q": "What did Johannes Gutenberg famously invent?", "correct": "The printing press", "wrong": ["The telescope", "The steam engine", "The clock"], "tag": "printing-press"}, {"q": "What is the capital of the United States?", "correct": "Washington, D.C.", "wrong": ["New York", "Los Angeles", "Chicago"], "tag": "capital-usa"}, {"q": "What is the value of pi to two decimal places?", "correct": "3.14", "wrong": ["3.16", "3.41", "2.14"], "tag": "pi"}, {"q": "What do we call animals that have a backbone?", "correct": "Vertebrates", "wrong": ["Invertebrates", "Mammals", "Molluscs"], "tag": "vertebrates"}, {"q": "What is the Roman numeral for 100?", "correct": "C", "wrong": ["L", "M", "D"], "tag": "roman-100"}, {"q": "What is the capital of Italy?", "correct": "Rome", "wrong": ["Milan", "Venice", "Naples"]}, {"q": "What is H2O more commonly known as?", "correct": "Water", "wrong": ["Salt", "Air", "Ice"]}, {"q": "What is the largest mammal on Earth?", "correct": "The blue whale", "wrong": ["The elephant", "The giraffe", "The hippo"]}, {"q": "How many sides does a hexagon have?", "correct": "Six", "wrong": ["Five", "Seven", "Eight"]}, {"q": "How many minutes are there in an hour?", "correct": "Sixty", "wrong": ["Thirty", "Ninety", "One hundred"]}, {"q": "What do bees primarily make?", "correct": "Honey", "wrong": ["Milk", "Silk", "Butter"]}, {"q": "How many colours are in a rainbow?", "correct": "Seven", "wrong": ["Five", "Six", "Eight"]}, {"q": "What is the capital of Japan?", "correct": "Tokyo", "wrong": ["Beijing", "Seoul", "Bangkok"]}, {"q": "Which is the largest ocean?", "correct": "The Pacific", "wrong": ["The Atlantic", "The Indian", "The Arctic"]}, {"q": "What is the tallest animal in the world?", "correct": "The giraffe", "wrong": ["The elephant", "The horse", "The camel"]}, {"q": "How many players are on a football team on the pitch?", "correct": "Eleven", "wrong": ["Nine", "Ten", "Twelve"]}, {"q": "What is frozen water called?", "correct": "Ice", "wrong": ["Steam", "Snow", "Frost"]}, {"q": "Which planet do we live on?", "correct": "Earth", "wrong": ["Mars", "Venus", "Jupiter"]}, {"q": "What is the opposite of hot?", "correct": "Cold", "wrong": ["Warm", "Wet", "Dry"]}, {"q": "How many wheels does a standard car have?", "correct": "Four", "wrong": ["Two", "Three", "Six"]}, {"q": "What colour is a banana when ripe?", "correct": "Yellow", "wrong": ["Green", "Red", "Blue"]}, {"q": "What do you call a shape with five sides?", "correct": "A pentagon", "wrong": ["A hexagon", "A square", "An octagon"], "tag": "pentagon"}, {"q": "Which planet is famous for its rings?", "correct": "Saturn", "wrong": ["Mars", "Venus", "Mercury"], "tag": "saturn"}, {"q": "What is frozen rain called?", "correct": "Hail", "wrong": ["Snow", "Sleet", "Dew"], "tag": "hail"}, {"q": "What is the name of our galaxy?", "correct": "The Milky Way", "wrong": ["Andromeda", "Orion", "The Solar System"], "tag": "milky-way"}, {"q": "Which metal is a magnet most attracted to?", "correct": "Iron", "wrong": ["Gold", "Copper", "Silver"], "tag": "iron"}, {"q": "How many months of the year have 31 days?", "correct": "Seven", "wrong": ["Six", "Five", "Twelve"], "tag": "months-31"}, {"q": "What colour do you get by mixing red and white?", "correct": "Pink", "wrong": ["Purple", "Orange", "Grey"], "tag": "pink"}, {"q": "Which fairy-tale character left behind a glass slipper?", "correct": "Cinderella", "wrong": ["Snow White", "Rapunzel", "Sleeping Beauty"], "tag": "cinderella"}, {"q": "What do bees make in their hive?", "correct": "Honey", "wrong": ["Milk", "Silk", "Jam"], "tag": "honey"}, {"q": "How many colours are there on a traffic light?", "correct": "Three", "wrong": ["Two", "Four", "Five"], "tag": "traffic-light"}, {"q": "In Greek myth, who is the god of the sea?", "correct": "Poseidon", "wrong": ["Zeus", "Hades", "Apollo"], "tag": "poseidon"}, {"q": "Which winged horse appears in Greek mythology?", "correct": "Pegasus", "wrong": ["The Minotaur", "Cerberus", "The Sphinx"], "tag": "pegasus"}, {"q": "What mythical bird is reborn from its own ashes?", "correct": "The phoenix", "wrong": ["The griffin", "The dragon", "The eagle"], "tag": "phoenix"}, {"q": "In Greek myth, who was the goddess of wisdom?", "correct": "Athena", "wrong": ["Hera", "Aphrodite", "Artemis"], "tag": "athena"}, {"q": "What is the largest hot desert in the world?", "correct": "The Sahara", "wrong": ["The Gobi", "The Kalahari", "The Mojave"], "tag": "sahara"}, {"q": "Which is the coldest continent on Earth?", "correct": "Antarctica", "wrong": ["Europe", "Asia", "Australia"], "tag": "antarctica"}, {"q": "Who led France as emperor in the early 1800s?", "correct": "Napoleon", "wrong": ["Louis XIV", "Charlemagne", "Robespierre"], "tag": "napoleon"}, {"q": "Which famous ship sank in 1912 after hitting an iceberg?", "correct": "The Titanic", "wrong": ["The Mayflower", "The Bismarck", "The Victory"], "tag": "titanic"}, {"q": "Who was the last queen of ancient Egypt?", "correct": "Cleopatra", "wrong": ["Nefertiti", "Hatshepsut", "Boudicca"], "tag": "cleopatra"}, {"q": "In Norse mythology, who is the trickster god?", "correct": "Loki", "wrong": ["Thor", "Odin", "Baldr"], "tag": "loki"}, {"q": "What do we call a rock from space that lands on Earth?", "correct": "A meteorite", "wrong": ["A comet", "An asteroid", "A crater"], "tag": "meteorite"}, {"q": "Which explorer reached the Americas in 1492?", "correct": "Christopher Columbus", "wrong": ["Ferdinand Magellan", "Marco Polo", "Captain Cook"], "tag": "columbus"}, {"q": "In tennis, what is a score of zero called?", "correct": "Love", "wrong": ["Nil", "Duck", "Blank"], "tag": "tennis-love"}, {"q": "Which sport is played with a puck?", "correct": "Ice hockey", "wrong": ["Lacrosse", "Polo", "Curling"], "tag": "ice-hockey"}, {"q": "What do you call an animal that eats only plants?", "correct": "A herbivore", "wrong": ["A carnivore", "An omnivore", "A scavenger"], "tag": "herbivore"}, {"q": "Which is the only mammal that can truly fly?", "correct": "The bat", "wrong": ["The flying squirrel", "The owl", "The sugar glider"], "tag": "bat"}, {"q": "How many teeth does a typical adult have?", "correct": "32", "wrong": ["28", "30", "36"], "tag": "adult-teeth"}, {"q": "What is the centre of an atom called?", "correct": "The nucleus", "wrong": ["The electron", "The proton", "The shell"], "tag": "nucleus"}, {"q": "What is frozen carbon dioxide commonly known as?", "correct": "Dry ice", "wrong": ["Black ice", "Frost", "Sleet"], "tag": "dry-ice"}, {"q": "Which country is famous for inventing pizza?", "correct": "Italy", "wrong": ["Greece", "France", "Spain"], "tag": "pizza"}, {"q": "What is a group of lions called?", "correct": "A pride", "wrong": ["A pack", "A herd", "A flock"], "tag": "pride-lions"}, {"q": "How many sides does an octagon have?", "correct": "Eight", "wrong": ["Six", "Seven", "Ten"], "tag": "octagon"}, {"q": "Which bird is a traditional symbol of peace?", "correct": "The dove", "wrong": ["The eagle", "The owl", "The swan"], "tag": "dove"}, {"q": "Sound travels fastest through which of these?", "correct": "Steel", "wrong": ["Air", "Water", "A vacuum"], "tag": "sound-speed"}, {"q": "Who is often credited with inventing the light bulb?", "correct": "Thomas Edison", "wrong": ["Alexander Graham Bell", "Isaac Newton", "Michael Faraday"], "tag": "edison"}, {"q": "What is the tallest type of grass?", "correct": "Bamboo", "wrong": ["Sugarcane", "Wheat", "Reed"], "tag": "bamboo"}, {"q": "How many days are there in a leap year?", "correct": "366", "wrong": ["365", "364", "367"], "tag": "leap-year"}, {"q": "What is sushi traditionally wrapped in?", "correct": "Seaweed", "wrong": ["Rice paper", "Pastry", "A banana leaf"], "tag": "sushi"}, {"q": "What is the capital of Scotland?", "correct": "Edinburgh", "wrong": ["Glasgow", "Aberdeen", "Dundee"], "tag": "capital-scotland"}, {"q": "What is the capital of Ireland?", "correct": "Dublin", "wrong": ["Belfast", "Cork", "Galway"], "tag": "capital-ireland"}, {"q": "Which country’s flag features a red maple leaf?", "correct": "Canada", "wrong": ["Norway", "Switzerland", "Turkey"], "tag": "canada-flag"}, {"q": "Who wrote ‘Pride and Prejudice’?", "correct": "Jane Austen", "wrong": ["Charlotte Brontë", "Mary Shelley", "George Eliot"], "tag": "austen"}, {"q": "What do you call a machine that can be programmed to do tasks?", "correct": "A robot", "wrong": ["A computer", "An engine", "A gadget"], "tag": "robot"}, {"q": "What is the study of stars and space called?", "correct": "Astronomy", "wrong": ["Geology", "Biology", "Geography"], "tag": "astronomy"}, {"q": "What do you call words that sound the same but are spelled differently?", "correct": "Homophones", "wrong": ["Synonyms", "Antonyms", "Rhymes"], "tag": "homophones"}, {"q": "What does ‘WWW’ stand for?", "correct": "World Wide Web", "wrong": ["World Web Widget", "Wide World Web", "Web Wide World"], "tag": "www"}, {"q": "What tool does a painter use to mix their colours?", "correct": "A palette", "wrong": ["A canvas", "An easel", "A brush"], "tag": "palette"}, {"q": "What is the capital of Egypt?", "correct": "Cairo", "wrong": ["Alexandria", "Giza", "Luxor"], "tag": "capital-egypt"}, {"q": "What is a group of wolves called?", "correct": "A pack", "wrong": ["A pride", "A herd", "A flock"], "tag": "pack-wolves"}, {"q": "What do you call a shape with ten sides?", "correct": "A decagon", "wrong": ["A pentagon", "An octagon", "A hexagon"], "tag": "decagon"}, {"q": "What is the study of living things called?", "correct": "Biology", "wrong": ["Chemistry", "Physics", "Ecology"], "tag": "biology"}, {"q": "Which blood cells help the body fight infection?", "correct": "White blood cells", "wrong": ["Red blood cells", "Platelets", "Plasma"], "tag": "white-blood-cells"}, {"q": "What is 12 multiplied by 12?", "correct": "144", "wrong": ["124", "132", "154"], "tag": "twelve-squared"}, {"q": "Which country has a flag with a single red circle on white?", "correct": "Japan", "wrong": ["China", "South Korea", "Bangladesh"], "tag": "japan-flag"}];
+function slug(x){ return String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
+let usedTags=new Set();
+function pickQuestion(){ let cand=POOL.filter(o=>!usedTags.has(o.tag||slug(o.correct))); if(!cand.length){ usedTags=new Set(); cand=POOL.slice(); } const it=cand[Math.floor(Math.random()*cand.length)]; usedTags.add(it.tag||slug(it.correct)); return it; }
+const $=id=>document.getElementById(id);
+const SFX=(function(){ let ac=null,master=null,on=true;
+  function ctx(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=0.85; master.connect(ac.destination);}catch(e){} } if(ac&&ac.state==='suspended')ac.resume(); return ac; }
+  function tone(f,t,d,type,v){ const a=ctx(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v||0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g);g.connect(master);o.start(t);o.stop(t+d+0.03); }
+  function glide(f0,f1,t,d,type,v){ const a=ctx(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+d); g.gain.setValueAtTime(v||0.18,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g);g.connect(master);o.start(t);o.stop(t+d+0.03); }
+  function noise(t,d,v,f,type){ const a=ctx(); if(!a)return; const n=a.createBuffer(1,Math.max(1,(a.sampleRate*d)|0),a.sampleRate); const ch=n.getChannelData(0); for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1; const src=a.createBufferSource(); src.buffer=n; const bp=a.createBiquadFilter(); bp.type=type||'bandpass'; bp.frequency.value=f||1000; const g=a.createGain(); g.gain.setValueAtTime(v||0.15,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); src.connect(bp);bp.connect(g);g.connect(master);src.start(t);src.stop(t+d); }
+  return {
+    mute:function(m){ on=!m; if(master)master.gain.value=m?0:0.85; },
+    roll:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; for(let i=0;i<5;i++) noise(t+i*0.05,0.04,0.12,300+Math.random()*400); },
+    correct:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [880,1320,1760].forEach(function(f,i){ tone(f,t,0.7,'sine',i===0?0.2:0.1); }); },
+    wrong:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; tone(180,t,0.3,'sawtooth',0.22); tone(150,t+0.16,0.34,'sawtooth',0.2); },
+    climb:function(){ const a=ctx(); if(!a||!on)return; glide(300,760,a.currentTime,0.42,'triangle',0.16); },
+    slide:function(){ const a=ctx(); if(!a||!on)return; glide(760,200,a.currentTime,0.5,'sawtooth',0.16); noise(a.currentTime,0.5,0.06,900,'lowpass'); },
+    collapse:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; noise(t,0.5,0.3,500,'lowpass'); glide(400,90,t,0.5,'square',0.14); for(let i=0;i<6;i++) noise(t+i*0.06,0.06,0.12,200+Math.random()*300); },
+    slither:function(){ const a=ctx(); if(!a||!on)return; noise(a.currentTime,0.6,0.12,3500,'bandpass'); },
+    shake:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; for(let i=0;i<7;i++) noise(t+i*0.035,0.03,0.14,400+Math.random()*400); },
+    tick:function(){ const a=ctx(); if(!a||!on)return; tone(1100,a.currentTime,0.04,'square',0.06); },
+    swoop:function(){ const a=ctx(); if(!a||!on)return; glide(300,900,a.currentTime,0.5,'sine',0.14); glide(900,520,a.currentTime+0.45,0.4,'sine',0.1); },
+    rumble:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; noise(t,0.7,0.28,220,'lowpass'); glide(160,60,t,0.7,'sawtooth',0.14); },
+    wind:function(){ const a=ctx(); if(!a||!on)return; noise(a.currentTime,1.2,0.16,800,'bandpass'); },
+    summit:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [[523,0],[659,0.12],[784,0.24],[1047,0.36]].forEach(function(p){ tone(p[0],t+p[1],0.5,'triangle',0.2); tone(p[0]*1.5,t+p[1],0.5,'triangle',0.07); }); for(let i=0;i<40;i++) noise(t+0.3+Math.random()*1.2,0.04,0.04,1500+Math.random()*3000); }
+  };
+})();
+const cv=$('board'), ctx=cv.getContext('2d');
+let DPR=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+let W=0,H=0,CELL=0;
+
+// ---------- board model ----------
+function rint(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function genBoard(){
+  // ladders climb up (from<to), snakes slide down (from>to). Endpoints all distinct, never on 1 or TOP.
+  const used=new Set([1,TOP]);
+  function freeSquare(lo,hi){ for(let tries=0;tries<40;tries++){ const s=rint(lo,hi); if(!used.has(s)) return s; } return -1; }
+  const ladders=[], snakes=[];
+  const nLad=Math.max(4,Math.round(TOP*0.09)), nSnk=Math.max(4,Math.round(TOP*0.09));
+  const spanLo=Math.max(5,Math.round(TOP*0.08)), spanHi=Math.max(spanLo+2,Math.round(TOP*0.28));
+  let guard=0;
+  while(ladders.length<nLad && guard++<800){
+    const from=freeSquare(2, TOP-spanLo-1); if(from<0) continue;
+    const to=from+rint(spanLo,spanHi); if(to>=TOP || used.has(to)) continue;
+    used.add(from); used.add(to);
+    const life=Math.max(6, Math.round(TOP*0.34 - (from/TOP)*(TOP*0.17)));
+    ladders.push({from,to,health:life,maxHealth:life,alive:true});
+  }
+  guard=0;
+  while(snakes.length<nSnk && guard++<800){
+    const from=freeSquare(Math.round(TOP*0.10), TOP-1); if(from<0) continue;
+    const to=from-rint(spanLo,spanHi); if(to<2 || used.has(to)) continue;
+    used.add(from); used.add(to); const thr=(from>TOP*0.6)?2:3; snakes.push({from,to,stir:0,threshold:thr,alive:true});
+  }
+  return {ladders,snakes};
+}
+function resolveLanding(pos, board){
+  for(const l of board.ladders){ if(l.alive && l.from===pos) return {obj:l, to:l.to, kind:'ladder'}; }
+  for(const s of board.snakes){ if(s.alive && s.from===pos) return {obj:s, to:s.to, kind:'snake'}; }
+  return null;
+}
+function timerFor(square){ const f=Math.max(0,Math.min(1,square/TOP)); return Math.round(10000 - f*5000); }
+
+let board=genBoard();
+let pos=1, busy=false, lastRoll=0;
+let turns=0, correct=0, total=0;
+let tokenPix=null; // {x,y}
+
+// ---------- geometry ----------
+function squareCenter(n){ // n: 1..TOP, boustrophedon from bottom-left
+  const idx=n-1;
+  const row=Math.floor(idx/COLS);              // 0 at bottom
+  const inRow=idx%COLS;
+  const col=(row%2===0)? inRow : (COLS-1-inRow);
+  const x=col*CELL + CELL/2;
+  const y=H - (row*CELL + CELL/2);             // invert: row 0 at bottom
+  return {x,y};
+}
+
+// ---------- sizing ----------
+function resize(){
+  const wrapW=Math.min(cv.parentElement.clientWidth, 560);
+  CELL=Math.floor(wrapW/COLS);
+  W=CELL*COLS; H=CELL*ROWS;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!tokenPix) tokenPix=squareCenter(pos); else tokenPix=squareCenter(pos);
+  draw();
+}
+
+// ---------- drawing ----------
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function drawCells(){
+  for(let n=1;n<=TOP;n++){
+    const c=squareCenter(n);
+    const x=c.x-CELL/2, y=c.y-CELL/2;
+    const dark=((Math.floor((n-1)/COLS)+((n-1)%COLS))%2===0);
+    ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
+    roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
+    if(n===TOP){ ctx.fillStyle='rgba(245,178,62,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
+    ctx.fillStyle='rgba(183,176,162,.55)';
+    ctx.font='700 '+Math.max(8,CELL*0.24)+'px Nunito, sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(n, x+5, y+4);
+  }
+  // top flag
+  const t=squareCenter(TOP);
+  ctx.font=Math.floor(CELL*0.42)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🏔️', t.x, t.y+CELL*0.06);
+}
+
+function drawLadder(l){
+  const a=squareCenter(l.from), b=squareCenter(l.to);
+  const idleTr=(l.health!=null && l.health<=1 && l.alive)?Math.sin(T*0.02 + l.from)*CELL*0.03:0; const sh=(l._shake||0)+idleTr; a.x+=sh; b.x+=sh*0.6;
+  ctx.save(); if(l._alpha!=null) ctx.globalAlpha=l._alpha;
+  const h=(l.health==null?9:l.health);
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+  const nx=-dy/len, ny=dx/len; // perpendicular
+  const wRail=Math.max(4, CELL*0.16);
+  ctx.lineCap='round';
+  // rails (colour weathers as it rots)
+  ctx.strokeStyle = h>=4?'#c9924e':(h>=2?'#a9793f':'#916a4c'); ctx.lineWidth=Math.max(3,CELL*0.05*(h>=2?1:0.85));
+  for(const s of [-1,1]){
+    ctx.beginPath();
+    ctx.moveTo(a.x+nx*wRail*s, a.y+ny*wRail*s);
+    ctx.lineTo(b.x+nx*wRail*s, b.y+ny*wRail*s);
+    ctx.stroke();
+  }
+  // rungs (some missing as it frays)
+  ctx.strokeStyle = h>=4?'#8a5a2b':(h>=2?'#79532c':'#6b4a3a'); ctx.lineWidth=Math.max(2,CELL*0.035);
+  const rungs=Math.max(2,Math.floor(len/(CELL*0.5)));
+  for(let i=1;i<rungs;i++){
+    if(h<=1 && i%2===0) continue;
+    if(h<=3 && h>1 && i===2) continue;
+    const t=i/rungs; const px=a.x+dx*t, py=a.y+dy*t;
+    ctx.beginPath(); ctx.moveTo(px+nx*wRail, py+ny*wRail); ctx.lineTo(px-nx*wRail, py-ny*wRail); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSnake(s){
+  ctx.save(); if(s._alpha!=null) ctx.globalAlpha=s._alpha;
+  const steps=26; ctx.strokeStyle='#57b26a'; ctx.lineWidth=Math.max(6,CELL*0.20); ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); for(let i=0;i<=steps;i++){ const p=snakePointAt(s,i/steps); if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y); } ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=Math.max(2,CELL*0.05); ctx.beginPath(); for(let i=0;i<=steps;i++){ const p=snakePointAt(s,i/steps); if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);} ctx.stroke();
+  const head=snakePointAt(s,0);
+  ctx.fillStyle='#57b26a'; ctx.beginPath(); ctx.arc(head.x,head.y,CELL*0.20,0,7); ctx.fill();
+  const eo=CELL*0.07, ey=head.y-eo*0.4, stir=s.stir||0, awake=(stir>0||(s._writhe||0)>0.05);
+  if(!awake){
+    ctx.strokeStyle='#20233c'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(head.x-eo-CELL*0.03,ey); ctx.lineTo(head.x-eo+CELL*0.03,ey); ctx.moveTo(head.x+eo-CELL*0.03,ey); ctx.lineTo(head.x+eo+CELL*0.03,ey); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='800 '+Math.max(9,CELL*0.2)+'px Nunito, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('z', head.x+CELL*0.2, head.y-CELL*0.24 + Math.sin(T*0.004)*CELL*0.05);
+  } else {
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.055,0,7); ctx.arc(head.x+eo,ey,CELL*0.055,0,7); ctx.fill();
+    ctx.fillStyle='#20233c'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.024,0,7); ctx.arc(head.x+eo,ey,CELL*0.024,0,7); ctx.fill();
+    const tong=CELL*(0.16+0.06*Math.sin(T*0.02)); ctx.strokeStyle='#e0728a'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.beginPath(); ctx.moveTo(head.x,head.y+CELL*0.15); ctx.lineTo(head.x,head.y+CELL*0.15+tong); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawToken(){
+  if(!tokenPix) return;
+  const bob=tokenMoving?0:Math.sin(T*0.004)*CELL*0.03; const x=tokenPix.x, y=tokenPix.y+bob;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.fillStyle='#f5b23e'; ctx.beginPath(); ctx.arc(x,y,CELL*0.26,0,7); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#241a12'; ctx.beginPath(); ctx.arc(x,y,CELL*0.12,0,7); ctx.fill();
+}
+
+function draw(){
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  let sx=0,sy=0; if(T<shakeUntil){ const amt=shakeAmt*((shakeUntil-T)/shakeDur); sx=(Math.random()*2-1)*amt; sy=(Math.random()*2-1)*amt; }
+  const cx=W/2, cy=H/2; ctx.translate(cx+sx,cy+sy); ctx.scale(cam.scale,cam.scale); ctx.translate(-cx,-cy);
+  drawCells();
+  board.ladders.forEach(l=>{ if(l.alive||l._alpha!=null) drawLadder(l); });
+  board.snakes.forEach(sn=>{ if(sn.alive||sn._alpha!=null) drawSnake(sn); });
+  drawParticles();
+  drawToken();
+  drawRoc();
+  ctx.restore();
+}
+
+// ---------- render engine: loop, camera, particles, tweens ----------
+let T=0, tokenMoving=false;
+let cam={scale:1};
+let shakeAmt=0, shakeDur=1, shakeUntil=0;
+let particles=[], tweens=[];
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function addTween(dur, update, done){ return new Promise(res=>{ tweens.push({start:T,dur:Math.max(1,dur),update:update,done:function(){ if(done)done(); res(); }}); }); }
+function shake(amt,dur){ shakeAmt=amt; shakeDur=Math.max(1,dur); shakeUntil=T+dur; }
+function punch(peak){ addTween(420,function(t){ cam.scale=1+(peak-1)*Math.sin(t*Math.PI); },function(){ cam.scale=1; }); }
+function snakePointAt(s,u){ const head=squareCenter(s.from), tail=squareCenter(s.to); const dx=tail.x-head.x, dy=tail.y-head.y, len=Math.hypot(dx,dy)||1; const nx=-dy/len, ny=dx/len; const amp=CELL*0.34; const strike=s._writhe||0; const wob=Math.sin(u*Math.PI*3 + T*0.0018 + s.from + strike*6)*amp*(1-u*0.12)*(1+strike*1.1)*(0.15+0.85*u); return {x:head.x+dx*u+nx*wob, y:head.y+dy*u+ny*wob}; }
+function spawnDust(x,y,n){ for(let i=0;i<(n||8);i++){ const a=Math.random()*6.283, sp=CELL*(0.02+Math.random()*0.05); particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-CELL*0.02,g:CELL*0.004,life:0,max:500+Math.random()*300,r:CELL*(0.05+Math.random()*0.07),col:'rgba(205,185,155,0.5)',kind:'dust'}); } }
+function spawnDebris(x,y){ for(let i=0;i<14;i++){ const a=Math.random()*6.283, sp=CELL*(0.04+Math.random()*0.10); particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:-Math.abs(Math.sin(a))*sp-CELL*0.05,g:CELL*0.013,life:0,max:600+Math.random()*400,rot:Math.random()*6,vr:(Math.random()-0.5)*0.4,w:CELL*(0.06+Math.random()*0.09),h:CELL*(0.02+Math.random()*0.04),col:Math.random()<0.5?'#c9924e':'#8a5a2b',kind:'wood'}); } spawnDust(x,y,10); }
+function updateParticles(dt){ for(const p of particles){ p.life+=dt; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; if(p.kind==='wood') p.rot+=p.vr; } if(particles.length) particles=particles.filter(p=>p.life<p.max); }
+function drawParticles(){ for(const p of particles){ const k=1-p.life/p.max; if(k<=0) continue; if(p.kind==='wood'){ ctx.save(); ctx.globalAlpha=k; ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); } else if(p.kind==='rock'){ ctx.save(); ctx.globalAlpha=k; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); ctx.restore(); } else if(p.kind==='wind'){ ctx.save(); ctx.globalAlpha=k*0.5; ctx.strokeStyle=p.col; ctx.lineWidth=Math.max(1,CELL*0.03); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.len,p.y); ctx.stroke(); ctx.restore(); } else { ctx.save(); ctx.globalAlpha=k*0.6; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(0.6+0.6*(1-k)),0,7); ctx.fill(); ctx.restore(); } } }
+function animateTo(n,dur){ const from={x:tokenPix.x,y:tokenPix.y}, to=squareCenter(n); tokenMoving=true; return addTween(dur,function(t){ const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; tokenPix={x:from.x+(to.x-from.x)*e,y:from.y+(to.y-from.y)*e}; },function(){ tokenPix=to; tokenMoving=false; }); }
+async function walk(fromN,toN){ const step=toN>fromN?1:-1; for(let n=fromN+step; step>0?n<=toN:n>=toN; n+=step){ await animateTo(n,150); } }
+async function slideAlongSnake(s){ tokenMoving=true; await addTween(240,function(t){ s._writhe=t*0.9; },null); shake(CELL*0.10,520); await addTween(780,function(t){ const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; tokenPix=snakePointAt(s,e); s._writhe=0.9*(1-t*0.35); },function(){ tokenPix=squareCenter(s.to); tokenMoving=false; }); await addTween(300,function(t){ s._writhe=0.55*(1-t); },function(){ s._writhe=0; }); }
+function loop(now){ const dt=Math.min(50,now-(loop._last||now)); loop._last=now; T=now; for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); tw.update(t); if(t>=1){ tweens.splice(i,1); tw.done(); } } updateParticles(dt); draw(); requestAnimationFrame(loop); }
+
+// ---------- dice face ----------
+const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,28],[72,28],[28,50],[72,50],[28,72],[72,72]]};
+function renderDie(v){ const d=$('die'); d.innerHTML=''; (PIPS[v]||[]).forEach(p=>{ const s=document.createElement('span'); s.className='pip'; s.style.left=p[0]+'%'; s.style.top=p[1]+'%'; d.appendChild(s); }); }
+
+// ---------- question ----------
+function askQuestion(q, kind, dur){ dur=dur||ANSWER_MS;
+  return new Promise(resolve=>{
+    const ov=$('qoverlay'), bar=$('qtimerbar'); let done=false, timer=null, raf=0;
+    const PR={ladder:['🪜 Climb it — answer to hold the ladder!','lad'], snake:['🐍 Sneak past — answer without waking it!','sna'], rock:['🪨 Rockfall! Answer to scramble clear!','rock'], storm:['🌩️ A storm! Answer to shelter the ladders!','storm']}[kind]||['','lad'];
+    $('qkind').className='qkind '+PR[1]; $('qkind').textContent=PR[0];
+    $('qtext').textContent=q.q;
+    const opts=shuffle([q.correct].concat(q.wrong)); const correctIdx=opts.indexOf(q.correct);
+    const grid=$('qopts'); grid.innerHTML='';
+    function finish(ok){ if(done) return; done=true; clearTimeout(timer); cancelAnimationFrame(raf); try{ ok?SFX.correct():SFX.wrong(); }catch(e){}
+      const kids=grid.children; if(kids[correctIdx]) kids[correctIdx].classList.add('right');
+      setTimeout(function(){ ov.classList.add('hide'); resolve(ok); }, ok?450:800); }
+    opts.forEach(function(o,i){ const b=document.createElement('button'); b.className='qopt c'+i;
+      const k=document.createElement('span'); k.className='qk'; k.textContent='ABCD'[i];
+      const t=document.createElement('span'); t.textContent=o; b.appendChild(k); b.appendChild(t);
+      b.addEventListener('click',function(){ if(done) return; if(i!==correctIdx) b.classList.add('wrong'); finish(i===correctIdx); });
+      grid.appendChild(b); });
+    ov.classList.remove('hide');
+    const start=performance.now(); bar.style.width='100%';
+    (function tick(now){ const t=Math.min(1,(now-start)/dur); bar.style.width=((1-t)*100)+'%'; const rem=dur*(1-t); if(rem<2000){ const sc=Math.ceil(rem/1000); if(tick._s!==sc){ tick._s=sc; try{SFX.tick();}catch(e){} } } if(t<1 && !done) raf=requestAnimationFrame(tick); })(start);
+    timer=setTimeout(function(){ finish(false); }, dur);
+  });
+}
+
+// ---------- decay & snake behaviour ----------
+function collapse(l){ try{SFX.collapse();}catch(e){} setStatus('A ladder crumbles to pieces! 🪜'); const mid=squareCenter(l.from), top=squareCenter(l.to); spawnDebris((mid.x+top.x)/2,(mid.y+top.y)/2); shake(CELL*0.14,540); punch(1.05);
+  return addTween(560,function(t){ l._shake=Math.sin(t*44)*(1-t)*CELL*0.14; l._alpha=1-t; },function(){ l.alive=false; l._alpha=null; l._shake=0; }); }
+function slitherAway(s){ try{SFX.slither();}catch(e){} const h=squareCenter(s.from); spawnDust(h.x,h.y,8);
+  return addTween(640,function(t){ s._alpha=1-t; s._writhe=0.5*(1-t)+0.15; },function(){ s.alive=false; s._alpha=null; s._writhe=0; }); }
+function jolt(l){ const m=squareCenter(l.from); shake(CELL*0.07,340); spawnDust(m.x,m.y,7);
+  return addTween(380,function(t){ l._shake=Math.sin(t*50)*(1-t)*CELL*0.15; },function(){ l._shake=0; }); }
+async function ageLadders(){ const dying=[]; board.ladders.forEach(l=>{ if(l.alive){ l.health--; if(l.health<=0) dying.push(l); } }); for(const l of dying) await collapse(l); }
+async function snakeActs(s){
+  const targets=board.ladders.filter(l=>l.alive);
+  const shake = targets.length>0 && Math.random()<0.55;
+  if(shake){ targets.sort((a,b)=>Math.abs(a.from-s.from)-Math.abs(b.from-s.from)); const l=targets[0];
+    setStatus('The snake lashes out and shakes a ladder! 🐍'); try{SFX.shake();}catch(e){} await jolt(l); l.health-=3; s.stir=0; if(l.health<=0) await collapse(l);
+  } else { setStatus('The snake slithers away — the path clears. 🐍'); await slitherAway(s); }
+}
+
+// ---------- third-force events: Roc, Rockfall, Storm ----------
+const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.04;
+let roc={show:false,x:0,y:0};
+function lerp(a,b,t){ return a+(b-a)*t; }
+function ease(t){ return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
+function spawnRocks(c){ for(let i=0;i<9;i++){ particles.push({x:c.x+(Math.random()-0.5)*CELL*1.2, y:c.y-CELL*(0.8+Math.random()*2.2), vx:(Math.random()-0.5)*CELL*0.06, vy:CELL*(0.05+Math.random()*0.08), g:CELL*0.015, life:0, max:700+Math.random()*300, r:CELL*(0.08+Math.random()*0.12), col:Math.random()<0.5?'#8a8f99':'#6b6f78', kind:'rock'}); } spawnDust(c.x,c.y,10); }
+function spawnWind(){ for(let i=0;i<26;i++){ particles.push({x:-CELL, y:Math.random()*H, vx:CELL*(0.28+Math.random()*0.45), vy:(Math.random()-0.5)*CELL*0.02, g:0, life:0, max:700+Math.random()*300, len:CELL*(0.6+Math.random()*1.3), col:'rgba(200,220,255,0.4)', kind:'wind'}); } }
+function drawRoc(){ if(!roc.show) return; const flap=Math.sin(T*0.02); ctx.save(); ctx.translate(roc.x,roc.y);
+  ctx.fillStyle='#8f6ab0';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-CELL*0.42,-CELL*0.28-flap*CELL*0.28,-CELL*0.58,CELL*0.06); ctx.quadraticCurveTo(-CELL*0.34,CELL*0.06,0,0); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(CELL*0.42,-CELL*0.28-flap*CELL*0.28,CELL*0.58,CELL*0.06); ctx.quadraticCurveTo(CELL*0.34,CELL*0.06,0,0); ctx.fill();
+  ctx.fillStyle='#6b4a8a'; ctx.beginPath(); ctx.ellipse(0,0,CELL*0.2,CELL*0.13,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(CELL*0.19,-CELL*0.03,CELL*0.08,0,7); ctx.fill();
+  ctx.fillStyle='#f5b23e'; ctx.beginPath(); ctx.moveTo(CELL*0.26,-CELL*0.03); ctx.lineTo(CELL*0.37,0); ctx.lineTo(CELL*0.26,CELL*0.03); ctx.fill();
+  ctx.restore(); }
+async function flyRoc(toN){ const s0=squareCenter(pos), dest=squareCenter(toN); roc={show:true,x:-CELL,y:s0.y-CELL*2};
+  await addTween(500,function(t){ const e=ease(t); roc.x=lerp(-CELL,s0.x,e); roc.y=lerp(s0.y-CELL*2,s0.y-CELL*0.55,e); });
+  tokenMoving=true;
+  await addTween(1000,function(t){ const e=ease(t); roc.x=lerp(s0.x,dest.x,e); roc.y=lerp(s0.y-CELL*0.55,dest.y-CELL*0.55,e)-Math.sin(t*Math.PI)*CELL*1.1; tokenPix={x:roc.x,y:roc.y+CELL*0.5}; });
+  tokenPix=dest; tokenMoving=false;
+  await addTween(450,function(t){ const e=ease(t); roc.x=lerp(dest.x,W+CELL,e); roc.y=lerp(dest.y-CELL*0.55,dest.y-CELL*2.2,e); },function(){ roc.show=false; }); }
+async function braceHop(){ const c=squareCenter(pos); await addTween(320,function(t){ tokenPix={x:c.x,y:c.y-Math.sin(t*Math.PI)*CELL*0.4}; },function(){ tokenPix=c; }); }
+async function rocEvent(){ const to=Math.min(TOP, pos+rint(5,16)); setStatus('A great Roc sweeps down and carries you upward! 🦅'); try{SFX.swoop();}catch(e){} await flyRoc(to); pos=to; }
+async function rockfallEvent(){ setStatus('Rocks come loose above you! 🪨'); try{SFX.rumble();}catch(e){}
+  const ok=await askQuestion(pickQuestion(),'rock',8000);
+  if(ok){ setStatus('You scramble clear of the rockfall!'); await braceHop(); }
+  else { const to=Math.max(1,pos-rint(5,16)); setStatus('Caught in the rockfall — down you tumble!'); shake(CELL*0.16,600); punch(1.06); spawnRocks(squareCenter(pos)); await animateTo(to,640); pos=to; } }
+async function stormEvent(){ setStatus('A gale sweeps across the board! 🌩️'); try{SFX.wind();}catch(e){} spawnWind();
+  const ok=await askQuestion(pickQuestion(),'storm',8000);
+  if(ok){ setStatus('You shelter the ladders — they hold!'); shake(CELL*0.06,400); }
+  else { setStatus('The storm batters every ladder!'); shake(CELL*0.18,720); punch(1.05); spawnWind();
+    const alive=board.ladders.filter(function(l){return l.alive;}); alive.forEach(function(l){ l.health-=4; jolt(l); }); await sleep(440);
+    for(const l of board.ladders){ if(l.alive && l.health<=0) await collapse(l); } } }
+async function maybeEvent(){ const r=Math.random();
+  if(r<P_ROC){ if(pos<TOP-2) await rocEvent(); }
+  else if(r<P_ROC+P_ROCK){ if(pos>4) await rockfallEvent(); }
+  else if(r<P_ROC+P_ROCK+P_STORM){ if(board.ladders.some(function(l){return l.alive;})) await stormEvent(); } }
+
+// ---------- game flow ----------
+function setStatus(html){ $('status').innerHTML=html; }
+async function rollTurn(){
+  if(busy) return; busy=true; $('roll').disabled=true;
+  const d=rint(1,6); lastRoll=d; turns++;
+  try{SFX.roll();}catch(e){} $('die').classList.add('rolling');
+  let flick=0; const fi=setInterval(()=>renderDie(rint(1,6)), 60);
+  await sleep(500); clearInterval(fi); renderDie(d); $('die').classList.remove('rolling');
+  setStatus('Rolled a <b>'+d+'</b>…');
+
+  let target=pos+d;
+  if(target>=TOP){ await walk(pos, TOP); pos=TOP; return win(); }
+  await walk(pos, target); pos=target;
+
+  const hit=resolveLanding(pos, board);
+  if(hit){
+    await sleep(150);
+    const ok=await askQuestion(pickQuestion(), hit.kind, timerFor(pos));
+    total++; if(ok) correct++;
+    try{ if(hit.kind==='ladder'&&ok) SFX.climb(); else if(hit.kind==='snake'&&!ok) SFX.slide(); }catch(e){}
+    if(hit.kind==='ladder'){
+      if(ok){ setStatus('The ladder holds! Up you climb. 🪜'); await animateTo(hit.to,480); pos=hit.to; }
+      else { hit.obj.health-=2; setStatus('The rung snaps — no climb.'); if(hit.obj.health<=0) await collapse(hit.obj); }
+    } else {
+      hit.obj.stir += ok?1:2;
+      if(ok){ setStatus('You slip past the sleeping snake. 🐍'); }
+      else { setStatus('The snake wakes — down you slide! 🐍'); punch(1.06); await slideAlongSnake(hit.obj); pos=hit.to; }
+      if(hit.obj.alive && hit.obj.stir>=hit.obj.threshold) await snakeActs(hit.obj);
+    }
+  } else {
+    setStatus('On square <b>'+pos+'</b>.');
+    await maybeEvent();
+  }
+
+  if(pos>=TOP) return win();
+  await ageLadders();
+  busy=false; $('roll').disabled=false;
+}
+function bestScore(){ try{ return parseInt(localStorage.getItem('creak_best')||'0',10)||null; }catch(e){ return null; } }
+function confetti(){ const c=$('confetti'); if(!c) return; c.innerHTML=''; const em=['🎉','⭐','🏔️','🪜','✨']; for(let i=0;i<26;i++){ const sp=document.createElement('span'); sp.textContent=em[i%em.length]; sp.style.left=(Math.random()*100)+'%'; sp.style.animationDelay=(Math.random()*0.9)+'s'; sp.style.animationDuration=(2+Math.random()*1.4)+'s'; sp.style.fontSize=(14+Math.random()*16)+'px'; c.appendChild(sp); } }
+function win(){
+  busy=false;
+  const left=board.ladders.filter(l=>l.alive).length, tot=board.ladders.length;
+  const prev=bestScore(); const isBest = !prev || turns<prev;
+  if(isBest){ try{ localStorage.setItem('creak_best', String(turns)); }catch(e){} }
+  $('ovBig').textContent = isBest ? '🏔️ New best!' : '🏔️ Summit!';
+  $('ovLine').textContent = isBest && prev ? ('Beat your record of '+prev+' turns!') : 'You reached the summit.';
+  $('ovStats').innerHTML =
+    '<div class="st"><b>'+turns+'</b><span>turns</span></div>'+
+    '<div class="st"><b>'+correct+'/'+total+'</b><span>correct</span></div>'+
+    '<div class="st"><b>'+left+'/'+tot+'</b><span>ladders left</span></div>';
+  try{ SFX.summit(); }catch(e){}
+  confetti();
+  $('overlay').classList.remove('hide');
+}
+function newGame(){
+  board=genBoard(); pos=1; lastRoll=0; busy=false; usedTags=new Set(); turns=0; correct=0; total=0;
+  tokenPix=squareCenter(pos);
+  const cf=$('confetti'); if(cf) cf.innerHTML='';
+  $('overlay').classList.add('hide');
+  $('roll').disabled=false; $('die').innerHTML='';
+  const b=bestScore();
+  setStatus('Roll to begin your climb.'+(b?(' <b>Best: '+b+'</b>'):''));
+  draw();
+}
+
+$('roll').addEventListener('click', rollTurn);
+$('newgame').addEventListener('click', newGame);
+$('ovAgain').addEventListener('click', newGame);
+{ let muted=false; const mb=$('mute'); if(mb) mb.addEventListener('click', function(){ muted=!muted; try{SFX.mute(muted);}catch(e){} mb.textContent=muted?'🔇':'🔊'; }); }
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(loop);
+
+// expose pure logic for testing
+window.__CC={genBoard,resolveLanding,TOP,COLS,ROWS,POOL,pickQuestion,slug,timerFor,spawnDebris,shake,punch,snakePointAt,loop,getParticles:function(){return particles;},setBoard:function(b){board=b;},spawnRocks,spawnWind,showRoc:function(){roc.show=true;roc.x=100;roc.y=100;}};
+</script>
+</body>
+</html>
