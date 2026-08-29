@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hold The Throne — Stage</title>
+<title>Hold The Throne, Stage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -132,7 +132,7 @@
       </div>
       <div class="card hof" id="hofCard" style="grid-column:1/-1">
         <div class="hd">🏆 Hall of Fame</div>
-        <div id="hofList" class="hoflist"><span class="hofempty">No champions yet — be the first!</span></div>
+        <div id="hofList" class="hoflist"><span class="hofempty">No champions yet. Be the first!</span></div>
       </div>
     </div>
 
@@ -142,20 +142,20 @@
         <div class="qhead"><span class="qnum" id="qnum">Question 1</span><span class="qmeta" id="qmeta">of 20</span></div>
         <div class="progress"><i id="prog"></i></div>
         <div class="qbox">
-          <div class="qtext" id="qtext">—</div>
+          <div class="qtext" id="qtext">…</div>
           <div class="opts" id="opts"></div>
           <div class="timer" id="timerWrap"><i id="timer"></i></div>
           <div class="stcount hide" id="stcount"></div>
         </div>
         <div class="seats">
-          <div class="seat champ" id="seatChamp"><div class="crown">👑</div><div class="role">On the throne</div><div class="who" id="champName">—</div><div class="streak" id="champStreak"></div></div>
+          <div class="seat champ" id="seatChamp"><div class="crown">👑</div><div class="role">On the throne</div><div class="who" id="champName">…</div><div class="streak" id="champStreak"></div></div>
           <div class="vs">vs</div>
-          <div class="seat" id="seatChal"><div class="role">Challenger</div><div class="who" id="chalName">—</div><div class="streak" id="chalTag"></div></div>
+          <div class="seat" id="seatChal"><div class="role">Challenger</div><div class="who" id="chalName">…</div><div class="streak" id="chalTag"></div></div>
         </div>
-        <div class="queue"><div class="lab">Queue</div><div class="qq" id="queue"><span class="empty">—</span></div></div>
+        <div class="queue"><div class="lab">Queue</div><div class="qq" id="queue"><span class="empty">,</span></div></div>
         <div class="beststreak" id="best"></div>
       </div>
-      <div id="bannerView" class="hide"><div class="banner" id="banner">—</div></div>
+      <div id="bannerView" class="hide"><div class="banner" id="banner">…</div></div>
     </div>
 
   </div>
@@ -163,7 +163,7 @@
 
 <script>
 
-/* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
+/* ---- Chapter & Verse, animated host (first pass; tunable) ---- */
 (function(){
   const HCV=document.getElementById('hostCv'); if(!HCV) return;
   const X=HCV.getContext('2d');
@@ -371,10 +371,10 @@ async function createRoom(){
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
 async function writeLegend(winner, flawless){ if(!winner) return; try{ await sb('legends',{method:'POST',body:JSON.stringify({ name:winner.name, game:'throne', streak:(G.bestStreak[winner.id]||0), flawless:!!flawless, questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() })}); }catch(e){} loadLegends(); }
 async function loadLegends(){ let r=[]; try{ r=await sb('legends?game=eq.throne&select=name,streak,flawless,created_at&order=created_at.desc&limit=8')||[]; }catch(e){} renderLegends(r); }
-function renderLegends(list){ const el=$('hofList'); if(!el) return; if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet — be the first!</span>'; return; }
+function renderLegends(list){ const el=$('hofList'); if(!el) return; if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet. Be the first!</span>'; return; }
   el.innerHTML=''; list.forEach(function(L){ const row=document.createElement('div'); row.className='hofrow'+(L.flawless?' legend':'');
     const c=document.createElement('span'); c.className='em'; c.textContent=L.flawless?'👑':'🏅';
-    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||'—';
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||',';
     const st=document.createElement('span'); st.className='st'; st.textContent=(L.flawless?'Flawless legend':'Champion')+(L.streak?(' · streak '+L.streak):'');
     row.appendChild(c); row.appendChild(nm); row.appendChild(st); el.appendChild(row); }); }
 
@@ -428,12 +428,12 @@ async function win(p){
   banner(true, esc(p.name)+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
 }
 function blemish(id){ if(id && G.blemished.indexOf(id)<0) G.blemished.push(id); }
-function nameFor(id){ if(G.champ&&G.champ.id===id) return G.champ.name; if(G.chal&&G.chal.id===id) return G.chal.name; const q=G.queue.find(p=>p.id===id); if(q) return q.name; const p=G.players.find(x=>x.id===id); return p?p.name:'\u2014'; }
+function nameFor(id){ if(G.champ&&G.champ.id===id) return G.champ.name; if(G.chal&&G.chal.id===id) return G.chal.name; const q=G.queue.find(p=>p.id===id); if(q) return q.name; const p=G.players.find(x=>x.id===id); return p?p.name:','; }
 function streakKing(){ let best=null; Object.keys(G.bestStreak).forEach(function(id){ const sc=G.bestStreak[id]; if(!best || sc>best.s || (sc===best.s && (G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0))){ best={id:id, s:sc, name:nameFor(id)}; } }); return best; }
 async function bothMiss(){ G.outcome='bothmiss'; G.pendingLoser=null;
   if(G.champ) blemish(G.champ.id); if(G.chal) blemish(G.chal.id);
   SFX.wrong(); HS('wince');
-  banner(false, 'Nobody got it!', 'Both step aside — two new challengers.');
+  banner(false, 'Nobody got it!', 'Both step aside. Two new challengers.');
 }
 function banner(ok,msg,sub){
   G.phase='reveal'; G.revealOk=ok; G.revealMsg=msg; G.revealSub=sub; writeState(); render();
@@ -448,7 +448,7 @@ function afterReveal(){
   if(G.outcome==='win'){ enqueue(G.pendingLoser); G.chal=dequeue(); }
   else if(G.outcome==='bothmiss'){ enqueue(G.champ); enqueue(G.chal); G.champ=dequeue(); G.chal=dequeue(); G.streak=0; }
   if(!G.champ || !G.chal){ G.phase='gameover'; G.winner=G.champ||G.chal; G.deadmsg='Not enough players left.'; writeState(); render(); return; }
-  G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds — streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
+  G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds, streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
   writeState(); render();
   clearTimeout(G._t); G._t=setTimeout(nextOrEnd, BETWEEN_MS);
 }
@@ -468,19 +468,19 @@ function enterFinale(){
   G.finalists={ closer:{id:closer.id,name:closer.name}, king:{id:sk.id,name:sk.name} };
   G.champ={id:closer.id,name:closer.name}; G.chal={id:sk.id,name:sk.name}; G.queue=[]; G.streak=0;
   G.finaleScore={}; G.finaleScore[closer.id]=0; G.finaleScore[sk.id]=0;
-  G.phase='finintro'; G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+' — first to 2 wins.';
+  G.phase='finintro'; G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+', first to 2 wins.';
   SFX.sting(); HS('present'); hostSay(pick(QUIPS.finale));
   writeState(); render();
   clearTimeout(G._t); G._t=setTimeout(serveQuestion, 3200);
 }
-function scoreStr(){ const c=G.finalists.closer, k=G.finalists.king; return esc(c.name)+' '+(G.finaleScore[c.id]||0)+' — '+(G.finaleScore[k.id]||0)+' '+esc(k.name); }
+function scoreStr(){ const c=G.finalists.closer, k=G.finalists.king; return esc(c.name)+' '+(G.finaleScore[c.id]||0)+' - '+(G.finaleScore[k.id]||0)+' '+esc(k.name); }
 function gradeFinale(ok){
   if(ok){ const id=G.answerer.id; G.finaleScore[id]=(G.finaleScore[id]||0)+1; SFX.correct(); HS('celebrate');
     if(G.finaleScore[id]>=2){ G.finaleWinner={id:id,name:G.answerer.name}; G.outcome='finalewin'; banner(true, esc(G.answerer.name)+' wins the Finale!', scoreStr()); }
     else { G.outcome='finalepoint'; banner(true, esc(G.answerer.name)+' scores!', scoreStr()); }
   } else {
     if(!G.firstResolved){ G.firstResolved=true; G.lockedOut.push(G.answerer.id); const opp=(G.answerer.id===G.champ.id)?G.chal:G.champ; G.answerer={id:opp.id,name:opp.name}; G.ansWin=Date.now()+ANS_MS; writeState(); }
-    else { G.outcome='finalemiss'; banner(false, 'Nobody got it!', scoreStr()+' — next question.'); }
+    else { G.outcome='finalemiss'; banner(false, 'Nobody got it!', scoreStr()+', next question.'); }
   }
 }
 function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=streakKing(); SFX.fanfare(); SFX.applause(); HS('celebrate'); hostSay(pick(QUIPS.win));
@@ -546,15 +546,15 @@ function render(){
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
       let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
-      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'—')+' holds the throne!<div class="sub">'+sub+'</div>'; }
+      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'…')+' holds the throne!<div class="sub">'+sub+'</div>'; }
     return;
   }
   // play view
   $('qnum').textContent='Question '+G.qIndex; $('qmeta').textContent='of '+G.qTotal;
   { const pr=$('prog'); if(pr) pr.style.width=Math.min(100,(G.qIndex/G.qTotal)*100)+'%'; }
-  { const be=$('best'); if(be){ const sk=streakKing(); be.textContent = (sk&&sk.s>0)? ('Longest streak so far: '+sk.s+' — '+sk.name) : ''; } }
+  { const be=$('best'); if(be){ const sk=streakKing(); be.textContent = (sk&&sk.s>0)? ('Longest streak so far: '+sk.s+', '+sk.name) : ''; } }
   if(G.mode==='finale' && G.finalists){ $('qnum').textContent='Grand Finale'; $('qmeta').textContent='first to 2'; const pr=$('prog'); if(pr) pr.style.width='100%'; const be=$('best'); if(be) be.textContent=scoreStr(); }
-  $('qtext').textContent=G.q?G.q.q:'—';
+  $('qtext').textContent=G.q?G.q.q:',';
   const opts=$('opts'); opts.innerHTML='';
   (G.q?G.q.opts:[]).forEach((o,i)=>{ const d=document.createElement('div'); d.className='opt c'+i; const k=document.createElement('span'); k.className='k'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); });
   // timer / countdown
@@ -567,15 +567,15 @@ function render(){
     else { wrap.classList.remove('ans'); const remain=G.buzzWin-now; const frac=Math.max(0,Math.min(1,remain/BUZZ_MS)); bar.style.width=(frac*100)+'%';
       if(remain>0 && remain<2600){ const sec=Math.ceil(remain/1000); if(G._lastTick!==sec){ G._lastTick=sec; SFX.tick(); } } } }
   // seats
-  $('champName').textContent=G.champ?G.champ.name:'—';
+  $('champName').textContent=G.champ?G.champ.name:',';
   $('champStreak').textContent=(G.mode==='finale'&&G.finaleScore)?('Points: '+(G.finaleScore[G.champ.id]||0)):(G.streak>0?('Streak '+G.streak):'');
-  $('chalName').textContent=G.chal?G.chal.name:'—';
+  $('chalName').textContent=G.chal?G.chal.name:',';
   $('seatChamp').classList.toggle('buzzed', !!(G.answerer&&G.champ&&G.answerer.id===G.champ.id));
   $('seatChal').classList.toggle('buzzed', !!(G.answerer&&G.chal&&G.answerer.id===G.chal.id));
   $('chalTag').textContent = (G.mode==='finale'&&G.finaleScore&&G.chal)?('Points: '+(G.finaleScore[G.chal.id]||0)):(G.answerer? (G.answerer.id===(G.chal&&G.chal.id)?'answering…':'') : '');
   // queue
   const q=$('queue'); const liveQ=G.queue.filter(p=>isLive(p.id));
-  if(!liveQ.length){ q.innerHTML='<span class="empty">— nobody waiting —</span>'; }
+  if(!liveQ.length){ q.innerHTML='<span class="empty">nobody waiting yet</span>'; }
   else { q.innerHTML=''; liveQ.forEach((p,i)=>{ const s=document.createElement('span'); s.textContent=(i+1)+'. '+p.name; q.appendChild(s); }); }
 }
 

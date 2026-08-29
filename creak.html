@@ -75,7 +75,7 @@
     <button class="btn" id="roll">Roll</button>
     <button class="btn ghost" id="newgame" style="margin-top:10px">New board</button>
   </div>
-  <div class="foot">Ladders rot, snakes strike — and watch for the Roc that lifts you, the rockfalls, and storms that batter the ladders. 🔊 top-right.</div>
+  <div class="foot">Ladders rot, snakes strike, and watch for the Roc that lifts you, the rockfalls, and storms that batter the ladders. 🔊 top-right.</div>
 
   <div class="qoverlay hide" id="qoverlay">
     <div class="qcard">
@@ -312,7 +312,7 @@ function renderDie(v){ const d=$('die'); d.innerHTML=''; (PIPS[v]||[]).forEach(p
 function askQuestion(q, kind, dur){ dur=dur||ANSWER_MS;
   return new Promise(resolve=>{
     const ov=$('qoverlay'), bar=$('qtimerbar'); let done=false, timer=null, raf=0;
-    const PR={ladder:['🪜 Climb it — answer to hold the ladder!','lad'], snake:['🐍 Sneak past — answer without waking it!','sna'], rock:['🪨 Rockfall! Answer to scramble clear!','rock'], storm:['🌩️ A storm! Answer to shelter the ladders!','storm']}[kind]||['','lad'];
+    const PR={ladder:['🪜 Climb it. Answer to hold the ladder!','lad'], snake:['🐍 Sneak past. Answer without waking it!','sna'], rock:['🪨 Rockfall! Answer to scramble clear!','rock'], storm:['🌩️ A storm! Answer to shelter the ladders!','storm']}[kind]||['','lad'];
     $('qkind').className='qkind '+PR[1]; $('qkind').textContent=PR[0];
     $('qtext').textContent=q.q;
     const opts=shuffle([q.correct].concat(q.wrong)); const correctIdx=opts.indexOf(q.correct);
@@ -345,7 +345,7 @@ async function snakeActs(s){
   const shake = targets.length>0 && Math.random()<0.55;
   if(shake){ targets.sort((a,b)=>Math.abs(a.from-s.from)-Math.abs(b.from-s.from)); const l=targets[0];
     setStatus('The snake lashes out and shakes a ladder! 🐍'); try{SFX.shake();}catch(e){} await jolt(l); l.health-=3; s.stir=0; if(l.health<=0) await collapse(l);
-  } else { setStatus('The snake slithers away — the path clears. 🐍'); await slitherAway(s); }
+  } else { setStatus('The snake slithers away, the path clears. 🐍'); await slitherAway(s); }
 }
 
 // ---------- third-force events: Roc, Rockfall, Storm ----------
@@ -374,10 +374,10 @@ async function rocEvent(){ const to=Math.min(TOP, pos+rint(5,16)); setStatus('A 
 async function rockfallEvent(){ setStatus('Rocks come loose above you! 🪨'); try{SFX.rumble();}catch(e){}
   const ok=await askQuestion(pickQuestion(),'rock',8000);
   if(ok){ setStatus('You scramble clear of the rockfall!'); await braceHop(); }
-  else { const to=Math.max(1,pos-rint(5,16)); setStatus('Caught in the rockfall — down you tumble!'); shake(CELL*0.16,600); punch(1.06); spawnRocks(squareCenter(pos)); await animateTo(to,640); pos=to; } }
+  else { const to=Math.max(1,pos-rint(5,16)); setStatus('Caught in the rockfall. Down you tumble!'); shake(CELL*0.16,600); punch(1.06); spawnRocks(squareCenter(pos)); await animateTo(to,640); pos=to; } }
 async function stormEvent(){ setStatus('A gale sweeps across the board! 🌩️'); try{SFX.wind();}catch(e){} spawnWind();
   const ok=await askQuestion(pickQuestion(),'storm',8000);
-  if(ok){ setStatus('You shelter the ladders — they hold!'); shake(CELL*0.06,400); }
+  if(ok){ setStatus('You shelter the ladders, they hold!'); shake(CELL*0.06,400); }
   else { setStatus('The storm batters every ladder!'); shake(CELL*0.18,720); punch(1.05); spawnWind();
     const alive=board.ladders.filter(function(l){return l.alive;}); alive.forEach(function(l){ l.health-=4; jolt(l); }); await sleep(440);
     for(const l of board.ladders){ if(l.alive && l.health<=0) await collapse(l); } } }
@@ -408,11 +408,11 @@ async function rollTurn(){
     try{ if(hit.kind==='ladder'&&ok) SFX.climb(); else if(hit.kind==='snake'&&!ok) SFX.slide(); }catch(e){}
     if(hit.kind==='ladder'){
       if(ok){ setStatus('The ladder holds! Up you climb. 🪜'); await animateTo(hit.to,480); pos=hit.to; }
-      else { hit.obj.health-=2; setStatus('The rung snaps — no climb.'); if(hit.obj.health<=0) await collapse(hit.obj); }
+      else { hit.obj.health-=2; setStatus('The rung snaps. No climb.'); if(hit.obj.health<=0) await collapse(hit.obj); }
     } else {
       hit.obj.stir += ok?1:2;
       if(ok){ setStatus('You slip past the sleeping snake. 🐍'); }
-      else { setStatus('The snake wakes — down you slide! 🐍'); punch(1.06); await slideAlongSnake(hit.obj); pos=hit.to; }
+      else { setStatus('The snake wakes. Down you slide! 🐍'); punch(1.06); await slideAlongSnake(hit.obj); pos=hit.to; }
       if(hit.obj.alive && hit.obj.stir>=hit.obj.threshold) await snakeActs(hit.obj);
     }
   } else {

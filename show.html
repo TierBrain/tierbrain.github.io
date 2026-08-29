@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chapter &amp; Verse — Stage</title>
+<title>Chapter &amp; Verse, Stage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -295,14 +295,14 @@
           <div class="fincard youth"><div class="finteam">Youth</div><ol class="podium" id="finYouthList"></ol></div>
           <div class="fincard adult"><div class="finteam">Adults</div><ol class="podium" id="finAdultList"></ol></div>
         </div>
-        <div class="finfoot">Well played, everyone — thank you for coming!</div>
+        <div class="finfoot">Well played, everyone. Thank you for coming!</div>
       </div>
 
       <div id="closingPanel" class="hide">
         <div class="closehd">A closing word</div>
         <div class="closeverse" id="closeText"></div>
         <div class="closeref" id="closeRef"></div>
-        <div class="closefoot">Thank you for joining us — go in peace.</div>
+        <div class="closefoot">Thank you for joining us, go in peace.</div>
       </div>
     </div>
   </div>
@@ -331,7 +331,7 @@
     <button class="btn go-btn hide" id="closingBtn">Closing word ▸</button>
     <button class="btn" id="copyBtn">Copy join link</button>
     <button class="btn warn" id="newBtn">New room</button>
-    <span class="hint">The show runs itself once it starts — this desk is just here if you need it.</span>
+    <span class="hint">The show runs itself once it starts, this desk is just here if you need it.</span>
   </div>
 </div>
 <button id="opsToggle" title="Show controls">⚙</button>
@@ -450,7 +450,7 @@ start();
 </script>
 
 <script>
-/* ---- Chapter & Verse — round engine (Round 1 Rapid-Fire + Round 2 Verse) ---- */
+/* ---- Chapter & Verse, round engine (Round 1 Rapid-Fire + Round 2 Verse) ---- */
   const BANK_RAPID={
     1:[
       {"q":"Who built an ark to survive a great flood?","correct":"Noah","wrong":["Moses","Abraham","David"]},
@@ -608,7 +608,7 @@ start();
      {th:'christmas',answer:'Bethlehem',cat:'Place',clues:['I am only a small town.','The prophet Micah named me.','I am the City of David.','Shepherds came to me one night.','Jesus was born here.'],wrong:['Nazareth','Jerusalem','Bethany']},
      {th:'easter',answer:'Judas',cat:'Person',clues:['I was one of the twelve.','I looked after the money bag.','I made a deal with the priests.','I was paid thirty pieces of silver.','I betrayed Jesus with a kiss.'],wrong:['Peter','Thomas','John']},
      {th:'easter',answer:'Peter',cat:'Person',clues:['I was a fisherman by trade.','I once walked on water briefly.','I promised never to leave Jesus.','I denied him three times.','A rooster crowed, just as Jesus foretold.'],wrong:['Judas','Andrew','James']},
-     {th:'easter',answer:'The Empty Tomb',cat:'Event',clues:['It happened early on a Sunday.','A great stone was involved.','Women came carrying spices.','Angels were there to meet them.','Jesus was gone \u2014 he had risen!'],wrong:['The Last Supper','The Ascension','Pentecost']}
+     {th:'easter',answer:'The Empty Tomb',cat:'Event',clues:['It happened early on a Sunday.','A great stone was involved.','Women came carrying spices.','Angels were there to meet them.','Jesus was gone, he had risen!'],wrong:['The Last Supper','The Ascension','Pentecost']}
     ]
   };
   function themedPick(themedArr, generalArr, theme, n, r){ let base=shuf(themedArr.filter(function(x){return x.th===theme;}), r);
@@ -666,11 +666,11 @@ start();
     };
   })();
   const QUIPS={
-    welcome:['Welcome, everyone!','Here we go \u2014 let\u2019s play!','Great to see you all!'],
+    welcome:['Welcome, everyone!','Here we go, let\u2019s play!','Great to see you all!'],
     round:['Round time!','Here\u2019s the next one!','Let\u2019s go!'],
     correct:['Brilliant!','Nice one!','Well played!','Yes! Lovely.'],
     wrong:['Ooh, so close!','Not quite!','Next time!'],
-    buzzopen:['Buzzers are open!','Hit that buzzer!','Fastest finger \u2014 go!'],
+    buzzopen:['Buzzers are open!','Hit that buzzer!','Fastest finger, go!'],
     got:['Got it!','Spot on!','Superb!'],
     finale:['What a game!','Give it up for our champions!','Amazing, everyone!']
   };
@@ -697,12 +697,12 @@ start();
     const r=rng(seed); const pool=shuf(POOL.slice(),r); const fin=FINALE?1:0;
     const mid=Math.max(1,Math.min(ADMIN_ROUNDS-fin, pool.length)); const order=pool.slice(0,mid); if(FINALE) order.push(FINALE); return order; }
   function lineupSentence(order){ const t=order.map(x=>RMETA[x].title);
-    if(t.length===1) return 'Tonight: one round \u2014 '+t[0]+'!';
+    if(t.length===1) return 'Tonight: one round, '+t[0]+'!';
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
-  const RMETA={ rapidfire:{title:'Rapid-Fire', win:8000, build:buildRapid, intro:'Welcome, everyone! First up \u2014 Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right \u2014 tap fast, because quicker correct answers score bonus points!'},
-                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2 \u2014 Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices \u2014 pick the right one.'},
-                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round \u2014 The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
-                fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure \u2014 the earlier you\u2019re right, the more points you score (5 down to 1).'} };
+  const RMETA={ rapidfire:{title:'Rapid-Fire', win:8000, build:buildRapid, intro:'Welcome, everyone! First up: Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right, tap fast, because quicker correct answers score bonus points!'},
+                verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2, Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices, pick the right one.'},
+                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round: The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
+                fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure, the earlier you\u2019re right, the more points you score (5 down to 1).'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
@@ -747,7 +747,7 @@ start();
   }
   function renderReveal(q){ const cards=$('opts').children;
     for(let i=0;i<cards.length;i++){ cards[i].classList.add(i===q.correct?'correct':'dim'); }
-    if(q.kind && q.kind.indexOf('verse')===0){ $('qPrompt').textContent='\u2014 '+q.ref;
+    if(q.kind && q.kind.indexOf('verse')===0){ $('qPrompt').textContent=', '+q.ref;
       if(q.kind==='verse-blank'){ const bl=$('qText').querySelector('.blank'); if(bl){ bl.textContent=q.opts[q.correct]; bl.classList.add('filled'); } } } }
   function renderTimer(now){ const frac=Math.max(0,Math.min(1,(G.deadline-now)/G.win));
     const f=$('timerFill'); f.style.width=(frac*100).toFixed(1)+'%'; f.classList.toggle('low', frac<0.25);
@@ -764,7 +764,7 @@ start();
       }
     }catch(e){} }
 
-  function startShow(){ if(!room){ alert('Still connecting \u2014 give it a second.'); return; }
+  function startShow(){ if(!room){ alert('Still connecting, give it a second.'); return; }
     G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder(G.gameSeed); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
@@ -800,7 +800,7 @@ start();
     if(window.HOST) window.HOST.set('celebrate');
     $('pauseBtn').classList.add('hide'); $('skipBtn').classList.add('hide');
     $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
-    const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+' \u2014 '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide');
+    const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+': '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide');
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
   const CLOSERS={
     all:[
@@ -816,11 +816,11 @@ start();
       {ref:'1 Corinthians 15:57', text:'But thanks be to God, who gives us the victory through our Lord Jesus Christ.'}
     ]
   };
-  const CLOSE_LINES=['Thank you for playing \u2014 go in peace.','Until next time \u2014 God bless you all!','Well played, everyone \u2014 see you soon!'];
+  const CLOSE_LINES=['Thank you for playing, go in peace.','Until next time, God bless you all!','Well played, everyone, see you soon!'];
   function showClosing(){ G.phase='closing'; showPanel('closing');
     const pool=CLOSERS[THEME]||CLOSERS.all; const v=pool[Math.floor(Math.random()*pool.length)];
     if($('closeText')) $('closeText').textContent='\u201c'+v.text+'\u201d';
-    if($('closeRef')) $('closeRef').textContent='\u2014 '+v.ref;
+    if($('closeRef')) $('closeRef').textContent=', '+v.ref;
     if(window.HOST) window.HOST.set('calm'); hostSay(pick(CLOSE_LINES),'affirm');
     $('closingBtn').classList.add('hide');
     setRoom({phase:'closing', q_id:'', state:{round:'Closing', close:{ref:v.ref, text:v.text}}}); poll(); }
@@ -837,7 +837,7 @@ start();
     renderFinale(fin); setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();
     setTimeout(function(){ SFX.cymbal(); SFX.fanfare(); SFX.applause(); hostSay(pick(QUIPS.finale),'yay'); }, 1300); }
   function renderFinale(fin){ const medals=['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
-    const teams=$('finTeams'); if(teams){ teams.textContent = fin.teamWin ? ('Youth '+fin.youth.total+'   \u2014   Adults '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Youth win it!':'Adults win it!'))) : ''; }
+    const teams=$('finTeams'); if(teams){ teams.textContent = fin.teamWin ? ('Youth '+fin.youth.total+'  ,   Adults '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Youth win it!':'Adults win it!'))) : ''; }
     function fill(id,b){ const el=$(id); if(!el) return; el.innerHTML='';
       if(!b.top.length){ const li=document.createElement('li'); li.className='pnone'; li.textContent='No players'; el.appendChild(li); return; }
       b.top.forEach(function(p,i){ const li=document.createElement('li'); const m=document.createElement('span'); m.className='medal'; m.textContent=medals[i]||'';
@@ -1107,7 +1107,7 @@ start();
 
 
 <script>
-/* ---- Chapter & Verse — animated host (first pass; tunable) ---- */
+/* ---- Chapter & Verse, animated host (first pass; tunable) ---- */
 (function(){
   const HCV=document.getElementById('hostCv'); if(!HCV) return;
   const X=HCV.getContext('2d');

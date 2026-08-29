@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>The Big Quiz — Join</title>
+<title>The Big Quiz, Join</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -139,11 +139,11 @@
   <div class="screen hide" id="waitScreen">
     <div class="topbar">
       <span class="badge" id="teamBadge">YOUTH</span>
-      <span class="who2" id="whoName">—</span>
+      <span class="who2" id="whoName">,</span>
       <span class="score-pill"><b id="myScore">0</b><span>pts</span></span>
     </div>
     <div id="playArea" class="playarea"></div>
-    <div class="room-note">Room <span id="roomTag">—</span> · keep this screen open</div>
+    <div class="room-note">Room <span id="roomTag">,</span> · keep this screen open</div>
     <button class="leave" id="leaveBtn">Leave the game</button>
   </div>
 </div>
@@ -191,7 +191,7 @@ async function join(tag){
     enterWaiting();
   }catch(e){
     if(/relation .* does not exist|42P01/i.test(e.message)) showErr('The game isn\'t set up yet. Ask the host.');
-    else showErr('Could not join — check your connection and try again.');
+    else showErr('Could not join, check your connection and try again.');
   }
 }
 
@@ -289,8 +289,8 @@ function renderBuzzer(bz, qid){ clearBzTimer();
   if(bz.phase==='arm'){ setArea('<div class="pa-title">Get ready\u2026</div><div class="pa-msg">Buzzers arming!</div>'); return; }
   if(lane.st==='answering' && lane.bid===me.id){ renderBuzzAnswer(bz,lane,qid); return; }
   if(lane.st==='answering'){ setArea('<div class="pa-title">'+esc(lane.bname||'Someone')+' buzzed in!</div><div class="pa-msg">Watch the big screen\u2026</div>'); return; }
-  if(lane.st==='done'){ setArea('<div class="pa-msg">Your team\u2019s done this one \u2014 watch the screen.</div>'); return; }
-  if((lane.out||[]).indexOf(me.id)>=0){ setArea('<div class="pa-msg">You\u2019re out this one \u2014 next question soon.</div>'); return; }
+  if(lane.st==='done'){ setArea('<div class="pa-msg">Your team\u2019s done this one, watch the screen.</div>'); return; }
+  if((lane.out||[]).indexOf(me.id)>=0){ setArea('<div class="pa-msg">You\u2019re out this one, next question soon.</div>'); return; }
   renderBuzzButton(qid, bz);
 }
 function renderBuzzButton(qid, bz){
@@ -309,7 +309,7 @@ function renderBuzzAnswer(bz,lane,qid){
   if(bzAnsQid===qid && bzAnsChoice>=0){ renderBuzzLocked(bz.opts); return; }
   const wrap=document.createElement('div');
   const qh=liveHeader(bz); if(qh) wrap.appendChild(qh);
-  const t=document.createElement('div'); t.className='pa-title'; t.textContent='You buzzed first \u2014 answer!'; wrap.appendChild(t);
+  const t=document.createElement('div'); t.className='pa-title'; t.textContent='You buzzed first, answer!'; wrap.appendChild(t);
   const bar=document.createElement('div'); bar.className='bzcd'; const fill=document.createElement('div'); fill.className='bzcdfill'; fill.id='bzcdfill'; bar.appendChild(fill); wrap.appendChild(bar);
   const grid=document.createElement('div'); grid.className='pgrid';
   bz.opts.forEach(function(o,i){ const btn=document.createElement('button'); btn.className='pbtn'; btn.style.setProperty('--oc',OPTC[i]);
@@ -356,7 +356,7 @@ function renderClues(fc, qid){ clearBzTimer();
     const k=document.createElement('span'); k.className='pk'; k.textContent=OPTL[i]; const tx=document.createElement('span'); tx.className='pt'; tx.textContent=o;
     b.appendChild(k); b.appendChild(tx); b.addEventListener('click', function(){ sendCluesAnswer(i,qid,fc,opts); }); grid.appendChild(b); });
   wrap.appendChild(grid);
-  const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Guess as soon as you\u2019re sure \u2014 earlier is worth more!'; wrap.appendChild(h);
+  const h=document.createElement('div'); h.className='pa-hint'; h.textContent='Guess as soon as you\u2019re sure, earlier is worth more!'; wrap.appendChild(h);
   area().innerHTML=''; area().appendChild(wrap);
 }
 function renderCluesLocked(opts){
@@ -420,10 +420,10 @@ async function pollState(){
     if(sig!==lastSig){ lastSig=sig; setArea('<div class="pa-title">'+esc(st.round||'Get ready')+'</div><div class="pa-msg" style="margin-top:6px">'+esc(st.rules||'')+'</div>'); }
   } else if(phase==='final'){
     if(lastSig!=='final'){ lastSig='final'; const fin=st.fin||{}; const mine=fin[me.tag]||{top:[],total:0};
-      const champ = (mine.top&&mine.top[0]) ? (esc(mine.top[0].name)+' \u2014 '+mine.top[0].score+' pts') : 'No scores this time';
+      const champ = (mine.top&&mine.top[0]) ? (esc(mine.top[0].name)+', '+mine.top[0].score+' pts') : 'No scores this time';
       let team=''; if(fin.teamWin && fin.youth && fin.adult){ const line='Team A '+fin.youth.total+' \u2013 Team B '+fin.adult.total;
         team = (fin.teamWin==='tie') ? ('It\u2019s a tie! '+line) : ((fin.teamWin===me.tag?'Your team wins! ':'')+line); }
-      setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing \u2014 well done!</div>'); }
+      setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing, well done!</div>'); }
   } else if(phase==='closing'){
     if(lastSig!=='closing'){ lastSig='closing'; const c=st.close||{};
       setArea('<div class="pa-title">A closing word</div><div class="pa-msg" style="font-family:Fraunces,serif;font-style:italic;font-size:18px;line-height:1.4">\u201c'+esc(c.text||'')+'\u201d</div><div class="pa-hint" style="margin-top:8px">'+esc(c.ref||'')+'</div><div class="pa-hint" style="margin-top:16px">Thank you for coming!</div>'); }

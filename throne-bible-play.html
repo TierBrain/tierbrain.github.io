@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Hold The Throne · Bible Edition — Play</title>
+<title>Hold The Throne · Bible Edition, Play</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -128,7 +128,7 @@ function render(st){
   const up=(r==='champ'||r==='chal');
   const sig=phase+'|'+r+'|'+st.qId+'|'+(st.answerer?st.answerer.id:'-')+'|'+((st.lockedOut||[]).indexOf(myId)>=0);
 
-  if(phase==='lobby'){ if(lastSig!=='lobby'){ lastSig='lobby'; setHTML('<div class="pa-title">You\u2019re in!</div><div class="pa-msg">Waiting for the host to start the game\u2026</div><div class="pa-hint">Sit tight \u2014 you\u2019ll be called up.</div>'); } return; }
+  if(phase==='lobby'){ if(lastSig!=='lobby'){ lastSig='lobby'; setHTML('<div class="pa-title">You\u2019re in!</div><div class="pa-msg">Waiting for the host to start the game\u2026</div><div class="pa-hint">Sit tight, you\u2019ll be called up.</div>'); } return; }
 
   if(phase==='reveal'){ if(lastSig!==sig){ lastSig=sig; const rv=st.reveal||{}; const correct=(st.q&&st.q.opts&&rv.correctIdx>=0)?st.q.opts[rv.correctIdx]:'';
       let head = rv.ok?'<div class="pa-good">\u2713 '+esc(rv.msg||'')+'</div>':'<div class="pa-bad">'+esc(rv.msg||'')+'</div>';
@@ -136,20 +136,20 @@ function render(st){
 
   if(phase==='finintro'){ if(lastSig!=='finintro'){ lastSig='finintro'; const m=(st.finintro&&st.finintro.msg)||'Grand Finale!';
       const mine=(st.champ&&st.champ.id===myId)||(st.chal&&st.chal.id===myId);
-      setHTML('<div class="pa-title">\ud83d\udc51 Grand Finale</div><div class="pa-msg">'+esc(m)+'</div>'+(mine?'<div class="pa-good" style="margin-top:8px">You\u2019re in it \u2014 get ready!</div>':'<div class="pa-hint">Watch the showdown!</div>')); } return; }
+      setHTML('<div class="pa-title">\ud83d\udc51 Grand Finale</div><div class="pa-msg">'+esc(m)+'</div>'+(mine?'<div class="pa-good" style="margin-top:8px">You\u2019re in it, get ready!</div>':'<div class="pa-hint">Watch the showdown!</div>')); } return; }
   if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'); } return; }
 
   if(phase==='gameover'){ if(lastSig!=='over'){ lastSig='over'; const w=st.winner||{}; const mine=w.id===myId;
       const su=st.summary||{}; let extra=''; if(su.flawless){ extra='A flawless run! \ud83d\udc51'; } else if(su.finaleScore&&su.finalists){ extra='Finale: '+(su.finaleScore[su.finalists.closer.id]||0)+'\u2013'+(su.finaleScore[su.finalists.king.id]||0); }
-      setHTML('<div class="pa-title">\ud83d\udc51 Champion!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win the crown!':esc(w.name||'\u2014')+' takes the crown')+'</div>'+(extra?'<div class="pa-hint">'+esc(extra)+'</div>':'')+'<div class="pa-hint">Thanks for playing!</div>'); } return; }
+      setHTML('<div class="pa-title">\ud83d\udc51 Champion!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win the crown!':esc(w.name||',')+' takes the crown')+'</div>'+(extra?'<div class="pa-hint">'+esc(extra)+'</div>':'')+'<div class="pa-hint">Thanks for playing!</div>'); } return; }
 
   if(phase==='live'){
     // spectators / queue
     if(!up){
       if(lastSig!==sig){ lastSig=sig; const pos=(r[0]==='q')?r.slice(1):null;
-        const line='<div class="seatline"><b>'+esc(st.champ?st.champ.name:'\u2014')+'</b>'+(st.streak>1?' ('+st.streak+')':'')+' vs '+esc(st.chal?st.chal.name:'\u2014')+'</div>';
+        const line='<div class="seatline"><b>'+esc(st.champ?st.champ.name:',')+'</b>'+(st.streak>1?' ('+st.streak+')':'')+' vs '+esc(st.chal?st.chal.name:',')+'</div>';
         const qline=(st.q&&st.q.q)?'<div class="qtext" style="font-size:17px;margin-top:12px">'+esc(st.q.q)+'</div>':'';
-        if(pos) setHTML('<div class="pa-title">In the queue</div><div class="pa-good" style="color:var(--gold-hi)">#'+pos+'</div><div class="pa-hint">Get ready \u2014 winner stays on.</div>'+line+qline);
+        if(pos) setHTML('<div class="pa-title">In the queue</div><div class="pa-good" style="color:var(--gold-hi)">#'+pos+'</div><div class="pa-hint">Get ready. Winner stays on.</div>'+line+qline);
         else setHTML('<div class="pa-title">Watching\u2026</div>'+line+qline); }
       return;
     }
@@ -165,10 +165,10 @@ function render(st){
       if(lastSig!==csig){ lastSig=csig;
         if(counting){ setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="countnum">'+Math.ceil(remain/1000)+'</div><div class="pa-hint">Get ready\u2026 buzzers unlock together!</div>'); }
         else {
-          setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="buzzwrap"><button class="buzzbtn" id="bz">BUZZ</button></div><div class="pa-hint">First to buzz answers \u2014 but get it wrong and it\u2019s theirs!</div>');
+          setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="buzzwrap"><button class="buzzbtn" id="bz">BUZZ</button></div><div class="pa-hint">First to buzz answers, but get it wrong and it\u2019s theirs!</div>');
           $('bz').addEventListener('click', ()=>{ if(buzzedQid===st.qId) return; buzzedQid=st.qId; playBuzz(); try{ if(navigator.vibrate)navigator.vibrate(50);}catch(e){}
             $('bz').classList.add('hit'); sb('buzzes',{method:'POST',body:JSON.stringify({code, q_id:st.qId, player_id:myId, name:myName, tag:''})});
-            setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">You\u2019re in \u2014 answering\u2026</div>'); lastSig='buzzwait|'+st.qId; });
+            setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">You\u2019re in, answering\u2026</div>'); lastSig='buzzwait|'+st.qId; });
         }
       }
       return;
@@ -179,7 +179,7 @@ function render(st){
     if(iAnswer){
       if(answeredQid===st.qId){ if(lastSig!=='answered|'+st.qId){ lastSig='answered|'+st.qId; setHTML('<div class="pa-title">Locked in</div><div class="pa-msg">\u2026</div>'); } return; }
       if(lastSig!==sig){ lastSig=sig;
-        let h='<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="pa-hint" style="margin-top:0">Quick \u2014 pick your answer!</div><div class="pgrid" id="grid"></div>';
+        let h='<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="pa-hint" style="margin-top:0">Quick, pick your answer!</div><div class="pgrid" id="grid"></div>';
         setHTML(h); const opts=(st.q&&st.q.opts)||[]; const grid=$('grid');
         opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='pbtn'; b.style.setProperty('--oc',OPTC[i]);
           const k=document.createElement('span'); k.className='pk'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o;
