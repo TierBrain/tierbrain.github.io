@@ -105,6 +105,7 @@
   .ops{position:fixed;bottom:14px;right:14px;display:flex;gap:8px;}
   .ops button{border:1px solid var(--line);background:rgba(20,24,52,.9);color:var(--dim);border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:13px;}
   @media(max-width:720px){.lobby{grid-template-columns:1fr;}.opts{grid-template-columns:1fr;}.seats{grid-template-columns:1fr;}.vs{display:none;}}
+  .stcount{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(44px,11vw,96px);text-align:center;color:var(--gold-hi);padding:8px;line-height:1;}
 </style>
 </head>
 <body>
@@ -145,6 +146,7 @@
           <div class="qtext" id="qtext">—</div>
           <div class="opts" id="opts"></div>
           <div class="timer" id="timerWrap"><i id="timer"></i></div>
+          <div class="stcount hide" id="stcount"></div>
         </div>
         <div class="seats">
           <div class="seat champ" id="seatChamp"><div class="crown">👑</div><div class="role">On the throne</div><div class="who" id="champName">—</div><div class="streak" id="champStreak"></div></div>
@@ -346,6 +348,7 @@ function HS(pose){ if(window.HOST&&window.HOST.set) window.HOST.set(pose); }
 function hostSay(text){ const b=$('hostBubble'); if(!b) return; b.textContent=text; b.classList.remove('hide'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); clearTimeout(hostSay._t); hostSay._t=setTimeout(function(){ b.classList.add('hide'); },2200); }
 
 const BUZZ_MS=6000, ANS_MS=4000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
+const COUNTDOWN_MS=3000;
 let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIndex:0, qTotal:20,
         q:null, qId:null, answerer:null, buzzWin:0, ansWin:0, lockedOut:[], firstResolved:false,
         outcome:null, pendingLoser:null, used:new Set(), players:[], _t:null, winner:null,
@@ -392,6 +395,7 @@ async function tick(){
 }
 async function liveTick(){
   const now=Date.now();
+  if(!G.answerer && now<(G.buzzOpenAt||0)) return;
   if(!G.answerer){
     let bz=[]; try{ bz=await sb('buzzes?code=eq.'+G.code+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=player_id,created_at&order=created_at.asc')||[]; }catch(e){}
     const first=bz.find(b=> (G.champ&&b.player_id===G.champ.id)||(G.chal&&b.player_id===G.chal.id) );
@@ -489,7 +493,7 @@ function pickQuestion(){ let cand=POOL.filter(o=>!G.used.has(o.tag||slug(o.corre
 function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
   G.q={ q:it.q, opts, correctIdx:opts.indexOf(it.correct) };
   G.qId=G.code+':'+(G.mode==='finale'?'F':'')+G.qIndex+':'+Math.floor(Math.random()*1e6);
-  G.answerer=null; G.buzzWin=Date.now()+BUZZ_MS; G.ansWin=0; G.lockedOut=[]; G.firstResolved=false; G.outcome=null;
+  G.answerer=null; G.buzzOpenAt=Date.now()+COUNTDOWN_MS; G.buzzWin=G.buzzOpenAt+BUZZ_MS; G.ansWin=0; G.lockedOut=[]; G.firstResolved=false; G.outcome=null;
   G.phase='live'; G._lastTick=null; HS('ask'); writeState(); render();
 }
 function nextQuestion(){ G.qIndex++; serveQuestion(); }
@@ -513,7 +517,7 @@ async function startGame(){
 
 function writeState(){
   const st={ game:'throne', phase:G.phase, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
-    qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, answerer:G.answerer, lockedOut:G.lockedOut,
+    qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, buzzOpenAt:(G.phase==='live'?(G.buzzOpenAt||0):0), answerer:G.answerer, lockedOut:G.lockedOut,
     buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
     reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
     between:G.phase==='between'?{msg:G.betweenMsg}:null,
@@ -554,11 +558,15 @@ function render(){
   $('qtext').textContent=G.q?G.q.q:'—';
   const opts=$('opts'); opts.innerHTML='';
   (G.q?G.q.opts:[]).forEach((o,i)=>{ const d=document.createElement('div'); d.className='opt c'+i; const k=document.createElement('span'); k.className='k'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); });
-  // timer
-  const now=Date.now(); const wrap=$('timerWrap'); const bar=$('timer');
-  if(G.answerer){ wrap.classList.add('ans'); const frac=Math.max(0,Math.min(1,(G.ansWin-now)/ANS_MS)); bar.style.width=(frac*100)+'%'; }
-  else { wrap.classList.remove('ans'); const remain=G.buzzWin-now; const frac=Math.max(0,Math.min(1,remain/BUZZ_MS)); bar.style.width=(frac*100)+'%';
-    if(remain>0 && remain<2600){ const sec=Math.ceil(remain/1000); if(G._lastTick!==sec){ G._lastTick=sec; SFX.tick(); } } }
+  // timer / countdown
+  const now=Date.now(); const wrap=$('timerWrap'); const bar=$('timer'); const sc=$('stcount');
+  const cd = (!G.answerer) ? ((G.buzzOpenAt||0)-now) : -1;
+  if(cd>0){ if(sc){ sc.classList.remove('hide'); sc.textContent=Math.ceil(cd/1000); } wrap.classList.add('hide');
+    const s=Math.ceil(cd/1000); if(G._lastCd!==s){ G._lastCd=s; SFX.tick(); } }
+  else { if(sc) sc.classList.add('hide'); wrap.classList.remove('hide'); G._lastCd=null;
+    if(G.answerer){ wrap.classList.add('ans'); const frac=Math.max(0,Math.min(1,(G.ansWin-now)/ANS_MS)); bar.style.width=(frac*100)+'%'; }
+    else { wrap.classList.remove('ans'); const remain=G.buzzWin-now; const frac=Math.max(0,Math.min(1,remain/BUZZ_MS)); bar.style.width=(frac*100)+'%';
+      if(remain>0 && remain<2600){ const sec=Math.ceil(remain/1000); if(G._lastTick!==sec){ G._lastTick=sec; SFX.tick(); } } } }
   // seats
   $('champName').textContent=G.champ?G.champ.name:'—';
   $('champStreak').textContent=(G.mode==='finale'&&G.finaleScore)?('Points: '+(G.finaleScore[G.champ.id]||0)):(G.streak>0?('Streak '+G.streak):'');
