@@ -105,6 +105,8 @@
   .ops button{border:1px solid var(--line);background:rgba(20,24,52,.9);color:var(--dim);border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:13px;}
   @media(max-width:720px){.lobby{grid-template-columns:1fr;}.opts{grid-template-columns:1fr;}.seats{grid-template-columns:1fr;}.vs{display:none;}}
   .stcount{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(44px,11vw,96px);text-align:center;color:var(--gold-hi);padding:8px;line-height:1;}
+  .coffee{display:inline-block;margin-top:16px;color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.02em;text-decoration:none;opacity:.8;}
+  .coffee:hover{opacity:1;color:var(--gold-hi);}
 </style>
 </head>
 <body>
@@ -546,7 +548,7 @@ function render(){
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
       let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
-      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'…')+' holds the throne!<div class="sub">'+sub+'</div>'; }
+      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'…')+' holds the throne!<div class="sub">'+sub+'</div><a class="coffee" href="https://ko-fi.com/tierbrain" target="_blank" rel="noopener">Enjoyed the game? ☕ Buy me a coffee</a>'; }
     return;
   }
   // play view
