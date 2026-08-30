@@ -1,0 +1,26 @@
+name: Keep Supabase awake
+
+# Free Supabase projects pause after ~1 week of inactivity, which would
+# silently break multiplayer. This pings the database every 3 days so it
+# never sleeps. It costs nothing and needs no maintenance.
+#
+# INSTALL: put this file in your repo at  .github/workflows/keepalive.yml
+# (create the .github/workflows folders if they don't exist), then commit.
+# You can also trigger it manually from the repo's "Actions" tab.
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # 06:00 UTC, every 3 days
+  workflow_dispatch:         # lets you run it by hand from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the database
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://cgrbwtcydgfkbqhseeap.supabase.co/rest/v1/legends?select=name&limit=1" \
+            -H "apikey: sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU")
+          echo "Supabase responded with HTTP $code"
+          if [ "$code" != "200" ]; then echo "Unexpected status"; exit 1; fi
