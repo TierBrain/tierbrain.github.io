@@ -219,6 +219,7 @@
   .admin select{background:rgba(255,255,255,.06); color:var(--ink); border:1px solid var(--board-line); border-radius:8px;
     padding:5px 8px; font-family:'Nunito'; font-weight:800; font-size:13px;}
 </style>
+  <script src="questions.js?v=7"></script>
 </head>
 <body>
 <div class="wrap">
@@ -601,7 +602,7 @@ start();
   function interleave(arrs,r){ const cs=arrs.map(a=>shuf(a.slice(),r)); const out=[]; let go=true; while(go){ go=false; for(const c of cs){ if(c.length){ out.push(c.shift()); go=true; } } } return out; }
   function pickDistinct(list, used, n, tagFn){ const taken=new Set(used); const out=[]; for(let i=0;i<list.length && out.length<n;i++){ const tg=tagFn(list[i]); if(taken.has(tg)) continue; taken.add(tg); out.push(list[i]); } return out; }
   function buildRapid(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
-    const list=(theme&&theme!=='all')? shuf(THEMED.rapid.filter(x=>x.th===theme),r).concat(shuf(RAPID_GEN.slice(),r)) : interleave([BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']], r);
+    const list=(theme&&theme!=='all')? shuf(THEMED.rapid.filter(x=>x.th===theme),r).concat(shuf(RAPID_GEN.slice(),r)) : (GK_SHARED ? shuf(GK_SHARED.slice(),r) : interleave([BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']], r));
     return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
   function buildVerse(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=x=>x.tag||slug(x.vref); const taken=new Set(used); const nb=Math.ceil(n/2);
     const blankList=(theme&&theme!=='all')? shuf(THEMED.vblank.filter(x=>x.th===theme),r).concat(shuf(VB_BLANK.slice(),r)) : shuf(VB_BLANK.slice(),r);
@@ -745,8 +746,12 @@ start();
    {q:'How many wheels does a standard car have?',correct:'Four',wrong:['Two','Three','Six']},
    {q:'What colour is a banana when ripe?',correct:'Yellow',wrong:['Green','Red','Blue']}
   ];
+  const GK_SHARED = (window.TB && window.TB.bank && Object.keys(window.TB.bank('gk')||{}).length)
+    ? [].concat(window.TB.bank('gk')['1']||[], window.TB.bank('gk')['2']||[], window.TB.bank('gk')['3']||[], window.TB.bank('gk')['4']||[])
+    : null;
+
   function buildBuzzer(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
-    const list=(theme&&theme!=='all')? shuf(THEMED.buzz.filter(x=>x.th===theme),r).concat(shuf(BUZZ_BANK.slice(),r)) : shuf(BUZZ_BANK.slice(),r);
+    const list=(theme&&theme!=='all')? shuf(THEMED.buzz.filter(x=>x.th===theme),r).concat(shuf(BUZZ_BANK.slice(),r)) : (GK_SHARED ? shuf(GK_SHARED.slice(),r) : shuf(BUZZ_BANK.slice(),r));
     return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
 
   const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600;
