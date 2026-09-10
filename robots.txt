@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tierbrain.co/sitemap.xml
+Sitemap: https://tierbrain.co/sitemap-questions.xml
