@@ -282,8 +282,44 @@ function genBoard(){
     const to=from-rint(spanLo,spanHi); if(to<2 || used.has(to)) continue;
     used.add(from); used.add(to); const thr=(from>TOP*0.6)?2:3; snakes.push({from,to,stir:0,threshold:thr,alive:true});
   }
-  return {ladders,snakes};
+  // Craters: holes torn in the board itself. A couple exist from the start,
+  // and the Storm can tear out more. Kept off the top row and the finish so
+  // the summit is always reachable (the always-winnable guarantee).
+  const craters=new Set();
+  function craterAllowed(sq){
+    if(sq<=2 || sq>=TOP-COLS) return false;         // never near start or the final row
+    if(used.has(sq)) return false;                   // not on a ladder/snake endpoint
+    if(craters.has(sq)) return false;
+    // never let a whole row become craters
+    const row=Math.floor((sq-1)/COLS);
+    let inRow=0; craters.forEach(c=>{ if(Math.floor((c-1)/COLS)===row) inRow++; });
+    return inRow < COLS-3;
+  }
+  // one or two beneath snake tails: a wrong answer slides you down AND drops you
+  snakes.forEach(function(sn){
+    if(craters.size>=2) return;
+    if(Math.random()<0.5){
+      const below=sn.to-COLS;
+      if(craterAllowed(below)) craters.add(below);
+    }
+  });
+  // one or two in random places
+  let cg=0;
+  while(craters.size<rint(2,3) && cg++<200){
+    const sq=rint(Math.round(TOP*0.15), TOP-COLS-1);
+    if(craterAllowed(sq)) craters.add(sq);
+  }
+  return {ladders,snakes,craters:Array.from(craters),craterAllowed:null};
 }
+
+// Where do you land if you fall into a crater? The nearest solid square below.
+function fallTo(sq, board){
+  const holes=new Set(board.craters||[]);
+  let t=sq-COLS;                       // drop roughly one row
+  while(t>1 && holes.has(t)) t-=COLS;  // keep falling through stacked holes
+  return Math.max(1,t);
+}
+function isCrater(sq, board){ return (board.craters||[]).indexOf(sq)>=0; }
 function resolveLanding(pos, board){
   for(const l of board.ladders){ if(l.alive && l.from===pos) return {obj:l, to:l.to, kind:'ladder'}; }
   for(const s of board.snakes){ if(s.alive && s.from===pos) return {obj:s, to:s.to, kind:'snake'}; }
@@ -327,6 +363,21 @@ function drawCells(){
     const c=squareCenter(n);
     const x=c.x-CELL/2, y=c.y-CELL/2;
     const dark=((Math.floor((n-1)/COLS)+((n-1)%COLS))%2===0);
+    if(board && isCrater(n, board)){
+      // a hole where the tile used to be: dark void with a ragged rim
+      const g=ctx.createRadialGradient(c.x,c.y,CELL*0.05,c.x,c.y,CELL*0.52);
+      g.addColorStop(0,'rgba(0,0,0,.92)'); g.addColorStop(0.65,'rgba(6,5,12,.85)'); g.addColorStop(1,'rgba(20,14,10,.25)');
+      ctx.fillStyle=g; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
+      ctx.strokeStyle='rgba(150,110,70,.5)'; ctx.lineWidth=Math.max(1,CELL*0.03);
+      ctx.beginPath();
+      for(let k=0;k<=10;k++){
+        const a=(k/10)*Math.PI*2, rr=CELL*(0.30+0.06*Math.sin(k*2.7+n));
+        const px=c.x+Math.cos(a)*rr, py=c.y+Math.sin(a)*rr*0.82;
+        if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath(); ctx.stroke();
+      continue;                                   // no number on a missing tile
+    }
     ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
     roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
     if(n===TOP){ ctx.fillStyle='rgba(245,178,62,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
@@ -479,7 +530,7 @@ async function snakeActs(s){
 }
 
 // ---------- third-force events: Roc, Rockfall, Storm ----------
-const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.04;
+const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.10;
 let roc={show:false,x:0,y:0};
 function lerp(a,b,t){ return a+(b-a)*t; }
 function ease(t){ return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
@@ -510,7 +561,47 @@ async function stormEvent(){ setStatus('A gale sweeps across the board! 🌩️'
   if(ok){ setStatus('You shelter the ladders, they hold!'); shake(CELL*0.06,400); }
   else { setStatus('The storm batters every ladder!'); shake(CELL*0.18,720); punch(1.05); spawnWind();
     const alive=board.ladders.filter(function(l){return l.alive;}); alive.forEach(function(l){ l.health-=4; jolt(l); }); await sleep(440);
-    for(const l of board.ladders){ if(l.alive && l.health<=0) await collapse(l); } } }
+    for(const l of board.ladders){ if(l.alive && l.health<=0) await collapse(l); }
+    await tearTiles(rint(2,3)); } }
+
+// The gale rips tiles clean off the board, leaving fresh craters.
+// Hard-capped: testing showed the board can become unwinnable past ~15 holes,
+// so we stop well short of that.
+const MAX_CRATERS=10;
+async function tearTiles(n){
+  const holes=new Set(board.craters||[]);
+  if(holes.size>=MAX_CRATERS) return;
+  n=Math.min(n, MAX_CRATERS-holes.size);
+  const ends=new Set();
+  board.ladders.forEach(function(l){ ends.add(l.from); ends.add(l.to); });
+  board.snakes.forEach(function(sn){ ends.add(sn.from); ends.add(sn.to); });
+  const torn=[];
+  let guard=0;
+  while(torn.length<n && guard++<300){
+    const sq=rint(Math.round(TOP*0.12), TOP-COLS-1);
+    if(sq<=2 || sq>=TOP-COLS) continue;
+    if(holes.has(sq) || ends.has(sq) || sq===pos) continue;   // never under the player's feet
+    const row=Math.floor((sq-1)/COLS);
+    let inRow=0; holes.forEach(function(h){ if(Math.floor((h-1)/COLS)===row) inRow++; });
+    if(inRow>=COLS-3) continue;
+    holes.add(sq); torn.push(sq);
+  }
+  if(!torn.length) return;
+  setStatus('The gale tears tiles from the board!');
+  board.craters=Array.from(holes);
+  torn.forEach(function(sq){ const c=squareCenter(sq); spawnDebris(c.x,c.y); });
+  shake(CELL*0.14,560);
+  draw(); await sleep(420);
+}
+async function fallIntoCrater(from){
+  const to=fallTo(from, board);
+  setStatus('The ground gives way. You fall through the board!');
+  try{ SFX.slide(); }catch(e){}
+  shake(CELL*0.18,640); punch(1.07);
+  const c=squareCenter(from); spawnDebris(c.x,c.y); spawnDust(c.x,c.y,12);
+  await animateTo(to, 620);
+  return to;
+}
 async function maybeEvent(){ const r=Math.random();
   if(r<P_ROC){ if(pos<TOP-2) await rocEvent(); }
   else if(r<P_ROC+P_ROCK){ if(pos>4) await rockfallEvent(); }
@@ -530,6 +621,15 @@ async function rollTurn(){
   if(target>=TOP){ await walk(pos, TOP); pos=TOP; return win(); }
   await walk(pos, target); pos=target;
 
+  // Landed on a missing tile? Straight down.
+  if(isCrater(pos, board)){
+    pos = await fallIntoCrater(pos);
+    if(pos>=TOP) return win();
+    await ageLadders();
+    busy=false; $('roll').disabled=false;
+    return;
+  }
+
   const hit=resolveLanding(pos, board);
   if(hit){
     await sleep(150);
@@ -542,7 +642,9 @@ async function rollTurn(){
     } else {
       hit.obj.stir += ok?1:2;
       if(ok){ setStatus('You slip past the sleeping snake. 🐍'); }
-      else { setStatus('The snake wakes. Down you slide! 🐍'); punch(1.06); await slideAlongSnake(hit.obj); pos=hit.to; }
+      else { setStatus('The snake wakes. Down you slide! 🐍'); punch(1.06); await slideAlongSnake(hit.obj); pos=hit.to;
+        if(isCrater(pos, board)){ pos = await fallIntoCrater(pos); }   // dropped into a hole at the tail
+      }
       if(hit.obj.alive && hit.obj.stir>=hit.obj.threshold) await snakeActs(hit.obj);
     }
   } else {

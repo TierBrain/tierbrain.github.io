@@ -295,7 +295,7 @@ async function collapse(l){ setStatus('A ladder crumbles to pieces! \ud83e\ude9c
 async function jolt(l){ await sleep(160); }
 async function ageLadders(){ const dying=[]; G.board.ladders.forEach(function(l){ if(l.alive){ l.health--; if(l.health<=0) dying.push(l); } }); for(const l of dying) await collapse(l); }
 // ---------- third-force events (ported from solo, attributed to the active player) ----------
-const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.04;
+const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.10;
 
 async function rocEvent(playerId){
   const from=G.positions[playerId]||1;
@@ -325,6 +325,37 @@ async function stormEvent(playerId){
   alive.forEach(function(l){ l.health-=4; });
   draw(); await sleep(440);
   for(const l of G.board.ladders){ if(l.alive && l.health<=0) await collapse(l); }
+  await tearTiles(rint(2,3));
+}
+async function fallIntoCrater(playerId, from){
+  const to=fallTo(from, G.board);
+  setStatus(nameOf(playerId)+' falls through a hole in the board!');
+  await animateTokenTo(playerId, to, 620);
+  G.positions[playerId]=to; settleStationaryTokens(null); draw();
+  return to;
+}
+async function tearTiles(n){
+  const holes=new Set(G.board.craters||[]);
+  if(holes.size>=MAX_CRATERS) return;
+  n=Math.min(n, MAX_CRATERS-holes.size);
+  const ends=new Set();
+  G.board.ladders.forEach(function(l){ ends.add(l.from); ends.add(l.to); });
+  G.board.snakes.forEach(function(sn){ ends.add(sn.from); ends.add(sn.to); });
+  const occupied=new Set(G.order.map(function(pid){ return G.positions[pid]; }));
+  const torn=[]; let guard=0;
+  while(torn.length<n && guard++<300){
+    const sq=rint(Math.round(TOP*0.12), TOP-COLS-1);
+    if(sq<=2 || sq>=TOP-COLS) continue;
+    if(holes.has(sq) || ends.has(sq) || occupied.has(sq)) continue;
+    const row=Math.floor((sq-1)/COLS);
+    let inRow=0; holes.forEach(function(h){ if(Math.floor((h-1)/COLS)===row) inRow++; });
+    if(inRow>=COLS-3) continue;
+    holes.add(sq); torn.push(sq);
+  }
+  if(!torn.length) return;
+  setStatus('The gale tears tiles from the board!');
+  G.board.craters=Array.from(holes);
+  draw(); await sleep(420);
 }
 async function maybeEvent(playerId){
   const pos=G.positions[playerId]||1;
@@ -400,8 +431,34 @@ function genBoard(){
     used.add(from); used.add(to); const thr=(from>TOP*0.6)?2:3;
     snakes.push({from,to,stir:0,threshold:thr,alive:true});
   }
-  return {ladders,snakes};
+  // Craters: holes torn in the shared board. Everyone falls in the same ones.
+  const craters=new Set();
+  function craterAllowed(sq){
+    if(sq<=2 || sq>=TOP-COLS) return false;
+    if(used.has(sq) || craters.has(sq)) return false;
+    const row=Math.floor((sq-1)/COLS);
+    let inRow=0; craters.forEach(function(c){ if(Math.floor((c-1)/COLS)===row) inRow++; });
+    return inRow < COLS-3;
+  }
+  snakes.forEach(function(sn){
+    if(craters.size>=2) return;
+    if(Math.random()<0.5){ const below=sn.to-COLS; if(craterAllowed(below)) craters.add(below); }
+  });
+  let cg=0;
+  while(craters.size<rint(2,3) && cg++<200){
+    const sq=rint(Math.round(TOP*0.15), TOP-COLS-1);
+    if(craterAllowed(sq)) craters.add(sq);
+  }
+  return {ladders,snakes,craters:Array.from(craters)};
 }
+const MAX_CRATERS=10;
+function fallTo(sq, board){
+  const holes=new Set(board.craters||[]);
+  let t=sq-COLS;
+  while(t>1 && holes.has(t)) t-=COLS;
+  return Math.max(1,t);
+}
+function isCrater(sq, board){ return (board.craters||[]).indexOf(sq)>=0; }
 function resolveLanding(pos, board){
   for(const l of board.ladders){ if(l.alive && l.from===pos) return {obj:l, to:l.to, kind:'ladder'}; }
   for(const s of board.snakes){ if(s.alive && s.from===pos) return {obj:s, to:s.to, kind:'snake'}; }
@@ -440,6 +497,20 @@ function drawCells(){
   for(let n=1;n<=TOP;n++){
     const c=squareCenter(n); const x=c.x-CELL/2, y=c.y-CELL/2;
     const dark=((Math.floor((n-1)/COLS)+((n-1)%COLS))%2===0);
+    if(G.board && isCrater(n, G.board)){
+      const g=ctx.createRadialGradient(c.x,c.y,CELL*0.05,c.x,c.y,CELL*0.52);
+      g.addColorStop(0,'rgba(0,0,0,.92)'); g.addColorStop(0.65,'rgba(6,5,12,.85)'); g.addColorStop(1,'rgba(20,14,10,.25)');
+      ctx.fillStyle=g; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
+      ctx.strokeStyle='rgba(150,110,70,.5)'; ctx.lineWidth=Math.max(1,CELL*0.03);
+      ctx.beginPath();
+      for(let k=0;k<=10;k++){
+        const a=(k/10)*Math.PI*2, rr=CELL*(0.30+0.06*Math.sin(k*2.7+n));
+        const px=c.x+Math.cos(a)*rr, py=c.y+Math.sin(a)*rr*0.82;
+        if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath(); ctx.stroke();
+      continue;
+    }
     ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
     roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
     if(n===TOP){ ctx.fillStyle='rgba(245,178,62,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
@@ -652,6 +723,20 @@ async function resolveTurn(playerId){
     settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); writeState(); return;
   }
 
+  // Landed on a missing tile? Straight down.
+  if(isCrater(pos, G.board)){
+    pos = await fallIntoCrater(playerId, pos);
+    G.positions[playerId]=pos;
+    settleStationaryTokens(null);
+    await ageLadders();
+    G.turnIdx=(G.turnIdx+1)%G.order.length;
+    G.turnSeq++; G.turnStartedAt=Date.now();
+    draw(); renderTurnbar();
+    setStatus('Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026');
+    writeState();
+    return;
+  }
+
   const hit=resolveLanding(pos, G.board);
   if(hit){
     const ok = await askQuestionFor(playerId, hit.kind, pos);
@@ -661,7 +746,9 @@ async function resolveTurn(playerId){
     } else {
       hit.obj.stir += ok?1:2;
       if(ok){ setStatus(nameOf(playerId)+' slips past the sleeping snake. \ud83d\udc0d'); }
-      else { setStatus(nameOf(playerId)+' woke the snake \u2014 down it goes! \ud83d\udc0d'); await animateTokenTo(playerId, hit.to, 480); pos=hit.to; }
+      else { setStatus(nameOf(playerId)+' woke the snake \u2014 down it goes! \ud83d\udc0d'); await animateTokenTo(playerId, hit.to, 480); pos=hit.to;
+        if(isCrater(pos, G.board)){ pos = await fallIntoCrater(playerId, pos); }
+      }
       if(hit.obj.alive && hit.obj.stir>=hit.obj.threshold) await snakeActs(hit.obj);
     }
   } else {
@@ -736,7 +823,7 @@ createRoom().then(function(){ loop(); });
 
 // expose for headless testing
 window.__CM={ genBoard, resolveLanding, TOP, getG:function(){return G;}, setG:function(patch){Object.assign(G,patch);},
-  resolveTurn, ageLadders, snakeActs, pickQuestion, askQuestionFor, showWin, playAgain, pollPlayers, reconcileDropouts, maybeEvent, rocEvent, rockfallEvent, stormEvent,
+  resolveTurn, ageLadders, snakeActs, pickQuestion, askQuestionFor, showWin, playAgain, pollPlayers, reconcileDropouts, maybeEvent, rocEvent, rockfallEvent, stormEvent, tearTiles, fallTo, isCrater, fallIntoCrater,
   startGame:function(){ G.phase='live'; G.board=genBoard(); G.order=G.players.map(p=>p.id); G.turnIdx=0; G.turnSeq=0; G.winner=null; G.positions={}; usedTags=new Set(); G.order.forEach(pid=>G.positions[pid]=1); settleStationaryTokens(null); } };
 </script>
 </body>
