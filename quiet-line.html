@@ -101,6 +101,24 @@
     background:linear-gradient(90deg,transparent,var(--phos),transparent);opacity:.75;
     transform:translateX(-30%);}
   .meter.live i{animation:sweep 1.15s linear infinite;}
+
+  /* interference: the whole set stutters for an instant as a digit is lost */
+  .readout.static{animation:stutter .42s steps(2) 1;}
+  @keyframes stutter{
+    0%{filter:none;}
+    18%{filter:brightness(1.7) contrast(.6);transform:translateX(-1.5px);}
+    36%{filter:brightness(.35);transform:translateX(2px);}
+    58%{filter:brightness(1.4) contrast(.7);transform:translateX(-1px);}
+    78%{filter:brightness(.55);transform:translateX(1px);}
+    100%{filter:none;transform:none;}
+  }
+  /* a burst of noise bars across the readout at the same moment */
+  .readout .noise{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:repeating-linear-gradient(0deg,
+      rgba(200,214,185,.16) 0 2px, transparent 2px 4px,
+      rgba(200,214,185,.07) 4px 5px, transparent 5px 9px);}
+  .readout.static .noise{animation:burst .42s steps(3) 1;}
+  @keyframes burst{0%{opacity:0;}25%{opacity:.85;}55%{opacity:.35;}100%{opacity:0;}}
   @keyframes sweep{to{transform:translateX(400%);}}
 
   /* the recovered message: one letter per decoded word, filling in as you go */
@@ -188,6 +206,7 @@
     <div class="clue" id="clue">Tuning in&hellip;</div>
     <div class="digits" id="digits"></div>
     <div class="meter" id="meter"><i></i></div>
+    <div class="noise"></div>
   </div>
 
   <div class="message" id="message" title="The message, one letter per decoded word"></div>
@@ -414,6 +433,29 @@ function saveBest(b){ try{ localStorage.setItem('quietline_best', JSON.stringify
 /* ---- audio: a dry mechanical click, generated rather than loaded ---- */
 let ac = null, muted = false;
 try{ muted = localStorage.getItem('quietline_muted') === '1'; }catch(e){}
+/* the sound of a digit being swallowed: louder, lower, uglier than the hiss */
+function crackle(){
+  if(muted) return;
+  try{
+    if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    const dur=0.3;
+    const buf=ac.createBuffer(1, Math.ceil(ac.sampleRate*dur), ac.sampleRate);
+    const ch=buf.getChannelData(0);
+    for(let i=0;i<ch.length;i++){
+      const decay = 1 - (i/ch.length);
+      ch[i] = (Math.random()*2-1) * decay * (Math.random()<0.35 ? 1 : 0.35);
+    }
+    const src=ac.createBufferSource(); src.buffer=buf;
+    const f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=900;
+    const g=ac.createGain(); const t=ac.currentTime;
+    g.gain.setValueAtTime(0.11,t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    src.connect(f); f.connect(g); g.connect(ac.destination);
+    src.start(t); src.stop(t+dur);
+  }catch(e){}
+}
+
 /* a short burst of filtered noise: the hiss between digits */
 function hiss(ms){
   if(muted) return;
@@ -598,8 +640,18 @@ function receive(){
     renderDigits();
     const cells = document.querySelectorAll('#digits .dg');
     if(cells[i]) cells[i].classList.add('landing');
-    hiss(90);
-    click(300 + (parseInt(round.code[i],10) * 24));
+
+    if(lostDigits.indexOf(i) >= 0){
+      // the set stutters as the digit is swallowed
+      const r = document.querySelector('.readout');
+      if(r){ r.classList.remove('static'); void r.offsetWidth; r.classList.add('static');
+        setTimeout(()=>r.classList.remove('static'), 460); }
+      crackle();
+    } else {
+      hiss(90);
+      click(300 + (parseInt(round.code[i],10) * 24));
+    }
+
     i++;
     setTimeout(step, 230);
   };
