@@ -487,7 +487,7 @@ function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const
 
 async function createRoom(){
   G.code=code5(); G.phase='lobby';
-  await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, seed:(Math.random()*1e9)|0, phase:'lobby', state:{game:'throne',phase:'lobby'}})});
+  await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, seed:(Math.random()*1e9)|0, phase:'lobby', state:{game:'throne-bible',phase:'lobby'}})});
   $('code').textContent=G.code;
   const link=baseUrl()+'/throne-bible-play.html?c='+G.code;
   const u=$('url'); u.textContent=link.replace(/^https?:\/\//,''); u.href=link;
@@ -643,7 +643,7 @@ async function startGame(){
 }
 
 function writeState(){
-  const st={ game:'throne', phase:G.phase, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
+  const st={ game:'throne-bible', phase:G.phase, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
     qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, buzzOpenAt:(G.phase==='live'?(G.buzzOpenAt||0):0), answerer:G.answerer, lockedOut:G.lockedOut,
     buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
     reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
@@ -680,7 +680,7 @@ function render(){
         var lines=[]; if(sk&&sk.s>0) lines.push('Longest streak: '+sk.s+' by '+sk.name+'.');
         if(su.flawless) lines.push('A flawless run \u2014 never lost the throne.');
         lines.push('After '+G.qTotal+' questions.');
-        TBShare.open({ game:'throne', kicker:'Hold The Throne', big:winnerName, lines:lines,
+        TBShare.open({ game:'throne-bible', kicker:'Hold The Throne \u00b7 Bible Edition', big:winnerName, lines:lines,
           footer:'Think you can dethrone them?', accent:'#f5b23e',
           shareText:winnerName+' just took the throne. Think you can dethrone them?' });
       }; }, 0); }
