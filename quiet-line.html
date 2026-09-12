@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Quiet Line</title>
+<meta name="description" content="A decoding puzzle. A clue tells you what to find, a line of digits tells you how it is spelled. Decode every word to recover the transmission.">
+<link rel="canonical" href="https://tierbrain.co/quiet-line.html">
+<meta name="theme-color" content="#171a17">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/quiet-line.html">
+<meta property="og:title" content="The Quiet Line">
+<meta property="og:description" content="Words arrive spelled in keypad digits. Decode them all to recover the transmission.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --case:#171a17;      /* instrument casing, green-tinted rather than neutral black */
+    --panel:#22271f;     /* panel face */
+    --cap:#3a4236;       /* engraved keycap */
+    --cap-hi:#4a5444;
+    --phos:#c8d6b9;      /* phosphor readout */
+    --phos-dim:#6f7d66;
+    --brass:#e8c77a;     /* used only on the live line */
+    --wrong:#c4705f;
+  }
+  html,body{height:100%;}
+  body{
+    font-family:'Courier Prime',ui-monospace,monospace;
+    background:var(--case);
+    color:var(--phos);
+    display:flex;flex-direction:column;align-items:center;
+    padding:18px 16px 26px;
+    min-height:100dvh;
+    overflow-x:hidden;
+  }
+  /* faint horizontal scanning, like a valve set warming up. Motion is one
+     orchestrated ambient effect, not scattered entrance animations. */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);
+    opacity:.5;
+  }
+  .set{width:100%;max-width:430px;display:flex;flex-direction:column;flex:1;}
+
+  .plate{display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid rgba(200,214,185,.16);padding-bottom:9px;}
+  .plate h1{font-size:15px;font-weight:700;letter-spacing:.18em;color:var(--phos-dim);}
+  .plate h1 a{color:inherit;text-decoration:none;}
+  .plate h1 a:hover{color:var(--phos);}
+  .mute{background:none;border:1px solid rgba(200,214,185,.2);border-radius:3px;color:var(--phos-dim);
+    font-family:inherit;font-size:10px;letter-spacing:.1em;padding:4px 8px;cursor:pointer;margin-left:8px;}
+  .mute:focus-visible,.home:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+  .home{display:inline-block;margin-top:14px;font-size:11px;color:var(--phos-dim);text-decoration:none;
+    border-bottom:1px solid rgba(200,214,185,.2);}
+  .home:hover{color:var(--phos);}
+  .plate .no{font-size:12px;color:var(--phos-dim);}
+
+  /* The readout is the one bold element. Everything else stays quiet. */
+  .readout{background:var(--panel);border:1px solid rgba(0,0,0,.5);
+    box-shadow:inset 0 2px 14px rgba(0,0,0,.55);
+    border-radius:3px;margin-top:16px;padding:20px 14px 16px;text-align:center;
+    position:relative;overflow:hidden;}
+  .readout::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 50% 0%,rgba(200,214,185,.07),transparent 70%);}
+  .clue{font-size:14.5px;line-height:1.5;color:var(--phos);opacity:.9;
+    min-height:44px;display:flex;align-items:center;justify-content:center;
+    padding:0 4px;position:relative;}
+  .digits{display:flex;justify-content:center;gap:5px;margin-top:16px;position:relative;}
+  .dg{flex:0 1 38px;min-width:0;}
+  .dg .num{font-size:clamp(19px,7.2vw,30px);font-weight:700;line-height:1;color:var(--phos);
+    text-shadow:0 0 10px rgba(200,214,185,.45);}
+  .dg .slot{margin-top:7px;height:22px;border-bottom:1px solid rgba(200,214,185,.3);
+    font-size:clamp(13px,4.4vw,17px);font-weight:700;color:var(--brass);line-height:22px;}
+  .dg.filled .slot{border-bottom-color:var(--brass);}
+  .dg.cursor .slot{border-bottom-color:var(--brass);animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{50%{border-bottom-color:transparent;}}
+  .dg .opts{margin-top:5px;font-size:clamp(7px,2.3vw,9.5px);letter-spacing:.06em;color:var(--phos-dim);height:12px;white-space:nowrap;}
+  /* a digit that has not arrived yet */
+  .dg.waiting .num{color:var(--phos-dim);opacity:.25;}
+  .dg.waiting .opts{opacity:.25;}
+  /* the moment a digit lands */
+  .dg.landing .num{animation:land .34s ease-out;}
+  @keyframes land{
+    0%{opacity:0;transform:translateY(-3px);text-shadow:0 0 22px rgba(200,214,185,.9);}
+    60%{opacity:1;text-shadow:0 0 16px rgba(200,214,185,.7);}
+    100%{opacity:1;transform:none;}
+  }
+  /* a digit the interference ate: you must work it out from the clue alone */
+  .dg.lost .num{color:var(--wrong);opacity:.75;}
+  .dg.lost .opts{color:var(--wrong);opacity:.5;}
+
+  /* the receiver: a needle that twitches while the signal comes in */
+  .meter{height:3px;background:rgba(200,214,185,.10);border-radius:2px;
+    margin-top:12px;overflow:hidden;position:relative;}
+  .meter i{position:absolute;top:0;bottom:0;width:26%;border-radius:2px;
+    background:linear-gradient(90deg,transparent,var(--phos),transparent);opacity:.75;
+    transform:translateX(-30%);}
+  .meter.live i{animation:sweep 1.15s linear infinite;}
+  @keyframes sweep{to{transform:translateX(400%);}}
+
+  /* the recovered message: one letter per decoded word, filling in as you go */
+  .message{margin-top:14px;padding:12px 10px;background:rgba(0,0,0,.25);border-radius:3px;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:44px;align-items:center;}
+  .ml{width:17px;height:24px;border-bottom:1px solid rgba(200,214,185,.22);
+    font-size:16px;font-weight:700;line-height:24px;text-align:center;color:var(--brass);}
+  .ml.gap{border-bottom:0;width:9px;}
+  .ml.pending{color:transparent;}
+  .verdict{text-align:center;font-size:13px;min-height:20px;margin-top:14px;letter-spacing:.04em;}
+  .verdict.good{color:var(--brass);}
+  .verdict.bad{color:var(--wrong);}
+
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:20px;}
+  .key{background:var(--cap);border:0;border-radius:4px;padding:11px 0 8px;
+    font-family:inherit;color:var(--phos);cursor:pointer;
+    box-shadow:0 3px 0 #10130f, inset 0 1px 0 rgba(255,255,255,.06);
+    transition:transform .04s linear, box-shadow .04s linear, background .12s;}
+  .key:active{transform:translateY(3px);box-shadow:0 0 0 #10130f, inset 0 1px 0 rgba(255,255,255,.04);background:var(--cap-hi);}
+  .key .d{font-size:22px;font-weight:700;line-height:1;}
+  .key .l{font-size:10px;letter-spacing:.14em;color:var(--phos-dim);margin-top:4px;height:12px;}
+  .key.act{background:var(--cap-hi);}
+  .key:disabled{opacity:.35;cursor:default;}
+  .key.fn .d{font-size:13px;letter-spacing:.1em;padding:6px 0;}
+  .key.armed{background:var(--cap-hi);box-shadow:0 0 0 1px var(--brass) inset, 0 3px 0 #10130f;}
+  /* the letter choice appears in place, so the pad itself never moves */
+  .choice{display:flex;gap:8px;justify-content:center;margin-top:14px;min-height:46px;align-items:center;}
+  .choice .lbl{font-size:11px;color:var(--phos-dim);letter-spacing:.08em;}
+  .lt{background:var(--cap);border:0;border-radius:4px;color:var(--phos);font-family:inherit;
+    font-size:20px;font-weight:700;width:46px;height:44px;cursor:pointer;
+    box-shadow:0 3px 0 #10130f, inset 0 1px 0 rgba(255,255,255,.06);}
+  .lt:active{transform:translateY(3px);box-shadow:0 0 0 #10130f;}
+  .lt:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+  .key:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+
+  .foot{text-align:center;font-size:11px;color:var(--phos-dim);margin-top:auto;padding-top:18px;line-height:1.6;}
+
+  /* signal strength stands in for lives: each failure degrades the line */
+  .signal{display:flex;align-items:center;gap:7px;}
+  .signal .bars{display:flex;gap:3px;align-items:flex-end;}
+  .signal .bar{width:4px;background:var(--phos);border-radius:1px;transition:background .3s,opacity .3s;}
+  .signal .bar:nth-child(1){height:6px;} .signal .bar:nth-child(2){height:10px;} .signal .bar:nth-child(3){height:14px;}
+  .signal .bar.lost{background:var(--wrong);opacity:.25;}
+
+  .screen{position:fixed;inset:0;background:var(--case);z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;text-align:center;}
+  .screen.hide{display:none;}
+  .screen h2{font-size:clamp(20px,6vw,26px);font-weight:700;letter-spacing:.1em;margin-bottom:6px;}
+  .screen .sub{font-size:13px;color:var(--phos-dim);line-height:1.65;max-width:23em;}
+  .figures{display:flex;gap:26px;margin:26px 0 6px;}
+  .fig{display:flex;flex-direction:column;align-items:center;}
+  .fig b{font-size:26px;font-weight:700;color:var(--brass);line-height:1;}
+  .fig span{font-size:10.5px;color:var(--phos-dim);letter-spacing:.1em;margin-top:6px;}
+  .best{font-size:12px;color:var(--phos-dim);margin-top:18px;min-height:18px;}
+  .go{margin-top:24px;background:var(--cap);border:0;border-radius:4px;color:var(--phos);
+    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.08em;padding:15px 34px;cursor:pointer;
+    box-shadow:0 3px 0 #10130f, inset 0 1px 0 rgba(255,255,255,.06);}
+  .go:active{transform:translateY(3px);box-shadow:0 0 0 #10130f;}
+  .go:focus-visible{outline:2px solid var(--brass);outline-offset:3px;}
+  .transcript{margin-top:20px;font-size:12px;line-height:1.9;color:var(--phos-dim);max-width:26em;}
+  .transcript .ok{color:var(--phos);} .transcript .no{color:var(--wrong);opacity:.8;}
+  .foot b{color:var(--phos);font-weight:400;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+  @media (max-height:680px){
+    .dg .num{font-size:25px;} .key .d{font-size:19px;} .clue{font-size:13.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="set">
+
+  <div class="plate">
+    <h1><a href="index.html">THE QUIET LINE</a></h1>
+    <div class="signal" id="signal">
+      <span class="no" id="tally">1 of 10</span>
+      <span class="bars"><i class="bar"></i><i class="bar"></i><i class="bar"></i></span>
+      <button class="mute" id="muteBtn" aria-label="Toggle sound">SOUND</button>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="clue" id="clue">Tuning in&hellip;</div>
+    <div class="digits" id="digits"></div>
+    <div class="meter" id="meter"><i></i></div>
+  </div>
+
+  <div class="message" id="message" title="The message, one letter per decoded word"></div>
+
+  <div class="choice" id="choice"></div>
+
+  <div class="verdict" id="verdict"></div>
+
+  <div class="pad" id="pad"></div>
+
+  <p class="foot">The digits tell you how long the word is and which letters it could use.<br>
+    The clue tells you which word it is. You need <b>both</b>.</p>
+</div>
+
+<div class="screen" id="startScreen">
+  <h2>THE QUIET LINE</h2>
+  <p class="sub">Words arrive spelled in keypad digits. A clue tells you what each one means.
+    The digits tell you how it is spelled. You need both.<br><br>
+    Every word you decode gives up its first letter, and those letters spell the
+    transmission. Digits arrive one at a time, and the line is not always clean:
+    some come through lost. Three failures and it goes dead.</p>
+  <button class="go" id="beginBtn">Open the line</button>
+  <p class="best" id="startBest"></p>
+</div>
+
+<div class="screen hide" id="endScreen">
+  <h2 id="endTitle">Line closed</h2>
+  <p class="sub" id="endSub"></p>
+  <div class="figures">
+    <div class="fig"><b id="figDecoded">0</b><span>DECODED</span></div>
+    <div class="fig"><b id="figTime">0:00</b><span>TIME</span></div>
+    <div class="fig"><b id="figClean">0</b><span>FIRST TRY</span></div>
+  </div>
+  <p class="best" id="endBest"></p>
+  <div class="transcript" id="transcript"></div>
+  <button class="go" id="againBtn">Open a new line</button>
+  <button class="go" id="shareBtn" style="margin-top:10px">Share this run</button>
+  <a class="home" href="index.html">More TierBrain games</a>
+</div>
+
+<script>
+
+/* ============================================================
+   TierBrain shareable score card — drop-in module
+   Usage: TBShare.open({ game, kicker, big, lines, footer, accent })
+   game:   short slug used in the filename, e.g. 'creak'
+   kicker: small caps label, e.g. 'CREAK & COIL'
+   big:    the headline stat, e.g. '22 turns'
+   lines:  array of small caption lines under the big stat
+   footer: bottom-line, e.g. 'Can you beat me?'
+   accent: hex colour for the glow/border, e.g. '#f5b23e'
+   ============================================================ */
+(function(){
+  function esc(s){ return String(s==null?'':s); }
+  function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+  const CSS = `
+  .tbs-ov{position:fixed;inset:0;background:rgba(6,7,16,.86);z-index:999;display:flex;align-items:center;justify-content:center;
+    padding:22px;backdrop-filter:blur(3px);}
+  .tbs-ov.hide{display:none;}
+  .tbs-card{width:100%;max-width:380px;}
+  .tbs-canwrap{border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .tbs-canwrap canvas{display:block;width:100%;height:auto;}
+  .tbs-actions{display:flex;gap:10px;margin-top:16px;}
+  .tbs-btn{flex:1;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;
+    font-family:inherit;color:#fff;background:linear-gradient(180deg,#3fc79a,#1f9d76);box-shadow:0 6px 0 #14684c;}
+  .tbs-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #14684c;}
+  .tbs-btn.ghost{background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.18);}
+  .tbs-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:0;
+    background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer;}
+  .tbs-note{color:rgba(255,255,255,.55);font-size:12px;text-align:center;margin-top:10px;font-weight:700;}
+  `;
+
+  function ensureStyle(){ if(document.getElementById('tbs-style')) return;
+    const s=document.createElement('style'); s.id='tbs-style'; s.textContent=CSS; document.head.appendChild(s); }
+
+  function ensureDom(){ if(document.getElementById('tbsOverlay')) return;
+    const ov=el(`<div class="tbs-ov hide" id="tbsOverlay">
+      <button class="tbs-close" id="tbsClose">&times;</button>
+      <div class="tbs-card">
+        <div class="tbs-canwrap"><canvas id="tbsCanvas" width="760" height="950"></canvas></div>
+        <div class="tbs-actions">
+          <button class="tbs-btn" id="tbsSave">Save image</button>
+          <button class="tbs-btn ghost" id="tbsShare">Share</button>
+        </div>
+        <div class="tbs-note">tierbrain.co</div>
+      </div>
+    </div>`);
+    document.body.appendChild(ov);
+    document.getElementById('tbsClose').addEventListener('click', close);
+    ov.addEventListener('click', function(e){ if(e.target===ov) close(); });
+  }
+
+  function close(){ const ov=document.getElementById('tbsOverlay'); if(ov) ov.classList.add('hide'); }
+
+  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function wrap(ctx,text,x,y,maxW,lh){ const words=String(text).split(' '); let line=''; const out=[];
+    for(const w of words){ const t=(line+' '+w).trim(); if(ctx.measureText(t).width>maxW && line){ out.push(line); line=w; } else line=t; }
+    if(line) out.push(line);
+    out.forEach((l,i)=>ctx.fillText(l, x, y+i*lh));
+    return y+out.length*lh; }
+
+  function draw(opts){
+    const cv=document.getElementById('tbsCanvas'), ctx=cv.getContext('2d');
+    const W=cv.width, H=cv.height, accent=opts.accent||'#f5b23e';
+    // background
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#12142b'); bg.addColorStop(1,'#080a1a');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // glow
+    const g=ctx.createRadialGradient(W/2,H*0.32,40,W/2,H*0.32,H*0.6);
+    g.addColorStop(0, accent+'33'); g.addColorStop(1, accent+'00');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // frame
+    ctx.strokeStyle=accent+'99'; ctx.lineWidth=3; roundRect(ctx,22,22,W-44,H-44,26); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=1; roundRect(ctx,32,32,W-64,H-64,20); ctx.stroke();
+    // kicker
+    ctx.textAlign='center'; ctx.fillStyle=accent; ctx.font='800 26px Arial';
+    ctx.save(); ctx.letterSpacing='6px'; ctx.fillText((opts.kicker||'TIERBRAIN').toUpperCase(), W/2, 140); ctx.restore();
+    // big stat (auto-shrink to fit the card width)
+    ctx.fillStyle='#fdf7ee';
+    var bigText=opts.big||'', bigSize=108, maxTextW=W-140;
+    ctx.font='800 '+bigSize+'px Georgia';
+    while(bigSize>44 && ctx.measureText(bigText).width>maxTextW){ bigSize-=4; ctx.font='800 '+bigSize+'px Georgia'; }
+    ctx.fillText(bigText, W/2, 220+bigSize*0.62);
+    // caption lines
+    ctx.font='600 30px Arial'; ctx.fillStyle='rgba(255,255,255,.82)';
+    let y=220+bigSize*0.62+70;
+    (opts.lines||[]).forEach(function(ln){ y=wrap(ctx, ln, W/2, y, W-160, 40)+14; ctx.textAlign='center'; });
+    // divider
+    ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.beginPath(); ctx.moveTo(W*0.28,y+18); ctx.lineTo(W*0.72,y+18); ctx.stroke();
+    // footer challenge line
+    ctx.font='800 32px Georgia'; ctx.fillStyle=accent;
+    ctx.fillText(opts.footer||'Can you beat me?', W/2, y+70);
+    // brand
+    ctx.font='800 24px Arial'; ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.fillText('tierbrain.co', W/2, H-56);
+  }
+
+  function open(opts){
+    ensureStyle(); ensureDom(); draw(opts);
+    document.getElementById('tbsOverlay').classList.remove('hide');
+    const cv=document.getElementById('tbsCanvas');
+    document.getElementById('tbsSave').onclick=function(){
+      cv.toBlob(function(blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download='tierbrain-'+(opts.game||'card')+'.png'; a.click(); }, 'image/png');
+    };
+    document.getElementById('tbsShare').onclick=function(){
+      cv.toBlob(async function(blob){
+        const file=new File([blob], 'tierbrain-'+(opts.game||'card')+'.png', {type:'image/png'});
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+          try{ await navigator.share({files:[file], title:'TierBrain', text: opts.shareText||'Play at tierbrain.co'}); }catch(e){}
+        } else {
+          cv.toBlob(function(b2){ const a=document.createElement('a'); a.href=URL.createObjectURL(b2);
+            a.download='tierbrain-'+(opts.game||'card')+'.png'; a.click(); }, 'image/png');
+        }
+      }, 'image/png');
+    };
+  }
+
+  window.TBShare = { open: open, close: close };
+})();
+
+
+</script>
+<script>
+"use strict";
+const ROUNDS = [{"q": "What is the opposite of 'tall'?", "a": "Short", "code": "74678", "tier": "1"}, {"q": "What is the opposite of 'bright'?", "a": "Dark", "code": "3275", "tier": "1"}, {"q": "What is the opposite of 'push'?", "a": "Pull", "code": "7855", "tier": "1"}, {"q": "What is the opposite of 'clean'?", "a": "Dirty", "code": "34789", "tier": "1"}, {"q": "What is the opposite of 'buy'?", "a": "Sell", "code": "7355", "tier": "1"}, {"q": "What is the opposite of 'true'?", "a": "False", "code": "32573", "tier": "1"}, {"q": "What is the opposite of 'awake'?", "a": "Asleep", "code": "275337", "tier": "1"}, {"q": "What is bread mainly made from?", "a": "Flour", "code": "35687", "tier": "1"}, {"q": "What is butter made from?", "a": "Milk", "code": "6455", "tier": "1"}, {"q": "What are dried grapes called?", "a": "Raisins", "code": "7247467", "tier": "1"}, {"q": "What is wine usually made from?", "a": "Grapes", "code": "472737", "tier": "1"}, {"q": "What colour is milk?", "a": "White", "code": "94483", "tier": "1"}, {"q": "How many toes are there on one foot?", "a": "Five", "code": "3483", "tier": "1"}, {"q": "What covers the outside of your body?", "a": "Skin", "code": "7546", "tier": "1"}, {"q": "What are the largest animals living in the sea?", "a": "Whales", "code": "942537", "tier": "1"}, {"q": "What colour is the night sky?", "a": "Black", "code": "25225", "tier": "1"}, {"q": "Which of these is a green vegetable?", "a": "Lettuce", "code": "5388823", "tier": "1"}, {"q": "What is the opposite of 'front'?", "a": "Back", "code": "2225", "tier": "1"}, {"q": "What do you call children who share the same parents as you?", "a": "Siblings", "code": "74254647", "tier": "1"}, {"q": "What do you wear on your hands to keep them warm?", "a": "Gloves", "code": "456837", "tier": "1"}, {"q": "What colour is an egg yolk?", "a": "Yellow", "code": "935569", "tier": "1"}, {"q": "How many wheels are there on two bicycles?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "What do you wear on your feet to keep them warm?", "a": "Socks", "code": "76257", "tier": "1"}, {"q": "What colour is an orange (the fruit)?", "a": "Orange", "code": "672643", "tier": "1"}, {"q": "How many legs does a dog have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "What is the opposite of 'start'?", "a": "Stop", "code": "7867", "tier": "1"}, {"q": "What is the opposite of 'hard'?", "a": "Soft", "code": "7638", "tier": "1"}, {"q": "What is the opposite of 'win'?", "a": "Lose", "code": "5673", "tier": "1"}, {"q": "What colour is coal?", "a": "Black", "code": "25225", "tier": "1"}, {"q": "Which of these would you find at the beach?", "a": "Sand", "code": "7263", "tier": "1"}, {"q": "What is the opposite of 'first'?", "a": "Last", "code": "5278", "tier": "1"}, {"q": "What do you call your mother and father together?", "a": "Parents", "code": "7273687", "tier": "1"}, {"q": "Which of these is a sweet food?", "a": "Cake", "code": "2253", "tier": "1"}, {"q": "What sound does a cat make?", "a": "Meow", "code": "6369", "tier": "1"}, {"q": "Which of these is used to write on a blackboard?", "a": "Chalk", "code": "24255", "tier": "1"}, {"q": "Which part of your body do you use to see?", "a": "Eyes", "code": "3937", "tier": "1"}, {"q": "Which of these would you find in a garden?", "a": "Flowers", "code": "3569377", "tier": "1"}, {"q": "What is the opposite of 'left'?", "a": "Right", "code": "74448", "tier": "1"}, {"q": "Which animal is famous for changing colour to match its surroundings?", "a": "Chameleon", "code": "242635366", "tier": "1"}, {"q": "Which of these is a vegetable, not a fruit?", "a": "Potato", "code": "768286", "tier": "1"}, {"q": "What colour do you get when you mix red and yellow?", "a": "Orange", "code": "672643", "tier": "1"}, {"q": "How many corners does a square have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "What do we call baby frogs?", "a": "Tadpoles", "code": "82376537", "tier": "1"}, {"q": "Which of these do you use to cut paper?", "a": "Scissors", "code": "72477677", "tier": "1"}, {"q": "What colour are clouds usually?", "a": "White", "code": "94483", "tier": "1"}, {"q": "How many wheels does a tricycle have?", "a": "Three", "code": "84733", "tier": "1"}, {"q": "What is the opposite of 'empty'?", "a": "Full", "code": "3855", "tier": "1"}, {"q": "What do you call the children of your aunt and uncle?", "a": "Cousins", "code": "2687467", "tier": "1"}, {"q": "How many legs does a cat have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "In which season do flowers begin to bloom?", "a": "Spring", "code": "777464", "tier": "1"}, {"q": "What is the opposite of 'loud'?", "a": "Quiet", "code": "78438", "tier": "1"}, {"q": "Which of these is a number?", "a": "Seven", "code": "73836", "tier": "1"}, {"q": "What do you call a baby sheep?", "a": "Lamb", "code": "5262", "tier": "1"}, {"q": "How many legs does a typical chair have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "Which of these is a metal?", "a": "Gold", "code": "4653", "tier": "1"}, {"q": "Which of these flies in the sky?", "a": "Bird", "code": "2473", "tier": "1"}, {"q": "Which of these is a colour of the rainbow?", "a": "Blue", "code": "2583", "tier": "1"}, {"q": "What do you call a person who cooks food in a restaurant?", "a": "Chef", "code": "2433", "tier": "1"}, {"q": "Which farm animal gives us wool?", "a": "Sheep", "code": "74337", "tier": "1"}, {"q": "What do we call the meal eaten in the evening?", "a": "Dinner", "code": "346637", "tier": "1"}, {"q": "Which of these is a fruit, not a vegetable?", "a": "Orange", "code": "672643", "tier": "1"}, {"q": "What do you call frozen rain that falls as little balls of ice?", "a": "Hail", "code": "4245", "tier": "1"}, {"q": "What do green plants release into the air that people breathe?", "a": "Oxygen", "code": "699436", "tier": "1"}, {"q": "What colour do children most often colour the sun?", "a": "Yellow", "code": "935569", "tier": "1"}, {"q": "What do you call a baby chicken?", "a": "Chick", "code": "24425", "tier": "1"}, {"q": "What do we call the early part of the day when the sun rises?", "a": "Morning", "code": "6676464", "tier": "1"}, {"q": "Which of these grows on trees?", "a": "Apples", "code": "277537", "tier": "1"}, {"q": "In which season do leaves often fall from the trees?", "a": "Autumn", "code": "288866", "tier": "1"}, {"q": "What is the opposite of 'open'?", "a": "Closed", "code": "256733", "tier": "1"}, {"q": "What is the capital of Japan?", "a": "Tokyo", "code": "86596", "tier": "1"}, {"q": "How many colours are on a standard traffic light?", "a": "Three", "code": "84733", "tier": "1"}, {"q": "Which animal is known as the 'King of the Jungle'?", "a": "Lion", "code": "5466", "tier": "1"}, {"q": "What do you call a baby cow?", "a": "Calf", "code": "2253", "tier": "1"}, {"q": "Which of these is a vegetable?", "a": "Carrot", "code": "227768", "tier": "1"}, {"q": "What is the opposite of 'big'?", "a": "Small", "code": "76255", "tier": "1"}, {"q": "What falls from the sky as soft white flakes in winter?", "a": "Snow", "code": "7669", "tier": "1"}, {"q": "Which of these shapes is perfectly round?", "a": "Circle", "code": "247253", "tier": "1"}, {"q": "What sound does a dog make?", "a": "Bark", "code": "2275", "tier": "1"}, {"q": "How many wheels does a car usually have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "What is the part of a plant that grows underground called?", "a": "Roots", "code": "76687", "tier": "1"}, {"q": "Which is fastest: walking, running or crawling?", "a": "Running", "code": "7866464", "tier": "1"}, {"q": "What colour is the inside of a lemon?", "a": "Yellow", "code": "935569", "tier": "1"}, {"q": "Which of these animals lives in water?", "a": "Fish", "code": "3474", "tier": "1"}, {"q": "What do we call the meal eaten in the middle of the day?", "a": "Lunch", "code": "58624", "tier": "1"}, {"q": "What colour is fresh snow?", "a": "White", "code": "94483", "tier": "1"}, {"q": "How many legs does a horse have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "Which season is usually the hottest?", "a": "Summer", "code": "786637", "tier": "1"}, {"q": "What do you call a person who flies a plane?", "a": "Pilot", "code": "74568", "tier": "1"}, {"q": "Which of these can you drink?", "a": "Water", "code": "92837", "tier": "1"}, {"q": "How many letters are there in the word 'cat'?", "a": "Three", "code": "84733", "tier": "1"}, {"q": "What do cows mainly eat?", "a": "Grass", "code": "47277", "tier": "1"}, {"q": "Which of these is a day of the week?", "a": "Sunday", "code": "786329", "tier": "1"}, {"q": "Which animal hops and carries its baby in a pouch?", "a": "Kangaroo", "code": "52642766", "tier": "1"}, {"q": "What do you wear on your feet?", "a": "Shoes", "code": "74637", "tier": "1"}, {"q": "What is the opposite of 'day'?", "a": "Night", "code": "64448", "tier": "1"}, {"q": "What colour do you get by mixing red and white?", "a": "Pink", "code": "7465", "tier": "1"}, {"q": "What is the opposite of 'fast'?", "a": "Slow", "code": "7569", "tier": "1"}, {"q": "Which season has the coldest weather?", "a": "Winter", "code": "946837", "tier": "1"}, {"q": "What is the opposite of 'up'?", "a": "Down", "code": "3696", "tier": "1"}, {"q": "Which fruit is traditionally said to keep the doctor away?", "a": "Apple", "code": "27753", "tier": "1"}, {"q": "What do you call a baby dog?", "a": "Puppy", "code": "78779", "tier": "1"}, {"q": "What do plants mainly need from the Sun in order to grow?", "a": "Light", "code": "54448", "tier": "1"}, {"q": "Which of these animals can fly?", "a": "Eagle", "code": "32453", "tier": "1"}, {"q": "What colour is grass?", "a": "Green", "code": "47336", "tier": "1"}, {"q": "How many fingers are on one hand, including the thumb?", "a": "Five", "code": "3483", "tier": "1"}, {"q": "What do we call the meal usually eaten in the morning?", "a": "Breakfast", "code": "273253278", "tier": "1"}, {"q": "What do you call a person who teaches pupils at school?", "a": "Teacher", "code": "8322437", "tier": "1"}, {"q": "What shape has four equal straight sides?", "a": "Square", "code": "778273", "tier": "1"}, {"q": "What do bees make?", "a": "Honey", "code": "46639", "tier": "1"}, {"q": "What is the young of a cat called?", "a": "Kitten", "code": "548836", "tier": "1"}, {"q": "How many sides does a square have?", "a": "Four", "code": "3687", "tier": "1"}, {"q": "What do you call water that falls from the clouds?", "a": "Rain", "code": "7246", "tier": "1"}, {"q": "Which animal has a long trunk?", "a": "Elephant", "code": "35374268", "tier": "1"}, {"q": "What day comes immediately after Monday?", "a": "Tuesday", "code": "8837329", "tier": "1"}, {"q": "What is the capital of France?", "a": "Paris", "code": "72747", "tier": "1"}, {"q": "How many legs does a spider have?", "a": "Eight", "code": "34448", "tier": "1"}, {"q": "What colour do you get by mixing blue and yellow?", "a": "Green", "code": "47336", "tier": "1"}, {"q": "Which planet do we live on?", "a": "Earth", "code": "32784", "tier": "1"}, {"q": "How many days are there in a week?", "a": "Seven", "code": "73836", "tier": "1"}, {"q": "What is H2O more commonly known as?", "a": "Water", "code": "92837", "tier": "1"}, {"q": "How many sides does a triangle have?", "a": "Three", "code": "84733", "tier": "1"}, {"q": "What is the opposite of 'hot'?", "a": "Cold", "code": "2653", "tier": "1"}, {"q": "What gas do humans breathe in to survive?", "a": "Oxygen", "code": "699436", "tier": "1"}, {"q": "How many colours are traditionally said to be in a rainbow?", "a": "Seven", "code": "73836", "tier": "1"}, {"q": "Which is the tallest living animal in the world?", "a": "Giraffe", "code": "4472333", "tier": "1"}, {"q": "What colour is a ripe banana?", "a": "Yellow", "code": "935569", "tier": "1"}, {"q": "Which season comes after winter?", "a": "Spring", "code": "777464", "tier": "1"}, {"q": "What is the capital of England?", "a": "London", "code": "566366", "tier": "1"}, {"q": "What do cows produce that people drink?", "a": "Milk", "code": "6455", "tier": "1"}, {"q": "Which of these is a fruit?", "a": "Apple", "code": "27753", "tier": "1"}, {"q": "What is the colour of the sky on a clear day?", "a": "Blue", "code": "2583", "tier": "1"}, {"q": "The Olympic Games are held once every how many years?", "a": "Four", "code": "3687", "tier": "2"}, {"q": "How many rings are there on the Olympic flag?", "a": "Five", "code": "3483", "tier": "2"}, {"q": "In tennis, what is a score of zero called?", "a": "Love", "code": "5683", "tier": "2"}, {"q": "The Ashes is a cricket rivalry between England and which country?", "a": "Australia", "code": "287872542", "tier": "2"}, {"q": "In which sport is the Tour de France?", "a": "Cycling", "code": "2925464", "tier": "2"}, {"q": "What is the main ingredient in guacamole?", "a": "Avocado", "code": "2862236", "tier": "2"}, {"q": "What are most chips (fries) made from?", "a": "Potatoes", "code": "76828637", "tier": "2"}, {"q": "What is tofu made from?", "a": "Soybeans", "code": "76923267", "tier": "2"}, {"q": "How many oceans are there on Earth?", "a": "Five", "code": "3483", "tier": "2"}, {"q": "Cold-blooded animals such as snakes and lizards are known as what?", "a": "Reptiles", "code": "73784537", "tier": "2"}, {"q": "What is marzipan mainly made from?", "a": "Almonds", "code": "2566637", "tier": "2"}, {"q": "In football (soccer), a 'hat-trick' means scoring how many goals?", "a": "Three", "code": "84733", "tier": "2"}, {"q": "What is the capital city of Jamaica?", "a": "Kingston", "code": "54647866", "tier": "2"}, {"q": "What do you call molten rock that erupts from a volcano?", "a": "Lava", "code": "5282", "tier": "2"}, {"q": "On which continent is the Sahara Desert?", "a": "Africa", "code": "237422", "tier": "2"}, {"q": "In which sport might you score a 'try'?", "a": "Rugby", "code": "78429", "tier": "2"}, {"q": "Which South American country is a long, thin strip down the west coast?", "a": "Chile", "code": "24453", "tier": "2"}, {"q": "What do we call frozen water vapour that makes patterns on cold windows?", "a": "Frost", "code": "37678", "tier": "2"}, {"q": "Which is the largest type of bird in the world?", "a": "Ostrich", "code": "6787424", "tier": "2"}, {"q": "Which European country is shaped like a boot?", "a": "Italy", "code": "48259", "tier": "2"}, {"q": "How many players in total take part in a tennis doubles match?", "a": "Four", "code": "3687", "tier": "2"}, {"q": "In which country is the Sydney Opera House?", "a": "Australia", "code": "287872542", "tier": "2"}, {"q": "What is the currency of Mexico?", "a": "Peso", "code": "7376", "tier": "2"}, {"q": "Which country has a red maple leaf on its flag?", "a": "Canada", "code": "226232", "tier": "2"}, {"q": "Which country is known as the 'Land of the Rising Sun'?", "a": "Japan", "code": "52726", "tier": "2"}, {"q": "Which Italian city is famous for its canals and gondolas?", "a": "Venice", "code": "836423", "tier": "2"}, {"q": "What do bees collect from flowers to make honey?", "a": "Nectar", "code": "632827", "tier": "2"}, {"q": "In Greek mythology, who is the goddess of wisdom?", "a": "Athena", "code": "284362", "tier": "2"}, {"q": "In which sport do players use the terms 'love', 'deuce' and 'serve'?", "a": "Tennis", "code": "836647", "tier": "2"}, {"q": "Which country hosted the ancient Olympic Games?", "a": "Greece", "code": "473323", "tier": "2"}, {"q": "What is the capital of Bangladesh?", "a": "Dhaka", "code": "34252", "tier": "2"}, {"q": "What is the longest river in Africa?", "a": "Nile", "code": "6453", "tier": "2"}, {"q": "How many players from one team take the field in baseball?", "a": "Nine", "code": "6463", "tier": "2"}, {"q": "In which country is the Taj Mahal?", "a": "India", "code": "46342", "tier": "2"}, {"q": "What is the currency of Russia?", "a": "Ruble", "code": "78253", "tier": "2"}, {"q": "Which gas, lighter than air, is used to make party balloons float?", "a": "Helium", "code": "435486", "tier": "2"}, {"q": "Which sport is played at Wimbledon?", "a": "Tennis", "code": "836647", "tier": "2"}, {"q": "The Great Barrier Reef lies off the coast of which country?", "a": "Australia", "code": "287872542", "tier": "2"}, {"q": "Which is the largest country in South America?", "a": "Brazil", "code": "272945", "tier": "2"}, {"q": "In which country would you find the Colosseum?", "a": "Italy", "code": "48259", "tier": "2"}, {"q": "Which is the only planet known to support life?", "a": "Earth", "code": "32784", "tier": "2"}, {"q": "How many players from one team are on court in netball?", "a": "Seven", "code": "73836", "tier": "2"}, {"q": "In which city is the Eiffel Tower?", "a": "Paris", "code": "72747", "tier": "2"}, {"q": "What do you call animals that eat both plants and meat?", "a": "Omnivores", "code": "666486737", "tier": "2"}, {"q": "How many lines are there in a standard musical staff?", "a": "Five", "code": "3483", "tier": "2"}, {"q": "How many sides does a heptagon have?", "a": "Seven", "code": "73836", "tier": "2"}, {"q": "What is the main currency of China?", "a": "Yuan", "code": "9826", "tier": "2"}, {"q": "Mount Fuji is a famous mountain in which country?", "a": "Japan", "code": "52726", "tier": "2"}, {"q": "Which lighter-than-air gas was once used to fill airships?", "a": "Hydrogen", "code": "49376436", "tier": "2"}, {"q": "How many sides does a nonagon have?", "a": "Nine", "code": "6463", "tier": "2"}, {"q": "What is the capital of Saudi Arabia?", "a": "Riyadh", "code": "749234", "tier": "2"}, {"q": "How many sides does an octagon have?", "a": "Eight", "code": "34448", "tier": "2"}, {"q": "What is the currency of India?", "a": "Rupee", "code": "78733", "tier": "2"}, {"q": "What is the capital of the Philippines?", "a": "Manila", "code": "626452", "tier": "2"}, {"q": "What is the capital of Pakistan?", "a": "Islamabad", "code": "475262223", "tier": "2"}, {"q": "Which metal is strongly attracted to magnets?", "a": "Iron", "code": "4766", "tier": "2"}, {"q": "What is the capital of Ghana?", "a": "Accra", "code": "22272", "tier": "2"}, {"q": "In Greek mythology, who had snakes for hair?", "a": "Medusa", "code": "633872", "tier": "2"}, {"q": "What is the capital of Iran?", "a": "Tehran", "code": "834726", "tier": "2"}, {"q": "In paint, how many primary colours are there (red, yellow and blue)?", "a": "Three", "code": "84733", "tier": "2"}, {"q": "What is the capital of Colombia?", "a": "Bogota", "code": "264682", "tier": "2"}, {"q": "Which sport is played with a shuttlecock?", "a": "Badminton", "code": "223646866", "tier": "2"}, {"q": "Which country is the original home of pizza and pasta?", "a": "Italy", "code": "48259", "tier": "2"}, {"q": "What is the capital of China?", "a": "Beijing", "code": "2345464", "tier": "2"}, {"q": "What is the fastest land animal?", "a": "Cheetah", "code": "2433824", "tier": "2"}, {"q": "What is the main currency of the United States?", "a": "Dollar", "code": "365527", "tier": "2"}, {"q": "How many hearts does an octopus have?", "a": "Three", "code": "84733", "tier": "2"}, {"q": "What is the capital of Brazil?", "a": "Brasilia", "code": "27274542", "tier": "2"}, {"q": "Which is the largest continent by area?", "a": "Asia", "code": "2742", "tier": "2"}, {"q": "How many sides does a pentagon have?", "a": "Five", "code": "3483", "tier": "2"}, {"q": "What is the study of past events called?", "a": "History", "code": "4478679", "tier": "2"}, {"q": "Which planet is often called Earth's 'twin' because of its similar size?", "a": "Venus", "code": "83687", "tier": "2"}, {"q": "How many players from one team are on the field in cricket?", "a": "Eleven", "code": "353836", "tier": "2"}, {"q": "In which country is the Great Wall?", "a": "China", "code": "24462", "tier": "2"}, {"q": "Which element has the chemical symbol 'H'?", "a": "Hydrogen", "code": "49376436", "tier": "2"}, {"q": "What is the capital of Kenya?", "a": "Nairobi", "code": "6247624", "tier": "2"}, {"q": "In which Italian city is the famous Leaning Tower?", "a": "Pisa", "code": "7472", "tier": "2"}, {"q": "In which sport is the Ryder Cup contested?", "a": "Golf", "code": "4653", "tier": "2"}, {"q": "How many players from one team are on the field in rugby union?", "a": "Fifteen", "code": "3438336", "tier": "2"}, {"q": "What is the capital of Thailand?", "a": "Bangkok", "code": "2264565", "tier": "2"}, {"q": "Which instrument has a keyboard of black and white keys?", "a": "Piano", "code": "74266", "tier": "2"}, {"q": "What is the shared currency used across much of the European Union?", "a": "Euro", "code": "3876", "tier": "2"}, {"q": "What is the capital of Italy?", "a": "Rome", "code": "7663", "tier": "2"}, {"q": "Which is the smallest planet in our solar system?", "a": "Mercury", "code": "6372879", "tier": "2"}, {"q": "What is the capital of Germany?", "a": "Berlin", "code": "237546", "tier": "2"}, {"q": "In which country are the Pyramids of Giza?", "a": "Egypt", "code": "34978", "tier": "2"}, {"q": "What is the largest country in the world by area?", "a": "Russia", "code": "787742", "tier": "2"}, {"q": "What is the capital of Russia?", "a": "Moscow", "code": "667269", "tier": "2"}, {"q": "What is the largest organ of the human body?", "a": "Skin", "code": "7546", "tier": "2"}, {"q": "How many strings does a standard violin have?", "a": "Four", "code": "3687", "tier": "2"}, {"q": "Which metal is the best conductor of electricity?", "a": "Silver", "code": "745837", "tier": "2"}, {"q": "Which planet is famous for its prominent ring system?", "a": "Saturn", "code": "728876", "tier": "2"}, {"q": "How many players from one team are on a basketball court at once?", "a": "Five", "code": "3483", "tier": "2"}, {"q": "What is the capital of Australia?", "a": "Canberra", "code": "22623772", "tier": "2"}, {"q": "How many players from one team are on the pitch in football (soccer)?", "a": "Eleven", "code": "353836", "tier": "2"}, {"q": "What is the largest planet in our solar system?", "a": "Jupiter", "code": "5874837", "tier": "2"}, {"q": "Which is the largest ocean on Earth?", "a": "Pacific", "code": "7224342", "tier": "2"}, {"q": "What is the hardest known natural substance?", "a": "Diamond", "code": "3426663", "tier": "2"}, {"q": "How many continents are there on Earth?", "a": "Seven", "code": "73836", "tier": "2"}, {"q": "Which gas makes up most of Earth's atmosphere?", "a": "Nitrogen", "code": "64876436", "tier": "2"}, {"q": "In which country is the Eiffel Tower?", "a": "France", "code": "372623", "tier": "2"}, {"q": "What is the capital of Canada?", "a": "Ottawa", "code": "688292", "tier": "2"}, {"q": "Which planet is known as the Red Planet?", "a": "Mars", "code": "6277", "tier": "2"}, {"q": "What is the capital of Spain?", "a": "Madrid", "code": "623743", "tier": "2"}, {"q": "What is the capital of Wales?", "a": "Cardiff", "code": "2273433", "tier": "3"}, {"q": "What is the capital of Scotland?", "a": "Edinburgh", "code": "334628744", "tier": "3"}, {"q": "Which gas is produced when an acid reacts with a metal?", "a": "Hydrogen", "code": "49376436", "tier": "3"}, {"q": "What is the capital of Afghanistan?", "a": "Kabul", "code": "52285", "tier": "3"}, {"q": "Which is the highest mountain in North America?", "a": "Denali", "code": "336254", "tier": "3"}, {"q": "Which galaxy is the nearest large neighbour to our Milky Way?", "a": "Andromeda", "code": "263766332", "tier": "3"}, {"q": "In which modern country are the ruins of the ancient city of Babylon?", "a": "Iraq", "code": "4727", "tier": "3"}, {"q": "Which is the only country that occupies an entire continent?", "a": "Australia", "code": "287872542", "tier": "3"}, {"q": "What is the force that resists motion between two surfaces rubbing together?", "a": "Friction", "code": "37428466", "tier": "3"}, {"q": "Which is the highest mountain in the Americas?", "a": "Aconcagua", "code": "226622482", "tier": "3"}, {"q": "In which city would you find the Brandenburg Gate?", "a": "Berlin", "code": "237546", "tier": "3"}, {"q": "Which Scandinavian country is known as the 'Land of the Midnight Sun' and famous for fjords?", "a": "Norway", "code": "667929", "tier": "3"}, {"q": "In which country are the cities of Casablanca and Marrakech?", "a": "Morocco", "code": "6676226", "tier": "3"}, {"q": "In which country is the temple complex of Angkor Wat?", "a": "Cambodia", "code": "22626342", "tier": "3"}, {"q": "In which country is the ancient Inca city of Machu Picchu?", "a": "Peru", "code": "7378", "tier": "3"}, {"q": "Which gas do red blood cells carry around the body?", "a": "Oxygen", "code": "699436", "tier": "3"}, {"q": "In Greek myth, which hero could be wounded only at his heel?", "a": "Achilles", "code": "22445537", "tier": "3"}, {"q": "How many sides does a dodecagon have?", "a": "Twelve", "code": "893583", "tier": "3"}, {"q": "Which planet is the third from the Sun?", "a": "Earth", "code": "32784", "tier": "3"}, {"q": "How many planets in our solar system have ring systems?", "a": "Four", "code": "3687", "tier": "3"}, {"q": "Which is the brightest star in the night sky as seen from Earth?", "a": "Sirius", "code": "747487", "tier": "3"}, {"q": "In which country is the ancient city of Petra, carved into rock?", "a": "Jordan", "code": "567326", "tier": "3"}, {"q": "Which is the largest country in Africa by area?", "a": "Algeria", "code": "2543742", "tier": "3"}, {"q": "What word describes animals that are active mainly at night?", "a": "Nocturnal", "code": "662887625", "tier": "3"}, {"q": "What is the capital of North Macedonia?", "a": "Skopje", "code": "756753", "tier": "3"}, {"q": "Who painted 'The School of Athens'?", "a": "Raphael", "code": "7274235", "tier": "3"}, {"q": "What is the capital of Albania?", "a": "Tirana", "code": "847262", "tier": "3"}, {"q": "What is the capital of Bosnia and Herzegovina?", "a": "Sarajevo", "code": "72725386", "tier": "3"}, {"q": "Which is the second largest planet in our solar system?", "a": "Saturn", "code": "728876", "tier": "3"}, {"q": "What is the scientific study of rocks and the Earth's structure called?", "a": "Geology", "code": "4365649", "tier": "3"}, {"q": "What is the capital of Moldova?", "a": "Chisinau", "code": "24474628", "tier": "3"}, {"q": "What is the capital of Ecuador?", "a": "Quito", "code": "78486", "tier": "3"}, {"q": "Which noble gas makes up roughly 1% of Earth's atmosphere?", "a": "Argon", "code": "27466", "tier": "3"}, {"q": "What force pulls all objects towards the centre of the Earth?", "a": "Gravity", "code": "4728489", "tier": "3"}, {"q": "In which country are the ancient pyramids of Teotihuacan?", "a": "Mexico", "code": "639426", "tier": "3"}, {"q": "What is the capital of Serbia?", "a": "Belgrade", "code": "23547233", "tier": "3"}, {"q": "Which art movement is Pablo Picasso credited with co-founding?", "a": "Cubism", "code": "282476", "tier": "3"}, {"q": "What is the capital of Ukraine?", "a": "Kyiv", "code": "5948", "tier": "3"}, {"q": "What is the largest artery in the human body?", "a": "Aorta", "code": "26782", "tier": "3"}, {"q": "What is the SI unit of electric current?", "a": "Ampere", "code": "267373", "tier": "3"}, {"q": "In which country did the painter Frida Kahlo live and work?", "a": "Mexico", "code": "639426", "tier": "3"}, {"q": "What is the capital of Bulgaria?", "a": "Sofia", "code": "76342", "tier": "3"}, {"q": "What is the capital of Belarus?", "a": "Minsk", "code": "64675", "tier": "3"}, {"q": "What is the capital of Lithuania?", "a": "Vilnius", "code": "8456487", "tier": "3"}, {"q": "What is the capital of Venezuela?", "a": "Caracas", "code": "2272227", "tier": "3"}, {"q": "Which unit is used to measure the loudness of sound?", "a": "Decibel", "code": "3324235", "tier": "3"}, {"q": "What is the capital of Nepal?", "a": "Kathmandu", "code": "528462638", "tier": "3"}, {"q": "What is the SI unit of electric potential (voltage)?", "a": "Volt", "code": "8658", "tier": "3"}, {"q": "What is the capital of Austria?", "a": "Vienna", "code": "843662", "tier": "3"}, {"q": "What is the SI unit of energy?", "a": "Joule", "code": "56853", "tier": "3"}, {"q": "Which element has the atomic number 6?", "a": "Carbon", "code": "227266", "tier": "3"}, {"q": "What is the capital of the Netherlands?", "a": "Amsterdam", "code": "267837326", "tier": "3"}, {"q": "How many chambers does the human heart have?", "a": "Four", "code": "3687", "tier": "3"}, {"q": "Which planet has the strongest surface gravity?", "a": "Jupiter", "code": "5874837", "tier": "3"}, {"q": "What is the SI unit of power?", "a": "Watt", "code": "9288", "tier": "3"}, {"q": "What is the capital of Poland?", "a": "Warsaw", "code": "927729", "tier": "3"}, {"q": "What is the largest island in the world?", "a": "Greenland", "code": "473365263", "tier": "3"}, {"q": "What is the capital of Hungary?", "a": "Budapest", "code": "28327378", "tier": "3"}, {"q": "Sound travels fastest through which of these?", "a": "Steel", "code": "78335", "tier": "3"}, {"q": "What is the capital of the Czech Republic?", "a": "Prague", "code": "772483", "tier": "3"}, {"q": "Which blood vessels carry blood away from the heart?", "a": "Arteries", "code": "27837437", "tier": "3"}, {"q": "In which city is the Acropolis?", "a": "Athens", "code": "284367", "tier": "3"}, {"q": "Who is traditionally credited as the author of 'The Odyssey'?", "a": "Homer", "code": "46637", "tier": "3"}, {"q": "What is the SI unit of pressure?", "a": "Pascal", "code": "727225", "tier": "3"}, {"q": "What is the capital of Chile?", "a": "Santiago", "code": "72684246", "tier": "3"}, {"q": "What is the capital of Vietnam?", "a": "Hanoi", "code": "42664", "tier": "3"}, {"q": "What is the capital of South Korea?", "a": "Seoul", "code": "73685", "tier": "3"}, {"q": "What is the capital of Belgium?", "a": "Brussels", "code": "27877357", "tier": "3"}, {"q": "What is the capital of Greece?", "a": "Athens", "code": "284367", "tier": "3"}, {"q": "What is the SI unit of force?", "a": "Newton", "code": "639866", "tier": "3"}, {"q": "Which element has the chemical symbol 'Cu'?", "a": "Copper", "code": "267737", "tier": "3"}, {"q": "What is the capital of Portugal?", "a": "Lisbon", "code": "547266", "tier": "3"}, {"q": "What is the chemical formula for common table salt?", "a": "NaCl", "code": "6225", "tier": "3"}, {"q": "Which planet has the hottest surface in our solar system?", "a": "Venus", "code": "83687", "tier": "3"}, {"q": "What is the scientific study of living organisms called?", "a": "Biology", "code": "2465649", "tier": "3"}, {"q": "Which ancient Greek philosopher tutored Alexander the Great?", "a": "Aristotle", "code": "274786853", "tier": "3"}, {"q": "What is the capital of Sweden?", "a": "Stockholm", "code": "786254656", "tier": "3"}, {"q": "What is the smallest unit of an element that keeps its properties?", "a": "Atom", "code": "2866", "tier": "3"}, {"q": "What is the capital of Ireland?", "a": "Dublin", "code": "382546", "tier": "3"}, {"q": "Which country gave the Statue of Liberty to the United States?", "a": "France", "code": "372623", "tier": "3"}, {"q": "Which element has the atomic number 1?", "a": "Hydrogen", "code": "49376436", "tier": "3"}, {"q": "What is the world's largest hot desert?", "a": "Sahara", "code": "724272", "tier": "3"}, {"q": "In Greek mythology, who is the king of the gods?", "a": "Zeus", "code": "9387", "tier": "3"}, {"q": "Which organ in the human body produces insulin?", "a": "Pancreas", "code": "72627327", "tier": "3"}, {"q": "What is the capital of Egypt?", "a": "Cairo", "code": "22476", "tier": "3"}, {"q": "In which Shakespeare play does the character Iago appear?", "a": "Othello", "code": "6843556", "tier": "3"}, {"q": "What is the largest internal organ in the human body?", "a": "Liver", "code": "54837", "tier": "3"}, {"q": "Which metal is liquid at room temperature?", "a": "Mercury", "code": "6372879", "tier": "3"}, {"q": "What is the capital of Norway?", "a": "Oslo", "code": "6756", "tier": "3"}, {"q": "What is the longest bone in the human body?", "a": "Femur", "code": "33687", "tier": "3"}, {"q": "Which planet is closest to the Sun?", "a": "Mercury", "code": "6372879", "tier": "3"}, {"q": "What is the capital of Turkmenistan?", "a": "Ashgabat", "code": "27442228", "tier": "4"}, {"q": "Who wrote the novel 'The Red and the Black'?", "a": "Stendhal", "code": "78363425", "tier": "4"}, {"q": "Which element has the atomic number 92?", "a": "Uranium", "code": "8726486", "tier": "4"}, {"q": "What is the capital of Laos?", "a": "Vientiane", "code": "843684263", "tier": "4"}, {"q": "What is the capital of Tajikistan?", "a": "Dushanbe", "code": "38742623", "tier": "4"}, {"q": "Which element has the atomic number 7?", "a": "Nitrogen", "code": "64876436", "tier": "4"}, {"q": "In which country is the historic city of Timbuktu?", "a": "Mali", "code": "6254", "tier": "4"}, {"q": "What was the name of the first artificial satellite, launched in 1957?", "a": "Sputnik", "code": "7788645", "tier": "4"}, {"q": "Who wrote the Greek tragedy 'Oedipus Rex'?", "a": "Sophocles", "code": "767462537", "tier": "4"}, {"q": "At which site did the ancient Statue of Zeus, one of the Seven Wonders, stand?", "a": "Olympia", "code": "6596742", "tier": "4"}, {"q": "In Norse mythology, what is the name of the great hall where slain warriors are received?", "a": "Valhalla", "code": "82542552", "tier": "4"}, {"q": "Which is the only chemical element that is a liquid nonmetal at room temperature?", "a": "Bromine", "code": "2766463", "tier": "4"}, {"q": "Which country was historically known as Persia?", "a": "Iran", "code": "4726", "tier": "4"}, {"q": "Which is the largest island in the Mediterranean Sea?", "a": "Sicily", "code": "742459", "tier": "4"}, {"q": "Which country's flag shows a single red circle on a white background?", "a": "Japan", "code": "52726", "tier": "4"}, {"q": "Which planet is named after the Roman king of the gods?", "a": "Jupiter", "code": "5874837", "tier": "4"}, {"q": "Which country was once called Siam?", "a": "Thailand", "code": "84245263", "tier": "4"}, {"q": "Which Italian sculptor created the bronze 'David', the first freestanding nude since antiquity?", "a": "Donatello", "code": "366283556", "tier": "4"}, {"q": "Which European country contains the regions of Catalonia, Andalusia and the Basque Country?", "a": "Spain", "code": "77246", "tier": "4"}, {"q": "Which African country was historically known as Abyssinia?", "a": "Ethiopia", "code": "38446742", "tier": "4"}, {"q": "What is the SI base unit of mass?", "a": "Kilogram", "code": "54564726", "tier": "4"}, {"q": "What is the name of the largest moon of Neptune?", "a": "Triton", "code": "874866", "tier": "4"}, {"q": "In Greek mythology, who was forced to hold up the sky on his shoulders?", "a": "Atlas", "code": "28527", "tier": "4"}, {"q": "What is the capital of Kyrgyzstan?", "a": "Bishkek", "code": "2474535", "tier": "4"}, {"q": "Which element has the atomic number 80?", "a": "Mercury", "code": "6372879", "tier": "4"}, {"q": "What is the capital of Armenia?", "a": "Yerevan", "code": "9373826", "tier": "4"}, {"q": "Which element has the chemical symbol 'Sb'?", "a": "Antimony", "code": "26846669", "tier": "4"}, {"q": "What is the capital of Georgia (the country)?", "a": "Tbilisi", "code": "8245474", "tier": "4"}, {"q": "Which element has the chemical symbol 'Kr'?", "a": "Krypton", "code": "5797866", "tier": "4"}, {"q": "What is the capital of Azerbaijan?", "a": "Baku", "code": "2258", "tier": "4"}, {"q": "What is the capital of Paraguay?", "a": "Asuncion", "code": "27862466", "tier": "4"}, {"q": "What is the SI base unit of time?", "a": "Second", "code": "732663", "tier": "4"}, {"q": "Which ancient Roman city was buried by the eruption of Mount Vesuvius in 79 AD?", "a": "Pompeii", "code": "7667344", "tier": "4"}, {"q": "What is the capital of Qatar?", "a": "Doha", "code": "3642", "tier": "4"}, {"q": "After oxygen, which is the second most abundant element in the Earth's crust?", "a": "Silicon", "code": "7454266", "tier": "4"}, {"q": "Which philosopher was the teacher of Plato?", "a": "Socrates", "code": "76272837", "tier": "4"}, {"q": "What is the capital of Montenegro?", "a": "Podgorica", "code": "763467422", "tier": "4"}, {"q": "What is the capital of Malta?", "a": "Valletta", "code": "82553882", "tier": "4"}, {"q": "Which element has the atomic number 47?", "a": "Silver", "code": "745837", "tier": "4"}, {"q": "Which element has the chemical symbol 'Ba'?", "a": "Barium", "code": "227486", "tier": "4"}, {"q": "Which ancient general famously crossed the Alps with war elephants?", "a": "Hannibal", "code": "42664225", "tier": "4"}, {"q": "What is the capital of Cyprus?", "a": "Nicosia", "code": "6426742", "tier": "4"}, {"q": "Which element has the chemical symbol 'Mn'?", "a": "Manganese", "code": "626426373", "tier": "4"}, {"q": "Who is regarded as the first emperor of ancient Rome?", "a": "Augustus", "code": "28487887", "tier": "4"}, {"q": "What is the capital of Senegal?", "a": "Dakar", "code": "32527", "tier": "4"}, {"q": "Around which planet did Galileo discover four large moons?", "a": "Jupiter", "code": "5874837", "tier": "4"}, {"q": "What is the SI base unit of length?", "a": "Metre", "code": "63873", "tier": "4"}, {"q": "What is the capital of Uzbekistan?", "a": "Tashkent", "code": "82745368", "tier": "4"}, {"q": "Which queen was the last active ruler of ancient Egypt?", "a": "Cleopatra", "code": "253672872", "tier": "4"}, {"q": "Which element is the most abundant by mass in the human body?", "a": "Oxygen", "code": "699436", "tier": "4"}, {"q": "What is the capital of Slovenia?", "a": "Ljubljana", "code": "558255262", "tier": "4"}, {"q": "Which element has the atomic number 26?", "a": "Iron", "code": "4766", "tier": "4"}, {"q": "What is the capital of Estonia?", "a": "Tallinn", "code": "8255466", "tier": "4"}, {"q": "Which element has the chemical symbol 'U'?", "a": "Uranium", "code": "8726486", "tier": "4"}, {"q": "What is the capital of Latvia?", "a": "Riga", "code": "7442", "tier": "4"}, {"q": "Which element, essential to the thyroid, has the symbol 'I'?", "a": "Iodine", "code": "463463", "tier": "4"}, {"q": "What is the capital of Lebanon?", "a": "Beirut", "code": "234788", "tier": "4"}, {"q": "What is the capital of Jordan?", "a": "Amman", "code": "26626", "tier": "4"}, {"q": "What is the largest moon in our solar system?", "a": "Ganymede", "code": "42696333", "tier": "4"}, {"q": "What is the SI base unit of temperature?", "a": "Kelvin", "code": "535846", "tier": "4"}, {"q": "What is the capital of Syria?", "a": "Damascus", "code": "32627287", "tier": "4"}, {"q": "What is the capital of Algeria?", "a": "Algiers", "code": "2544377", "tier": "4"}, {"q": "Which subatomic particle carries a negative electric charge?", "a": "Electron", "code": "35328766", "tier": "4"}, {"q": "What is the capital of Tunisia?", "a": "Tunis", "code": "88647", "tier": "4"}, {"q": "What is the scientific study of the origin and structure of the universe called?", "a": "Cosmology", "code": "267665649", "tier": "4"}, {"q": "What is the capital of Switzerland?", "a": "Bern", "code": "2376", "tier": "4"}, {"q": "Which element has the atomic number 79?", "a": "Gold", "code": "4653", "tier": "4"}, {"q": "Which philosopher wrote 'The Republic'?", "a": "Plato", "code": "75286", "tier": "4"}, {"q": "What is the capital of Croatia?", "a": "Zagreb", "code": "924732", "tier": "4"}, {"q": "Which element has the chemical symbol 'Ne'?", "a": "Neon", "code": "6366", "tier": "4"}, {"q": "Which is the second most abundant element in the universe?", "a": "Helium", "code": "435486", "tier": "4"}, {"q": "What is the capital of Turkey?", "a": "Ankara", "code": "265272", "tier": "4"}, {"q": "What is the capital of Iraq?", "a": "Baghdad", "code": "2244323", "tier": "4"}, {"q": "Which planet, discovered in 1846, was the first found by mathematical prediction?", "a": "Neptune", "code": "6378863", "tier": "4"}, {"q": "What is the SI base unit for the amount of a substance?", "a": "Mole", "code": "6653", "tier": "4"}, {"q": "What is the capital of Nigeria?", "a": "Abuja", "code": "22852", "tier": "4"}, {"q": "What is the capital of Peru?", "a": "Lima", "code": "5462", "tier": "4"}, {"q": "What is the capital of Cuba?", "a": "Havana", "code": "428262", "tier": "4"}, {"q": "Which planet has the longest day (the longest rotation period)?", "a": "Venus", "code": "83687", "tier": "4"}, {"q": "What is the capital of Romania?", "a": "Bucharest", "code": "282427378", "tier": "4"}, {"q": "What is the scientific study of fungi called?", "a": "Mycology", "code": "69265649", "tier": "4"}, {"q": "Which ancient Greek is known as the 'father of geometry'?", "a": "Euclid", "code": "382543", "tier": "4"}, {"q": "What is the capital of Finland?", "a": "Helsinki", "code": "43574654", "tier": "4"}, {"q": "What is the most abundant metal in the Earth's crust?", "a": "Aluminium", "code": "258646486", "tier": "4"}, {"q": "Who painted 'The Night Watch'?", "a": "Rembrandt", "code": "736272638", "tier": "4"}, {"q": "What is the term for an animal that eats only plants?", "a": "Herbivore", "code": "437248673", "tier": "4"}, {"q": "What is the SI unit of frequency?", "a": "Hertz", "code": "43789", "tier": "4"}, {"q": "What is the capital of Iceland?", "a": "Reykjavik", "code": "739552845", "tier": "4"}, {"q": "Which element is represented by the symbol 'He'?", "a": "Helium", "code": "435486", "tier": "4"}, {"q": "What is the largest moon of the planet Saturn?", "a": "Titan", "code": "84826", "tier": "4"}, {"q": "Which gas, with the formula O3, forms a protective layer in the stratosphere?", "a": "Ozone", "code": "69663", "tier": "4"}, {"q": "What is the capital of Morocco?", "a": "Rabat", "code": "72228", "tier": "4"}, {"q": "What is the capital of Bhutan?", "a": "Thimphu", "code": "8446748", "tier": "4"}, {"q": "Which mineral sits at the top (10) of the Mohs hardness scale?", "a": "Diamond", "code": "3426663", "tier": "4"}, {"q": "Which metal has the highest melting point?", "a": "Tungsten", "code": "88647836", "tier": "4"}, {"q": "What is the longest river in South America?", "a": "Amazon", "code": "262966", "tier": "4"}, {"q": "What is the SI base unit of luminous intensity?", "a": "Candela", "code": "2263352", "tier": "4"}, {"q": "Which planet in our solar system rotates roughly on its side?", "a": "Uranus", "code": "872687", "tier": "4"}, {"q": "Which element is the most abundant in the Sun?", "a": "Hydrogen", "code": "49376436", "tier": "4"}, {"q": "In Greek mythology, who flew too close to the Sun on wax wings?", "a": "Icarus", "code": "422787", "tier": "4"}];
+const MESSAGES = ["THE LINE HOLDS", "KEEP LISTENING", "TRUST NO ONE", "COME HOME NOW", "THEY ARE HERE", "BURN THIS PAGE", "WE HEAR YOU", "STAY OFF THE ROAD", "THE THIRD BELL", "NOBODY IS COMING", "FIND THE OTHERS", "HOLD THE FREQUENCY", "ALL STATIONS SILENT", "ANSWER BEFORE DAWN", "THE CELLAR DOOR", "MOVE AT MIDNIGHT", "SHE MADE IT OUT", "DO NOT REPLY", "ONE MORE NIGHT", "THE BRIDGE IS OUT"];
+
+const LETTERS = {2:"ABC",3:"DEF",4:"GHI",5:"JKL",6:"MNO",7:"PQRS",8:"TUV",9:"WXYZ"};
+const $ = id => document.getElementById(id);
+
+const LIVES = 3;
+let secret = '';        // the message being recovered
+let secretLetters = []; // its letters, minus spaces
+
+let queue = [], ptr = 0, round = null, entered = [], attempts = 0;
+let lives = LIVES, decoded = 0, cleanFirstTry = 0, startedAt = 0, log = [];
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* Each word you decode gives up its first letter, and those letters spell the
+   transmission. So the run is assembled backwards: pick the message first, then
+   find a word for every letter in it.
+
+   Within each letter's candidates we still climb the tiers, so the clues get
+   harder as the message fills in. */
+function buildQueue(){
+  secret = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+  secretLetters = secret.replace(/[^A-Z]/g, '').split('');
+
+  const byInit = {};
+  ROUNDS.forEach(r => {
+    const c = r.a.replace(/[^A-Za-z]/g,'').toUpperCase()[0];
+    (byInit[c] = byInit[c] || []).push(r);
+  });
+  Object.keys(byInit).forEach(c => byInit[c] = shuffle(byInit[c]));
+
+  const used = new Set();
+  const out = [];
+  secretLetters.forEach((c, i) => {
+    const cands = (byInit[c] || []).filter(r => !used.has(r.a));
+    if(!cands.length) return;
+    // early letters lean easy, later ones lean hard
+    const wantTier = i < secretLetters.length * 0.35 ? ['1','2'] :
+                     i < secretLetters.length * 0.7  ? ['2','3'] : ['3','4'];
+    const pick = cands.find(r => wantTier.indexOf(r.tier) >= 0) || cands[0];
+    used.add(pick.a);
+    out.push(pick);
+  });
+  return out;
+}
+
+function fmtTime(ms){
+  const s = Math.max(0, Math.round(ms/1000));
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+function bestScore(){ try{ return JSON.parse(localStorage.getItem('quietline_best')||'null'); }catch(e){ return null; } }
+function saveBest(b){ try{ localStorage.setItem('quietline_best', JSON.stringify(b)); }catch(e){} }
+
+/* ---- audio: a dry mechanical click, generated rather than loaded ---- */
+let ac = null, muted = false;
+try{ muted = localStorage.getItem('quietline_muted') === '1'; }catch(e){}
+/* a short burst of filtered noise: the hiss between digits */
+function hiss(ms){
+  if(muted) return;
+  try{
+    if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    const dur = (ms||140)/1000;
+    const buf = ac.createBuffer(1, Math.ceil(ac.sampleRate*dur), ac.sampleRate);
+    const ch = buf.getChannelData(0);
+    for(let i=0;i<ch.length;i++) ch[i] = (Math.random()*2-1) * 0.5;
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1600; f.Q.value=0.7;
+    const g = ac.createGain();
+    const t = ac.currentTime;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.035,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    src.connect(f); f.connect(g); g.connect(ac.destination);
+    src.start(t); src.stop(t+dur);
+  }catch(e){}
+}
+
+function click(pitch){
+  if(muted) return;
+  try{
+    if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    const t = ac.currentTime;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type='square'; o.frequency.setValueAtTime(pitch||220, t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.06,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.06);
+  }catch(e){}
+}
+
+function loadRound(){
+  if(ptr >= queue.length){ endRun(true); return; }
+  round = queue[ptr];
+  entered = [];
+  armed = null;
+  attempts = 0;
+  $('clue').textContent = round.q;
+  $('verdict').textContent = '';
+  $('verdict').className = 'verdict';
+  $('tally').textContent = (ptr + 1) + ' of ' + queue.length;
+  renderSignal();
+  renderMessage();
+  renderPad();
+  renderChoice();
+  receive();
+}
+
+/* The strip mirrors the message exactly, spaces and all, so the shape of the
+   sentence is visible from the start. That is deliberate: seeing "___ ____ _____"
+   lets you start guessing long before the last word falls. */
+function renderMessage(){
+  const box = $('message');
+  if(!box) return;
+  box.innerHTML = '';
+  let li = 0;
+  secret.split('').forEach(ch => {
+    const cell = document.createElement('div');
+    if(ch === ' '){
+      cell.className = 'ml gap';
+    } else {
+      const got = li < ptr && log[li] && log[li].ok;
+      cell.className = 'ml' + (got ? '' : ' pending');
+      cell.textContent = ch;
+      li++;
+    }
+    box.appendChild(cell);
+  });
+}
+
+function renderSignal(){
+  const bars = document.querySelectorAll('#signal .bar');
+  bars.forEach((b,i) => b.classList.toggle('lost', i >= lives));
+}
+
+function startRun(){
+  queue = buildQueue();
+  ptr = 0; lives = LIVES; decoded = 0; cleanFirstTry = 0; log = [];
+  startedAt = Date.now();
+  $('startScreen').classList.add('hide');
+  $('endScreen').classList.add('hide');
+  loadRound();
+}
+
+function loseLife(){
+  lives--;
+  renderSignal();
+  if(lives <= 0){ setTimeout(()=>endRun(false), 900); return true; }
+  return false;
+}
+
+function endRun(completed){
+  const ms = Date.now() - startedAt;
+  const full = decoded === queue.length;
+  $('endTitle').textContent = full ? 'Message received' : 'The line went dead';
+  $('endSub').textContent = full
+    ? secret
+    : 'You recovered ' + decoded + ' of ' + queue.length + ' letters. The rest went with the signal.';
+  $('figDecoded').textContent = decoded + '/' + queue.length;
+  $('figTime').textContent = fmtTime(ms);
+  $('figClean').textContent = cleanFirstTry;
+
+  const best = bestScore();
+  const better = !best || decoded > best.decoded || (decoded === best.decoded && ms < best.ms);
+  if(better && decoded > 0){
+    saveBest({decoded: decoded, ms: ms, clean: cleanFirstTry});
+    $('endBest').textContent = best ? 'A new best.' : '';
+  } else if(best){
+    $('endBest').textContent = 'Best so far: ' + best.decoded + ' decoded in ' + fmtTime(best.ms) + '.';
+  } else {
+    $('endBest').textContent = '';
+  }
+
+  $('transcript').innerHTML = log.map(function(e){
+    const L = e.word.replace(/[^A-Za-z]/g,'').toUpperCase()[0];
+    return '<div class="' + (e.ok ? 'ok' : 'no') + '">' + L + ' &nbsp; ' + e.word + (e.ok ? '' : ' &mdash; missed') + '</div>';
+  }).join('');
+
+  $('endScreen').classList.remove('hide');
+}
+
+let arrived = 0;      // how many digits have come through
+let lostDigits = [];  // indexes the interference ate
+let arriving = false;
+
+function renderDigits(){
+  const wrap = $('digits');
+  wrap.innerHTML = '';
+  const code = round.code.split('');
+  code.forEach((d,i) => {
+    const here = i < arrived;
+    const lost = lostDigits.indexOf(i) >= 0;
+    const cell = document.createElement('div');
+    cell.className = 'dg'
+      + (entered[i] ? ' filled' : '')
+      + (i === entered.length && here ? ' cursor' : '')
+      + (here ? '' : ' waiting')
+      + (lost ? ' lost' : '');
+    const num = document.createElement('div'); num.className = 'num';
+    num.textContent = lost ? '?' : (here ? d : '\u2013');
+    const slot = document.createElement('div'); slot.className = 'slot'; slot.textContent = entered[i] || '';
+    const opts = document.createElement('div'); opts.className = 'opts';
+    // a lost digit gives up nothing: the clue has to carry it
+    opts.textContent = entered[i] ? '' : (lost ? 'lost' : (here ? (LETTERS[d] || '') : ''));
+    cell.appendChild(num); cell.appendChild(slot); cell.appendChild(opts);
+    wrap.appendChild(cell);
+  });
+}
+
+/* Digits come in one at a time, with hiss between them. You can start entering
+   before the signal finishes, which is the point: a partial code plus the clue
+   is often enough, and waiting costs you time. */
+function receive(){
+  const total = round.code.length;
+  arrived = 0; lostDigits = [];
+  arriving = true;
+  $('meter').classList.add('live');
+
+  // deeper into a run, the line degrades: later messages lose a digit more often
+  const degrade = Math.min(0.45, 0.06 + ptr * 0.045);
+  if(Math.random() < degrade){
+    // never lose the first digit; losing it gives the player nothing to start from
+    lostDigits.push(1 + Math.floor(Math.random() * (total - 1)));
+  }
+
+  renderDigits();
+  let i = 0;
+  const step = () => {
+    if(i >= total){
+      arriving = false;
+      $('meter').classList.remove('live');
+      renderDigits(); renderPad(); renderChoice();
+      return;
+    }
+    arrived = i + 1;
+    renderDigits();
+    const cells = document.querySelectorAll('#digits .dg');
+    if(cells[i]) cells[i].classList.add('landing');
+    hiss(90);
+    click(300 + (parseInt(round.code[i],10) * 24));
+    i++;
+    setTimeout(step, 230);
+  };
+  setTimeout(step, 260);
+}
+
+/* The keypad is fixed: 2-9 always in the same place, exactly where a real one
+   would be. You read the code, decide which key it means, and press it. The game
+   does not narrow the options for you - that would do the decoding on your behalf. */
+let armed = null;   // digit currently selected, awaiting a letter choice
+
+function renderPad(){
+  const pad = $('pad');
+  pad.innerHTML = '';
+  for(let d=2; d<=9; d++){
+    const b = document.createElement('button');
+    b.className = 'key' + (armed === d ? ' armed' : '');
+    b.innerHTML = '<div class="d">' + d + '</div><div class="l">' + LETTERS[d] + '</div>';
+    b.addEventListener('click', () => arm(d));
+    pad.appendChild(b);
+  }
+  // ninth cell: back
+  const back = document.createElement('button');
+  back.className = 'key fn';
+  back.innerHTML = '<div class="d">BACK</div>';
+  back.disabled = entered.length === 0 && armed === null;
+  back.addEventListener('click', () => {
+    if(armed !== null){ armed = null; }
+    else { entered.pop(); }
+    click(160); renderDigits(); renderPad(); renderChoice();
+  });
+  pad.appendChild(back);
+
+  // reveal sits below, away from the number keys
+  const give = document.createElement('button');
+  give.className = 'key fn';
+  give.style.gridColumn = '1 / -1';
+  give.innerHTML = '<div class="d">SHOW THE WORD</div>';
+  give.addEventListener('click', reveal);
+  pad.appendChild(give);
+}
+
+function arm(d){
+  armed = d;
+  click(180);
+  renderPad();
+  renderChoice();
+}
+
+function renderChoice(){
+  const box = $('choice');
+  box.innerHTML = '';
+  if(armed === null){
+    const hint = document.createElement('div');
+    hint.className = 'lbl';
+    hint.textContent = entered.length < round.code.length ? 'Press a key, then pick the letter.' : '';
+    box.appendChild(hint);
+    return;
+  }
+  (LETTERS[armed] || '').split('').forEach(L => {
+    const b = document.createElement('button');
+    b.className = 'lt';
+    b.textContent = L;
+    b.addEventListener('click', () => press(L));
+    box.appendChild(b);
+  });
+}
+
+function press(letter){
+  if(entered.length >= round.code.length) return;
+  entered.push(letter);
+  armed = null;
+  click(200 + entered.length * 18);
+  renderDigits();
+  if(entered.length === round.code.length){ renderPad(); renderChoice(); check(); }
+  else { renderPad(); renderChoice(); }
+}
+
+function check(){
+  const guess = entered.join('').toUpperCase();
+  const answer = round.a.replace(/[^A-Za-z]/g,'').toUpperCase();
+  if(guess === answer){
+    decoded++;
+    if(attempts === 0) cleanFirstTry++;
+    log.push({word: round.a, ok: true});
+    $('verdict').textContent = 'Decoded. ' + round.a;
+    $('verdict').className = 'verdict good';
+    renderMessage();
+    click(440); setTimeout(()=>click(660), 90);
+    setTimeout(()=>{ ptr++; loadRound(); }, 1400);
+  } else {
+    attempts++;
+    click(110);
+    const dead = loseLife();
+    if(dead){
+      $('verdict').textContent = 'Signal lost.';
+      $('verdict').className = 'verdict bad';
+      log.push({word: round.a, ok: false});
+      return;
+    }
+    // a wrong guess costs a bar but you stay on the same message
+    $('verdict').textContent = lives === 1 ? 'Wrong. One bar left.' : 'Wrong. Signal weakening.';
+    $('verdict').className = 'verdict bad';
+    setTimeout(()=>{ entered = []; armed = null; $('verdict').textContent=''; $('verdict').className='verdict'; renderDigits(); renderPad(); renderChoice(); }, 1000);
+  }
+}
+
+/* Giving up costs a bar, so it is a real decision rather than a free escape. */
+function reveal(){
+  entered = round.a.replace(/[^A-Za-z]/g,'').toUpperCase().split('');
+  armed = null;
+  arrived = round.code.length; lostDigits = [];
+  renderDigits(); renderPad(); renderChoice();
+  log.push({word: round.a, ok: false});
+  const dead = loseLife();
+  $('verdict').textContent = 'It was ' + round.a + '.';
+  $('verdict').className = 'verdict';
+  if(dead) return;
+  setTimeout(()=>{ ptr++; loadRound(); }, 1700);
+}
+
+$('muteBtn').addEventListener('click', () => {
+  muted = !muted;
+  try{ localStorage.setItem('quietline_muted', muted ? '1' : '0'); }catch(e){}
+  $('muteBtn').textContent = muted ? 'MUTED' : 'SOUND';
+});
+$('muteBtn').textContent = muted ? 'MUTED' : 'SOUND';
+
+$('shareBtn').addEventListener('click', () => {
+  const full = decoded === queue.length;
+  TBShare.open({
+    game: 'quiet-line',
+    kicker: 'The Quiet Line',
+    big: full ? secret : decoded + '/' + queue.length,
+    lines: full
+      ? ['Full transmission recovered in ' + fmtTime(Date.now() - startedAt) + '.']
+      : ['Recovered ' + decoded + ' of ' + queue.length + ' letters before the line went dead.'],
+    footer: 'Can you hold the line?',
+    accent: '#c8d6b9',
+    shareText: full ? 'I recovered a full transmission on The Quiet Line.' : 'The line went dead on me. Can you do better?'
+  });
+});
+
+/* keyboard: type digits, then a letter. Faster than tapping on a desktop. */
+document.addEventListener('keydown', (e) => {
+  if(!$('startScreen').classList.contains('hide')){ if(e.key==='Enter') $('beginBtn').click(); return; }
+  if(!$('endScreen').classList.contains('hide')){ if(e.key==='Enter') $('againBtn').click(); return; }
+  if(e.key >= '2' && e.key <= '9'){ arm(parseInt(e.key,10)); e.preventDefault(); return; }
+  if(armed !== null && /^[a-zA-Z]$/.test(e.key)){
+    const L = e.key.toUpperCase();
+    if((LETTERS[armed]||'').indexOf(L) >= 0){ press(L); e.preventDefault(); }
+    return;
+  }
+  if(e.key === 'Backspace'){
+    if(armed !== null) armed = null; else entered.pop();
+    renderDigits(); renderPad(); renderChoice(); e.preventDefault();
+  }
+});
+
+$('beginBtn').addEventListener('click', () => { click(300); startRun(); });
+$('againBtn').addEventListener('click', () => { click(300); startRun(); });
+
+(function initStart(){
+  const b = bestScore();
+  $('startBest').textContent = b ? ('Best so far: ' + b.decoded + ' decoded in ' + fmtTime(b.ms) + '.') : '';
+})();
+</script>
+</body>
+</html>
