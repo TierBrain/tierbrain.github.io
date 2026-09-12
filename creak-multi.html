@@ -251,8 +251,8 @@ async function sb(path, opts){ opts=opts||{}; try{
   const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
   if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
   const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
-  if(r.ok){ if(opts.method) return null; return await r.json(); }
-  return opts.method?null:[];
+  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
+  return opts.method?{ok:false}:[];
 }catch(e){ return opts.method?null:[]; } }
 function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
 function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.github.io'; }
@@ -602,7 +602,14 @@ async function walkToken(pid, fromN, toN){
 
 async function createRoom(){
   G.code=code5(); G.phase='lobby';
-  await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, phase:'lobby', state:{game:'creak-multi',phase:'lobby'}})});
+  const made = await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, phase:'lobby', state:{game:'creak-multi',phase:'lobby'}})});
+  if(!made || made.ok===false){
+    $('code').textContent='----';
+    const u=$('url'); if(u) u.textContent='Cannot reach the game server. Check your connection and reload.';
+    const q=$('qr'); if(q) q.style.display='none';
+    const sb2=$('startBtn'); if(sb2){ sb2.disabled=true; sb2.textContent='No connection'; }
+    return;
+  }
   $('code').textContent=G.code;
   const link=baseUrl()+'/creak-multi-play.html?c='+G.code;
   const u=$('url'); u.textContent=link.replace(/^https?:\/\//,'');
