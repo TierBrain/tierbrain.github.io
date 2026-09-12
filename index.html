@@ -39,6 +39,13 @@
   .hero h1{font-family:'Baloo 2';font-weight:700;font-size:clamp(28px,5.2vw,42px);line-height:1.14;}
   .hero h1 em{font-style:normal;color:var(--gold);}
   .hero p{margin-top:11px;color:var(--mut);font-weight:600;font-size:15.5px;line-height:1.6;max-width:520px;}
+  .occasion{display:block;margin-top:18px;max-width:520px;padding:14px 16px;border-radius:14px;
+    background:linear-gradient(135deg,rgba(242,201,92,.14),rgba(201,138,224,.10));
+    border:1px solid rgba(242,201,92,.34);transition:border-color .16s;}
+  .occasion:hover{border-color:var(--gold);}
+  .occasion:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
+  .occasion b{font-family:'Baloo 2';font-weight:700;font-size:16px;color:var(--gold);display:block;}
+  .occasion span{display:block;margin-top:3px;color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.5;}
   .utility{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;align-items:center;}
   .search{flex:1;min-width:210px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
     padding:13px 15px;color:var(--ink);font-weight:700;font-size:15px;font-family:inherit;}
@@ -115,6 +122,10 @@
       <div class="eyebrow">A free hub of browser games</div>
       <h1>Games that run on <em>what you know.</em></h1>
       <p>Quizzes, puzzles, party games and detective mysteries. Answer well, and something happens: a ladder holds, a throne is won, a case cracks open.</p>
+      <a class="occasion" href="packs.html">
+        <b>Got people coming round?</b>
+        <span>Put it on the big screen, everyone joins on their phone. Game night, sorted.</span>
+      </a>
     </div>
     <div class="utility">
       <input class="search" id="q" type="search" aria-label="Search games and quizzes" placeholder="Search games &amp; quizzes…" autocomplete="off">
@@ -166,7 +177,7 @@
   </section>
 
   <section class="sec" data-sec="multi" aria-label="Play together">
-    <div class="secrow"><h2 class="sectitle">Play together</h2><div class="secnote">one screen, everyone’s phone</div></div>
+    <div class="secrow"><h2 class="sectitle">Play together</h2><div class="secnote"><a href="packs.html" style="color:var(--gold)">see the game night packs</a></div></div>
     <div class="grid">
       <a class="tc" href="show.html" data-cat="game multiplayer" data-title="Chapter &amp; Verse" data-blurb="The Bible game show: an animated host runs four rounds while two teams play along on their phones. Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale, with 496 Scripture questions.">
         <h4>Chapter &amp; Verse</h4><p>The Bible game show. Four rounds, an animated host, two teams on their phones. Built for church groups, youth nights and family gatherings.</p><span class="meta">Live · 496 questions · 4 rounds</span></a>

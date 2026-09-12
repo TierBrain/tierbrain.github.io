@@ -67,4 +67,5 @@
   <url><loc>https://tierbrain.co/wall.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://tierbrain.co/wheel.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://tierbrain.co/wrestling-quiz.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://tierbrain.co/packs.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
 </urlset>
