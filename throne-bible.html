@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="canonical" href="https://tierbrain.co/throne-bible.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <title>Hold The Throne · Bible Edition, Stage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -727,8 +737,18 @@ function render(){
 
 /* ---------- controls ---------- */
 $('startBtn').addEventListener('click', startGame);
-$('qMinus').addEventListener('click', ()=>{ G.qTotal=Math.max(3,G.qTotal-1); $('qTot').textContent=G.qTotal; });
-$('qPlus').addEventListener('click', ()=>{ G.qTotal=Math.min(20,G.qTotal+1); $('qTot').textContent=G.qTotal; });
+/* Up to 50 questions. Past 20 it steps in fives, so a long game is a few taps
+   rather than thirty. Both pools are far larger than 50, so no repeats. */
+function qStep(n){ return n > 20 ? 5 : 1; }
+$('qMinus').addEventListener('click', ()=>{
+  const step = qStep(G.qTotal > 20 ? G.qTotal - 1 : G.qTotal);
+  G.qTotal = Math.max(3, G.qTotal - step);
+  $('qTot').textContent = G.qTotal;
+});
+$('qPlus').addEventListener('click', ()=>{
+  G.qTotal = Math.min(50, G.qTotal + qStep(G.qTotal));
+  $('qTot').textContent = G.qTotal;
+});
 $('newBtn').addEventListener('click', ()=>{ clearTimeout(G._t); location.reload(); });
 { let muted=false; const mb=$('muteBtn'); if(mb) mb.addEventListener('click', ()=>{ muted=!muted; SFX.mute(muted); mb.textContent=muted?'🔇':'🔊'; }); }
 { const cb=$('copyBtn'); if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(G.joinLink||''); }catch(e){ try{ const t=document.createElement('textarea'); t.value=G.joinLink||''; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_){} } cb.textContent='Copied \u2713'; cb.classList.add('done'); setTimeout(()=>{ cb.textContent='Copy join link'; cb.classList.remove('done'); }, 1600); }); }
