@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="canonical" href="https://tierbrain.co/throne-bible-play.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <title>Hold The Throne · Bible Edition, Play</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -43,7 +53,10 @@
   .seatline b{color:var(--gold-hi);}
   .foot{text-align:center;color:var(--dim);font-size:12px;font-weight:700;padding:12px;}
   .leave{color:var(--dim);text-decoration:underline;background:none;border:0;font-weight:800;cursor:pointer;font-size:14px;font-family:inherit;}
-  .countnum{font-family:'Fraunces',serif;font-weight:700;font-size:76px;text-align:center;color:var(--gold-hi);margin:14px 0;line-height:1;animation:cpop .38s ease;}
+  .countnum{font-family:'Fraunces',serif;font-weight:700;font-size:30px;text-align:center;color:var(--gold-hi);
+    margin:16px 0;line-height:1;letter-spacing:.04em;animation:getready 1.6s ease-in-out infinite;}
+  @keyframes getready{0%,100%{opacity:.7;}50%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .countnum{animation:none;opacity:.9;} }
   @keyframes cpop{from{transform:scale(1.4);opacity:.3;}to{transform:scale(1);opacity:1;}}
 </style>
 </head>
@@ -163,7 +176,7 @@ function render(st){
       if(counting && unlockQid!==st.qId){ unlockQid=st.qId; clearTimeout(unlockTimer); unlockTimer=setTimeout(function(){ lastSig=''; if(lastState) render(lastState); }, Math.max(0,remain)); }
       const csig='buzz|'+st.qId+'|'+(counting?Math.ceil(remain/1000):'go');
       if(lastSig!==csig){ lastSig=csig;
-        if(counting){ setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="countnum">'+Math.ceil(remain/1000)+'</div><div class="pa-hint">Get ready\u2026 buzzers unlock together!</div>'); }
+        if(counting){ setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="countnum">Get ready</div><div class="pa-hint">Read the question. Buzzers unlock together.</div>'); }
         else {
           setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="buzzwrap"><button class="buzzbtn" id="bz">BUZZ</button></div><div class="pa-hint">First to buzz answers, but get it wrong and it\u2019s theirs!</div>');
           $('bz').addEventListener('click', ()=>{ if(buzzedQid===st.qId) return; buzzedQid=st.qId; playBuzz(); try{ if(navigator.vibrate)navigator.vibrate(50);}catch(e){}

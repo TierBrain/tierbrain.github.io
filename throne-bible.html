@@ -115,7 +115,11 @@
   .ops{position:fixed;bottom:14px;right:14px;display:flex;gap:8px;}
   .ops button{border:1px solid var(--line);background:rgba(20,24,52,.9);color:var(--dim);border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:13px;}
   @media(max-width:720px){.lobby{grid-template-columns:1fr;}.opts{grid-template-columns:1fr;}.seats{grid-template-columns:1fr;}.vs{display:none;}}
-  .stcount{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(44px,11vw,96px);text-align:center;color:var(--gold-hi);padding:8px;line-height:1;}
+  .stcount{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(26px,5.5vw,44px);text-align:center;
+    color:var(--gold-hi);padding:14px 8px;line-height:1;letter-spacing:.04em;
+    animation:getready 1.6s ease-in-out infinite;}
+  @keyframes getready{0%,100%{opacity:.72;}50%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .stcount{animation:none;opacity:.9;} }
   .coffee{display:inline-block;margin-top:16px;color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.02em;text-decoration:none;opacity:.8;}
   .coffee:hover{opacity:1;color:var(--gold-hi);}
   .topicrow{gap:8px;align-items:center;}
@@ -764,8 +768,13 @@ function render(){
   // timer / countdown
   const now=Date.now(); const wrap=$('timerWrap'); const bar=$('timer'); const sc=$('stcount');
   const cd = (!G.answerer) ? ((G.buzzOpenAt||0)-now) : -1;
-  if(cd>0){ if(sc){ sc.classList.remove('hide'); sc.textContent=Math.ceil(cd/1000); } wrap.classList.add('hide');
-    const s=Math.ceil(cd/1000); if(G._lastCd!==s){ G._lastCd=s; SFX.tick(); } }
+  if(cd>0){
+    // The buzzers still unlock together, but showing '3 2 1' advertised the wait.
+    // A steady 'Get ready' does the same job and reads as anticipation.
+    if(sc){ sc.classList.remove('hide'); sc.textContent='Get ready'; } wrap.classList.add('hide');
+    // One soft cue as the question lands, then silence. A tick per second would
+    // audibly count down the very thing we stopped showing.
+    if(G._lastCd===null || G._lastCd===undefined){ G._lastCd='shown'; SFX.tick(); } }
   else { if(sc) sc.classList.add('hide'); wrap.classList.remove('hide'); G._lastCd=null;
     if(G.answerer){ wrap.classList.add('ans'); const frac=Math.max(0,Math.min(1,(G.ansWin-now)/ANS_MS)); bar.style.width=(frac*100)+'%'; }
     else { wrap.classList.remove('ans'); const remain=G.buzzWin-now; const frac=Math.max(0,Math.min(1,remain/BUZZ_MS)); bar.style.width=(frac*100)+'%';
