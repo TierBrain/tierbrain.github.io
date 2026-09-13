@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="canonical" href="https://tierbrain.co/show.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <title>Chapter &amp; Verse, Stage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -218,6 +228,19 @@
   .admin label{color:var(--ink-dim); font-weight:800;}
   .admin select{background:rgba(255,255,255,.06); color:var(--ink); border:1px solid var(--board-line); border-radius:8px;
     padding:5px 8px; font-family:'Nunito'; font-weight:800; font-size:13px;}
+  .teamedit{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;
+    margin:0 auto 12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;
+    background:rgba(255,255,255,.03);max-width:560px;}
+  .teamedit label{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;
+    color:var(--dim);letter-spacing:.04em;flex-wrap:wrap;justify-content:center;}
+  .teamedit input{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:inherit;font-weight:800;font-size:14px;padding:7px 10px;width:9.5em;text-align:center;}
+  .teamedit input:focus{outline:none;border-color:var(--gold,#f5b23e);}
+  .teamedit .vs{color:var(--dim);font-weight:700;font-size:12px;}
+  .teamreset{background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);
+    font-family:inherit;font-weight:700;font-size:11.5px;padding:6px 11px;cursor:pointer;}
+  .teamreset:hover{color:var(--ink);}
+  .teamedit.hide{display:none;}
 </style>
 </head>
 <body>
@@ -271,8 +294,8 @@
         <div class="qtop"><span class="rlabel" id="bzLabel">The Buzzer</span><span class="qnum" id="bzNum"></span></div>
         <div class="qtext" id="bzText">Get ready…</div>
         <div class="bzlanes">
-          <div class="bzlane youth" id="bzYouth"><div class="bzhd">Youth</div><div class="bzstat"></div><div class="bzname"></div></div>
-          <div class="bzlane adult" id="bzAdult"><div class="bzhd">Adults</div><div class="bzstat"></div><div class="bzname"></div></div>
+          <div class="bzlane youth" id="bzYouth"><div class="bzhd">Team A</div><div class="bzstat"></div><div class="bzname"></div></div>
+          <div class="bzlane adult" id="bzAdult"><div class="bzhd">Team B</div><div class="bzstat"></div><div class="bzname"></div></div>
         </div>
         <div class="timerbar"><div class="fill" id="bzBar"></div></div>
         <div class="opts hide" id="bzOpts"></div>
@@ -292,8 +315,8 @@
         <div class="finhd">🏆 Final Scores</div>
         <div class="finteams" id="finTeams"></div>
         <div class="fincards">
-          <div class="fincard youth" id="finYouthCard"><div class="finteam">Youth</div><ol class="podium" id="finYouthList"></ol></div>
-          <div class="fincard adult" id="finAdultCard"><div class="finteam">Adults</div><ol class="podium" id="finAdultList"></ol></div>
+          <div class="fincard youth" id="finYouthCard"><div class="finteam">Team A</div><ol class="podium" id="finYouthList"></ol></div>
+          <div class="fincard adult" id="finAdultCard"><div class="finteam">Team B</div><ol class="podium" id="finAdultList"></ol></div>
         </div>
         <div class="finfoot">Well played, everyone. Thank you for coming!</div>
       </div>
@@ -307,13 +330,22 @@
     </div>
   </div>
 
+  <div class="teamedit" id="teamEdit">
+    <label>Team names
+      <input id="teamInYouth" maxlength="16" autocomplete="off" spellcheck="false" aria-label="First team name">
+      <span class="vs">vs</span>
+      <input id="teamInAdult" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Second team name">
+    </label>
+    <button class="teamreset" id="teamReset" type="button">Reset</button>
+  </div>
+
   <div class="boards">
     <div class="team youth" id="teamYouthBox">
-      <div class="hd"><span>Youth</span><span class="team-total" id="youthTotal">0</span></div>
+      <div class="hd"><span id="teamNameYouth">Team A</span><span class="team-total" id="youthTotal">0</span></div>
       <ul class="roster" id="youthList"><li class="empty">Waiting for players…</li></ul>
     </div>
     <div class="team adult" id="teamAdultBox">
-      <div class="hd"><span>Adults &amp; Parents</span><span class="team-total" id="adultTotal">0</span></div>
+      <div class="hd"><span id="teamNameAdult">Team B</span><span class="team-total" id="adultTotal">0</span></div>
       <ul class="roster" id="adultList"><li class="empty">Waiting for players…</li></ul>
     </div>
   </div>
@@ -415,8 +447,8 @@ function renderBoards(players){
   if(yBox) yBox.style.display = (soloTag==='adult') ? 'none' : '';
   if(aBox) aBox.style.display = (soloTag==='youth') ? 'none' : '';
   const yHd=yBox&&yBox.querySelector('.hd span'), aHd=aBox&&aBox.querySelector('.hd span');
-  if(yHd) yHd.textContent = soloTag==='youth' ? 'Scores' : 'Youth';
-  if(aHd) aHd.textContent = soloTag==='adult' ? 'Scores' : 'Adults';
+  if(yHd) yHd.textContent = soloTag==='youth' ? 'Scores' : teamName('youth');
+  if(aHd) aHd.textContent = soloTag==='adult' ? 'Scores' : teamName('adult');
 
   const yTot=youth.reduce((a,p)=>a+(p.score||0),0), aTot=adult.reduce((a,p)=>a+(p.score||0),0);
   if($('youthTotal')) $('youthTotal').textContent=yTot; if($('adultTotal')) $('adultTotal').textContent=aTot;
@@ -990,6 +1022,48 @@ start();
   const LIVE_KEY='cv_live'; let LIVE=localStorage.getItem(LIVE_KEY)==='1'; const REF_PROMPT='Which reference is this?';
   function liveState(q){ if(!q) return {live:LIVE}; var o={live:LIVE, qkind:q.kind}; if(q.kind==='verse-blank'){ o.qtext=q.text; o.prompt='Fill in the missing word'; } else if(q.kind==='verse-ref'){ o.qtext=q.text; o.prompt=REF_PROMPT; } else { o.qtext=q.q; } return o; }
   const THEME_NAMES={all:'All topics', christmas:'Christmas', easter:'Easter'};
+
+/* Team names are editable so a group can call themselves whatever they like.
+   The underlying tags stay 'youth' and 'adult' so nothing else has to change. */
+const DEFAULT_TEAMS = {youth:'Team A', adult:'Team B'};
+let TEAMS = Object.assign({}, DEFAULT_TEAMS);
+try{
+  const saved = JSON.parse(localStorage.getItem('cv_team_names')||'null');
+  if(saved && saved.youth && saved.adult) TEAMS = saved;
+}catch(e){}
+function teamName(tag){ return (TEAMS[tag]||DEFAULT_TEAMS[tag]||'Team').trim() || DEFAULT_TEAMS[tag]; }
+window.addEventListener('DOMContentLoaded', function(){ applyTeamNames(); wireTeamEditor(); });
+function saveTeams(){
+  try{ localStorage.setItem('cv_team_names', JSON.stringify(TEAMS)); }catch(e){}
+}
+function lockTeamEditor(){ const te=$('teamEdit'); if(te) te.classList.add('hide'); }
+
+function wireTeamEditor(){
+  const yi=$('teamInYouth'), ai=$('teamInAdult'), rs=$('teamReset');
+  if(!yi||!ai) return;
+  function commit(){
+    TEAMS.youth = (yi.value||'').trim().slice(0,16) || DEFAULT_TEAMS.youth;
+    TEAMS.adult = (ai.value||'').trim().slice(0,16) || DEFAULT_TEAMS.adult;
+    saveTeams(); applyTeamNames();
+    if(window.__pushTeams) window.__pushTeams();   // so the phones pick the names up
+  }
+  yi.addEventListener('input', commit);
+  ai.addEventListener('input', commit);
+  if(rs) rs.addEventListener('click', ()=>{
+    TEAMS = Object.assign({}, DEFAULT_TEAMS);
+    saveTeams(); applyTeamNames();
+    if(window.__pushTeams) window.__pushTeams();
+  });
+}
+
+function applyTeamNames(){
+  const y=teamName('youth'), a=teamName('adult');
+  const set=(id,v)=>{ const el=$(id); if(el) el.textContent=v; };
+  set('teamNameYouth', y); set('teamNameAdult', a);
+  const yi=$('teamInYouth'), ai=$('teamInAdult');
+  if(yi && yi.value!==y) yi.value=y;
+  if(ai && ai.value!==a) ai.value=a;
+}
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function maxRounds(){ return POOL.length+(FINALE?1:0); }
   function buildShowOrder(seed){ if(PICK!=='random' && RMETA[PICK]) return [PICK];
@@ -1000,7 +1074,7 @@ start();
     return 'Tonight: '+t.slice(0,-1).join(', ')+', then '+t[t.length-1]+'!'; }
   const RMETA={ rapidfire:{title:'Rapid-Fire', win:8000, build:buildRapid, intro:'Welcome, everyone! First up: Rapid-Fire.', rules:'Everyone answers every question. Four choices, one right, tap fast, because quicker correct answers score bonus points!'},
                 verse:{title:'Chapter & Verse', win:20000, build:buildVerse, intro:'Round 2, Chapter & Verse.', rules:'A Bible verse appears on the screen. Either fill in the missing word, or name its reference. Four choices, pick the right one.'},
-                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round: The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Youth and adults race separately.'},
+                buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round: The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. The two teams race separately.'},
                 fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure, the earlier you\u2019re right, the more points you score (5 down to 1).'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
 
@@ -1025,7 +1099,12 @@ start();
     return shuf(items,r); }
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
+    // carry the team names on every update so the phones always show the right ones
+    patch.state = Object.assign({}, patch.state||{}, {teams:{youth:teamName('youth'), adult:teamName('adult')}});
     return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
+  function writeRoom(){ return setRoom({}); }
+  // let the lobby team editor (defined earlier, outside this scope) push names
+  window.__pushTeams = function(){ try{ return writeRoom(); }catch(e){} };
   function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); var fp=$('fcPanel'); if(fp) fp.classList.toggle('hide', which!=='fc'); var vp=$('finalePanel'); if(vp) vp.classList.toggle('hide', which!=='final'); var cp=$('closingPanel'); if(cp) cp.classList.toggle('hide', which!=='closing'); }
   function setCompact(on){ document.body.classList.toggle('compact', !!on); }
 
@@ -1064,6 +1143,7 @@ start();
     }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting, give it a second.'); return; }
+    lockTeamEditor();
     G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder(G.gameSeed); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
@@ -1141,12 +1221,13 @@ start();
     if(yCard) yCard.style.display = (soloT==='adult') ? 'none' : '';
     if(aCard) aCard.style.display = (soloT==='youth') ? 'none' : '';
     const yT=yCard&&yCard.querySelector('.finteam'), aT=aCard&&aCard.querySelector('.finteam');
-    if(yT) yT.textContent = soloT==='youth' ? 'Final scores' : 'Youth';
-    if(aT) aT.textContent = soloT==='adult' ? 'Final scores' : 'Adults';
+    if(yT) yT.textContent = soloT==='youth' ? 'Final scores' : teamName('youth');
+    if(aT) aT.textContent = soloT==='adult' ? 'Final scores' : teamName('adult');
     const teams=$('finTeams');
     if(teams){
       if(soloT){ teams.textContent=''; }   // one team playing: no versus line at all
-      else { teams.textContent = fin.teamWin ? ('Youth '+fin.youth.total+'   -   Adults '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?'Youth win it!':'Adults win it!'))) : ''; }
+      else { const yN=teamName('youth'), aN=teamName('adult');
+        teams.textContent = fin.teamWin ? (yN+' '+fin.youth.total+'   -   '+aN+' '+fin.adult.total+'      \u00b7      '+(fin.teamWin==='tie'?'It\u2019s a tie!':(fin.teamWin==='youth'?yN+' win it!':aN+' win it!'))) : ''; }
     }
     function fill(id,b){ const el=$(id); if(!el) return; el.innerHTML='';
       if(!b.top.length){ const li=document.createElement('li'); li.className='pnone'; li.textContent='No players'; el.appendChild(li); return; }
@@ -1302,8 +1383,8 @@ start();
     if(yl) yl.style.display = (soloT==='adult') ? 'none' : '';
     if(al) al.style.display = (soloT==='youth') ? 'none' : '';
     const yhd=yl&&yl.querySelector('.bzhd'), ahd=al&&al.querySelector('.bzhd');
-    if(yhd) yhd.textContent = soloT==='youth' ? 'Buzz in' : 'Youth';
-    if(ahd) ahd.textContent = soloT==='adult' ? 'Buzz in' : 'Adults';
+    if(yhd) yhd.textContent = soloT==='youth' ? 'Buzz in' : teamName('youth');
+    if(ahd) ahd.textContent = soloT==='adult' ? 'Buzz in' : teamName('adult');
     renderLane('bzYouth', bz.lanes.youth, bz); renderLane('bzAdult', bz.lanes.adult, bz);
     const opts=$('bzOpts'); if(!opts) return;
     if(bz.phase==='reveal'){ opts.classList.remove('hide'); opts.innerHTML='';

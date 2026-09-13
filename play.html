@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="canonical" href="https://tierbrain.co/play.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <title>Chapter &amp; Verse, Join</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -128,8 +138,8 @@
     <div>
       <label>Which team?</label>
       <div class="teams">
-        <button class="team-btn youth" data-tag="youth">Youth<small>ages 13–18</small></button>
-        <button class="team-btn adult" data-tag="adult">Adult<small>parent / grown-up</small></button>
+        <button class="team-btn youth" data-tag="youth" id="teamBtnYouth">Team A</button>
+        <button class="team-btn adult" data-tag="adult" id="teamBtnAdult">Team B</button>
       </div>
     </div>
     <div class="hint">Tap your team to join.</div>
@@ -168,11 +178,30 @@ function clearErr(){ $('err').classList.remove('show'); }
 function prefillCode(){
   const m=location.search.match(/[?&]c=([^&]+)/) || location.hash.match(/#([A-Za-z0-9]+)/);
   if(m) $('code').value=decodeURIComponent(m[1]).toUpperCase().slice(0,5);
+  const ci=$('code');
+  if(ci){ ci.addEventListener('input', peekTeams); peekTeams(); }
 }
 
 async function roomExists(code){
-  const rows=await sb('rooms?code=eq.'+encodeURIComponent(code)+'&select=code,phase');
-  return rows&&rows.length?rows[0]:null;
+  const rows=await sb('rooms?code=eq.'+encodeURIComponent(code)+'&select=code,phase,state');
+  const r = rows&&rows.length?rows[0]:null;
+  if(r && r.state && r.state.teams) applyTeamNames(r.state.teams);
+  return r;
+}
+
+/* As soon as a full code is typed, look up what this host has called the teams,
+   so the join buttons are right before anyone chooses. */
+let peekTimer=null;
+function peekTeams(){
+  const c=($('code').value||'').trim().toUpperCase();
+  if(c.length<4) return;
+  clearTimeout(peekTimer);
+  peekTimer=setTimeout(async ()=>{
+    try{
+      const r=await sb('rooms?code=eq.'+encodeURIComponent(c)+'&select=state');
+      if(r&&r[0]&&r[0].state&&r[0].state.teams) applyTeamNames(r[0].state.teams);
+    }catch(e){}
+  }, 350);
 }
 
 async function join(tag){
@@ -395,6 +424,19 @@ function renderLobby(){ const wrap=document.createElement('div');
   area().innerHTML=''; area().appendChild(wrap);
 }
 
+/* The host can rename the teams; those names arrive with the room state. */
+let TEAM_NAMES = {youth:'Team A', adult:'Team B'};
+function applyTeamNames(t){
+  if(!t) return;
+  let changed=false;
+  if(t.youth && t.youth!==TEAM_NAMES.youth){ TEAM_NAMES.youth=t.youth; changed=true; }
+  if(t.adult && t.adult!==TEAM_NAMES.adult){ TEAM_NAMES.adult=t.adult; changed=true; }
+  if(!changed) return;
+  const yb=$('teamBtnYouth'), ab=$('teamBtnAdult');
+  if(yb) yb.textContent=TEAM_NAMES.youth;
+  if(ab) ab.textContent=TEAM_NAMES.adult;
+}
+
 async function pollState(){
   if(!me) return;
   try{ const rows=await sb('players?id=eq.'+me.id+'&select=score'); if(rows&&rows.length) $('myScore').textContent=rows[0].score; }catch(e){}
@@ -402,6 +444,7 @@ async function pollState(){
   try{ const r=await sb('rooms?code=eq.'+encodeURIComponent(me.code)+'&select=phase,q_id,deadline,state'); rm=r&&r[0]; }catch(e){ return; }
   if(!rm){ if(lastSig!=='gone'){ lastSig='gone'; setArea('<div class="pa-msg">The room has closed. Rejoin when the host opens a new one.</div>'); } return; }
   const st=rm.state||{}, phase=rm.phase;
+  applyTeamNames(st.teams);
   if(phase==='question'){
     if(rm.q_id!==curQid){ curQid=rm.q_id; answered=false; myChoice=-1; lastSig=''; }
     const sig='q:'+curQid+':'+answered;
@@ -423,7 +466,9 @@ async function pollState(){
       const champ = (mine.top&&mine.top[0]) ? (esc(mine.top[0].name)+', '+mine.top[0].score+' pts') : 'No scores this time';
       let team='';
       const _solo = fin.youth && fin.adult && ((fin.youth.count && !fin.adult.count) || (fin.adult.count && !fin.youth.count));
-      if(!_solo && fin.teamWin && fin.youth && fin.adult){ const line='Youth '+fin.youth.total+' \u2013 Adults '+fin.adult.total;
+      if(!_solo && fin.teamWin && fin.youth && fin.adult){
+        const yN=(TEAM_NAMES.youth||'Team A'), aN=(TEAM_NAMES.adult||'Team B');
+        const line=yN+' '+fin.youth.total+' \u2013 '+aN+' '+fin.adult.total;
         team = (fin.teamWin==='tie') ? ('It\u2019s a tie! '+line) : ((fin.teamWin===me.tag?'Your team wins! ':'')+line); }
       setArea('<div class="pa-title">That\u2019s a wrap!</div><div class="pa-good" style="font-size:22px">'+esc(team)+'</div><div class="pa-msg">Your team\u2019s champion: '+champ+'</div><div class="pa-hint">Thanks for playing, well done!</div>'); }
   } else if(phase==='closing'){
