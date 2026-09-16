@@ -121,6 +121,18 @@
   @media (prefers-reduced-motion: reduce){ .stcount{animation:none;opacity:.9;} }
   .coffee{display:inline-block;margin-top:16px;color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.02em;text-decoration:none;opacity:.8;}
   .coffee:hover{opacity:1;color:var(--gold-hi);}
+  .topicrow{gap:8px;align-items:center;}
+  .topiclab{color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.04em;}
+  .topicin{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line);
+    border-radius:10px;color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;padding:9px 12px;}
+  .topicin:focus{outline:none;border-color:var(--gold);}
+  .topicin::placeholder{color:rgba(244,238,222,.35);font-weight:600;}
+  .topicclear{background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);
+    font-family:inherit;font-size:16px;line-height:1;padding:6px 10px;cursor:pointer;}
+  .topicclear:hover{color:var(--ink);}
+  .topicnote{color:var(--dim);font-weight:700;font-size:12.5px;margin-top:-2px;}
+  .topicnote.warn{color:#e0a35f;}
+  .topicnote.bad{color:#e0728a;}
 </style>
   <script src="questions.js?v=7"></script>
 </head>
@@ -143,6 +155,21 @@
           <div class="step">Questions
             <button id="qMinus">–</button><span id="qTot">20</span><button id="qPlus">+</button>
           </div>
+          <div class="step">Answer time
+            <button id="tMinus">–</button><span id="tTot">4s</span><button id="tPlus">+</button>
+          </div>
+        </div>
+        <div class="row topicrow">
+          <label class="topiclab" for="topicIn">Topic</label>
+          <input id="topicIn" class="topicin" placeholder="Everything. Try: capital, planet, wrote&hellip;"
+                 autocomplete="off" spellcheck="false" maxlength="28">
+          <button class="topicclear" id="topicClear" type="button" title="Clear">&times;</button>
+        </div>
+        <div class="topicnote" id="topicNote">Leave blank for all topics.</div>
+        <div class="row" style="margin-top:4px">
+          <a href="throne-rules.html" target="_blank" rel="noopener"
+             style="color:var(--gold-hi);font-weight:800;font-size:13px;text-decoration:none;
+                    border-bottom:1px solid rgba(255,212,122,.35)">How to play</a>
         </div>
         <div class="row"><button class="btn go" id="startBtn" disabled>Start the game ▸</button>
           <span style="color:var(--dim);font-weight:700;font-size:14px">Need 2+ players</span></div>
@@ -491,7 +518,26 @@ function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 function HS(pose){ if(window.HOST&&window.HOST.set) window.HOST.set(pose); }
 function hostSay(text){ const b=$('hostBubble'); if(!b) return; b.textContent=text; b.classList.remove('hide'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); clearTimeout(hostSay._t); hostSay._t=setTimeout(function(){ b.classList.add('hide'); },2200); }
 
-const BUZZ_MS=6000, ANS_MS=4000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
+const BUZZ_MS=6000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
+/* Answer time is adjustable: 4s suits a quick round, longer suits younger
+   players or harder questions. */
+let ANS_MS = 4000;
+const ANS_MIN = 3000, ANS_MAX = 15000;
+
+/* Topic filter: type a subject and the game only asks about that. Searches the
+   question and its answer, not the wrong options, so a question that merely
+   lists the topic as a distractor does not count. */
+let TOPIC = '';
+function topicMatches(q, t){
+  if(!t) return true;
+  const hay = (q.q + ' ' + q.correct + ' ' + (q.tag||'')).toLowerCase();
+  return t.split(/[\s,]+/).filter(Boolean).every(function(word){ return hay.indexOf(word) >= 0; });
+}
+function topicPool(){
+  if(!TOPIC) return POOL;
+  const f = POOL.filter(function(q){ return topicMatches(q, TOPIC); });
+  return f.length ? f : POOL;   // never leave the game with nothing to ask
+}
 const COUNTDOWN_MS=3000;
 let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIndex:0, qTotal:20,
         q:null, qId:null, answerer:null, buzzWin:0, ansWin:0, lockedOut:[], firstResolved:false,
@@ -642,7 +688,10 @@ function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=strea
   G.summary={ champ:winner, closer:G.closer, streakKing:sk, flawless:flawless, finaleScore:G.finaleScore||null, finalists:G.finalists||null };
   writeState(); render(); writeLegend(winner, flawless);
 }
-function pickQuestion(){ let cand=POOL.filter(o=>!G.used.has(o.tag||slug(o.correct))); if(!cand.length){ G.used=new Set(); cand=POOL.slice(); } const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(it.tag||slug(it.correct)); return it; }
+function pickQuestion(){ const pool=topicPool();
+  let cand=pool.filter(o=>!G.used.has(o.tag||slug(o.correct)));
+  if(!cand.length){ G.used=new Set(); cand=pool.slice(); }
+  const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(it.tag||slug(it.correct)); return it; }
 function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
   G.q={ q:it.q, opts, correctIdx:opts.indexOf(it.correct) };
   G.qId=G.code+':'+(G.mode==='finale'?'F':'')+G.qIndex+':'+Math.floor(Math.random()*1e6);
@@ -752,6 +801,35 @@ $('startBtn').addEventListener('click', startGame);
 /* Up to 50 questions. Past 20 it steps in fives, so a long game is a few taps
    rather than thirty. Both pools are far larger than 50, so no repeats. */
 function qStep(n){ return n > 20 ? 5 : 1; }
+
+function showAnsTime(){ const el=$('tTot'); if(el) el.textContent=(ANS_MS/1000)+'s'; }
+$('tMinus').addEventListener('click', ()=>{ ANS_MS=Math.max(ANS_MIN, ANS_MS-1000); showAnsTime(); });
+$('tPlus').addEventListener('click',  ()=>{ ANS_MS=Math.min(ANS_MAX, ANS_MS+1000); showAnsTime(); });
+showAnsTime();
+
+/* Tell the host how many questions their topic has, so they know before starting. */
+function updateTopicNote(){
+  const note=$('topicNote'); if(!note) return;
+  if(!TOPIC){ note.textContent='Leave blank for all topics.'; note.className='topicnote'; return; }
+  const n = POOL.filter(function(q){ return topicMatches(q, TOPIC); }).length;
+  if(n===0){
+    note.textContent='Nothing found for that. The game will use every topic instead.';
+    note.className='topicnote bad';
+  } else if(n < 10){
+    note.textContent = n + ' question' + (n===1?'':'s') + ' on that. Questions will repeat in a longer game.';
+    note.className='topicnote warn';
+  } else {
+    note.textContent = n + ' questions on that topic.';
+    note.className='topicnote';
+  }
+}
+(function(){
+  const ti=$('topicIn'), tc=$('topicClear');
+  if(!ti) return;
+  ti.addEventListener('input', ()=>{ TOPIC=(ti.value||'').trim().toLowerCase(); updateTopicNote(); });
+  if(tc) tc.addEventListener('click', ()=>{ ti.value=''; TOPIC=''; updateTopicNote(); ti.focus(); });
+  updateTopicNote();
+})();
 $('qMinus').addEventListener('click', ()=>{
   const step = qStep(G.qTotal > 20 ? G.qTotal - 1 : G.qTotal);
   G.qTotal = Math.max(3, G.qTotal - step);

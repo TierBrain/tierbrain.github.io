@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to play Hold The Throne</title>
+<meta name="description" content="The rules of Hold The Throne. Two players duel, the winner keeps the throne, the loser joins the queue. Ends in a Grand Finale.">
+<link rel="canonical" href="https://tierbrain.co/throne-rules.html">
+<meta name="theme-color" content="#1b1023">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/throne-rules.html">
+<meta property="og:title" content="How to play Hold The Throne">
+<meta property="og:description" content="Two players duel on a question. The winner keeps the throne. Everyone else waits their turn.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  a{text-decoration:none;color:inherit;}
+  :root{
+    --shadow:#1b1023;    /* throne-room dark, warm plum rather than neutral black */
+    --panel:#2c1a33;
+    --raise:#3a2340;
+    --gold:#f5b23e;
+    --gold-hi:#ffd47a;
+    --parch:#e8dcc8;
+    --dim:#a795a8;
+    --wine:#8f4a5c;
+    --line:rgba(245,178,62,.22);
+  }
+  body{
+    font-family:'Nunito',system-ui,sans-serif;
+    color:var(--parch);
+    background:
+      radial-gradient(120% 70% at 50% -10%, rgba(245,178,62,.13), transparent 58%),
+      radial-gradient(90% 60% at 100% 100%, rgba(143,74,92,.16), transparent 60%),
+      var(--shadow);
+    min-height:100vh;padding:0 18px 60px;
+  }
+  .card{max-width:760px;margin:0 auto;}
+
+  header{padding:34px 0 0;text-align:center;}
+  .crest{font-size:38px;line-height:1;}
+  h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(27px,6vw,42px);
+    line-height:1.08;margin-top:10px;}
+  h1 .ed{display:block;font-size:.42em;font-weight:600;letter-spacing:.2em;
+    color:var(--gold);margin-top:10px;font-family:'Nunito';}
+  .sub{color:var(--dim);font-weight:700;font-size:15px;margin-top:14px;
+    max-width:34em;margin-left:auto;margin-right:auto;line-height:1.6;}
+
+  /* THE SEATS: the arrangement is the game, so it carries the page */
+  .seats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:34px;align-items:end;}
+  .seat{background:linear-gradient(180deg,var(--raise),var(--panel));
+    border:1px solid var(--line);border-radius:14px;padding:18px 12px 15px;text-align:center;}
+  .seat.throne{border-color:var(--gold);box-shadow:0 0 0 1px rgba(245,178,62,.25), 0 12px 30px rgba(0,0,0,.45);
+    padding-top:26px;padding-bottom:22px;}
+  .seat .ico{font-size:26px;line-height:1;}
+  .seat.throne .ico{font-size:34px;}
+  .seat .who{font-family:'Fraunces',serif;font-weight:700;font-size:16px;margin-top:9px;}
+  .seat.throne .who{font-size:19px;color:var(--gold-hi);}
+  .seat .what{color:var(--dim);font-weight:700;font-size:12.2px;margin-top:6px;line-height:1.45;}
+  .arrows{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:9px;
+    color:var(--dim);font-weight:800;font-size:11.5px;text-align:center;}
+  .arrows i{font-style:normal;}
+
+  h2{font-family:'Fraunces',serif;font-weight:700;font-size:21px;margin:44px 0 4px;
+    padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .lead{color:var(--dim);font-weight:700;font-size:14px;margin-top:12px;line-height:1.6;}
+
+  /* the duel genuinely is a sequence, so numbering earns its place */
+  ol.flow{counter-reset:f;margin-top:16px;}
+  ol.flow li{counter-increment:f;list-style:none;position:relative;padding:12px 0 12px 46px;
+    border-bottom:1px solid rgba(245,178,62,.10);}
+  ol.flow li:last-child{border-bottom:0;}
+  ol.flow li::before{content:counter(f);position:absolute;left:0;top:11px;
+    width:30px;height:30px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #4a2d52, #2c1a33);
+    border:1px solid var(--line);color:var(--gold);
+    font-family:'Fraunces',serif;font-weight:700;font-size:14px;
+    display:flex;align-items:center;justify-content:center;}
+  ol.flow b{font-weight:800;color:var(--parch);}
+  ol.flow span{display:block;color:var(--dim);font-weight:700;font-size:13.4px;
+    margin-top:3px;line-height:1.55;}
+  .tick{color:var(--gold-hi);font-weight:800;font-size:12.5px;white-space:nowrap;}
+
+  .outcomes{display:grid;gap:11px;margin-top:18px;}
+  .out{border-left:3px solid var(--gold);background:rgba(245,178,62,.07);
+    border-radius:3px 12px 12px 3px;padding:14px 16px;}
+  .out.bad{border-left-color:var(--wine);background:rgba(143,74,92,.16);}
+  .out.bad h3{color:#e4a0ae;}
+  .out h3{font-family:'Fraunces',serif;font-weight:700;font-size:15.5px;}
+  .out p{color:var(--dim);font-weight:700;font-size:13.4px;line-height:1.55;margin-top:5px;}
+
+  .finale{margin-top:20px;border:1px solid var(--gold);border-radius:15px;
+    background:linear-gradient(180deg,rgba(245,178,62,.14),rgba(245,178,62,.05));padding:20px;}
+  .finale h3{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--gold-hi);}
+  .finale p{color:var(--parch);font-weight:700;font-size:14px;line-height:1.6;margin-top:8px;opacity:.9;}
+  .duo{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;margin-top:18px;}
+  .duo .f{background:rgba(27,16,35,.55);border:1px solid var(--line);border-radius:11px;
+    padding:15px 12px;text-align:center;display:flex;flex-direction:column;justify-content:center;}
+  .duo .f b{display:block;font-family:'Fraunces',serif;font-weight:700;font-size:14.5px;color:var(--gold-hi);}
+  .duo .f span{display:block;color:var(--dim);font-weight:700;font-size:12px;margin-top:5px;line-height:1.45;}
+  .duo .v{font-family:'Fraunces',serif;font-weight:700;color:var(--dim);font-size:14px;
+    display:flex;align-items:center;justify-content:center;}
+
+  .host{margin-top:18px;display:grid;gap:9px;}
+  .host div{background:var(--panel);border:1px solid rgba(245,178,62,.14);border-radius:11px;
+    padding:12px 15px;color:var(--dim);font-weight:700;font-size:13.4px;line-height:1.5;}
+  .host b{color:var(--parch);}
+
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    text-align:center;color:var(--dim);font-weight:700;font-size:13px;line-height:1.75;}
+  footer a{color:var(--gold);}
+
+  @media(max-width:560px){
+    .seats{grid-template-columns:1fr;}
+    .arrows{display:none;}
+    .seat.throne{order:-1;}
+    .duo{grid-template-columns:1fr;}
+    .duo .v{text-align:center;}
+  }
+  @media print{
+    body{background:#fff;color:#221;}
+    .seat,.out,.finale,.host div{background:#fff;border-color:#bbb;}
+    h1,h2,.out h3,.finale h3{color:#221;}
+    .sub,.lead,.out p,.host div,footer{color:#444;}
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <header>
+    <div class="crest">👑</div>
+    <h1>Hold The Throne
+      <span class="ed">Winner stays on</span></h1>
+    <p class="sub">Two players duel on a question. Whoever gets it right keeps the throne.
+      Whoever gets it wrong goes to the back of the queue. Everyone plays on their own phone.</p>
+  </header>
+
+  <div class="seats">
+    <div class="seat">
+      <div class="ico">🪑</div>
+      <div class="who">The Challenger</div>
+      <div class="what">Steps up to face whoever is on the throne</div>
+    </div>
+    <div class="seat throne">
+      <div class="ico">👑</div>
+      <div class="who">On the throne</div>
+      <div class="what">Won the last duel. Every win builds a streak</div>
+    </div>
+    <div class="seat">
+      <div class="ico">🧍🧍🧍</div>
+      <div class="who">The queue</div>
+      <div class="what">Everyone else, waiting their turn</div>
+    </div>
+  </div>
+  <div class="arrows">
+    <i>&uarr; comes off the front of the queue</i>
+    <i>&nbsp;</i>
+    <i>&uarr; losers rejoin at the back</i>
+  </div>
+
+  <h2>How one duel works</h2>
+  <p class="lead">The same four beats, over and over, until the questions run out.</p>
+  <ol class="flow">
+    <li><b>The question appears</b> <span>It shows on the big screen and on both duellists' phones. Everyone gets a moment to read it.</span></li>
+    <li><b>Buzzers unlock together</b> <span class="tick">6 seconds to buzz</span><span>Nobody can buzz early. Both buzzers open at the same instant, so it is a fair race.</span></li>
+    <li><b>First to buzz answers</b> <span class="tick">4 seconds to answer, adjustable</span><span>Four options appear on their phone. The clock is short on purpose.</span></li>
+    <li><b>The throne is settled</b> <span>Right answer wins the duel. Wrong answer hands the chance to the other player.</span></li>
+  </ol>
+
+  <h2>The three ways a duel ends</h2>
+  <div class="outcomes">
+    <div class="out">
+      <h3>The champion holds</h3>
+      <p>They answered right. Their streak grows by one, the challenger joins the back of the queue, and the next person steps up.</p>
+    </div>
+    <div class="out">
+      <h3>The challenger takes it</h3>
+      <p>They answered right. They take the throne, their streak starts at one, and the old champion goes to the back of the queue.</p>
+    </div>
+    <div class="out bad">
+      <h3>Nobody gets it</h3>
+      <p>Both duellists missed. Both step aside, the streak resets to zero, and two fresh players come off the queue. The throne is empty for a moment.</p>
+    </div>
+  </div>
+
+  <h2>The Grand Finale</h2>
+  <div class="finale">
+    <h3>Two finalists, first to two points</h3>
+    <p>When the questions run out, the game does not simply stop. The last person to win a duel faces
+      whoever built the longest streak all game.</p>
+    <div class="duo">
+      <div class="f"><b>The closer</b><span>Won the final duel of the game</span></div>
+      <div class="v">versus</div>
+      <div class="f"><b>The streak holder</b><span>Held the throne longest across the whole game</span></div>
+    </div>
+    <p>Same rules as a normal duel, but it runs until someone has two correct answers. If the same
+      person is both the closer and the streak holder, they have already won it outright.</p>
+  </div>
+
+  <h2>What the host can change</h2>
+  <div class="host">
+    <div><b>Questions per game.</b> Anywhere from 3 for a quick round to 50 for a long session.</div>
+    <div><b>Answer time.</b> 3 to 15 seconds. Longer suits younger players or harder questions.</div>
+    <div><b>Topic.</b> Type a word that appears in the questions, such as capital, planet, painted or wrote, and the game asks only those. The lobby tells you how many it found.</div>
+  </div>
+
+  <h2>Winning the whole thing</h2>
+  <p class="lead">The Grand Finale decides the champion. Anyone who never lost a single duel is recorded
+    in the Hall of Fame as a flawless legend, which is rarer than it sounds.</p>
+
+  <footer>
+    <a href="throne.html">Open the game</a> &nbsp;·&nbsp; <a href="throne-bible.html">Bible Edition</a><br>
+    Free to play. Nothing to install, no accounts, no cost.
+  </footer>
+</div>
+</body>
+</html>
