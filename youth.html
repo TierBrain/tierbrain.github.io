@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bible Games for Youth Groups | Free, No App, No Sign-Up</title>
+<meta name="description" content="Five free Bible games for youth groups and church halls. Put one on the screen, everyone joins on their phone. No app, no accounts, no cost, nothing to set up.">
+<link rel="canonical" href="https://tierbrain.co/youth.html">
+<meta name="theme-color" content="#161232">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/youth.html">
+<meta property="og:title" content="Free Bible games for youth groups">
+<meta property="og:description" content="Put it on the screen, everyone joins on their phone. No app, no sign-up, no cost. Built for Wednesday nights and church halls.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  a{text-decoration:none;color:inherit;}
+  :root{--ink:#f4f1ff;--mut:#a9a4cf;--line:rgba(255,255,255,.10);--gold:#f2c95c;--warm:#e9c27a;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+    background:radial-gradient(90% 60% at 15% -10%,rgba(201,138,224,.16),transparent 55%),
+      radial-gradient(70% 50% at 100% 0%,rgba(61,143,232,.14),transparent 55%),
+      linear-gradient(165deg,#0c0a1e,#161232 55%,#0d1430);
+    background-attachment:fixed;padding:0 20px 70px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  header{padding:24px 0 4px;}
+  .word{font-family:'Baloo 2';font-weight:700;font-size:18px;}
+  .word b{color:var(--gold);font-weight:800;}
+
+  .hero{margin-top:32px;}
+  h1{font-family:'Baloo 2';font-weight:700;font-size:clamp(29px,6.4vw,44px);line-height:1.12;}
+  h1 em{font-style:normal;color:var(--gold);}
+  .lede{margin-top:14px;color:#ddd8f5;font-weight:600;font-size:clamp(15.5px,2.6vw,18px);line-height:1.62;}
+
+  .facts{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px;}
+  .facts span{border:1px solid var(--line);border-radius:999px;padding:8px 15px;
+    font-weight:700;font-size:13px;color:var(--mut);}
+  .facts span b{color:var(--warm);font-weight:800;}
+
+  h2{font-family:'Baloo 2';font-weight:700;font-size:21px;margin:44px 0 8px;
+    padding-bottom:9px;border-bottom:1px solid var(--line);}
+  p.body{color:var(--mut);font-weight:600;font-size:15px;line-height:1.68;margin-top:12px;}
+  p.body strong{color:var(--ink);font-weight:800;}
+
+  .steps{counter-reset:s;margin-top:16px;}
+  .steps li{counter-increment:s;list-style:none;position:relative;padding:10px 0 10px 40px;
+    color:var(--mut);font-weight:600;font-size:15px;line-height:1.6;}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:9px;
+    width:26px;height:26px;border-radius:50%;background:rgba(242,201,92,.15);
+    border:1px solid rgba(242,201,92,.4);color:var(--gold);
+    font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .steps li b{color:var(--ink);}
+
+  .games{display:grid;gap:11px;margin-top:16px;}
+  .g{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:15px;padding:16px 17px;
+    display:block;transition:border-color .16s,transform .16s;}
+  .g:hover{border-color:rgba(242,201,92,.45);transform:translateY(-2px);}
+  .g:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
+  .g h3{font-family:'Baloo 2';font-weight:700;font-size:17px;}
+  .g .tag{display:inline-block;font-weight:800;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--warm);margin-bottom:5px;}
+  .g p{color:var(--mut);font-weight:600;font-size:13.6px;line-height:1.55;margin-top:5px;}
+  .g .meta{color:var(--gold);font-weight:800;font-size:11.5px;margin-top:9px;opacity:.85;}
+
+  .note{background:rgba(242,201,92,.09);border:1px solid rgba(242,201,92,.28);
+    border-radius:15px;padding:17px 18px;margin-top:22px;}
+  .note b{font-family:'Baloo 2';font-weight:700;font-size:16px;color:var(--gold);display:block;margin-bottom:5px;}
+  .note p{color:var(--mut);font-weight:600;font-size:14.2px;line-height:1.62;}
+
+  .cta{display:block;background:linear-gradient(135deg,#f2c95c,#e0912f);color:#241a12;
+    border-radius:15px;padding:19px;text-align:center;font-family:'Baloo 2';font-weight:800;
+    font-size:18px;margin-top:34px;}
+  .cta span{display:block;font-family:'Nunito';font-weight:700;font-size:12.8px;opacity:.78;margin-top:3px;}
+
+  .share{margin-top:26px;padding:16px 18px;border:1px dashed var(--line);border-radius:15px;}
+  .share b{font-weight:800;font-size:14px;color:var(--ink);display:block;margin-bottom:6px;}
+  .share p{color:var(--mut);font-weight:600;font-size:13.6px;line-height:1.6;}
+  .share code{background:rgba(255,255,255,.07);border-radius:6px;padding:2px 8px;
+    font-family:ui-monospace,monospace;font-size:13px;color:var(--warm);}
+
+  footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--mut);font-size:13px;font-weight:700;text-align:center;line-height:1.7;}
+  footer a{color:var(--gold);}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><a class="word" href="/">Tier<b>Brain</b></a></header>
+
+  <div class="hero">
+    <h1>Bible games your youth group will <em>actually want to play.</em></h1>
+    <p class="lede">Put one on the screen at the front. Everyone joins on their own phone by scanning a code.
+      That is the whole setup. No app to download, no accounts to create, no licence, no cost.</p>
+    <div class="facts">
+      <span><b>Free</b> forever</span>
+      <span><b>No sign-up</b> for anyone</span>
+      <span>Works on <b>any phone</b></span>
+      <span><b>900+</b> Scripture questions</span>
+    </div>
+  </div>
+
+  <h2>Why it works in a church hall</h2>
+  <p class="body">Most things you could put in front of a youth group need an app installed, an account made,
+    or a subscription someone has to justify to the treasurer. By the time thirty young people have
+    downloaded something, you have lost the room.</p>
+  <p class="body">This runs in a web browser. <strong>One person opens a game on a laptop or smart TV; everyone
+    else scans a QR code and they are in.</strong> It takes under a minute, and it works on the old Android
+    someone borrowed from their mum.</p>
+
+  <h2>How a session runs</h2>
+  <ol class="steps">
+    <li>Open a game on the <b>laptop or TV</b> at the front. A five-letter code appears.</li>
+    <li>Everyone <b>scans the QR code</b> on the screen, or types the code into the site.</li>
+    <li>They enter a name, pick a team, and <b>play</b>.</li>
+    <li>You control the pace from the front. Pause, skip, or stop whenever you need to.</li>
+  </ol>
+
+  <h2>The five Bible games</h2>
+  <div class="games">
+    <a class="g" href="show.html">
+      <span class="tag">The big one &middot; 4 rounds</span>
+      <h3>Chapter &amp; Verse</h3>
+      <p>A full Bible game show with an animated host. Four rounds: Rapid-Fire, Fill the Gap, Five Clues,
+        and a Buzzer finale. Two teams play along on their phones. Runs about 25 minutes.</p>
+      <div class="meta">486 questions &middot; name your own teams</div>
+    </a>
+    <a class="g" href="throne-bible.html">
+      <span class="tag">Competitive &middot; winner stays on</span>
+      <h3>Hold The Throne: Bible</h3>
+      <p>Two players duel on a question. Whoever wins keeps their seat and faces the next challenger from
+        the queue. Build a streak, hold the throne. Best with 3 or more.</p>
+      <div class="meta">407 questions &middot; pick a topic, set the pace</div>
+    </a>
+    <p class="body" style="margin-top:-2px"><a href="throne-bible-rules.html"
+       style="color:#f2c95c;font-weight:800">See how Hold The Throne works</a>
+       &mdash; a one-page explainer you can put on the screen before you start.</p>
+    <a class="g" href="first-finger-bible.html">
+      <span class="tag">Fast &middot; everyone at once</span>
+      <h3>First Finger: Bible</h3>
+      <p>Same question for the whole room. First correct answer takes the point. A wrong buzz locks you
+        out, so it rewards knowing rather than guessing.</p>
+      <div class="meta">Quick rounds &middot; good for warming up</div>
+    </a>
+    <a class="g" href="five-clues-bible.html">
+      <span class="tag">Thoughtful &middot; solo or small group</span>
+      <h3>Five Clues: Bible</h3>
+      <p>Five clues revealed one at a time. Name the person, place or event. The fewer clues you need,
+        the more it scores.</p>
+      <div class="meta">Works well projected for the whole room</div>
+    </a>
+    <a class="g" href="bible-quiz.html">
+      <span class="tag">Straightforward &middot; four tiers</span>
+      <h3>The Bible Quiz</h3>
+      <p>A classic quiz climbing four difficulty tiers, from the familiar stories to questions that
+        reward proper study. Play on one device or pass it round.</p>
+      <div class="meta">128 questions &middot; Genesis to Revelation</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <b>Teaching on a topic this week?</b>
+    <p>Hold The Throne: Bible has a topic box. Type <em>Noah</em>, <em>Moses</em> or <em>parables</em> and
+      it will only ask questions on that, so the game can double as a recap of what you have just taught.
+      It tells you how many questions it found before you start.</p>
+  </div>
+
+  <a class="cta" href="show.html">Try Chapter &amp; Verse now
+    <span>Opens straight away &middot; nothing to install</span></a>
+
+  <div class="share">
+    <b>Passing this on to another youth leader?</b>
+    <p>Send them <code>tierbrain.co/youth.html</code> and they will have everything they need.
+      Nothing to sign up for, so there is nothing for them to commit to.</p>
+  </div>
+
+  <footer>
+    Built by one person, given away free. If it is useful to your group, telling another
+    youth leader is worth more than anything else.<br>
+    <a href="/">See all TierBrain games</a>
+  </footer>
+</div>
+</body>
+</html>
