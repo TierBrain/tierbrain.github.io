@@ -39,6 +39,18 @@
   .tierpill{font-weight:800;font-size:13px;color:#23180a;background:var(--gold);padding:5px 12px;border-radius:20px;}
   #cvWrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0;}
   #cv{display:block;max-width:100%;max-height:100%;border-radius:10px;}
+  /* The score falls with every tile uncovered. That was invisible before, so
+     there was no felt reason to commit early: the tension of the game was
+     happening only in the scoring code. */
+  .worth{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px 2px;}
+  .wlab{font-weight:700;font-size:12px;color:var(--dim);letter-spacing:.03em;}
+  .wval{font-weight:800;font-size:19px;color:var(--gold);min-width:2.4em;text-align:right;
+    font-variant-numeric:tabular-nums;transition:color .2s;}
+  .wval.low{color:#e0866b;}
+  .wbar{display:block;width:74px;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden;}
+  .wbar i{display:block;height:100%;width:100%;border-radius:3px;background:var(--gold);
+    transition:width .45s ease, background .3s;}
+  .wbar i.low{background:#e0866b;}
   .prompt{text-align:center;color:var(--mut);font-size:13px;font-weight:600;padding:0 16px 6px;}
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px max(16px,env(safe-area-inset-bottom));}
   .opt{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:700;
@@ -98,6 +110,11 @@
     <span class="tierpill" id="hTier">Tier 1</span>
   </div>
   <div id="cvWrap"><canvas id="cv"></canvas></div>
+  <div class="worth" id="worth">
+    <span class="wlab">Answer now for</span>
+    <span class="wval" id="worthVal">0</span>
+    <span class="wbar"><i id="worthBar"></i></span>
+  </div>
   <div class="prompt" id="prompt">Which country&rsquo;s flag is this?</div>
   <div class="opts" id="opts"></div>
 </section>
@@ -486,23 +503,80 @@ function renderOptions(opts){
   var box=document.getElementById('opts');box.innerHTML='';
   opts.forEach(function(name,i){var b=document.createElement('button');b.className='opt';b.textContent=name;b.onclick=function(){choose(i);};box.appendChild(b);});
 }
+/* Which tile to uncover next.
+
+   A plain shuffle lets the revealed tiles clump together, and three tiles in a
+   huddle tell you far less than three spread across the picture: a corner of a
+   flag is often one flat colour. So each new tile is the one furthest from
+   everything already shown (farthest-point sampling). Same number of tiles
+   uncovered, considerably more information in them, and the puzzle stays just
+   as hard because you still only see part of the image.
+
+   The opener is drawn from the middle band rather than a corner, since the
+   centre of a flag or crest is where the distinguishing detail usually lives. */
+function buildRevealOrder(){
+  var GC=4, GR=3;              /* the grid this game uses */
+  var cells=[];
+  for(var i=0;i<total;i++) cells.push({i:i, c:i%GC, r:(i/GC)|0});
+
+  /* opener: a centre-ish tile, so the first glimpse is worth something */
+  var mids=cells.filter(function(x){ return x.r===1; });
+  var first=mids[(Math.random()*mids.length)|0];
+
+  var out=[first.i];
+  var taken={}; taken[first.i]=true;
+
+  while(out.length<total){
+    var bestCell=null, bestDist=-1;
+    for(var k=0;k<cells.length;k++){
+      var cell=cells[k];
+      if(taken[cell.i]) continue;
+      /* distance to the nearest tile already uncovered */
+      var nearest=1e9;
+      for(var o=0;o<out.length;o++){
+        var oc=cells[out[o]];
+        var d=Math.hypot(cell.c-oc.c, cell.r-oc.r);
+        if(d<nearest) nearest=d;
+      }
+      /* tiny jitter so identical distances do not always resolve the same way */
+      nearest+=Math.random()*0.01;
+      if(nearest>bestDist){ bestDist=nearest; bestCell=cell; }
+    }
+    out.push(bestCell.i); taken[bestCell.i]=true;
+  }
+  return out;
+}
+
 function nextRound(){
   layout();buildGeometry();
   target=pickTarget(tier);var o=buildOptions(target);correctIdx=o.correct;
   off=document.createElement('canvas');off.width=CW;off.height=CH;ITEMS[target].d(off.getContext('2d'),CW,CH);
   revealed=[];for(var i=0;i<total;i++)revealed[i]=false;
-  order=[];for(i=0;i<total;i++)order[i]=i;shuffle(order);
+  order=buildRevealOrder();
   revealedCount=0;answered=false;
+  var wEl2=document.getElementById('worth'); if(wEl2) wEl2.style.visibility='visible';
   renderOptions(o.options);document.getElementById('prompt').textContent=PROMPTS[deckKey];
-  revealed[order[revealedCount++]]=true;drawBoard();
+  revealed[order[revealedCount++]]=true;drawBoard();updateWorth();
   clearInterval(intervalId);clearTimeout(graceId);
   var iv=Math.max(1500,2600-(tier-1)*300);
   intervalId=setInterval(revealTick,iv);
 }
+function updateWorth(){
+  var hidden=total-revealedCount;
+  var pts=Math.max(8,Math.round(100*hidden/total))*tier;
+  var el=document.getElementById('worthVal'), bar=document.getElementById('worthBar');
+  if(el) el.textContent=pts;
+  var frac=hidden/total;
+  if(bar) bar.style.width=Math.max(4,frac*100)+'%';
+  var low=frac<=0.34;
+  if(el) el.classList.toggle('low',low);
+  if(bar) bar.classList.toggle('low',low);
+}
+
 function revealTick(){
   if(answered)return;
   if(revealedCount<total){
-    revealed[order[revealedCount++]]=true;drawBoard();
+    revealed[order[revealedCount++]]=true;drawBoard();updateWorth();
     if(revealedCount>=total){clearInterval(intervalId);graceId=setTimeout(function(){if(!answered)finishRound(false,0,-1);},2200);}
   }
 }
@@ -512,6 +586,7 @@ function choose(i){
 }
 function finishRound(correct,hidden,chosen){
   answered=true;
+  var wEl=document.getElementById('worth'); if(wEl) wEl.style.visibility='hidden';
   for(var i=0;i<total;i++)revealed[i]=true;drawBoard();
   var btns=document.querySelectorAll('.opt');
   for(i=0;i<btns.length;i++){btns[i].onclick=null;
