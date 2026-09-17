@@ -241,6 +241,14 @@
     font-family:inherit;font-weight:700;font-size:11.5px;padding:6px 11px;cursor:pointer;}
   .teamreset:hover{color:var(--ink);}
   .teamedit.hide{display:none;}
+  .vseg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .vbtn{background:transparent;border:0;color:var(--dim);font-family:inherit;font-weight:800;
+    font-size:13px;padding:8px 16px;cursor:pointer;}
+  .vbtn.on{background:var(--gold);color:#23180a;}
+  .vbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .vnote{color:var(--dim);font-weight:700;font-size:12px;}
+  .bibcredit{color:var(--dim);font-weight:600;font-size:10.5px;line-height:1.5;
+    margin-top:14px;opacity:.75;max-width:42em;margin-left:auto;margin-right:auto;}
 </style>
 </head>
 <body>
@@ -314,6 +322,7 @@
       <div id="finalePanel" class="hide">
         <div class="finhd">🏆 Final Scores</div>
         <div class="finteams" id="finTeams"></div>
+    <p class="bibcredit" id="bibCredit"></p>
         <div class="fincards">
           <div class="fincard youth" id="finYouthCard"><div class="finteam">Team A</div><ol class="podium" id="finYouthList"></ol></div>
           <div class="fincard adult" id="finAdultCard"><div class="finteam">Team B</div><ol class="podium" id="finAdultList"></ol></div>
@@ -328,6 +337,16 @@
         <div class="closefoot">Thank you for joining us, go in peace.</div>
       </div>
     </div>
+  </div>
+
+  <div class="teamedit" id="bibleEdit">
+    <label>Bible version
+      <span class="vseg">
+        <button type="button" class="vbtn on" data-v="KJV">KJV</button>
+        <button type="button" class="vbtn" data-v="NIV">NIV</button>
+      </span>
+    </label>
+    <span class="vnote" id="vnote">Verse rounds will use the King James Version.</span>
   </div>
 
   <div class="teamedit" id="teamEdit">
@@ -769,108 +788,183 @@ start();
       {"q": "Which New Testament book presents Jesus as our great high priest?", "correct": "Hebrews", "wrong": ["Romans", "Colossians", "1 Peter"]}
     ]
   };
-  const VB_BLANK=[
-   {vref:'John 3:16', text:'For God so loved the {b}, that he gave his one and only Son\u2026', answer:'world', wrong:['earth','people','nations']},
-   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the {b}.', answer:'earth', wrong:['world','seas','skies']},
-   {vref:'Genesis 1:3', text:'God said, \u201cLet there be {b},\u201d and there was light.', answer:'light', wrong:['day','life','sun']},
-   {vref:'Matthew 5:14', text:'You are the {b} of the world.', answer:'light', wrong:['salt','hope','way']},
-   {vref:'John 11:35', text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','spoke']},
-   {vref:'Philippians 4:13', text:'I can do all things through {b}, who strengthens me.', answer:'Christ', wrong:['God','faith','hope']},
-   {vref:'1 Corinthians 13:4', text:'Love is {b} and is kind.', answer:'patient', wrong:['gentle','humble','faithful']},
-   {vref:'John 1:1', text:'In the beginning was the {b}, and the Word was with God\u2026', answer:'Word', wrong:['Light','Son','Truth']},
-   {vref:'Exodus 20:13', text:'You shall not {b}.', answer:'murder', wrong:['steal','lie','covet']},
-   {vref:'Matthew 4:4', text:'Man shall not live by {b} alone\u2026', answer:'bread', wrong:['food','wealth','work']}
-  ,
-   {"vref": "Proverbs 3:5", "text": "Trust in the LORD with all your {b}, and do not lean on your own understanding.", "answer": "heart", "wrong": ["soul", "mind", "strength"]},
-   {"vref": "Isaiah 40:31", "text": "They shall mount up with wings like {b}.", "answer": "eagles", "wrong": ["doves", "angels", "hawks"]},
-   {"vref": "Romans 6:23", "text": "For the wages of sin is {b}, but the free gift of God is eternal life.", "answer": "death", "wrong": ["sorrow", "judgement", "exile"]},
-   {"vref": "Matthew 5:16", "text": "Let your {b} shine before others, so that they may see your good works.", "answer": "light", "wrong": ["faith", "love", "hope"]},
-   {"vref": "Joshua 1:9", "text": "Be strong and {b}. Do not be frightened.", "answer": "courageous", "wrong": ["faithful", "patient", "steadfast"]},
-   {"vref": "Psalm 119:105", "text": "Your word is a {b} to my feet and a light to my path.", "answer": "lamp", "wrong": ["guide", "torch", "staff"]},
-   {"vref": "Galatians 5:22", "text": "But the fruit of the Spirit is love, {b}, peace, patience.", "answer": "joy", "wrong": ["mercy", "grace", "hope"]},
-   {"vref": "Hebrews 11:1", "text": "Now faith is the {b} of things hoped for.", "answer": "assurance", "wrong": ["promise", "evidence", "hope"]},
-   {"vref": "Micah 6:8", "text": "To do justice, and to love kindness, and to walk {b} with your God.", "answer": "humbly", "wrong": ["faithfully", "closely", "daily"]},
-   {"vref": "John 14:6", "text": "I am the way, and the {b}, and the life.", "answer": "truth", "wrong": ["light", "door", "word"]},
-   {"vref": "Matthew 6:33", "text": "But seek {b} the kingdom of God and his righteousness.", "answer": "first", "wrong": ["always", "only", "daily"]},
-   {"vref": "Philippians 4:6", "text": "Do not be {b} about anything, but in everything by prayer.", "answer": "anxious", "wrong": ["troubled", "afraid", "weary"]},
-   {"vref": "1 John 4:8", "text": "God is {b}.", "answer": "love", "wrong": ["light", "truth", "spirit"]},
-   {"vref": "Proverbs 22:6", "text": "Train up a {b} in the way he should go.", "answer": "child", "wrong": ["son", "servant", "people"]},
-   {"vref": "Romans 12:2", "text": "Do not be conformed to this {b}.", "answer": "world", "wrong": ["age", "people", "flesh"]},
-   {"vref": "Psalm 46:1", "text": "God is our {b} and strength, a very present help in trouble.", "answer": "refuge", "wrong": ["shield", "rock", "fortress"]},
-   {"vref": "Matthew 11:28", "text": "Come to me, all who labour and are heavy laden, and I will give you {b}.", "answer": "rest", "wrong": ["peace", "hope", "joy"]},
-   {"vref": "2 Corinthians 5:17", "text": "If anyone is in Christ, he is a new {b}.", "answer": "creation", "wrong": ["person", "spirit", "birth"]},
-   {"vref": "Isaiah 53:5", "text": "But he was {b} for our transgressions.", "answer": "pierced", "wrong": ["wounded", "broken", "stricken"]},
-   {"vref": "James 1:22", "text": "But be {b} of the word, and not hearers only.", "answer": "doers", "wrong": ["keepers", "teachers", "lovers"]},
-   {"vref": "Psalm 51:10", "text": "Create in me a {b} heart, O God.", "answer": "clean", "wrong": ["new", "pure", "willing"]},
-   {"vref": "Colossians 3:23", "text": "Whatever you do, work {b}, as for the Lord.", "answer": "heartily", "wrong": ["gladly", "humbly", "faithfully"]},
-   {"vref": "1 Peter 5:7", "text": "Casting all your {b} on him, because he cares for you.", "answer": "anxieties", "wrong": ["burdens", "fears", "troubles"]},
-   {"vref": "Deuteronomy 6:5", "text": "You shall love the LORD your God with all your heart and with all your {b}.", "answer": "soul", "wrong": ["mind", "spirit", "being"]},
-   {"vref": "Ephesians 6:11", "text": "Put on the whole {b} of God.", "answer": "armour", "wrong": ["strength", "truth", "robe"]},
-   {"vref": "Psalm 27:1", "text": "The LORD is my light and my {b}; whom shall I fear?", "answer": "salvation", "wrong": ["shield", "refuge", "strength"]},
-   {"vref": "Matthew 28:20", "text": "And behold, I am with you {b}, to the end of the age.", "answer": "always", "wrong": ["daily", "surely", "ever"]},
-   {"vref": "Genesis 2:7", "text": "The LORD God formed the man of dust from the ground and breathed into his nostrils the breath of {b}.", "answer": "life", "wrong": ["heaven", "spirit", "air"]},
-   {"vref": "Genesis 50:20", "text": "You meant evil against me, but God meant it for {b}.", "answer": "good", "wrong": ["glory", "mercy", "peace"]},
-   {"vref": "Psalm 139:14", "text": "I am fearfully and {b} made.", "answer": "wonderfully", "wrong": ["carefully", "perfectly", "gladly"]},
-   {"vref": "Acts 1:8", "text": "You will receive {b} when the Holy Spirit has come upon you.", "answer": "power", "wrong": ["grace", "wisdom", "joy"]},
-   {"vref": "1 Corinthians 13:13", "text": "The greatest of these is {b}.", "answer": "love", "wrong": ["faith", "hope", "grace"]},
-   {"vref": "Matthew 7:7", "text": "Ask, and it will be {b} to you.", "answer": "given", "wrong": ["opened", "shown", "added"]},
-   {"vref": "Isaiah 41:10", "text": "Fear not, for I am {b} you.", "answer": "with", "wrong": ["before", "beside", "behind"]},
-   {"vref": "John 15:13", "text": "Greater {b} has no one than this.", "answer": "love", "wrong": ["faith", "gift", "joy"]},
-   {"vref": "Lamentations 3:22", "text": "The steadfast love of the LORD never {b}.", "answer": "ceases", "wrong": ["fails", "ends", "sleeps"]},
-   {"vref": "Romans 5:8", "text": "While we were still {b}, Christ died for us.", "answer": "sinners", "wrong": ["enemies", "lost", "weak"]},
-   {"vref": "Psalm 121:1", "text": "I lift up my eyes to the {b}.", "answer": "hills", "wrong": ["heavens", "Lord", "skies"]}
-  ];
-  const VB_REF=[
-   {vref:'Genesis 1:1', text:'In the beginning, God created the heavens and the earth.', wrong:['John 1:1','Genesis 2:1','Psalm 1:1']},
-   {vref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', wrong:['John 1:16','Romans 3:16','1 John 3:16']},
-   {vref:'John 11:35', text:'Jesus wept.', wrong:['Luke 19:41','John 11:33','Matthew 26:75']},
-   {vref:'Philippians 4:13', text:'I can do all things through Christ, who strengthens me.', wrong:['Ephesians 4:13','Philippians 3:14','2 Timothy 4:7']},
-   {vref:'1 Corinthians 13:4', text:'Love is patient and is kind. Love doesn\u2019t envy.', wrong:['1 John 4:8','Romans 13:8','1 Corinthians 13:13']},
-   {vref:'Matthew 5:14', text:'You are the light of the world. A city located on a hill can\u2019t be hidden.', wrong:['John 8:12','Matthew 5:13','Philippians 2:15']},
-   {vref:'John 1:1', text:'In the beginning was the Word, and the Word was with God, and the Word was God.', wrong:['Genesis 1:1','John 3:1','Colossians 1:1']},
-   {vref:'Genesis 1:3', text:'God said, \u201cLet there be light,\u201d and there was light.', wrong:['Genesis 1:1','John 1:5','Psalm 27:1']}
-  ,
-   {"vref": "Jeremiah 29:11", "text": "For I know the plans I have for you, declares the LORD, plans for welfare and not for evil, to give you a future and a hope.", "wrong": ["Isaiah 29:11", "Jeremiah 31:11", "Proverbs 29:11"]},
-   {"vref": "Romans 8:28", "text": "And we know that for those who love God all things work together for good.", "wrong": ["Romans 6:23", "Romans 12:2", "Romans 5:8"]},
-   {"vref": "Proverbs 3:5", "text": "Trust in the LORD with all your heart, and do not lean on your own understanding.", "wrong": ["Proverbs 4:5", "Psalm 3:5", "Proverbs 3:15"]},
-   {"vref": "Matthew 28:19", "text": "Go therefore and make disciples of all nations, baptising them.", "wrong": ["Mark 16:15", "Acts 1:8", "Matthew 28:9"]},
-   {"vref": "Isaiah 40:31", "text": "But they who wait for the LORD shall renew their strength; they shall mount up with wings like eagles.", "wrong": ["Isaiah 41:10", "Psalm 40:31", "Isaiah 40:8"]},
-   {"vref": "Ephesians 2:8", "text": "For by grace you have been saved through faith. And this is not your own doing; it is the gift of God.", "wrong": ["Ephesians 2:10", "Romans 3:24", "Galatians 2:8"]},
-   {"vref": "Joshua 1:9", "text": "Be strong and courageous. Do not be frightened, for the LORD your God is with you wherever you go.", "wrong": ["Deuteronomy 31:6", "Joshua 24:15", "Judges 1:9"]},
-   {"vref": "Psalm 119:105", "text": "Your word is a lamp to my feet and a light to my path.", "wrong": ["Psalm 19:105", "Proverbs 6:23", "Psalm 119:11"]},
-   {"vref": "Galatians 5:22", "text": "But the fruit of the Spirit is love, joy, peace, patience, kindness.", "wrong": ["Galatians 5:16", "Ephesians 5:9", "1 Corinthians 13:13"]},
-   {"vref": "Hebrews 11:1", "text": "Now faith is the assurance of things hoped for, the conviction of things not seen.", "wrong": ["Hebrews 12:1", "Romans 10:17", "James 2:17"]},
-   {"vref": "Micah 6:8", "text": "To do justice, and to love kindness, and to walk humbly with your God.", "wrong": ["Amos 5:24", "Micah 5:2", "Isaiah 1:17"]},
-   {"vref": "Revelation 3:20", "text": "Behold, I stand at the door and knock. If anyone hears my voice and opens the door, I will come in.", "wrong": ["Revelation 21:4", "Matthew 7:7", "Revelation 3:16"]},
-   {"vref": "2 Timothy 1:7", "text": "For God gave us a spirit not of fear but of power and love and self-control.", "wrong": ["1 Timothy 1:7", "2 Timothy 3:16", "Romans 8:15"]},
-   {"vref": "Matthew 6:33", "text": "But seek first the kingdom of God and his righteousness, and all these things will be added to you.", "wrong": ["Matthew 6:9", "Luke 12:31", "Matthew 7:7"]},
-   {"vref": "John 14:6", "text": "I am the way, and the truth, and the life. No one comes to the Father except through me.", "wrong": ["John 10:9", "John 11:25", "John 8:12"]},
-   {"vref": "Philippians 4:6", "text": "Do not be anxious about anything, but in everything by prayer and supplication let your requests be made known to God.", "wrong": ["Philippians 4:13", "1 Peter 5:7", "Matthew 6:25"]},
-   {"vref": "1 John 4:8", "text": "Anyone who does not love does not know God, because God is love.", "wrong": ["1 John 3:1", "John 3:16", "1 Corinthians 13:13"]},
-   {"vref": "Isaiah 53:5", "text": "But he was pierced for our transgressions; he was crushed for our iniquities.", "wrong": ["Isaiah 55:6", "Isaiah 40:8", "Psalm 22:1"]},
-   {"vref": "Matthew 11:28", "text": "Come to me, all who labour and are heavy laden, and I will give you rest.", "wrong": ["Matthew 5:3", "John 7:37", "Psalm 55:22"]},
-   {"vref": "Romans 12:2", "text": "Do not be conformed to this world, but be transformed by the renewal of your mind.", "wrong": ["Romans 8:1", "Colossians 3:2", "Ephesians 4:23"]},
-   {"vref": "Psalm 46:1", "text": "God is our refuge and strength, a very present help in trouble.", "wrong": ["Psalm 91:1", "Psalm 18:2", "Psalm 62:8"]},
-   {"vref": "Proverbs 22:6", "text": "Train up a child in the way he should go; even when he is old he will not depart from it.", "wrong": ["Proverbs 13:24", "Ephesians 6:4", "Deuteronomy 6:7"]},
-   {"vref": "2 Corinthians 5:17", "text": "Therefore, if anyone is in Christ, he is a new creation. The old has passed away.", "wrong": ["Galatians 2:20", "Romans 6:4", "Ephesians 2:10"]},
-   {"vref": "Matthew 5:16", "text": "Let your light shine before others, so that they may see your good works.", "wrong": ["Matthew 5:14", "John 8:12", "Philippians 2:15"]},
-   {"vref": "James 1:22", "text": "But be doers of the word, and not hearers only, deceiving yourselves.", "wrong": ["James 2:17", "Romans 2:13", "Matthew 7:24"]},
-   {"vref": "Psalm 51:10", "text": "Create in me a clean heart, O God, and renew a right spirit within me.", "wrong": ["Psalm 139:23", "Ezekiel 36:26", "Psalm 24:4"]},
-   {"vref": "Deuteronomy 6:5", "text": "You shall love the LORD your God with all your heart and with all your soul and with all your might.", "wrong": ["Leviticus 19:18", "Matthew 22:37", "Joshua 22:5"]},
-   {"vref": "Colossians 3:23", "text": "Whatever you do, work heartily, as for the Lord and not for men.", "wrong": ["Ecclesiastes 9:10", "1 Corinthians 10:31", "Ephesians 6:7"]},
-   {"vref": "1 Peter 5:7", "text": "Casting all your anxieties on him, because he cares for you.", "wrong": ["Philippians 4:6", "Psalm 55:22", "Matthew 6:34"]},
-   {"vref": "Genesis 50:20", "text": "As for you, you meant evil against me, but God meant it for good.", "wrong": ["Genesis 45:5", "Romans 8:28", "Genesis 39:9"]},
-   {"vref": "Psalm 139:14", "text": "I praise you, for I am fearfully and wonderfully made.", "wrong": ["Psalm 8:4", "Psalm 100:3", "Jeremiah 1:5"]},
-   {"vref": "Lamentations 3:22", "text": "The steadfast love of the LORD never ceases; his mercies never come to an end.", "wrong": ["Psalm 136:1", "Micah 7:18", "Lamentations 3:1"]},
-   {"vref": "Acts 1:8", "text": "But you will receive power when the Holy Spirit has come upon you.", "wrong": ["Acts 2:4", "Matthew 28:19", "Luke 24:49"]},
-   {"vref": "1 Corinthians 13:13", "text": "So now faith, hope, and love abide, these three; but the greatest of these is love.", "wrong": ["1 Corinthians 13:4", "Galatians 5:6", "Romans 5:5"]},
-   {"vref": "Matthew 7:7", "text": "Ask, and it will be given to you; seek, and you will find; knock, and it will be opened.", "wrong": ["Luke 11:9", "Matthew 6:33", "John 15:7"]},
-   {"vref": "Isaiah 41:10", "text": "Fear not, for I am with you; be not dismayed, for I am your God.", "wrong": ["Isaiah 43:1", "Joshua 1:9", "Psalm 23:4"]},
-   {"vref": "Ephesians 6:11", "text": "Put on the whole armour of God, that you may be able to stand against the schemes of the devil.", "wrong": ["Ephesians 4:24", "1 Peter 5:8", "Romans 13:12"]},
-   {"vref": "Psalm 27:1", "text": "The LORD is my light and my salvation; whom shall I fear?", "wrong": ["Psalm 18:2", "Psalm 62:1", "Psalm 121:1"]},
-   {"vref": "John 15:13", "text": "Greater love has no one than this, that someone lay down his life for his friends.", "wrong": ["John 13:34", "1 John 3:16", "Romans 5:8"]}
-  ];
+/* ===================== TRANSLATIONS =====================
+   Groups read different Bibles. In a CAC or RCCG hall you will have KJV and
+   NIV in the same room, and a fill-the-gap that quotes one of them marks the
+   other reader wrong for quoting their own Bible correctly.
 
+   Three of the original ten questions were genuinely broken by this:
+     Philippians 4:13  answer 'Christ'   NIV has no 'Christ' in that verse
+     1 Corinthians 13:4 answer 'patient' KJV reads 'charity suffereth long'
+     Exodus 20:13      answer 'murder'   KJV reads 'kill'
+
+   So each verse carries its own wording and its own answer per translation.
+   The host picks the version in the lobby and it is sent to every phone.
+
+   ACCURACY NOTE FOR WHOEVER MAINTAINS THIS: these verses should be checked
+   against a printed Bible before a session. A misquotation in a church hall
+   costs more than a wrong quiz answer.
+   ======================================================== */
+
+var BIBLE_VERSION = 'KJV';   /* 'KJV' or 'NIV' */
+
+/* Fill the gap. Each entry gives the sentence and the missing word for both
+   translations. Where a verse cannot work in one of them it is simply absent
+   from that side and gets skipped. */
+var VERSE_BLANKS = [
+  { ref:'John 11:35',
+    KJV:{ text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','spoke'] },
+    NIV:{ text:'Jesus {b}.', answer:'wept', wrong:['prayed','slept','spoke'] } },
+
+  { ref:'John 1:1',
+    KJV:{ text:'In the beginning was the {b}, and the Word was with God, and the Word was God.', answer:'Word', wrong:['Light','Son','Truth'] },
+    NIV:{ text:'In the beginning was the {b}, and the Word was with God, and the Word was God.', answer:'Word', wrong:['Light','Son','Truth'] } },
+
+  { ref:'Genesis 1:3',
+    KJV:{ text:'And God said, Let there be {b}: and there was light.', answer:'light', wrong:['day','life','sun'] },
+    NIV:{ text:'And God said, \u201cLet there be {b},\u201d and there was light.', answer:'light', wrong:['day','life','sun'] } },
+
+  { ref:'Genesis 1:1',
+    KJV:{ text:'In the beginning God created the heaven and the {b}.', answer:'earth', wrong:['world','seas','skies'] },
+    NIV:{ text:'In the beginning God created the heavens and the {b}.', answer:'earth', wrong:['world','seas','skies'] } },
+
+  { ref:'John 3:16',
+    KJV:{ text:'For God so loved the {b}, that he gave his only begotten Son\u2026', answer:'world', wrong:['earth','people','nations'] },
+    NIV:{ text:'For God so loved the {b} that he gave his one and only Son\u2026', answer:'world', wrong:['earth','people','nations'] } },
+
+  { ref:'Matthew 5:14',
+    KJV:{ text:'Ye are the {b} of the world.', answer:'light', wrong:['salt','hope','way'] },
+    NIV:{ text:'You are the {b} of the world.', answer:'light', wrong:['salt','hope','way'] } },
+
+  { ref:'Matthew 4:4',
+    KJV:{ text:'Man shall not live by {b} alone\u2026', answer:'bread', wrong:['faith','word','works'] },
+    NIV:{ text:'Man shall not live on {b} alone\u2026', answer:'bread', wrong:['faith','word','works'] } },
+
+  /* the three that broke: each now has wording and an answer true to its version */
+  { ref:'Philippians 4:13',
+    KJV:{ text:'I can do all things through {b} which strengtheneth me.', answer:'Christ', wrong:['faith','prayer','grace'] },
+    NIV:{ text:'I can do all this through him who gives me {b}.', answer:'strength', wrong:['peace','courage','hope'] } },
+
+  { ref:'1 Corinthians 13:4',
+    KJV:{ text:'{b} suffereth long, and is kind\u2026', answer:'Charity', wrong:['Mercy','Patience','Kindness'] },
+    NIV:{ text:'Love is {b}, love is kind\u2026', answer:'patient', wrong:['gentle','humble','faithful'] } },
+
+  { ref:'Exodus 20:13',
+    KJV:{ text:'Thou shalt not {b}.', answer:'kill', wrong:['steal','covet','lie'] },
+    NIV:{ text:'You shall not {b}.', answer:'murder', wrong:['steal','covet','lie'] } },
+
+  { ref:'Psalm 23:1',
+    KJV:{ text:'The LORD is my {b}; I shall not want.', answer:'shepherd', wrong:['refuge','fortress','rock'] },
+    NIV:{ text:'The LORD is my {b}, I lack nothing.', answer:'shepherd', wrong:['refuge','fortress','rock'] } },
+
+  { ref:'Psalm 119:105',
+    KJV:{ text:'Thy word is a {b} unto my feet, and a light unto my path.', answer:'lamp', wrong:['guide','torch','staff'] },
+    NIV:{ text:'Your word is a {b} for my feet, a light on my path.', answer:'lamp', wrong:['guide','torch','staff'] } },
+
+  { ref:'Proverbs 3:5',
+    KJV:{ text:'Trust in the LORD with all thine {b}\u2026', answer:'heart', wrong:['soul','mind','strength'] },
+    NIV:{ text:'Trust in the LORD with all your {b}\u2026', answer:'heart', wrong:['soul','mind','strength'] } },
+
+  { ref:'Romans 6:23',
+    KJV:{ text:'For the wages of sin is {b}\u2026', answer:'death', wrong:['sorrow','judgement','exile'] },
+    NIV:{ text:'For the wages of sin is {b}\u2026', answer:'death', wrong:['sorrow','judgement','exile'] } },
+
+  { ref:'Genesis 2:7',
+    KJV:{ text:'The LORD God formed man of the {b} of the ground\u2026', answer:'dust', wrong:['clay','earth','sand'] },
+    NIV:{ text:'The LORD God formed a man from the {b} of the ground\u2026', answer:'dust', wrong:['clay','earth','sand'] } },
+
+  { ref:'Isaiah 40:31',
+    KJV:{ text:'They shall mount up with wings as {b}\u2026', answer:'eagles', wrong:['doves','angels','hawks'] },
+    NIV:{ text:'They will soar on wings like {b}\u2026', answer:'eagles', wrong:['doves','angels','hawks'] } },
+
+  { ref:'Matthew 6:9',
+    KJV:{ text:'Our Father which art in heaven, {b} be thy name.', answer:'Hallowed', wrong:['Blessed','Holy','Praised'] },
+    NIV:{ text:'Our Father in heaven, {b} be your name.', answer:'hallowed', wrong:['blessed','holy','praised'] } },
+
+  { ref:'John 14:6',
+    KJV:{ text:'I am the way, the {b}, and the life.', answer:'truth', wrong:['light','door','word'] },
+    NIV:{ text:'I am the way and the {b} and the life.', answer:'truth', wrong:['light','door','word'] } },
+
+  { ref:'1 John 4:8',
+    KJV:{ text:'God is {b}.', answer:'love', wrong:['light','truth','spirit'] },
+    NIV:{ text:'God is {b}.', answer:'love', wrong:['light','truth','spirit'] } },
+
+  { ref:'Joshua 1:9',
+    KJV:{ text:'Be strong and of a good {b}\u2026', answer:'courage', wrong:['cheer','heart','spirit'] },
+    NIV:{ text:'Be strong and {b}\u2026', answer:'courageous', wrong:['faithful','patient','steadfast'] } }
+];
+
+/* Name the reference. The text shown must match the room's Bible or the
+   familiar cadence is lost, which is half of what makes the round work. */
+var VERSE_REFS = [
+  { ref:'John 11:35', KJV:'Jesus wept.', NIV:'Jesus wept.',
+    wrong:['Luke 19:41','John 11:33','Mark 14:72'] },
+  { ref:'Genesis 1:1', KJV:'In the beginning God created the heaven and the earth.',
+    NIV:'In the beginning God created the heavens and the earth.',
+    wrong:['John 1:1','Genesis 2:1','Psalm 1:1'] },
+  { ref:'John 3:16', KJV:'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.',
+    NIV:'For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.',
+    wrong:['John 1:16','Romans 3:16','1 John 3:16'] },
+  { ref:'Psalm 23:1', KJV:'The LORD is my shepherd; I shall not want.',
+    NIV:'The LORD is my shepherd, I lack nothing.',
+    wrong:['Psalm 24:1','Psalm 22:1','Psalm 100:1'] },
+  { ref:'John 1:1', KJV:'In the beginning was the Word, and the Word was with God, and the Word was God.',
+    NIV:'In the beginning was the Word, and the Word was with God, and the Word was God.',
+    wrong:['Genesis 1:1','John 3:1','Colossians 1:1'] },
+  { ref:'Philippians 4:13', KJV:'I can do all things through Christ which strengtheneth me.',
+    NIV:'I can do all this through him who gives me strength.',
+    wrong:['Philippians 4:6','Romans 8:37','2 Timothy 1:7'] },
+  { ref:'Proverbs 3:5', KJV:'Trust in the LORD with all thine heart; and lean not unto thine own understanding.',
+    NIV:'Trust in the LORD with all your heart and lean not on your own understanding.',
+    wrong:['Proverbs 4:5','Psalm 3:5','Proverbs 3:15'] },
+  { ref:'Matthew 5:14', KJV:'Ye are the light of the world. A city that is set on an hill cannot be hid.',
+    NIV:'You are the light of the world. A town built on a hill cannot be hidden.',
+    wrong:['Matthew 5:13','John 8:12','Philippians 2:15'] },
+  { ref:'Isaiah 40:31', KJV:'They that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.',
+    NIV:'Those who hope in the LORD will renew their strength. They will soar on wings like eagles.',
+    wrong:['Isaiah 41:10','Psalm 40:31','Isaiah 40:8'] },
+  { ref:'Romans 6:23', KJV:'For the wages of sin is death; but the gift of God is eternal life through Jesus Christ our Lord.',
+    NIV:'For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.',
+    wrong:['Romans 3:23','Romans 5:8','Romans 8:1'] },
+  { ref:'Psalm 119:105', KJV:'Thy word is a lamp unto my feet, and a light unto my path.',
+    NIV:'Your word is a lamp for my feet, a light on my path.',
+    wrong:['Psalm 19:105','Proverbs 6:23','Psalm 119:11'] },
+  { ref:'1 John 4:8', KJV:'He that loveth not knoweth not God; for God is love.',
+    NIV:'Whoever does not love does not know God, because God is love.',
+    wrong:['1 John 3:1','John 3:16','1 Corinthians 13:13'] },
+  { ref:'Joshua 1:9', KJV:'Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.',
+    NIV:'Be strong and courageous. Do not be afraid; do not be discouraged, for the LORD your God will be with you wherever you go.',
+    wrong:['Deuteronomy 31:6','Joshua 24:15','Judges 1:9'] },
+  { ref:'Matthew 6:9', KJV:'Our Father which art in heaven, Hallowed be thy name.',
+    NIV:'Our Father in heaven, hallowed be your name.',
+    wrong:['Luke 11:1','Matthew 6:33','Matthew 26:39'] },
+  { ref:'John 14:6', KJV:'I am the way, the truth, and the life: no man cometh unto the Father, but by me.',
+    NIV:'I am the way and the truth and the life. No one comes to the Father except through me.',
+    wrong:['John 10:9','John 11:25','John 8:12'] }
+];
+
+/* Build the round's questions in whichever version the host chose. */
+function versionedBlanks(){
+  var v=BIBLE_VERSION, out=[];
+  for(var i=0;i<VERSE_BLANKS.length;i++){
+    var e=VERSE_BLANKS[i], d=e[v];
+    if(!d) continue;
+    out.push({vref:e.ref, text:d.text, answer:d.answer, wrong:d.wrong.slice()});
+  }
+  return out;
+}
+function versionedRefs(){
+  var v=BIBLE_VERSION, out=[];
+  for(var i=0;i<VERSE_REFS.length;i++){
+    var e=VERSE_REFS[i];
+    if(!e[v]) continue;
+    out.push({vref:e.ref, text:e[v], wrong:e.wrong.slice()});
+  }
+  return out;
+}
+
+    const VB_BLANK=versionedBlanks();
+    const VB_REF=versionedRefs();
   const RAPID_GEN=[].concat(BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']);
   const THEMED={
     rapid:[
@@ -1032,11 +1126,40 @@ try{
   if(saved && saved.youth && saved.adult) TEAMS = saved;
 }catch(e){}
 function teamName(tag){ return (TEAMS[tag]||DEFAULT_TEAMS[tag]||'Team').trim() || DEFAULT_TEAMS[tag]; }
-window.addEventListener('DOMContentLoaded', function(){ applyTeamNames(); wireTeamEditor(); });
+window.addEventListener('DOMContentLoaded', function(){ applyTeamNames(); wireTeamEditor(); wireBibleVersion(); });
 function saveTeams(){
   try{ localStorage.setItem('cv_team_names', JSON.stringify(TEAMS)); }catch(e){}
 }
 function lockTeamEditor(){ const te=$('teamEdit'); if(te) te.classList.add('hide'); }
+
+function wireBibleVersion(){
+  var box=document.getElementById('bibleEdit'); if(!box) return;
+  var note=document.getElementById('vnote');
+  var btns=box.querySelectorAll('.vbtn');
+  try{ var saved=localStorage.getItem('cv_bible_version'); if(saved==='KJV'||saved==='NIV') BIBLE_VERSION=saved; }catch(e){}
+  function paint(){
+    for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-v')===BIBLE_VERSION);
+    if(note) note.textContent = BIBLE_VERSION==='KJV'
+      ? 'Verse rounds will use the King James Version.'
+      : 'Verse rounds will use the New International Version.';
+  }
+  for(var i=0;i<btns.length;i++){
+    btns[i].addEventListener('click', function(){
+      BIBLE_VERSION=this.getAttribute('data-v');
+      try{ localStorage.setItem('cv_bible_version', BIBLE_VERSION); }catch(e){}
+      paint();
+      if(window.__pushTeams) window.__pushTeams();   // tell the phones
+    });
+  }
+  paint();
+}
+function setBibleCredit(){
+  var el=document.getElementById('bibCredit'); if(!el) return;
+  el.textContent = BIBLE_VERSION==='NIV'
+    ? 'Scripture quotations taken from The Holy Bible, New International Version\u00ae NIV\u00ae. Used by permission. All rights reserved worldwide.'
+    : 'Scripture quotations from the King James Version, which is in the public domain.';
+}
+function lockBibleVersion(){ var b=document.getElementById('bibleEdit'); if(b) b.classList.add('hide'); }
 
 function wireTeamEditor(){
   const yi=$('teamInYouth'), ai=$('teamInAdult'), rs=$('teamReset');
@@ -1100,7 +1223,10 @@ function applyTeamNames(){
 
   function setRoom(patch){ if(!room) return Promise.resolve(); patch.updated_at=new Date().toISOString();
     // carry the team names on every update so the phones always show the right ones
-    patch.state = Object.assign({}, patch.state||{}, {teams:{youth:teamName('youth'), adult:teamName('adult')}});
+    patch.state = Object.assign({}, patch.state||{}, {
+      teams:{youth:teamName('youth'), adult:teamName('adult')},
+      bible: BIBLE_VERSION
+    });
     return sb('rooms?code=eq.'+room.code, {method:'PATCH', body:JSON.stringify(patch)}).catch(()=>{}); }
   function writeRoom(){ return setRoom({}); }
   // let the lobby team editor (defined earlier, outside this scope) push names
@@ -1143,7 +1269,7 @@ function applyTeamNames(){
     }catch(e){} }
 
   function startShow(){ if(!room){ alert('Still connecting, give it a second.'); return; }
-    lockTeamEditor();
+    lockTeamEditor(); lockBibleVersion(); setBibleCredit();
     G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder(G.gameSeed); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
@@ -1317,6 +1443,7 @@ function applyTeamNames(){
   function buildBuzzer(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
     const list=(theme&&theme!=='all')? shuf(THEMED.buzz.filter(x=>x.th===theme),r).concat(shuf(BUZZ_BANK.slice(),r)) : shuf(BUZZ_BANK.slice(),r);
     return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong),r); return {kind:'buzz', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
+
 
   const BUZZ_ARM=3000, BUZZ_WINDOW=700, BUZZ_ANSWER=10000, BUZZ_REVEAL=4600, BUZZ_OPEN_MAX=20000;
   let bzActx=null;
