@@ -6,6 +6,15 @@
 <title>TierBrain | Free Quizzes, Puzzles &amp; Party Games Online</title>
 <meta name="description" content="A free hub of browser games powered by what you know: quizzes, puzzles, party games and detective mysteries. Instant play, no app, no sign-up.">
 <link rel="canonical" href="https://tierbrain.co/">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <meta name="theme-color" content="#161232">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/">
@@ -137,7 +146,7 @@
         <button class="pill" data-f="puzzle" aria-pressed="false">Puzzle</button>
       </div>
     </div>
-    <div class="count" id="count" role="status" aria-live="polite">55 games</div>
+    <div class="count" id="count" role="status" aria-live="polite">57 games</div>
   </header>
 
   <section class="sec" data-sec="feat" aria-label="Start here">
@@ -183,6 +192,8 @@
         <h4>Chapter &amp; Verse</h4><p>The Bible game show. Four rounds, an animated host, two teams on their phones. Built for church groups, youth nights and family gatherings.</p><span class="meta">Live · 496 questions · 4 rounds</span></a>
       <a class="tc" href="throne-bible.html" data-cat="game multiplayer" data-title="Hold The Throne: Bible Edition" data-blurb="The winner-stays-on buzzer gauntlet, with a Scripture question bank. Two players duel, the winner keeps their seat and faces the next challenger from the queue.">
         <h4>Hold The Throne: Bible</h4><p>The buzzer gauntlet with a Scripture bank. Win the duel, keep your seat, take on the queue. Best with 3+ players.</p><span class="meta">Live · 180 questions · winner stays on</span></a>
+      <a class="tc" href="standing-room-multi.html" data-cat="game multiplayer" data-title="Standing Room: Together" data-blurb="Everyone stands on one floor. Every step anyone takes sinks a board for good. Answer right to choose your step. Last one standing wins.">
+        <h4>Standing Room: Together</h4><p>One floor, everybody on it. Every step any of you takes sinks a board for all of you.</p><span class="meta">Live · 2-6 players · shared board</span></a>
       <a class="tc" href="creak-multi.html" data-cat="game multiplayer" data-title="Creak &amp; Coil: The Shared Climb" data-blurb="The multiplayer race up one rotting board. Everyone climbs the same ladders, so a wrong answer snaps a rung for all of you.">
         <h4>Creak &amp; Coil: Shared Climb</h4><p>The race up one rotting board. Everyone shares the same ladders, so a wrong answer costs the whole table.</p><span class="meta">Live · 2-6 players · shared board</span></a>
       <a class="tc" href="finish-line.html" data-cat="game multiplayer" data-title="Finish Line" data-blurb="A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.">
@@ -199,6 +210,8 @@
   <section class="sec" data-sec="adv" aria-label="Adventures and puzzles">
     <div class="secrow"><h2 class="sectitle">Adventures &amp; puzzles</h2><div class="secnote">take your time</div></div>
     <div class="grid">
+      <a class="tc" href="standing-room.html" data-cat="game puzzle" data-title="Standing Room" data-blurb="You and an opponent on a floor above deep water. Every step you take sinks the board behind you. Answer right and you choose where to step; answer wrong and the water chooses.">
+        <h4>Standing Room</h4><p>Every step sinks the board behind you. Answer right to choose where you go. Last one standing wins.</p><span class="meta">Solo · vs the machine</span></a>
       <a class="tc" href="quiet-line.html" data-cat="game puzzle" data-title="The Quiet Line" data-blurb="A decoding puzzle. Words arrive spelled in keypad digits, a clue tells you what each one means, and every word you decode gives up a letter of the hidden transmission.">
         <h4>The Quiet Line</h4><p>Words arrive as keypad digits over a failing signal. Decode them all and they spell the transmission.</p><span class="meta">Solo · decoding puzzle</span></a>
       <a class="tc" href="quiet-line-vault.html" data-cat="game puzzle" data-title="The Vault" data-blurb="Seven doors, one below the last, each held shut by a word spelled in keypad digits. Decode your way down before the lock holds.">

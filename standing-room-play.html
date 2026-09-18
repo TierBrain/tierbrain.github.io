@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Standing Room &mdash; join</title>
+<meta name="description" content="Join a game of Standing Room on your phone.">
+<link rel="canonical" href="https://tierbrain.co/standing-room-play.html">
+<meta name="theme-color" content="#16232b">
+<script>
+(function(){ if(location.hostname==='tierbrain.github.io'){
+  location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{--deep:#101b22;--water:#16232b;--plank:#8a6e4e;--plank-lit:#a58760;--plank-dark:#6b5540;
+        --bone:#e8dcc4;--gold:#d8a23c;--rust:#b5654a;--line:rgba(232,220,196,.14);}
+  html,body{height:100%;}
+  body{font-family:'Archivo',system-ui,sans-serif;color:var(--bone);
+    background:radial-gradient(120% 70% at 50% -20%,#22323c,transparent 60%),
+      linear-gradient(180deg,var(--water),var(--deep));background-attachment:fixed;
+    min-height:100dvh;padding:18px 16px 26px;display:flex;flex-direction:column;align-items:center;}
+  .wrap{width:100%;max-width:420px;flex:1;display:flex;flex-direction:column;}
+  h1{font-weight:800;font-size:22px;text-align:center;}
+  h1 b{color:var(--gold);}
+  .sub{text-align:center;color:rgba(232,220,196,.55);font-weight:600;font-size:13px;margin-top:4px;}
+
+  label{display:block;font-weight:700;font-size:12.5px;color:rgba(232,220,196,.6);margin:16px 0 6px;}
+  input{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:11px;
+    color:var(--bone);font-family:inherit;font-weight:800;font-size:17px;padding:14px;text-align:center;}
+  input:focus{outline:none;border-color:var(--gold);}
+  #code{letter-spacing:.3em;text-transform:uppercase;}
+  .go{width:100%;margin-top:18px;background:var(--gold);border:0;border-radius:11px;color:#241905;
+    font-family:inherit;font-weight:800;font-size:17px;padding:16px;cursor:pointer;box-shadow:0 4px 0 #8f6a1f;}
+  .go:active{transform:translateY(4px);box-shadow:0 0 0 #8f6a1f;}
+  .err{color:var(--rust);font-weight:700;font-size:13.5px;text-align:center;margin-top:10px;min-height:19px;}
+
+  .hide{display:none!important;}
+  .me{display:flex;align-items:center;justify-content:center;gap:9px;font-weight:800;font-size:15px;margin-top:6px;}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--gold);}
+  .area{flex:1;display:flex;flex-direction:column;justify-content:center;}
+  .msg{text-align:center;font-weight:700;font-size:16px;line-height:1.5;color:rgba(232,220,196,.75);padding:26px 8px;}
+  .qtext{font-weight:700;font-size:17px;line-height:1.4;text-align:center;margin-bottom:16px;}
+  .opts{display:grid;gap:9px;}
+  .opt{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:var(--bone);
+    font-family:inherit;font-weight:700;font-size:16px;padding:17px 10px;cursor:pointer;}
+  .opt:active{transform:translateY(2px);}
+  .opt:disabled{opacity:.45;}
+  .grid{display:grid;gap:5px;margin-top:6px;}
+  .cell{aspect-ratio:1;border-radius:4px;background:rgba(255,255,255,.05);border:1px solid rgba(232,220,196,.07);}
+  .cell.solid{background:linear-gradient(170deg,var(--plank-lit),var(--plank) 45%,var(--plank-dark));border-color:transparent;}
+  .cell.step{cursor:pointer;box-shadow:inset 0 0 0 2px var(--gold),0 0 14px rgba(216,162,60,.45);}
+  .cell.meHere{box-shadow:inset 0 0 0 3px #fff;}
+  .cell i{display:block;width:60%;height:60%;margin:20% auto;border-radius:50%;}
+  .lead{text-align:center;font-weight:700;font-size:14px;color:var(--gold);margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Standing <b>Room</b></h1>
+  <div class="sub">one floor, everybody on it</div>
+
+  <div id="joinCard">
+    <label for="code">Room code (on the big screen)</label>
+    <input id="code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE">
+    <label for="name">Your name</label>
+    <input id="name" maxlength="14" autocomplete="off" placeholder="e.g. Sam">
+    <button class="go" id="joinBtn">Step onto the floor</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="playCard" class="hide">
+    <div class="me"><i class="dot" id="myDot"></i><span id="myName"></span></div>
+    <div class="area" id="area"><div class="msg">Waiting for the game to start&hellip;</div></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+async function sb(path,opts){ opts=opts||{}; try{
+  var headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},opts.headers||{});
+  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
+  var r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({},opts,{headers}));
+  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
+  return opts.method?{ok:false}:[];
+}catch(e){ return opts.method?null:[]; } }
+
+var $=function(i){return document.getElementById(i);};
+var COLOURS=['#d8a23c','#4fb0a8','#c96fa8','#7fb85c','#6f8fd8','#e0855c'];
+var me=null, lastSig='', answeredQ='', steppedQ='';
+
+var params=new URLSearchParams(location.search);
+if(params.get('c')) $('code').value=params.get('c').toUpperCase().slice(0,5);
+
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function setArea(h){ $('area').innerHTML=h; }
+
+async function join(){
+  $('err').textContent='';
+  var code=($('code').value||'').trim().toUpperCase();
+  var name=($('name').value||'').trim();
+  if(code.length<4){ $('err').textContent='Enter the code shown on the big screen.'; return; }
+  if(!name){ $('err').textContent='Enter a name so people know who you are.'; return; }
+  var rooms=await sb('rooms?code=eq.'+encodeURIComponent(code)+'&select=code,phase');
+  if(!rooms||!rooms.length){ $('err').textContent='No room with that code. Check and try again.'; return; }
+  var id=(crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Math.random().toString(36).slice(2));
+  var now=new Date().toISOString();
+  var r=await sb('players',{method:'POST',body:JSON.stringify({id:id,code:code,name:name,tag:'standing-room',score:0,joined_at:now,last_seen:now})});
+  if(!r||r.ok===false){ $('err').textContent='Could not join. Check your connection.'; return; }
+  me={id:id,code:code,name:name};
+  try{ localStorage.setItem('sr_session',JSON.stringify(me)); }catch(e){}
+  $('joinCard').classList.add('hide');
+  $('playCard').classList.remove('hide');
+  $('myName').textContent=name;
+  poll(); setInterval(poll,1100);
+}
+
+async function poll(){
+  if(!me) return;
+  var rows=await sb('rooms?code=eq.'+encodeURIComponent(me.code)+'&select=phase,state');
+  var rm=rows&&rows[0]; if(!rm) return;
+  var st=rm.state||{};
+  if(st.order){ var i=st.order.indexOf(me.id); if(i>=0) $('myDot').style.background=COLOURS[i%COLOURS.length]; }
+
+  if(st.phase==='lobby'){
+    if(lastSig!=='lobby'){ lastSig='lobby'; setArea('<div class="msg">You are on the floor.<br>Waiting for the host to start&hellip;</div>'); }
+    return;
+  }
+  if(st.phase==='over'){
+    if(lastSig!=='over'){ lastSig='over';
+      var last=(st.order||[]).filter(function(p){return !(st.outOf||{})[p];});
+      var won=last.length===1&&last[0]===me.id;
+      setArea('<div class="msg">'+(won?'You are still standing.':'The floor is gone.')+'</div>'); }
+    return;
+  }
+  if((st.outOf||{})[me.id]){
+    if(lastSig!=='out'){ lastSig='out'; setArea('<div class="msg">You went under.<br>Watch the rest of them.</div>'); }
+    return;
+  }
+
+  var whose=(st.order||[])[st.turn];
+  var mine = whose===me.id;
+  var qid = st.qId||'';
+
+  if(!mine){
+    var sig='wait:'+qid;
+    if(lastSig!==sig){ lastSig=sig;
+      var nm='';
+      (st.names||[]).forEach(function(n){ if(n.id===whose) nm=n.name; });
+      setArea('<div class="msg">'+esc(nm||'Someone')+' is deciding&hellip;<br><span style="font-size:13px;opacity:.65">Every step sinks a board for all of us.</span></div>');
+    }
+    return;
+  }
+
+  /* my turn: answer, then pick a step */
+  if(qid.indexOf(':step')<0){
+    if(answeredQ===qid) return;
+    var sigq='q:'+qid;
+    if(lastSig===sigq) return;
+    lastSig=sigq;
+    var q=st.q||{};
+    var html='<div class="lead">Your turn</div><div class="qtext">'+esc(q.q||'')+'</div><div class="opts">';
+    (q.opts||[]).forEach(function(o){ html+='<button class="opt" data-o="'+esc(o)+'">'+esc(o)+'</button>'; });
+    html+='</div>';
+    setArea(html);
+    var btns=$('area').querySelectorAll('.opt');
+    for(var b=0;b<btns.length;b++){
+      btns[b].addEventListener('click',function(){
+        var val=this.getAttribute('data-o');
+        var all=$('area').querySelectorAll('.opt');
+        for(var k=0;k<all.length;k++) all[k].disabled=true;
+        answeredQ=qid;
+        sb('moves',{method:'POST',body:JSON.stringify({code:me.code,player_id:me.id,turn_seq:st.seq||0,q_id:qid,choice:val})});
+        setArea('<div class="msg">Sent. Look at the big screen&hellip;</div>');
+        lastSig='sent:'+qid;
+      });
+    }
+    return;
+  }
+
+  /* step choice */
+  if(steppedQ===qid) return;
+  var sigs='step:'+qid;
+  if(lastSig===sigs) return;
+  lastSig=sigs;
+  var N=st.N||6, solid=st.solid||[], pos=st.pos||{}, myTile=pos[me.id];
+  var occ={}; (st.order||[]).forEach(function(p){ if(!(st.outOf||{})[p] && p!==me.id) occ[pos[p]]=true; });
+  var opts=[];
+  var r0=(myTile/N)|0, c0=myTile%N;
+  for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+    if(!dr&&!dc) continue;
+    var rr=r0+dr, cc=c0+dc;
+    if(rr<0||cc<0||rr>=N||cc>=N) continue;
+    var t=rr*N+cc;
+    if(solid[t] && !occ[t]) opts.push(t);
+  }
+  var g='<div class="lead">Right. Choose your step.</div><div class="grid" style="grid-template-columns:repeat('+N+',1fr)">';
+  for(var i=0;i<N*N;i++){
+    var cls='cell'+(solid[i]?' solid':'')+(opts.indexOf(i)>=0?' step':'')+(i===myTile?' meHere':'');
+    var tokHtml='';
+    (st.order||[]).forEach(function(p,ix){ if(!(st.outOf||{})[p] && pos[p]===i)
+      tokHtml='<i style="background:'+COLOURS[ix%COLOURS.length]+'"></i>'; });
+    g+='<div class="'+cls+'" data-t="'+i+'">'+tokHtml+'</div>';
+  }
+  g+='</div>';
+  setArea(g);
+  var cells=$('area').querySelectorAll('.cell.step');
+  for(var c=0;c<cells.length;c++){
+    cells[c].addEventListener('click',function(){
+      var t=this.getAttribute('data-t');
+      steppedQ=qid;
+      sb('moves',{method:'POST',body:JSON.stringify({code:me.code,player_id:me.id,turn_seq:st.seq||0,q_id:qid,choice:String(t)})});
+      setArea('<div class="msg">Stepping&hellip;</div>');
+      lastSig='stepped:'+qid;
+    });
+  }
+}
+
+$('joinBtn').addEventListener('click',join);
+$('name').addEventListener('keydown',function(e){ if(e.key==='Enter') join(); });
+</script>
+</body>
+</html>

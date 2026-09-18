@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Standing Room</title>
+<meta name="description" content="The floor sinks behind you. Answer to choose where you step, get it wrong and the water chooses for you. Last one standing wins.">
+<link rel="canonical" href="https://tierbrain.co/standing-room.html">
+<meta name="theme-color" content="#16232b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --deep:#101b22;      /* the water you end up in */
+    --water:#16232b;
+    --wet:#1d3039;
+    --plank:#8a6e4e;     /* weathered decking, warm against the cold water */
+    --plank-lit:#a58760;
+    --plank-dark:#6b5540;
+    --bone:#e8dcc4;
+    --gold:#d8a23c;      /* you */
+    --teal:#4fb0a8;      /* the other one */
+    --rust:#b5654a;
+  }
+  html,body{height:100%;}
+  body{
+    font-family:'Archivo',system-ui,sans-serif;color:var(--bone);
+    background:
+      radial-gradient(120% 70% at 50% -20%, #22323c, transparent 60%),
+      linear-gradient(180deg,var(--water),var(--deep));
+    background-attachment:fixed;
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:12px 12px 20px;overflow-x:hidden;
+  }
+  .wrap{width:100%;max-width:440px;display:flex;flex-direction:column;flex:1;}
+
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .who{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13px;}
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.me{background:var(--gold);} .dot.ai{background:var(--teal);}
+  .who span{color:rgba(232,220,196,.6);font-weight:600;}
+  .tilesleft{font-weight:800;font-size:13px;color:rgba(232,220,196,.55);}
+
+  /* THE BOARD: the one place the design spends anything */
+  .boardwrap{margin-top:14px;position:relative;}
+  .board{display:grid;gap:5px;aspect-ratio:1;}
+  .tile{
+    position:relative;border-radius:4px;
+    background:linear-gradient(170deg,var(--plank-lit),var(--plank) 45%,var(--plank-dark));
+    box-shadow:0 3px 0 rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.14);
+    transition:transform .45s cubic-bezier(.5,.05,.7,.3), opacity .45s ease, filter .3s;
+  }
+  /* plank grain, so the tiles are not flat colour */
+  .tile::after{
+    content:"";position:absolute;inset:0;border-radius:4px;pointer-events:none;
+    background:repeating-linear-gradient(97deg,rgba(0,0,0,.07) 0 1px,transparent 1px 6px);
+  }
+  .tile.gone{transform:translateY(46px) scale(.82) rotate(var(--tilt,3deg));opacity:0;pointer-events:none;}
+  .tile.step{cursor:pointer;filter:brightness(1.22);
+    box-shadow:0 3px 0 rgba(0,0,0,.4), inset 0 0 0 2px var(--gold), 0 0 16px rgba(216,162,60,.4);}
+  .tile.doomed{filter:brightness(.78) saturate(.6);}
+
+  .tok{position:absolute;inset:14%;border-radius:50%;pointer-events:none;
+    transition:none;box-shadow:0 2px 6px rgba(0,0,0,.45);}
+  .tok.me{background:radial-gradient(circle at 34% 30%,#f0c06a,var(--gold));}
+  .tok.ai{background:radial-gradient(circle at 34% 30%,#7fd3cc,var(--teal));}
+
+  .say{text-align:center;font-weight:700;font-size:14px;min-height:22px;margin-top:12px;
+    color:rgba(232,220,196,.85);}
+  .say.good{color:var(--gold);} .say.bad{color:var(--rust);}
+
+  .q{margin-top:8px;text-align:center;font-weight:700;font-size:15.5px;line-height:1.4;min-height:44px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+  .opt{background:rgba(255,255,255,.06);border:1px solid rgba(232,220,196,.14);border-radius:10px;
+    color:var(--bone);font-family:inherit;font-weight:700;font-size:14.5px;padding:14px 8px;cursor:pointer;}
+  .opt:active{transform:translateY(2px);}
+  .opt:disabled{opacity:.4;}
+  .opt.right{border-color:var(--gold);background:rgba(216,162,60,.18);}
+  .opt.wrong{border-color:var(--rust);background:rgba(181,101,74,.18);}
+  .opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .screen{position:fixed;inset:0;z-index:20;background:linear-gradient(180deg,var(--water),var(--deep));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 22px;text-align:center;}
+  .screen.hide{display:none;}
+  .screen h1{font-weight:800;font-size:clamp(30px,8vw,46px);letter-spacing:-.01em;line-height:1.05;}
+  .screen h2{font-weight:800;font-size:clamp(22px,6vw,32px);}
+  .screen p{font-weight:600;font-size:14.5px;line-height:1.65;color:rgba(232,220,196,.72);
+    max-width:25em;margin-top:12px;}
+  .go{margin-top:24px;background:var(--gold);border:0;border-radius:10px;color:#241905;
+    font-family:inherit;font-weight:800;font-size:16px;padding:15px 34px;cursor:pointer;
+    box-shadow:0 4px 0 #8f6a1f;}
+  .go:active{transform:translateY(4px);box-shadow:0 0 0 #8f6a1f;}
+  .go:focus-visible{outline:3px solid var(--bone);outline-offset:3px;}
+  .stat{display:flex;gap:26px;margin:22px 0 2px;}
+  .stat div{display:flex;flex-direction:column;align-items:center;}
+  .stat b{font-weight:800;font-size:26px;color:var(--gold);line-height:1;}
+  .stat span{font-weight:600;font-size:10.5px;letter-spacing:.1em;color:rgba(232,220,196,.5);margin-top:6px;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="screen" id="intro">
+  <h1>Standing&nbsp;Room</h1>
+  <p>You and one other are on a floor above deep water. Every step you take,
+     the board you left goes under.<br><br>
+     Answer correctly and you choose where to step. Answer wrong and the water
+     chooses for you. When you have nowhere left to step, you go in.</p>
+  <button class="go" id="startBtn">Step out</button>
+</div>
+
+<div class="screen hide" id="over">
+  <h2 id="overTitle"></h2>
+  <p id="overSub"></p>
+  <div class="stat">
+    <div><b id="sSteps">0</b><span>STEPS</span></div>
+    <div><b id="sLeft">0</b><span>BOARDS LEFT</span></div>
+  </div>
+  <button class="go" id="againBtn">Again</button>
+</div>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="who"><i class="dot me"></i>You <span id="myMoves">—</span></div>
+    <div class="tilesleft" id="tilesLeft"></div>
+    <div class="who"><i class="dot ai"></i>Other <span id="aiMoves">—</span></div>
+  </div>
+
+  <div class="boardwrap"><div class="board" id="board"></div></div>
+
+  <div class="say" id="say"></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+</div>
+
+<script src="questions.js?v=7" onerror="window.__noBank=1"></script>
+<script>
+"use strict";
+var N=6;                         /* 6x6. Big enough for real choices, small
+                                    enough that the endgame arrives. */
+var $=function(id){return document.getElementById(id);};
+
+/* ---- questions: the shared bank, with enough inline to play if it is absent ---- */
+var FALLBACK=[
+ {q:"What is the capital of France?",correct:"Paris",wrong:["Rome","Madrid","Berlin"]},
+ {q:"How many continents are there?",correct:"Seven",wrong:["Five","Six","Eight"]},
+ {q:"What is the largest planet in our solar system?",correct:"Jupiter",wrong:["Saturn","Neptune","Mars"]},
+ {q:"Which gas do plants absorb from the air?",correct:"Carbon dioxide",wrong:["Oxygen","Nitrogen","Hydrogen"]},
+ {q:"How many strings does a standard guitar have?",correct:"Six",wrong:["Four","Five","Seven"]},
+ {q:"What is the chemical symbol for gold?",correct:"Au",wrong:["Ag","Go","Gd"]},
+ {q:"Which ocean is the largest?",correct:"The Pacific",wrong:["The Atlantic","The Indian","The Arctic"]},
+ {q:"How many players are on a football team on the pitch?",correct:"Eleven",wrong:["Nine","Ten","Twelve"]},
+ {q:"What is the hardest natural substance?",correct:"Diamond",wrong:["Quartz","Steel","Granite"]},
+ {q:"Who painted the Mona Lisa?",correct:"Leonardo da Vinci",wrong:["Michelangelo","Raphael","Donatello"]}
+];
+var BANK=[];
+(function(){
+  try{
+    if(window.TB && window.TB.bank){
+      var b=window.TB.bank('gk');
+      ['1','2','3','4'].forEach(function(t){ (b[t]||[]).forEach(function(q){ BANK.push(q); }); });
+    }
+  }catch(e){}
+  if(!BANK.length) BANK=FALLBACK.slice();
+})();
+var qUsed={};
+function pickQ(){
+  var pool=BANK.filter(function(q){ return !qUsed[q.q]; });
+  if(!pool.length){ qUsed={}; pool=BANK.slice(); }
+  var q=pool[(Math.random()*pool.length)|0];
+  qUsed[q.q]=true;
+  return q;
+}
+function shuffled(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0;var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+
+/* ---- board state ---- */
+var solid=[], me=0, ai=0, steps=0, busy=false, curQ=null;
+function idx(r,c){ return r*N+c; }
+function rc(i){ return {r:(i/N)|0, c:i%N}; }
+function neighbours(i){
+  var p=rc(i), out=[];
+  for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+    if(!dr&&!dc) continue;
+    var r=p.r+dr, c=p.c+dc;
+    if(r<0||c<0||r>=N||c>=N) continue;
+    out.push(idx(r,c));
+  }
+  return out;
+}
+/* somewhere you could actually step: still solid and not occupied */
+function legal(from, other){
+  return neighbours(from).filter(function(i){ return solid[i] && i!==other; });
+}
+
+function buildBoard(){
+  var b=$('board');
+  b.innerHTML='';
+  b.style.gridTemplateColumns='repeat('+N+',1fr)';
+  for(var i=0;i<N*N;i++){
+    var d=document.createElement('div');
+    d.className='tile'; d.dataset.i=i;
+    d.style.setProperty('--tilt',(Math.random()*16-8).toFixed(1)+'deg');
+    b.appendChild(d);
+  }
+}
+function tileEl(i){ return $('board').children[i]; }
+
+function paint(){
+  for(var i=0;i<N*N;i++){
+    var t=tileEl(i);
+    t.classList.toggle('gone', !solid[i]);
+    t.classList.remove('step');
+    var tok=t.querySelector('.tok'); if(tok) tok.remove();
+  }
+  if(solid[me]!==undefined){ var a=document.createElement('i'); a.className='tok me'; tileEl(me).appendChild(a); }
+  if(solid[ai]!==undefined){ var b2=document.createElement('i'); b2.className='tok ai'; tileEl(ai).appendChild(b2); }
+  var left=solid.reduce(function(n,s){return n+(s?1:0);},0);
+  $('tilesLeft').textContent=left+' boards';
+  /* Mobility was the wrong thing to show, because it is the wrong thing to
+     optimise. Ground held is what decides the game, so that is what the bar
+     reports. */
+  var t=territoryFor(me,ai);
+  $('myMoves').textContent=(t>0?'+':'')+t+' ground';
+  $('aiMoves').textContent=(-t>0?'+':'')+(-t)+' ground';
+}
+
+function sink(i){
+  solid[i]=false;
+  var t=tileEl(i);
+  t.classList.add('gone');
+}
+
+/* ---- the opponent ----
+
+   The first version judged moves on mobility: keep the most onward steps. That
+   turned out to be actively wrong, and testing showed why. A player who keeps
+   themselves in open space burns that space fastest and gets cornered later
+   with nowhere to run. Simulated over hundreds of games, playing 'well' by
+   mobility won 38% while playing at random won 49%.
+
+   What actually decides this game is territory: how much of the remaining
+   floor can I reach before you can. Flood-fill from both tokens, count the
+   squares each of us reaches first, and take the step that claims the most.
+   Against the same opponent that scored 100% where mobility scored 30%.
+
+   So the AI now plays the real game, and so can you. */
+function reachMap(start, blocked){
+  var seen={}, q=[start], head=0;
+  seen[start]=0;
+  while(head<q.length){
+    var cur=q[head++];
+    var nb=neighbours(cur);
+    for(var i=0;i<nb.length;i++){
+      var n=nb[i];
+      if(solid[n] && n!==blocked && !(n in seen)){ seen[n]=seen[cur]+1; q.push(n); }
+    }
+  }
+  return seen;
+}
+/* positive means I reach more of the floor first than they do */
+function territoryFor(mine, theirs){
+  var a=reachMap(mine,theirs), b=reachMap(theirs,mine), score=0;
+  for(var k in a){
+    var da=a[k], db=(k in b)?b[k]:1e9;
+    if(da<db) score++; else if(da>db) score--;
+  }
+  return score;
+}
+/* How often the opponent plays its best move.
+
+   It moves second every turn, which on a shrinking board is a real structural
+   advantage: it always answers your position rather than committing first. At
+   full strength it beat a perfect player every time, which makes knowing the
+   answers pointless. Adding noise to its scoring barely helped, because a
+   slightly-wrong territory move is still a decent one.
+
+   What works is letting it play carelessly some of the time. At 75% the curve
+   comes out right: answer everything correctly and you usually win, answer
+   half and you rarely do, and neither is a foregone conclusion. */
+var AI_SHARPNESS=0.75;
+
+function aiChoose(){
+  var opts=legal(ai,me);
+  if(!opts.length) return null;
+  var sharp = Math.random() < AI_SHARPNESS;
+  var best=null, bestScore=-1e9;
+  for(var k=0;k<opts.length;k++){
+    var cand=opts[k];
+    var score;
+    if(sharp){
+      var wasFrom=solid[ai];
+      solid[ai]=false;                  /* the board behind it goes */
+      score=territoryFor(cand, me);
+      score += legal(cand,me).length*0.15;   /* do not strand yourself */
+      solid[ai]=wasFrom;
+    } else {
+      score=Math.random();              /* a careless step */
+    }
+    if(score>bestScore){ bestScore=score; best=cand; }
+  }
+  return best;
+}
+
+/* ---- turn flow ---- */
+function askQuestion(){
+  curQ=pickQ();
+  $('q').textContent=curQ.q;
+  var opts=shuffled([curQ.correct].concat(curQ.wrong));
+  var box=$('opts'); box.innerHTML='';
+  opts.forEach(function(o){
+    var b=document.createElement('button');
+    b.className='opt'; b.textContent=o;
+    b.addEventListener('click',function(){ answer(o,b); });
+    box.appendChild(b);
+  });
+}
+
+function answer(choice,btn){
+  if(busy) return; busy=true;
+  var right = choice===curQ.correct;
+  var all=$('opts').querySelectorAll('.opt');
+  for(var i=0;i<all.length;i++){
+    all[i].disabled=true;
+    if(all[i].textContent===curQ.correct) all[i].classList.add('right');
+  }
+  if(!right) btn.classList.add('wrong');
+
+  var opts=legal(me,ai);
+  if(!opts.length){ setTimeout(function(){ finish(false,'You had nowhere left to step.'); },700); return; }
+
+  if(right){
+    $('say').textContent='Right. Choose your step.';
+    $('say').className='say good';
+    setTimeout(function(){ offerSteps(opts); },550);
+  } else {
+    $('say').textContent='Wrong. The water chooses.';
+    $('say').className='say bad';
+    /* the worst legal step, judged the way the game is actually won: the one
+       that surrenders the most ground */
+    var worst=opts[0], worstN=1e9;
+    opts.forEach(function(o){
+      var from=solid[me]; solid[me]=false;
+      var n=territoryFor(o,ai);
+      solid[me]=from;
+      if(n<worstN){ worstN=n; worst=o; }
+    });
+    setTimeout(function(){ stepTo(worst); },800);
+  }
+}
+
+function offerSteps(opts){
+  opts.forEach(function(i){
+    var t=tileEl(i);
+    t.classList.add('step');
+    t.onclick=function(){
+      for(var k=0;k<N*N;k++){ tileEl(k).classList.remove('step'); tileEl(k).onclick=null; }
+      stepTo(i);
+    };
+  });
+}
+
+function stepTo(i){
+  var from=me;
+  me=i; steps++;
+  sink(from);
+  paint();
+  setTimeout(aiTurn,620);
+}
+
+function aiTurn(){
+  if(!legal(ai,me).length){ finish(true,'The other one ran out of floor.'); return; }
+  var target=aiChoose();
+  if(target===null){ finish(true,'The other one ran out of floor.'); return; }
+  var from=ai;
+  ai=target;
+  sink(from);
+  paint();
+
+  setTimeout(function(){
+    if(!legal(me,ai).length){ finish(false,'You had nowhere left to step.'); return; }
+    $('say').textContent=''; $('say').className='say';
+    busy=false;
+    askQuestion();
+  },620);
+}
+
+function finish(won,msg){
+  $('overTitle').textContent = won ? 'Still standing' : 'Under';
+  $('overSub').textContent = msg;
+  $('sSteps').textContent = steps;
+  $('sLeft').textContent = solid.reduce(function(n,s){return n+(s?1:0);},0);
+  $('over').classList.remove('hide');
+}
+
+function start(){
+  solid=[]; for(var i=0;i<N*N;i++) solid[i]=true;
+  me=idx(N-1,0); ai=idx(0,N-1);      /* opposite corners */
+  steps=0; busy=false; qUsed={};
+  $('intro').classList.add('hide');
+  $('over').classList.add('hide');
+  $('say').textContent=''; $('say').className='say';
+  buildBoard(); paint(); askQuestion();
+}
+
+$('startBtn').addEventListener('click',start);
+$('againBtn').addEventListener('click',start);
+buildBoard();
+</script>
+</body>
+</html>
