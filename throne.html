@@ -133,6 +133,12 @@
   .topicnote{color:var(--dim);font-weight:700;font-size:12.5px;margin-top:-2px;}
   .topicnote.warn{color:#e0a35f;}
   .topicnote.bad{color:#e0728a;}
+  /* Living-room: puts the question and options on every phone so the queue can
+     follow when the screen is small or far away. Only the two duellists can
+     ever answer; for everyone else the options are there to read, not press. */
+  .livetog{display:inline-flex;align-items:center;gap:7px;color:var(--dim);
+    font-weight:800;font-size:13px;cursor:pointer;user-select:none;}
+  .livetog input{width:17px;height:17px;accent-color:var(--gold);}
 </style>
   <script src="questions.js?v=7"></script>
 </head>
@@ -158,6 +164,7 @@
           <div class="step">Answer time
             <button id="tMinus">–</button><span id="tTot">4s</span><button id="tPlus">+</button>
           </div>
+          <label class="livetog"><input type="checkbox" id="liveToggle" checked> Living-room</label>
         </div>
         <div class="row topicrow">
           <label class="topiclab" for="topicIn">Topic</label>
@@ -522,6 +529,8 @@ const BUZZ_MS=6000, REVEAL_MS=2600, BETWEEN_MS=2800, STALE_MS=32000;
 /* Answer time is adjustable: 4s suits a quick round, longer suits younger
    players or harder questions. */
 let ANS_MS = 4000;
+let LIVE_ROOM = true;
+try{ var lr=localStorage.getItem('tb_throne_gk_live'); if(lr!==null) LIVE_ROOM = lr==='1'; }catch(e){}
 const ANS_MIN = 3000, ANS_MAX = 15000;
 
 /* Topic filter: type a subject and the game only asks about that. Searches the
@@ -718,7 +727,7 @@ async function startGame(){
 }
 
 function writeState(){
-  const st={ game:'throne', phase:G.phase, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
+  const st={ game:'throne', phase:G.phase, live:LIVE_ROOM, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
     qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, buzzOpenAt:(G.phase==='live'?(G.buzzOpenAt||0):0), answerer:G.answerer, lockedOut:G.lockedOut,
     buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
     reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
@@ -803,6 +812,15 @@ $('startBtn').addEventListener('click', startGame);
 function qStep(n){ return n > 20 ? 5 : 1; }
 
 function showAnsTime(){ const el=$('tTot'); if(el) el.textContent=(ANS_MS/1000)+'s'; }
+(function(){
+  const lt=$('liveToggle'); if(!lt) return;
+  lt.checked=LIVE_ROOM;
+  lt.addEventListener('change',function(){
+    LIVE_ROOM=lt.checked;
+    try{ localStorage.setItem('tb_throne_gk_live', LIVE_ROOM?'1':'0'); }catch(e){}
+    writeState();
+  });
+})();
 $('tMinus').addEventListener('click', ()=>{ ANS_MS=Math.max(ANS_MIN, ANS_MS-1000); showAnsTime(); });
 $('tPlus').addEventListener('click',  ()=>{ ANS_MS=Math.min(ANS_MAX, ANS_MS+1000); showAnsTime(); });
 showAnsTime();
