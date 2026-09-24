@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Finish Line — TierBrain</title>
+<meta name="description" content="A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/finish-line.html">
+<meta property="og:title" content="Finish Line">
+<meta property="og:description" content="A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/finish-line.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Finish Line | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
@@ -96,12 +113,12 @@
   <div class="screen" id="menuScreen">
     <div class="sub">TierBrain</div>
     <h1 class="display">Finish Line</h1>
-    <p class="lead">A live race for 2 or more. Everyone enters the same race code, then answers as fast as they can — every right answer moves your racer forward. First to the finish line wins.</p>
+    <p class="lead">A live race for 2 or more. Everyone enters the same race code, then answers as fast as they can, every right answer moves your racer forward. First to the finish line wins.</p>
     <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
     <div class="field"><label>Race code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="RACE1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Join race</button>
-    <p class="note">Tip: pick any code and tell your friends — same code = same race.</p>
+    <p class="note">Tip: pick any code and tell your friends. Same code, same race.</p>
   </div>
 
   <!-- LOBBY -->

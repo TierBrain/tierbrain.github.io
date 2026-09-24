@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Fact or Fiction — TierBrain</title>
+<meta name="description" content="True or false? Snap judgements, with famous myths waiting to trip you up near the top.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/fact-fiction.html">
+<meta property="og:title" content="Fact or Fiction">
+<meta property="og:description" content="True or false? Snap judgements, with famous myths waiting to trip you up near the top.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/fact-fiction.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Fact or Fiction | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -183,7 +200,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Fact or Fiction</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 statements — true or false? Tap your call and the truth is revealed straight after. Easy to start, but the higher you climb the more it leans on famous myths that <i>sound</i> true. Trust nothing!</p>
+    <p class="lead">20 statements: true or false? Tap your call and the truth is revealed straight after. Easy to start, but the higher you climb the more it leans on famous myths that <i>sound</i> true. Trust nothing!</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
@@ -192,7 +209,7 @@
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Game</button>
@@ -229,7 +246,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
     <p class="statline">You judged <b id="tuAns">0</b> statements<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -249,7 +266,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -261,132 +278,132 @@
   // ============ QUESTION BANK (stable, settled facts) ============
   const BANK={
     1:[
-      {"q":"The Sun is a star.","correct":"True","wrong":["False"],"reveal":"True — it's our nearest star."},
-      {"q":"A spider is an insect.","correct":"False","wrong":["True"],"reveal":"False — spiders are arachnids, with eight legs."},
-      {"q":"Water boils at 100°C at sea level.","correct":"True","wrong":["False"],"reveal":"True — at standard pressure, yes."},
-      {"q":"Bats are blind.","correct":"False","wrong":["True"],"reveal":"False — bats can see; many also use echolocation."},
-      {"q":"The Great Wall of China is visible from the Moon with the naked eye.","correct":"False","wrong":["True"],"reveal":"False — it's far too narrow to see from that distance."},
-      {"q":"A triangle has three sides.","correct":"True","wrong":["False"],"reveal":"True — by definition."},
-      {"q":"Penguins can fly.","correct":"False","wrong":["True"],"reveal":"False — they're flightless; they 'fly' through water."},
-      {"q":"The Pacific is the largest ocean.","correct":"True","wrong":["False"],"reveal":"True — it's the biggest by far."},
-      {"q":"Diamonds are made of carbon.","correct":"True","wrong":["False"],"reveal":"True — pure crystallised carbon."},
-      {"q":"Mount Everest is the highest mountain above sea level.","correct":"True","wrong":["False"],"reveal":"True — at about 8,849 m."},
-      {"q":"Sound travels faster than light.","correct":"False","wrong":["True"],"reveal":"False — light is vastly faster."},
-      {"q":"Humans and dinosaurs lived at the same time.","correct":"False","wrong":["True"],"reveal":"False — they were separated by millions of years."},
-      {"q":"The heart sits slightly to the left of centre.","correct":"True","wrong":["False"],"reveal":"True — it does lean left."},
-      {"q":"A tomato is botanically a fruit.","correct":"True","wrong":["False"],"reveal":"True — it develops from a flower and holds seeds."},
-      {"q":"Lightning never strikes the same place twice.","correct":"False","wrong":["True"],"reveal":"False — it often does, especially tall structures."},
-      {"q":"The Earth orbits the Sun.","correct":"True","wrong":["False"],"reveal":"True — once a year."},
-      {"q":"A year on Earth is roughly 365 days.","correct":"True","wrong":["False"],"reveal":"True — 365 and a quarter."},
-      {"q":"Goldfish have a three-second memory.","correct":"False","wrong":["True"],"reveal":"False — they can remember things for months."},
-      {"q":"Sharks are mammals.","correct":"False","wrong":["True"],"reveal":"False — sharks are fish."},
-      {"q":"Sealed honey can last for thousands of years without spoiling.","correct":"True","wrong":["False"],"reveal":"True — it barely degrades."},
-      {"q":"The capital of Australia is Sydney.","correct":"False","wrong":["True"],"reveal":"False — it's Canberra."},
-      {"q":"Glass is made mainly from sand.","correct":"True","wrong":["False"],"reveal":"True — melted silica sand."},
-      {"q":"Bananas grow on trees.","correct":"False","wrong":["True"],"reveal":"False — the banana plant is a giant herb, not a tree."},
-      {"q":"There are seven continents.","correct":"True","wrong":["False"],"reveal":"True — by the common count."},
-      {"q":"A leap year occurs roughly every four years.","correct":"True","wrong":["False"],"reveal":"True — with rare century exceptions."},
-      {"q":"An adult human normally has 206 bones.","correct":"True","wrong":["False"],"reveal":"True — babies have more, which fuse."},
-      {"q":"Owls can rotate their heads a full 360°.","correct":"False","wrong":["True"],"reveal":"False — about 270°, not all the way round."},
-      {"q":"The Eiffel Tower is in Paris.","correct":"True","wrong":["False"],"reveal":"True — on the Champ de Mars."},
-      {"q":"Camels store water in their humps.","correct":"False","wrong":["True"],"reveal":"False — humps store fat, not water."},
-      {"q":"Ice is less dense than liquid water.","correct":"True","wrong":["False"],"reveal":"True — that's why it floats."}
+      {"q":"The Sun is a star.","correct":"True","wrong":["False"],"reveal":"True, it's our nearest star."},
+      {"q":"A spider is an insect.","correct":"False","wrong":["True"],"reveal":"False, spiders are arachnids, with eight legs."},
+      {"q":"Water boils at 100°C at sea level.","correct":"True","wrong":["False"],"reveal":"True, at standard pressure, yes."},
+      {"q":"Bats are blind.","correct":"False","wrong":["True"],"reveal":"False, bats can see; many also use echolocation."},
+      {"q":"The Great Wall of China is visible from the Moon with the naked eye.","correct":"False","wrong":["True"],"reveal":"False, it's far too narrow to see from that distance."},
+      {"q":"A triangle has three sides.","correct":"True","wrong":["False"],"reveal":"True, by definition."},
+      {"q":"Penguins can fly.","correct":"False","wrong":["True"],"reveal":"False, they're flightless; they 'fly' through water."},
+      {"q":"The Pacific is the largest ocean.","correct":"True","wrong":["False"],"reveal":"True, it's the biggest by far."},
+      {"q":"Diamonds are made of carbon.","correct":"True","wrong":["False"],"reveal":"True, pure crystallised carbon."},
+      {"q":"Mount Everest is the highest mountain above sea level.","correct":"True","wrong":["False"],"reveal":"True, at about 8,849 m."},
+      {"q":"Sound travels faster than light.","correct":"False","wrong":["True"],"reveal":"False, light is vastly faster."},
+      {"q":"Humans and dinosaurs lived at the same time.","correct":"False","wrong":["True"],"reveal":"False, they were separated by millions of years."},
+      {"q":"The heart sits slightly to the left of centre.","correct":"True","wrong":["False"],"reveal":"True, it does lean left."},
+      {"q":"A tomato is botanically a fruit.","correct":"True","wrong":["False"],"reveal":"True, it develops from a flower and holds seeds."},
+      {"q":"Lightning never strikes the same place twice.","correct":"False","wrong":["True"],"reveal":"False, it often does, especially tall structures."},
+      {"q":"The Earth orbits the Sun.","correct":"True","wrong":["False"],"reveal":"True, once a year."},
+      {"q":"A year on Earth is roughly 365 days.","correct":"True","wrong":["False"],"reveal":"True, 365 and a quarter."},
+      {"q":"Goldfish have a three-second memory.","correct":"False","wrong":["True"],"reveal":"False, they can remember things for months."},
+      {"q":"Sharks are mammals.","correct":"False","wrong":["True"],"reveal":"False, sharks are fish."},
+      {"q":"Sealed honey can last for thousands of years without spoiling.","correct":"True","wrong":["False"],"reveal":"True, it barely degrades."},
+      {"q":"The capital of Australia is Sydney.","correct":"False","wrong":["True"],"reveal":"False, it's Canberra."},
+      {"q":"Glass is made mainly from sand.","correct":"True","wrong":["False"],"reveal":"True, melted silica sand."},
+      {"q":"Bananas grow on trees.","correct":"False","wrong":["True"],"reveal":"False, the banana plant is a giant herb, not a tree."},
+      {"q":"There are seven continents.","correct":"True","wrong":["False"],"reveal":"True, by the common count."},
+      {"q":"A leap year occurs roughly every four years.","correct":"True","wrong":["False"],"reveal":"True, with rare century exceptions."},
+      {"q":"An adult human normally has 206 bones.","correct":"True","wrong":["False"],"reveal":"True, babies have more, which fuse."},
+      {"q":"Owls can rotate their heads a full 360°.","correct":"False","wrong":["True"],"reveal":"False, about 270°, not all the way round."},
+      {"q":"The Eiffel Tower is in Paris.","correct":"True","wrong":["False"],"reveal":"True, on the Champ de Mars."},
+      {"q":"Camels store water in their humps.","correct":"False","wrong":["True"],"reveal":"False, humps store fat, not water."},
+      {"q":"Ice is less dense than liquid water.","correct":"True","wrong":["False"],"reveal":"True, that's why it floats."}
     ],
     2:[
-      {"q":"A bolt of lightning can be hotter than the surface of the Sun.","correct":"True","wrong":["False"],"reveal":"True — it can hit ~30,000°C."},
-      {"q":"The Sahara is the largest desert on Earth.","correct":"False","wrong":["True"],"reveal":"False — Antarctica is larger — a cold desert."},
-      {"q":"Humans only use 10% of their brains.","correct":"False","wrong":["True"],"reveal":"False — we use virtually all of it."},
-      {"q":"Kilimanjaro is the highest mountain in Africa.","correct":"True","wrong":["False"],"reveal":"True — around 5,895 m."},
-      {"q":"A group of crows is called a 'murder'.","correct":"True","wrong":["False"],"reveal":"True — that's the collective noun."},
-      {"q":"Vikings wore horned helmets.","correct":"False","wrong":["True"],"reveal":"False — no evidence; a 19th-century invention."},
-      {"q":"The Mona Lisa was painted by Leonardo da Vinci.","correct":"True","wrong":["False"],"reveal":"True — early 1500s."},
-      {"q":"Chameleons change colour mainly to camouflage.","correct":"False","wrong":["True"],"reveal":"False — mostly for mood, temperature and signalling."},
-      {"q":"An octopus has three hearts.","correct":"True","wrong":["False"],"reveal":"True — two for the gills, one for the body."},
-      {"q":"The Statue of Liberty was a gift from France.","correct":"True","wrong":["False"],"reveal":"True — given in 1886."},
-      {"q":"'Sushi' means 'raw fish'.","correct":"False","wrong":["True"],"reveal":"False — it refers to the vinegared rice."},
-      {"q":"Mercury is the closest planet to the Sun.","correct":"True","wrong":["False"],"reveal":"True — the innermost planet."},
-      {"q":"Albert Einstein failed maths at school.","correct":"False","wrong":["True"],"reveal":"False — he excelled at it."},
-      {"q":"Sound cannot travel through the vacuum of space.","correct":"True","wrong":["False"],"reveal":"True — it needs a medium."},
-      {"q":"The first Olympic Games were held in Greece.","correct":"True","wrong":["False"],"reveal":"True — in ancient Olympia."},
-      {"q":"An adult usually has 32 teeth, including wisdom teeth.","correct":"True","wrong":["False"],"reveal":"True — that's the full set."},
-      {"q":"Bulls charge because they're enraged by the colour red.","correct":"False","wrong":["True"],"reveal":"False — they're red-green colour-blind; it's the motion."},
-      {"q":"Saturn is the only planet with rings.","correct":"False","wrong":["True"],"reveal":"False — Jupiter, Uranus and Neptune have them too."},
-      {"q":"The Pyramids of Giza were built by the ancient Egyptians.","correct":"True","wrong":["False"],"reveal":"True — around 4,500 years ago."},
-      {"q":"Humans have more than five senses.","correct":"True","wrong":["False"],"reveal":"True — balance and temperature among them."},
-      {"q":"Sunlight takes about eight minutes to reach Earth.","correct":"True","wrong":["False"],"reveal":"True — roughly 8 minutes 20 seconds."},
-      {"q":"A 'baker's dozen' is twelve.","correct":"False","wrong":["True"],"reveal":"False — it's thirteen."},
-      {"q":"The Atlantic is larger than the Pacific.","correct":"False","wrong":["True"],"reveal":"False — the Pacific is much larger."},
-      {"q":"The shortest war in history lasted under an hour.","correct":"True","wrong":["False"],"reveal":"True — the Anglo-Zanzibar War, about 38 minutes."},
-      {"q":"Venus is the hottest planet in the Solar System.","correct":"True","wrong":["False"],"reveal":"True — its thick atmosphere traps heat."},
-      {"q":"Sliced bread was invented before the motor car.","correct":"False","wrong":["True"],"reveal":"False — cars came first; sliced bread arrived in 1928."},
-      {"q":"Your heart briefly stops when you sneeze.","correct":"False","wrong":["True"],"reveal":"False — it doesn't stop."},
-      {"q":"The Great Barrier Reef is the largest living structure on Earth.","correct":"True","wrong":["False"],"reveal":"True — visible from space."},
-      {"q":"Mount Vesuvius destroyed Pompeii.","correct":"True","wrong":["False"],"reveal":"True — in AD 79."},
-      {"q":"Mount Rushmore depicts four US presidents.","correct":"True","wrong":["False"],"reveal":"True — Washington, Jefferson, Roosevelt, Lincoln."}
+      {"q":"A bolt of lightning can be hotter than the surface of the Sun.","correct":"True","wrong":["False"],"reveal":"True, it can hit ~30,000°C."},
+      {"q":"The Sahara is the largest desert on Earth.","correct":"False","wrong":["True"],"reveal":"False, Antarctica is larger, a cold desert."},
+      {"q":"Humans only use 10% of their brains.","correct":"False","wrong":["True"],"reveal":"False, we use virtually all of it."},
+      {"q":"Kilimanjaro is the highest mountain in Africa.","correct":"True","wrong":["False"],"reveal":"True, around 5,895 m."},
+      {"q":"A group of crows is called a 'murder'.","correct":"True","wrong":["False"],"reveal":"True, that's the collective noun."},
+      {"q":"Vikings wore horned helmets.","correct":"False","wrong":["True"],"reveal":"False, no evidence; a 19th-century invention."},
+      {"q":"The Mona Lisa was painted by Leonardo da Vinci.","correct":"True","wrong":["False"],"reveal":"True, early 1500s."},
+      {"q":"Chameleons change colour mainly to camouflage.","correct":"False","wrong":["True"],"reveal":"False, mostly for mood, temperature and signalling."},
+      {"q":"An octopus has three hearts.","correct":"True","wrong":["False"],"reveal":"True, two for the gills, one for the body."},
+      {"q":"The Statue of Liberty was a gift from France.","correct":"True","wrong":["False"],"reveal":"True, given in 1886."},
+      {"q":"'Sushi' means 'raw fish'.","correct":"False","wrong":["True"],"reveal":"False, it refers to the vinegared rice."},
+      {"q":"Mercury is the closest planet to the Sun.","correct":"True","wrong":["False"],"reveal":"True, the innermost planet."},
+      {"q":"Albert Einstein failed maths at school.","correct":"False","wrong":["True"],"reveal":"False, he excelled at it."},
+      {"q":"Sound cannot travel through the vacuum of space.","correct":"True","wrong":["False"],"reveal":"True, it needs a medium."},
+      {"q":"The first Olympic Games were held in Greece.","correct":"True","wrong":["False"],"reveal":"True, in ancient Olympia."},
+      {"q":"An adult usually has 32 teeth, including wisdom teeth.","correct":"True","wrong":["False"],"reveal":"True, that's the full set."},
+      {"q":"Bulls charge because they're enraged by the colour red.","correct":"False","wrong":["True"],"reveal":"False, they're red-green colour-blind; it's the motion."},
+      {"q":"Saturn is the only planet with rings.","correct":"False","wrong":["True"],"reveal":"False, Jupiter, Uranus and Neptune have them too."},
+      {"q":"The Pyramids of Giza were built by the ancient Egyptians.","correct":"True","wrong":["False"],"reveal":"True, around 4,500 years ago."},
+      {"q":"Humans have more than five senses.","correct":"True","wrong":["False"],"reveal":"True, balance and temperature among them."},
+      {"q":"Sunlight takes about eight minutes to reach Earth.","correct":"True","wrong":["False"],"reveal":"True, roughly 8 minutes 20 seconds."},
+      {"q":"A 'baker's dozen' is twelve.","correct":"False","wrong":["True"],"reveal":"False, it's thirteen."},
+      {"q":"The Atlantic is larger than the Pacific.","correct":"False","wrong":["True"],"reveal":"False, the Pacific is much larger."},
+      {"q":"The shortest war in history lasted under an hour.","correct":"True","wrong":["False"],"reveal":"True, the Anglo-Zanzibar War, about 38 minutes."},
+      {"q":"Venus is the hottest planet in the Solar System.","correct":"True","wrong":["False"],"reveal":"True, its thick atmosphere traps heat."},
+      {"q":"Sliced bread was invented before the motor car.","correct":"False","wrong":["True"],"reveal":"False, cars came first; sliced bread arrived in 1928."},
+      {"q":"Your heart briefly stops when you sneeze.","correct":"False","wrong":["True"],"reveal":"False, it doesn't stop."},
+      {"q":"The Great Barrier Reef is the largest living structure on Earth.","correct":"True","wrong":["False"],"reveal":"True, visible from space."},
+      {"q":"Mount Vesuvius destroyed Pompeii.","correct":"True","wrong":["False"],"reveal":"True, in AD 79."},
+      {"q":"Mount Rushmore depicts four US presidents.","correct":"True","wrong":["False"],"reveal":"True, Washington, Jefferson, Roosevelt, Lincoln."}
     ],
     3:[
-      {"q":"Glass is really a slow-moving liquid, which is why old windows are thicker at the bottom.","correct":"False","wrong":["True"],"reveal":"False — glass is an amorphous solid; the myth is false."},
-      {"q":"Napoleon Bonaparte was unusually short.","correct":"False","wrong":["True"],"reveal":"False — he was about average height for his era."},
-      {"q":"The Coriolis effect decides which way water spins down your sink.","correct":"False","wrong":["True"],"reveal":"False — it's far too weak at that scale."},
-      {"q":"Pluto was reclassified as a dwarf planet in 2006.","correct":"True","wrong":["False"],"reveal":"True — by the IAU."},
-      {"q":"Everest's summit is the closest point on Earth to space.","correct":"False","wrong":["True"],"reveal":"False — Chimborazo's is, thanks to Earth's bulge."},
-      {"q":"Humans are born with every brain cell they'll ever have.","correct":"False","wrong":["True"],"reveal":"False — new neurons can still form."},
-      {"q":"The tongue has separate zones for each taste.","correct":"False","wrong":["True"],"reveal":"False — the 'tongue map' is a myth."},
-      {"q":"Diamond is the hardest known natural material.","correct":"True","wrong":["False"],"reveal":"True — top of the hardness scale."},
-      {"q":"Sound travels faster in water than in air.","correct":"True","wrong":["False"],"reveal":"True — about four times faster."},
-      {"q":"Light travels at roughly 300,000 km per second.","correct":"True","wrong":["False"],"reveal":"True — in a vacuum."},
-      {"q":"The Hundred Years' War lasted exactly 100 years.","correct":"False","wrong":["True"],"reveal":"False — it ran 116 years (1337–1453)."},
-      {"q":"Antibiotics kill viruses.","correct":"False","wrong":["True"],"reveal":"False — they target bacteria, not viruses."},
-      {"q":"Mount Fuji is an active volcano.","correct":"True","wrong":["False"],"reveal":"True — it last erupted in 1707."},
-      {"q":"There are thought to be more stars in the universe than grains of sand on Earth.","correct":"True","wrong":["False"],"reveal":"True — by most estimates."},
-      {"q":"A 'light-year' is a measure of time.","correct":"False","wrong":["True"],"reveal":"False — it measures distance."},
-      {"q":"Bananas are very slightly radioactive.","correct":"True","wrong":["False"],"reveal":"True — from the potassium they contain."},
-      {"q":"Snow has never fallen in the Sahara.","correct":"False","wrong":["True"],"reveal":"False — it has, on rare occasions."},
-      {"q":"Sharks existed before trees did.","correct":"True","wrong":["False"],"reveal":"True — by tens of millions of years."},
-      {"q":"The '5-second rule' for dropped food is scientifically sound.","correct":"False","wrong":["True"],"reveal":"False — bacteria transfer almost instantly."},
-      {"q":"An octopus has blue blood.","correct":"True","wrong":["False"],"reveal":"True — it's copper-based."},
-      {"q":"The Maya specifically predicted the world would end in 2012.","correct":"False","wrong":["True"],"reveal":"False — a calendar cycle simply ended."},
-      {"q":"Pure water is an excellent conductor of electricity.","correct":"False","wrong":["True"],"reveal":"False — it's a poor conductor; impurities carry current."},
-      {"q":"The Eiffel Tower can be about 15 cm taller in summer.","correct":"True","wrong":["False"],"reveal":"True — the metal expands in heat."},
-      {"q":"Honeybees can learn to recognise human faces.","correct":"True","wrong":["False"],"reveal":"True — studies show they can."},
-      {"q":"Under the right conditions, hot water can freeze faster than cold.","correct":"True","wrong":["False"],"reveal":"True — the Mpemba effect."},
-      {"q":"Mount Kilimanjaro has no permanent ice.","correct":"False","wrong":["True"],"reveal":"False — it still has shrinking glaciers."},
-      {"q":"The human body contains more bacterial cells than human cells.","correct":"True","wrong":["False"],"reveal":"True — roughly comparable or more."},
-      {"q":"Lightning is attracted to metal objects above all else.","correct":"False","wrong":["True"],"reveal":"False — height and shape matter far more than material."},
-      {"q":"A jiffy is an actual unit of time.","correct":"True","wrong":["False"],"reveal":"True — it has defined scientific meanings."},
-      {"q":"Chewing gum stays in your stomach for seven years if swallowed.","correct":"False","wrong":["True"],"reveal":"False — it passes through like other food."}
+      {"q":"Glass is really a slow-moving liquid, which is why old windows are thicker at the bottom.","correct":"False","wrong":["True"],"reveal":"False, glass is an amorphous solid; the myth is false."},
+      {"q":"Napoleon Bonaparte was unusually short.","correct":"False","wrong":["True"],"reveal":"False, he was about average height for his era."},
+      {"q":"The Coriolis effect decides which way water spins down your sink.","correct":"False","wrong":["True"],"reveal":"False, it's far too weak at that scale."},
+      {"q":"Pluto was reclassified as a dwarf planet in 2006.","correct":"True","wrong":["False"],"reveal":"True, by the IAU."},
+      {"q":"Everest's summit is the closest point on Earth to space.","correct":"False","wrong":["True"],"reveal":"False, Chimborazo's is, thanks to Earth's bulge."},
+      {"q":"Humans are born with every brain cell they'll ever have.","correct":"False","wrong":["True"],"reveal":"False, new neurons can still form."},
+      {"q":"The tongue has separate zones for each taste.","correct":"False","wrong":["True"],"reveal":"False, the 'tongue map' is a myth."},
+      {"q":"Diamond is the hardest known natural material.","correct":"True","wrong":["False"],"reveal":"True, top of the hardness scale."},
+      {"q":"Sound travels faster in water than in air.","correct":"True","wrong":["False"],"reveal":"True, about four times faster."},
+      {"q":"Light travels at roughly 300,000 km per second.","correct":"True","wrong":["False"],"reveal":"True, in a vacuum."},
+      {"q":"The Hundred Years' War lasted exactly 100 years.","correct":"False","wrong":["True"],"reveal":"False, it ran 116 years (1337–1453)."},
+      {"q":"Antibiotics kill viruses.","correct":"False","wrong":["True"],"reveal":"False, they target bacteria, not viruses."},
+      {"q":"Mount Fuji is an active volcano.","correct":"True","wrong":["False"],"reveal":"True, it last erupted in 1707."},
+      {"q":"There are thought to be more stars in the universe than grains of sand on Earth.","correct":"True","wrong":["False"],"reveal":"True, by most estimates."},
+      {"q":"A 'light-year' is a measure of time.","correct":"False","wrong":["True"],"reveal":"False, it measures distance."},
+      {"q":"Bananas are very slightly radioactive.","correct":"True","wrong":["False"],"reveal":"True, from the potassium they contain."},
+      {"q":"Snow has never fallen in the Sahara.","correct":"False","wrong":["True"],"reveal":"False, it has, on rare occasions."},
+      {"q":"Sharks existed before trees did.","correct":"True","wrong":["False"],"reveal":"True, by tens of millions of years."},
+      {"q":"The '5-second rule' for dropped food is scientifically sound.","correct":"False","wrong":["True"],"reveal":"False, bacteria transfer almost instantly."},
+      {"q":"An octopus has blue blood.","correct":"True","wrong":["False"],"reveal":"True, it's copper-based."},
+      {"q":"The Maya specifically predicted the world would end in 2012.","correct":"False","wrong":["True"],"reveal":"False, a calendar cycle simply ended."},
+      {"q":"Pure water is an excellent conductor of electricity.","correct":"False","wrong":["True"],"reveal":"False, it's a poor conductor; impurities carry current."},
+      {"q":"The Eiffel Tower can be about 15 cm taller in summer.","correct":"True","wrong":["False"],"reveal":"True, the metal expands in heat."},
+      {"q":"Honeybees can learn to recognise human faces.","correct":"True","wrong":["False"],"reveal":"True, studies show they can."},
+      {"q":"Under the right conditions, hot water can freeze faster than cold.","correct":"True","wrong":["False"],"reveal":"True, the Mpemba effect."},
+      {"q":"Mount Kilimanjaro has no permanent ice.","correct":"False","wrong":["True"],"reveal":"False, it still has shrinking glaciers."},
+      {"q":"The human body contains more bacterial cells than human cells.","correct":"True","wrong":["False"],"reveal":"True, roughly comparable or more."},
+      {"q":"Lightning is attracted to metal objects above all else.","correct":"False","wrong":["True"],"reveal":"False, height and shape matter far more than material."},
+      {"q":"A jiffy is an actual unit of time.","correct":"True","wrong":["False"],"reveal":"True, it has defined scientific meanings."},
+      {"q":"Chewing gum stays in your stomach for seven years if swallowed.","correct":"False","wrong":["True"],"reveal":"False, it passes through like other food."}
     ],
     4:[
-      {"q":"The Great Wall of China is one single, continuous wall.","correct":"False","wrong":["True"],"reveal":"False — it's many walls built over centuries."},
-      {"q":"Mount Everest is the largest mountain in the Solar System.","correct":"False","wrong":["True"],"reveal":"False — Olympus Mons on Mars dwarfs it."},
-      {"q":"Centrifugal force is a real fundamental force.","correct":"False","wrong":["True"],"reveal":"False — it's an apparent force in a rotating frame."},
-      {"q":"The blood in your veins is blue until it meets the air.","correct":"False","wrong":["True"],"reveal":"False — blood is always red; veins just look blue."},
-      {"q":"Evolution means individuals adapt during their own lifetime.","correct":"False","wrong":["True"],"reveal":"False — it acts on populations across generations."},
-      {"q":"The Sun is yellow.","correct":"False","wrong":["True"],"reveal":"False — it emits white light; the air tints it."},
-      {"q":"Most diamonds form from compressed coal.","correct":"False","wrong":["True"],"reveal":"False — they form from carbon deep in the mantle, not coal."},
-      {"q":"A penny dropped from a skyscraper could kill a passer-by.","correct":"False","wrong":["True"],"reveal":"False — too light, and it tumbles; it wouldn't."},
-      {"q":"Chimborazo is the highest mountain on Earth above sea level.","correct":"False","wrong":["True"],"reveal":"False — that's Everest; Chimborazo is farthest from Earth's centre."},
-      {"q":"A day on Venus lasts longer than a Venus year.","correct":"True","wrong":["False"],"reveal":"True — it spins that slowly."},
-      {"q":"Bananas are botanically berries, but strawberries are not.","correct":"True","wrong":["False"],"reveal":"True — odd but true."},
-      {"q":"Some metals are light enough to float on water.","correct":"True","wrong":["False"],"reveal":"True — lithium and sodium do."},
-      {"q":"Sound travels faster in warmer air than in cold air.","correct":"True","wrong":["False"],"reveal":"True — speed rises with temperature."},
-      {"q":"Mount Everest's height never changes.","correct":"False","wrong":["True"],"reveal":"False — tectonics and quakes shift it."},
-      {"q":"Stars that twinkle are actually planets.","correct":"False","wrong":["True"],"reveal":"False — planets generally don't twinkle; stars do."},
-      {"q":"You can catch warts by handling toads.","correct":"False","wrong":["True"],"reveal":"False — toad bumps can't give you warts."},
-      {"q":"Polaris, the North Star, is the brightest star in the night sky.","correct":"False","wrong":["True"],"reveal":"False — Sirius is brightest; Polaris is modest."},
-      {"q":"Adding salt makes water boil faster.","correct":"False","wrong":["True"],"reveal":"False — it slightly raises the boiling point."},
-      {"q":"The far side of the Moon never receives sunlight.","correct":"False","wrong":["True"],"reveal":"False — it gets plenty; we just never see it from Earth."},
-      {"q":"An octopus can taste what it touches with its arms.","correct":"True","wrong":["False"],"reveal":"True — its suckers have taste receptors."},
-      {"q":"The preferred plural of 'octopus' is 'octopi'.","correct":"False","wrong":["True"],"reveal":"False — 'octopuses' is preferred; the root is Greek."},
-      {"q":"Bumblebees are aerodynamically incapable of flight.","correct":"False","wrong":["True"],"reveal":"False — a long-debunked myth."},
-      {"q":"Cracking your knuckles causes arthritis.","correct":"False","wrong":["True"],"reveal":"False — studies find no link."},
-      {"q":"The 1815 eruption of Mount Tambora caused a 'year without a summer'.","correct":"True","wrong":["False"],"reveal":"True — 1816 saw global cooling."},
-      {"q":"Lemmings deliberately throw themselves off cliffs en masse.","correct":"False","wrong":["True"],"reveal":"False — a myth from a staged film."},
-      {"q":"Light always travels in a perfectly straight line.","correct":"False","wrong":["True"],"reveal":"False — gravity can bend it."},
-      {"q":"A teaspoon of neutron-star material would weigh billions of tonnes.","correct":"True","wrong":["False"],"reveal":"True — it's astonishingly dense."},
-      {"q":"We lose most of our body heat through our heads.","correct":"False","wrong":["True"],"reveal":"False — loss is roughly proportional to exposed area."},
-      {"q":"Mars looks red because of iron oxide — rust — on its surface.","correct":"True","wrong":["False"],"reveal":"True — that's the cause."},
-      {"q":"The Coriolis effect makes toilets flush the opposite way in each hemisphere.","correct":"False","wrong":["True"],"reveal":"False — plumbing and bowl shape decide it."}
+      {"q":"The Great Wall of China is one single, continuous wall.","correct":"False","wrong":["True"],"reveal":"False, it's many walls built over centuries."},
+      {"q":"Mount Everest is the largest mountain in the Solar System.","correct":"False","wrong":["True"],"reveal":"False, Olympus Mons on Mars dwarfs it."},
+      {"q":"Centrifugal force is a real fundamental force.","correct":"False","wrong":["True"],"reveal":"False, it's an apparent force in a rotating frame."},
+      {"q":"The blood in your veins is blue until it meets the air.","correct":"False","wrong":["True"],"reveal":"False, blood is always red; veins just look blue."},
+      {"q":"Evolution means individuals adapt during their own lifetime.","correct":"False","wrong":["True"],"reveal":"False, it acts on populations across generations."},
+      {"q":"The Sun is yellow.","correct":"False","wrong":["True"],"reveal":"False, it emits white light; the air tints it."},
+      {"q":"Most diamonds form from compressed coal.","correct":"False","wrong":["True"],"reveal":"False, they form from carbon deep in the mantle, not coal."},
+      {"q":"A penny dropped from a skyscraper could kill a passer-by.","correct":"False","wrong":["True"],"reveal":"False, too light, and it tumbles; it wouldn't."},
+      {"q":"Chimborazo is the highest mountain on Earth above sea level.","correct":"False","wrong":["True"],"reveal":"False, that's Everest; Chimborazo is farthest from Earth's centre."},
+      {"q":"A day on Venus lasts longer than a Venus year.","correct":"True","wrong":["False"],"reveal":"True, it spins that slowly."},
+      {"q":"Bananas are botanically berries, but strawberries are not.","correct":"True","wrong":["False"],"reveal":"True, odd but true."},
+      {"q":"Some metals are light enough to float on water.","correct":"True","wrong":["False"],"reveal":"True, lithium and sodium do."},
+      {"q":"Sound travels faster in warmer air than in cold air.","correct":"True","wrong":["False"],"reveal":"True, speed rises with temperature."},
+      {"q":"Mount Everest's height never changes.","correct":"False","wrong":["True"],"reveal":"False, tectonics and quakes shift it."},
+      {"q":"Stars that twinkle are actually planets.","correct":"False","wrong":["True"],"reveal":"False, planets generally don't twinkle; stars do."},
+      {"q":"You can catch warts by handling toads.","correct":"False","wrong":["True"],"reveal":"False, toad bumps can't give you warts."},
+      {"q":"Polaris, the North Star, is the brightest star in the night sky.","correct":"False","wrong":["True"],"reveal":"False, Sirius is brightest; Polaris is modest."},
+      {"q":"Adding salt makes water boil faster.","correct":"False","wrong":["True"],"reveal":"False, it slightly raises the boiling point."},
+      {"q":"The far side of the Moon never receives sunlight.","correct":"False","wrong":["True"],"reveal":"False, it gets plenty; we just never see it from Earth."},
+      {"q":"An octopus can taste what it touches with its arms.","correct":"True","wrong":["False"],"reveal":"True, its suckers have taste receptors."},
+      {"q":"The preferred plural of 'octopus' is 'octopi'.","correct":"False","wrong":["True"],"reveal":"False, 'octopuses' is preferred; the root is Greek."},
+      {"q":"Bumblebees are aerodynamically incapable of flight.","correct":"False","wrong":["True"],"reveal":"False, a long-debunked myth."},
+      {"q":"Cracking your knuckles causes arthritis.","correct":"False","wrong":["True"],"reveal":"False, studies find no link."},
+      {"q":"The 1815 eruption of Mount Tambora caused a 'year without a summer'.","correct":"True","wrong":["False"],"reveal":"True, 1816 saw global cooling."},
+      {"q":"Lemmings deliberately throw themselves off cliffs en masse.","correct":"False","wrong":["True"],"reveal":"False, a myth from a staged film."},
+      {"q":"Light always travels in a perfectly straight line.","correct":"False","wrong":["True"],"reveal":"False, gravity can bend it."},
+      {"q":"A teaspoon of neutron-star material would weigh billions of tonnes.","correct":"True","wrong":["False"],"reveal":"True, it's astonishingly dense."},
+      {"q":"We lose most of our body heat through our heads.","correct":"False","wrong":["True"],"reveal":"False, loss is roughly proportional to exposed area."},
+      {"q":"Mars looks red because of iron oxide, rust, on its surface.","correct":"True","wrong":["False"],"reveal":"True, that's the cause."},
+      {"q":"The Coriolis effect makes toilets flush the opposite way in each hemisphere.","correct":"False","wrong":["True"],"reveal":"False, plumbing and bowl shape decide it."}
     ]
   };
   const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
@@ -624,18 +641,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

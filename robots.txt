@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
 
+# Supabase API paths the games call. Never pages on this domain, so crawling
+# them only produces 404s and wastes crawl budget.
+Disallow: /rest/
+
 Sitemap: https://tierbrain.co/sitemap.xml
 Sitemap: https://tierbrain.co/sitemap-questions.xml
 Sitemap: https://tierbrain.co/sitemap-answers.xml

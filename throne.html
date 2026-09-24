@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A winner-stays-on buzzer duel. Win the question and keep your seat; lose and join the back of the queue. Build a streak and survive to the Grand Finale.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/throne.html">
+<meta property="og:title" content="Hold The Throne">
+<meta property="og:description" content="A winner-stays-on buzzer duel. Win the question and keep your seat; lose and join the back of the queue. Build a streak and survive to the Grand Finale.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/throne.html">
 <script>
 /* Anyone arriving on the old github.io address is moved to the real domain,
@@ -104,7 +111,14 @@
   .hofrow{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.04);border-radius:11px;padding:9px 13px;font-weight:800;}
   .hofrow .em{font-size:18px;}
   .hofrow .nm{flex:1;}
-  .hofrow .st{color:var(--dim);font-size:13px;font-weight:800;}
+  .hofrow .rk{min-width:1.5em;text-align:right;color:var(--dim);font-size:13px;font-weight:800;
+    font-variant-numeric:tabular-nums;}
+  .hofrow .sc{margin-left:auto;font-size:19px;font-weight:800;color:var(--gold-hi);
+    font-variant-numeric:tabular-nums;}
+  .hofrow .lab{color:var(--dim);font-size:11.5px;font-weight:800;letter-spacing:.04em;}
+  .hofrow .fl{color:var(--gold-hi);font-size:10.5px;font-weight:800;letter-spacing:.09em;
+    text-transform:uppercase;border:1px solid rgba(245,178,62,.4);border-radius:999px;padding:2px 8px;}
+  .hofrow.top{background:rgba(245,178,62,.10);}
   .hofrow.legend{background:rgba(245,178,62,.13);border:1px solid rgba(245,178,62,.32);}
   .hofrow.legend .nm{color:var(--gold-hi);}
 
@@ -159,10 +173,10 @@
         <div class="plist" id="plist"><span class="empty" style="color:var(--dim);font-weight:700">Waiting for players to join…</span></div>
         <div class="row">
           <div class="step">Questions
-            <button id="qMinus">–</button><span id="qTot">20</span><button id="qPlus">+</button>
+            <button id="qMinus" aria-label="Fewer questions">–</button><span id="qTot">20</span><button id="qPlus" aria-label="More questions">+</button>
           </div>
           <div class="step">Answer time
-            <button id="tMinus">–</button><span id="tTot">4s</span><button id="tPlus">+</button>
+            <button id="tMinus" aria-label="Less answer time">–</button><span id="tTot">4s</span><button id="tPlus" aria-label="More answer time">+</button>
           </div>
           <label class="livetog"><input type="checkbox" id="liveToggle" checked> Living-room</label>
         </div>
@@ -214,7 +228,7 @@
 
 <script>
 /* ============================================================
-   TierBrain shareable score card — drop-in module
+   TierBrain shareable score card, drop-in module
    Usage: TBShare.open({ game, kicker, big, lines, footer, accent })
    game:   short slug used in the filename, e.g. 'creak'
    kicker: small caps label, e.g. 'CREAK & COIL'
@@ -579,13 +593,42 @@ async function createRoom(){
 }
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
 async function writeLegend(winner, flawless){ if(!winner) return; try{ await sb('legends',{method:'POST',body:JSON.stringify({ name:winner.name, game:'throne', streak:(G.bestStreak[winner.id]||0), flawless:!!flawless, questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() })}); }catch(e){} loadLegends(); }
-async function loadLegends(){ let r=[]; try{ r=await sb('legends?game=eq.throne&select=name,streak,flawless,created_at&order=created_at.desc&limit=8')||[]; }catch(e){} renderLegends(r); }
-function renderLegends(list){ const el=$('hofList'); if(!el) return; if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet. Be the first!</span>'; return; }
-  el.innerHTML=''; list.forEach(function(L){ const row=document.createElement('div'); row.className='hofrow'+(L.flawless?' legend':'');
-    const c=document.createElement('span'); c.className='em'; c.textContent=L.flawless?'👑':'🏅';
-    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||',';
-    const st=document.createElement('span'); st.className='st'; st.textContent=(L.flawless?'Flawless legend':'Champion')+(L.streak?(' · streak '+L.streak):'');
-    row.appendChild(c); row.appendChild(nm); row.appendChild(st); el.appendChild(row); }); }
+/* A hall of fame ordered by date is a log, not a leaderboard. Rank on the
+   streak, because that is the thing the game is actually about: how long you
+   held the throne. A flawless run keeps its crown as the rarer honour, but it
+   does not jump the queue, so the number you see is the number you are ranked
+   on. Pull a wider slice so we can keep only each person's best run. */
+async function loadLegends(){ let r=[];
+  try{ r=await sb('legends?game=eq.throne&select=name,streak,flawless,created_at&order=streak.desc,created_at.desc&limit=60')||[]; }catch(e){}
+  const best={};
+  (r||[]).forEach(function(L){
+    const k=(L.name||'?').trim().toLowerCase();
+    const cur=best[k];
+    if(!cur || (L.streak||0)>(cur.streak||0) || ((L.streak||0)===(cur.streak||0) && L.flawless && !cur.flawless)){ best[k]=L; }
+  });
+  const list=Object.keys(best).map(function(k){ return best[k]; })
+    .sort(function(a,b){
+      return (b.streak||0)-(a.streak||0)
+          || (b.flawless?1:0)-(a.flawless?1:0)
+          || (Date.parse(b.created_at||0)-Date.parse(a.created_at||0));
+    }).slice(0,10);
+  renderLegends(list); }
+function renderLegends(list){ const el=$('hofList'); if(!el) return;
+  if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet. Be the first!</span>'; return; }
+  el.innerHTML='';
+  list.forEach(function(L,i){
+    const row=document.createElement('div');
+    row.className='hofrow'+(L.flawless?' legend':'')+(i===0?' top':'');
+    const rk=document.createElement('span'); rk.className='rk'; rk.textContent=(i+1);
+    const c=document.createElement('span'); c.className='em';
+    c.textContent = L.flawless ? '👑' : (i===0?'🥇':(i===1?'🥈':(i===2?'🥉':'🏅')));
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=L.name||'?';
+    const sc=document.createElement('span'); sc.className='sc'; sc.textContent=(L.streak||0);
+    const lab=document.createElement('span'); lab.className='lab'; lab.textContent=(L.streak===1?'win':'wins');
+    row.appendChild(rk); row.appendChild(c); row.appendChild(nm); row.appendChild(sc); row.appendChild(lab);
+    if(L.flawless){ const f=document.createElement('span'); f.className='fl'; f.textContent='flawless'; row.insertBefore(f,sc); }
+    el.appendChild(row);
+  }); }
 
 function livePlayers(){ const now=Date.now(); return G.players.filter(p=>{ const t=p.last_seen?Date.parse(p.last_seen):0; return (now-t)<STALE_MS || !p.last_seen; }); }
 function isLive(id){ return livePlayers().some(p=>p.id===id); }
@@ -762,7 +805,7 @@ function render(){
       setTimeout(function(){ var sb=$('banShare'); if(!sb) return; sb.onclick=function(){
         var winnerName=(G.winner&&G.winner.name)||'Someone';
         var lines=[]; if(sk&&sk.s>0) lines.push('Longest streak: '+sk.s+' by '+sk.name+'.');
-        if(su.flawless) lines.push('A flawless run \u2014 never lost the throne.');
+        if(su.flawless) lines.push('A flawless run, never lost the throne.');
         lines.push('After '+G.qTotal+' questions.');
         TBShare.open({ game:'throne', kicker:'Hold The Throne', big:winnerName, lines:lines,
           footer:'Think you can dethrone them?', accent:'#f5b23e',

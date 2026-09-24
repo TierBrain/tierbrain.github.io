@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Five Clues — TierBrain</title>
+<meta name="description" content="Guess the hidden answer from clues revealed one at a time: the fewer you need, the more points you score.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/five-clues.html">
+<meta property="og:title" content="Five Clues">
+<meta property="og:description" content="Guess the hidden answer from clues revealed one at a time: the fewer you need, the more points you score.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/five-clues.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Five Clues | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -199,7 +216,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Guess in as few clues as you can</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">Guess the hidden answer in as few clues as you can. Solve early for more points — across four tiers, up to Legends. Each clue runs on its own short timer.</p>
+    <p class="lead">Guess the hidden answer in as few clues as you can. Solve early for more points, across four tiers, up to Legends. Each clue runs on its own short timer.</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Fewer clues, more points:</b> solve on clue 1 for 5 points, down to 1 point on clue 5.</span></div>
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> solve 2 rounds in a row to move up a difficulty level.</span></div>
@@ -208,7 +225,7 @@
     </div>
     <div class="timelabel">Time per clue</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start</button>
@@ -245,7 +262,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Time is up — here's how far you climbed.</p>
+    <p class="lead">Time is up. Here's how far you climbed.</p>
     <p class="statline">You played <b id="tuAns">0</b> rounds<br>and scored <b id="tuCorr">0</b> points</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -265,7 +282,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -328,7 +345,7 @@
   }
   function clueTimeUp(){
     if(locked||!playing) return;
-    if(cluesShown<5){ revealNext(); clueMsg('Time \u2014 next clue', getCSS('--l2')); }
+    if(cluesShown<5){ revealNext(); clueMsg('Time, next clue', getCSS('--l2')); }
     else { solveRound(false); }
   }
   function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
@@ -373,7 +390,7 @@
     if(locked||!playing) return;
     const g=$('guessInput').value||''; if(!g.trim()) return;
     if(isRight(g)){ solveRound(true); return; }
-    if(cluesShown<5){ revealNext(); $('guessInput').value=''; clueMsg('Not quite \u2014 here is another clue.', getCSS('--l2')); sWrong(); }
+    if(cluesShown<5){ revealNext(); $('guessInput').value=''; clueMsg('Not quite, here is another clue.', getCSS('--l2')); sWrong(); }
     else { solveRound(false); }
   }
   function nextClue(){
@@ -398,7 +415,7 @@
     if(success){
       savedMs+=clueRemaining();
       const pts=6-cluesShown; correct+=pts; sRight(); streakW=0; streakC++;
-      clueMsg('Solved! +'+pts+' \u2014 '+current.answer, getCSS('--right'));
+      clueMsg('Solved! +'+pts+', '+current.answer, getCSS('--right'));
       if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
     } else {
       totalWrong++; sWrong(); streakC=0; streakW++; renderStrikes();
@@ -528,18 +545,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

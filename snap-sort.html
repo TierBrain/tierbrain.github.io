@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Snap Sort — TierBrain</title>
+<meta name="description" content="Tap left or right to bin each item before its timer runs out: build a streak, but three misses ends your run.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/snap-sort.html">
+<meta property="og:title" content="Snap Sort">
+<meta property="og:description" content="Tap left or right to bin each item before its timer runs out: build a streak, but three misses ends your run.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/snap-sort.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Snap Sort | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
@@ -229,16 +246,16 @@
   <div class="screen" id="startScreen">
     <div class="sub">Tap the right bin, fast</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">Items drop in one at a time — tap the correct bin before the timer runs out. A hot streak climbs the tiers; three misses and you are out.</p>
+    <p class="lead">Items drop in one at a time, tap the correct bin before the timer runs out. A hot streak climbs the tiers; three misses and you are out.</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Two bins:</b> tap left or right to sort each item.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Climb up:</b> a streak of 3 correct bumps you up a tier — items get trickier and the timer shorter.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Climb up:</b> a streak of 3 correct bumps you up a tier, items get trickier and the timer shorter.</span></div>
       <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Three lives:</b> a wrong tap or a timed-out item costs a life; lose all three and you are out.</span></div>
       <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Snap to it:</b> every item is on a quick timer that shrinks as you climb.</span></div>
     </div>
     <div class="timelabel">Reaction speed</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start</button>
@@ -275,7 +292,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -295,7 +312,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -415,7 +432,7 @@
     if(busy||!playing) return; busy=true;
     $('leftBtn').disabled=true; $('rightBtn').disabled=true;
     totalWrong++; streakC=0; renderStrikes(); sWrong(); flash('bad');
-    $('itemLabel').textContent=current.label+'  \u2014  too slow';
+    $('itemLabel').textContent=current.label+', too slow';
     updateHud();
     setTimeout(function(){ if(!playing) return; if(totalWrong>=LIVES){ endOut(); return; } newItem(); }, 680);
   }
@@ -532,18 +549,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

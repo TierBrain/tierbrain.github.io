@@ -3,7 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Claim the Board — TierBrain</title>
+<meta name="description" content="A frontier land rush. Stake claims across the board by answering, jump the Rustler&#x27;s plots with two right in a row, and hold the most land at the end.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/claim.html">
+<meta property="og:title" content="Claim the Board">
+<meta property="og:description" content="A frontier land rush. Stake claims across the board by answering, jump the Rustler&#x27;s plots with two right in a row, and hold the most land at the end.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/claim.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Claim the Board | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Rye&display=swap" rel="stylesheet">
@@ -109,13 +126,13 @@
     <h1 class="title">Claim the Board</h1>
     <p class="lead">Stake your claim across the frontier. Tap open land on your border and answer to claim it; jump the Rustler&rsquo;s plots with two right in a row. Hold the most land when the dust settles.</p>
     <div class="howto">
-      <div class="howline"><span class="pip" style="background:var(--you)"></span>Your border <small>&mdash; answer to claim open land</small></div>
-      <div class="howline"><span class="pip" style="background:var(--riv)"></span>Rustler&rsquo;s land <small>&mdash; two in a row to jump the claim</small></div>
+      <div class="howline"><span class="pip" style="background:var(--you)"></span>Your border<small>: answer to claim open land</small></div>
+      <div class="howline"><span class="pip" style="background:var(--riv)"></span>Rustler&rsquo;s land<small>: two in a row to jump the claim</small></div>
       <div class="howline"><span class="pip" style="background:var(--free);border:1px dashed var(--dash)"></span>Most plots when the board&rsquo;s full wins</div>
     </div>
     <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="Your name" autocomplete="off"></div>
     <div class="field"><label>Frontier</label><div class="chips" id="tierRow"></div></div>
-    <div class="field"><label>Posse code (optional &mdash; share a board)</label><input id="codeIn" maxlength="24" placeholder="e.g. DEADWOOD" autocomplete="off"></div>
+    <div class="field"><label>Posse code (optional: share a board)</label><input id="codeIn" maxlength="24" placeholder="e.g. DEADWOOD" autocomplete="off"></div>
     <button id="startBtn" class="cta">Ride out</button>
     <button id="boardBtn" class="linkbtn">View leaderboard</button>
     <div class="err" id="menuErr"></div>
@@ -200,10 +217,10 @@
     rows.slice(0,10).forEach(function(r,i){ var li=document.createElement('li'); li.className='brow'+(hi&&r.t===hi?' me':'');
       li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span><span class="bsc">'+r.correct+' plots<br><span class="bmeta">'+(r.level?'won':'lost')+'</span></span>'; list.appendChild(li); }); }
   function setMode(){ var I=ids(),t=$(I.t); if(t) t.textContent=shared()?('Posse \u00b7 '+groupCode()):'This device'; }
-  function renderLocal(hi){ var I=ids(); renderRows(BOARD,hi); var e=$(I.e); e.textContent='No claims filed yet \u2014 stake the first!'; e.classList.toggle('hidden',BOARD.length>0); setMode(); }
+  function renderLocal(hi){ var I=ids(); renderRows(BOARD,hi); var e=$(I.e); e.textContent='No claims filed yet, stake the first!'; e.classList.toggle('hidden',BOARD.length>0); setMode(); }
   function refreshShared(hi){ var I=ids(); setMode(); var list=$(I.l); $(I.e).classList.add('hidden'); list.innerHTML='<li class="bload">Loading\u2026</li>';
-    return sbLoad().then(function(b){ BOARD=b; renderRows(BOARD,hi); $(I.e).textContent='No claims in this posse yet \u2014 stake the first!'; $(I.e).classList.toggle('hidden',BOARD.length>0); })
-      .catch(function(){ list.innerHTML=''; $(I.e).textContent='Couldn\u2019t reach the shared board \u2014 check your connection.'; $(I.e).classList.remove('hidden'); }); }
+    return sbLoad().then(function(b){ BOARD=b; renderRows(BOARD,hi); $(I.e).textContent='No claims in this posse yet, stake the first!'; $(I.e).classList.toggle('hidden',BOARD.length>0); })
+      .catch(function(){ list.innerHTML=''; $(I.e).textContent='Couldn\u2019t reach the shared board, check your connection.'; $(I.e).classList.remove('hidden'); }); }
   function showBoard(hi){ if(shared()) refreshShared(hi); else { loadLocal(); renderLocal(hi); } }
   function saveScore(){ if(!lastRun||boardBusy) return; var name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Drifter'; lsSet(NAME_KEY,name);
     var entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
@@ -260,7 +277,7 @@
     Array.prototype.forEach.call($('qOpts').children,function(b){ b.style.pointerEvents='none'; });
     if(ok){ if(btn) btn.classList.add('good'); sfxClaim(); modal.have++;
       if(modal.have>=modal.need){ $('qFx').textContent=modal.need>1?'Claim jumped!':'Claimed!'; $('qFx').style.color='var(--right)'; var R=modal.r,C=modal.c; setTimeout(function(){ G.g[R][C]=YOU; closeQ(); refreshBoard(); checkEnd(); },560); }
-      else { $('qFx').textContent='Got it \u2014 one more!'; $('qFx').style.color='var(--you)'; setTimeout(function(){ modal.locked=false; nextQ(); },680); } }
+      else { $('qFx').textContent='Got it, one more!'; $('qFx').style.color='var(--you)'; setTimeout(function(){ modal.locked=false; nextQ(); },680); } }
     else { if(btn) btn.classList.add('bad'); sfxMiss(); Array.prototype.forEach.call($('qOpts').children,function(b,i){ if(modal.cur.opts[i].ok) b.classList.add('good'); });
       cool[modal.r+'-'+modal.c]=Date.now()+COOLMS; $('qFx').textContent=(btn?'Missed!':'Too slow!')+' The claim cools off.'; $('qFx').style.color='var(--wrong)';
       setTimeout(function(){ closeQ(); refreshBoard(); },1000); } }

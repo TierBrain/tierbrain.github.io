@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Recall — TierBrain</title>
+<meta name="description" content="Watch the pattern light up, then tap it back. It grows every round: pure memory.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/recall.html">
+<meta property="og:title" content="Recall">
+<meta property="og:description" content="Watch the pattern light up, then tap it back. It grows every round: pure memory.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/recall.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Recall | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -180,10 +197,10 @@
   <div id="qcard">
     <div class="padStatus" id="padStatus">Get ready…</div>
     <div class="padgrid" id="padgrid">
-      <button type="button" class="pad p0" id="pad0"></button>
-      <button type="button" class="pad p1" id="pad1"></button>
-      <button type="button" class="pad p2" id="pad2"></button>
-      <button type="button" class="pad p3" id="pad3"></button>
+      <button type="button" class="pad p0" id="pad0" aria-label="Red pad"></button>
+      <button type="button" class="pad p1" id="pad1" aria-label="Green pad"></button>
+      <button type="button" class="pad p2" id="pad2" aria-label="Yellow pad"></button>
+      <button type="button" class="pad p3" id="pad3" aria-label="Blue pad"></button>
     </div>
   </div>
 
@@ -193,16 +210,16 @@
   <div class="screen" id="startScreen">
     <div class="sub">Recall</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">A pattern lights up across four pads — watch, then tap it back in the same order. Each round adds one more step. No trivia, just nerve: how long a chain can you hold?</p>
+    <p class="lead">A pattern lights up across four pads, watch, then tap it back in the same order. Each round adds one more step. No trivia, just nerve: how long a chain can you hold?</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Watch &amp; repeat:</b> the pattern lights up — tap it back in order.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Watch &amp; repeat:</b> the pattern lights up, tap it back in order.</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>It grows:</b> each round adds one step. Clear 20 rounds to win.</span></div>
       <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 slips in total ends your run.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> 2 minutes — and it speeds up as you climb.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> 2 minutes, and it speeds up as you climb.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Game</button>
@@ -239,7 +256,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
     <p class="statline">You cleared <b id="tuAns">0</b> rounds<b id="tuCorr" hidden></b></p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -259,7 +276,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -342,7 +359,7 @@
     let i=0; const sp=SPEED[level];
     (function step(){
       if(!playing) return;
-      if(i>=sequence.length){ accepting=true; $('padgrid').classList.remove('playing'); $('padStatus').textContent='Your turn \u2014 repeat it'; return; }
+      if(i>=sequence.length){ accepting=true; $('padgrid').classList.remove('playing'); $('padStatus').textContent='Your turn, repeat it'; return; }
       lightPad(sequence[i]); i++; setTimeout(step, sp);
     })();
   }
@@ -370,14 +387,14 @@
         accepting=false; correct=sequence.length; answered=sequence.length; streakW=0; sRight();
         $('progbar').style.width=(correct/20*100)+'%';
         if(correct>=20){ setTimeout(()=>{ if(playing) endDone(); }, 520); return; }
-        $('padStatus').textContent='Nice — next round\u2026';
+        $('padStatus').textContent='Nice, next round\u2026';
         setTimeout(()=>{ if(playing) startRound(); }, 680);
       }
     } else {
       accepting=false; sWrong(); totalWrong++; streakW++; renderStrikes();
       const g=$('padgrid'); g.classList.add('shake'); setTimeout(()=>g.classList.remove('shake'),420);
       if(totalWrong>=4){ setTimeout(()=>{ if(playing) endOut(); }, 520); return; }
-      $('padStatus').textContent='Missed — watch again\u2026';
+      $('padStatus').textContent='Missed, watch again\u2026';
       setTimeout(()=>{ if(playing){ inputPos=0; $('padStatus').textContent='Watch the pattern\u2026'; $('padgrid').classList.add('playing'); playSeq(); } }, 950);
     }
   }
@@ -492,18 +509,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

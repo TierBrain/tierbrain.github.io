@@ -4,13 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>The Quiet Line</title>
-<meta name="description" content="A decoding puzzle. A clue tells you what to find, a line of digits tells you how it is spelled. Decode every word to recover the transmission.">
+<meta name="description" content="A decoding puzzle. Words arrive as keypad digits over a failing signal. Decode each one and it gives up a letter of the hidden transmission.">
 <link rel="canonical" href="https://tierbrain.co/quiet-line.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <meta name="theme-color" content="#171a17">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/quiet-line.html">
 <meta property="og:title" content="The Quiet Line">
-<meta property="og:description" content="Words arrive spelled in keypad digits. Decode them all to recover the transmission.">
+<meta property="og:description" content="A decoding puzzle. Words arrive as keypad digits over a failing signal. Decode each one and it gives up a letter of the hidden transmission.">
 <meta property="og:image" content="https://tierbrain.co/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -250,7 +259,7 @@
 <script>
 
 /* ============================================================
-   TierBrain shareable score card — drop-in module
+   TierBrain shareable score card, drop-in module
    Usage: TBShare.open({ game, kicker, big, lines, footer, accent })
    game:   short slug used in the filename, e.g. 'creak'
    kicker: small caps label, e.g. 'CREAK & COIL'
@@ -577,7 +586,7 @@ function endRun(completed){
 
   $('transcript').innerHTML = log.map(function(e){
     const L = e.word.replace(/[^A-Za-z]/g,'').toUpperCase()[0];
-    return '<div class="' + (e.ok ? 'ok' : 'no') + '">' + L + ' &nbsp; ' + e.word + (e.ok ? '' : ' &mdash; missed') + '</div>';
+    return '<div class="' + (e.ok ? 'ok' : 'no') + '">' + L + ' &nbsp; ' + e.word + (e.ok ? '' : ', missed') + '</div>';
   }).join('');
 
   $('endScreen').classList.remove('hide');

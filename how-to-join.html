@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="How to join a TierBrain multiplayer game. Open the game on a big screen, then everyone scans the code on their phone. No app, no sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/how-to-join.html">
+<meta property="og:title" content="How to join a game">
+<meta property="og:description" content="How to join a TierBrain multiplayer game. Open the game on a big screen, then everyone scans the code on their phone. No app, no sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/how-to-join.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>How to Join | Game Show</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo:#0e1230; --indigo2:#070915; --panel:#141834;
+    --gold:#f5b23e; --gold-hi:#ffd47a; --teal:#2fb6a6; --teal-hi:#79e6d8;
+    --ink:#f6f0e2; --ink-dim:#b9b2a2; --line:rgba(245,178,62,.22);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#05060d; font-family:'Nunito',system-ui,sans-serif; color:var(--ink); display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px;}
+  .poster{
+    position:relative; width:210mm; max-width:100%; aspect-ratio:210/297; overflow:hidden;
+    background:
+      radial-gradient(80% 45% at 50% 0%, rgba(245,178,62,.16), transparent 60%),
+      linear-gradient(180deg, var(--indigo), var(--indigo2));
+    padding:16mm 15mm; display:flex; flex-direction:column;
+  }
+  .poster.teal{ background:
+      radial-gradient(80% 45% at 50% 0%, rgba(47,182,166,.18), transparent 60%),
+      linear-gradient(180deg, var(--indigo), var(--indigo2)); }
+  .accent{ --a:var(--gold); --ahi:var(--gold-hi); }
+  .poster.teal .accent, .poster.teal{ --a:var(--teal); --ahi:var(--teal-hi); }
+
+  .eyebrow{ font-weight:800; letter-spacing:.32em; text-transform:uppercase; font-size:12pt; color:var(--gold-hi); }
+  .poster.teal .eyebrow{ color:var(--teal-hi); }
+  .eyebrow .dim{ color:var(--ink-dim); letter-spacing:.16em; }
+  .title{ font-family:'Fraunces',serif; font-weight:600; font-size:52pt; line-height:.98; margin:6mm 0 3mm; }
+  .title b{ color:var(--gold-hi); font-weight:700; }
+  .poster.teal .title b{ color:var(--teal-hi); }
+  .lede{ font-size:15pt; font-weight:700; color:var(--ink-dim); margin-bottom:9mm; }
+
+  .steps{ display:flex; flex-direction:column; gap:6mm; }
+  .step{ display:grid; grid-template-columns:auto 1fr; gap:6mm; align-items:start; }
+  .num{ width:15mm; height:15mm; border-radius:50%; border:2px solid var(--gold); color:var(--gold-hi);
+    font-family:'Fraunces',serif; font-weight:700; font-size:22pt; display:flex; align-items:center; justify-content:center; }
+  .poster.teal .num{ border-color:var(--teal); color:var(--teal-hi); }
+  .step .body{ padding-top:1mm; }
+  .step h3{ font-family:'Fraunces',serif; font-weight:600; font-size:19pt; line-height:1.1; }
+  .step p{ font-size:13pt; font-weight:700; color:var(--ink-dim); margin-top:1.5mm; }
+  .step .url{ color:var(--gold-hi); }
+  .poster.teal .step .url{ color:var(--teal-hi); }
+
+  .board{ margin:8mm 0 0; background:linear-gradient(180deg,#241a12,#160f0a); border:2px solid #3a2a1c; border-radius:5mm;
+    padding:6mm; display:flex; align-items:center; gap:7mm; }
+  .board .qr{ width:26mm; height:26mm; flex:0 0 auto; background:#faf5e9; border-radius:3mm; padding:2.5mm;
+    display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(5,1fr); gap:1mm; }
+  .board .qr i{ background:#160f0a; border-radius:.6mm; }
+  .board .qr i.off{ background:transparent; }
+  .board .txt{ flex:1; }
+  .board .cap{ font-weight:800; letter-spacing:.22em; text-transform:uppercase; font-size:10pt; color:#c39a5e; }
+  .slots{ display:flex; gap:2.5mm; margin-top:3mm; }
+  .slot{ width:12mm; height:16mm; background:linear-gradient(180deg,#faf5e9,#e6d8bd); border-radius:2mm; color:#241a12;
+    font-family:'Fraunces',serif; font-weight:700; font-size:22pt; display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 -1.5mm 0 rgba(0,0,0,.12); }
+  .board .note{ font-size:11.5pt; font-weight:800; color:var(--ink-dim); margin-top:3mm; }
+
+  .tips{ margin-top:auto; padding-top:7mm; border-top:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:3mm 8mm; }
+  .tip{ font-size:11.5pt; font-weight:700; color:var(--ink-dim); }
+  .tip b{ color:var(--ink); }
+  .foot{ margin-top:6mm; text-align:center; font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:12pt; }
+  .sunburst{ position:absolute; top:-14mm; left:50%; transform:translateX(-50%); width:60mm; height:60mm;
+    background:radial-gradient(circle, rgba(255,212,122,.35), transparent 62%); filter:blur(4px); pointer-events:none; }
+
+  @media print{
+    @page{ size:A4 portrait; margin:0; }
+    body{ background:#fff; padding:0; gap:0; }
+    .poster{ width:210mm; height:297mm; max-width:none; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .poster:last-child{ page-break-after:auto; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ POSTER 1 · CHAPTER & VERSE ============ -->
+  <section class="poster accent">
+    <div class="sunburst"></div>
+    <div class="eyebrow">Chapter &amp; Verse <span class="dim">· a Bible game show</span></div>
+    <div class="title">How to <b>join</b></div>
+    <div class="lede">It takes about 20 seconds. Just grab your phone.</div>
+
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div class="body">
+        <h3>Open your phone's camera</h3>
+        <p>Point it at the QR code on the big screen. No app needed.</p></div></div>
+      <div class="step"><div class="num">2</div><div class="body">
+        <h3>Tap the link that pops up</h3>
+        <p>Or type <span class="url">tierbrain.github.io/play.html</span> into your browser.</p></div></div>
+      <div class="step"><div class="num">3</div><div class="body">
+        <h3>Enter the code &amp; your name</h3>
+        <p>The 5-letter code is on the big screen. Your name shows on the scoreboard.</p></div></div>
+      <div class="step"><div class="num">4</div><div class="body">
+        <h3>Tap your team, then play</h3>
+        <p>Choose <b>Youth</b> or <b>Adults</b>. Read each question on the big screen and answer on your phone.</p></div></div>
+    </div>
+
+    <div class="board">
+      <div class="qr" aria-hidden="true">
+        <i></i><i></i><i class="off"></i><i></i><i></i>
+        <i></i><i class="off"></i><i></i><i class="off"></i><i></i>
+        <i class="off"></i><i></i><i></i><i></i><i class="off"></i>
+        <i></i><i class="off"></i><i></i><i class="off"></i><i></i>
+        <i></i><i></i><i class="off"></i><i></i><i></i>
+      </div>
+      <div class="txt">
+        <div class="cap">On the big screen</div>
+        <div class="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+        <div class="note">Scan the QR, or type the 5-letter code shown up front.</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <div class="tip"><b>Turn your ringer on</b> so you hear the buzzer.</div>
+      <div class="tip"><b>Keep your screen awake</b> and this page open.</div>
+      <div class="tip"><b>One phone per person</b>, everyone plays.</div>
+      <div class="tip"><b>Dropped out?</b> Just rejoin with the same code.</div>
+    </div>
+    <div class="foot">Eyes up front. Let the show begin.</div>
+  </section>
+
+  <!-- ============ POSTER 2 · THE BIG QUIZ ============ -->
+  <section class="poster teal accent">
+    <div class="sunburst"></div>
+    <div class="eyebrow">The Big Quiz <span class="dim">· a general knowledge game show</span></div>
+    <div class="title">How to <b>join</b></div>
+    <div class="lede">It takes about 20 seconds. Just grab your phone.</div>
+
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div class="body">
+        <h3>Open your phone's camera</h3>
+        <p>Point it at the QR code on the big screen. No app needed.</p></div></div>
+      <div class="step"><div class="num">2</div><div class="body">
+        <h3>Tap the link that pops up</h3>
+        <p>Or type <span class="url">tierbrain.github.io/play-gen.html</span> into your browser.</p></div></div>
+      <div class="step"><div class="num">3</div><div class="body">
+        <h3>Enter the code &amp; your name</h3>
+        <p>The 5-letter code is on the big screen. Your name shows on the scoreboard.</p></div></div>
+      <div class="step"><div class="num">4</div><div class="body">
+        <h3>Pick a side, then play</h3>
+        <p>Join <b>Team A</b> or <b>Team B</b>. Read each question on the big screen and answer on your phone.</p></div></div>
+    </div>
+
+    <div class="board">
+      <div class="qr" aria-hidden="true">
+        <i></i><i class="off"></i><i></i><i></i><i class="off"></i>
+        <i></i><i></i><i class="off"></i><i></i><i></i>
+        <i class="off"></i><i></i><i></i><i class="off"></i><i></i>
+        <i></i><i></i><i class="off"></i><i></i><i class="off"></i>
+        <i class="off"></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="txt">
+        <div class="cap">On the big screen</div>
+        <div class="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+        <div class="note">Scan the QR, or type the 5-letter code shown up front.</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <div class="tip"><b>Turn your ringer on</b> so you hear the buzzer.</div>
+      <div class="tip"><b>Keep your screen awake</b> and this page open.</div>
+      <div class="tip"><b>One phone per person</b>, everyone plays.</div>
+      <div class="tip"><b>Dropped out?</b> Just rejoin with the same code.</div>
+    </div>
+    <div class="foot">Eyes up front. Let the quiz begin.</div>
+  </section>
+
+</body>
+</html>

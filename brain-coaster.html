@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Brain Coaster — TierBrain</title>
+<meta name="description" content="A quiz that powers a rollercoaster: answer right to crest the hill and plunge. Keep your streak alive; three brakes ends the ride.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/brain-coaster.html">
+<meta property="og:title" content="Brain Coaster">
+<meta property="og:description" content="A quiz that powers a rollercoaster: answer right to crest the hill and plunge. Keep your streak alive; three brakes ends the ride.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/brain-coaster.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Brain Coaster | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -133,7 +150,7 @@
   <div id="qpanel">
     <div class="qchain"><i id="chain"></i></div>
     <div class="qbox">
-      <div class="qtext" id="qtext">—</div>
+      <div class="qtext" id="qtext">–</div>
       <div class="opts" id="opts"></div>
     </div>
   </div>
@@ -141,9 +158,9 @@
   <!-- START -->
   <div class="scr" id="startScr">
     <div class="logo display">Brain&nbsp;Coaster</div>
-    <div class="tag">Every right answer powers the climb — crest the hill and <b>plunge</b>. Keep the chain rolling.</div>
+    <div class="tag">Every right answer powers the climb, crest the hill and <b>plunge</b>. Keep the chain rolling.</div>
     <div class="how">
-      <div class="row"><span class="ic">✅</span><span>Answer right to crest the hill and drop — that's one hill cleared.</span></div>
+      <div class="row"><span class="ic">✅</span><span>Answer right to crest the hill and drop, that's one hill cleared.</span></div>
       <div class="row"><span class="ic">🛑</span><span>Wrong or too slow slams the brakes. Three brakes and the ride's over.</span></div>
       <div class="row"><span class="ic">🔥</span><span>Answer fast and keep a streak for a faster, wilder ride.</span></div>
     </div>
@@ -162,12 +179,12 @@
     <div class="inputs">
       <label for="nameInput">Your name</label>
       <input id="nameInput" type="text" maxlength="18" placeholder="Rider" autocomplete="off">
-      <label for="groupInput">Group code (optional — to share a leaderboard)</label>
+      <label for="groupInput">Group code (optional: to share a leaderboard)</label>
       <input id="groupInput" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     </div>
     <div class="board" id="board">
       <h4><span id="boardTitle">This device</span><span id="boardYou"></span></h4>
-      <div id="boardList"><div class="muted">—</div></div>
+      <div id="boardList"><div class="muted">–</div></div>
     </div>
     <div class="row2">
       <button class="btn" id="againBtn">Ride again ›</button>
@@ -557,7 +574,7 @@ function categoryComplete(){
 function showCelebration(){
   const c=catOf(activeCat);
   $('celebTitle').textContent = perfectCat ? 'Flawless track!' : 'Track complete!';
-  $('celebSub').innerHTML = 'You conquered <b>'+esc(c.label)+'</b>'+(perfectCat?' \u2014 not a single miss \u2b50':'')+' \ud83c\udf89';
+  $('celebSub').innerHTML = 'You conquered <b>'+esc(c.label)+'</b>'+(perfectCat?', not a single miss \u2b50':'')+' \ud83c\udf89';
   $('celebScore').textContent = score;
   const done=TOUR.filter(function(k){return tourDone[k];}).length;
   $('celebProg').textContent = done+' / '+TOUR.length+' tracks cleared';
@@ -581,7 +598,7 @@ function grandFinale(){
   for(let i=0;i<6;i++) sparkle(cartX, yTrack(cartX)-26, (i%2)?'#ffd36b':'#ff5db0', 18);
   $('rHills').textContent=score; $('rStreak').textContent=bestStreak;
   let best=parseInt(lsGet(BEST_KEY)||'0',10); if(score>best){ best=score; lsSet(BEST_KEY,String(best)); }
-  $('rBest').textContent='You cleared every track \u2014 '+score+' correct in one ride!';
+  $('rBest').textContent='You cleared every track, '+score+' correct in one ride!';
   $('overTitle').textContent='\ud83c\udfc6 Grand Tour complete!';
   $('overScr').classList.remove('hide');
   finaleBoard();
@@ -593,7 +610,7 @@ async function finaleBoard(){
   try{ await submitRow('qc_braincoaster','global',name,score,bestStreak); }catch(e){}
   if(groupCode()){ try{ await submitRow('qc_braincoaster',groupCode(),name,score,bestStreak); }catch(e){} }
   try{ const rows=await fetchBoard('qc_braincoaster','global'); renderBoard(rows,list); }
-  catch(e){ list.innerHTML='<div class="muted">You\u2019ve conquered every track \u2014 a true champion! (The Wall was unreachable just now; your run is saved on this device.)</div>'; }
+  catch(e){ list.innerHTML='<div class="muted">You\u2019ve conquered every track, a true champion! (The Wall was unreachable just now; your run is saved on this device.)</div>'; }
 }
 
 /* ---------------- update loop ---------------- */
@@ -870,7 +887,7 @@ function renderBoard(rows,list){
   let shown=false;
   list.innerHTML=rows.map(function(r,i){ const mine=(r.name||'').toLowerCase()===me && !shown; if(mine) shown=true;
     return '<div class="lrow'+(mine?' me':'')+'"><span class="rk">'+(i+1)+'</span>'
-      +'<span class="nm">'+esc(r.name||'\u2014')+'</span>'
+      +'<span class="nm">'+esc(r.name||'\u2013')+'</span>'
       +'<span class="sc">'+(r.correct|0)+'</span></div>';
   }).join('');
 }
@@ -881,7 +898,7 @@ async function submitAndLoad(){
   list.innerHTML='<div class="muted">Loading the leaderboard…</div>';
   if(score>0){ try{ await submitScore(); }catch(e){} }
   try{ const rows=await fetchTop(); renderBoard(rows,list); }
-  catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard right now \u2014 your best is saved on this device.</div>'; }
+  catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard right now, your best is saved on this device.</div>'; }
 }
 
 /* ---------------- audio (optional) ---------------- */
@@ -910,7 +927,7 @@ function buildCats(){
   CATS.forEach(function(c){
     const b=document.createElement('button');
     b.className='cat-btn'+(c.key==='mixed'?' mixed':'');
-    b.innerHTML='<span class="ci">'+c.ic+'</span><span>'+(c.key==='mixed'?'Ride \u2014 Mixed':c.label)+'</span>';
+    b.innerHTML='<span class="ci">'+c.ic+'</span><span>'+(c.key==='mixed'?'Ride, Mixed':c.label)+'</span>';
     b.addEventListener('click',function(){ startGame(c.key); });
     wrap.appendChild(b);
   });

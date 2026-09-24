@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Join The Big Quiz, a free four-round game show. Everyone plays on their own phone while the host runs it on the big screen.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/join-the-big-quiz.html">
+<meta property="og:title" content="Join The Big Quiz">
+<meta property="og:description" content="Join The Big Quiz, a free four-round game show. Everyone plays on their own phone while the host runs it on the big screen.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/join-the-big-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>How to Join | The Big Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo:#0e1230; --indigo2:#070915;
+    --gold:#2fb6a6; --gold-hi:#79e6d8; --ink:#f6f0e2; --ink-dim:#bcb5a4; --line:rgba(47,182,166,.24);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:#05060d;}
+  body{ font-family:'Nunito',system-ui,sans-serif; color:var(--ink); display:flex; justify-content:center; padding:clamp(12px,3vw,32px); }
+  .poster{
+    width:min(680px,100%); position:relative; overflow:hidden; border-radius:16px;
+    background:
+      radial-gradient(85% 42% at 50% 0%, rgba(47,182,166,.18), transparent 60%),
+      linear-gradient(180deg,var(--indigo),var(--indigo2));
+    padding:clamp(24px,5vw,52px) clamp(22px,5vw,48px);
+  }
+  .eyebrow{ font-weight:800; letter-spacing:.28em; text-transform:uppercase; font-size:clamp(11px,2.4vw,14px); color:var(--gold-hi); }
+  .eyebrow .dim{ color:var(--ink-dim); letter-spacing:.14em; }
+  .title{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(40px,10vw,68px); line-height:.98; margin:clamp(10px,2.4vw,20px) 0 clamp(6px,1.4vw,12px); }
+  .title b{ color:var(--gold-hi); font-weight:700; }
+  .lede{ font-size:clamp(14px,3.2vw,19px); font-weight:700; color:var(--ink-dim); margin-bottom:clamp(20px,4vw,34px); }
+
+  .steps{ display:flex; flex-direction:column; gap:clamp(14px,3vw,24px); }
+  .step{ display:grid; grid-template-columns:auto 1fr; gap:clamp(14px,3vw,22px); align-items:start; }
+  .num{ width:clamp(40px,9vw,58px); aspect-ratio:1; border-radius:50%; border:2px solid var(--gold); color:var(--gold-hi);
+    font-family:'Fraunces',serif; font-weight:700; font-size:clamp(20px,5vw,30px); display:flex; align-items:center; justify-content:center; }
+  .step h3{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(18px,4.4vw,25px); line-height:1.08; }
+  .step p{ font-size:clamp(13px,3vw,17px); font-weight:700; color:var(--ink-dim); margin-top:4px; }
+  .step .url{ color:var(--gold-hi); word-break:break-all; }
+
+  .board{ margin-top:clamp(20px,4vw,34px); background:linear-gradient(180deg,#241a12,#160f0a); border:2px solid #3a2a1c; border-radius:16px;
+    padding:clamp(16px,3.5vw,26px); display:flex; align-items:center; gap:clamp(16px,4vw,30px); }
+  .qr{ width:clamp(70px,18vw,108px); aspect-ratio:1; flex:0 0 auto; background:#faf5e9; border-radius:10px; padding:8px;
+    display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(5,1fr); gap:3px; }
+  .qr i{ background:#160f0a; border-radius:1.5px; }
+  .qr i.off{ background:transparent; }
+  .board .cap{ font-weight:800; letter-spacing:.2em; text-transform:uppercase; font-size:clamp(9px,2.2vw,12px); color:#c39a5e; }
+  .slots{ display:flex; gap:clamp(5px,1.4vw,9px); margin-top:clamp(6px,1.4vw,10px); }
+  .slot{ width:clamp(30px,7vw,44px); aspect-ratio:3/4; background:linear-gradient(180deg,#faf5e9,#e6d8bd); border-radius:6px; color:#241a12;
+    font-family:'Fraunces',serif; font-weight:700; font-size:clamp(20px,5vw,30px); display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 -5px 0 rgba(0,0,0,.12); }
+  .board .note{ font-size:clamp(11px,2.6vw,14px); font-weight:800; color:var(--ink-dim); margin-top:clamp(6px,1.4vw,10px); }
+
+  .tips{ margin-top:clamp(20px,4vw,32px); padding-top:clamp(16px,3vw,24px); border-top:1px solid var(--line);
+    display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,2vw,14px) clamp(18px,4vw,34px); }
+  .tip{ font-size:clamp(11px,2.6vw,15px); font-weight:700; color:var(--ink-dim); }
+  .tip b{ color:var(--ink); }
+  .foot{ margin-top:clamp(18px,3.5vw,28px); text-align:center; font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:clamp(13px,2.8vw,17px); }
+
+  @media (max-width:420px){ .tips{ grid-template-columns:1fr; } }
+
+  @media print{
+    @page{ size:A4 portrait; margin:12mm; }
+    html,body{ background:#fff; }
+    body{ padding:0; }
+    .poster{ width:100%; border-radius:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+  <section class="poster">
+    <div class="eyebrow">The Big Quiz <span class="dim">· a general knowledge game show</span></div>
+    <div class="title">How to <b>join</b></div>
+    <div class="lede">It takes about 20 seconds. Just grab your phone.</div>
+
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div>
+        <h3>Open your phone's camera</h3>
+        <p>Point it at the QR code on the big screen. No app needed.</p></div></div>
+      <div class="step"><div class="num">2</div><div>
+        <h3>Tap the link that pops up</h3>
+        <p>Or type <span class="url">tierbrain.github.io/play-gen.html</span> into your browser.</p></div></div>
+      <div class="step"><div class="num">3</div><div>
+        <h3>Enter the code &amp; your name</h3>
+        <p>The 5-letter code is on the big screen. Your name shows on the scoreboard.</p></div></div>
+      <div class="step"><div class="num">4</div><div>
+        <h3>Pick a side, then play</h3>
+        <p>Join <b>Team A</b> or <b>Team B</b>, then read each question on the big screen and answer on your phone.</p></div></div>
+    </div>
+
+    <div class="board">
+      <div class="qr" aria-hidden="true">
+        <i></i><i></i><i class="off"></i><i></i><i></i><i></i><i class="off"></i><i></i><i class="off"></i><i></i><i class="off"></i><i></i><i></i><i></i><i class="off"></i><i></i><i class="off"></i><i></i><i class="off"></i><i></i><i></i><i></i><i class="off"></i><i></i><i></i>
+      </div>
+      <div>
+        <div class="cap">On the big screen</div>
+        <div class="slots"><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div></div>
+        <div class="note">Scan the QR, or type the 5-letter code shown up front.</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <div class="tip"><b>Turn your ringer on</b> so you hear the buzzer.</div>
+      <div class="tip"><b>Keep your screen awake</b> and this page open.</div>
+      <div class="tip"><b>One phone per person</b>, everyone plays.</div>
+      <div class="tip"><b>Dropped out?</b> Rejoin with the same code.</div>
+    </div>
+    <div class="foot">Eyes up front. Let the quiz begin.</div>
+  </section>
+</body>
+</html>

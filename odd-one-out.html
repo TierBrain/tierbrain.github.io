@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Odd One Out — TierBrain</title>
+<meta name="description" content="Three belong together, one doesn&#x27;t: spot it. The hidden link is revealed after.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/odd-one-out.html">
+<meta property="og:title" content="Odd One Out">
+<meta property="og:description" content="Three belong together, one doesn&#x27;t: spot it. The hidden link is revealed after.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/odd-one-out.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Odd One Out | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -183,7 +200,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Odd One Out</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 puzzles: three of the four belong together — spot the one that doesn’t. The link is revealed after each pick, and the higher you climb, the trickier the connections. Watch for red herrings!</p>
+    <p class="lead">20 puzzles: three of the four belong together, spot the one that doesn’t. The link is revealed after each pick, and the higher you climb, the trickier the connections. Watch for red herrings!</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
@@ -192,7 +209,7 @@
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Game</button>
@@ -229,7 +246,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
     <p class="statline">You solved <b id="tuAns">0</b> puzzles<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -249,7 +266,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -272,7 +289,7 @@
       {"q":"Which is the odd one out?","correct":"Spanish","wrong":["France","Germany","Italy"],"reveal":"The other three are all countries (Spanish is a language)."},
       {"q":"Which is the odd one out?","correct":"Swimming","wrong":["Football","Tennis","Basketball"],"reveal":"The other three are all ball sports (swimming uses no ball)."},
       {"q":"Which is the odd one out?","correct":"Bicycle","wrong":["Car","Bus","Lorry"],"reveal":"The other three are all motor vehicles (a bicycle has no engine)."},
-      {"q":"Which is the odd one out?","correct":"The Moon","wrong":["The Sun","A lamp","A candle"],"reveal":"The other three are all sources of their own light — the Moon only reflects light."},
+      {"q":"Which is the odd one out?","correct":"The Moon","wrong":["The Sun","A lamp","A candle"],"reveal":"The other three are all sources of their own light, the Moon only reflects light."},
       {"q":"Which is the odd one out?","correct":"Penguin","wrong":["Eagle","Sparrow","Robin"],"reveal":"The other three are all birds that can fly (a penguin cannot)."},
       {"q":"Which is the odd one out?","correct":"Iron","wrong":["Gold","Silver","Bronze"],"reveal":"The other three are all Olympic medals (iron is not one)."},
       {"q":"Which is the odd one out?","correct":"Violin","wrong":["Drum","Tambourine","Cymbals"],"reveal":"The other three are all percussion instruments (a violin has strings)."},
@@ -293,7 +310,7 @@
       {"q":"Which is the odd one out?","correct":"Ostrich","wrong":["Eagle","Falcon","Sparrow"],"reveal":"The other three are all birds that can fly (an ostrich cannot)."}
     ],
     2:[
-      {"q":"Which is the odd one out?","correct":"Tomato","wrong":["Carrot","Potato","Onion"],"reveal":"The other three are all vegetables — a tomato is botanically a fruit."},
+      {"q":"Which is the odd one out?","correct":"Tomato","wrong":["Carrot","Potato","Onion"],"reveal":"The other three are all vegetables, a tomato is botanically a fruit."},
       {"q":"Which is the odd one out?","correct":"Bat","wrong":["Eagle","Owl","Sparrow"],"reveal":"The other three are all birds (a bat is a flying mammal)."},
       {"q":"Which is the odd one out?","correct":"Pluto","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all full planets (Pluto is a dwarf planet)."},
       {"q":"Which is the odd one out?","correct":"Brazil","wrong":["France","Spain","Germany"],"reveal":"The other three are all members of the European Union (Brazil is not)."},
@@ -359,7 +376,7 @@
     4:[
       {"q":"Which is the odd one out?","correct":"Mercury","wrong":["Jupiter","Saturn","Uranus"],"reveal":"The other three are all planets with ring systems (Mercury has none)."},
       {"q":"Which is the odd one out?","correct":"Finnish","wrong":["Welsh","Irish","Breton"],"reveal":"The other three are all Celtic languages (Finnish belongs to a different, Uralic family)."},
-      {"q":"Which is the odd one out?","correct":"Luxembourg","wrong":["Vatican City","Monaco","San Marino"],"reveal":"The other three are all among Europe’s tiniest states — Luxembourg is far larger."},
+      {"q":"Which is the odd one out?","correct":"Luxembourg","wrong":["Vatican City","Monaco","San Marino"],"reveal":"The other three are all among Europe’s tiniest states, Luxembourg is far larger."},
       {"q":"Which is the odd one out?","correct":"Quartz","wrong":["Diamond","Graphite","Coal"],"reveal":"The other three are all forms of carbon (quartz is silicon dioxide)."},
       {"q":"Which is the odd one out?","correct":"Axolotl","wrong":["Gecko","Skink","Iguana"],"reveal":"The other three are all reptiles (an axolotl is an amphibian)."},
       {"q":"Which is the odd one out?","correct":"Whale shark","wrong":["Blue whale","Orca","Dolphin"],"reveal":"The other three are all marine mammals (a whale shark is a fish)."},
@@ -385,7 +402,7 @@
       {"q":"Which is the odd one out?","correct":"Pentagon","wrong":["Hexagon","Octagon","Decagon"],"reveal":"The other three are all shapes with an even number of sides (a pentagon has five)."},
       {"q":"Which is the odd one out?","correct":"Rugby","wrong":["Football","Hockey","Netball"],"reveal":"The other three are all sports played with a round ball (rugby uses an oval ball)."},
       {"q":"Which is the odd one out?","correct":"Hydrogen","wrong":["Nitrogen","Oxygen","Argon"],"reveal":"The other three are all gases that make up most of Earth’s air (hydrogen is barely present)."},
-      {"q":"Which is the odd one out?","correct":"Polaris","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all planets (Polaris is a star — the North Star)."},
+      {"q":"Which is the odd one out?","correct":"Polaris","wrong":["Mars","Jupiter","Saturn"],"reveal":"The other three are all planets (Polaris is a star, the North Star)."},
       {"q":"Which is the odd one out?","correct":"Pi","wrong":["Two","Seven","Thirteen"],"reveal":"The other three are all whole numbers (pi is irrational, 3.14159…)."}
     ]
   };
@@ -624,18 +641,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

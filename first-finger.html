@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>First Finger — TierBrain</title>
+<meta name="description" content="Same question for everyone at once: the first correct answer takes the point. A wrong buzz locks you out, so be quick but sure.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/first-finger.html">
+<meta property="og:title" content="First Finger">
+<meta property="og:description" content="Same question for everyone at once: the first correct answer takes the point. A wrong buzz locks you out, so be quick but sure.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/first-finger.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>First Finger | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
@@ -79,7 +96,7 @@
   <div class="screen" id="menuScreen">
     <div class="sub">TierBrain</div>
     <h1 class="display">First Finger</h1>
-    <p class="lead">Everyone sees the same question at once — first correct answer takes the point. A wrong buzz locks you out of that one, so be quick but be sure. Most points after 12 rounds wins.</p>
+    <p class="lead">Everyone sees the same question at once, first correct answer takes the point. A wrong buzz locks you out of that one, so be quick but be sure. Most points after 12 rounds wins.</p>
     <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
     <div class="field"><label>Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="BUZZ1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
@@ -263,8 +280,8 @@
     mode='reveal'; $('liveLbl').textContent='';
     var w=lastRes&&lastRes.winners[dispQ];
     var ans=qOf(dispQ)[1];
-    if(w){ $('reveal').innerHTML='<b style="color:var(--right)">'+esc(w.name)+(w.name===me?' (you)':'')+'</b> got it \u2014 '+esc(ans); }
-    else { $('reveal').innerHTML='<span style="color:var(--wrong)">Nobody buzzed</span> \u2014 it was '+esc(ans); }
+    if(w){ $('reveal').innerHTML='<b style="color:var(--right)">'+esc(w.name)+(w.name===me?' (you)':'')+'</b> got it, '+esc(ans); }
+    else { $('reveal').innerHTML='<span style="color:var(--wrong)">Nobody buzzed</span>, it was '+esc(ans); }
     // highlight correct option
     [].forEach.call($('opts').children,function(c){ var t=c.textContent.replace(/^[A-D]/,''); if(t===ans) c.classList.add('good'); c.disabled=true; });
     if(revealT) clearTimeout(revealT);

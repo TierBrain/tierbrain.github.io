@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="The winner-stays-on buzzer duel with Scripture questions. Win and keep your seat; lose and rejoin the queue. Filter by topic for a lesson recap.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/throne-bible.html">
+<meta property="og:title" content="Hold The Throne: Bible Edition">
+<meta property="og:description" content="The winner-stays-on buzzer duel with Scripture questions. Win and keep your seat; lose and rejoin the queue. Filter by topic for a lesson recap.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/throne-bible.html">
 <script>
 /* Anyone arriving on the old github.io address is moved to the real domain,
@@ -166,10 +173,10 @@
         <div class="plist" id="plist"><span class="empty" style="color:var(--dim);font-weight:700">Waiting for players to join…</span></div>
         <div class="row">
           <div class="step">Questions
-            <button id="qMinus">–</button><span id="qTot">20</span><button id="qPlus">+</button>
+            <button id="qMinus" aria-label="Fewer questions">–</button><span id="qTot">20</span><button id="qPlus" aria-label="More questions">+</button>
           </div>
           <div class="step">Answer time
-            <button id="tMinus">–</button><span id="tTot">4s</span><button id="tPlus">+</button>
+            <button id="tMinus" aria-label="Less answer time">–</button><span id="tTot">4s</span><button id="tPlus" aria-label="More answer time">+</button>
           </div>
           <label class="livetog"><input type="checkbox" id="liveToggle" checked> Living-room</label>
         </div>
@@ -221,7 +228,7 @@
 
 <script>
 /* ============================================================
-   TierBrain shareable score card — drop-in module
+   TierBrain shareable score card, drop-in module
    Usage: TBShare.open({ game, kicker, big, lines, footer, accent })
    game:   short slug used in the filename, e.g. 'creak'
    kicker: small caps label, e.g. 'CREAK & COIL'
@@ -800,7 +807,7 @@ function render(){
       setTimeout(function(){ var sb=$('banShare'); if(!sb) return; sb.onclick=function(){
         var winnerName=(G.winner&&G.winner.name)||'Someone';
         var lines=[]; if(sk&&sk.s>0) lines.push('Longest streak: '+sk.s+' by '+sk.name+'.');
-        if(su.flawless) lines.push('A flawless run \u2014 never lost the throne.');
+        if(su.flawless) lines.push('A flawless run, never lost the throne.');
         lines.push('After '+G.qTotal+' questions.');
         TBShare.open({ game:'throne-bible', kicker:'Hold The Throne \u00b7 Bible Edition', big:winnerName, lines:lines,
           footer:'Think you can dethrone them?', accent:'#f5b23e',

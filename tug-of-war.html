@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tug of War — TierBrain</title>
+<meta name="description" content="Two teams, one rope. Every right answer hauls it your way and a wrong one lets it slip: first side over the line wins.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/tug-of-war.html">
+<meta property="og:title" content="Tug of War">
+<meta property="og:description" content="Two teams, one rope. Every right answer hauls it your way and a wrong one lets it slip: first side over the line wins.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/tug-of-war.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Tug of War | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
@@ -94,12 +111,12 @@
   <div class="screen" id="menuScreen">
     <div class="sub">TierBrain</div>
     <h1 class="display">Tug of War</h1>
-    <p class="lead">A live tug for two sides. Everyone enters the same room code and picks a team — then every right answer hauls the rope your way, and a wrong one lets it slip back. First side to drag the rope past their line wins.</p>
+    <p class="lead">A live tug for two sides. Everyone enters the same room code and picks a team, then every right answer hauls the rope your way, and a wrong one lets it slip back. First side to drag the rope past their line wins.</p>
     <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
     <div class="field"><label>Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Enter room</button>
-    <p class="note">Pick any code and tell your friends — same code = same match.</p>
+    <p class="note">Pick any code and tell your friends, same code = same match.</p>
   </div>
 
   <div class="screen hidden" id="lobbyScreen">

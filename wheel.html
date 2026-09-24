@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phrase Spinner — TierBrain</title>
+<meta name="description" content="Spin the wheel, reveal the hidden phrase letter by letter, then call it before the clock: mind the Bankrupt!">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/wheel.html">
+<meta property="og:title" content="Phrase Spinner">
+<meta property="og:description" content="Spin the wheel, reveal the hidden phrase letter by letter, then call it before the clock: mind the Bankrupt!">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/wheel.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Phrase Spinner | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Bungee&display=swap" rel="stylesheet">
@@ -259,16 +276,16 @@
   <div class="screen" id="startScreen">
     <div class="sub">Phrase Spinner</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">Spin the wheel, reveal the hidden phrase letter by letter, then call it before that puzzle’s timer runs out. 20 puzzles across four tiers up to Legends — the better you do, the trickier they get.</p>
+    <p class="lead">Spin the wheel, reveal the hidden phrase letter by letter, then call it before that puzzle’s timer runs out. 20 puzzles across four tiers up to Legends, the better you do, the trickier they get.</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Spin &amp; guess:</b> spin for points, then pick a consonant. Buy a vowel for 250 points once you’ve banked enough.</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Solve it:</b> hit <b>Solve</b> and spell the phrase. Right = climb a tier; two in a row levels you up.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Watch out:</b> a wrong solve costs you — four wrong puzzles knocks you out. Mind <b>Bankrupt</b> and <b>Lose a Turn</b>!</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> every puzzle has its own timer — solve it before time runs out, or that puzzle is lost.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Watch out:</b> a wrong solve costs you, four wrong puzzles knocks you out. Mind <b>Bankrupt</b> and <b>Lose a Turn</b>!</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> every puzzle has its own timer, solve it before time runs out, or that puzzle is lost.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Spin to Play</button>
@@ -305,7 +322,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your time is up — here's how far you climbed.</p>
+    <p class="lead">Your time is up, here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> puzzles<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -325,7 +342,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -481,8 +498,8 @@
   }
   function landWedge(w){
     busy=false;
-    if(w==='BANK'){ bank=0; misses++; setStatus('\ud83d\udca5 BANKRUPT \u2014 bank wiped! Spin again.'); sWrong(); renderKeys(); updateControls(); return; }
-    if(w==='LOSE'){ misses++; setStatus('Lose a turn \u2014 spin again.'); sWrong(); renderKeys(); updateControls(); return; }
+    if(w==='BANK'){ bank=0; misses++; setStatus('\ud83d\udca5 BANKRUPT, bank wiped! Spin again.'); sWrong(); renderKeys(); updateControls(); return; }
+    if(w==='LOSE'){ misses++; setStatus('Lose a turn, spin again.'); sWrong(); renderKeys(); updateControls(); return; }
     pendingValue=w; awaitingConsonant=true; setStatus(w+' points! Pick a consonant.'); renderKeys(); updateControls();
   }
   function pickLetter(ch){
@@ -497,7 +514,7 @@
     } else if(awaitingVowel&&isV){
       awaitingVowel=false; const n=countOf(ch);
       if(n>0){ revealed.add(ch); bank-=VOWEL_COST; sRight(); setStatus(ch+' \u00d7 '+n+' revealed.'); }
-      else { misses++; bank=Math.max(0,bank-VOWEL_COST); sWrong(); setStatus('No '+ch+' \u2014 vowel wasted.'); }
+      else { misses++; bank=Math.max(0,bank-VOWEL_COST); sWrong(); setStatus('No '+ch+', vowel wasted.'); }
       renderBoardTiles(); renderKeys(); updateControls();
       if(n>0&&allRevealed()) doResolve(true);
     }
@@ -512,7 +529,7 @@
     solving=true; awaitingConsonant=false; awaitingVowel=false; pendingValue=0;
     solveFill={}; activeBlanks=blankIndices(); activePtr=0;
     if(activeBlanks.length===0){ submitSolve(); return; }
-    setStatus('Spell the phrase \u2014 tap letters to fill the blanks.');
+    setStatus('Spell the phrase, tap letters to fill the blanks.');
     renderBoardTiles(); renderKeys(); updateControls();
   }
   function solveType(ch){
@@ -689,18 +706,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

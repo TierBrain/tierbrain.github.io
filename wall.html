@@ -3,6 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/wall.html">
+<meta property="og:title" content="Wall of Fame">
+<meta property="og:description" content="See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/wall.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <title>Wall of Fame · TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -321,7 +338,7 @@
       else { sn=n(row.correct); su='pts'; ex=''; }
       html+=plaque({ic:'\u{1F3C5}',cat:g.label,name:row.name,statNum:sn,statUnit:su,extra:ex,reign:reign(row.created_at),href:g.href});
     });
-    document.getElementById('champs').innerHTML = html || '<div class="note">No scores yet for this group. Share the code and start playing \u2014 the first result claims every title.</div>';
+    document.getElementById('champs').innerHTML = html || '<div class="note">No scores yet for this group. Share the code and start playing, the first result claims every title.</div>';
     renderSpot(titles);
     renderRecordsGroup(rows, titles);
     renderFeedGroup(rows);
@@ -337,7 +354,7 @@
       cards.push(rec('Top score', n(best.correct), '', '<b>'+esc(best.name)+'</b> in '+esc(gameLabel(best.quiz_id,best.group_code))));
     if(jf){ var tn=(TIERS.filter(function(t){return t.key===n(jf.level);})[0]||{}).name||'';
       cards.push(rec('Fastest solve', fmtTime(jf.time_left), '', '<b>'+esc(jf.name)+'</b> \u00b7 '+esc(tn)+' jigsaw')); }
-    if(titles.length){ var c={}; titles.forEach(function(t){var k=t.holder||'\u2014';c[k]=(c[k]||0)+1;});
+    if(titles.length){ var c={}; titles.forEach(function(t){var k=t.holder||'\u2013';c[k]=(c[k]||0)+1;});
       var top=null; Object.keys(c).forEach(function(k){if(!top||c[k]>c[top])top=k;});
       cards.push(rec('Most decorated', c[top], (c[top]===1?'title':'titles'), 'held by <b>'+esc(top)+'</b>')); }
     if(!cards.length)return;
@@ -350,7 +367,7 @@
       if(r.quiz_id==='qc_piecebypiece'){ desc='scored <b>'+n(r.correct)+'</b> in '+esc(deckLabel(r.group_code)); }
       else if(r.quiz_id==='qc_jigsaw'){ var tn=(TIERS.filter(function(t){return t.key===n(r.level);})[0]||{}).name||'a'; desc='solved the <b>'+esc(tn)+'</b> jigsaw in '+fmtTime(r.time_left); }
       else { var g=REGMAP[r.quiz_id]; if(!g)continue; desc=(g.mode==='level'?('reached <b>Level '+n(r.level)+'</b>'):('scored <b>'+n(r.correct)+'</b>'))+' in '+esc(g.label); }
-      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2014')+'</span><span class="fdesc">'+desc+'</span><span class="fwhen">'+esc(ago(r.created_at))+'</span></div>';
+      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2013')+'</span><span class="fdesc">'+desc+'</span><span class="fwhen">'+esc(ago(r.created_at))+'</span></div>';
       count++;
     }
     if(!html)return;
@@ -394,7 +411,7 @@
   if(GROUP){
     var ins=DECKS.map(function(d){return d.key+'~'+GROUP;}).join(',');
     var gurl=sbBase()+'?or=(group_code.eq.'+GROUP+',group_code.eq.global~'+GROUP+',group_code.in.('+ins+'))&order=created_at.desc&limit=2000';
-    get(gurl).then(function(rows){ renderGroup(rows||[]); }).catch(function(){document.getElementById('champs').innerHTML='<div class="note">The hall is resting \u2014 couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';});
+    get(gurl).then(function(rows){ renderGroup(rows||[]); }).catch(function(){document.getElementById('champs').innerHTML='<div class="note">The hall is resting, couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';});
     return;
   }
   var pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
@@ -405,7 +422,7 @@
     render(res[0]||[], res[1]||[], res[2]||[], res[3]||[]);
   }).catch(function(e){
     document.getElementById('champs').innerHTML=
-      '<div class="note">The hall is resting — couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';
+      '<div class="note">The hall is resting, couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';
   });
 
   // render ----------------------------------------------------------
@@ -413,7 +430,7 @@
     var titles=[]; // {holder, created_at}
     var champHTML='';
 
-    // Piece by Piece — champion per deck (rows pre-sorted by score desc)
+    // Piece by Piece, champion per deck (rows pre-sorted by score desc)
     DECKS.forEach(function(d){
       var row=null,i;
       for(i=0;i<pbp.length;i++){ if(deckOf(pbp[i].group_code)===d.key){row=pbp[i];break;} }
@@ -430,7 +447,7 @@
       }
     });
 
-    // Jigsaw — fastest per tier (rows pre-sorted by time asc)
+    // Jigsaw, fastest per tier (rows pre-sorted by time asc)
     TIERS.forEach(function(t){
       var row=null,i;
       for(i=0;i<jig.length;i++){ if(n(jig[i].level)===t.key){row=jig[i];break;} }
@@ -446,7 +463,7 @@
         champHTML+=emptyPlaque('\u{1F9E9}','Jigsaw \u00b7 '+t.name,JIG);
       }
     });
-    // Brain Coaster — top global score
+    // Brain Coaster, top global score
     bc=bc||[];
     if(bc.length){ bc.sort(scoreSort); var brow=bc[0];
       titles.push({holder:brow.name,created_at:brow.created_at});
@@ -495,7 +512,7 @@
     }
     var count={}, first={};
     titles.forEach(function(t){
-      var k=t.holder||'\u2014';
+      var k=t.holder||'\u2013';
       count[k]=(count[k]||0)+1;
       if(!first[k]||Date.parse(t.created_at)<Date.parse(first[k])) first[k]=t.created_at;
     });
@@ -506,7 +523,7 @@
     var c=count[best];
     var sub = c>1
       ? 'Holds <b>'+c+' titles</b> across the hall.'
-      : 'Holds the top spot — for now.';
+      : 'Holds the top spot, for now.';
     el.innerHTML='<div class="spot shine">'
       +crownSVG()
       +'<div class="role">Champion of '+(GROUP?esc(GROUP):'the Hall')+'</div>'
@@ -532,7 +549,7 @@
     // most decorated
     if(titles.length){
       var count={};
-      titles.forEach(function(t){var k=t.holder||'\u2014';count[k]=(count[k]||0)+1;});
+      titles.forEach(function(t){var k=t.holder||'\u2013';count[k]=(count[k]||0)+1;});
       var top=null;Object.keys(count).forEach(function(k){if(!top||count[k]>count[top])top=k;});
       cards.push(rec('Most decorated', count[top], (count[top]===1?'title':'titles'), 'held by <b>'+esc(top)+'</b>'));
     }
@@ -560,7 +577,7 @@
         var g=REGMAP[r.quiz_id];
         desc='scored <b>'+n(r.correct)+'</b>'+(g?(' in '+esc(g.label)):'');
       }
-      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2014')+'</span>'
+      html+='<div class="frow"><span class="fname">'+esc(r.name||'\u2013')+'</span>'
         +'<span class="fdesc">'+desc+'</span>'
         +'<span class="fwhen">'+esc(ago(r.created_at))+'</span></div>';
     });
@@ -591,7 +608,7 @@
       el.innerHTML='<form class="grpform" id="grpForm">'
         +'<input id="grpInput" class="grpinput" maxlength="24" placeholder="Group code" autocomplete="off" value="'+esc(saved)+'">'
         +'<button class="grpbtn" type="submit">View group \u203a</button></form>'
-        +'<div class="scopehint">Viewing the full hall \u2014 enter your group\u2019s code for a private wall.</div>';
+        +'<div class="scopehint">Viewing the full hall, enter your group\u2019s code for a private wall.</div>';
       var f=document.getElementById('grpForm');
       if(f)f.addEventListener('submit',function(ev){ev.preventDefault();
         var c=(document.getElementById('grpInput').value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);

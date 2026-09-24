@@ -6,6 +6,15 @@
 <title>The Quiet Line: The Vault</title>
 <meta name="description" content="Seven doors, each held shut by a word spelled in keypad digits. How deep can you get before the lock holds?">
 <link rel="canonical" href="https://tierbrain.co/quiet-line-vault.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <meta name="theme-color" content="#3b3a36">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/quiet-line-vault.html">
@@ -198,7 +207,7 @@
 <script>
 
 /* ============================================================
-   TierBrain shareable score card — drop-in module
+   TierBrain shareable score card, drop-in module
    Usage: TBShare.open({ game, kicker, big, lines, footer, accent })
    game:   short slug used in the filename, e.g. 'creak'
    kicker: small caps label, e.g. 'CREAK & COIL'
@@ -503,7 +512,7 @@ function judge(){
 
 function openDoor(){
   thunk(70,0.55);   // the lock turning
-  doorLog.push(DOORS[doorIx].n + ' \u2014 ' + DOORS[doorIx].w);
+  doorLog.push(DOORS[doorIx].n + ', ' + DOORS[doorIx].w);
   $('say').textContent = DOORS[doorIx].w;
   $('say').className='say ok';
   doorIx++;
@@ -521,7 +530,7 @@ function finish(allOpen){
   $('tTime').textContent = fmt(ms);
   $('tWords').textContent = wordsDone;
   $('ledger').innerHTML = doorLog.map(d=>'<div class="done">'+d+'</div>').join('')
-    + (allOpen?'':'<div class="stuck">'+DOORS[doorIx].n+' &mdash; held</div>');
+    + (allOpen?'':'<div class="stuck">'+DOORS[doorIx].n+', held</div>');
   const b=best();
   const better = !b || doorIx>b.depth || (doorIx===b.depth && ms<b.ms);
   if(better && doorIx>0){ saveBest({depth:doorIx, ms:ms}); $('closeNote').textContent = b? 'Deeper than before.':''; }

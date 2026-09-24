@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="canonical" href="https://tierbrain.co/jigsaw.html">
+<meta name="description" content="Drag the scattered pieces home to rebuild a freshly generated picture: race the clock across four sizes, from a 12-piece warm-up to a 48-piece master.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/jigsaw.html">
+<meta property="og:title" content="Jigsaw">
+<meta property="og:description" content="Drag the scattered pieces home to rebuild a freshly generated picture: race the clock across four sizes, from a 12-piece warm-up to a 48-piece master.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <title>TierBrain · Jigsaw</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
@@ -74,10 +82,10 @@
 <section id="menu" class="screen on">
   <div class="wordmark" style="font-size:13px; letter-spacing:3px; color:var(--mut);">T I E R B R A I N</div>
   <h1><span class="star">&#10022;</span> Jigsaw</h1>
-  <p class="sub">Drag the scattered pieces home. Every picture is freshly generated &mdash; race the clock and climb the board.</p>
+  <p class="sub">Drag the scattered pieces home. Every picture is freshly generated, race the clock and climb the board.</p>
   <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
   <input id="groupInput" class="name" maxlength="24" placeholder="Group code (optional)" autocomplete="off">
-  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional — friends who enter the same code share a private Wall of Fame.</p>
+  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional: friends who enter the same code share a private Wall of Fame.</p>
   <div class="tiers" id="tierList"></div>
   <p class="hint">Pieces snap when they&rsquo;re close to the right spot. The two easier puzzles show a faint picture to guide you; the harder two don&rsquo;t.</p>
 </section>
@@ -916,7 +924,7 @@ function submitAndLoad(secs){
     .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=like.'+GROUP+'*&level=eq.'+tier.key+'&order=time_left.asc&limit=8',{headers:sbHeaders()});})
     .then(function(r){return r.json();})
     .then(function(rows){
-      if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No times yet \u2014 you\u2019re the first!</div>';return;}
+      if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No times yet, you\u2019re the first!</div>';return;}
       var marked=false, html='';
       for(var i=0;i<rows.length;i++){
         var you=(!marked && rows[i].name===nm && rows[i].time_left===secs); if(you)marked=true;

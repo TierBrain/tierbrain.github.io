@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Afrobeats Quiz — TierBrain</title>
+<meta name="description" content="From Fela&#x27;s Afrobeat to Burna, Wizkid, Davido and the global takeover: the stars, the hits, the awards and the roots.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/afrobeats-quiz.html">
+<meta property="og:title" content="Afrobeats">
+<meta property="og:description" content="From Fela&#x27;s Afrobeat to Burna, Wizkid, Davido and the global takeover: the stars, the hits, the awards and the roots.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/afrobeats-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Afrobeats Quiz | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -180,7 +197,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Afrobeats Trivia</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 questions from a big pool — the stars, the songs, the history and the roots of Afrobeats, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <p class="lead">20 questions from a big pool: the stars, the songs, the history and the roots of Afrobeats, across four tiers up to Legends. The better you do, the harder it gets!</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
@@ -189,7 +206,7 @@
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code (optional)</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Quiz</button>
@@ -226,7 +243,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -246,7 +263,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -301,7 +318,7 @@
       {"q":"'Peru', later remixed with Ed Sheeran, was a hit for which singer?","correct":"Fireboy DML","wrong":["Joeboy","Omah Lay","Ruger"]},
       {"q":"Tyla's signature sound is rooted in which South African style?","correct":"Amapiano","wrong":["Highlife","Juju","Kwaito"]},
       {"q":"Which twin-brother duo released the 2007 album 'Game Over'?","correct":"P-Square","wrong":["Styl-Plus","Bracket","The Remedies"]},
-      {"q":"Tems first topped the Billboard Hot 100 via Future's hit that sampled her \u2014 named?","correct":"Wait for U","wrong":["Essence","Calm Down","Last Last"]},
+      {"q":"Tems first topped the Billboard Hot 100 via Future's hit that sampled her, named?","correct":"Wait for U","wrong":["Essence","Calm Down","Last Last"]},
       {"q":"Which channel, launched in 2005, aired African videos to a global audience?","correct":"MTV Base Africa","wrong":["BET Africa","Channel O","Trace Urban"]},
       {"q":"Which 2019 Burna Boy album shares its name with his nickname?","correct":"African Giant","wrong":["Twice as Tall","Love, Damini","Outside"]},
       {"q":"The 'Shaku Shaku' dance was popularised by which Olamide song?","correct":"Wo","wrong":["Science Student","Bobo","Durosoke"]},
@@ -336,7 +353,7 @@
       {"q":"Tems' debut studio album (2024) is called?","correct":"Born in the Wild","wrong":["For Broken Ears","If Orange Was a Place","The Wild"]},
       {"q":"Asake's acclaimed 2022 debut album was?","correct":"Mr. Money With the Vibe","wrong":["Lungu Boy","Work of Art","Ololade Asake"]},
       {"q":"Which 1980 Talking Heads album, shaped by Afrobeat, did Eno and Byrne make?","correct":"Remain in Light","wrong":["Fear of Music","Speaking in Tongues","Little Creatures"]},
-      {"q":"'Calm Down' peaked at which spot on the Billboard Hot 100 \u2014 a record for an African-led song?","correct":"No. 3","wrong":["No. 1","No. 10","No. 25"]},
+      {"q":"'Calm Down' peaked at which spot on the Billboard Hot 100, a record for an African-led song?","correct":"No. 3","wrong":["No. 1","No. 10","No. 25"]},
       {"q":"Which Ghanaian is regarded as the godfather of 'hiplife'?","correct":"Reggie Rockstone","wrong":["Sarkodie","Shatta Wale","Stonebwoy"]},
       {"q":"Hiplife fused hip-hop with which older Ghanaian genre?","correct":"Highlife","wrong":["Juju","Fuji","Apala"]},
       {"q":"The Grammy category 'Best African Music Performance' was introduced in which year?","correct":"2024","wrong":["2020","2022","2026"]},
@@ -382,8 +399,8 @@
       {"q":"Burna Boy's grandfather, Benson Idonije, was the first manager of which legend?","correct":"Fela Kuti","wrong":["King Sunny Ade","Tony Allen","Victor Uwaifo"]},
       {"q":"Which 1971 concert brought soul stars like Wilson Pickett and Ike & Tina Turner to Accra?","correct":"Soul to Soul","wrong":["Live Aid","Wattstax","Lagos Jump"]},
       {"q":"The huge 1977 pan-African arts festival held in Lagos was known as?","correct":"FESTAC '77","wrong":["Felabration","Calabar Carnival","AfroFuture"]},
-      {"q":"Fela famously married many women in a single 1978 ceremony \u2014 reportedly how many?","correct":"27","wrong":["7","12","50"]},
-      {"q":"Which grandson of Fela \u2014 Femi's son \u2014 earned a Grammy nod with the album 'Legacy+'?","correct":"Made Kuti","wrong":["Seun Kuti","Omorinmade","Tony Allen"]},
+      {"q":"Fela famously married many women in a single 1978 ceremony, reportedly how many?","correct":"27","wrong":["7","12","50"]},
+      {"q":"Which grandson of Fela, Femi's son, earned a Grammy nod with the album 'Legacy+'?","correct":"Made Kuti","wrong":["Seun Kuti","Omorinmade","Tony Allen"]},
     ]
   };
   const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
@@ -619,18 +636,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }

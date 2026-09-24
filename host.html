@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBrain Host | Turn Any Screen Into a Game Show</title>
+<meta name="description" content="TierBrain Host lets you run multiplayer quizzes and games for your pub, office, church, school or party. Host from a laptop or TV, players join from their phones. Coming soon, join early access.">
+<link rel="canonical" href="https://tierbrain.co/host.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<meta name="theme-color" content="#161232">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/host.html">
+<meta property="og:title" content="TierBrain Host | Turn Any Screen Into a Game Show">
+<meta property="og:description" content="Run multiplayer quizzes and games for your pub, office, church, school or party. Coming soon, join early access.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TierBrain Host | Turn Any Screen Into a Game Show">
+<meta name="twitter:description" content="Run multiplayer quizzes and games for your pub, office, church, school or party. Coming soon, join early access.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{ --ink:#f4f1ff; --mut:#a9a4cf; --gold:#f2c95c; --lilac:#d9c8ff; --line:rgba(255,255,255,.14); }
+  html,body{min-height:100%;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(110% 80% at 85% -10%, rgba(201,138,224,.20), transparent 55%),
+      radial-gradient(90% 70% at 0% 110%, rgba(61,143,232,.16), transparent 55%),
+      radial-gradient(80% 60% at 110% 110%, rgba(255,93,158,.14), transparent 55%),
+      linear-gradient(165deg,#0c0a1e,#161232 60%,#0d1430);
+    background-attachment:fixed;
+    display:flex;flex-direction:column;align-items:center;
+    padding:clamp(20px,6vw,40px) 18px 60px;min-height:100dvh;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:22px 22px;}
+
+  .back{align-self:flex-start;max-width:680px;width:100%;margin:0 auto 18px;
+    font-weight:800;font-size:14px;color:var(--mut);text-decoration:none;display:flex;align-items:center;gap:6px;}
+  .back:hover{color:var(--ink);}
+
+  header{text-align:center;max-width:680px;margin-bottom:clamp(20px,4vw,32px);
+    animation:rise .7s cubic-bezier(.2,.8,.2,1) both;}
+  .kicker{font-family:'Baloo 2';font-weight:700;letter-spacing:5px;font-size:13px;
+    text-transform:uppercase;color:var(--mut);margin-bottom:10px;}
+  .kicker b{color:var(--gold);}
+  h1{font-family:'Baloo 2';font-weight:800;line-height:.96;font-size:clamp(38px,10vw,66px);
+    background:linear-gradient(110deg,#fff,var(--lilac) 40%,var(--gold));-webkit-background-clip:text;
+    background-clip:text;color:transparent;letter-spacing:-1px;}
+  .tag{margin-top:14px;color:#cdc7ee;font-weight:700;font-size:clamp(16px,3.8vw,20px);line-height:1.5;}
+  .sub{margin-top:10px;color:var(--mut);font-weight:600;font-size:15px;line-height:1.6;max-width:520px;margin-left:auto;margin-right:auto;}
+
+  .whofor{max-width:680px;width:100%;text-align:center;color:var(--mut);font-weight:700;font-size:14px;
+    margin:22px auto 8px;padding:0 6px;}
+  .whofor span{color:var(--ink);}
+
+  .tiers{display:grid;grid-template-columns:1fr;gap:14px;width:100%;max-width:680px;margin:28px auto 8px;}
+  @media(min-width:680px){ .tiers{grid-template-columns:1fr 1fr 1fr;} }
+  .tcard{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));
+    border:1px solid var(--line);border-radius:18px;padding:20px 18px;overflow:hidden;
+    animation:rise .7s cubic-bezier(.2,.8,.2,1) both;}
+  .tcard::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--a),var(--b));}
+  .t1{--a:#3ad1d1;--b:#46d6ff;} .t2{--a:#f2c95c;--b:#ff9b3d;} .t3{--a:#ff5db0;--b:#b794ff;}
+  .tname{font-family:'Baloo 2';font-weight:800;font-size:17px;}
+  .tprice{font-family:'Baloo 2';font-weight:800;font-size:22px;margin-top:4px;color:var(--gold);}
+  .tprice small{font-family:'Nunito';font-weight:700;font-size:12px;color:var(--mut);}
+  .tlist{margin-top:12px;list-style:none;color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.9;}
+  .tlist li::before{content:"✓ ";color:var(--gold);font-weight:800;}
+  .planned{text-align:center;color:var(--mut);font-size:12px;font-weight:700;margin-top:4px;letter-spacing:.02em;}
+
+  .panel{width:100%;max-width:520px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,32px);margin-top:30px;
+    animation:rise .7s cubic-bezier(.2,.8,.2,1) both;}
+  .panel h2{font-family:'Baloo 2';font-weight:800;font-size:22px;text-align:center;}
+  .panel p{color:var(--mut);font-weight:600;font-size:14px;text-align:center;margin-top:8px;line-height:1.6;}
+
+  form{margin-top:20px;display:flex;flex-direction:column;gap:12px;}
+  label{font-weight:800;font-size:12.5px;color:var(--mut);letter-spacing:.03em;margin-bottom:-6px;}
+  input[type="email"], select{
+    width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);
+    color:var(--ink);padding:14px 15px;font-size:15px;font-family:inherit;font-weight:700;outline:none;}
+  input[type="email"]::placeholder{color:rgba(244,241,255,.4);}
+  input[type="email"]:focus, select:focus{border-color:var(--gold);}
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%23a9a4cf' stroke-width='2' fill='none' fill-rule='evenodd'/></svg>");
+    background-repeat:no-repeat;background-position:right 15px center;padding-right:38px;}
+  select option{background:#1a1638;color:var(--ink);}
+  .hp{position:absolute;left:-9999px;opacity:0;}
+
+  .cta{margin-top:6px;border:0;border-radius:14px;padding:15px;font-family:'Baloo 2';font-weight:800;font-size:16px;
+    color:#241a12;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);box-shadow:0 6px 0 #9c631f;}
+  .cta:active{transform:translateY(4px);box-shadow:0 2px 0 #9c631f;}
+  .cta:disabled{opacity:.6;cursor:default;}
+  .note{text-align:center;color:var(--mut);font-size:12px;font-weight:700;margin-top:12px;}
+
+  .done{display:none;text-align:center;padding:10px 4px 4px;}
+  .done.show{display:block;}
+  .done .big{font-size:40px;}
+  .done h3{font-family:'Baloo 2';font-weight:800;font-size:20px;margin-top:8px;}
+  .done p{color:var(--mut);font-weight:600;font-size:14px;margin-top:6px;line-height:1.6;}
+  .err{color:#ff9b9b;font-weight:700;font-size:13px;text-align:center;margin-top:6px;display:none;}
+  .err.show{display:block;}
+
+  footer{margin-top:40px;color:var(--mut);font-size:12.5px;font-weight:700;text-align:center;}
+  footer a{color:var(--mut);}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){ *{animation:none !important;} }
+</style>
+</head>
+<body>
+
+  <a class="back" href="/">&larr; TierBrain</a>
+
+  <header>
+    <div class="kicker"><b>Coming soon</b> &middot; Early access</div>
+    <h1>TierBrain Host</h1>
+    <p class="tag">Turn any screen into a game show.</p>
+    <p class="sub">Host from a laptop or TV. Players join from their phones. No app required.</p>
+  </header>
+
+  <p class="whofor">Built for <span>pub quiz nights</span>, <span>office socials</span>, <span>church &amp; youth groups</span>, <span>classrooms</span> and <span>parties</span>.</p>
+
+  <div class="tiers">
+    <div class="tcard t1">
+      <div class="tname">Free</div>
+      <div class="tprice">£0</div>
+      <ul class="tlist"><li>Up to 6 players</li><li>The Big Quiz</li><li>Standard question packs</li></ul>
+    </div>
+    <div class="tcard t2">
+      <div class="tname">Host</div>
+      <div class="tprice">£4.99 <small>/ month</small></div>
+      <ul class="tlist"><li>Up to 30 players</li><li>All multiplayer games</li><li>Private games</li><li>Saved sessions</li></ul>
+    </div>
+    <div class="tcard t3">
+      <div class="tname">Host Pro</div>
+      <div class="tprice">£14.99 <small>/ month</small></div>
+      <ul class="tlist"><li>100+ players</li><li>Custom questions</li><li>Your branding</li><li>Recurring events</li></ul>
+    </div>
+  </div>
+  <p class="planned">Planned tiers, shown to gauge interest. Pricing may change before launch.</p>
+
+  <div class="panel">
+    <h2>Get early access</h2>
+    <p>Be first to try it, and help shape what it becomes. No spam, just one email when it's ready.</p>
+
+    <form id="hostForm" novalidate>
+      <label for="hf_email">Email</label>
+      <input type="email" id="hf_email" placeholder="you@example.com" required autocomplete="email">
+
+      <label for="hf_context">What would you use it for? (optional)</label>
+      <select id="hf_context">
+        <option value="">Prefer not to say</option>
+        <option value="pub">Pub quiz night</option>
+        <option value="office">Office / work social</option>
+        <option value="church">Church / youth group</option>
+        <option value="school">School / classroom</option>
+        <option value="party">Party / private event</option>
+        <option value="other">Something else</option>
+      </select>
+
+      <!-- honeypot: invisible to real people, bots often fill every field -->
+      <input class="hp" type="text" id="hf_hp" tabindex="-1" autocomplete="off">
+
+      <button class="cta" id="hf_submit" type="submit">Join early access</button>
+      <div class="err" id="hf_err">Please enter a valid email address.</div>
+      <p class="note">Free TierBrain stays free either way.</p>
+    </form>
+
+    <div class="done" id="hf_done">
+      <div class="big">🎉</div>
+      <h3>You're on the list</h3>
+      <p>Thanks! We'll email you the moment TierBrain Host is ready to try.</p>
+    </div>
+  </div>
+
+  <footer>Made for fun by TierBrain &middot; <a href="/">Back to all games</a></footer>
+
+<script>
+const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+
+const form=document.getElementById('hostForm');
+const emailEl=document.getElementById('hf_email');
+const ctxEl=document.getElementById('hf_context');
+const hpEl=document.getElementById('hf_hp');
+const btn=document.getElementById('hf_submit');
+const err=document.getElementById('hf_err');
+const done=document.getElementById('hf_done');
+
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+form.addEventListener('submit', async function(e){
+  e.preventDefault();
+  err.classList.remove('show');
+  const email=emailEl.value.trim();
+
+  if(hpEl.value){ return; } // bot filled the honeypot; silently drop
+
+  if(!validEmail(email)){
+    err.textContent='Please enter a valid email address.';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.disabled=true; btn.textContent='Joining…';
+  try{
+    const res=await fetch(SB_URL+'/rest/v1/host_leads', {
+      method:'POST',
+      headers:{
+        'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/json', 'Prefer':'return=minimal'
+      },
+      body: JSON.stringify({ email:email, context: ctxEl.value || null })
+    });
+    if(!res.ok){ throw new Error('request failed'); }
+    form.style.display='none';
+    done.classList.add('show');
+  }catch(e){
+    err.textContent="Something went wrong, please try again in a moment.";
+    err.classList.add('show');
+    btn.disabled=false; btn.textContent='Join early access';
+  }
+});
+</script>
+</body>
+</html>

@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="canonical" href="https://tierbrain.co/piece-by-piece.html">
+<meta name="description" content="A flag builds itself piece by piece: name the country before it finishes. Guess early off a few pieces for big points; one guess only.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/piece-by-piece.html">
+<meta property="og:title" content="Piece by Piece">
+<meta property="og:description" content="A flag builds itself piece by piece: name the country before it finishes. Guess early off a few pieces for big points; one guess only.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <title>TierBrain · Piece by Piece</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
@@ -87,10 +95,10 @@
 <section id="menu" class="screen on">
   <div class="kick">T I E R B R A I N</div>
   <h1><span class="star">&#10022;</span> Piece by Piece</h1>
-  <p class="sub">An image builds itself, piece by piece. Name it before it finishes &mdash; the sooner you call it, the more you score. One guess. Pick a category:</p>
+  <p class="sub">An image builds itself, piece by piece. Name it before it finishes, the sooner you call it, the more you score. One guess. Pick a category:</p>
   <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
   <input id="groupInput" class="name" maxlength="24" placeholder="Group code (optional)" autocomplete="off">
-  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional — friends who enter the same code share a private Wall of Fame.</p>
+  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional: friends who enter the same code share a private Wall of Fame.</p>
   <div class="decks">
     <button class="big deckbtn" id="deckFlags">Flags</button>
     <button class="big deckbtn" id="deckPlanets">Planets &amp; Moons</button>
@@ -618,7 +626,7 @@ function submitAndLoad(secs){
     .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=like.'+deckKey+'*&order=correct.desc,time_left.asc&limit=8',{headers:sbHeaders()});})
     .then(function(r){return r.json();})
     .then(function(rows){
-      if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No scores yet \u2014 you\u2019re the first!</div>';return;}
+      if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No scores yet, you\u2019re the first!</div>';return;}
       var marked=false,html='';
       for(var i=0;i<rows.length;i++){
         var you=(!marked&&rows[i].name===nm&&rows[i].correct===score);if(you)marked=true;
