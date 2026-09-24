@@ -252,6 +252,18 @@
 .st-crown .st-tag{animation:stTagIn .5s cubic-bezier(.2,1.4,.4,1) 2.45s forwards;}
 
 @media (prefers-reduced-motion: reduce){ .sting{display:none!important;} }
+  .hofscope{margin-left:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:11.5px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border:1px solid rgba(255,255,255,.14);
+    border-radius:999px;padding:3px 10px;vertical-align:middle;}
+  .hofscope.shared{color:var(--gold-hi);border-color:rgba(245,178,62,.45);}
+  .hofshare{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .hofshare label{font-weight:800;font-size:13px;color:var(--dim);}
+  .hofshare input{flex:1;min-width:160px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+    border-radius:10px;color:var(--ink);font-family:inherit;font-weight:800;font-size:14px;padding:9px 12px;
+    letter-spacing:.08em;text-transform:uppercase;}
+  .hofshare input::placeholder{letter-spacing:0;text-transform:none;font-weight:600;color:rgba(244,238,222,.35);}
+  .hofshare input:focus{outline:none;border-color:var(--gold);}
+  .hofnote{color:var(--dim);font-weight:700;font-size:12.5px;line-height:1.5;margin-top:8px;}
 </style>
   <script src="questions.js?v=7"></script>
 </head>
@@ -295,8 +307,14 @@
           <span style="color:var(--dim);font-weight:700;font-size:14px">Need 2+ players</span></div>
       </div>
       <div class="card hof" id="hofCard" style="grid-column:1/-1">
-        <div class="hd">🏆 Hall of Fame</div>
+        <div class="hd">🏆 Hall of Fame <span class="hofscope" id="hofScope">on this device</span></div>
         <div id="hofList" class="hoflist"><span class="hofempty">No champions yet. Be the first!</span></div>
+        <div class="hofshare">
+          <label for="hofCodeIn">Share with your group</label>
+          <input id="hofCodeIn" placeholder="Optional code, e.g. STMARKS" maxlength="24"
+                 autocomplete="off" spellcheck="false" autocapitalize="characters">
+        </div>
+        <p class="hofnote" id="hofNote">Champions stay on this device. Add a code to share the Hall of Fame with your group&rsquo;s other devices. Only people who enter the same code can see it.</p>
       </div>
     </div>
 
@@ -691,14 +709,41 @@ async function createRoom(){
   writeState(); loadLegends();
 }
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
-async function writeLegend(winner, flawless){ if(!winner) return; try{ await sb('legends',{method:'POST',body:JSON.stringify({ name:winner.name, game:'throne', streak:(G.bestStreak[winner.id]||0), flawless:!!flawless, questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() })}); }catch(e){} loadLegends(); }
+/* ---------- Hall of Fame: private by default ----------
+   This used to be one board shared by every game played anywhere, filtered
+   only by edition. A child who won at one church appeared on the big screen
+   at every other church, permanently, under whatever name they had typed, with
+   no way to remove it.
+
+   Now it lives on this device unless the host chooses a code to share it with
+   their own group's other devices, which is exactly how the quizzes already
+   work. The group is recorded inside the existing 'game' field, so no change
+   to the database was needed. */
+const HOF_EDITION='throne';
+const HOF_LOCAL_KEY='tb_hof_'+HOF_EDITION, HOF_CODE_KEY='tb_hofcode_'+HOF_EDITION;
+function hofCode(){ let c=''; try{ c=localStorage.getItem(HOF_CODE_KEY)||''; }catch(e){}
+  return c.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24); }
+function hofLocalRead(){ try{ return JSON.parse(localStorage.getItem(HOF_LOCAL_KEY)||'[]')||[]; }catch(e){ return []; } }
+function hofLocalWrite(list){ try{ localStorage.setItem(HOF_LOCAL_KEY, JSON.stringify(list.slice(-200))); }catch(e){} }
+async function writeLegend(winner, flawless){
+  if(!winner) return;
+  const entry={ name:winner.name, streak:(G.bestStreak[winner.id]||0), flawless:!!flawless,
+                questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() };
+  const code=hofCode();
+  if(code){ try{ await sb('legends',{method:'POST',body:JSON.stringify(Object.assign({game:HOF_EDITION+':'+code},entry))}); }catch(e){} }
+  else { const L=hofLocalRead(); L.push(entry); hofLocalWrite(L); }
+  loadLegends();
+}
 /* A hall of fame ordered by date is a log, not a leaderboard. Rank on the
    streak, because that is the thing the game is actually about: how long you
    held the throne. A flawless run keeps its crown as the rarer honour, but it
    does not jump the queue, so the number you see is the number you are ranked
    on. Pull a wider slice so we can keep only each person's best run. */
 async function loadLegends(){ let r=[];
-  try{ r=await sb('legends?game=eq.throne&select=name,streak,flawless,created_at&order=streak.desc,created_at.desc&limit=60')||[]; }catch(e){}
+  const code=hofCode();
+  if(code){ try{ r=await sb('legends?game=eq.'+encodeURIComponent(HOF_EDITION+':'+code)+'&select=name,streak,flawless,created_at&order=streak.desc,created_at.desc&limit=60')||[]; }catch(e){} }
+  else { r=hofLocalRead(); }
+  paintHofScope();
   const best={};
   (r||[]).forEach(function(L){
     const k=(L.name||'?').trim().toLowerCase();
@@ -712,6 +757,26 @@ async function loadLegends(){ let r=[];
           || (Date.parse(b.created_at||0)-Date.parse(a.created_at||0));
     }).slice(0,10);
   renderLegends(list); }
+function paintHofScope(){
+  const code=hofCode(), el=$('hofScope'), note=$('hofNote');
+  if(el){ el.textContent = code ? ('group '+code) : 'on this device'; el.classList.toggle('shared', !!code); }
+  if(note) note.textContent = code
+    ? 'Shared with group '+code+'. Only people who enter this code can see it. Clear it to keep champions on this device.'
+    : 'Champions stay on this device. Add a code to share the Hall of Fame with your group\u2019s other devices. Only people who enter the same code can see it.';
+}
+(function(){
+  const inp=$('hofCodeIn'); if(!inp) return;
+  inp.value=hofCode();
+  let t=null;
+  inp.addEventListener('input',function(){
+    const clean=(inp.value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);
+    try{ localStorage.setItem(HOF_CODE_KEY, clean); }catch(e){}
+    paintHofScope();
+    clearTimeout(t); t=setTimeout(loadLegends, 450);   /* wait for them to finish typing */
+  });
+  paintHofScope();
+})();
+
 function renderLegends(list){ const el=$('hofList'); if(!el) return;
   if(!list||!list.length){ el.innerHTML='<span class="hofempty">No champions yet. Be the first!</span>'; return; }
   el.innerHTML='';
