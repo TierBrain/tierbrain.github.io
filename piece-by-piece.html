@@ -658,5 +658,6 @@ window.addEventListener('resize',function(){
 function tbGroup(){try{var el=document.getElementById('groupInput');if(!el)return '';var v=(el.value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);if(v){try{localStorage.setItem('qc_group',v);}catch(e){}}return v;}catch(e){return '';}}
 (function(){try{var el=document.getElementById('groupInput');if(el){var g=(localStorage.getItem('qc_group')||'');if(g&&!el.value)el.value=g;}}catch(e){}})();
 </script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
