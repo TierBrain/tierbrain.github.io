@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Full Circuit: The Switchboard</title>
+<meta name="description" content="Connect each caller to the right answer before the line goes dead. The first room of Full Circuit.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://tierbrain.co/full-circuit.html">
+<meta name="theme-color" content="#1f130c">
+<script>
+(function(){ if(location.hostname==='tierbrain.github.io'){
+  location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================
+   FULL CIRCUIT: THE SWITCHBOARD
+   A 1940s telephone exchange. The cable is the one bold thing;
+   walnut, brass and lamps stay quiet around it. Lamps carry all
+   the state: amber calling, green connected, red fault, dark dead.
+   ========================================================== */
+:root{
+  --bg:#e9dcc2; --panel:#d7c19b; --panel-edge:#b89a6c; --grain:rgba(90,60,30,.08);
+  --ink:#2b2016; --ink-soft:#5d4a36;
+  --brass:#b78a3e; --brass-hi:#e2bf78; --brass-lo:#7d5a22;
+  --amber:#ff9f1c; --green:#3fae5a; --red:#d4402b; --dead:#6f6152;
+  --strip:#fbf5e6; --strip-ink:#2b2016;
+  --cord:#6e2a24; --cord-hi:#a8483d;
+  --hole:#1a120c;
+  --serif:'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  --type:'Special Elite', 'Courier New', Courier, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1f130c; --panel:#2e1d14; --panel-edge:#4a3020; --grain:rgba(255,220,170,.035);
+    --ink:#f0e4cc; --ink-soft:#c2ad8c;
+    --brass:#c89b4f; --brass-hi:#e9c47f; --brass-lo:#7d5a22;
+    --amber:#ffae3d; --green:#8fd694; --red:#e2553e; --dead:#4b3a2c;
+    --strip:#efe4c8; --strip-ink:#2b2016;
+    --cord:#6e2a24; --cord-hi:#a8483d; --hole:#0d0805;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1f130c; --panel:#2e1d14; --panel-edge:#4a3020; --grain:rgba(255,220,170,.035);
+  --ink:#f0e4cc; --ink-soft:#c2ad8c;
+  --brass:#c89b4f; --brass-hi:#e9c47f; --brass-lo:#7d5a22;
+  --amber:#ffae3d; --green:#8fd694; --red:#e2553e; --dead:#4b3a2c;
+  --strip:#efe4c8; --strip-ink:#2b2016; --cord:#6e2a24; --cord-hi:#a8483d; --hole:#0d0805;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;overscroll-behavior:none;}
+button{font:inherit;color:inherit;}
+.app{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;padding:14px 14px 12px;}
+
+/* header: a brass nameplate, the lines, the count */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.plate{font-family:var(--type);font-size:18px;color:#2b1c0e;padding:7px 16px 6px;border-radius:4px;
+  background:linear-gradient(180deg,var(--brass-hi),var(--brass) 55%,var(--brass-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 0 rgba(0,0,0,.25);}
+.status{display:flex;align-items:center;gap:14px;font-family:var(--type);font-size:15px;color:var(--ink-soft);}
+.lines{display:flex;gap:7px;}
+.lines i{width:14px;height:14px;border-radius:50%;background:var(--amber);
+  box-shadow:0 0 8px var(--amber),inset 0 -2px 3px rgba(0,0,0,.25);transition:background .4s,box-shadow .4s;}
+.lines i.gone{background:var(--dead);box-shadow:inset 0 -2px 3px rgba(0,0,0,.35);}
+
+/* the board: a walnut panel */
+.board{position:relative;flex:1;margin-top:12px;border-radius:14px;min-height:430px;
+  background:
+    repeating-linear-gradient(92deg,var(--grain) 0 2px,transparent 2px 9px),
+    var(--panel);
+  border:2px solid var(--panel-edge);box-shadow:inset 0 0 40px rgba(0,0,0,.25);
+  display:flex;flex-direction:column;padding:18px 16px 20px;touch-action:none;user-select:none;-webkit-user-select:none;}
+
+/* the caller */
+.caller{display:flex;gap:14px;align-items:flex-start;}
+.jack{position:relative;width:54px;height:54px;flex:none;}
+.jack .ring{position:absolute;inset:6px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--brass-hi),var(--brass) 45%,var(--brass-lo));
+  box-shadow:0 2px 0 rgba(0,0,0,.35);}
+.jack .hole{position:absolute;inset:17px;border-radius:50%;background:var(--hole);box-shadow:inset 0 2px 4px rgba(0,0,0,.8);}
+.lamp{position:absolute;top:-4px;right:-4px;width:15px;height:15px;border-radius:50%;background:var(--dead);
+  box-shadow:inset 0 -2px 3px rgba(0,0,0,.35);transition:background .25s,box-shadow .25s;}
+.lamp.amber{background:var(--amber);box-shadow:0 0 12px var(--amber);}
+.lamp.green{background:var(--green);box-shadow:0 0 14px var(--green);}
+.lamp.red{background:var(--red);box-shadow:0 0 14px var(--red);}
+.lamp.blink{animation:blink .7s steps(2,start) infinite;}
+.lamp.flicker{animation:flicker .28s steps(3) infinite;}
+@keyframes blink{to{background:var(--dead);box-shadow:none;}}
+@keyframes flicker{50%{background:var(--dead);box-shadow:none;}}
+
+.ticket{flex:1;min-width:0;background:var(--strip);color:var(--strip-ink);border-radius:6px;padding:12px 14px 12px;
+  box-shadow:0 2px 0 rgba(0,0,0,.2);}
+.who{margin:0;font-family:var(--type);font-size:14px;color:#6b5641;}
+.q{margin:6px 0 0;font-size:17px;line-height:1.5;font-weight:700;min-height:3em;}
+.line{margin-top:10px;height:5px;border-radius:3px;background:rgba(43,32,22,.12);overflow:hidden;}
+.line i{display:block;height:100%;width:100%;background:var(--brass);border-radius:3px;transform-origin:left;}
+.line.low i{background:var(--red);}
+
+/* the sockets: two rows of two on a phone, one row on a wide screen */
+.sockets{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:26px 14px;padding-top:30px;}
+@media (min-width:600px){ .sockets{grid-template-columns:repeat(4,1fr);} }
+.socket{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;background:none;border:0;
+  padding:4px 2px;cursor:pointer;border-radius:10px;}
+.socket:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.socket .jack{width:58px;height:58px;}
+.socket.near .jack .ring{box-shadow:0 0 0 3px var(--amber),0 2px 0 rgba(0,0,0,.35);}
+.strip{display:block;width:100%;max-width:150px;background:var(--strip);color:var(--strip-ink);
+  font-family:var(--type);font-size:15px;line-height:1.25;padding:7px 8px;border-radius:4px;text-align:center;
+  box-shadow:0 2px 0 rgba(0,0,0,.2);min-height:2.6em;display:flex;align-items:center;justify-content:center;}
+.socket.right .strip{outline:3px solid var(--green);}
+.socket.wrong .strip{outline:3px solid var(--red);}
+
+/* the cable and the plug: the one bold thing */
+.cable{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+.cord-under{fill:none;stroke:rgba(0,0,0,.45);stroke-width:11;stroke-linecap:round;}
+.cord{fill:none;stroke:var(--cord);stroke-width:8;stroke-linecap:round;}
+.braid{fill:none;stroke:var(--cord-hi);stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round;}
+.plug{position:absolute;left:0;top:0;width:30px;height:46px;margin:-8px 0 0 -15px;border-radius:7px 7px 11px 11px;
+  background:linear-gradient(90deg,#1b130e,#3a2a20 45%,#1b130e);box-shadow:0 3px 6px rgba(0,0,0,.45);
+  cursor:grab;touch-action:none;z-index:3;}
+.plug::before{content:"";position:absolute;left:50%;top:-10px;width:8px;height:14px;margin-left:-4px;border-radius:2px 2px 3px 3px;
+  background:linear-gradient(90deg,var(--brass-lo),var(--brass-hi),var(--brass-lo));}
+.plug.dragging{cursor:grabbing;}
+.plug:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.sparks{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:14px;}
+.spark{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffd27a;box-shadow:0 0 6px #ffb347;}
+
+/* footer */
+.controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;
+  font-size:14px;color:var(--ink-soft);}
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.toggle input{width:18px;height:18px;accent-color:var(--brass);}
+.soundBtn{background:none;border:1px solid var(--panel-edge);border-radius:8px;padding:7px 12px;cursor:pointer;color:var(--ink-soft);}
+.soundBtn:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+
+/* opening and closing cards */
+.card{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px));background:var(--bg);}
+.card[hidden]{display:none;}
+.card .inner{max-width:430px;width:100%;}
+.card h1{font-size:30px;line-height:1.15;margin:14px 0 12px;font-weight:700;}
+.card p{font-size:16px;line-height:1.65;color:var(--ink-soft);margin:0 0 12px;}
+.card .rule{font-family:var(--type);font-size:16px;color:var(--ink);margin:18px 0 22px;}
+.go{display:inline-block;border:0;border-radius:10px;padding:14px 22px;font-size:16px;font-weight:700;cursor:pointer;
+  color:#2b1c0e;background:linear-gradient(180deg,var(--brass-hi),var(--brass) 60%,var(--brass-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.3);}
+.go:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 0 rgba(0,0,0,.3);}
+.go:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.stats{display:flex;gap:26px;margin:18px 0 22px;font-family:var(--type);}
+.stats b{display:block;font-size:26px;color:var(--ink);font-weight:400;}
+.stats span{font-size:14px;color:var(--ink-soft);}
+.item{display:flex;align-items:center;gap:14px;background:var(--strip);color:var(--strip-ink);border-radius:8px;padding:12px 14px;margin:6px 0 20px;}
+.item svg{flex:none;}
+.item b{font-family:var(--type);font-weight:400;font-size:18px;display:block;}
+.item span{font-size:14px;line-height:1.5;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+
+@media (prefers-reduced-motion: reduce){
+  .lamp.blink,.lamp.flicker{animation:none;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="plate">The Switchboard</div>
+    <div class="status">
+      <span class="lines" id="lines" role="img" aria-label="3 lines left"><i></i><i></i><i></i></span>
+      <span id="count">0 of 5 connected</span>
+    </div>
+  </header>
+
+  <main class="board" id="board">
+    <section class="caller">
+      <div class="jack" id="callerJack"><span class="ring"></span><span class="hole"></span><span class="lamp" id="callerLamp"></span></div>
+      <div class="ticket">
+        <p class="who" id="who">The board is quiet</p>
+        <p class="q" id="q"></p>
+        <div class="line" id="line"><i id="lineBar"></i></div>
+      </div>
+    </section>
+
+    <section class="sockets" id="sockets" aria-label="Answer sockets">
+      <button class="socket" data-i="0"><span class="jack"><span class="ring"></span><span class="hole"></span><span class="lamp"></span></span><span class="strip"></span></button>
+      <button class="socket" data-i="1"><span class="jack"><span class="ring"></span><span class="hole"></span><span class="lamp"></span></span><span class="strip"></span></button>
+      <button class="socket" data-i="2"><span class="jack"><span class="ring"></span><span class="hole"></span><span class="lamp"></span></span><span class="strip"></span></button>
+      <button class="socket" data-i="3"><span class="jack"><span class="ring"></span><span class="hole"></span><span class="lamp"></span></span><span class="strip"></span></button>
+    </section>
+
+    <svg class="cable" id="cable" aria-hidden="true"><path class="cord-under" id="cordUnder"/><path class="cord" id="cord"/><path class="braid" id="braid"/></svg>
+    <div class="plug" id="plug" tabindex="-1" aria-hidden="true"></div>
+    <div class="sparks" id="sparks" aria-hidden="true"></div>
+  </main>
+
+  <footer class="controls">
+    <label class="toggle"><input type="checkbox" id="simple"> Simple mode: tap a socket to connect</label>
+    <button class="soundBtn" id="soundBtn" type="button">Sound on</button>
+  </footer>
+  <p class="sr" id="say" aria-live="polite"></p>
+</div>
+
+<section class="card" id="intro">
+  <div class="inner">
+    <div class="plate" style="display:inline-block">The Switchboard</div>
+    <h1>The lines are ringing</h1>
+    <p>Each caller needs connecting to the right answer. Drag the cable from the caller into the matching socket before the line goes dead.</p>
+    <p class="rule">Connect five callers before three lines go dead.</p>
+    <button class="go" id="startBtn" type="button">Take the first call</button>
+  </div>
+</section>
+
+<section class="card" id="end" hidden>
+  <div class="inner">
+    <div class="plate" style="display:inline-block">The Switchboard</div>
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <div class="item" id="itemCard" hidden>
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <g fill="none" stroke="#b8672e" stroke-width="3.2" stroke-linecap="round">
+          <ellipse cx="28" cy="16" rx="16" ry="5"/><ellipse cx="28" cy="23" rx="16" ry="5"/>
+          <ellipse cx="28" cy="30" rx="16" ry="5"/><ellipse cx="28" cy="37" rx="16" ry="5"/>
+          <path d="M44 37 Q52 44 44 50"/>
+        </g>
+        <g fill="none" stroke="#e7a36b" stroke-width="1.2"><path d="M16 14 Q22 12 28 12"/><path d="M16 21 Q22 19 28 19"/><path d="M16 28 Q22 26 28 26"/></g>
+      </svg>
+      <div><b>The Wire</b><span>In the house it will power the Dark Room's lamps. In the machine it becomes the wiring.</span></div>
+    </div>
+    <div class="stats">
+      <div><b id="sConnected">0</b><span>connected</span></div>
+      <div><b id="sDropped">0</b><span>lines lost</span></div>
+      <div><b id="sTime">0:00</b><span>on the board</span></div>
+    </div>
+    <button class="go" id="againBtn" type="button">Play again</button>
+  </div>
+</section>
+
+<script src="questions.js?v=7" onerror="window.__noBank=1"></script>
+<script>
+"use strict";
+/* ---------- questions ----------
+   The Switchboard is an early room, so it draws tiers 1 to 3, and only
+   questions whose four options all fit on a socket's paper strip. On the
+   site that is 631 questions from the shared bank; anywhere the bank cannot
+   load, the 210 embedded here are used instead. */
+var EMBEDDED = {"1":[{"q":"In which room do you usually sleep?","correct":"The bedroom","wrong":["The kitchen","The bathroom","The garage"]},{"q":"What is the opposite of 'true'?","correct":"False","wrong":["Big","Hot","Wet"]},{"q":"Which animal has a long trunk?","correct":"Elephant","wrong":["Lion","Zebra","Bear"]},{"q":"What is the opposite of 'awake'?","correct":"Asleep","wrong":["Tall","Hot","Loud"]},{"q":"Which of these is something you read?","correct":"A book","wrong":["A spoon","A shoe","A clock"]},{"q":"What do you use to unlock a door?","correct":"A key","wrong":["A spoon","A pen","A cup"]},{"q":"What colour is an egg yolk?","correct":"Yellow","wrong":["Blue","Green","Purple"]},{"q":"How many things are there in a pair?","correct":"Two","wrong":["One","Three","Four"]},{"q":"How many sides does a square have?","correct":"Four","wrong":["Three","Five","Six"]},{"q":"Which of these can you drink?","correct":"Water","wrong":["Sand","Wood","Glass"]},{"q":"Which of these is a shape?","correct":"A circle","wrong":["Red","Loud","Seven"]},{"q":"How many legs does a spider have?","correct":"Eight","wrong":["Six","Ten","Four"]},{"q":"What is the long yellow fruit that monkeys are said to love?","correct":"A banana","wrong":["An apple","A grape","A lemon"]},{"q":"How many legs does a dog have?","correct":"Four","wrong":["Two","Six","Eight"]},{"q":"What colour is an orange (the fruit)?","correct":"Orange","wrong":["Blue","Purple","Black"]},{"q":"How many legs does a horse have?","correct":"Four","wrong":["Two","Six","Eight"]},{"q":"What sound does a cat make?","correct":"Meow","wrong":["Bark","Moo","Quack"]},{"q":"What do you wear on your feet to keep them warm?","correct":"Socks","wrong":["Gloves","A hat","A belt"]},{"q":"Which of these would you use to dry yourself after a bath?","correct":"A towel","wrong":["A spoon","A hat","A book"]},{"q":"Which organ pumps blood around your body?","correct":"The heart","wrong":["The brain","The lungs","The stomach"]},{"q":"What is the opposite of 'begin'?","correct":"End","wrong":["Tall","Loud","Wet"]},{"q":"What is the opposite of 'hard'?","correct":"Soft","wrong":["Tall","Loud","Wet"]},{"q":"What is the opposite of 'day'?","correct":"Night","wrong":["Noon","Week","Hour"]},{"q":"Which of these numbers is bigger than 10?","correct":"20","wrong":["5","8","2"]},{"q":"Which of these do you use to cut paper?","correct":"Scissors","wrong":["A spoon","A pillow","A cup"]},{"q":"How many thumbs does a typical person have?","correct":"Two","wrong":["One","Three","Ten"]},{"q":"In which season do flowers begin to bloom?","correct":"Spring","wrong":["Winter","Autumn","Summer"]},{"q":"How many months are there in a year?","correct":"12","wrong":["10","11","24"]},{"q":"What sound does a dog make?","correct":"Bark","wrong":["Meow","Moo","Quack"]},{"q":"What is the opposite of 'clean'?","correct":"Dirty","wrong":["Tall","Loud","Cold"]},{"q":"How many days are there in a week?","correct":"Seven","wrong":["Five","Six","Eight"]},{"q":"What do you call a doctor who treats animals?","correct":"A vet","wrong":["A nurse","A chef","A pilot"]},{"q":"What covers the outside of your body?","correct":"Skin","wrong":["Bone","Hair","Muscle"]},{"q":"Which of these is used to write on paper?","correct":"A pen","wrong":["A spoon","A hammer","A cup"]},{"q":"What is the opposite of 'happy'?","correct":"Sad","wrong":["Tall","Fast","Loud"]},{"q":"What is the opposite of 'big'?","correct":"Small","wrong":["Tall","Long","Wide"]},{"q":"Which of these is a number?","correct":"Seven","wrong":["Blue","Happy","Round"]},{"q":"What is the opposite of 'near'?","correct":"Far","wrong":["Up","Hot","Wet"]},{"q":"Which of these animals can fly?","correct":"Eagle","wrong":["Penguin","Ostrich","Salmon"]},{"q":"What do we call the grand home of a king or queen?","correct":"A palace","wrong":["A barn","A tent","A cave"]},{"q":"What gas do humans breathe in to survive?","correct":"Oxygen","wrong":["Carbon dioxide","Helium","Hydrogen"]},{"q":"What is the opposite of 'hot'?","correct":"Cold","wrong":["Warm","Dry","Wet"]},{"q":"What do you call a shop that sells bread and cakes?","correct":"A bakery","wrong":["A library","A garage","A bank"]},{"q":"Which of these would you wear on your head?","correct":"A hat","wrong":["A shoe","A glove","A sock"]},{"q":"How many ears does a typical person have?","correct":"Two","wrong":["One","Three","Four"]},{"q":"What is frozen water called?","correct":"Ice","wrong":["Steam","Mist","Fog"]},{"q":"What do you call children who share the same parents as you?","correct":"Siblings","wrong":["Cousins","Parents","Neighbours"]},{"q":"What is the part of a plant that grows underground called?","correct":"Roots","wrong":["Leaves","Petals","Branches"]},{"q":"What do you call a baby dog?","correct":"Puppy","wrong":["Kitten","Calf","Cub"]},{"q":"What colour do you get when you mix red and yellow?","correct":"Orange","wrong":["Green","Purple","Blue"]},{"q":"Which of these animals has stripes?","correct":"A zebra","wrong":["A pig","A sheep","A cow"]},{"q":"How many fingers and thumbs are there on two hands?","correct":"Ten","wrong":["Five","Eight","Twelve"]},{"q":"How many sides does a coin have (heads and tails)?","correct":"Two","wrong":["One","Three","Four"]},{"q":"How many legs does a cat have?","correct":"Four","wrong":["Two","Six","Eight"]},{"q":"Which of these is a hot drink?","correct":"Tea","wrong":["Lemonade","Milkshake","Cola"]},{"q":"What colour do you get by mixing blue and yellow?","correct":"Green","wrong":["Purple","Orange","Brown"]},{"q":"Which of these comes from a chicken?","correct":"An egg","wrong":["Milk","Wool","Honey"]},{"q":"What is the capital of England?","correct":"London","wrong":["Manchester","Birmingham","Liverpool"]},{"q":"What do you taste with?","correct":"Your tongue","wrong":["Your nose","Your ears","Your elbow"]},{"q":"What do you call a small house built for a dog?","correct":"A kennel","wrong":["A nest","A stable","A web"]},{"q":"What is a baby pig called?","correct":"A piglet","wrong":["A kid","A foal","A cub"]},{"q":"How many corners does a square have?","correct":"Four","wrong":["Three","Five","Six"]},{"q":"How many wheels are there on two bicycles?","correct":"Four","wrong":["Two","Three","Six"]},{"q":"Which is fastest: walking, running or crawling?","correct":"Running","wrong":["Walking","Crawling","Standing"]},{"q":"What do we call baby frogs?","correct":"Tadpoles","wrong":["Cubs","Kittens","Chicks"]},{"q":"What do you call a baby duck?","correct":"A duckling","wrong":["A foal","A cub","A kid"]},{"q":"What do you call a person who looks after people's teeth?","correct":"A dentist","wrong":["A vet","A chef","A pilot"]},{"q":"What do we call the early part of the day when the sun rises?","correct":"Morning","wrong":["Midnight","Afternoon","Evening"]},{"q":"What do you use to make a phone call?","correct":"A phone","wrong":["A spoon","A book","A clock"]},{"q":"What are dried grapes called?","correct":"Raisins","wrong":["Prunes","Dates","Figs"]}],"2":[{"q":"How many strings does a standard guitar have?","correct":"Six","wrong":["Four","Five","Seven"]},{"q":"In which Italian city is the famous Leaning Tower?","correct":"Pisa","wrong":["Rome","Florence","Venice"]},{"q":"What is the chemical formula for carbon dioxide?","correct":"CO2","wrong":["H2O","O2","CO"]},{"q":"How many rings are there on the Olympic flag?","correct":"Five","wrong":["Four","Six","Three"]},{"q":"Which animal is known as the 'ship of the desert'?","correct":"The camel","wrong":["The horse","The donkey","The llama"]},{"q":"How many sides does a pentagon have?","correct":"Five","wrong":["Four","Six","Seven"]},{"q":"Who wrote 'Charlotte's Web'?","correct":"E.B. White","wrong":["Roald Dahl","Beatrix Potter","A.A. Milne"]},{"q":"What is the chemical symbol for cobalt?","correct":"Co","wrong":["Cb","Ct","C"]},{"q":"Who wrote 'Charlie and the Chocolate Factory'?","correct":"Roald Dahl","wrong":["Enid Blyton","C.S. Lewis","Dr. Seuss"]},{"q":"How many millimetres are there in one centimetre?","correct":"10","wrong":["100","5","1000"]},{"q":"In football (soccer), a 'hat-trick' means scoring how many goals?","correct":"Three","wrong":["Two","Four","Five"]},{"q":"In which mountain range is Mount Everest?","correct":"The Himalayas","wrong":["The Andes","The Alps","The Rockies"]},{"q":"What do you call animals that eat only meat?","correct":"Carnivores","wrong":["Herbivores","Omnivores","Insectivores"]},{"q":"How many players from one team are on court in volleyball?","correct":"Six","wrong":["Five","Seven","Four"]},{"q":"What is the capital of India?","correct":"New Delhi","wrong":["Mumbai","Kolkata","Bangalore"]},{"q":"Which planet is often called Earth's 'twin' because of its similar size?","correct":"Venus","wrong":["Mars","Mercury","Neptune"]},{"q":"Which Italian city is famous for its canals and gondolas?","correct":"Venice","wrong":["Rome","Naples","Florence"]},{"q":"How many players in total take part in a tennis doubles match?","correct":"Four","wrong":["Two","Six","Eight"]},{"q":"On which continent is the Sahara Desert?","correct":"Africa","wrong":["Asia","Australia","South America"]},{"q":"Which river flows through London?","correct":"The Thames","wrong":["The Seine","The Rhine","The Danube"]},{"q":"How many players from one team are on the ice in ice hockey?","correct":"Six","wrong":["Five","Seven","Eleven"]},{"q":"What currency is used in Japan?","correct":"Yen","wrong":["Won","Yuan","Ringgit"]},{"q":"What is the largest country in the world by area?","correct":"Russia","wrong":["Canada","China","United States"]},{"q":"Which ocean lies between Africa and Australia?","correct":"Indian Ocean","wrong":["Atlantic Ocean","Pacific Ocean","Arctic Ocean"]},{"q":"How many zeros are there in the number one thousand?","correct":"3","wrong":["2","4","5"]},{"q":"How many sides does an octagon have?","correct":"Eight","wrong":["Six","Seven","Ten"]},{"q":"How many players from one team are on court in netball?","correct":"Seven","wrong":["Five","Six","Eleven"]},{"q":"What is the capital of Brazil?","correct":"Brasilia","wrong":["Rio de Janeiro","Sao Paulo","Salvador"]},{"q":"Which is the largest type of bird in the world?","correct":"Ostrich","wrong":["Eagle","Penguin","Albatross"]},{"q":"What are most chips (fries) made from?","correct":"Potatoes","wrong":["Carrots","Apples","Beans"]},{"q":"Which vitamin does the body mainly make when skin is exposed to sunlight?","correct":"Vitamin D","wrong":["Vitamin C","Vitamin A","Vitamin B12"]},{"q":"Which sea creature has five arms and can regrow them?","correct":"A starfish","wrong":["A jellyfish","An octopus","A crab"]},{"q":"How many sides does a decagon have?","correct":"Ten","wrong":["Eight","Nine","Twelve"]},{"q":"How many natural moons does Earth have?","correct":"One","wrong":["Two","Zero","Four"]},{"q":"How many players from one team are on the field in cricket?","correct":"Eleven","wrong":["Nine","Ten","Twelve"]},{"q":"What is the main currency of the United States?","correct":"Dollar","wrong":["Peso","Pound","Euro"]},{"q":"What is the official language of Brazil?","correct":"Portuguese","wrong":["Spanish","Brazilian","French"]},{"q":"Which is the only planet known to support life?","correct":"Earth","wrong":["Mars","Venus","Jupiter"]},{"q":"How many players from one team are on a basketball court at once?","correct":"Five","wrong":["Six","Seven","Four"]},{"q":"In tennis, what is a score of zero called?","correct":"Love","wrong":["Deuce","Fault","Ace"]},{"q":"Which country hosted the ancient Olympic Games?","correct":"Greece","wrong":["Italy","Egypt","Turkey"]},{"q":"Who proposed the theory of evolution by natural selection?","correct":"Charles Darwin","wrong":["Gregor Mendel","Louis Pasteur","Carl Linnaeus"]},{"q":"What is the chemical symbol for calcium?","correct":"Ca","wrong":["C","Cl","Cm"]},{"q":"How many players from one team take the field in baseball?","correct":"Nine","wrong":["Ten","Eight","Eleven"]},{"q":"How many strings does a standard violin have?","correct":"Four","wrong":["Six","Five","Three"]},{"q":"Who wrote the 'Famous Five' adventure books?","correct":"Enid Blyton","wrong":["Roald Dahl","J.K. Rowling","Beatrix Potter"]},{"q":"How many years are there in a century?","correct":"100","wrong":["10","50","1000"]},{"q":"Who wrote 'The Cat in the Hat'?","correct":"Dr. Seuss","wrong":["Roald Dahl","Maurice Sendak","Eric Carle"]},{"q":"How many sides does a heptagon have?","correct":"Seven","wrong":["Six","Eight","Five"]},{"q":"Which gas do plants absorb from the air for photosynthesis?","correct":"Carbon dioxide","wrong":["Oxygen","Nitrogen","Hydrogen"]},{"q":"What do you call a person who studies history?","correct":"A historian","wrong":["A geologist","A biologist","A chemist"]},{"q":"Who wrote 'The Wonderful Wizard of Oz'?","correct":"L. Frank Baum","wrong":["Lewis Carroll","Roald Dahl","J.M. Barrie"]},{"q":"The Ashes is a cricket rivalry between England and which country?","correct":"Australia","wrong":["India","South Africa","New Zealand"]},{"q":"What is the currency of the United Kingdom?","correct":"Pound sterling","wrong":["Euro","Dollar","Franc"]},{"q":"What is the largest big cat in the world?","correct":"The tiger","wrong":["The lion","The leopard","The jaguar"]},{"q":"What do you call molten rock that erupts from a volcano?","correct":"Lava","wrong":["Coal","Ash","Sand"]},{"q":"Which country has a red maple leaf on its flag?","correct":"Canada","wrong":["United States","Australia","Brazil"]},{"q":"What is the name of the tube in your throat that carries air to your lungs?","correct":"The windpipe","wrong":["The gullet","The spine","The vein"]},{"q":"What do you call a scientist who studies the stars and planets?","correct":"An astronomer","wrong":["A geologist","A biologist","A chemist"]},{"q":"Which gas makes up most of Earth's atmosphere?","correct":"Nitrogen","wrong":["Oxygen","Carbon dioxide","Hydrogen"]},{"q":"Which metal is strongly attracted to magnets?","correct":"Iron","wrong":["Gold","Aluminium","Copper"]},{"q":"How many continents are there on Earth?","correct":"Seven","wrong":["Five","Six","Eight"]},{"q":"Which instrument is used to measure temperature?","correct":"A thermometer","wrong":["A barometer","A ruler","A compass"]},{"q":"What do you call a word that sounds the same as another but is spelled differently?","correct":"A homophone","wrong":["An antonym","A synonym","A verb"]},{"q":"What is the currency of Mexico?","correct":"Peso","wrong":["Real","Dollar","Colon"]},{"q":"How many faces does a standard die (dice) have?","correct":"Six","wrong":["Four","Eight","Twelve"]},{"q":"Which lighter-than-air gas was once used to fill airships?","correct":"Hydrogen","wrong":["Oxygen","Carbon dioxide","Argon"]},{"q":"What is the capital of Pakistan?","correct":"Islamabad","wrong":["Karachi","Lahore","Kabul"]},{"q":"What is the capital of Australia?","correct":"Canberra","wrong":["Sydney","Melbourne","Perth"]},{"q":"How many planets are there in our solar system?","correct":"8","wrong":["9","7","10"]}],"3":[{"q":"Which art movement is Salvador Dali most associated with?","correct":"Surrealism","wrong":["Cubism","Impressionism","Pop art"]},{"q":"In which country is the ancient Inca city of Machu Picchu?","correct":"Peru","wrong":["Bolivia","Chile","Ecuador"]},{"q":"Which gas is produced when an acid reacts with a metal?","correct":"Hydrogen","wrong":["Oxygen","Carbon dioxide","Nitrogen"]},{"q":"In which country are the cities of Casablanca and Marrakech?","correct":"Morocco","wrong":["Algeria","Tunisia","Egypt"]},{"q":"What is the SI unit of force?","correct":"Newton","wrong":["Joule","Pascal","Watt"]},{"q":"What is the capital of Nepal?","correct":"Kathmandu","wrong":["Thimphu","Dhaka","Lhasa"]},{"q":"Which element has the chemical symbol 'Cu'?","correct":"Copper","wrong":["Calcium","Cobalt","Chromium"]},{"q":"In which Shakespeare play does the character Iago appear?","correct":"Othello","wrong":["Hamlet","Macbeth","King Lear"]},{"q":"What is the capital of Slovakia?","correct":"Bratislava","wrong":["Brno","Ljubljana","Vienna"]},{"q":"Who wrote the play 'The Cherry Orchard'?","correct":"Anton Chekhov","wrong":["Leo Tolstoy","Maxim Gorky","Nikolai Gogol"]},{"q":"What is the capital of Wales?","correct":"Cardiff","wrong":["Swansea","Newport","Bangor"]},{"q":"Absolute zero is approximately what temperature in degrees Celsius?","correct":"-273","wrong":["0","-100","-50"]},{"q":"What is the capital of Poland?","correct":"Warsaw","wrong":["Krakow","Gdansk","Lodz"]},{"q":"Which vitamin, found in citrus fruits, prevents the disease scurvy?","correct":"Vitamin C","wrong":["Vitamin D","Vitamin A","Vitamin K"]},{"q":"Which English king famously had six wives?","correct":"Henry VIII","wrong":["Henry VII","Edward VI","Richard III"]},{"q":"Which element has the atomic number 1?","correct":"Hydrogen","wrong":["Helium","Oxygen","Carbon"]},{"q":"What is the process called when water vapour turns back into liquid?","correct":"Condensation","wrong":["Evaporation","Sublimation","Precipitation"]},{"q":"In which city would you find the Brandenburg Gate?","correct":"Berlin","wrong":["Munich","Vienna","Prague"]},{"q":"What is the capital of the Czech Republic?","correct":"Prague","wrong":["Brno","Vienna","Bratislava"]},{"q":"Which is the largest country in Africa by area?","correct":"Algeria","wrong":["Egypt","Sudan","Libya"]},{"q":"The speed of light in a vacuum is approximately how fast?","correct":"300,000 km/s","wrong":["150,000 km/s","30,000 km/s","3,000 km/s"]},{"q":"What is the SI unit of electric charge?","correct":"The coulomb","wrong":["The volt","The ampere","The ohm"]},{"q":"What is the scientific study of living organisms called?","correct":"Biology","wrong":["Geology","Chemistry","Physics"]},{"q":"What is the force that resists motion between two surfaces rubbing together?","correct":"Friction","wrong":["Gravity","Magnetism","Inertia"]},{"q":"What is the capital of Bulgaria?","correct":"Sofia","wrong":["Plovdiv","Varna","Bucharest"]},{"q":"In which year did World War II begin in Europe?","correct":"1939","wrong":["1941","1945","1914"]},{"q":"What is the capital of Egypt?","correct":"Cairo","wrong":["Alexandria","Giza","Luxor"]},{"q":"How many chambers does the human heart have?","correct":"Four","wrong":["Two","Three","Six"]},{"q":"What is the capital of Serbia?","correct":"Belgrade","wrong":["Zagreb","Sarajevo","Skopje"]},{"q":"What is the capital of Ethiopia?","correct":"Addis Ababa","wrong":["Nairobi","Khartoum","Mogadishu"]},{"q":"Which unit is used to measure the loudness of sound?","correct":"Decibel","wrong":["Hertz","Watt","Lumen"]},{"q":"What is the capital of Lithuania?","correct":"Vilnius","wrong":["Riga","Tallinn","Warsaw"]},{"q":"In which part of a plant does most photosynthesis take place?","correct":"The leaves","wrong":["The roots","The stem","The flower"]},{"q":"What is the SI unit of electric potential (voltage)?","correct":"Volt","wrong":["Ampere","Ohm","Watt"]},{"q":"What is the chemical formula for methane?","correct":"CH4","wrong":["CO2","NH3","H2O"]},{"q":"In Roman numerals, what number does 'L' represent?","correct":"50","wrong":["100","500","5"]},{"q":"What is the SI unit of electric current?","correct":"Ampere","wrong":["Volt","Ohm","Coulomb"]},{"q":"Which is the highest mountain in the Americas?","correct":"Aconcagua","wrong":["Denali","Mount Whitney","Chimborazo"]},{"q":"Which metal is liquid at room temperature?","correct":"Mercury","wrong":["Lead","Aluminium","Zinc"]},{"q":"In which museum does the Mona Lisa hang?","correct":"The Louvre","wrong":["The Uffizi","The Prado","The Met"]},{"q":"In which year did humans first land on the Moon?","correct":"1969","wrong":["1965","1972","1959"]},{"q":"In which year did World War II end?","correct":"1945","wrong":["1944","1946","1939"]},{"q":"In which year did World War I begin?","correct":"1914","wrong":["1912","1918","1939"]},{"q":"What is the chemical formula for common table salt?","correct":"NaCl","wrong":["KCl","NaCO","Na2O"]},{"q":"What is the SI unit of power?","correct":"Watt","wrong":["Joule","Newton","Hertz"]},{"q":"What is the largest island in the world?","correct":"Greenland","wrong":["New Guinea","Madagascar","Borneo"]},{"q":"What is the chemical symbol for silicon?","correct":"Si","wrong":["Sc","Sn","Sl"]},{"q":"What is the capital of North Macedonia?","correct":"Skopje","wrong":["Tirana","Sofia","Podgorica"]},{"q":"What is the capital of Albania?","correct":"Tirana","wrong":["Skopje","Sarajevo","Podgorica"]},{"q":"Which is the second largest planet in our solar system?","correct":"Saturn","wrong":["Jupiter","Neptune","Uranus"]},{"q":"In which country is the temple complex of Angkor Wat?","correct":"Cambodia","wrong":["Thailand","Vietnam","Myanmar"]},{"q":"In Greek myth, which hero could be wounded only at his heel?","correct":"Achilles","wrong":["Hercules","Perseus","Odysseus"]},{"q":"What is the longest bone in the human body?","correct":"Femur","wrong":["Tibia","Humerus","Fibula"]},{"q":"In which modern country are the ruins of the ancient city of Babylon?","correct":"Iraq","wrong":["Iran","Syria","Egypt"]},{"q":"Which planet is the third from the Sun?","correct":"Earth","wrong":["Venus","Mars","Mercury"]},{"q":"What is the capital of Belarus?","correct":"Minsk","wrong":["Kyiv","Vilnius","Riga"]},{"q":"Which element has the atomic number 6?","correct":"Carbon","wrong":["Nitrogen","Oxygen","Boron"]},{"q":"What is the largest internal organ in the human body?","correct":"Liver","wrong":["Stomach","Lungs","Brain"]},{"q":"What is the name of the path a planet follows around the Sun?","correct":"Its orbit","wrong":["Its axis","Its equator","Its rotation"]},{"q":"Which river flows through Paris?","correct":"The Seine","wrong":["The Loire","The Rhone","The Rhine"]},{"q":"In which country are the ancient pyramids of Teotihuacan?","correct":"Mexico","wrong":["Egypt","Peru","Guatemala"]},{"q":"What is the scientific study of insects called?","correct":"Entomology","wrong":["Ornithology","Ichthyology","Herpetology"]},{"q":"What is the green pigment in plants that absorbs sunlight called?","correct":"Chlorophyll","wrong":["Carotene","Keratin","Melanin"]},{"q":"What is the chemical symbol for bromine?","correct":"Br","wrong":["Bo","Bm","Be"]},{"q":"Which planet has the hottest surface in our solar system?","correct":"Venus","wrong":["Mercury","Mars","Jupiter"]},{"q":"What is the capital of Scotland?","correct":"Edinburgh","wrong":["Glasgow","Aberdeen","Dundee"]},{"q":"Who wrote the novel 'Catch-22'?","correct":"Joseph Heller","wrong":["Kurt Vonnegut","Norman Mailer","John Updike"]},{"q":"What is the capital of Austria?","correct":"Vienna","wrong":["Salzburg","Graz","Munich"]},{"q":"What is the capital of Hungary?","correct":"Budapest","wrong":["Vienna","Belgrade","Bucharest"]},{"q":"What is the scientific study of weather called?","correct":"Meteorology","wrong":["Geology","Astrology","Ecology"]}]};
+var FITS = function(q){ return q && q.wrong && q.wrong.length >= 3 &&
+  [q.correct].concat(q.wrong.slice(0,3)).every(function(a){ return String(a).length <= 14; }); };
+var POOL = { '1':[], '2':[], '3':[] };
+(function(){
+  var used = false;
+  try{
+    if(window.TB && window.TB.bank){
+      var b = window.TB.bank('gk') || {};
+      ['1','2','3'].forEach(function(t){ (b[t]||[]).forEach(function(q){ if(FITS(q)) POOL[t].push(q); }); });
+      used = POOL['1'].length > 20;
+    }
+  }catch(e){}
+  if(!used){ POOL = { '1':EMBEDDED['1'].slice(), '2':EMBEDDED['2'].slice(), '3':EMBEDDED['3'].slice() }; }
+})();
+
+var SEEN_KEY = 'fc_switchboard_seen_v1';
+function qKey(q){ var h=5381, s=String(q.q); for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
+var seen = (function(){ try{ return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]')); }catch(e){ return new Set(); } })();
+function saveSeen(){ try{ localStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(seen).slice(-2000))); }catch(e){} }
+function pickQuestion(tier){
+  var list = POOL[tier].filter(function(q){ return !seen.has(qKey(q)); });
+  if(!list.length){ POOL[tier].forEach(function(q){ seen.delete(qKey(q)); }); list = POOL[tier].slice(); }
+  var q = list[Math.floor(Math.random()*list.length)];
+  seen.add(qKey(q)); saveSeen();
+  return q;
+}
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* ---------- rules ---------- */
+var TARGET = 5, LINES = 3, CALL_MS = 15000;
+function tierFor(n){ return n < 2 ? '1' : (n < 4 ? '2' : '3'); }
+
+/* ---------- sound: built in the browser, like the rest of the site ---------- */
+var ac = null, muted = false;
+try{ muted = localStorage.getItem('fc_muted') === '1'; }catch(e){}
+function actx(){ if(muted) return null; try{ if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){ return null; } return ac; }
+function tone(f, t, d, type, v){ var a=actx(); if(!a) return; var o=a.createOscillator(), g=a.createGain(), T=a.currentTime+t;
+  o.type=type||'sine'; o.frequency.setValueAtTime(f,T); g.gain.setValueAtTime(0.0001,T);
+  g.gain.exponentialRampToValueAtTime(v||0.12,T+0.015); g.gain.exponentialRampToValueAtTime(0.0001,T+d);
+  o.connect(g); g.connect(a.destination); o.start(T); o.stop(T+d+0.05); }
+function noise(t, d, v, freq){ var a=actx(); if(!a) return; var n=Math.floor(a.sampleRate*d), buf=a.createBuffer(1,n,a.sampleRate), ch=buf.getChannelData(0);
+  for(var i=0;i<n;i++) ch[i]=(Math.random()*2-1)*(1-i/n);
+  var s=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain(), T=a.currentTime+t;
+  s.buffer=buf; f.type='bandpass'; f.frequency.value=freq||2400; f.Q.value=0.8; g.gain.value=v||0.2;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start(T); }
+var SFX = {
+  /* the British double ring: two short bursts of 400 and 450 hertz together */
+  ring: function(){ [0,0.6].forEach(function(t){ tone(400,t,0.4,'sine',0.07); tone(450,t,0.4,'sine',0.07); }); },
+  click: function(){ noise(0,0.05,0.35,3200); tone(180,0,0.06,'square',0.05); },
+  right: function(){ tone(660,0.06,0.25,'sine',0.1); tone(990,0.16,0.35,'sine',0.08); },
+  wrong: function(){ noise(0,0.28,0.4,1800); tone(220,0,0.3,'sawtooth',0.06); tone(110,0.08,0.3,'square',0.05); },
+  crackle: function(){ noise(0,0.06+Math.random()*0.05,0.12,1200+Math.random()*2400); }
+};
+
+/* ---------- elements ---------- */
+var $ = function(id){ return document.getElementById(id); };
+var board=$('board'), plug=$('plug'), cord=$('cord'), cordUnder=$('cordUnder'), braid=$('braid');
+var sockets = Array.prototype.slice.call(document.querySelectorAll('.socket'));
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+var simple = false; try{ simple = localStorage.getItem('fc_simple') === '1'; }catch(e){}
+$('simple').checked = simple;
+
+/* ---------- geometry ---------- */
+function centreOf(el){ var b=board.getBoundingClientRect(), r=el.getBoundingClientRect();
+  return { x: r.left - b.left + r.width/2, y: r.top - b.top + r.height/2 }; }
+function home(){ return centreOf($('callerJack')); }
+function socketJack(i){ return centreOf(sockets[i].querySelector('.jack')); }
+
+/* the cord hangs between the caller's jack and the plug, sagging with distance
+   and swinging a little when it moves */
+var plugPos = {x:0,y:0}, swing = 0, swingV = 0;
+function drawCord(){
+  var a = home(), p = plugPos;
+  var dx = p.x - a.x, dy = p.y - a.y, dist = Math.sqrt(dx*dx+dy*dy);
+  var sag = Math.min(140, 18 + dist*0.32) + swing;
+  var mx = (a.x + p.x)/2 + swing*0.4, my = Math.max(a.y, p.y) + sag;
+  var d = 'M'+a.x+' '+a.y+' Q'+mx+' '+my+' '+p.x+' '+(p.y-6);
+  cord.setAttribute('d', d); cordUnder.setAttribute('d', d); braid.setAttribute('d', d);
+  plug.style.transform = 'translate('+p.x+'px,'+p.y+'px)';
+}
+function settleSwing(){
+  if(reduceMotion){ swing=0; swingV=0; drawCord(); return; }
+  var step = function(){ swingV += -swing*0.12; swingV *= 0.86; swing += swingV;
+    drawCord(); if(Math.abs(swing) > 0.3 || Math.abs(swingV) > 0.3) requestAnimationFrame(step); else { swing=0; drawCord(); } };
+  requestAnimationFrame(step);
+}
+function movePlug(to, ms, done){
+  if(reduceMotion || !ms){ plugPos = {x:to.x, y:to.y}; drawCord(); if(done) done(); return; }
+  var from = {x:plugPos.x, y:plugPos.y}, t0 = performance.now();
+  var step = function(now){ var k = Math.min(1,(now-t0)/ms), e = 1-Math.pow(1-k,3);
+    plugPos = {x: from.x+(to.x-from.x)*e, y: from.y+(to.y-from.y)*e}; drawCord();
+    if(k<1) requestAnimationFrame(step); else { swingV = 6; settleSwing(); if(done) done(); } };
+  requestAnimationFrame(step);
+}
+
+/* ---------- state ---------- */
+var S = null;
+function fresh(){ return { connected:0, dropped:0, calls:0, q:null, opts:[], answerIdx:-1, live:false, t0:0, callStart:0, lastCrackle:0 }; }
+
+function paintLines(){ var left = LINES - S.dropped; var dots = $('lines').children;
+  for(var i=0;i<dots.length;i++) dots[i].classList.toggle('gone', i >= left);
+  $('lines').setAttribute('aria-label', left + (left===1?' line':' lines') + ' left');
+  $('count').textContent = S.connected + ' of ' + TARGET + ' connected'; }
+
+function say(t){ $('say').textContent = t; }
+
+function nextCall(){
+  if(S.connected >= TARGET) return finish(true);
+  if(S.dropped >= LINES) return finish(false);
+  var q = pickQuestion(tierFor(S.calls));
+  S.calls++;
+  S.q = q; S.opts = shuffle([q.correct].concat(q.wrong.slice(0,3))); S.answerIdx = S.opts.indexOf(q.correct);
+  sockets.forEach(function(s,i){ s.classList.remove('right','wrong','near'); s.querySelector('.lamp').className='lamp';
+    s.querySelector('.strip').textContent = S.opts[i]; s.setAttribute('aria-label','Socket '+(i+1)+': '+S.opts[i]); });
+  $('who').textContent = 'Caller ' + S.calls + ' is asking';
+  $('q').textContent = q.q;
+  $('callerLamp').className = 'lamp amber blink';
+  $('line').classList.remove('low');
+  movePlug(home(), 0);
+  SFX.ring();
+  say('Caller ' + S.calls + ': ' + q.q);
+  S.live = true; S.callStart = performance.now();
+  requestAnimationFrame(tick);
+}
+
+function tick(now){
+  if(!S || !S.live) return;
+  var left = CALL_MS - (now - S.callStart), f = Math.max(0, left / CALL_MS);
+  $('lineBar').style.transform = 'scaleX(' + f + ')';
+  if(left < 4000){
+    $('line').classList.add('low');
+    $('callerLamp').className = 'lamp amber flicker';
+    if(now - S.lastCrackle > 180 + Math.random()*260){ SFX.crackle(); S.lastCrackle = now; }
+  }
+  if(left <= 0){ return resolve(-1); }
+  requestAnimationFrame(tick);
+}
+
+/* i = the socket chosen, or -1 when the line went dead */
+function resolve(i){
+  if(!S.live) return;
+  S.live = false;
+  var right = (i === S.answerIdx);
+  var rightSock = sockets[S.answerIdx];
+  if(right){
+    SFX.click(); SFX.right();
+    S.connected++;
+    rightSock.classList.add('right'); rightSock.querySelector('.lamp').className = 'lamp green';
+    $('callerLamp').className = 'lamp green';
+    $('who').textContent = 'Connected';
+    say('Connected. ' + S.q.correct + ' is right.');
+  } else {
+    SFX.wrong();
+    S.dropped++;
+    if(i >= 0){ sockets[i].classList.add('wrong'); sockets[i].querySelector('.lamp').className = 'lamp red'; burst(socketJack(i)); }
+    rightSock.classList.add('right'); rightSock.querySelector('.lamp').className = 'lamp green blink';
+    $('callerLamp').className = 'lamp red';
+    $('who').textContent = (i < 0 ? 'The line went dead' : 'Wrong line') + '. It should have been ' + S.q.correct + '.';
+    say((i < 0 ? 'The line went dead.' : 'Wrong line.') + ' The answer was ' + S.q.correct + '.');
+  }
+  paintLines();
+  setTimeout(function(){
+    movePlug(home(), right ? 380 : 260, function(){ setTimeout(nextCall, 280); });
+  }, right ? 900 : 1500);
+}
+
+function burst(at){
+  if(reduceMotion) return;
+  var box = $('sparks');
+  for(var k=0;k<14;k++){
+    var s = document.createElement('i'); s.className='spark'; box.appendChild(s);
+    var ang = Math.random()*Math.PI*2, sp = 30+Math.random()*50;
+    s.animate([{transform:'translate('+at.x+'px,'+at.y+'px)',opacity:1},
+               {transform:'translate('+(at.x+Math.cos(ang)*sp)+'px,'+(at.y+Math.sin(ang)*sp+20)+'px)',opacity:0}],
+              {duration:420+Math.random()*260,easing:'cubic-bezier(.2,.7,.4,1)'}).onfinish = (function(el){ return function(){ el.remove(); }; })(s);
+  }
+}
+
+/* ---------- dragging the plug ---------- */
+var drag = null;
+function nearestSocket(p){ var best=-1, bd=1e9;
+  sockets.forEach(function(s,i){ var c=socketJack(i), d=Math.hypot(c.x-p.x,c.y-p.y); if(d<bd){ bd=d; best=i; } });
+  return bd < 58 ? best : -1; }
+plug.addEventListener('pointerdown', function(e){
+  if(!S || !S.live) return;
+  actx();
+  drag = { id:e.pointerId, ox:e.clientX, oy:e.clientY, px:plugPos.x, py:plugPos.y };
+  plug.setPointerCapture(e.pointerId); plug.classList.add('dragging'); e.preventDefault();
+});
+plug.addEventListener('pointermove', function(e){
+  if(!drag || e.pointerId !== drag.id) return;
+  var b = board.getBoundingClientRect();
+  plugPos = { x: Math.max(8, Math.min(b.width-8, drag.px + e.clientX - drag.ox)),
+              y: Math.max(8, Math.min(b.height-8, drag.py + e.clientY - drag.oy)) };
+  swing = Math.max(-18, Math.min(18, (e.movementX||0) * 0.8));
+  drawCord();
+  var n = nearestSocket(plugPos);
+  sockets.forEach(function(s,i){ s.classList.toggle('near', i === n); });
+});
+function endDrag(e){
+  if(!drag || (e && e.pointerId !== drag.id)) return;
+  drag = null; plug.classList.remove('dragging');
+  sockets.forEach(function(s){ s.classList.remove('near'); });
+  var n = nearestSocket(plugPos);
+  if(n >= 0 && S && S.live){ movePlug(socketJack(n), 90, function(){ resolve(n); }); }
+  else { movePlug(home(), 240); }
+}
+plug.addEventListener('pointerup', endDrag);
+plug.addEventListener('pointercancel', endDrag);
+
+/* simple mode, keys 1 to 4, and tapping a socket all route here */
+function connectTo(i){ if(!S || !S.live) return; actx(); movePlug(socketJack(i), 260, function(){ resolve(i); }); }
+sockets.forEach(function(s,i){
+  s.addEventListener('click', function(){
+    if(!S || !S.live) return;
+    if(simple) connectTo(i);
+    else { $('who').textContent = 'Drag the cable into this socket, or turn on simple mode.'; }
+  });
+});
+document.addEventListener('keydown', function(e){
+  var k = parseInt(e.key, 10);
+  if(k >= 1 && k <= 4 && S && S.live){ e.preventDefault(); connectTo(k-1); }
+});
+$('simple').addEventListener('change', function(){ simple = this.checked; try{ localStorage.setItem('fc_simple', simple?'1':'0'); }catch(e){} });
+function paintSound(){ $('soundBtn').textContent = muted ? 'Sound off' : 'Sound on'; $('soundBtn').setAttribute('aria-pressed', String(!muted)); }
+$('soundBtn').addEventListener('click', function(){ muted = !muted; try{ localStorage.setItem('fc_muted', muted?'1':'0'); }catch(e){} paintSound(); });
+paintSound();
+
+/* ---------- start and finish ---------- */
+function start(){
+  S = fresh(); S.t0 = performance.now();
+  $('intro').hidden = true; $('end').hidden = true;
+  paintLines(); actx();
+  setTimeout(nextCall, 250);
+}
+function finish(won){
+  S.live = false;
+  var secs = Math.round((performance.now() - S.t0)/1000);
+  $('endTitle').textContent = won ? 'The board goes quiet' : 'The exchange falls silent';
+  $('endText').textContent = won
+    ? 'Every caller reached the right line. Tucked behind the panel, something is now yours.'
+    : 'Three lines went dead before five callers got through. The board is waiting for another go.';
+  $('itemCard').hidden = !won;
+  $('sConnected').textContent = S.connected;
+  $('sDropped').textContent = S.dropped;
+  $('sTime').textContent = Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0');
+  $('againBtn').textContent = won ? 'Play again' : 'Try again';
+  if(won){ tone(523,0,0.3,'sine',0.09); tone(659,0.15,0.3,'sine',0.09); tone(784,0.3,0.5,'sine',0.1); }
+  $('end').hidden = false; $('againBtn').focus();
+}
+$('startBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+window.addEventListener('resize', function(){ if(!drag) { plugPos = home(); drawCord(); } });
+requestAnimationFrame(function(){ plugPos = home(); drawCord(); });
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
