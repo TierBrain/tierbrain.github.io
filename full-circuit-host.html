@@ -136,6 +136,49 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
   background:var(--strip);color:var(--strip-ink);font-family:var(--type);font-size:20px;padding:12px 22px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.3);
   transition:opacity .3s,transform .3s;pointer-events:none;}
 .toast.on{opacity:1;transform:translate(-50%,0);}
+
+/* ==================== THE STORY: interludes between the rooms ====================
+   One scene for every beat: the screen takes the colour of where you are, a door
+   grows out of the dark as you walk towards it, then swings open and the next
+   room's colour floods out while two lines of narration type themselves below. */
+.story{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
+  background:var(--st-from,#1f130c);transition:background-color 2.4s ease;cursor:pointer;
+  padding:env(safe-area-inset-top,0px) 20px env(safe-area-inset-bottom,0px);}
+.story.to{background:var(--st-to,#1f130c);}
+.story .s-scene{position:relative;width:min(78vw,420px);height:min(46vh,380px);display:flex;align-items:flex-end;justify-content:center;}
+.story .s-floor{position:absolute;left:-40vw;right:-40vw;bottom:0;height:40%;
+  background:repeating-linear-gradient(90deg,rgba(255,220,170,.05) 0 2px,transparent 2px 60px);
+  transform:perspective(300px) rotateX(64deg);transform-origin:bottom;opacity:.8;}
+.story .s-door{position:relative;width:46%;aspect-ratio:3/4.4;transform:scale(.34);transform-origin:50% 100%;
+  transition:transform 3.2s cubic-bezier(.35,.1,.3,1);}
+.story.walk .s-door{transform:scale(1);}
+.story .s-frame{position:absolute;inset:0;border-radius:50% 50% 4px 4px / 36% 36% 4px 4px;border:4px solid #c89b4f;overflow:hidden;
+  background:var(--st-to,#1f130c);box-shadow:0 0 0 2px rgba(0,0,0,.5);}
+.story .s-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,rgba(255,236,190,.55),transparent 70%);opacity:0;transition:opacity .8s;}
+.story .s-leaf{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(90deg,#3a2718,#2a1b10);transition:transform 1s ease-in;}
+.story .s-leaf.l{left:0;transform-origin:left center;} .story .s-leaf.r{right:0;transform-origin:right center;}
+.story .s-leaf svg{position:absolute;top:26%;width:46%;height:auto;opacity:.95;}
+.story .s-leaf.l svg{right:-23%;} .story .s-leaf.r svg{left:-23%;display:none;}
+.story .s-leaf svg *{stroke:#e9c47f;}
+/* the room's symbol sits on the face of the door as a whole, and fades as it opens */
+.story .s-sign{position:absolute;left:27%;top:22%;width:46%;transition:opacity .45s;pointer-events:none;}
+.story .s-sign svg{display:block;width:100%;height:auto;} .story .s-sign svg *{stroke:#e9c47f;}
+.story.open .s-sign{opacity:0;}
+.story.open .s-leaf.l{transform:perspective(600px) rotateY(-80deg);} .story.open .s-leaf.r{transform:perspective(600px) rotateY(80deg);}
+.story.open .s-glow{opacity:1;}
+.story .s-house{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;transition:opacity 1.2s;}
+.story .s-house svg{width:100%;height:auto;}
+.story .s-stairs{position:absolute;inset:0;transition:transform 3.4s ease-in-out;}
+.story.climb .s-stairs{transform:translateY(-22%) translateX(-8%);}
+.story .s-orb{position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
+  background:radial-gradient(circle,#e8fbff,#9fe8ff 40%,transparent 70%);opacity:.15;transition:opacity 2.4s,transform 2.4s;}
+.story.wake .s-orb{opacity:1;transform:scale(2.2);} .story.fade .s-orb{opacity:0;transform:scale(.6);}
+.story .s-lines{min-height:5.4em;max-width:30em;margin-top:30px;text-align:center;}
+.story .s-ln{font-family:'Special Elite','Courier New',monospace;font-size:clamp(17px,2.4vw,26px);line-height:1.5;color:#f0e4cc;margin:0 0 .5em;
+  opacity:0;transform:translateY(6px);transition:opacity .7s,transform .7s;}
+.story .s-ln.on{opacity:1;transform:none;}
+.story .s-skip{position:absolute;right:18px;bottom:calc(16px + env(safe-area-inset-bottom,0px));font-family:'Special Elite',monospace;font-size:14px;color:rgba(240,228,204,.45);}
+@media (prefers-reduced-motion: reduce){ .story .s-door,.story .s-stairs,.story .s-leaf,.story .s-orb{transition:none !important;} .story{transition:none;} }
 </style>
 </head>
 <body>
@@ -156,7 +199,7 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
         <div class="meta" id="pcount">Waiting for players</div>
         <div class="chips" id="chips"><span class="none">Nobody has joined yet.</span></div>
         <button class="go" id="startBtn" type="button" disabled>Step inside</button>
-        <p class="lead" style="margin-top:14px;font-size:16px">Three to eight players. Bigger groups can split into teams and take turns.</p>
+        <p class="lead" style="margin-top:14px;font-size:16px">Three to eight players. Bigger groups can split into teams and take turns. <a href="full-circuit-rules.html" target="_blank" rel="noopener" style="color:var(--ink-soft)">How to play</a> (opens in a new tab, so this room stays open).</p>
       </div>
     </div>
   </section>
@@ -295,6 +338,94 @@ async function writeState(){
             names:G.players.map(function(p){ return {id:p.id, name:p.name}; }) } }) });
 }
 
+
+/* ==================== THE STORY ====================
+   Narration exactly as written in the spec's Narration script. Lines are
+   stitched from the actual route: what you won or how you left, then where
+   you are heading, with an item's own line taking over when it helps. */
+var NARR = {
+  arrival:['The house has stood dark for a hundred years.','Tonight, one window is lit.','Somewhere inside, something is waiting to be woken.','The front door is already open. Step inside.'],
+  hallway:'The hallway smells of dust, old books and engine oil.',
+  carry:{ Wire:'The Wire is coiled at your belt, still faintly warm.', Spring:'The Spring hums in your pocket, eager to be let go.',
+    Lens:'The Lens sits in your palm, catching light that is not there.', Key:'The Key is heavy and cold, and fits no door you have seen.',
+    Fuse:'The Fuse glows softly, like a coal that will not go out.' },
+  lost:{ switchboard:'Behind you, the last call rings on unanswered.', glasshouse:'The rain keeps drumming as the glass door swings shut.',
+    orrery:'The planets turn on without you.', strongroom:'The alarm fades to a long, low hum.', darkroom:'The dark closes behind you like a curtain.' },
+  toward:{ switchboard:'Down the corridor, a telephone starts to ring.', glasshouse:'Somewhere ahead, rain drums on a roof made of glass.',
+    orrery:'Behind the next door, something ticks, and something turns.', strongroom:'The corridor ends at a steel door with a heavy dial.',
+    darkroom:'No light shows under this door. A torch lies beside it.' },
+  link:{ 'Spring>orrery':'The ticking grows louder, and the Spring stirs in your pocket.', 'Lens>strongroom':'The Lens grows warm as you near the steel door.',
+    'Wire>darkroom':'The Wire tugs towards the dark, as if it knows where the lamps are.', Fuse:'The Fuse hums. Whatever waits in there, it will take the first blow.' },
+  stairs:['The only way back is up the back stairs. They creak with every step.','The back stairs are narrow and steep, and the house is listening.'],
+  keyShortcut:'The Key turns in a hidden lock. A shortcut swings open.',
+  reveal:{ none:'The last door opens. The machine sits in the dark, hollow where its parts should be.',
+    some:'The last door opens. The machine waits, with some of its parts in place.', all:'The last door opens. The machine waits, every part in place, humming faintly.' },
+  needSolo:'It needs one more thing: a current.', needTeam:'It needs a circuit. It needs all of you.',
+  end:{ awake:'Its eye opens. Its chest glows. For the first time in a hundred years, the machine is awake.',
+    asleep:'The glow fades, and the machine sleeps on. But it will remember that you came.' }
+};
+var PALETTE = { night:'#0a0d16', hall:'#1f130c', switchboard:'#2e1d14', glasshouse:'#12302b', orrery:'#0e1630',
+  strongroom:'#5a1f22', darkroom:'#060403', machine:'#15100c' };
+/* the two lines for walking from one room to the next */
+function storyWalkLines(prev, next, items, fuseArmed){
+  var first = !prev ? NARR.hallway : (prev.won ? (NARR.carry[ROOMS[prev.room].item] || NARR.hallway) : NARR.lost[prev.room]);
+  var has = function(i){ return items.indexOf(i) >= 0; }, second = NARR.toward[next];
+  if(has('Spring') && next === 'orrery') second = NARR.link['Spring>orrery'];
+  else if(has('Lens') && next === 'strongroom') second = NARR.link['Lens>strongroom'];
+  else if(has('Wire') && next === 'darkroom') second = NARR.link['Wire>darkroom'];
+  else if(fuseArmed) second = NARR.link.Fuse;
+  return [first, second];
+}
+var HOUSE_SVG = '<svg viewBox="0 0 300 220" aria-hidden="true"><path d="M20 220 V104 L150 20 L280 104 V220 Z" fill="#05060b"/>'
+  + '<rect x="210" y="34" width="18" height="44" fill="#05060b"/>'
+  + '<rect x="58" y="120" width="30" height="40" fill="#141a2b"/><rect x="212" y="120" width="30" height="40" fill="#141a2b"/>'
+  + '<rect x="135" y="68" width="30" height="34" fill="#ffae3d" style="filter:drop-shadow(0 0 14px #ffae3d)"/>'
+  + '<path d="M128 220 V170 Q150 150 172 170 V220 Z" fill="#141a2b"/></svg>';
+var STAIRS_SVG = '<svg viewBox="0 0 300 240" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><path d="M0 240 H60 V200 H110 V160 H160 V120 H210 V80 H260 V40 H300 V240 Z" fill="#2a1b10" stroke="#5a3e24" stroke-width="3"/>'
+  + '<path d="M40 200 L280 20" stroke="#6b4a2c" stroke-width="5"/></svg>';
+var storyBusy = false;
+/* kind: 'walk' | 'arrive' | 'stairs' | 'reveal' | 'end'
+   o: { lines, from, to, glyph, skippable, awake } */
+function playStory(kind, o, done){
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(storyBusy){ done(); return; } storyBusy = true;
+  var el = document.createElement('div'); el.className = 'story k-' + kind;   /* 'k-' keeps the type apart from the 'walk' state */ el.setAttribute('role', 'presentation');
+  el.style.setProperty('--st-from', PALETTE[o.from] || o.from || PALETTE.hall);
+  el.style.setProperty('--st-to', PALETTE[o.to] || o.to || PALETTE.hall);
+  var scene = '';
+  if(kind === 'arrive') scene = '<div class="s-house">' + HOUSE_SVG + '</div>';
+  if(kind === 'stairs') scene = '<div class="s-stairs">' + STAIRS_SVG + '</div>';
+  if(kind === 'end') scene = '<div class="s-orb"></div>';
+  if(kind === 'walk' || kind === 'arrive' || kind === 'reveal'){
+    var g = o.glyph || '';
+    scene += '<div class="s-floor"></div><div class="s-door" style="' + (kind === 'arrive' ? 'opacity:0;transition:opacity 1s,transform 3.2s cubic-bezier(.35,.1,.3,1)' : '') + '"><div class="s-frame">'
+      + '<div class="s-glow"></div><div class="s-leaf l"></div><div class="s-leaf r"></div>' + (g ? '<div class="s-sign">' + g + '</div>' : '') + '</div></div>';
+  }
+  el.innerHTML = '<div class="s-scene">' + scene + '</div><div class="s-lines">'
+    + o.lines.map(function(t){ return '<p class="s-ln">' + t + '</p>'; }).join('') + '</div>'
+    + (o.skippable === false ? '' : '<div class="s-skip">Tap to skip</div>');
+  document.body.appendChild(el);
+  var lines = el.querySelectorAll('.s-ln'), per = kind === 'arrive' ? 2400 : 2000, timers = [];
+  var at = function(ms, fn){ timers.push(setTimeout(fn, reduce ? Math.min(ms, 300) : ms)); };
+  lines.forEach(function(l, i){ timers.push(setTimeout(function(){ l.classList.add('on'); }, 150 + i * per)); });
+  var total = Math.max(3600, 150 + lines.length * per + 1300);
+  if(kind === 'walk'){ at(60, function(){ el.classList.add('walk', 'to'); }); at(total - 1500, function(){ el.classList.add('open'); }); }
+  if(kind === 'arrive'){
+    at(4700, function(){ var h = el.querySelector('.s-house'); h.style.opacity = '0'; var d = el.querySelector('.s-door'); d.style.opacity = '1'; el.classList.add('walk', 'to'); });
+    at(total - 1500, function(){ el.classList.add('open'); });
+  }
+  if(kind === 'stairs'){ at(60, function(){ el.classList.add('climb', 'to'); }); }
+  if(kind === 'reveal'){ at(60, function(){ el.classList.add('walk'); }); at(1900, function(){ el.classList.add('open', 'to'); }); }
+  if(kind === 'end'){ at(200, function(){ el.classList.add(o.awake ? 'wake' : 'fade', 'to'); }); }
+  var finished = false;
+  var finish = function(){ if(finished) return; finished = true; timers.forEach(clearTimeout);
+    el.style.transition = 'opacity .45s'; el.style.opacity = '0'; document.removeEventListener('keydown', onKey, true);
+    setTimeout(function(){ el.remove(); storyBusy = false; }, 460); done(); };
+  var onKey = function(e){ if(o.skippable === false) return; e.preventDefault(); finish(); };
+  if(o.skippable !== false){ el.addEventListener('click', finish); document.addEventListener('keydown', onKey, true); }
+  timers.push(setTimeout(finish, total));
+}
+
 /* ---------- the lobby ---------- */
 async function openHouse(){
   G.code = code5();
@@ -323,7 +454,11 @@ async function pollPlayers(){
   $('chips').innerHTML = G.players.length ? G.players.map(function(p){ return '<span class="chip">' + esc(p.name) + '</span>'; }).join('') : '<span class="none">Nobody has joined yet.</span>';
   $('startBtn').disabled = G.players.length < 3;
 }
-$('startBtn').addEventListener('click', function(){ G.phase = 'hall'; G.players.forEach(function(p){ G.playedBy[p.id] = 0; }); writeState(); paintHall(); });
+$('startBtn').addEventListener('click', function(){
+  G.phase = 'hall'; G.prev = null; G.players.forEach(function(p){ G.playedBy[p.id] = 0; }); writeState();
+  var first = localStorage.getItem('fc_host_arrived') !== '1';
+  playStory('arrive', { lines:NARR.arrival, from:'night', to:'hall', skippable:!first }, function(){ try{ localStorage.setItem('fc_host_arrived', '1'); }catch(e){} paintHall(); });
+});
 
 /* ---------- the hallway ---------- */
 function paintHall(){
@@ -367,6 +502,8 @@ function sendIn(k, pid){
   $('mRight').textContent = '0'; $('mWrong').textContent = '0'; $('feed').innerHTML = '';
   show('mirror'); writeState();
   G.lastEvent = performance.now(); G.troubleShown = false; $('trouble').hidden = true;
+  /* the walk plays on the big screen while the phone picks up its room */
+  playStory('walk', { lines:storyWalkLines(G.prev, k, G.items, G.fuse), from:G.prev ? G.prev.room : 'hall', to:k, glyph:ROOMS[k].glyph }, function(){ G.lastEvent = performance.now(); });
   clearInterval(G.poll); G.poll = setInterval(followRoom, 900);
 }
 /* if a phone goes quiet for 35 seconds, offer the host a way out */
@@ -385,7 +522,7 @@ $('trWait').addEventListener('click', function(){ $('trouble').hidden = true; G.
 $('trHand').addEventListener('click', function(){ $('trouble').hidden = true; clearInterval(G.poll); var k = G.room; G.phase = 'hall'; writeState(); pickPlayer(k); });
 $('trSkip').addEventListener('click', function(){
   $('trouble').hidden = true; clearInterval(G.poll);
-  var k = G.room, R = ROOMS[k]; G.done[k] = 'lost'; G.depth++;
+  var k = G.room, R = ROOMS[k]; G.done[k] = 'lost'; G.depth++; G.prev = { room:k, won:false };
   $('aPlate').textContent = R.name; $('aTitle').textContent = 'The room was skipped';
   $('aText').textContent = 'No ' + R.item + ' this time, but no trip up the back stairs either.';
   G.phase = 'after'; G.player = null; show('after'); writeState();
@@ -415,6 +552,7 @@ function roomOver(e){
   clearInterval(G.poll);
   var k = G.room, R = ROOMS[k], who = nameOf(G.player);
   G.done[k] = e.won ? 'won' : 'lost'; G.depth++; G.playedBy[G.player] = (G.playedBy[G.player] || 0) + 1;
+  G.prev = { room:k, won:!!e.won };
   if(e.won){ G.items.push(R.item); if(R.item === 'Fuse') G.fuse = true; }
   if(typeof e.fuse === 'boolean' && !(e.won && R.item === 'Fuse')) G.fuse = e.fuse;
   if(e.keyUsed) G.keyUsed = true;
@@ -423,7 +561,9 @@ function roomOver(e){
   $('aTitle').textContent = e.won ? who + ' won the ' + R.item : 'The room beat ' + who;
   $('aText').textContent = (e.stats || '') + (e.won ? '' : (e.keyUsed ? ' The team\u2019s Key opened a shortcut past the back stairs.'
     : ' The back stairs cost the team ' + (e.penalty || 0) + ' seconds on the finale clock.'));
-  G.phase = 'after'; show('after'); writeState();
+  G.phase = 'after'; writeState();
+  if(e.won) show('after');
+  else playStory('stairs', { lines:[e.keyUsed ? NARR.keyShortcut : NARR.stairs[Math.floor(Math.random()*NARR.stairs.length)]], from:k, to:'hall' }, function(){ show('after'); });
 }
 $('aBtn').addEventListener('click', paintHall);
 
@@ -449,6 +589,11 @@ function fqPick(t){ var L = FQ[t].filter(function(q){ return !usedFQ[q.q]; }); i
 function shuffle(a){ a = a.slice(); for(var i=a.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 function has(i){ return G.items.indexOf(i) >= 0; }
 function openMachine(){
+  var n = G.items.length, line = n === 0 ? NARR.reveal.none : (n === 5 ? NARR.reveal.all : NARR.reveal.some);
+  G.phase = 'machine'; writeState();
+  playStory('reveal', { lines:[line, NARR.needTeam], from:'hall', to:'machine' }, startFinale);
+}
+function startFinale(){
   FN = { t: Math.max(30, 90 + (has('Spring') ? 12 : 0) - G.finalePenalty) * 1000, charge: has('Key') ? 2 : 0, target: 10,
          step: has('Wire') ? 1.5 : 1, lens: has('Lens'), fuse: has('Fuse'), seq: 0, live: false, right: 0, shorts: 0, last: 0 };
   G.awake = null; G.spark = null; G.fq = null;
@@ -552,7 +697,7 @@ function fnEnd(awake){
     $('endText').textContent = awake
       ? 'With ' + secs + ' seconds to spare, the team carried the current all the way round. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.'
       : 'The clock ran out with the machine ' + Math.round(100 * FN.charge / FN.target) + '% charged. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.';
-    show('ending');
+    playStory('end', { lines:[awake ? NARR.end.awake : NARR.end.asleep], from:'machine', to:'machine', awake:awake }, function(){ show('ending'); });
   }, awake ? 3200 : 2000);
 }
 $('againBtn').addEventListener('click', function(){ location.reload(); });
