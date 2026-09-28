@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Full Circuit: team game</title>
+<meta name="description" content="Full Circuit for a team: one big screen, everyone's phones.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://tierbrain.co/full-circuit-host.html">
+<meta name="theme-color" content="#1f130c">
+<script>
+(function(){ if(location.hostname==='tierbrain.github.io'){
+  location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+/* The big screen: the house's walnut and brass, sized to be read across a room. */
+:root{
+  --bg:#e9dcc2; --panel:#d7c19b; --panel-edge:#b89a6c; --ink:#2b2016; --ink-soft:#5d4a36;
+  --brass:#b78a3e; --brass-hi:#e2bf78; --brass-lo:#7d5a22; --amber:#ff9f1c; --green:#3fae5a; --red:#d4402b;
+  --strip:#fbf5e6; --strip-ink:#2b2016; --glyph:#6b4a17;
+  --serif:'Libre Baskerville', Georgia, 'Times New Roman', serif; --type:'Special Elite','Courier New',monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#1f130c; --panel:#2e1d14; --panel-edge:#4a3020; --ink:#f0e4cc; --ink-soft:#c2ad8c;
+  --brass:#c89b4f; --brass-hi:#e9c47f; --amber:#ffae3d; --green:#8fd694; --red:#e2553e; --strip:#efe4c8; --glyph:#e9c47f; } }
+:root[data-theme="dark"]{ --bg:#1f130c; --panel:#2e1d14; --panel-edge:#4a3020; --ink:#f0e4cc; --ink-soft:#c2ad8c;
+  --brass:#c89b4f; --brass-hi:#e9c47f; --amber:#ffae3d; --green:#8fd694; --red:#e2553e; --strip:#efe4c8; --glyph:#e9c47f; }
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased;}
+button{font:inherit;color:inherit;}
+.app{min-height:100%;max-width:1200px;margin:0 auto;padding:22px 28px 28px;display:flex;flex-direction:column;}
+.screen{flex:1;display:flex;flex-direction:column;}
+.screen[hidden]{display:none;}
+.plate{font-family:var(--type);font-size:22px;color:#2b1c0e;padding:8px 18px 7px;border-radius:4px;display:inline-block;
+  background:linear-gradient(180deg,var(--brass-hi),var(--brass) 55%,var(--brass-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 0 rgba(0,0,0,.25);}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.meta{font-family:var(--type);font-size:18px;color:var(--ink-soft);}
+.go{border:0;border-radius:12px;padding:16px 28px;font-size:19px;font-weight:700;cursor:pointer;color:#2b1c0e;
+  background:linear-gradient(180deg,var(--brass-hi),var(--brass) 60%,var(--brass-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.3);}
+.go:disabled{opacity:.45;cursor:default;}
+.go:focus-visible,.door:focus-visible,.who-btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
+.lead{font-size:clamp(16px,1.6vw,20px);line-height:1.6;color:var(--ink-soft);margin:0 0 18px;max-width:46em;}
+
+/* lobby */
+.lobby{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:18px;align-items:start;}
+@media (max-width:800px){ .lobby{grid-template-columns:1fr;} }
+.panel{background:var(--panel);border:2px solid var(--panel-edge);border-radius:16px;padding:22px;}
+.code{font-family:var(--type);font-size:clamp(46px,7vw,84px);letter-spacing:.14em;color:var(--brass-hi);text-align:center;}
+.panel .codelabel{text-align:center;font-family:var(--type);color:var(--ink-soft);font-size:16px;}
+.qr{display:block;width:190px;height:190px;margin:14px auto 8px;background:#fff;border-radius:10px;}
+.url{display:block;text-align:center;font-family:var(--type);font-size:16px;color:var(--ink-soft);word-break:break-all;}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 18px;min-height:44px;}
+.chip{font-family:var(--type);font-size:18px;background:var(--strip);color:var(--strip-ink);border-radius:8px;padding:8px 14px;}
+.none{font-size:16px;color:var(--ink-soft);}
+
+/* the hallway */
+.pack{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 18px;min-height:40px;}
+.doors{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;}
+@media (max-width:900px){ .doors{grid-template-columns:repeat(3,minmax(0,1fr));} }
+.door{position:relative;background:var(--panel);border:2px solid var(--panel-edge);border-radius:90px 90px 12px 12px;padding:26px 12px 18px;
+  min-height:230px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;text-align:center;box-shadow:inset 0 0 26px rgba(0,0,0,.18);}
+.door .glyph{width:70px;height:70px;} .door .glyph *{stroke:var(--glyph);}
+.door .hint{font-size:17px;line-height:1.45;padding:0 10px;}
+.door .state{font-family:var(--type);font-size:15px;color:var(--ink-soft);} .door .state.got{color:var(--green);}
+.door.done{cursor:default;}
+.machine{grid-column:1 / -1;border-radius:14px;min-height:0;padding:18px;}
+
+/* choosing who goes in */
+.picker{position:fixed;inset:0;z-index:20;background:rgba(10,6,3,.72);display:flex;align-items:center;justify-content:center;padding:20px;}
+.picker[hidden]{display:none;}
+.picker .box{background:var(--bg);border-radius:18px;padding:26px;max-width:720px;width:100%;}
+.picker h2{margin:0 0 6px;font-size:28px;} .picker p{margin:0 0 16px;color:var(--ink-soft);font-size:17px;}
+.whos{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+.who-btn{background:var(--strip);color:var(--strip-ink);border:0;border-radius:10px;padding:14px;cursor:pointer;text-align:left;box-shadow:0 2px 0 rgba(0,0,0,.2);}
+.who-btn b{display:block;font-family:var(--type);font-weight:400;font-size:20px;}
+.who-btn span{font-size:14px;color:#6b5641;}
+.cancel{margin-top:16px;background:none;border:1px solid var(--panel-edge);border-radius:8px;padding:9px 14px;cursor:pointer;color:var(--ink-soft);}
+
+/* following a room, a beat behind the player's phone */
+.mirror{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:26px;margin-top:18px;flex:1;}
+@media (max-width:900px){ .mirror{grid-template-columns:1fr;} }
+.stage{background:var(--panel);border:2px solid var(--panel-edge);border-radius:16px;padding:28px;display:flex;flex-direction:column;justify-content:center;}
+.stage .who{font-family:var(--type);font-size:20px;color:var(--ink-soft);margin:0 0 12px;}
+.stage .bigq{font-size:clamp(26px,3vw,40px);line-height:1.35;font-weight:700;margin:0;min-height:2.7em;}
+.stage .outcome{font-family:var(--type);font-size:22px;margin:18px 0 0;min-height:1.3em;}
+.outcome.ok{color:var(--green);} .outcome.bad{color:var(--red);}
+.score{display:flex;gap:28px;font-family:var(--type);margin-top:22px;}
+.score b{display:block;font-weight:400;font-size:44px;color:var(--ink);} .score span{font-size:16px;color:var(--ink-soft);}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.feed li{background:var(--strip);color:var(--strip-ink);border-radius:8px;padding:10px 14px;font-size:16px;line-height:1.4;border-left:6px solid var(--panel-edge);}
+.feed li.ok{border-left-color:var(--green);} .feed li.bad{border-left-color:var(--red);}
+.feed li small{display:block;font-family:var(--type);font-size:14px;color:#6b5641;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section class="screen" id="lobby">
+    <div class="bar"><div class="plate">Full Circuit</div><span class="meta" id="status">Opening the house&hellip;</span></div>
+    <h1>Something in this house is asleep</h1>
+    <p class="lead">Join on your phones. One of you goes into each room while everyone else watches up here and shouts. What you win in one room helps in another, and the parts you collect wake the machine in the finale.</p>
+    <div class="lobby">
+      <div class="panel">
+        <div class="codelabel">Tonight&rsquo;s code</div>
+        <div class="code" id="code">&middot;&middot;&middot;&middot;&middot;</div>
+        <img class="qr" id="qr" alt="QR code to join the game">
+        <span class="url" id="url"></span>
+      </div>
+      <div class="panel">
+        <div class="meta" id="pcount">Waiting for players</div>
+        <div class="chips" id="chips"><span class="none">Nobody has joined yet.</span></div>
+        <button class="go" id="startBtn" type="button" disabled>Step inside</button>
+        <p class="lead" style="margin-top:14px;font-size:16px">Three to eight players. Bigger groups can split into teams and take turns.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="hall" hidden>
+    <div class="bar"><div class="plate">The hallway</div><span class="meta" id="hallCount"></span></div>
+    <h1>Choose a door together</h1>
+    <div class="pack" id="pack"></div>
+    <div class="doors" id="doors"></div>
+  </section>
+
+  <section class="screen" id="mirror" hidden>
+    <div class="bar"><div class="plate" id="mPlate"></div><span class="meta" id="mWhoTop"></span></div>
+    <div class="mirror">
+      <div class="stage">
+        <p class="who" id="mWho"></p>
+        <p class="bigq" id="mQ"></p>
+        <p class="outcome" id="mOut"></p>
+        <div class="score"><div><b id="mRight">0</b><span>right of 5</span></div><div><b id="mWrong">0</b><span>mistakes of 3</span></div></div>
+      </div>
+      <ul class="feed" id="feed" aria-live="polite"></ul>
+    </div>
+  </section>
+
+  <section class="screen" id="after" hidden>
+    <div class="bar"><div class="plate" id="aPlate"></div></div>
+    <h1 id="aTitle"></h1>
+    <p class="lead" id="aText"></p>
+    <div><button class="go" id="aBtn" type="button">Back to the hallway</button></div>
+  </section>
+
+  <section class="screen" id="machineWait" hidden>
+    <div class="bar"><div class="plate">The machine</div></div>
+    <h1>The house is explored</h1>
+    <p class="lead" id="mwText"></p>
+  </section>
+</div>
+
+<div class="picker" id="picker" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <h2 id="pickTitle">Who goes in?</h2>
+    <p id="pickSub"></p>
+    <div class="whos" id="whos"></div>
+    <button class="cancel" id="pickCancel" type="button">Choose a different door</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
+var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+async function sb(path,opts){ opts=opts||{}; try{
+  var headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},opts.headers||{});
+  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
+  var r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({},opts,{headers}));
+  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
+  return opts.method?{ok:false}:[];
+}catch(e){ return opts.method?null:[]; } }
+var $ = function(id){ return document.getElementById(id); };
+function code5(){ var s='', A='ABCDEFGHJKLMNPQRSTUVWXYZ'; for(var i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
+function baseUrl(){ var h=location.href; if(/^https?:\/\//.test(h)){ var b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.co'; }
+function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+var ROOMS = {
+  switchboard:{ name:'The Switchboard', hint:'A telephone rings behind this door', item:'Wire',
+    glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22 C14 14 42 14 42 22 L37 26 L33 22 L23 22 L19 26 Z"/><path d="M20 26 L17 44 H39 L36 26"/><circle cx="28" cy="35" r="5"/></svg>' },
+  glasshouse:{ name:'The Glasshouse', hint:'Rain drums on glass beyond this door', item:'Spring',
+    glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M28 8 C22 18 18 23 18 29 A10 10 0 0 0 38 29 C38 23 34 18 28 8 Z"/><path d="M14 42 L12 48 M28 42 L26 48 M42 42 L40 48"/></svg>' },
+  orrery:{ name:'The Orrery', hint:'Something ticks and turns in here', item:'Lens',
+    glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6"><circle cx="28" cy="28" r="6"/><ellipse cx="28" cy="28" rx="20" ry="9"/><circle cx="46" cy="30" r="3"/></svg>' },
+  strongroom:{ name:'The Strongroom', hint:'A heavy dial on a steel door', item:'Key',
+    glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><circle cx="28" cy="28" r="16"/><circle cx="28" cy="28" r="5"/><path d="M28 12 V16 M28 40 V44 M12 28 H16 M40 28 H44"/></svg>' },
+  darkroom:{ name:'The Dark Room', hint:'No light shows under this door', item:'Fuse',
+    glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M28 10 C24 16 24 20 28 24 C32 20 32 16 28 10 Z"/><path d="M24 28 H32 V46 H24 Z"/></svg>' }
+};
+var ORDER = ['switchboard','glasshouse','orrery','strongroom','darkroom'];
+var G = { code:'', phase:'lobby', players:[], done:{}, items:[], depth:0, finalePenalty:0, fuse:false, keyUsed:false,
+          room:null, player:null, roomSeq:0, playedBy:{}, seen:{}, poll:0 };
+
+function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.hidden = (s.id !== id); }); }
+function nameOf(id){ var p = G.players.filter(function(x){ return x.id === id; })[0]; return p ? p.name : 'Someone'; }
+async function writeState(){
+  await sb('rooms?code=eq.' + G.code, { method:'PATCH', body: JSON.stringify({ phase:G.phase, updated_at:new Date().toISOString(),
+    state:{ game:'full-circuit', phase:G.phase, room:G.room, player:G.player, roomSeq:G.roomSeq, depth:G.depth,
+            items:G.items, fuse:G.fuse, keyUsed:G.keyUsed, names:G.players.map(function(p){ return {id:p.id, name:p.name}; }) } }) });
+}
+
+/* ---------- the lobby ---------- */
+async function openHouse(){
+  G.code = code5();
+  var made = await sb('rooms', { method:'POST', body: JSON.stringify({ code:G.code, phase:'lobby', state:{ game:'full-circuit', phase:'lobby' } }) });
+  if(!made || made.ok === false){ $('code').textContent = '----'; $('status').textContent = 'Cannot reach the game server. Check the internet and reload.'; return; }
+  $('code').textContent = G.code;
+  var link = baseUrl() + '/full-circuit.html?team=' + G.code;
+  $('url').textContent = link.replace(/^https?:\/\//, '');
+  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=' + encodeURIComponent(link);
+  $('status').textContent = 'Room ' + G.code;
+  writeState(); pollPlayers(); setInterval(function(){ if(G.phase === 'lobby') pollPlayers(); }, 1500);
+}
+async function pollPlayers(){
+  var r = await sb('players?code=eq.' + G.code + '&select=id,name&order=joined_at.asc');
+  if(Array.isArray(r)) G.players = r.slice(0, 8);
+  $('pcount').textContent = G.players.length ? G.players.length + (G.players.length === 1 ? ' player' : ' players') + ' in the house' : 'Waiting for players';
+  $('chips').innerHTML = G.players.length ? G.players.map(function(p){ return '<span class="chip">' + esc(p.name) + '</span>'; }).join('') : '<span class="none">Nobody has joined yet.</span>';
+  $('startBtn').disabled = G.players.length < 3;
+}
+$('startBtn').addEventListener('click', function(){ G.phase = 'hall'; G.players.forEach(function(p){ G.playedBy[p.id] = 0; }); writeState(); paintHall(); });
+
+/* ---------- the hallway ---------- */
+function paintHall(){
+  G.phase = 'hall';
+  var played = ORDER.filter(function(k){ return G.done[k]; }).length;
+  $('hallCount').textContent = played + ' of 5 rooms explored';
+  $('pack').innerHTML = G.items.length ? G.items.map(function(i){ return '<span class="chip">' + i + '</span>'; }).join('') : '<span class="none">The team is carrying nothing yet.</span>';
+  var box = $('doors'); box.innerHTML = '';
+  ORDER.forEach(function(k){
+    var R = ROOMS[k], st = G.done[k], d = document.createElement('button'); d.type = 'button';
+    d.className = 'door' + (st ? ' done' : '');
+    d.innerHTML = R.glyph + (st ? '<span class="hint">' + R.name + '</span><span class="state' + (st === 'won' ? ' got">Won the ' + R.item : '">No item') + '</span>' : '<span class="hint">' + R.hint + '</span>');
+    d.disabled = !!st; d.addEventListener('click', function(){ pickPlayer(k); }); box.appendChild(d);
+  });
+  var all = ORDER.every(function(k){ return G.done[k]; }), m = document.createElement('button'); m.type = 'button';
+  m.className = 'door machine'; m.disabled = !all;
+  m.innerHTML = '<span class="hint">' + (all ? 'The machine is waiting' : 'A locked door. Something hums behind it.') + '</span>';
+  m.addEventListener('click', openMachine); box.appendChild(m);
+  show('hall'); writeState();
+}
+function pickPlayer(k){
+  $('pickSub').textContent = ROOMS[k].hint + '. Who is brave enough?';
+  var box = $('whos'); box.innerHTML = '';
+  G.players.slice().sort(function(a,b){ return (G.playedBy[a.id]||0) - (G.playedBy[b.id]||0); }).forEach(function(p){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'who-btn';
+    var n = G.playedBy[p.id] || 0;
+    b.innerHTML = '<b>' + esc(p.name) + '</b><span>' + (n ? 'Played ' + n + (n === 1 ? ' room' : ' rooms') : 'Not played yet') + '</span>';
+    b.addEventListener('click', function(){ $('picker').hidden = true; sendIn(k, p.id); });
+    box.appendChild(b);
+  });
+  $('picker').hidden = false;
+}
+$('pickCancel').addEventListener('click', function(){ $('picker').hidden = true; });
+
+/* ---------- a room: the phone plays it, the big screen follows ---------- */
+function sendIn(k, pid){
+  G.phase = 'room'; G.room = k; G.player = pid; G.roomSeq++; G.seen = {};
+  $('mPlate').textContent = ROOMS[k].name; $('mWhoTop').textContent = nameOf(pid) + ' has gone in';
+  $('mWho').textContent = 'Waiting for ' + nameOf(pid) + '\u2019s phone\u2026';
+  $('mQ').textContent = ''; $('mOut').textContent = ''; $('mOut').className = 'outcome';
+  $('mRight').textContent = '0'; $('mWrong').textContent = '0'; $('feed').innerHTML = '';
+  show('mirror'); writeState();
+  clearInterval(G.poll); G.poll = setInterval(followRoom, 900);
+}
+async function followRoom(){
+  var rows = await sb('moves?code=eq.' + G.code + '&player_id=eq.' + G.player + '&turn_seq=eq.' + G.roomSeq + '&select=q_id,choice&order=q_id.asc');
+  if(!Array.isArray(rows)) return;
+  rows.forEach(function(r){
+    if(G.seen[r.q_id]) return; G.seen[r.q_id] = true;
+    var e; try{ e = JSON.parse(r.choice); }catch(x){ return; }
+    if(r.q_id === 'done') return roomOver(e);
+    if(e.t === 'q'){ $('mWho').textContent = nameOf(G.player) + ' is answering'; $('mQ').textContent = e.q; $('mOut').textContent = ''; $('mOut').className = 'outcome'; }
+    if(e.t === 'a'){
+      $('mRight').textContent = e.r; $('mWrong').textContent = e.w;
+      $('mOut').textContent = e.ok ? 'Right!' : (e.fuse ? 'Wrong, but the Fuse took it' : 'Wrong. It was ' + e.c);
+      $('mOut').className = 'outcome ' + (e.ok ? 'ok' : 'bad');
+      var li = document.createElement('li'); li.className = e.ok ? 'ok' : 'bad';
+      li.innerHTML = '<small>' + (e.ok ? 'Right' : 'Wrong') + '</small>' + esc(e.q || '') + '<br><b>' + esc(e.c || '') + '</b>';
+      var f = $('feed'); f.insertBefore(li, f.firstChild); while(f.children.length > 5) f.removeChild(f.lastChild);
+    }
+    if(e.t === 'stairs'){ $('mWho').textContent = nameOf(G.player) + ' is on the back stairs'; $('mQ').textContent = e.q || ''; }
+  });
+}
+function roomOver(e){
+  clearInterval(G.poll);
+  var k = G.room, R = ROOMS[k], who = nameOf(G.player);
+  G.done[k] = e.won ? 'won' : 'lost'; G.depth++; G.playedBy[G.player] = (G.playedBy[G.player] || 0) + 1;
+  if(e.won){ G.items.push(R.item); if(R.item === 'Fuse') G.fuse = true; }
+  if(typeof e.fuse === 'boolean' && !(e.won && R.item === 'Fuse')) G.fuse = e.fuse;
+  if(e.keyUsed) G.keyUsed = true;
+  G.finalePenalty += (e.penalty || 0);
+  $('aPlate').textContent = R.name;
+  $('aTitle').textContent = e.won ? who + ' won the ' + R.item : 'The room beat ' + who;
+  $('aText').textContent = (e.stats || '') + (e.won ? '' : (e.keyUsed ? ' The team\u2019s Key opened a shortcut past the back stairs.'
+    : ' The back stairs cost the team ' + (e.penalty || 0) + ' seconds on the finale clock.'));
+  G.phase = 'after'; show('after'); writeState();
+}
+$('aBtn').addEventListener('click', paintHall);
+
+/* ---------- the machine: the team finale is built next ---------- */
+function openMachine(){
+  G.phase = 'machine'; writeState();
+  $('mwText').textContent = 'The team carried ' + G.items.length + ' of 5 parts to the machine. The team finale, with the spark leaping between your phones, is the next thing being built.';
+  show('machineWait');
+}
+
+openHouse();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

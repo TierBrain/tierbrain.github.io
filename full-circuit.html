@@ -298,9 +298,9 @@ button{font:inherit;color:inherit;}
 /* drawn parts (arms, springs, the key) keep their own line weight */
 .machine .part-line{fill:none;stroke:var(--brass);}
 .machine .missing-line{fill:none;stroke:var(--ink-soft);stroke-dasharray:4 4;opacity:.55;}
-.machine .socket{fill:rgba(0,0,0,.35);stroke:var(--ink-soft);stroke-width:1.5;}
-.machine .socket.on{fill:var(--spark);stroke:var(--spark-hot);filter:drop-shadow(0 0 6px var(--spark));}
-.machine .socket.gap{fill:var(--red);stroke:var(--red);}
+.machine .msock{fill:rgba(0,0,0,.35);stroke:var(--ink-soft);stroke-width:1.5;}
+.machine .msock.on{fill:var(--spark);stroke:var(--spark-hot);filter:drop-shadow(0 0 6px var(--spark));}
+.machine .msock.gap{fill:var(--red);stroke:var(--red);}
 .machine .arc{fill:none;stroke:var(--spark);stroke-width:2.5;stroke-linejoin:round;filter:drop-shadow(0 0 4px var(--spark));opacity:0;}
 .machine .arc.flash{animation:arc .45s ease-out;}
 @keyframes arc{0%{opacity:1}100%{opacity:0}}
@@ -434,11 +434,11 @@ button{font:inherit;color:inherit;}
         <g id="p-Wire"><path d="M95 108 Q62 118 64 168 M205 108 Q238 118 236 168" stroke-width="7" fill="none" stroke-linecap="round"/></g>
         <g id="p-Spring"><path d="M122 180 l10 7 -10 7 10 7 -10 7 10 7 -10 7 10 7 M178 180 l-10 7 10 7 -10 7 10 7 -10 7 10 7 -10 7" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
         <g id="p-Key"><path d="M205 137 H236" stroke-width="6" stroke-linecap="round" fill="none"/><circle cx="247" cy="137" r="11" stroke-width="5" fill="none"/></g>
-        <circle class="socket" id="s-Lens" cx="150" cy="50" r="6"/>
-        <circle class="socket" id="s-Fuse" cx="150" cy="135" r="6"/>
-        <circle class="socket" id="s-Wire" cx="80" cy="112" r="6"/>
-        <circle class="socket" id="s-Spring" cx="150" cy="198" r="6"/>
-        <circle class="socket" id="s-Key" cx="247" cy="137" r="6"/>
+        <circle class="msock" id="s-Lens" cx="150" cy="50" r="6"/>
+        <circle class="msock" id="s-Fuse" cx="150" cy="135" r="6"/>
+        <circle class="msock" id="s-Wire" cx="80" cy="112" r="6"/>
+        <circle class="msock" id="s-Spring" cx="150" cy="198" r="6"/>
+        <circle class="msock" id="s-Key" cx="247" cy="137" r="6"/>
         <polyline class="arc" id="arc" points=""/>
       </svg>
       <p class="fq" id="fQ"></p>
@@ -479,6 +479,26 @@ button{font:inherit;color:inherit;}
       <p id="finText"></p>
       <div class="pack" id="finPack"></div>
       <button class="go" id="againBtn" type="button">Explore again</button>
+    </div>
+  </section>
+
+  <!-- TEAM MODE: joining from the big screen's code -->
+  <section class="screen card" id="join" hidden>
+    <div class="inner">
+      <div class="plate">Full Circuit</div>
+      <h1>Join the team</h1>
+      <p>Room <b id="joinCode"></b>. Pick a name the others will recognise.</p>
+      <p><input id="joinName" maxlength="14" autocomplete="off" placeholder="Your name"
+        style="width:100%;font:inherit;font-size:18px;padding:12px 14px;border-radius:8px;border:2px solid var(--panel-edge);background:var(--strip);color:var(--strip-ink)"></p>
+      <button class="go" id="joinBtn" type="button">Join</button>
+      <p id="joinErr" style="color:var(--red);margin-top:10px"></p>
+    </div>
+  </section>
+  <section class="screen card" id="teamWait" hidden>
+    <div class="inner">
+      <div class="plate" id="twPlate">Full Circuit</div>
+      <h1 id="twTitle"></h1>
+      <p id="twText"></p>
     </div>
   </section>
 
@@ -709,7 +729,7 @@ Tally.prototype.over = function(){ return this.right >= 5 || this.wrong >= 3; };
 /* ==========================================================
    ROOM: THE SWITCHBOARD
    ========================================================== */
-var SB = { board:$('sbBoard'), plug:$('plug'), sockets:Array.prototype.slice.call(document.querySelectorAll('.socket')),
+var SB = { board:$('sbBoard'), plug:$('plug'), sockets:Array.prototype.slice.call(document.querySelectorAll('#room-switchboard .socket')),
   plugPos:{x:0,y:0}, swing:0, swingV:0, drag:null, st:null };
 function sbCentre(el){ var b=SB.board.getBoundingClientRect(), r=el.getBoundingClientRect(); return { x:r.left-b.left+r.width/2, y:r.top-b.top+r.height/2 }; }
 function sbHome(){ return sbCentre($('callerJack')); }
@@ -1307,7 +1327,7 @@ function runFinale(){
       var line = el.getAttribute('fill') === 'none';
       el.setAttribute('class', line ? (fitted ? 'part-line' : 'missing-line') : (fitted ? 'part' : 'missing')); });
     g.querySelectorAll('.glow').forEach(function(el){ el.style.display = fitted ? '' : 'none'; });
-    $('s-' + p).setAttribute('class', 'socket');
+    $('s-' + p).setAttribute('class', 'msock');
   });
   var n = H.items.length;
   $('fNote').textContent = n === 5 ? 'Every part is fitted. The spark will never have to bridge a gap.'
@@ -1339,15 +1359,15 @@ function fLeap(){
   for(var k=1;k<6;k++){ var t = k/6; pts.push((from.x + (b.x-from.x)*t + (Math.random()*16-8)).toFixed(1) + ',' + (from.y + (b.y-from.y)*t + (Math.random()*16-8)).toFixed(1)); }
   pts.push(b.x + ',' + b.y);
   var arc = $('arc'); arc.setAttribute('points', pts.join(' ')); arc.classList.remove('flash'); void arc.getBoundingClientRect(); arc.classList.add('flash');
-  PARTS.forEach(function(p){ $('s-' + p).setAttribute('class', 'socket'); });
+  PARTS.forEach(function(p){ $('s-' + p).setAttribute('class', 'msock'); });
   F.at = to;
   noise(0, 0.08, 0.18, 4200, 'highpass');
   if(!fHas(to)){
-    F.t -= 2000; $('s-' + to).setAttribute('class', 'socket gap');
+    F.t -= 2000; $('s-' + to).setAttribute('class', 'msock gap');
     tone(160, 0, 0.2, 'sawtooth', 0.05);
     $('fNote').textContent = 'The spark bridges the gap where the ' + to + ' should be. Two seconds lost.';
   } else {
-    $('s-' + to).setAttribute('class', 'socket on');
+    $('s-' + to).setAttribute('class', 'msock on');
     if(F.asked > 0) $('fNote').textContent = '';   /* keep the opening note up until the first answer */
   }
 }
@@ -1394,7 +1414,7 @@ function fEnd(awake){
   var secs = Math.ceil(Math.max(0, F.t) / 1000);
   if(awake){
     $('machine').classList.add('awake');
-    PARTS.forEach(function(p){ if(fHas(p)) $('s-' + p).setAttribute('class', 'socket on'); });
+    PARTS.forEach(function(p){ if(fHas(p)) $('s-' + p).setAttribute('class', 'msock on'); });
     [0, 0.2, 0.4, 0.7].forEach(function(t, i){ tone([392, 494, 587, 784][i], t, 0.9, 'sine', 0.09); });
     $('fQ').textContent = 'It is awake.'; $('fNote').textContent = '';
   } else { tone(220, 0, 1.2, 'sine', 0.1, 70); $('fQ').textContent = 'The charge fades.'; }
@@ -1428,6 +1448,92 @@ document.addEventListener('keydown', function(e){
 });
 /* the space bar pulls the Orrery's lever */
 document.addEventListener('keydown', function(e){ if((e.key === ' ' || e.key === 'Enter') && !$('room-orrery').hidden && OR.st && OR.st.live && document.activeElement !== $('lever')){ e.preventDefault(); orStop(); } });
+
+/* ==========================================================
+   TEAM MODE
+   Opened from the big screen's code. This phone waits, and when the
+   host sends its player into a room it runs that very room here, with
+   no lag, reporting each question and answer so the big screen can
+   follow a beat behind.
+   ========================================================== */
+var TEAM = (function(){ try{ var c = new URLSearchParams(location.search).get('team'); return c ? c.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5) : null; }catch(e){ return null; } })();
+var TM = { me:null, lastSeq:0, curSeq:0, ev:0, lastQ:null, onStairs:false, running:false };
+if(TEAM){
+  var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+  var sbT = async function(path, opts){ opts = opts || {}; try{
+    var headers = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+    if(opts.method === 'POST' || opts.method === 'PATCH') headers['Prefer'] = 'return=minimal';
+    var r = await fetch(SB_URL + '/rest/v1/' + path, Object.assign({}, opts, {headers:headers}));
+    if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
+    return opts.method ? {ok:false} : [];
+  }catch(e){ return opts.method ? null : []; } };
+  var emit = function(e){
+    if(!TM.running) return;
+    sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq,
+      q_id: 'e' + String(TM.ev++).padStart(3, '0'), choice: JSON.stringify(e) }) });
+  };
+  var report = function(result){
+    TM.running = false;
+    sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq, q_id:'done', choice: JSON.stringify(result) }) });
+    teamWait(result.won ? 'You won the ' + ROOMS[TM.room].item : 'Back to the hallway',
+      result.won ? 'Look up at the big screen. The whole team is carrying it now.' : 'Look up at the big screen. The team will choose the next door.', ROOMS[TM.room].name);
+  };
+  /* follow every question the rooms draw, so the big screen can show it */
+  ['pickQuestion','srPick','drPick'].forEach(function(fn){
+    var orig = window[fn];
+    window[fn] = function(t){ var q = orig(t); if(TM.running){ TM.lastQ = q; emit({ t: TM.onStairs ? 'stairs' : 'q', q: q.q }); } return q; };
+  });
+  var origHit = Tally.prototype.hit, origMiss = Tally.prototype.mistake;
+  Tally.prototype.hit = function(){ origHit.call(this); if(TM.lastQ) emit({ t:'a', ok:true, r:this.right, w:this.wrong, q:TM.lastQ.q, c:TM.lastQ.correct }); };
+  Tally.prototype.mistake = function(){ var counted = origMiss.call(this);
+    if(TM.lastQ) emit({ t:'a', ok:false, fuse:!counted, r:this.right, w:this.wrong, q:TM.lastQ.q, c:TM.lastQ.correct }); return counted; };
+
+  var teamWait = function(title, text, plate){ $('twTitle').textContent = title; $('twText').textContent = text; $('twPlate').textContent = plate || 'Full Circuit'; show('teamWait'); };
+  var runTeamRoom = function(state){
+    TM.lastSeq = state.roomSeq; TM.curSeq = state.roomSeq; TM.ev = 0; TM.room = state.room; TM.running = true; TM.onStairs = false;
+    H = newHouse(); H.items = (state.items || []).slice(); H.fuse = !!state.fuse; H.depth = state.depth || 0; H.keyUsed = !!state.keyUsed;
+    var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery, strongroom:runStrongroom, darkroom:runDarkRoom }[state.room];
+    actx(); SFX.door();
+    run(H.depth, function(won, stats){
+      if(won) return report({ won:true, stats:stats, fuse:H.fuse });
+      if(H.items.indexOf('Key') >= 0 && !H.keyUsed) return report({ won:false, stats:stats, keyUsed:true, penalty:0, fuse:H.fuse });
+      TM.onStairs = true;
+      runStairs(function(){ TM.onStairs = false; report({ won:false, stats:stats, penalty:H.finalePenalty, fuse:H.fuse }); });
+    });
+  };
+  var nameFrom = function(state, id){ var n = (state.names || []).filter(function(x){ return x.id === id; })[0]; return n ? n.name : 'Someone'; };
+  var poll = async function(){
+    if(!TM.me) return;
+    var rows = await sbT('rooms?code=eq.' + TEAM + '&select=phase,state'); var rm = rows && rows[0]; if(!rm) return;
+    var st = rm.state || {}, ph = st.phase;
+    if(TM.running) return;
+    if(ph === 'room' && st.player === TM.me.id && st.roomSeq > TM.lastSeq) return runTeamRoom(st);
+    if(ph === 'lobby') teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
+    else if(ph === 'hall') teamWait('Choose a door together', 'Look at the big screen and argue about which door to open next.');
+    else if(ph === 'room') teamWait(nameFrom(st, st.player) + ' has gone in', 'Watch the big screen and shout your help. You might be next.', ROOMS[st.room] ? ROOMS[st.room].name : 'Full Circuit');
+    else if(ph === 'machine') teamWait('The house is explored', 'Look at the big screen for the machine.', 'The machine');
+  };
+  var join = async function(){
+    var name = ($('joinName').value || '').trim();
+    if(!name){ $('joinErr').textContent = 'Type a name first.'; return; }
+    var rooms = await sbT('rooms?code=eq.' + TEAM + '&select=code');
+    if(!rooms || !rooms.length){ $('joinErr').textContent = 'No game with that code. Check the big screen.'; return; }
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('p' + Math.random().toString(36).slice(2));
+    var now = new Date().toISOString();
+    var r = await sbT('players', { method:'POST', body: JSON.stringify({ id:id, code:TEAM, name:name, tag:'full-circuit', score:0, joined_at:now, last_seen:now }) });
+    if(!r || r.ok === false){ $('joinErr').textContent = 'Could not join. Check your connection.'; return; }
+    TM.me = { id:id, name:name }; store('fc_team_' + TEAM, JSON.stringify(TM.me));
+    actx(); teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
+    setInterval(poll, 1200); poll();
+  };
+  $('joinCode').textContent = TEAM;
+  $('joinBtn').addEventListener('click', join);
+  $('joinName').addEventListener('keydown', function(e){ if(e.key === 'Enter') join(); });
+  /* rejoin on reload, so a phone that sleeps does not lose its place */
+  var saved = null; try{ saved = JSON.parse(recall('fc_team_' + TEAM) || 'null'); }catch(e){}
+  if(saved && saved.id){ TM.me = saved; teamWait('Welcome back', 'Rejoining the team\u2026'); setInterval(poll, 1200); poll(); }
+  else show('join');
+}
 
 /* ---------- start ---------- */
 function begin(){ H = newHouse(); actx(); paintHall(); }
