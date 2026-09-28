@@ -221,6 +221,101 @@ button{font:inherit;color:inherit;}
 .lever:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
 .lever:disabled{opacity:.5;}
 
+/* ---------- ROOM: the Strongroom ----------
+   A Victorian safe room: oxblood enamel, gold pinstripe, steel. Its one
+   bold thing is the row of tumblers that click as you spin them. */
+.strongroom{--sr-enamel:#7a2b27; --sr-enamel2:#5a1e1b; --sr-gold:#c99a3f; --sr-steel:#c4cbcf; --sr-steel-lo:#737c81; --sr-ink:#22262a;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .strongroom{--sr-enamel:#5a1f22; --sr-enamel2:#3d1416; --sr-gold:#d4ad55;} }
+:root[data-theme="dark"] .strongroom{--sr-enamel:#5a1f22; --sr-enamel2:#3d1416; --sr-gold:#d4ad55;}
+.strongroom .board{background:radial-gradient(ellipse at 50% 35%,var(--sr-enamel),var(--sr-enamel2) 80%);border:3px solid var(--sr-enamel2);
+  box-shadow:inset 0 0 0 10px var(--sr-enamel2),inset 0 0 0 12px var(--sr-gold),inset 0 0 50px rgba(0,0,0,.35);padding:24px 22px 24px;}
+.strongroom .board::before,.strongroom .board::after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;top:20px;
+  background:radial-gradient(circle at 35% 30%,#e8eced,var(--sr-steel-lo));box-shadow:0 1px 1px rgba(0,0,0,.5);}
+.strongroom .board::before{left:20px;} .strongroom .board::after{right:20px;}
+.lives.bolts i{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--sr-steel,#aeb6bb) 60%);position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.4);}
+.lives.bolts i::after{content:"";position:absolute;left:3px;right:3px;top:6px;height:2px;background:rgba(0,0,0,.45);}
+.lives.bolts i.gone{background:var(--red);box-shadow:0 0 8px var(--red);}
+.tumblers{display:flex;justify-content:center;gap:6px;margin:auto 0;padding:22px 0 8px;flex-wrap:nowrap;}
+.wheel{position:relative;flex:0 1 44px;max-width:44px;height:132px;border-radius:8px;cursor:ns-resize;touch-action:none;overflow:hidden;
+  background:linear-gradient(180deg,#5d666b,var(--sr-steel) 30%,#eef1f2 50%,var(--sr-steel) 70%,#5d666b);box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.35);}
+.wheel:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.wheel .cell{position:absolute;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:700;font-size:26px;color:var(--sr-ink);transition:transform .16s ease;}
+.wheel .cell.fade{opacity:.35;font-size:20px;}
+.wheel::after{content:"";position:absolute;left:0;right:0;top:44px;height:44px;border-top:2px solid rgba(0,0,0,.35);border-bottom:2px solid rgba(0,0,0,.35);pointer-events:none;}
+.wheel.lens{box-shadow:0 0 0 3px var(--sr-gold),0 0 14px var(--sr-gold),0 3px 0 rgba(0,0,0,.4);cursor:default;}
+.wheel.good{box-shadow:0 0 0 3px var(--green),0 3px 0 rgba(0,0,0,.4);}
+.wheel.bad{box-shadow:0 0 0 3px var(--red),0 3px 0 rgba(0,0,0,.4);}
+.srbtns{display:flex;justify-content:center;margin-top:16px;}
+.plates{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.plates[hidden]{display:none;}
+.plate-btn{font-family:var(--type);font-size:16px;color:#2b1c0e;border:0;border-radius:6px;padding:11px 8px;cursor:pointer;
+  background:linear-gradient(180deg,var(--brass-hi),var(--brass) 60%,var(--brass-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 0 rgba(0,0,0,.35);}
+.plate-btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+
+/* ---------- ROOM: the Dark Room ----------
+   A cellar archive lit only by your torch. The room is dark in both
+   themes, because darkness is the room. Its one bold thing is the beam. */
+.darkroom .board{border:2px solid #1d150e;background:
+    repeating-linear-gradient(180deg,#2d2117 0 3px,#1d150e 3px 74px),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 120px),#241a12;}
+.wall{position:absolute;inset:0;z-index:0;}
+.note{position:absolute;display:block;background:#e8dcc0;color:#2a2016;font-family:var(--type);font-size:15px;line-height:1.3;
+  padding:10px 12px;border:0;border-radius:3px;text-align:center;box-shadow:0 3px 6px rgba(0,0,0,.5);cursor:pointer;}
+.note::before{content:"";position:absolute;top:-4px;left:50%;width:9px;height:9px;margin-left:-4px;border-radius:50%;background:#8a2f2a;box-shadow:0 1px 1px rgba(0,0,0,.5);}
+.note.qnote{font-family:var(--serif);font-weight:700;font-size:15px;line-height:1.45;text-align:left;cursor:default;}
+.note.right{outline:3px solid var(--green);}
+.note.wrong{outline:3px solid var(--red);}
+.note:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+.dark{position:absolute;inset:0;z-index:1;pointer-events:none;--x:50%;--y:60%;--r:78px;
+  background:
+    radial-gradient(circle at var(--x) var(--y), rgba(255,210,140,.16) 0, transparent var(--r)),
+    radial-gradient(circle at var(--x) var(--y), rgba(8,5,3,0) 0, rgba(8,5,3,0) calc(var(--r) * .5), rgba(8,5,3,.997) var(--r));}
+.dark.dim{background:rgba(8,5,3,.28);}
+.dark.flicker{animation:torch .22s steps(2) infinite;}
+@keyframes torch{50%{opacity:.82;}}
+.lives.candles i{position:relative;width:9px;height:16px;margin-top:6px;background:#efe4c8;border-radius:2px;}
+.lives.candles i::before{content:"";position:absolute;left:50%;top:-9px;width:8px;height:10px;margin-left:-4px;border-radius:50% 50% 50% 50% / 65% 65% 35% 35%;
+  background:radial-gradient(circle at 50% 70%,#fff3c4,var(--amber));box-shadow:0 0 8px var(--amber);}
+.lives.candles i.gone::before{background:none;box-shadow:none;}
+
+/* ---------- THE FINALE: the machine ----------
+   The house's own walnut and brass, plus one colour kept only for this
+   room: the electric blue-white of the spark. */
+.finale{--spark:#9fe8ff; --spark-hot:#e8fbff;}
+.finale .board{background:repeating-linear-gradient(92deg,var(--grain) 0 2px,transparent 2px 9px),var(--panel);border:2px solid var(--panel-edge);
+  box-shadow:inset 0 0 50px rgba(0,0,0,.3);padding:12px 14px 16px;}
+.meters{display:flex;gap:14px;align-items:center;font-family:var(--type);font-size:15px;color:var(--ink-soft);}
+.meters .clock{min-width:3.4em;color:var(--ink);font-size:20px;}
+.meters .clock.low{color:var(--red);}
+.charge{flex:1;height:14px;border-radius:7px;background:rgba(0,0,0,.25);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.4);}
+.charge i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4fb3d9,var(--spark));box-shadow:0 0 10px var(--spark);transition:width .35s ease;}
+.machine{display:block;width:100%;max-width:300px;height:auto;margin:4px auto 0;}
+.machine .part{fill:var(--brass);stroke:var(--brass-lo);stroke-width:2;}
+.machine .body{fill:var(--brass-lo);stroke:rgba(0,0,0,.35);stroke-width:2;}
+.machine .missing{fill:none;stroke:var(--ink-soft);stroke-width:2;stroke-dasharray:4 4;opacity:.55;}
+/* drawn parts (arms, springs, the key) keep their own line weight */
+.machine .part-line{fill:none;stroke:var(--brass);}
+.machine .missing-line{fill:none;stroke:var(--ink-soft);stroke-dasharray:4 4;opacity:.55;}
+.machine .socket{fill:rgba(0,0,0,.35);stroke:var(--ink-soft);stroke-width:1.5;}
+.machine .socket.on{fill:var(--spark);stroke:var(--spark-hot);filter:drop-shadow(0 0 6px var(--spark));}
+.machine .socket.gap{fill:var(--red);stroke:var(--red);}
+.machine .arc{fill:none;stroke:var(--spark);stroke-width:2.5;stroke-linejoin:round;filter:drop-shadow(0 0 4px var(--spark));opacity:0;}
+.machine .arc.flash{animation:arc .45s ease-out;}
+@keyframes arc{0%{opacity:1}100%{opacity:0}}
+.machine .glow{fill:var(--spark);opacity:0;transition:opacity 1.2s;}
+.machine.awake .glow{opacity:.9;}
+.machine.awake{animation:hum 1.6s ease-in-out infinite;}
+@keyframes hum{50%{transform:translateY(-3px);}}
+.fq{font-size:16px;line-height:1.45;font-weight:700;margin:8px 0 8px;min-height:2.9em;}
+.fopts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fopts .opt{padding:12px 10px;text-align:center;}
+.fnote{font-family:var(--type);font-size:13px;color:var(--ink-soft);min-height:1.3em;margin:8px 0 0;}
+.lensBtn{margin-top:8px;}
+.lensBtn[hidden]{display:none;}
+@media (prefers-reduced-motion: reduce){ .machine.awake{animation:none;} .machine .arc.flash{animation:none;opacity:.8;} }
+
 /* the back stairs */
 .opts{display:grid;gap:10px;margin:14px 0 8px;}
 .opt{background:var(--strip);color:var(--strip-ink);border:0;border-radius:8px;padding:13px 14px;text-align:left;font-family:var(--type);font-size:16px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.2);}
@@ -298,6 +393,58 @@ button{font:inherit;color:inherit;}
       <div class="ticket"><p class="who" id="orWho"></p><p class="q" id="orQ"></p><div class="line" id="orLine"><i id="orLineBar"></i></div></div>
       <svg class="orrery-svg" id="orSvg" viewBox="0 0 320 330" role="img" aria-label="The orrery"></svg>
       <button class="lever" id="lever" type="button">Stop the orrery</button>
+    </main>
+  </section>
+
+  <!-- ROOM: the Strongroom -->
+  <section class="screen room strongroom" id="room-strongroom" hidden>
+    <div class="bar"><div class="plate">The Strongroom</div>
+      <div class="status"><span class="lives bolts" id="srLives" role="img"></span><span id="srCount"></span></div></div>
+    <main class="board" id="srBoard">
+      <div class="ticket"><p class="who" id="srWho"></p><p class="q" id="srQ"></p><div class="line" id="srLine"><i id="srLineBar"></i></div></div>
+      <div class="tumblers" id="tumblers" aria-label="Letter tumblers"></div>
+      <div class="plates" id="plates" hidden></div>
+      <div class="srbtns"><button class="lever" id="tryDoor" type="button">Try the door</button></div>
+    </main>
+  </section>
+
+  <!-- ROOM: the Dark Room -->
+  <section class="screen room darkroom" id="room-darkroom" hidden>
+    <div class="bar"><div class="plate">The Dark Room</div>
+      <div class="status"><span class="lives candles" id="drLives" role="img"></span><span id="drCount"></span></div></div>
+    <main class="board" id="drBoard">
+      <div class="ticket"><p class="who" id="drWho"></p><p class="q" id="drQ"></p><div class="line" id="drLine"><i id="drLineBar"></i></div></div>
+      <div class="wall" id="drWall"></div>
+      <div class="dark" id="drDark"></div>
+    </main>
+  </section>
+
+  <!-- THE FINALE -->
+  <section class="screen room finale" id="room-finale" hidden>
+    <div class="bar"><div class="plate">The machine</div></div>
+    <main class="board" id="fBoard">
+      <div class="meters"><span class="clock" id="fClock">1:00</span><span class="charge" role="img" id="fChargeWrap"><i id="fCharge"></i></span></div>
+      <svg class="machine" id="machine" viewBox="0 0 300 250" aria-hidden="true">
+        <!-- the automaton: body first, then each part fitted or missing -->
+        <rect class="body" x="95" y="94" width="110" height="86" rx="16"/>
+        <rect class="body" x="138" y="80" width="24" height="16"/>
+        <rect class="body" x="110" y="18" width="80" height="64" rx="18"/>
+        <g id="p-Lens"><circle cx="150" cy="50" r="17"/><circle class="glow" cx="150" cy="50" r="10"/></g>
+        <g id="p-Fuse"><rect x="132" y="120" width="36" height="30" rx="12"/><rect class="glow" x="138" y="126" width="24" height="18" rx="8"/></g>
+        <g id="p-Wire"><path d="M95 108 Q62 118 64 168 M205 108 Q238 118 236 168" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+        <g id="p-Spring"><path d="M122 180 l10 7 -10 7 10 7 -10 7 10 7 -10 7 10 7 M178 180 l-10 7 10 7 -10 7 10 7 -10 7 10 7 -10 7" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g id="p-Key"><path d="M205 137 H236" stroke-width="6" stroke-linecap="round" fill="none"/><circle cx="247" cy="137" r="11" stroke-width="5" fill="none"/></g>
+        <circle class="socket" id="s-Lens" cx="150" cy="50" r="6"/>
+        <circle class="socket" id="s-Fuse" cx="150" cy="135" r="6"/>
+        <circle class="socket" id="s-Wire" cx="80" cy="112" r="6"/>
+        <circle class="socket" id="s-Spring" cx="150" cy="198" r="6"/>
+        <circle class="socket" id="s-Key" cx="247" cy="137" r="6"/>
+        <polyline class="arc" id="arc" points=""/>
+      </svg>
+      <p class="fq" id="fQ"></p>
+      <div class="fopts" id="fOpts"></div>
+      <button class="quiet lensBtn" id="lensBtn" type="button" hidden>Use the Lens: burn away a wrong answer</button>
+      <p class="fnote" id="fNote" aria-live="polite"></p>
     </main>
   </section>
 
@@ -416,6 +563,8 @@ $('simple').addEventListener('change', function(){ simple = this.checked; store(
 var ITEM_ART = {
   Wire:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="#b8672e" stroke-width="3.2" stroke-linecap="round"><ellipse cx="28" cy="16" rx="16" ry="5"/><ellipse cx="28" cy="23" rx="16" ry="5"/><ellipse cx="28" cy="30" rx="16" ry="5"/><ellipse cx="28" cy="37" rx="16" ry="5"/><path d="M44 37 Q52 44 44 50"/></g></svg>',
   Lens:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="24" cy="24" r="15" fill="rgba(160,210,230,.35)" stroke="#b78a3e" stroke-width="4"/><path d="M35 35 L47 47" stroke="#7d5a22" stroke-width="6" stroke-linecap="round"/><path d="M16 18 Q20 13 26 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  Key:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="18" cy="28" r="10" fill="none" stroke="#b78a3e" stroke-width="4.5"/><path d="M28 28 H50 M42 28 V36 M48 28 V34" fill="none" stroke="#b78a3e" stroke-width="4.5" stroke-linecap="round"/></svg>',
+  Fuse:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><rect x="10" y="20" width="36" height="16" rx="8" fill="rgba(200,220,230,.4)" stroke="#8e9c9f" stroke-width="3"/><rect x="4" y="22" width="8" height="12" rx="2" fill="#b78a3e"/><rect x="44" y="22" width="8" height="12" rx="2" fill="#b78a3e"/><path d="M12 28 Q20 22 28 28 T44 28" fill="none" stroke="#ff9f1c" stroke-width="2"/></svg>',
   Spring:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><path d="M16 10 L40 15 L16 20 L40 25 L16 30 L40 35 L16 40 L40 45" fill="none" stroke="#7d8b8d" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10 H22 M34 46 H44" stroke="#5f6c6e" stroke-width="3.4" stroke-linecap="round"/></svg>'
 };
 var ROOMS = {
@@ -428,9 +577,11 @@ var ROOMS = {
   orrery:{ name:'The Orrery', hint:'Something ticks and turns in here', item:'Lens', built:true,
     itemText:'In the house it will pre-set one letter in the Strongroom. In the machine it becomes the eye.',
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6"><circle cx="28" cy="28" r="6"/><ellipse cx="28" cy="28" rx="20" ry="9"/><circle cx="46" cy="30" r="3"/></svg>' },
-  strongroom:{ name:'The Strongroom', hint:'A heavy dial on a steel door', item:'Key', built:false,
+  strongroom:{ name:'The Strongroom', hint:'A heavy dial on a steel door', item:'Key', built:true,
+    itemText:'In the house it opens a shortcut past one detour. In the machine it starts the machine part-charged.',
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><circle cx="28" cy="28" r="16"/><circle cx="28" cy="28" r="5"/><path d="M28 12 V16 M28 40 V44 M12 28 H16 M40 28 H44"/></svg>' },
-  darkroom:{ name:'The Dark Room', hint:'No light shows under this door', item:'Fuse', built:false,
+  darkroom:{ name:'The Dark Room', hint:'No light shows under this door', item:'Fuse', built:true,
+    itemText:'In the house it protects your next room from one mistake. In the machine it forgives one short circuit.',
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M28 10 C24 16 24 20 28 24 C32 20 32 16 28 10 Z"/><path d="M24 28 H32 V46 H24 Z"/></svg>' }
 };
 var ORDER = ['switchboard','glasshouse','orrery','strongroom','darkroom'];
@@ -466,7 +617,7 @@ function paintHall(){
   var allOpenDone = ORDER.every(function(k){ return !ROOMS[k].built || H.done[k]; });
   m.innerHTML = '<span class="hint">' + (allOpenDone ? 'The machine is waiting' : 'A locked door. Something hums behind it.') + '</span>';
   m.disabled = !allOpenDone;
-  m.addEventListener('click', finishHouse);
+  m.addEventListener('click', runFinale);
   box.appendChild(m);
   show('hall');
 }
@@ -474,7 +625,7 @@ function paintHall(){
 function enterRoom(k){
   SFX.door();
   var depth = H.depth;
-  var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery }[k];
+  var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery, strongroom:runStrongroom, darkroom:runDarkRoom }[k];
   run(depth, function(won, stats){ afterRoom(k, won, stats); });
 }
 function afterRoom(k, won, stats){
@@ -485,6 +636,7 @@ function afterRoom(k, won, stats){
   $('keyBtn').hidden = true;
   if(won){
     H.items.push(R.item);
+    if(R.item === 'Fuse') H.fuse = true;
     SFX.item();
     $('afterTitle').textContent = 'You won the ' + R.item;
     $('afterText').textContent = stats;
@@ -533,8 +685,8 @@ function runStairs(done){
 function finishHouse(){
   var won = H.items.length;
   $('finTitle').textContent = 'The machine is waiting';
-  $('finText').textContent = 'You explored every room that is open so far and carried ' + won + (won === 1 ? ' part' : ' parts') +
-    ' to the machine. The rest of the house, and the machine itself, are still being built.';
+  $('finText').textContent = 'You explored every room in the house and carried ' + won + (won === 1 ? ' part' : ' parts') +
+    ' to the machine. Waking it is the finale, and that is being built next.';
   $('finPack').innerHTML = H.items.map(function(i){ return '<span class="chip">' + i + '</span>'; }).join('') || '<span class="none">No parts this time.</span>';
   show('finish');
 }
@@ -880,6 +1032,383 @@ function orResolve(i){
 }
 $('lever').addEventListener('click', orStop);
 
+/* ==========================================================
+   ROOM: THE STRONGROOM
+   Spell the answer on the tumblers. Each wheel carries only a few
+   letters, drawn from the four possible answers, so the wheels hint
+   at the options without listing them. The Lens pre-sets one wheel.
+   ========================================================== */
+var SPELL = function(a){ a = String(a).trim(); return /^[A-Za-z]{3,8}$/.test(a) || /^\d{1,4}$/.test(a); };
+var SR_POOL = { '1':[], '2':[], '3':[] };
+(function(){
+  var ok = false;
+  try{ if(window.TB && window.TB.bank){ var b = window.TB.bank('gk') || {};
+    ['1','2','3'].forEach(function(t){ (b[t]||[]).forEach(function(q){ if(q && SPELL(q.correct) && q.wrong && q.wrong.length >= 3) SR_POOL[t].push(q); }); });
+    ok = SR_POOL['1'].length > 20; } }catch(e){}
+  if(!ok) ['1','2','3'].forEach(function(t){ SR_POOL[t] = EMBEDDED[t].filter(function(q){ return SPELL(q.correct); }); });
+})();
+function srPick(tier){
+  var list = SR_POOL[tier].filter(function(q){ return !seen.has(qKey(q)); });
+  if(!list.length) list = SR_POOL[tier].slice();
+  var q = list[Math.floor(Math.random()*list.length)];
+  seen.add(qKey(q)); store(SEEN_KEY, JSON.stringify(Array.from(seen).slice(-2000)));
+  return q;
+}
+var SR = { st:null, raf:0 };
+function srLetters(q, pos, digits){
+  var want = String(q.correct).trim().toUpperCase().charAt(pos), set = [want];
+  if(digits){ return '0123456789'.split(''); }
+  q.wrong.slice(0,3).forEach(function(w){ var c = String(w).toUpperCase().charAt(pos); if(/[A-Z]/.test(c) && set.indexOf(c) < 0) set.push(c); });
+  var A = 'ABCDEFGHIJKLMNOPRSTUW';
+  while(set.length < 5){ var c = A.charAt(Math.floor(Math.random()*A.length)); if(set.indexOf(c) < 0) set.push(c); }
+  return shuffle(set);
+}
+function srPaintWheel(w){
+  var n = w.set.length, html = '';
+  [-1,0,1].forEach(function(off){ var i = (w.at + off + n) % n;
+    html += '<span class="cell' + (off ? ' fade' : '') + '" style="top:' + (44 + off*44) + 'px">' + w.set[i] + '</span>'; });
+  w.el.innerHTML = html;
+  w.el.setAttribute('aria-label', 'Tumbler ' + (w.idx+1) + ': ' + w.set[w.at] + (w.locked ? ', set by the Lens' : ''));
+}
+function srSpin(w, dir){ if(w.locked || !SR.st || !SR.st.live) return; w.at = (w.at + dir + w.set.length) % w.set.length; srPaintWheel(w); tone(1800 + Math.random()*300, 0, 0.03, 'square', 0.04); }
+function runStrongroom(depth, done){
+  SR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), lens:H.items.indexOf('Lens') >= 0,
+    tally:new Tally($('srLives'), $('srCount'), 'opened'), Q_MS:22000 };
+  show('room-strongroom'); setTimeout(srNext, 300);
+}
+function srNext(){
+  var st = SR.st; cancelAnimationFrame(SR.raf);
+  if(st.tally.over()){
+    var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
+    return st.done(won, 'You opened ' + st.tally.right + ' locks in ' + secs + ' seconds.');
+  }
+  var q = srPick(tierFor(st.depth, st.rounds)); st.rounds++;
+  var word = String(q.correct).trim().toUpperCase(), digits = /^\d+$/.test(word);
+  st.q = q; st.word = word; st.opts = shuffle([q.correct].concat(q.wrong.slice(0,3)));
+  var box = $('tumblers'); box.innerHTML = '';
+  st.wheels = word.split('').map(function(ch, i){
+    var set = srLetters(q, i, digits), el = document.createElement('div');
+    el.className = 'wheel'; el.tabIndex = 0; el.setAttribute('role', 'spinbutton'); box.appendChild(el);
+    var start = Math.floor(Math.random()*set.length); if(set[start] === ch) start = (start + 1) % set.length;
+    var w = { el:el, set:set, at:start, idx:i, locked:false };
+    /* drag a wheel up or down, or tap its top or bottom half */
+    var y0 = null, moved = 0;
+    el.addEventListener('pointerdown', function(e){ if(simple) return; y0 = e.clientY; moved = 0; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove', function(e){ if(y0 === null) return; var dy = e.clientY - y0;
+      if(Math.abs(dy) >= 30){ srSpin(w, dy > 0 ? -1 : 1); y0 = e.clientY; moved++; } });
+    el.addEventListener('pointerup', function(e){ if(y0 === null) return;
+      if(!moved){ var r = el.getBoundingClientRect(); srSpin(w, (e.clientY - r.top) < r.height/2 ? -1 : 1); } y0 = null; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'ArrowUp'){ e.preventDefault(); srSpin(w,-1); } if(e.key === 'ArrowDown'){ e.preventDefault(); srSpin(w,1); } });
+    srPaintWheel(w); return w;
+  });
+  /* the Lens: one wheel arrives already set, and stays set */
+  if(st.lens && st.wheels.length > 1){
+    var lw = st.wheels[Math.floor(Math.random()*st.wheels.length)];
+    lw.at = lw.set.indexOf(word.charAt(lw.idx)); lw.locked = true; lw.el.classList.add('lens'); srPaintWheel(lw);
+  }
+  var pl = $('plates'); pl.innerHTML = ''; pl.hidden = !simple;
+  st.opts.forEach(function(o){ var b = document.createElement('button'); b.type='button'; b.className='plate-btn'; b.textContent=o;
+    b.addEventListener('click', function(){ srChoose(o); }); pl.appendChild(b); });
+  $('srWho').textContent = st.rounds === 1 && st.lens ? 'The Lens has set one tumbler for you' : (digits ? 'Dial in the number' : 'Spell the answer on the tumblers');
+  $('srQ').textContent = q.q; $('srLine').classList.remove('low'); $('tryDoor').disabled = false; $('tryDoor').hidden = simple;
+  say(q.q + (digits ? ' Dial in the number.' : ' Spell the answer.'));
+  st.live = true; st.qStart = performance.now(); SR.raf = requestAnimationFrame(srTick);
+}
+function srTick(now){
+  var st = SR.st; if(!st || !st.live) return;
+  var left = st.Q_MS - (now - st.qStart);
+  $('srLineBar').style.transform = 'scaleX(' + Math.max(0, left/st.Q_MS) + ')';
+  if(left < 5000) $('srLine').classList.add('low');
+  if(left <= 0) return srResolve(false, true);
+  SR.raf = requestAnimationFrame(srTick);
+}
+/* simple mode: pick a brass plate and the wheels spin to it */
+function srChoose(o){
+  var st = SR.st; if(!st || !st.live) return; actx();
+  var target = String(o).trim().toUpperCase();
+  st.wheels.forEach(function(w, i){ var c = target.charAt(i), k = w.set.indexOf(c); if(k >= 0 && !w.locked){ w.at = k; srPaintWheel(w); } });
+  tone(1900, 0, 0.03, 'square', 0.04); tone(1700, 0.06, 0.03, 'square', 0.04);
+  setTimeout(function(){ srResolve(target === st.word); }, 380);
+}
+function srTry(){ var st = SR.st; if(!st || !st.live) return; actx();
+  var spelled = st.wheels.map(function(w){ return w.set[w.at]; }).join(''); srResolve(spelled === st.word); }
+function srResolve(right, timedOut){
+  var st = SR.st; if(!st.live) return; st.live = false; cancelAnimationFrame(SR.raf); $('tryDoor').disabled = true;
+  if(right){ st.tally.hit(); tone(90,0,0.4,'sine',0.14,60); noise(0,0.2,0.3,500,'lowpass'); SFX.right();
+    st.wheels.forEach(function(w){ w.el.classList.add('good'); }); $('srWho').textContent = 'The door swings open'; say('Opened.'); }
+  else {
+    var counted = st.tally.mistake();
+    [0,0.25,0.5].forEach(function(t){ tone(880,t,0.18,'square',0.05); tone(660,t+0.09,0.12,'square',0.05); });
+    st.wheels.forEach(function(w){ w.at = w.set.indexOf(st.word.charAt(w.idx)); srPaintWheel(w); w.el.classList.add(w.locked ? 'lens' : 'bad'); });
+    $('srWho').textContent = (timedOut ? 'Time ran out' : 'The alarm sounds') + '. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
+    say('The answer was ' + st.q.correct + '.');
+  }
+  setTimeout(srNext, right ? 1000 : 1900);
+}
+$('tryDoor').addEventListener('click', srTry);
+$('simple').addEventListener('change', function(){ if(SR.st && !$('room-strongroom').hidden){ $('plates').hidden = !simple; $('tryDoor').hidden = simple; } });
+
+/* ==========================================================
+   ROOM: THE DARK ROOM
+   Everything, even the question, is pinned to the walls in the dark.
+   Sweep the torch to find it all; you can only choose a note you can
+   see. The Wire powers the lamps: a wider beam that lasts longer.
+   ========================================================== */
+var DR = { board:$('drBoard'), wall:$('drWall'), dark:$('drDark'), st:null, raf:0, x:0, y:0, r:78, litAtPress:[] };
+var DR_POOL = { '1':[], '2':[], '3':[] };
+(function(){
+  var ok = false;
+  try{ if(window.TB && window.TB.bank){ var b = window.TB.bank('gk') || {};
+    ['1','2','3'].forEach(function(t){ (b[t]||[]).forEach(function(q){ if(q && q.wrong && q.wrong.length >= 3 && String(q.correct).length <= 26) DR_POOL[t].push(q); }); });
+    ok = DR_POOL['1'].length > 20; } }catch(e){}
+  if(!ok) ['1','2','3'].forEach(function(t){ DR_POOL[t] = EMBEDDED[t].slice(); });
+})();
+function drPick(tier){
+  var list = DR_POOL[tier].filter(function(q){ return !seen.has(qKey(q)); });
+  if(!list.length) list = DR_POOL[tier].slice();
+  var q = list[Math.floor(Math.random()*list.length)];
+  seen.add(qKey(q)); store(SEEN_KEY, JSON.stringify(Array.from(seen).slice(-2000)));
+  return q;
+}
+function drTorch(x, y){
+  DR.x = x; DR.y = y;
+  DR.dark.style.setProperty('--x', x + 'px'); DR.dark.style.setProperty('--y', y + 'px'); DR.dark.style.setProperty('--r', DR.r + 'px');
+  drReveal();
+}
+function drLit(el){
+  if(simple) return true;
+  var b = DR.board.getBoundingClientRect(), r = el.getBoundingClientRect();
+  var cx = Math.max(r.left, Math.min(DR.x + b.left, r.right)), cy = Math.max(r.top, Math.min(DR.y + b.top, r.bottom));
+  return Math.hypot(cx - (DR.x + b.left), cy - (DR.y + b.top)) < DR.r * 0.62;
+}
+/* the moment the torch finds the question, it is copied up to the card */
+function drReveal(){
+  var st = DR.st; if(!st || !st.live || st.found || !st.qnote) return;
+  if(drLit(st.qnote)){ st.found = true; $('drQ').textContent = st.q.q; $('drWho').textContent = 'Now find the right answer';
+    noise(0, 0.18, 0.12, 3000, 'highpass'); say(st.q.q); }
+}
+function runDarkRoom(depth, done){
+  var wired = H.items.indexOf('Wire') >= 0;
+  DR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), wired:wired,
+    tally:new Tally($('drLives'), $('drCount'), 'found'), Q_MS: wired ? 30000 : 22000 };
+  DR.r = wired ? 104 : 78;
+  show('room-darkroom'); setTimeout(drNext, 300);
+}
+function drPlace(notes){
+  /* scatter the notes below the card, without overlapping */
+  var W = DR.board.clientWidth, Hh = DR.board.clientHeight, top = DR.board.querySelector('.ticket').offsetHeight + 34, placed = [];
+  notes.forEach(function(el){
+    var w = el.offsetWidth, h = el.offsetHeight, best = null;
+    for(var t=0; t<260 && !best; t++){
+      var x = 10 + Math.random() * Math.max(1, W - w - 20), y = top + Math.random() * Math.max(1, Hh - h - top - 12);
+      var clash = placed.some(function(p){ return x < p.x + p.w + 10 && x + w + 10 > p.x && y < p.y + p.h + 10 && y + h + 10 > p.y; });
+      if(!clash) best = {x:x, y:y};
+    }
+    if(!best) best = { x: 10, y: top + placed.length * (h + 8) };
+    placed.push({x:best.x, y:best.y, w:w, h:h});
+    el.style.left = best.x + 'px'; el.style.top = best.y + 'px';
+    el.style.transform = 'rotate(' + (Math.random()*5 - 2.5).toFixed(1) + 'deg)';
+  });
+}
+function drNext(){
+  var st = DR.st; cancelAnimationFrame(DR.raf);
+  if(st.tally.over()){
+    var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
+    return st.done(won, 'You found ' + st.tally.right + ' right answers in ' + secs + ' seconds.');
+  }
+  var q = drPick(tierFor(st.depth, st.rounds)); st.rounds++;
+  st.q = q; st.opts = shuffle([q.correct].concat(q.wrong.slice(0,3))); st.found = simple;
+  DR.wall.innerHTML = '';
+  var W = DR.board.clientWidth, qn = document.createElement('div');
+  qn.className = 'note qnote'; qn.textContent = q.q; qn.style.width = Math.min(260, W * 0.7) + 'px';
+  DR.wall.appendChild(qn); st.qnote = qn;
+  st.notes = st.opts.map(function(o, i){
+    var b = document.createElement('button'); b.type='button'; b.className='note'; b.textContent=o;
+    b.style.maxWidth = (W * 0.44) + 'px'; b.setAttribute('aria-label', 'Answer ' + (i+1) + ': ' + o);
+    b.addEventListener('click', function(){
+      if(!st.live) return;
+      if(simple || DR.litAtPress.indexOf(b) >= 0) drChoose(i);
+      else $('drWho').textContent = 'You cannot read that in the dark. Shine the torch on it first.';
+    });
+    DR.wall.appendChild(b); return b;
+  });
+  drPlace([qn].concat(st.notes));
+  DR.dark.classList.toggle('dim', simple); DR.dark.classList.remove('flicker');
+  $('drQ').textContent = simple ? q.q : '';
+  $('drWho').textContent = st.rounds === 1 && st.wired ? 'The Wire lights the lamps: your torch reaches further and lasts longer'
+    : (simple ? 'Find the right answer on the walls' : 'The question is on one of these walls. Find it with your torch.');
+  $('drLine').classList.remove('low');
+  drTorch(DR.board.clientWidth / 2, DR.board.clientHeight * 0.62);
+  say(simple ? q.q : 'The question is somewhere on the walls. Move the torch to find it.');
+  st.live = true; st.qStart = performance.now(); DR.raf = requestAnimationFrame(drTick);
+}
+function drTick(now){
+  var st = DR.st; if(!st || !st.live) return;
+  var left = st.Q_MS - (now - st.qStart), f = Math.max(0, left / st.Q_MS);
+  $('drLineBar').style.transform = 'scaleX(' + f + ')';
+  if(left < 5000 && !simple){ $('drLine').classList.add('low'); DR.dark.classList.add('flicker');
+    var base = st.wired ? 104 : 78; DR.r = base * (0.62 + 0.38 * left / 5000); drTorch(DR.x, DR.y); }
+  if(left <= 0) return drResolve(-1);
+  DR.raf = requestAnimationFrame(drTick);
+}
+function drChoose(i){ actx(); drResolve(i); }
+function drResolve(i){
+  var st = DR.st; if(!st.live) return; st.live = false; cancelAnimationFrame(DR.raf);
+  DR.dark.classList.remove('flicker'); DR.dark.classList.add('dim');
+  var ans = st.opts.indexOf(st.q.correct);
+  st.notes[ans].classList.add('right'); $('drQ').textContent = st.q.q;
+  if(i === ans){ st.tally.hit(); SFX.right(); $('drWho').textContent = 'Found it'; say('Right.'); }
+  else {
+    var counted = st.tally.mistake(); tone(120, 0, 0.35, 'sine', 0.12, 60); noise(0, 0.25, 0.2, 400, 'lowpass');
+    if(i >= 0) st.notes[i].classList.add('wrong');
+    $('drWho').textContent = (i < 0 ? 'The torch died' : 'Not that one') + '. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
+    say('The answer was ' + st.q.correct + '.');
+  }
+  DR.r = st.wired ? 104 : 78;
+  setTimeout(drNext, i === ans ? 1100 : 1900);
+}
+/* sweep the torch: follow the finger or the mouse. Remember which notes
+   were lit before the press, so a blind tap can never pick an answer */
+DR.board.addEventListener('pointerdown', function(e){
+  if(!DR.st || !DR.st.live) return; actx();
+  DR.litAtPress = (DR.st.notes || []).filter(drLit);
+  if(e.target.closest('.note')) return;
+  var b = DR.board.getBoundingClientRect(); drTorch(e.clientX - b.left, e.clientY - b.top);
+  DR.board.setPointerCapture(e.pointerId); DR.sweeping = e.pointerId;
+});
+DR.board.addEventListener('pointermove', function(e){
+  if(!DR.st || !DR.st.live || simple) return;
+  if(e.pointerType === 'mouse' || DR.sweeping === e.pointerId){
+    var b = DR.board.getBoundingClientRect(); drTorch(e.clientX - b.left, e.clientY - b.top);
+  }
+});
+DR.board.addEventListener('pointerup', function(){ DR.sweeping = null; });
+DR.board.addEventListener('pointercancel', function(){ DR.sweeping = null; });
+
+/* ==========================================================
+   THE FINALE (solo)
+   The spark leaps between the machine's five sockets. A socket with no
+   part fitted is a gap it must bridge, which costs two seconds. Right
+   answers charge the machine; wrong ones short it for three seconds.
+   Every part won in the house changes the odds here.
+   ========================================================== */
+var PARTS = ['Lens','Fuse','Wire','Spring','Key'];
+var F = null;
+function fHas(item){ return H.items.indexOf(item) >= 0; }
+function fSocket(p){ var c = $('s-' + p); return { x: +c.getAttribute('cx'), y: +c.getAttribute('cy') }; }
+function runFinale(){
+  F = { t: Math.max(20, 60 + (fHas('Spring') ? 12 : 0) - H.finalePenalty) * 1000,
+        charge: fHas('Key') ? 2 : 0, target: 10, step: fHas('Wire') ? 1.5 : 1,
+        lensLeft: fHas('Lens'), fuse: fHas('Fuse'), at: null, live: false, last: 0, asked: 0, right: 0, shorts: 0 };
+  $('machine').classList.remove('awake');
+  PARTS.forEach(function(p){
+    var g = $('p-' + p), fitted = fHas(p);
+    g.querySelectorAll('circle:not(.glow), rect:not(.glow), path').forEach(function(el){
+      var line = el.getAttribute('fill') === 'none';
+      el.setAttribute('class', line ? (fitted ? 'part-line' : 'missing-line') : (fitted ? 'part' : 'missing')); });
+    g.querySelectorAll('.glow').forEach(function(el){ el.style.display = fitted ? '' : 'none'; });
+    $('s-' + p).setAttribute('class', 'socket');
+  });
+  var n = H.items.length;
+  $('fNote').textContent = n === 5 ? 'Every part is fitted. The spark will never have to bridge a gap.'
+    : (n === 0 ? 'No parts fitted. The spark will have to bridge a gap on every leap.'
+    : n + ' of 5 parts fitted. Gaps cost the spark two seconds to bridge.');
+  if(H.finalePenalty) $('fNote').textContent += ' The back stairs cost you ' + H.finalePenalty + ' seconds.';
+  fPaint(); show('room-finale');
+  SFX.door();
+  setTimeout(function(){ F.live = true; F.last = performance.now(); requestAnimationFrame(fTick); fNext(); }, 900);
+}
+function fPaint(){
+  var s = Math.max(0, Math.ceil(F.t / 1000));
+  $('fClock').textContent = Math.floor(s/60) + ':' + String(s % 60).padStart(2, '0');
+  $('fClock').classList.toggle('low', s <= 10);
+  var pct = Math.min(100, 100 * F.charge / F.target);
+  $('fCharge').style.width = pct + '%';
+  $('fChargeWrap').setAttribute('aria-label', 'Charge ' + Math.round(pct) + ' percent');
+}
+function fTick(now){
+  if(!F || !F.live) return;
+  F.t -= Math.min(60, now - F.last); F.last = now; fPaint();
+  if(F.t <= 0){ F.t = 0; fPaint(); return fEnd(false); }
+  requestAnimationFrame(fTick);
+}
+/* the spark leaps to a random socket, never the same one twice running */
+function fLeap(){
+  var choices = PARTS.filter(function(p){ return p !== F.at; }), to = choices[Math.floor(Math.random() * choices.length)];
+  var from = F.at ? fSocket(F.at) : { x:150, y:240 }, b = fSocket(to), pts = [from.x + ',' + from.y];
+  for(var k=1;k<6;k++){ var t = k/6; pts.push((from.x + (b.x-from.x)*t + (Math.random()*16-8)).toFixed(1) + ',' + (from.y + (b.y-from.y)*t + (Math.random()*16-8)).toFixed(1)); }
+  pts.push(b.x + ',' + b.y);
+  var arc = $('arc'); arc.setAttribute('points', pts.join(' ')); arc.classList.remove('flash'); void arc.getBoundingClientRect(); arc.classList.add('flash');
+  PARTS.forEach(function(p){ $('s-' + p).setAttribute('class', 'socket'); });
+  F.at = to;
+  noise(0, 0.08, 0.18, 4200, 'highpass');
+  if(!fHas(to)){
+    F.t -= 2000; $('s-' + to).setAttribute('class', 'socket gap');
+    tone(160, 0, 0.2, 'sawtooth', 0.05);
+    $('fNote').textContent = 'The spark bridges the gap where the ' + to + ' should be. Two seconds lost.';
+  } else {
+    $('s-' + to).setAttribute('class', 'socket on');
+    if(F.asked > 0) $('fNote').textContent = '';   /* keep the opening note up until the first answer */
+  }
+}
+function fNext(){
+  if(!F.live) return;
+  if(F.charge >= F.target) return fEnd(true);
+  fLeap(); F.asked++;
+  var q = pickQuestion(F.charge < 5 ? '2' : '3'), opts = shuffle([q.correct].concat(q.wrong.slice(0,3)));
+  F.q = q; F.answered = false;
+  $('fQ').textContent = q.q; say(q.q);
+  var box = $('fOpts'); box.innerHTML = '';
+  opts.forEach(function(o){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+    b.addEventListener('click', function(){ fAnswer(o, b); }); box.appendChild(b);
+  });
+  $('lensBtn').hidden = !F.lensLeft;
+}
+$('lensBtn').addEventListener('click', function(){
+  if(!F || !F.lensLeft || F.answered) return;
+  F.lensLeft = false; $('lensBtn').hidden = true;
+  var wrong = Array.prototype.slice.call($('fOpts').querySelectorAll('.opt')).filter(function(b){ return b.textContent !== F.q.correct && !b.disabled; });
+  var burn = wrong[Math.floor(Math.random() * wrong.length)];
+  if(burn){ burn.disabled = true; burn.style.opacity = '.25'; burn.style.textDecoration = 'line-through'; }
+  tone(900, 0, 0.3, 'sine', 0.07, 400); $('fNote').textContent = 'The Lens burns away one wrong answer.';
+});
+function fAnswer(o, btn){
+  if(!F.live || F.answered) return; F.answered = true; actx();
+  $('fOpts').querySelectorAll('.opt').forEach(function(b){ b.disabled = true; if(b.textContent === F.q.correct) b.classList.add('right'); });
+  if(o === F.q.correct){
+    F.charge += F.step; F.right++; fPaint();
+    tone(520 + F.charge * 40, 0, 0.18, 'sine', 0.09); noise(0, 0.06, 0.1, 5000, 'highpass');
+    $('fNote').textContent = 'Current flows. The machine charges.';
+    setTimeout(fNext, 420);
+  } else {
+    btn.classList.add('wrong');
+    if(F.fuse){ F.fuse = false; $('fNote').textContent = 'A short circuit, but the Fuse takes it. No time lost.'; tone(300, 0, 0.2, 'triangle', 0.06); }
+    else { F.t -= 3000; F.shorts++; SFX.wrong(); $('fNote').textContent = 'Short circuit. Three seconds lost. It was ' + F.q.correct + '.'; }
+    fPaint(); setTimeout(fNext, 900);
+  }
+}
+function fEnd(awake){
+  F.live = false; $('lensBtn').hidden = true;
+  $('fOpts').querySelectorAll('.opt').forEach(function(b){ b.disabled = true; });
+  var secs = Math.ceil(Math.max(0, F.t) / 1000);
+  if(awake){
+    $('machine').classList.add('awake');
+    PARTS.forEach(function(p){ if(fHas(p)) $('s-' + p).setAttribute('class', 'socket on'); });
+    [0, 0.2, 0.4, 0.7].forEach(function(t, i){ tone([392, 494, 587, 784][i], t, 0.9, 'sine', 0.09); });
+    $('fQ').textContent = 'It is awake.'; $('fNote').textContent = '';
+  } else { tone(220, 0, 1.2, 'sine', 0.1, 70); $('fQ').textContent = 'The charge fades.'; }
+  setTimeout(function(){
+    $('finTitle').textContent = awake ? 'The machine is awake' : 'The machine stays asleep';
+    $('finText').textContent = awake
+      ? 'With ' + secs + (secs === 1 ? ' second' : ' seconds') + ' to spare, the current reached every part it had and the machine stirred into life.'
+      : 'The clock ran out with the machine ' + Math.round(100 * F.charge / F.target) + '% charged. The house is waiting for another attempt.';
+    $('finPack').innerHTML = (H.items.map(function(i){ return '<span class="chip">' + i + '</span>'; }).join('') || '<span class="none">No parts this time.</span>') +
+      '<span class="none">' + F.right + ' right, ' + F.shorts + (F.shorts === 1 ? ' short' : ' shorts') + '</span>';
+    show('finish');
+  }, awake ? 2600 : 1600);
+}
+
 /* keys: 1 to 4 pick a socket or a drop in whichever room is open */
 document.addEventListener('keydown', function(e){
   var k = parseInt(e.key, 10);
@@ -887,6 +1416,15 @@ document.addEventListener('keydown', function(e){
   if(!$('room-switchboard').hidden && SB.st && SB.st.live){ e.preventDefault(); sbConnect(k-1); }
   else if(!$('room-glasshouse').hidden && GH.st && GH.st.live){ e.preventDefault(); ghSteer(k-1); }
   else if(!$('room-orrery').hidden && OR.st && OR.st.live){ e.preventDefault(); orTurnTo(k-1); }
+  else if(!$('room-strongroom').hidden && SR.st && SR.st.live && simple){ e.preventDefault(); srChoose(SR.st.opts[k-1]); }
+  else if(!$('room-darkroom').hidden && DR.st && DR.st.live && (simple || drLit(DR.st.notes[k-1]))){ e.preventDefault(); drChoose(k-1); }
+  else if(!$('room-finale').hidden && F && F.live && !F.answered){ var ob = $('fOpts').querySelectorAll('.opt')[k-1]; if(ob && !ob.disabled){ e.preventDefault(); ob.click(); } }
+});
+/* arrow keys move the torch */
+document.addEventListener('keydown', function(e){
+  if($('room-darkroom').hidden || !DR.st || !DR.st.live) return;
+  var m = {ArrowUp:[0,-30], ArrowDown:[0,30], ArrowLeft:[-30,0], ArrowRight:[30,0]}[e.key];
+  if(m){ e.preventDefault(); drTorch(Math.max(0, Math.min(DR.board.clientWidth, DR.x + m[0])), Math.max(0, Math.min(DR.board.clientHeight, DR.y + m[1]))); }
 });
 /* the space bar pulls the Orrery's lever */
 document.addEventListener('keydown', function(e){ if((e.key === ' ' || e.key === 'Enter') && !$('room-orrery').hidden && OR.st && OR.st.live && document.activeElement !== $('lever')){ e.preventDefault(); orStop(); } });
