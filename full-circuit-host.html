@@ -96,6 +96,46 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
 .feed li{background:var(--strip);color:var(--strip-ink);border-radius:8px;padding:10px 14px;font-size:16px;line-height:1.4;border-left:6px solid var(--panel-edge);}
 .feed li.ok{border-left-color:var(--green);} .feed li.bad{border-left-color:var(--red);}
 .feed li small{display:block;font-family:var(--type);font-size:14px;color:#6b5641;}
+/* the finale: the team wired round the machine */
+.fwrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:26px;margin-top:14px;flex:1;}
+@media (max-width:900px){ .fwrap{grid-template-columns:1fr;} }
+.ring{position:relative;min-height:470px;}
+.ring .machine{position:absolute;left:50%;top:50%;width:52%;max-width:300px;transform:translate(-50%,-50%);}
+.machine .part{fill:var(--brass);stroke:var(--brass-lo);stroke-width:2;}
+.machine .body{fill:var(--brass-lo);stroke:rgba(0,0,0,.35);stroke-width:2;}
+.machine .missing{fill:none;stroke:var(--ink-soft);stroke-width:2;stroke-dasharray:4 4;opacity:.55;}
+.machine .part-line{fill:none;stroke:var(--brass);}
+.machine .missing-line{fill:none;stroke:var(--ink-soft);stroke-dasharray:4 4;opacity:.55;}
+.machine .msock{fill:rgba(0,0,0,.3);stroke:var(--ink-soft);stroke-width:1.5;}
+.machine .glow{fill:#9fe8ff;opacity:0;transition:opacity 1.2s;}
+.machine.awake .glow{opacity:.9;}
+.machine.awake{animation:hum 1.6s ease-in-out infinite;}
+@keyframes hum{50%{transform:translate(-50%,calc(-50% - 4px));}}
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.wires line{stroke:var(--panel-edge);stroke-width:2;}
+.wires line.live{stroke:#9fe8ff;stroke-width:3;filter:drop-shadow(0 0 6px #9fe8ff);}
+.wires .arc{fill:none;stroke:#9fe8ff;stroke-width:3;filter:drop-shadow(0 0 6px #9fe8ff);opacity:0;}
+.wires .arc.flash{animation:arcf .5s ease-out;}
+@keyframes arcf{0%{opacity:1}100%{opacity:0}}
+.pchip{position:absolute;transform:translate(-50%,-50%);font-family:var(--type);font-size:19px;background:var(--strip);color:var(--strip-ink);
+  border-radius:999px;padding:9px 18px;box-shadow:0 2px 0 rgba(0,0,0,.25);white-space:nowrap;transition:box-shadow .3s,transform .3s;}
+.pchip.hot{box-shadow:0 0 0 4px #9fe8ff,0 0 26px #9fe8ff;transform:translate(-50%,-50%) scale(1.08);}
+.fmeters{display:flex;gap:18px;align-items:center;font-family:var(--type);font-size:20px;color:var(--ink-soft);margin-top:10px;}
+.fclock{font-size:34px;color:var(--ink);min-width:3.2em;} .fclock.low{color:var(--red);}
+.fcharge{flex:1;height:20px;border-radius:10px;background:rgba(0,0,0,.22);overflow:hidden;}
+.fcharge i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4fb3d9,#9fe8ff);box-shadow:0 0 12px #9fe8ff;transition:width .4s;}
+.fopts{list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fopts li{font-family:var(--type);font-size:20px;background:var(--strip);color:var(--strip-ink);border-radius:8px;padding:12px 14px;}
+.fopts li.right{outline:4px solid var(--green);} .fopts li.burn{opacity:.3;text-decoration:line-through;}
+.lensUse{margin-top:14px;}
+.lensUse[hidden]{display:none;}
+.trouble-btn{align-self:flex-start;margin-top:18px;background:none;border:1px solid var(--panel-edge);border-radius:8px;padding:9px 14px;cursor:pointer;color:var(--ink-soft);font-size:15px;}
+.trouble-btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:30;
+  background:var(--strip);color:var(--strip-ink);font-family:var(--type);font-size:20px;padding:12px 22px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.3);
+  transition:opacity .3s,transform .3s;pointer-events:none;}
+.toast.on{opacity:1;transform:translate(-50%,0);}
 </style>
 </head>
 <body>
@@ -136,6 +176,7 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
         <p class="bigq" id="mQ"></p>
         <p class="outcome" id="mOut"></p>
         <div class="score"><div><b id="mRight">0</b><span>right of 5</span></div><div><b id="mWrong">0</b><span>mistakes of 3</span></div></div>
+        <button class="trouble-btn" id="troubleBtn" type="button">Phone trouble?</button>
       </div>
       <ul class="feed" id="feed" aria-live="polite"></ul>
     </div>
@@ -148,12 +189,60 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
     <div><button class="go" id="aBtn" type="button">Back to the hallway</button></div>
   </section>
 
-  <section class="screen" id="machineWait" hidden>
+  <section class="screen" id="finale" hidden>
+    <div class="bar"><div class="plate">The machine</div><span class="meta" id="fnParts"></span></div>
+    <div class="fmeters"><span class="fclock" id="fnClock">1:30</span><span class="fcharge" role="img" id="fnChargeWrap"><i id="fnCharge"></i></span></div>
+    <div class="fwrap">
+      <div class="ring" id="ring">
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+        <svg class="machine" id="machine" viewBox="0 0 300 250" aria-hidden="true">
+        <!-- the automaton: body first, then each part fitted or missing -->
+        <rect class="body" x="95" y="94" width="110" height="86" rx="16"/>
+        <rect class="body" x="138" y="80" width="24" height="16"/>
+        <rect class="body" x="110" y="18" width="80" height="64" rx="18"/>
+        <g id="p-Lens"><circle cx="150" cy="50" r="17"/><circle class="glow" cx="150" cy="50" r="10"/></g>
+        <g id="p-Fuse"><rect x="132" y="120" width="36" height="30" rx="12"/><rect class="glow" x="138" y="126" width="24" height="18" rx="8"/></g>
+        <g id="p-Wire"><path d="M95 108 Q62 118 64 168 M205 108 Q238 118 236 168" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+        <g id="p-Spring"><path d="M122 180 l10 7 -10 7 10 7 -10 7 10 7 -10 7 10 7 M178 180 l-10 7 10 7 -10 7 10 7 -10 7 10 7 -10 7" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g id="p-Key"><path d="M205 137 H236" stroke-width="6" stroke-linecap="round" fill="none"/><circle cx="247" cy="137" r="11" stroke-width="5" fill="none"/></g>
+        <circle class="msock" id="s-Lens" cx="150" cy="50" r="6"/>
+        <circle class="msock" id="s-Fuse" cx="150" cy="135" r="6"/>
+        <circle class="msock" id="s-Wire" cx="80" cy="112" r="6"/>
+        <circle class="msock" id="s-Spring" cx="150" cy="198" r="6"/>
+        <circle class="msock" id="s-Key" cx="247" cy="137" r="6"/>
+        
+      </svg>
+      </div>
+      <div class="stage">
+        <p class="who" id="fnWho"></p>
+        <p class="bigq" id="fnQ"></p>
+        <ul class="fopts" id="fnOpts"></ul>
+        <p class="outcome" id="fnOut"></p>
+        <button class="go lensUse" id="lensUse" type="button" hidden>Use the Lens: burn away a wrong answer</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="ending" hidden>
     <div class="bar"><div class="plate">The machine</div></div>
-    <h1>The house is explored</h1>
-    <p class="lead" id="mwText"></p>
+    <h1 id="endTitle"></h1>
+    <p class="lead" id="endText"></p>
+    <div><button class="go" id="againBtn" type="button">Play again</button></div>
   </section>
 </div>
+
+<div class="picker" id="trouble" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="trTitle">
+    <h2 id="trTitle"></h2>
+    <p id="trText"></p>
+    <div class="acts">
+      <button class="go" id="trHand" type="button">Hand the room to someone else</button>
+      <button class="go" id="trSkip" type="button">Skip this room</button>
+      <button class="cancel" id="trWait" type="button">Keep waiting</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="picker" id="picker" hidden>
   <div class="box" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
@@ -164,6 +253,7 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
   </div>
 </div>
 
+<script src="questions.js?v=7" onerror="window.__noBank=1"></script>
 <script>
 "use strict";
 var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
@@ -201,7 +291,8 @@ function nameOf(id){ var p = G.players.filter(function(x){ return x.id === id; }
 async function writeState(){
   await sb('rooms?code=eq.' + G.code, { method:'PATCH', body: JSON.stringify({ phase:G.phase, updated_at:new Date().toISOString(),
     state:{ game:'full-circuit', phase:G.phase, room:G.room, player:G.player, roomSeq:G.roomSeq, depth:G.depth,
-            items:G.items, fuse:G.fuse, keyUsed:G.keyUsed, names:G.players.map(function(p){ return {id:p.id, name:p.name}; }) } }) });
+            items:G.items, fuse:G.fuse, keyUsed:G.keyUsed, spark:G.spark || null, fq:G.fq || null, awake:G.awake,
+            names:G.players.map(function(p){ return {id:p.id, name:p.name}; }) } }) });
 }
 
 /* ---------- the lobby ---------- */
@@ -214,11 +305,20 @@ async function openHouse(){
   $('url').textContent = link.replace(/^https?:\/\//, '');
   $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=' + encodeURIComponent(link);
   $('status').textContent = 'Room ' + G.code;
-  writeState(); pollPlayers(); setInterval(function(){ if(G.phase === 'lobby') pollPlayers(); }, 1500);
+  writeState(); pollPlayers(); setInterval(pollPlayers, 2000);
 }
+function toast(t){ var e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function(){ e.classList.remove('on'); }, 3500); }
 async function pollPlayers(){
   var r = await sb('players?code=eq.' + G.code + '&select=id,name&order=joined_at.asc');
-  if(Array.isArray(r)) G.players = r.slice(0, 8);
+  if(!Array.isArray(r)) return;
+  var before = {}; G.players.forEach(function(p){ before[p.id] = true; });
+  G.players = r.slice(0, 8);
+  /* the door stays open all game: a latecomer is welcomed and offered the next room */
+  if(G.phase !== 'lobby'){
+    G.players.forEach(function(p){ if(!before[p.id]){ G.playedBy[p.id] = G.playedBy[p.id] || 0; toast(p.name + ' has joined the house');
+      if(G.phase === 'finale' && FN){ fnRing(); if(G.spark && $('pc-' + G.spark)){ $('pc-' + G.spark).classList.add('hot'); $('w-' + G.spark).classList.add('live'); } }
+      writeState(); } });
+  }
   $('pcount').textContent = G.players.length ? G.players.length + (G.players.length === 1 ? ' player' : ' players') + ' in the house' : 'Waiting for players';
   $('chips').innerHTML = G.players.length ? G.players.map(function(p){ return '<span class="chip">' + esc(p.name) + '</span>'; }).join('') : '<span class="none">Nobody has joined yet.</span>';
   $('startBtn').disabled = G.players.length < 3;
@@ -266,14 +366,38 @@ function sendIn(k, pid){
   $('mQ').textContent = ''; $('mOut').textContent = ''; $('mOut').className = 'outcome';
   $('mRight').textContent = '0'; $('mWrong').textContent = '0'; $('feed').innerHTML = '';
   show('mirror'); writeState();
+  G.lastEvent = performance.now(); G.troubleShown = false; $('trouble').hidden = true;
   clearInterval(G.poll); G.poll = setInterval(followRoom, 900);
 }
+/* if a phone goes quiet for 35 seconds, offer the host a way out */
+function watchdog(){
+  if(G.phase !== 'room' || G.troubleShown) return;
+  if(performance.now() - (G.lastEvent || 0) > 35000) openTrouble(true);
+}
+function openTrouble(auto){
+  G.troubleShown = true;
+  $('trTitle').textContent = auto ? 'We have not heard from ' + nameOf(G.player) + '’s phone' : 'Trouble with ' + nameOf(G.player) + '’s phone?';
+  $('trText').textContent = 'If it has locked, gone to sleep or lost signal, ' + nameOf(G.player) + ' can reload the page to start the room again. Or hand the room to someone else, or skip it: skipping loses its item, but there is no trip up the back stairs.';
+  $('trouble').hidden = false;
+}
+$('troubleBtn').addEventListener('click', function(){ openTrouble(false); });
+$('trWait').addEventListener('click', function(){ $('trouble').hidden = true; G.troubleShown = false; G.lastEvent = performance.now(); });
+$('trHand').addEventListener('click', function(){ $('trouble').hidden = true; clearInterval(G.poll); var k = G.room; G.phase = 'hall'; writeState(); pickPlayer(k); });
+$('trSkip').addEventListener('click', function(){
+  $('trouble').hidden = true; clearInterval(G.poll);
+  var k = G.room, R = ROOMS[k]; G.done[k] = 'lost'; G.depth++;
+  $('aPlate').textContent = R.name; $('aTitle').textContent = 'The room was skipped';
+  $('aText').textContent = 'No ' + R.item + ' this time, but no trip up the back stairs either.';
+  G.phase = 'after'; G.player = null; show('after'); writeState();
+});
+setInterval(watchdog, 2000);
 async function followRoom(){
   var rows = await sb('moves?code=eq.' + G.code + '&player_id=eq.' + G.player + '&turn_seq=eq.' + G.roomSeq + '&select=q_id,choice&order=q_id.asc');
   if(!Array.isArray(rows)) return;
   rows.forEach(function(r){
     if(G.seen[r.q_id]) return; G.seen[r.q_id] = true;
     var e; try{ e = JSON.parse(r.choice); }catch(x){ return; }
+    G.lastEvent = performance.now();
     if(r.q_id === 'done') return roomOver(e);
     if(e.t === 'q'){ $('mWho').textContent = nameOf(G.player) + ' is answering'; $('mQ').textContent = e.q; $('mOut').textContent = ''; $('mOut').className = 'outcome'; }
     if(e.t === 'a'){
@@ -303,12 +427,135 @@ function roomOver(e){
 }
 $('aBtn').addEventListener('click', paintHall);
 
-/* ---------- the machine: the team finale is built next ---------- */
+/* ---------- THE TEAM FINALE ----------
+   The team is the circuit. The spark leaps to a random player, never the
+   same one twice running, and their phone shows the question. Right
+   answers charge the machine; wrong or slow ones short it. The clock is
+   longer than the solo one to allow for the round trip to each phone. */
+var PARTS = ['Lens','Fuse','Wire','Spring','Key'], FN = null;
+var FQ_FALLBACK = [
+ {q:'What is the capital of France?', correct:'Paris', wrong:['Rome','Madrid','Berlin']},
+ {q:'How many continents are there?', correct:'Seven', wrong:['Five','Six','Eight']},
+ {q:'What is the largest planet?', correct:'Jupiter', wrong:['Saturn','Mars','Venus']},
+ {q:'Which gas do plants absorb?', correct:'Carbon dioxide', wrong:['Oxygen','Nitrogen','Helium']},
+ {q:'What is frozen water called?', correct:'Ice', wrong:['Steam','Dew','Mist']}];
+var FQ = { '2':[], '3':[] };
+(function(){ try{ if(window.TB && window.TB.bank){ var b = window.TB.bank('gk') || {};
+  ['2','3'].forEach(function(t){ (b[t]||[]).forEach(function(q){ if(q && q.wrong && q.wrong.length >= 3 && [q.correct].concat(q.wrong.slice(0,3)).every(function(a){ return String(a).length <= 22; })) FQ[t].push(q); }); }); } }catch(e){}
+  if(!FQ['2'].length){ FQ['2'] = FQ_FALLBACK.slice(); FQ['3'] = FQ_FALLBACK.slice(); } })();
+var usedFQ = {};
+function fqPick(t){ var L = FQ[t].filter(function(q){ return !usedFQ[q.q]; }); if(!L.length){ usedFQ = {}; L = FQ[t].slice(); }
+  var q = L[Math.floor(Math.random()*L.length)]; usedFQ[q.q] = 1; return q; }
+function shuffle(a){ a = a.slice(); for(var i=a.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function has(i){ return G.items.indexOf(i) >= 0; }
 function openMachine(){
-  G.phase = 'machine'; writeState();
-  $('mwText').textContent = 'The team carried ' + G.items.length + ' of 5 parts to the machine. The team finale, with the spark leaping between your phones, is the next thing being built.';
-  show('machineWait');
+  FN = { t: Math.max(30, 90 + (has('Spring') ? 12 : 0) - G.finalePenalty) * 1000, charge: has('Key') ? 2 : 0, target: 10,
+         step: has('Wire') ? 1.5 : 1, lens: has('Lens'), fuse: has('Fuse'), seq: 0, live: false, right: 0, shorts: 0, last: 0 };
+  G.awake = null; G.spark = null; G.fq = null;
+  PARTS.forEach(function(p){ var g = document.getElementById('p-' + p), fitted = has(p);
+    g.querySelectorAll('circle:not(.glow), rect:not(.glow), path').forEach(function(el){ var line = el.getAttribute('fill') === 'none';
+      el.setAttribute('class', line ? (fitted ? 'part-line' : 'missing-line') : (fitted ? 'part' : 'missing')); });
+    g.querySelectorAll('.glow').forEach(function(el){ el.style.display = fitted ? '' : 'none'; }); });
+  $('machine').classList.remove('awake');
+  $('fnParts').textContent = G.items.length + ' of 5 parts fitted' + (G.finalePenalty ? '. The back stairs cost ' + G.finalePenalty + ' seconds' : '');
+  $('fnWho').textContent = 'Everyone, get your phones ready'; $('fnQ').textContent = 'The spark could land on any of you.';
+  $('fnOpts').innerHTML = ''; $('fnOut').textContent = ''; $('lensUse').hidden = true;
+  G.phase = 'finale'; show('finale'); fnRing(); fnPaint(); writeState();
+  setTimeout(function(){ FN.live = true; FN.last = performance.now(); FN.clock = setInterval(fnTick, 100); fnLeap(); }, 2600);
 }
+/* the players sit on an oval round the machine, each wired to it */
+function fnRing(){
+  var ring = $('ring'), W = ring.clientWidth, Hh = ring.clientHeight, n = G.players.length, cx = W/2, cy = Hh/2;
+  ring.querySelectorAll('.pchip').forEach(function(e){ e.remove(); });
+  var wires = '';
+  FN.pos = {};
+  G.players.forEach(function(p, i){
+    var a = -Math.PI/2 + i * 2*Math.PI / n, x = cx + (W/2 - 80) * Math.cos(a), y = cy + (Hh/2 - 34) * Math.sin(a);
+    FN.pos[p.id] = {x:x, y:y};
+    var c = document.createElement('span'); c.className = 'pchip'; c.id = 'pc-' + p.id; c.textContent = p.name;
+    c.style.left = x + 'px'; c.style.top = y + 'px'; ring.appendChild(c);
+    wires += '<line id="w-' + p.id + '" x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '"/>';
+  });
+  $('wires').innerHTML = wires + '<polyline class="arc" id="fnArc" points=""/>';
+}
+function fnPaint(){
+  var s = Math.max(0, Math.ceil(FN.t/1000));
+  $('fnClock').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); $('fnClock').classList.toggle('low', s <= 15);
+  var pct = Math.min(100, 100 * FN.charge / FN.target); $('fnCharge').style.width = pct + '%';
+  $('fnChargeWrap').setAttribute('aria-label', 'Charge ' + Math.round(pct) + ' percent');
+}
+function fnTick(){
+  var now = performance.now(); FN.t -= (now - FN.last); FN.last = now; fnPaint();
+  if(FN.live && FN.pending && now - FN.sentAt > 10000) fnResolve(null);   /* too slow: a short circuit */
+  if(FN.t <= 0 && FN.live){ FN.t = 0; fnPaint(); fnEnd(false); }
+}
+function fnLeap(){
+  if(!FN.live) return;
+  if(FN.charge >= FN.target) return fnEnd(true);
+  /* Still random, never the same player twice running, but weighted
+     towards whoever has held the spark least. Pure chance let one player
+     go 17 leaps without it; with 8 players, 1 finale in 7 left someone out.
+     This lean cut that to 4 in 2,000, while the chance of guessing who is
+     next only rose from 24% to 27%. */
+  FN.had = FN.had || {};
+  var pool = G.players.filter(function(p){ return p.id !== G.spark; });
+  var weights = pool.map(function(p){ return 1 / Math.pow(1 + (FN.had[p.id] || 0), 4); });
+  var total = weights.reduce(function(a, w){ return a + w; }, 0), pick = Math.random() * total, to = pool[pool.length - 1];
+  for(var wi = 0; wi < pool.length; wi++){ pick -= weights[wi]; if(pick <= 0){ to = pool[wi]; break; } }
+  FN.had[to.id] = (FN.had[to.id] || 0) + 1;
+  var from = G.spark ? FN.pos[G.spark] : { x: $('ring').clientWidth/2, y: $('ring').clientHeight/2 }, b = FN.pos[to.id], pts = [from.x + ',' + from.y];
+  for(var k=1;k<7;k++){ var t = k/7; pts.push((from.x + (b.x-from.x)*t + (Math.random()*28-14)).toFixed(1) + ',' + (from.y + (b.y-from.y)*t + (Math.random()*28-14)).toFixed(1)); }
+  pts.push(b.x + ',' + b.y);
+  var arc = $('fnArc'); arc.setAttribute('points', pts.join(' ')); arc.classList.remove('flash'); void arc.getBoundingClientRect(); arc.classList.add('flash');
+  document.querySelectorAll('.pchip').forEach(function(c){ c.classList.remove('hot'); });
+  document.querySelectorAll('.wires line').forEach(function(l){ l.classList.remove('live'); });
+  $('pc-' + to.id).classList.add('hot'); $('w-' + to.id).classList.add('live');
+  G.spark = to.id; FN.seq++;
+  var q = fqPick(FN.charge < 5 ? '2' : '3'), opts = shuffle([q.correct].concat(q.wrong.slice(0,3)));
+  FN.q = q; G.fq = { id: FN.seq, q: q.q, opts: opts, burn: -1 };
+  $('fnWho').textContent = 'The spark is with ' + to.name; $('fnQ').textContent = q.q; $('fnOut').textContent = ''; $('fnOut').className = 'outcome';
+  $('fnOpts').innerHTML = opts.map(function(o){ return '<li>' + esc(o) + '</li>'; }).join('');
+  $('lensUse').hidden = !FN.lens;
+  FN.pending = true; FN.sentAt = performance.now(); writeState();
+  clearInterval(FN.poll); FN.poll = setInterval(fnListen, 600);
+}
+async function fnListen(){
+  if(!FN.pending) return;
+  var rows = await sb('moves?code=eq.' + G.code + '&player_id=eq.' + G.spark + '&turn_seq=eq.' + (100 + FN.seq) + '&select=choice');
+  if(Array.isArray(rows) && rows.length && FN.pending) fnResolve(rows[0].choice);
+}
+$('lensUse').addEventListener('click', function(){
+  if(!FN || !FN.lens || !FN.pending) return;
+  var wrongIdx = G.fq.opts.map(function(o, i){ return o === FN.q.correct ? -1 : i; }).filter(function(i){ return i >= 0; });
+  var burn = wrongIdx[Math.floor(Math.random()*wrongIdx.length)];
+  FN.lens = false; $('lensUse').hidden = true; G.fq.burn = burn;
+  $('fnOpts').children[burn].classList.add('burn'); $('fnOut').textContent = 'The Lens burns away one wrong answer.'; writeState();
+});
+function fnResolve(choice){
+  if(!FN.pending) return; FN.pending = false; clearInterval(FN.poll);
+  var who = nameOf(G.spark), idx = G.fq.opts.indexOf(FN.q.correct);
+  if(idx >= 0) $('fnOpts').children[idx].classList.add('right');
+  if(choice === FN.q.correct){ FN.charge += FN.step; FN.right++; $('fnOut').textContent = who + ' got it. Current flows!'; $('fnOut').className = 'outcome ok'; }
+  else if(FN.fuse){ FN.fuse = false; $('fnOut').textContent = (choice === null ? who + ' ran out of time' : 'Wrong') + ', but the Fuse takes the short.'; $('fnOut').className = 'outcome bad'; }
+  else { FN.t -= 3000; FN.shorts++; $('fnOut').textContent = (choice === null ? who + ' ran out of time' : 'Wrong') + '. Short circuit: three seconds lost.'; $('fnOut').className = 'outcome bad'; }
+  fnPaint();
+  setTimeout(fnLeap, 1600);
+}
+function fnEnd(awake){
+  if(!FN.live) return; FN.live = false; FN.pending = false; clearInterval(FN.clock); clearInterval(FN.poll);
+  G.awake = awake; G.spark = null; G.fq = null; G.phase = 'over'; writeState();
+  if(awake){ $('machine').classList.add('awake'); $('fnWho').textContent = ''; $('fnQ').textContent = 'It is awake.'; $('fnOpts').innerHTML = ''; }
+  else { $('fnQ').textContent = 'The charge fades.'; }
+  var secs = Math.ceil(Math.max(0, FN.t)/1000);
+  setTimeout(function(){
+    $('endTitle').textContent = awake ? 'The machine is awake' : 'The machine stays asleep';
+    $('endText').textContent = awake
+      ? 'With ' + secs + ' seconds to spare, the team carried the current all the way round. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.'
+      : 'The clock ran out with the machine ' + Math.round(100 * FN.charge / FN.target) + '% charged. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.';
+    show('ending');
+  }, awake ? 3200 : 2000);
+}
+$('againBtn').addEventListener('click', function(){ location.reload(); });
 
 openHouse();
 </script>

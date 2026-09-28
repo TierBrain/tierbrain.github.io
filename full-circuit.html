@@ -502,6 +502,15 @@ button{font:inherit;color:inherit;}
     </div>
   </section>
 
+  <section class="screen card" id="teamQ" hidden>
+    <div class="inner">
+      <div class="plate">The spark is with you</div>
+      <h1 id="tqQ" style="font-size:24px;line-height:1.4"></h1>
+      <div class="opts" id="tqOpts"></div>
+      <p id="tqNote"></p>
+    </div>
+  </section>
+
   <footer class="controls" id="controls" hidden>
     <label class="toggle"><input type="checkbox" id="simple"> Simple mode: tap to answer</label>
     <button class="quiet" id="soundBtn" type="button">Sound on</button>
@@ -1470,10 +1479,11 @@ if(TEAM){
   var emit = function(e){
     if(!TM.running) return;
     sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq,
-      q_id: 'e' + String(TM.ev++).padStart(3, '0'), choice: JSON.stringify(e) }) });
+      q_id: 'e' + TM.run + String(TM.ev++).padStart(3, '0'), choice: JSON.stringify(e) }) });
   };
   var report = function(result){
-    TM.running = false;
+    if(TM.abortSeq === TM.curSeq) return;   /* this room was handed on or skipped */
+    TM.running = false; TM.reportedSeq = TM.curSeq;
     sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq, q_id:'done', choice: JSON.stringify(result) }) });
     teamWait(result.won ? 'You won the ' + ROOMS[TM.room].item : 'Back to the hallway',
       result.won ? 'Look up at the big screen. The whole team is carrying it now.' : 'Look up at the big screen. The team will choose the next door.', ROOMS[TM.room].name);
@@ -1490,7 +1500,7 @@ if(TEAM){
 
   var teamWait = function(title, text, plate){ $('twTitle').textContent = title; $('twText').textContent = text; $('twPlate').textContent = plate || 'Full Circuit'; show('teamWait'); };
   var runTeamRoom = function(state){
-    TM.lastSeq = state.roomSeq; TM.curSeq = state.roomSeq; TM.ev = 0; TM.room = state.room; TM.running = true; TM.onStairs = false;
+    TM.lastSeq = state.roomSeq; TM.curSeq = state.roomSeq; TM.ev = 0; TM.run = Date.now().toString(36); TM.room = state.room; TM.running = true; TM.onStairs = false;
     H = newHouse(); H.items = (state.items || []).slice(); H.fuse = !!state.fuse; H.depth = state.depth || 0; H.keyUsed = !!state.keyUsed;
     var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery, strongroom:runStrongroom, darkroom:runDarkRoom }[state.room];
     actx(); SFX.door();
@@ -1501,37 +1511,80 @@ if(TEAM){
       runStairs(function(){ TM.onStairs = false; report({ won:false, stats:stats, penalty:H.finalePenalty, fuse:H.fuse }); });
     });
   };
+  /* the host handed this room to someone else, or skipped it: stop quietly */
+  var abortRoom = function(){
+    TM.abortSeq = TM.curSeq; TM.running = false;
+    [SB, GH, OR, SR, DR].forEach(function(X){ if(X && X.st){ X.st.live = false; X.st.done = function(){}; } });
+    [GH, OR, SR, DR].forEach(function(X){ if(X && X.raf) cancelAnimationFrame(X.raf); });
+  };
   var nameFrom = function(state, id){ var n = (state.names || []).filter(function(x){ return x.id === id; })[0]; return n ? n.name : 'Someone'; };
   var poll = async function(){
     if(!TM.me) return;
     var rows = await sbT('rooms?code=eq.' + TEAM + '&select=phase,state'); var rm = rows && rows[0]; if(!rm) return;
     var st = rm.state || {}, ph = st.phase;
+    if(TM.running && (ph !== 'room' || st.player !== TM.me.id || st.roomSeq !== TM.curSeq)) abortRoom();
     if(TM.running) return;
     if(ph === 'room' && st.player === TM.me.id && st.roomSeq > TM.lastSeq) return runTeamRoom(st);
+    if(ph !== 'after') TM.reportedSeq = 0;
     if(ph === 'lobby') teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
     else if(ph === 'hall') teamWait('Choose a door together', 'Look at the big screen and argue about which door to open next.');
     else if(ph === 'room') teamWait(nameFrom(st, st.player) + ' has gone in', 'Watch the big screen and shout your help. You might be next.', ROOMS[st.room] ? ROOMS[st.room].name : 'Full Circuit');
     else if(ph === 'machine') teamWait('The house is explored', 'Look at the big screen for the machine.', 'The machine');
+    else if(ph === 'after' && !TM.reportedSeq) teamWait('Look at the big screen', 'The team is about to choose the next door. You could be next.');
+    else if(ph === 'finale'){
+      TM.fast = true;
+      var fq = st.fq;
+      if(fq && st.spark === TM.me.id && fq.id !== TM.answeredFq){
+        if(TM.shownFq !== fq.id){
+          TM.shownFq = fq.id;
+          $('tqQ').textContent = fq.q; $('tqNote').textContent = 'Answer before the spark fades.';
+          var box = $('tqOpts'); box.innerHTML = '';
+          fq.opts.forEach(function(o){
+            var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+            b.addEventListener('click', function(){
+              if(TM.answeredFq === fq.id) return; TM.answeredFq = fq.id;
+              box.querySelectorAll('.opt').forEach(function(x){ x.disabled = true; }); b.classList.add('right');
+              sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:100 + fq.id, q_id:'ans', choice:o }) });
+              $('tqNote').textContent = 'Sent. Look up at the big screen.';
+            });
+            box.appendChild(b);
+          });
+          show('teamQ');
+          try{ if(navigator.vibrate) navigator.vibrate([90, 50, 140]); }catch(e){}
+          noise(0, 0.1, 0.25, 4200, 'highpass'); tone(880, 0.05, 0.2, 'sine', 0.09);
+        }
+        /* the Lens, used on the big screen, burns away a wrong answer here too */
+        if(fq.burn >= 0){ var bb = $('tqOpts').children[fq.burn]; if(bb && !bb.disabled){ bb.disabled = true; bb.style.opacity = '.3'; bb.style.textDecoration = 'line-through'; } }
+      } else if(fq && st.spark !== TM.me.id){
+        teamWait('The spark is with ' + nameFrom(st, st.spark), fq.q + ' Shout your help!', 'The machine');
+      }
+    }
+    else if(ph === 'over'){ TM.fast = false;
+      teamWait(st.awake ? 'The machine is awake' : 'The machine stays asleep', st.awake ? 'You did it together. Look up at the big screen.' : 'So close. Look up at the big screen.', 'The machine'); }
   };
+  /* check twice as often during the finale, when every second counts */
+  var loop = function(){ poll().then(function(){ setTimeout(loop, TM.fast ? 500 : 1200); }, function(){ setTimeout(loop, 1200); }); };
   var join = async function(){
     var name = ($('joinName').value || '').trim();
     if(!name){ $('joinErr').textContent = 'Type a name first.'; return; }
     var rooms = await sbT('rooms?code=eq.' + TEAM + '&select=code');
     if(!rooms || !rooms.length){ $('joinErr').textContent = 'No game with that code. Check the big screen.'; return; }
+    var already = await sbT('players?code=eq.' + TEAM + '&select=id');
+    if(Array.isArray(already) && already.length >= 8){ $('joinErr').textContent = 'This house is full: eight players are already inside. Ask the host about starting a second game.'; return; }
     var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('p' + Math.random().toString(36).slice(2));
     var now = new Date().toISOString();
     var r = await sbT('players', { method:'POST', body: JSON.stringify({ id:id, code:TEAM, name:name, tag:'full-circuit', score:0, joined_at:now, last_seen:now }) });
     if(!r || r.ok === false){ $('joinErr').textContent = 'Could not join. Check your connection.'; return; }
     TM.me = { id:id, name:name }; store('fc_team_' + TEAM, JSON.stringify(TM.me));
     actx(); teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
-    setInterval(poll, 1200); poll();
+    loop();
   };
   $('joinCode').textContent = TEAM;
   $('joinBtn').addEventListener('click', join);
   $('joinName').addEventListener('keydown', function(e){ if(e.key === 'Enter') join(); });
   /* rejoin on reload, so a phone that sleeps does not lose its place */
   var saved = null; try{ saved = JSON.parse(recall('fc_team_' + TEAM) || 'null'); }catch(e){}
-  if(saved && saved.id){ TM.me = saved; teamWait('Welcome back', 'Rejoining the team\u2026'); setInterval(poll, 1200); poll(); }
+  if(saved && saved.id){ TM.me = saved; teamWait('Welcome back', 'Rejoining the team\u2026'); loop(); }
   else show('join');
 }
 
