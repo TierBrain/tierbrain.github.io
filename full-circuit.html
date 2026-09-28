@@ -193,6 +193,34 @@ button{font:inherit;color:inherit;}
 .pail .handle{position:absolute;left:10px;right:10px;top:-10px;height:26px;border:3px solid #5f6c6e;border-bottom:0;border-radius:40px 40px 0 0;}
 .splash{position:absolute;width:6px;height:6px;border-radius:50%;background:#bfe6ee;}
 
+/* ---------- ROOM: the Orrery ----------
+   A midnight observatory under a starlit ceiling. Its one bold thing is
+   the orrery: four planets on brass arms, each carrying an answer. */
+.orrery{--or-sky:#dfe3ee; --or-sky2:#c3cbe0; --or-star:rgba(40,50,90,.28); --or-ink:#1b2340; --or-track:rgba(125,90,34,.55);}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .orrery{--or-sky:#0e1630; --or-sky2:#1c2850; --or-star:rgba(255,255,255,.7); --or-track:rgba(233,196,127,.45);} }
+:root[data-theme="dark"] .orrery{--or-sky:#0e1630; --or-sky2:#1c2850; --or-star:rgba(255,255,255,.7); --or-track:rgba(233,196,127,.45);}
+.orrery .board{border:2px solid var(--panel-edge);
+  background:
+    radial-gradient(circle at 18% 22%,var(--or-star) 0 1px,transparent 1.5px) 0 0/53px 47px,
+    radial-gradient(circle at 70% 60%,var(--or-star) 0 1px,transparent 1.5px) 0 0/71px 61px,
+    radial-gradient(circle at 40% 80%,var(--or-star) 0 1.4px,transparent 2px) 0 0/97px 89px,
+    radial-gradient(ellipse at 50% 55%,var(--or-sky2),var(--or-sky) 70%);}
+.lives.stars i{width:16px;height:16px;background:var(--amber);clip-path:polygon(50% 0,62% 36%,100% 38%,70% 60%,80% 100%,50% 76%,20% 100%,30% 60%,0 38%,38% 36%);
+  filter:drop-shadow(0 0 4px var(--amber));transition:background .4s;}
+.lives.stars i.gone{background:var(--dead);filter:none;}
+.orrery-svg{display:block;width:100%;max-width:380px;margin:8px auto 0;flex:1;min-height:0;}
+.orrery-svg .planet{cursor:pointer;}
+.orrery-svg .tag rect{fill:var(--strip);}
+.orrery-svg .tag text{font-family:var(--type);font-size:13px;fill:var(--strip-ink);}
+.orrery-svg .insight circle.body{stroke:var(--amber);stroke-width:3;}
+.orrery-svg .isright circle.body{stroke:var(--green);stroke-width:4;}
+.orrery-svg .iswrong circle.body{stroke:var(--red);stroke-width:4;}
+.lever{align-self:center;margin-top:6px;border:0;border-radius:40px;padding:14px 26px;font-weight:700;font-size:16px;cursor:pointer;
+  color:#2b1c0e;background:linear-gradient(180deg,var(--brass-hi),var(--brass) 60%,var(--brass-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.35);}
+.lever:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 0 rgba(0,0,0,.35);}
+.lever:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+.lever:disabled{opacity:.5;}
+
 /* the back stairs */
 .opts{display:grid;gap:10px;margin:14px 0 8px;}
 .opt{background:var(--strip);color:var(--strip-ink);border:0;border-radius:8px;padding:13px 14px;text-align:left;font-family:var(--type);font-size:16px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.2);}
@@ -259,6 +287,17 @@ button{font:inherit;color:inherit;}
       <div class="sky" id="ghSky"></div>
       <div class="floor"></div>
       <div class="pail" id="pail" aria-hidden="true"><span class="handle"></span><span class="rim"></span><span class="body"></span></div>
+    </main>
+  </section>
+
+  <!-- ROOM: the Orrery -->
+  <section class="screen room orrery" id="room-orrery" hidden>
+    <div class="bar"><div class="plate">The Orrery</div>
+      <div class="status"><span class="lives stars" id="orLives" role="img"></span><span id="orCount"></span></div></div>
+    <main class="board" id="orBoard">
+      <div class="ticket"><p class="who" id="orWho"></p><p class="q" id="orQ"></p><div class="line" id="orLine"><i id="orLineBar"></i></div></div>
+      <svg class="orrery-svg" id="orSvg" viewBox="0 0 320 330" role="img" aria-label="The orrery"></svg>
+      <button class="lever" id="lever" type="button">Stop the orrery</button>
     </main>
   </section>
 
@@ -376,6 +415,7 @@ $('simple').addEventListener('change', function(){ simple = this.checked; store(
 /* ---------- the house ---------- */
 var ITEM_ART = {
   Wire:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="#b8672e" stroke-width="3.2" stroke-linecap="round"><ellipse cx="28" cy="16" rx="16" ry="5"/><ellipse cx="28" cy="23" rx="16" ry="5"/><ellipse cx="28" cy="30" rx="16" ry="5"/><ellipse cx="28" cy="37" rx="16" ry="5"/><path d="M44 37 Q52 44 44 50"/></g></svg>',
+  Lens:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="24" cy="24" r="15" fill="rgba(160,210,230,.35)" stroke="#b78a3e" stroke-width="4"/><path d="M35 35 L47 47" stroke="#7d5a22" stroke-width="6" stroke-linecap="round"/><path d="M16 18 Q20 13 26 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
   Spring:'<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><path d="M16 10 L40 15 L16 20 L40 25 L16 30 L40 35 L16 40 L40 45" fill="none" stroke="#7d8b8d" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10 H22 M34 46 H44" stroke="#5f6c6e" stroke-width="3.4" stroke-linecap="round"/></svg>'
 };
 var ROOMS = {
@@ -385,7 +425,8 @@ var ROOMS = {
   glasshouse:{ name:'The Glasshouse', hint:'Rain drums on glass beyond this door', item:'Spring', built:true,
     itemText:'In the house it will slow the Orrery\u2019s spin. In the machine it stores power for the finale.',
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M28 8 C22 18 18 23 18 29 A10 10 0 0 0 38 29 C38 23 34 18 28 8 Z"/><path d="M14 42 L12 48 M28 42 L26 48 M42 42 L40 48"/></svg>' },
-  orrery:{ name:'The Orrery', hint:'Something ticks and turns in here', item:'Lens', built:false,
+  orrery:{ name:'The Orrery', hint:'Something ticks and turns in here', item:'Lens', built:true,
+    itemText:'In the house it will pre-set one letter in the Strongroom. In the machine it becomes the eye.',
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6"><circle cx="28" cy="28" r="6"/><ellipse cx="28" cy="28" rx="20" ry="9"/><circle cx="46" cy="30" r="3"/></svg>' },
   strongroom:{ name:'The Strongroom', hint:'A heavy dial on a steel door', item:'Key', built:false,
     glyph:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><circle cx="28" cy="28" r="16"/><circle cx="28" cy="28" r="5"/><path d="M28 12 V16 M28 40 V44 M12 28 H16 M40 28 H44"/></svg>' },
@@ -433,7 +474,7 @@ function paintHall(){
 function enterRoom(k){
   SFX.door();
   var depth = H.depth;
-  var run = k === 'switchboard' ? runSwitchboard : runGlasshouse;
+  var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery }[k];
   run(depth, function(won, stats){ afterRoom(k, won, stats); });
 }
 function afterRoom(k, won, stats){
@@ -721,13 +762,134 @@ GH.board.addEventListener('pointermove', function(e){ if(GH.drag !== e.pointerId
 GH.board.addEventListener('pointerup', function(e){ if(GH.drag === e.pointerId) GH.drag = null; });
 GH.board.addEventListener('pointercancel', function(){ GH.drag = null; });
 
+/* ==========================================================
+   ROOM: THE ORRERY
+   The orrery turns; pull the lever when the planet carrying the
+   right answer lines up with the telescope. The Spring slows it.
+   ========================================================== */
+var OR = { svg:$('orSvg'), st:null, raf:0, theta:0, cx:160, cy:158, R:104 };
+var OR_COLOURS = ['#b5553c','#d6a13a','#3f8f8a','#6a5a9e'];
+var SIGHT = Math.PI / 2;                        /* straight down, at the telescope */
+function orPos(i){ var a = OR.theta + i * Math.PI / 2; return { x: OR.cx + OR.R*Math.cos(a), y: OR.cy + OR.R*Math.sin(a), a:a }; }
+function angDist(a, b){ var d = ((a - b) % (2*Math.PI) + 3*Math.PI) % (2*Math.PI) - Math.PI; return Math.abs(d); }
+function orNearest(){ var best=0, bd=9; for(var i=0;i<4;i++){ var d = angDist(orPos(i).a, SIGHT); if(d<bd){ bd=d; best=i; } } return {i:best, d:bd}; }
+function orBuild(opts){
+  var ns = 'http://www.w3.org/2000/svg', svg = OR.svg; svg.innerHTML = '';
+  var mk = function(tag, attrs, parent){ var e = document.createElementNS(ns, tag); for(var k in attrs) e.setAttribute(k, attrs[k]); (parent||svg).appendChild(e); return e; };
+  mk('circle', {cx:OR.cx, cy:OR.cy, r:OR.R, fill:'none', stroke:'var(--or-track)', 'stroke-width':2, 'stroke-dasharray':'2 6'});
+  /* the telescope, fixed, looking up at the bottom of the track */
+  var sightY = OR.cy + OR.R;
+  mk('line', {x1:OR.cx, y1:sightY+26, x2:OR.cx, y2:sightY+4, stroke:'var(--amber)', 'stroke-width':1.5, 'stroke-dasharray':'3 4', opacity:.7});
+  mk('rect', {x:OR.cx-9, y:sightY+28, width:18, height:34, rx:3, fill:'var(--brass)', stroke:'var(--brass-lo)', 'stroke-width':1.5});
+  mk('rect', {x:OR.cx-13, y:sightY+24, width:26, height:8, rx:3, fill:'var(--brass-hi)'});
+  OR.arms = []; OR.planets = [];
+  for(var i=0;i<4;i++) OR.arms.push(mk('line', {stroke:'var(--brass)', 'stroke-width':2.5, 'stroke-linecap':'round'}));
+  mk('circle', {cx:OR.cx, cy:OR.cy, r:22, fill:'var(--amber)', opacity:.25});
+  mk('circle', {cx:OR.cx, cy:OR.cy, r:15, fill:'var(--brass-hi)', stroke:'var(--brass-lo)', 'stroke-width':2});
+  opts.forEach(function(o, i){
+    var g = mk('g', {'class':'planet', role:'button', 'aria-label':'Planet '+(i+1)+': '+o});
+    mk('circle', {'class':'body', r:17, fill:OR_COLOURS[i], stroke:'rgba(0,0,0,.25)', 'stroke-width':1.5}, g);
+    mk('circle', {r:5, cx:-6, cy:-6, fill:'rgba(255,255,255,.35)'}, g);
+    var tag = mk('g', {'class':'tag'}, g), w = 16 + o.length * 7.6;
+    mk('rect', {x:-w/2, y:-52, width:w, height:22, rx:4}, tag);
+    var t = mk('text', {x:0, y:-36, 'text-anchor':'middle'}, tag); t.textContent = o;
+    g.addEventListener('click', function(){ if(OR.st && OR.st.live && simple) orTurnTo(i); else if(OR.st && OR.st.live) $('orWho').textContent = 'Stop it with the lever, or turn on simple mode.'; });
+    OR.planets.push(g);
+  });
+}
+function orDraw(){
+  var near = OR.st && OR.st.live ? orNearest() : null;
+  for(var i=0;i<4;i++){ var p = orPos(i);
+    OR.arms[i].setAttribute('x1', OR.cx); OR.arms[i].setAttribute('y1', OR.cy); OR.arms[i].setAttribute('x2', p.x); OR.arms[i].setAttribute('y2', p.y);
+    OR.planets[i].setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')');
+    OR.planets[i].classList.toggle('insight', !!near && near.i === i && near.d < 0.45);
+  }
+}
+function runOrrery(depth, done){
+  var slow = H.items.indexOf('Spring') >= 0;
+  OR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), slow:slow, lastTick:0,
+    tally:new Tally($('orLives'), $('orCount'), 'sighted'), Q_MS:15000 };
+  show('room-orrery');
+  setTimeout(orNext, 350);
+}
+function orNext(){
+  var st = OR.st; cancelAnimationFrame(OR.raf);
+  if(st.tally.over()){
+    var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
+    return st.done(won, 'You sighted ' + st.tally.right + ' right answers in ' + secs + ' seconds.');
+  }
+  var q = pickQuestion(tierFor(st.depth, st.rounds)); st.rounds++;
+  st.q = q; st.opts = shuffle([q.correct].concat(q.wrong.slice(0,3))); st.ans = st.opts.indexOf(q.correct);
+  /* one turn every 3.2 seconds at the door, quicker deeper in; the Spring slows it right down */
+  var rev = Math.max(1700, 3200 - st.depth*250 - st.rounds*110) * (st.slow ? 1.6 : 1);
+  st.speed = 2*Math.PI / rev;
+  OR.theta = Math.random() * 2 * Math.PI;
+  orBuild(st.opts);
+  $('orWho').textContent = st.rounds === 1 && st.slow ? 'The Spring slows the orrery down' : 'Stop it when the right planet is in the telescope';
+  $('orQ').textContent = q.q; $('orLine').classList.remove('low'); $('lever').disabled = false;
+  say(q.q);
+  st.live = true; st.qStart = performance.now(); st.last = st.qStart;
+  OR.raf = requestAnimationFrame(orTick);
+}
+function orTick(now){
+  var st = OR.st; if(!st || !st.live) return;
+  var dt = Math.min(50, now - st.last); st.last = now;
+  OR.theta += st.speed * dt; orDraw();
+  if(now - st.lastTick > 260){ tone(2600, 0, 0.02, 'square', 0.02); st.lastTick = now; }
+  var left = st.Q_MS - (now - st.qStart);
+  $('orLineBar').style.transform = 'scaleX(' + Math.max(0, left/st.Q_MS) + ')';
+  if(left < 4000) $('orLine').classList.add('low');
+  if(left <= 0) return orResolve(-1);
+  OR.raf = requestAnimationFrame(orTick);
+}
+/* ease the orrery so planet i sits exactly in the telescope, then judge it */
+function orSettle(i, ms, then){
+  var target = SIGHT - i * Math.PI / 2, from = OR.theta;
+  var diff = ((target - from) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  if(diff > Math.PI && ms < 400) diff -= 2*Math.PI;
+  if(reduceMotion){ OR.theta = from + diff; orDraw(); then(); return; }
+  var t0 = performance.now();
+  var step = function(now){ var k = Math.min(1, (now-t0)/ms), e = 1-Math.pow(1-k,3); OR.theta = from + diff*e; orDraw();
+    if(k < 1) requestAnimationFrame(step); else then(); };
+  requestAnimationFrame(step);
+}
+function orStop(){
+  var st = OR.st; if(!st || !st.live) return; actx();
+  st.live = false; cancelAnimationFrame(OR.raf); $('lever').disabled = true;
+  tone(140, 0, 0.12, 'square', 0.08); noise(0, 0.08, 0.3, 700, 'lowpass');
+  var n = orNearest().i; orSettle(n, 220, function(){ orResolve(n); });
+}
+function orTurnTo(i){
+  var st = OR.st; if(!st || !st.live) return; actx();
+  st.live = false; cancelAnimationFrame(OR.raf); $('lever').disabled = true;
+  orSettle(i, 650, function(){ orResolve(i); });
+}
+function orResolve(i){
+  var st = OR.st; st.live = false; cancelAnimationFrame(OR.raf); $('lever').disabled = true;
+  OR.planets.forEach(function(p){ p.classList.remove('insight'); });
+  OR.planets[st.ans].classList.add('isright');
+  if(i === st.ans){ st.tally.hit(); SFX.right(); $('orWho').textContent = 'In sight. Well spotted.'; say('Right.'); }
+  else {
+    var counted = st.tally.mistake(); SFX.wrong();
+    if(i >= 0) OR.planets[i].classList.add('iswrong');
+    else tone(300, 0, 0.9, 'sine', 0.08, 90);
+    $('orWho').textContent = (i < 0 ? 'The orrery ran down' : 'Wrong planet') + '. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
+    say('The answer was ' + st.q.correct + '.');
+  }
+  setTimeout(orNext, i === st.ans ? 1000 : 1700);
+}
+$('lever').addEventListener('click', orStop);
+
 /* keys: 1 to 4 pick a socket or a drop in whichever room is open */
 document.addEventListener('keydown', function(e){
   var k = parseInt(e.key, 10);
   if(!(k >= 1 && k <= 4)) return;
   if(!$('room-switchboard').hidden && SB.st && SB.st.live){ e.preventDefault(); sbConnect(k-1); }
   else if(!$('room-glasshouse').hidden && GH.st && GH.st.live){ e.preventDefault(); ghSteer(k-1); }
+  else if(!$('room-orrery').hidden && OR.st && OR.st.live){ e.preventDefault(); orTurnTo(k-1); }
 });
+/* the space bar pulls the Orrery's lever */
+document.addEventListener('keydown', function(e){ if((e.key === ' ' || e.key === 'Enter') && !$('room-orrery').hidden && OR.st && OR.st.live && document.activeElement !== $('lever')){ e.preventDefault(); orStop(); } });
 
 /* ---------- start ---------- */
 function begin(){ H = newHouse(); actx(); paintHall(); }
