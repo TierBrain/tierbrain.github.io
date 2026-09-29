@@ -915,7 +915,7 @@ function ghNext(){
   var st = GH.st;
   if(st.tally.over()){
     var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
-    return st.done(won, 'You caught ' + st.tally.right + ' right answers in ' + secs + ' seconds.');
+    return st.done(won, 'You caught ' + st.tally.right + (st.tally.right === 1 ? ' right answer' : ' right answers') + ' in ' + secs + ' seconds.');
   }
   var q = pickQuestion(tierFor(st.depth, st.rounds)); st.rounds++;
   var opts = shuffle([q.correct].concat(q.wrong.slice(0,3)));
@@ -1054,7 +1054,7 @@ function orNext(){
   var st = OR.st; cancelAnimationFrame(OR.raf);
   if(st.tally.over()){
     var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
-    return st.done(won, 'You sighted ' + st.tally.right + ' right answers in ' + secs + ' seconds.');
+    return st.done(won, 'You sighted ' + st.tally.right + (st.tally.right === 1 ? ' right answer' : ' right answers') + ' in ' + secs + ' seconds.');
   }
   var q = pickQuestion(tierFor(st.depth, st.rounds)); st.rounds++;
   st.q = q; st.opts = shuffle([q.correct].concat(q.wrong.slice(0,3))); st.ans = st.opts.indexOf(q.correct);
@@ -1166,7 +1166,7 @@ function srNext(){
   var st = SR.st; cancelAnimationFrame(SR.raf);
   if(st.tally.over()){
     var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
-    return st.done(won, 'You opened ' + st.tally.right + ' locks in ' + secs + ' seconds.');
+    return st.done(won, 'You opened ' + st.tally.right + (st.tally.right === 1 ? ' lock' : ' locks') + ' in ' + secs + ' seconds.');
   }
   var q = srPick(tierFor(st.depth, st.rounds)); st.rounds++;
   var word = String(q.correct).trim().toUpperCase(), digits = /^\d+$/.test(word);
@@ -1300,7 +1300,7 @@ function drNext(){
   var st = DR.st; cancelAnimationFrame(DR.raf);
   if(st.tally.over()){
     var won = st.tally.right >= 5, secs = Math.round((performance.now()-st.t0)/1000);
-    return st.done(won, 'You found ' + st.tally.right + ' right answers in ' + secs + ' seconds.');
+    return st.done(won, 'You found ' + st.tally.right + (st.tally.right === 1 ? ' right answer' : ' right answers') + ' in ' + secs + ' seconds.');
   }
   var q = drPick(tierFor(st.depth, st.rounds)); st.rounds++;
   st.q = q; st.opts = shuffle([q.correct].concat(q.wrong.slice(0,3))); st.found = simple;
@@ -1731,6 +1731,124 @@ function playStory(kind, o, done){
   var onKey = function(e){ if(o.skippable === false) return; e.preventDefault(); finish(); };
   if(o.skippable !== false){ el.addEventListener('click', finish); document.addEventListener('keydown', onKey, true); }
   timers.push(setTimeout(finish, total));
+}
+
+/* ==================== BIBLE EDITION: THE STORIES ====================
+   Items keep their original ids behind the scenes (Wire, Spring, Lens, Key,
+   Fuse), so every proven effect still works; only what players see changes.
+   Wording here is exactly as approved in the spec's Bible Edition section. */
+if(ED === 'bible'){
+  var BG = {
+    lamp:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34 Q28 46 46 34 L40 30 H16 Z"/><path d="M40 30 Q48 26 50 20"/><path d="M28 28 C24 22 26 16 28 12 C30 16 32 22 28 28 Z"/></svg>',
+    leaf:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 44 C14 22 30 12 46 10 C44 28 32 42 12 44 Z"/><path d="M12 44 L34 22"/></svg>',
+    star:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linejoin="round"><path d="M28 8 L33 22 L48 22 L36 31 L41 46 L28 37 L15 46 L20 31 L8 22 L23 22 Z"/></svg>',
+    chain:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="3" stroke-linecap="round"><rect x="6" y="20" width="24" height="16" rx="8"/><rect x="26" y="20" width="24" height="16" rx="8"/></svg>',
+    wave:'<svg class="glyph" viewBox="0 0 56 56" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M6 22 Q14 14 22 22 T38 22 T54 22"/><path d="M6 34 Q14 26 22 34 T38 34 T54 34"/><path d="M14 46 Q22 40 30 46"/></svg>'
+  };
+  var R_ = function(k, name, hint, glyph, text){ ROOMS[k].name = name; ROOMS[k].hint = hint; ROOMS[k].glyph = BG[glyph]; ROOMS[k].itemText = text; };
+  R_('switchboard', "Samuel's call", 'A lamp burns low, and someone is calling', 'lamp', 'On the journey it lights Jonah\u2019s darkness. At Jericho, each right answer marches further.');
+  R_('glasshouse', "Noah's flood", 'Rain drums on wet wood beyond this page', 'leaf', 'On the journey it calms Abraham\u2019s sky. At Jericho, it gives you more time.');
+  R_('orrery', "Abraham's stars", 'A desert sky, crowded with stars', 'star', 'On the journey it lights one link of Peter\u2019s chain. At Jericho, it once shows a wrong answer.');
+  R_('strongroom', 'Peter in prison', 'Iron bars, and chains that will not hold', 'chain', 'On the journey they spare you one long way round. At Jericho, the march starts one lap in.');
+  R_('darkroom', 'Jonah in the deep', 'Deep water, and something very large beneath it', 'wave', 'On the journey it shades you from your next mistake. At Jericho, it forgives one stumble.');
+  ITEM_ART.Wire = BG.lamp.replace('class="glyph"', 'width="56" height="56" stroke="#b8672e"');
+  ITEM_ART.Spring = BG.leaf.replace('class="glyph"', 'width="56" height="56" stroke="#4f8a5b"');
+  ITEM_ART.Lens = BG.star.replace('class="glyph"', 'width="56" height="56" stroke="#c99a3f"');
+  ITEM_ART.Key = BG.chain.replace('class="glyph"', 'width="56" height="56" stroke="#737c81"');
+  ITEM_ART.Fuse = BG.leaf.replace('class="glyph"', 'width="56" height="56" stroke="#3f7a4c"');
+  NARR = {
+    arrival:['An old book lies open, its pages worn soft by many hands.','Every page holds a story you can step into.','At the very end, a city waits behind high walls.','Turn the first page.'],
+    hallway:'The first page turns with a whisper.',
+    carry:{ Wire:'The lamp from Shiloh still burns in your hand.', Spring:'The dove\u2019s olive leaf rests safe in your pocket.',
+      Lens:'A little of Abraham\u2019s starlight still clings to your sleeve.', Key:'You carry a link of the fallen chains, a sign that doors can open.',
+      Fuse:'A leaf of Jonah\u2019s vine still shades you.' },
+    lost:{ switchboard:'Behind you, the voice falls quiet, waiting for another night.', glasshouse:'The rain keeps falling as the page turns.',
+      orrery:'The stars wheel on, too many to count.', strongroom:'The iron gate stays shut, for now.', darkroom:'The deep closes over, dark and still.' },
+    toward:{ switchboard:'The next page is night. A lamp burns low, and someone is calling.', glasshouse:'The next page smells of rain and wet wood.',
+      orrery:'The next page is a desert sky, crowded with stars.', strongroom:'The next page is a prison cell, and chains that will not hold for long.',
+      darkroom:'The next page is the deep sea, and something very large beneath it.' },
+    link:{ 'Spring>orrery':'The olive leaf is calm in your hand, and the stars seem to slow.', 'Lens>strongroom':'Starlight slips between the bars and falls on the lock.',
+      'Wire>darkroom':'The lamp from Shiloh will not go out, even in the deep.', Fuse:'Jonah\u2019s vine will shade you from the first mistake.' },
+    stairs:['The short road is closed. The long way round winds through the wilderness.','You take the long way round, as travellers did long ago.'],
+    keyShortcut:'The chains fall away, and a shorter path opens.',
+    reveal:{ none:'The last page opens on Jericho. Its walls stand tall, and you carry very little.',
+      some:'The last page opens on Jericho. You carry some of what you gathered.', all:'The last page opens on Jericho. You carry everything you gathered on the way.' },
+    needSolo:'March around the walls seven times.', needTeam:'March around the walls together, seven times.',
+    end:{ awake:'The trumpets sound. Everyone shouts together. And the walls come tumbling down.',
+      asleep:'The walls still stand tonight. But they will not stand forever.' }
+  };
+  PALETTE.hall = '#2a1d12'; PALETTE.switchboard = '#1c1830'; PALETTE.glasshouse = '#26323a'; PALETTE.orrery = '#141a33';
+  PALETTE.strongroom = '#2b2a2e'; PALETTE.darkroom = '#04121a'; PALETTE.machine = '#3a2a18';
+  HOUSE_SVG = '<svg viewBox="0 0 300 220" aria-hidden="true"><path d="M150 70 Q100 50 30 60 V190 Q100 180 150 200 Z" fill="#efe4c8" stroke="#7d5a22" stroke-width="3"/>'
+    + '<path d="M150 70 Q200 50 270 60 V190 Q200 180 150 200 Z" fill="#e3d4b0" stroke="#7d5a22" stroke-width="3"/>'
+    + '<path d="M55 90 H125 M55 110 H125 M55 130 H115 M175 90 H245 M175 110 H245 M175 130 H235" stroke="#a88b5e" stroke-width="3" stroke-linecap="round"/>'
+    + '<circle cx="150" cy="40" r="10" fill="#ffae3d" style="filter:drop-shadow(0 0 12px #ffae3d)"/></svg>';
+  STAIRS_SVG = '<svg viewBox="0 0 300 240" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">'
+    + '<path d="M150 240 C60 200 240 160 150 120 C80 90 200 60 150 20" fill="none" stroke="#8a6a3e" stroke-width="22" stroke-linecap="round"/>'
+    + '<path d="M150 240 C60 200 240 160 150 120 C80 90 200 60 150 20" fill="none" stroke="#c9a46a" stroke-width="3" stroke-dasharray="6 10"/></svg>';
+
+  /* static words on the opening card */
+  document.title = 'Full Circuit: Bible Edition';
+  (function(){
+    var intro = document.getElementById('intro'); if(!intro) return;
+    intro.querySelector('.plate').textContent = 'Full Circuit: Bible Edition';
+    intro.querySelector('h1').textContent = 'An old book lies open';
+    var ps = intro.querySelectorAll('p');
+    if(ps[0]) ps[0].textContent = 'Every page holds a story you can step into. Win a story and you gather something that helps in the next. At the very end, a city waits behind high walls.';
+    if(ps[1]) ps[1].textContent = 'Choose your stories wisely.';
+    document.getElementById('enterBtn').textContent = 'Turn the first page';
+    if(window.__noBible || !window.TB_BIBLE){ ps[1].textContent = 'The Bible questions could not load. Check your connection and reload.'; document.getElementById('enterBtn').disabled = true; }
+  })();
+
+  /* Everything the game says (never a question or an answer) is re-worded
+     as it appears. Questions, answers and narration are left untouched. */
+  var WORDS = [
+    [/^Caller \d+ is asking$/, 'A voice calls in the night'], [/^Connected$/, 'Here I am'],
+    [/The line went dead/g, 'The lamp went out'], [/^Wrong line/, 'Not that one'],
+    [/Drag the cable into this socket, or turn on simple mode\./, 'Carry the flame to this lamp, or turn on simple mode.'],
+    [/You connected (\d+) of your callers/, function(m, n){ return 'You answered ' + n + (n === '1' ? ' call' : ' calls'); }],
+    [/^Catch the right answer$/, 'Guide the dove to the right leaf'], [/^Caught it$/, 'The dove has it'],
+    [/^Wrong drop/, 'Wrong leaf'], [/^It got away/, 'The leaf fell into the water'], [/You caught (\d+) right answer(s?)/, 'The dove gathered $1 right answer$2'],
+    [/^Stop it when the right planet is in the telescope$/, 'Stop the stars when the right one sits above the tent'],
+    [/^The Spring slows the orrery down$/, 'The olive leaf calms the sky, and the stars slow down'],
+    [/^In sight\. Well spotted\.$/, 'Right above the tent.'], [/^Wrong planet/, 'Wrong star'], [/^The orrery ran down/, 'The night ran out'],
+    [/Stop it with the lever, or turn on simple mode\./, 'Stop the stars with the button, or turn on simple mode.'],
+    [/^Stop the orrery$/, 'Stop the stars'], [/You sighted (\d+) right answer(s?)/, 'You found $1 right star$2'],
+    [/^Spell the answer on the tumblers$/, 'Spell the answer on the chain'], [/^Dial in the number$/, 'Set the number on the chain'],
+    [/^The Lens has set one tumbler for you$/, 'Starlight has lit one link for you'], [/^The door swings open$/, 'The gate swings open'],
+    [/^The alarm sounds/, 'The chains hold'], [/^Try the door$/, 'Try the gate'], [/You opened (\d+) lock(s?)/, 'You opened $1 gate$2'],
+    [/The question is on one of these walls\. Find it with your torch\./, 'The question is hidden in the deep. Find it with your lamp.'],
+    [/^Find the right answer on the walls$/, 'Find the right answer in the deep'],
+    [/^The Wire lights the lamps: your torch reaches further and lasts longer$/, 'The lamp from Shiloh will not go out: it shines further and lasts longer'],
+    [/^The torch died/, 'The lamp went out'], [/Shine the torch on it first\./, 'Shine the lamp on it first.'],
+    [/(\d) of 5 connected/, '$1 of 5 answered'], [/(\d) of 5 caught/, '$1 of 5 gathered'], [/(\d) of 5 sighted/, '$1 of 5 found'],
+    [/ and the only way back is the long way round: the back stairs\./, ' and the only way on is the long way round.'],
+    [/^Take the back stairs$/, 'Take the long way round'], [/^Use the Key to skip the stairs$/, 'Use the Fallen Chains to skip the long way round'],
+    [/^The back stairs$/, 'The long way round'], [/^Right\. Up you go\.$/, 'Right. On you go.'],
+    [/^A slip on the stairs\. Three seconds off the finale clock\.$/, 'A stumble on the road. Three seconds off the clock at Jericho.'],
+    [/^The room beat you$/, 'The story beat you'], [/^Back to the hallway$/, 'Back to the book'], [/^The hallway$/, 'The book'],
+    [/^Choose a door$/, 'Choose a story'], [/^What you win behind one door can make another easier\.$/, 'What you gather in one story can help you in another.'],
+    [/rooms explored/, 'stories explored'], [/^The machine is waiting$/, 'Jericho is waiting'],
+    [/^A locked door\. Something hums behind it\.$/, 'The last page. A city waits behind high walls.'],
+    [/^The Switchboard$/, "Samuel's call"], [/^The Glasshouse$/, "Noah's flood"], [/^The Orrery$/, "Abraham's stars"],
+    [/^The Strongroom$/, 'Peter in prison'], [/^The Dark Room$/, 'Jonah in the deep'],
+    [/\bthe Wire\b/g, 'the Lamp'], [/\bWire\b/g, 'Lamp'], [/\bthe Spring\b/g, 'the Olive Leaf'], [/\bSpring\b/g, 'Olive Leaf'],
+    [/\bthe Lens\b/g, 'the Starlight'], [/\bLens\b/g, 'Starlight'], [/\bthe Key\b/g, 'the Fallen Chains'], [/\bKey\b/g, 'Fallen Chains'],
+    [/\b[Tt]he Fuse\b/g, 'Jonah\u2019s Vine'], [/\bFuse\b/g, 'Jonah\u2019s Vine']
+  ];
+  var KEEP = '.q, #stairQ, #fQ, #tqQ, .strip, .drop, .note, .opt, .plate-btn, .wheel, svg, .story, input, #joinCode';
+  var reword = function(node){
+    if(node.nodeType !== 3 || !node.parentElement || node.parentElement.closest(KEEP)) return;
+    var t = node.nodeValue, n = t;
+    for(var i = 0; i < WORDS.length; i++) n = n.replace(WORDS[i][0], WORDS[i][1]);
+    if(n !== t) node.nodeValue = n;
+  };
+  var walk = function(root){ var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); var x; while((x = w.nextNode())) reword(x); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){
+    if(m.type === 'characterData') reword(m.target);
+    m.addedNodes && m.addedNodes.forEach(function(a){ if(a.nodeType === 3) reword(a); else if(a.nodeType === 1) walk(a); });
+  }); }).observe(document.body, { subtree:true, childList:true, characterData:true });
+  walk(document.body);
 }
 
 /* ---------- start ---------- */
