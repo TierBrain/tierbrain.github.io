@@ -370,6 +370,52 @@ button{font:inherit;color:inherit;}
 .story .s-ln.on{opacity:1;transform:none;}
 .story .s-skip{position:absolute;right:18px;bottom:calc(16px + env(safe-area-inset-bottom,0px));font-family:'Special Elite',monospace;font-size:14px;color:rgba(240,228,204,.45);}
 @media (prefers-reduced-motion: reduce){ .story .s-door,.story .s-stairs,.story .s-leaf,.story .s-orb{transition:none !important;} .story{transition:none;} }
+
+/* ==================== BIBLE EDITION: THE FIVE WORLDS ====================
+   The same rooms and the same controls, dressed as the stories. */
+/* Samuel's call: night, a lamp burning low, a thread of flame */
+.ed-bible .switchboard .board{background:radial-gradient(ellipse at 18% 8%,rgba(255,180,90,.2),transparent 45%),linear-gradient(180deg,#1c1830,#120f22);border-color:#2a2446;}
+.ed-bible .switchboard .jack .ring{background:radial-gradient(circle at 40% 30%,#d9a070,#9a5f38 55%,#5a331c);}
+.ed-bible .switchboard .jack .hole{inset:20px;background:#1a0f08;}
+.ed-bible .switchboard .lamp.green{background:#ffd27a;box-shadow:0 0 16px #ffae3d,0 0 30px rgba(255,174,61,.5);}
+.ed-bible .cord{stroke:#ffcf7a;stroke-width:3;filter:drop-shadow(0 0 6px #ffae3d);}
+.ed-bible .cord-under,.ed-bible .braid{display:none;}
+.ed-bible .plug{width:20px;height:30px;margin:-14px 0 0 -10px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+  background:radial-gradient(circle at 50% 72%,#fff6d0,#ffc05a 42%,#e2553e 92%);box-shadow:0 0 16px #ffae3d,0 0 34px rgba(255,150,60,.55);}
+.ed-bible .plug::before{display:none;}
+/* Noah's flood: grey rain over grey water, olive leaves, a dove */
+.ed-bible .glasshouse .board{border:3px solid #3a4a52;background:linear-gradient(180deg,#5f6f78 0%,#3f4f58 55%,#2d3d46 100%);}
+.ed-bible .glasshouse .drop{border-radius:6px 55% 6px 55%;background:linear-gradient(135deg,#9bbf7a,#5f8f45);color:#12240c;padding:12px 6px;font-size:12.5px;line-height:1.2;overflow-wrap:anywhere;hyphens:auto;}
+.ed-bible .glasshouse .drop::before{display:none;}
+.ed-bible .glasshouse .floor{height:22px;background:repeating-linear-gradient(90deg,#6b4a2c 0 38px,#5a3d22 38px 40px);border-top:3px solid #3e2a16;}
+.ed-bible .pail{background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86 56'><path d='M8 34 Q24 22 40 30 Q52 8 74 6 Q62 18 58 30 Q70 30 80 36 Q64 40 52 40 Q40 52 22 50 Q30 44 30 40 Q18 42 8 34 Z' fill='%23ffffff' stroke='%23b9c4c8' stroke-width='2'/><circle cx='68' cy='33' r='2' fill='%2333404a'/></svg>") center/contain no-repeat;}
+.ed-bible .pail > span{display:none;}
+/* Abraham's stars: a desert night, a single tent */
+.ed-bible .orrery .board{background:
+    radial-gradient(circle at 18% 22%,rgba(255,255,255,.8) 0 1px,transparent 1.5px) 0 0/53px 47px,
+    radial-gradient(circle at 70% 60%,rgba(255,255,255,.7) 0 1px,transparent 1.5px) 0 0/71px 61px,
+    radial-gradient(ellipse at 50% 120%,#7a4a2a 0 22%,transparent 23%),
+    linear-gradient(180deg,#0b1030,#1d1b44 60%,#4a2f3a);border-color:#2a2446;}
+.ed-bible .orrery-svg .insight .body{stroke:#ffd27a;stroke-width:3;}
+.ed-bible .orrery-svg .isright .body{stroke:var(--green);stroke-width:4;}
+.ed-bible .orrery-svg .iswrong .body{stroke:var(--red);stroke-width:4;}
+/* Peter in prison: stone, iron bars, a shaft of light, a chain */
+.ed-bible .strongroom .board{background:
+    linear-gradient(115deg,transparent 30%,rgba(255,240,200,.14) 40%,rgba(255,240,200,.14) 52%,transparent 62%),
+    repeating-linear-gradient(90deg,transparent 0 46px,rgba(10,10,12,.55) 46px 52px),
+    repeating-linear-gradient(0deg,#56555a 0 38px,#4a494e 38px 40px),#4f4e53;
+  border:3px solid #2b2a2e;box-shadow:inset 0 0 50px rgba(0,0,0,.5);}
+.ed-bible .strongroom .board::before,.ed-bible .strongroom .board::after{display:none;}
+.ed-bible .wheel{border-radius:22px;background:linear-gradient(180deg,#2a2b2f,#6b6e74 30%,#9a9da3 50%,#6b6e74 70%,#2a2b2f);box-shadow:0 3px 0 rgba(0,0,0,.5),inset 0 0 0 2px rgba(0,0,0,.4);}
+.ed-bible .wheel .cell{color:#f4f1ea;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+.ed-bible .wheel.lens{box-shadow:0 0 0 3px #f7e7a6,0 0 16px #f7e7a6,0 3px 0 rgba(0,0,0,.5);}
+/* Jonah in the deep: blue-black water, a lamp that will not go out */
+.ed-bible .darkroom .board{border-color:#02080c;background:radial-gradient(ellipse at 50% 30%,#0b2a36,#04121a 70%);}
+.ed-bible .dark{background:
+    radial-gradient(circle at var(--x) var(--y), rgba(255,210,140,.16) 0, transparent var(--r)),
+    radial-gradient(circle at var(--x) var(--y), rgba(2,12,20,0) 0, rgba(2,12,20,0) calc(var(--r) * .5), rgba(2,12,20,.997) var(--r));}
+.ed-bible .dark.dim{background:rgba(2,12,20,.28);}
+.ed-bible .note{background:#dfe8e4;color:#10262c;}
 </style>
 </head>
 <body>
@@ -1018,16 +1064,29 @@ function orBuild(opts){
   /* the telescope, fixed, looking up at the bottom of the track */
   var sightY = OR.cy + OR.R;
   mk('line', {x1:OR.cx, y1:sightY+26, x2:OR.cx, y2:sightY+4, stroke:'var(--amber)', 'stroke-width':1.5, 'stroke-dasharray':'3 4', opacity:.7});
+  if(ED === 'bible'){
+    mk('path', {d:'M' + (OR.cx-34) + ' ' + (sightY+66) + ' L' + OR.cx + ' ' + (sightY+22) + ' L' + (OR.cx+34) + ' ' + (sightY+66) + ' Z', fill:'#c9a46a', stroke:'#7a5a32', 'stroke-width':2});
+    mk('path', {d:'M' + OR.cx + ' ' + (sightY+22) + ' L' + (OR.cx-8) + ' ' + (sightY+66) + ' L' + (OR.cx+8) + ' ' + (sightY+66) + ' Z', fill:'#3a2616'});
+  } else {
   mk('rect', {x:OR.cx-9, y:sightY+28, width:18, height:34, rx:3, fill:'var(--brass)', stroke:'var(--brass-lo)', 'stroke-width':1.5});
   mk('rect', {x:OR.cx-13, y:sightY+24, width:26, height:8, rx:3, fill:'var(--brass-hi)'});
+  }
   OR.arms = []; OR.planets = [];
-  for(var i=0;i<4;i++) OR.arms.push(mk('line', {stroke:'var(--brass)', 'stroke-width':2.5, 'stroke-linecap':'round'}));
+  for(var i=0;i<4;i++) OR.arms.push(mk('line', {stroke:'var(--brass)', 'stroke-width':2.5, 'stroke-linecap':'round', opacity: ED === 'bible' ? 0 : 1}));
+  if(ED === 'bible'){ mk('circle', {cx:OR.cx, cy:OR.cy, r:13, fill:'#efe6cf', opacity:.5}); }
+  else {
   mk('circle', {cx:OR.cx, cy:OR.cy, r:22, fill:'var(--amber)', opacity:.25});
   mk('circle', {cx:OR.cx, cy:OR.cy, r:15, fill:'var(--brass-hi)', stroke:'var(--brass-lo)', 'stroke-width':2});
+  }
   opts.forEach(function(o, i){
     var g = mk('g', {'class':'planet', role:'button', 'aria-label':'Planet '+(i+1)+': '+o});
+    if(ED === 'bible'){
+      var pts = []; for(var s5 = 0; s5 < 10; s5++){ var ra = s5 % 2 ? 8 : 19, an = -Math.PI/2 + s5 * Math.PI/5; pts.push((ra*Math.cos(an)).toFixed(1) + ',' + (ra*Math.sin(an)).toFixed(1)); }
+      mk('polygon', {'class':'body', points:pts.join(' '), fill:'#f7e7a6', stroke:'rgba(255,230,160,.5)', 'stroke-width':1.5, style:'filter:drop-shadow(0 0 6px #f7e7a6)'}, g);
+    } else {
     mk('circle', {'class':'body', r:17, fill:OR_COLOURS[i], stroke:'rgba(0,0,0,.25)', 'stroke-width':1.5}, g);
     mk('circle', {r:5, cx:-6, cy:-6, fill:'rgba(255,255,255,.35)'}, g);
+    }
     var tag = mk('g', {'class':'tag'}, g), w = 16 + o.length * 7.6;
     mk('rect', {x:-w/2, y:-52, width:w, height:22, rx:4}, tag);
     var t = mk('text', {x:0, y:-36, 'text-anchor':'middle'}, tag); t.textContent = o;
@@ -1789,6 +1848,8 @@ if(ED === 'bible'){
 
   /* static words on the opening card */
   document.title = 'Full Circuit: Bible Edition';
+  document.body.classList.add('ed-bible');
+  SFX.ring = function(){ tone(660, 0, 0.7, 'sine', 0.06); tone(990, 0.18, 0.9, 'sine', 0.04); };
   (function(){
     var intro = document.getElementById('intro'); if(!intro) return;
     intro.querySelector('.plate').textContent = 'Full Circuit: Bible Edition';
