@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Full Circuit</title>
-<meta name="description" content="Explore a strange house, win the parts of a dormant machine, and bring it to life.">
+<title>Full Circuit: Bible Edition</title>
+<meta name="description" content="Step into five Bible stories, gather what you find, and march round the walls of Jericho. Alone or as a team.">
 <meta name="robots" content="noindex">
-<link rel="canonical" href="https://tierbrain.co/full-circuit.html">
+<link rel="canonical" href="https://tierbrain.co/full-circuit-bible.html">
 <meta name="theme-color" content="#1f130c">
 <script>
 (function(){ if(location.hostname==='tierbrain.github.io'){
@@ -637,7 +637,7 @@ var EMBEDDED = {"1":[{"q":"In which room do you usually sleep?","correct":"The b
 /* ---------- EDITION ----------
    One set of code, two editions. '?ed=bible' switches to the Bible Edition:
    Bible questions now; its own stories, items and look follow. */
-var ED = /[?&]ed=bible\b/.test(location.search) ? 'bible' : 'house';
+var ED = 'bible';   /* this file is always the Bible Edition. It is generated from full-circuit.html: edit that file, not this one */
 function srcBank(){
   if(ED === 'bible') return window.TB_BIBLE || null;
   return (window.TB && window.TB.bank) ? (window.TB.bank('gk') || null) : null;
