@@ -3,24 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Bitcoin&#x27;s origins, Ethereum and the fundamentals: history, not hype.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://tierbrain.co/crypto-quiz.html">
-<meta property="og:title" content="Crypto &amp; Blockchain">
-<meta property="og:description" content="Bitcoin&#x27;s origins, Ethereum and the fundamentals: history, not hype.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://tierbrain.co/crypto-quiz.html">
-<script>
-/* Anyone arriving on the old github.io address is moved to the real domain,
-   keeping whatever page they asked for. Canonical tags alone are only a hint. */
-(function(){
-  if(location.hostname === 'tierbrain.github.io'){
-    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
-  }
-})();
-</script>
-<title>Crypto Quiz | TierBrain</title>
+<title>Crypto Quiz — TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -197,7 +180,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Crypto & Blockchain</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 questions on crypto fundamentals and history: Bitcoin's origins, blockchains, Ethereum and the key ideas, over four tiers up to Legends. The better you do, the harder it gets!</p>
+    <p class="lead">20 questions on crypto fundamentals and history — Bitcoin's origins, blockchains, Ethereum and the key ideas, over four tiers up to Legends. The better you do, the harder it gets!</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
@@ -206,7 +189,7 @@
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code (optional)</div>
+    <div class="timelabel">Group code — optional</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Quiz</button>
@@ -243,7 +226,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -263,7 +246,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -289,7 +272,7 @@
       {"q":"Ethereum's own cryptocurrency is called what?","correct":"Ether","wrong":["Bitcoin","Ada","Sol"]},
       {"q":"Money not controlled by any central bank or government is described as what?","correct":"Decentralized","wrong":["Centralized","Federal","Royal"]},
       {"q":"A unique digital token representing ownership of art or collectibles is an what?","correct":"NFT","wrong":["ICO","IPO","ATM"]},
-      {"q":"The smallest unit of Bitcoin is named after its creator, the what?","correct":"Satoshi","wrong":["Wei","Gwei","Bit"]},
+      {"q":"The smallest unit of Bitcoin is named after its creator — the what?","correct":"Satoshi","wrong":["Wei","Gwei","Bit"]},
       {"q":"A crypto designed to hold a steady value, often pegged to the dollar, is a what?","correct":"Stablecoin","wrong":["Meme coin","Altcoin","Token"]},
       {"q":"Any cryptocurrency other than Bitcoin is broadly called an what?","correct":"Altcoin","wrong":["Stablecoin","Hardcoin","Metacoin"]},
       {"q":"Bitcoin lets people pay each other directly without a what?","correct":"Bank","wrong":["Phone","Computer","Wallet"]},
@@ -317,7 +300,7 @@
       {"q":"Which consensus mechanism does Bitcoin use to secure its network?","correct":"Proof of Work","wrong":["Proof of Stake","Proof of Authority","Proof of Burn"]},
       {"q":"Ethereum switched in 2022 to which more energy-efficient mechanism?","correct":"Proof of Stake","wrong":["Proof of Work","Proof of Space","Proof of Time"]},
       {"q":"A “smart contract” is best described as what?","correct":"Self-executing code on a blockchain","wrong":["A legal paper","A bank loan","A verbal deal"]},
-      {"q":"The 2022 Ethereum upgrade to proof of stake was nicknamed the what?","correct":"Merge","wrong":["Fork","Split","Reboot"]},
+      {"q":"The 2022 Ethereum upgrade to proof of stake was nicknamed the what?","correct":"Merge","wrong":["Fork","Split","Reboot"]},{"q":"Which 2024 Ethereum upgrade introduced \"blobs\" to cut fees on layer-2 networks?","correct":"Dencun","wrong":["Pectra","The Merge","Frontier"]},{"q":"Ethereum's Fusaka upgrade followed which other 2025 upgrade?","correct":"Pectra","wrong":["Dencun","The Merge","Shapella"]},{"q":"Ethereum's Fusaka upgrade introduced PeerDAS, mainly to help Ethereum do what?","correct":"Scale for layer-2 networks","wrong":["Mine new coins","Replace proof of stake","Hide transactions"]},{"q":"The Ethereum hard fork planned to follow Fusaka is nicknamed what?","correct":"Glamsterdam","wrong":["Shanghai","Constantinople","Istanbul"]},
       {"q":"The Bitcoin whitepaper's title was “Bitcoin: A Peer-to-Peer Electronic ___ System”?","correct":"Cash","wrong":["Money","Banking","Payment"]},
       {"q":"A very large holder of a cryptocurrency is informally called a what?","correct":"Whale","wrong":["Shark","Bull","Bear"]},
       {"q":"Tokens built on Ethereum commonly follow which technical standard?","correct":"ERC-20","wrong":["HTTP","ISO-9000","BTC-1"]},
@@ -398,12 +381,12 @@
       {"q":"The “Cypherpunks,” who influenced Bitcoin, communicated mainly via a 1990s what?","correct":"Mailing list","wrong":["Magazine","Radio show","TV channel"]},
       {"q":"Adam Back's “Hashcash,” reused in Bitcoin, was originally designed to fight what?","correct":"Email spam","wrong":["Viruses","Piracy","Scam calls"]},
       {"q":"Ethereum's first live mainnet release in 2015 was code-named what?","correct":"Frontier","wrong":["Homestead","Metropolis","Serenity"]},
-      {"q":"Ethereum's roadmap of upgrades runs Frontier, Homestead, Metropolis and then what?","correct":"Serenity","wrong":["Genesis","Horizon","Olympus"]},
+      {"q":"Ethereum's original roadmap ran Frontier, Homestead, Metropolis and then what?","correct":"Serenity","wrong":["Genesis","Horizon","Olympus"]},
       {"q":"“The DAO,” hacked in 2016, was an early example of a what?","correct":"Decentralized Autonomous Organization","wrong":["Stablecoin","Crypto exchange","Mining pool"]},
       {"q":"One “gwei” equals how many wei?","correct":"One billion","wrong":["One thousand","One million","One trillion"]},
       {"q":"Which long-standing problem did Satoshi solve, stopping a coin being spent twice?","correct":"The double-spending problem","wrong":["The halting problem","The scaling problem","The 51% problem"]},
       {"q":"Regulated Bitcoin futures launched in 2017 on which major US exchange?","correct":"The Chicago Mercantile Exchange","wrong":["The NYSE","NASDAQ","The London Stock Exchange"]},
-      {"q":"Which country became the first to adopt Bitcoin as legal tender, in 2021?","correct":"El Salvador","wrong":["Venezuela","Switzerland","Singapore"]},
+      {"q":"Which country became the first to adopt Bitcoin as legal tender, in 2021?","correct":"El Salvador","wrong":["Venezuela","Switzerland","Singapore"]},{"q":"In 2025 El Salvador changed its Bitcoin law so that accepting bitcoin became what for businesses?","correct":"Voluntary","wrong":["Compulsory","Illegal","Taxed at 50%"]},
       {"q":"The exchange Mt. Gox was originally a trading site for cards from which game?","correct":"Magic: The Gathering","wrong":["Pokémon","Yu-Gi-Oh!","Hearthstone"]},
       {"q":"How many satoshis make up one whole Bitcoin?","correct":"100 million","wrong":["One thousand","One million","One billion"]},
       {"q":"A blockchain-like cryptographic timestamping system was first described in 1991 by Haber and whom?","correct":"Stornetta","wrong":["Diffie","Merkle","Rivest"]},
@@ -649,18 +632,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }
@@ -708,6 +691,5 @@
 
 })();
 </script>
-<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

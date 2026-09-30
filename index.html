@@ -70,7 +70,7 @@
   .sectitle{font-family:'Baloo 2';font-weight:700;font-size:21px;margin:0;}
   .secnote{color:var(--mut);font-weight:700;font-size:13px;text-align:right;}
   .feat{display:grid;grid-template-columns:1.35fr 1fr;gap:15px;}
-  .feat-side{display:grid;grid-template-rows:1fr 1fr;gap:15px;}
+  .feat-side{display:grid;grid-template-rows:1fr 1fr 1fr;gap:15px;}
   .fc{position:relative;border-radius:20px;overflow:hidden;padding:20px;display:flex;flex-direction:column;
     justify-content:flex-end;min-height:176px;transition:transform .18s ease,box-shadow .18s ease;}
   .fc:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(0,0,0,.4);}
@@ -86,6 +86,10 @@
   .f-creak .tag{background:rgba(201,146,78,.22);color:#f0c98c;} .f-creak p{color:#d8c3a8;}
   .f-gas{background:linear-gradient(200deg,#241d2c,#100c14 75%);color:#e9dfc8;border:1px solid rgba(201,162,74,.3);}
   .f-gas .tag{background:rgba(201,162,74,.18);color:#d8bd7c;} .f-gas p{color:#b9ad9a;} .f-gas h3{font-family:'Fraunces',serif;}
+.f-circuit{background:linear-gradient(200deg,#3a2616,#1a0f08 75%);color:#f0e4cc;border:1px solid rgba(233,196,127,.35);}
+.f-circuit .tag{background:rgba(233,196,127,.18);color:#e9c47f;}
+.f-circuit p{color:#c9b69a;}
+.f-circuit h3{font-family:'Fraunces',serif;}
   .f-throne{background:linear-gradient(200deg,#3a1622,#160a10 75%);color:#f6e6c8;border:1px solid rgba(245,178,62,.35);}
   .f-throne .tag{background:rgba(245,178,62,.2);color:#ffd47a;} .f-throne p{color:#dcbfa0;}
   .f-quiz{background:linear-gradient(200deg,#10303a,#081820 75%);color:#dff6f2;border:1px solid rgba(47,182,166,.3);}
@@ -152,7 +156,13 @@
   <section class="sec" data-sec="feat" aria-label="Start here">
     <div class="secrow"><h2 class="sectitle">Start here</h2><div class="secnote">the ones to try first</div></div>
     <div class="feat">
-      <a class="fc f-creak fbig" href="creak.html" data-cat="game" data-title="Creak &amp; Coil" data-blurb="A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.">
+      <a class="fc f-circuit fbig" href="full-circuit.html" data-cat="game" data-title="Full Circuit" data-blurb="Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen with everyone's phones.">
+        <span class="tag">New · solo or team</span><svg class="art" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <g fill="none" stroke="#e9c47f" stroke-width="2.5" opacity=".32" stroke-linecap="round"><path d="M232 470 V258 Q232 186 300 186 Q368 186 368 258 V470"/><path d="M300 186 V470"/><circle cx="324" cy="336" r="4"/><circle cx="168" cy="150" r="22"/><path d="M146 150 H190 M168 128 V172"/></g>
+ <polyline points="46,420 84,380 70,368 118,330 102,318 160,270" fill="none" stroke="#9fe8ff" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/></svg>
+        <h3>Full Circuit</h3><p>Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen.</p></a>
+      <div class="feat-side">
+      <a class="fc f-creak" href="creak.html" data-cat="game" data-title="Creak &amp; Coil" data-blurb="A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.">
         <span class="tag">Solo · beat your best</span><svg class="art" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
  <g stroke="#c9924e" stroke-width="2.5" opacity=".32" stroke-linecap="round">
   <line x1="70" y1="20" x2="40" y2="230"/><line x1="110" y1="14" x2="86" y2="230"/>
@@ -161,16 +171,6 @@
  <path d="M180 30 C230 70,150 110,210 150 S320 190,270 235" fill="none" stroke="#57b26a" stroke-width="6" opacity=".28" stroke-linecap="round"/>
  <circle cx="180" cy="30" r="8" fill="#57b26a" opacity=".35"/></svg>
         <h3>Creak &amp; Coil</h3><p>A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.</p></a>
-      <div class="feat-side">
-      <a class="fc f-gas" href="gaslight.html" data-cat="game" data-title="Gaslight" data-blurb="Noir detective cases where your deductions write the ending. Crack a locked-room poisoning, or a murder aboard the night express: a wrong call reroutes the case, it never ends it.">
-        <span class="tag">Detective fiction</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
- <g stroke="#d8bd7c" stroke-width="1.4" opacity=".2">
-  <line x1="20" y1="0" x2="0" y2="40"/><line x1="55" y1="0" x2="30" y2="45"/><line x1="95" y1="0" x2="68" y2="42"/>
-  <line x1="140" y1="0" x2="112" y2="46"/><line x1="185" y1="0" x2="158" y2="40"/></g>
- <circle cx="280" cy="34" r="44" fill="url(#lg)"/><circle cx="280" cy="34" r="5" fill="#e9c66a" opacity=".55"/>
- <g transform="translate(40,120)" opacity=".33" stroke="#d8bd7c" stroke-width="2" fill="none"><circle r="13"/><line x1="9" y1="9" x2="22" y2="22"/></g>
- <defs><radialGradient id="lg"><stop offset="0%" stop-color="#e9c66a" stop-opacity=".26"/><stop offset="100%" stop-color="#e9c66a" stop-opacity="0"/></radialGradient></defs></svg>
-        <h3>Gaslight</h3><p>Noir detective cases where your deductions write the ending. Crack a locked-room poisoning, or a murder aboard the night express: a wrong call reroutes the case, it never ends it.</p></a>
       <a class="fc f-throne" href="throne.html" data-cat="game multiplayer" data-title="Hold The Throne" data-blurb="A winner-stays-on buzzer gauntlet: two players duel on a question, the winner keeps their seat and takes on the next challenger from the queue. Build a streak, survive to the Grand Finale, and earn a place among the Legends. An animated host runs the whole show. Best with 3+ players, on your phones.">
         <span class="tag">Live · winner stays on</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
  <g opacity=".3" stroke="#ffd47a" fill="none" stroke-width="2.4" stroke-linejoin="round"><path d="M250 22 L262 44 L278 26 L285 50 L300 32 L295 60 L256 60 Z"/></g>
@@ -214,8 +214,8 @@
   <section class="sec" data-sec="adv" aria-label="Adventures and puzzles">
     <div class="secrow"><h2 class="sectitle">Adventures &amp; puzzles</h2><div class="secnote">take your time</div></div>
     <div class="grid">
-      <a class="tc" href="full-circuit.html" data-cat="game puzzle" data-title="Full Circuit" data-blurb="A machine has slept in this house for a hundred years. Five rooms, five ways to answer, and every part you win brings it closer to waking.">
-        <h4>Full Circuit</h4><p>Five rooms, five ways to answer. Win the parts of a sleeping machine and wake it.</p><span class="meta">New · Solo · 5 rooms</span></a>
+      <a class="tc" href="gaslight.html" data-cat="game" data-title="Gaslight" data-blurb="Noir detective cases where your deductions write the ending. Crack a locked-room poisoning, or a murder aboard the night express: a wrong call reroutes the case, it never ends it.">
+        <h4>Gaslight</h4><p>Noir detective cases where your deductions write the ending. A wrong call reroutes the case, it never ends it.</p><span class="meta">Detective fiction · noir cases</span></a>
       <a class="tc" href="full-circuit-bible.html" data-cat="game puzzle bible" data-title="Full Circuit: Bible Edition" data-blurb="Step into five Bible stories, from Samuel's call to Jonah in the deep, gather what you find, and march round the walls of Jericho.">
         <h4>Full Circuit: Bible Edition</h4><p>Five Bible stories, five ways to answer, and the walls of Jericho at the end.</p><span class="meta">New · Solo · 5 stories</span></a>
       <a class="tc" href="standing-room.html" data-cat="game puzzle" data-title="Standing Room" data-blurb="You and an opponent on a floor above deep water. Every step you take sinks the board behind you. Answer right and you choose where to step; answer wrong and the water chooses.">
@@ -332,7 +332,7 @@
         <a class="qc" href="politics-quiz.html" data-cat="quiz" data-title="Politics &amp; Government" data-blurb="Systems, institutions and thinkers, from ancient Athens to the modern state.">
           <h5>Politics &amp; Government</h5><span>130 questions · 4 tiers</span></a>
         <a class="qc" href="crypto-quiz.html" data-cat="quiz" data-title="Crypto &amp; Blockchain" data-blurb="Bitcoin's origins, Ethereum and the fundamentals: history, not hype.">
-          <h5>Crypto &amp; Blockchain</h5><span>129 questions · 4 tiers</span></a>
+          <h5>Crypto &amp; Blockchain</h5><span>134 questions · 4 tiers</span></a>
         </div></div>
 
   </section>
