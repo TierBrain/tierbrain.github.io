@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Full Circuit: team game</title>
+<title>Full Circuit: Bible Edition, team game</title>
 <meta name="description" content="Full Circuit for a team: one big screen, everyone's phones.">
 <meta name="robots" content="noindex">
-<link rel="canonical" href="https://tierbrain.co/full-circuit-host.html">
+<link rel="canonical" href="https://tierbrain.co/full-circuit-bible-host.html">
 <meta name="theme-color" content="#1f130c">
 <script>
 (function(){ if(location.hostname==='tierbrain.github.io'){
@@ -308,7 +308,7 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
 <script src="bible-bank.js?v=1" onerror="window.__noBible=1"></script>
 <script>
 "use strict";
-var ED = /[?&]ed=bible\b/.test(location.search) ? 'bible' : 'house';
+var ED = 'bible';   /* always the Bible Edition. Generated from full-circuit-host.html: edit that file, not this one */
 var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
 async function sb(path,opts){ opts=opts||{}; try{
