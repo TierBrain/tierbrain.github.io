@@ -124,6 +124,29 @@
   @media(max-width:820px){ .feat{grid-template-columns:1fr;} .feat-side{grid-template-rows:none;}
     .f-creak{grid-row:auto;} .fbig{min-height:240px;} }
   @media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+
+/* Today's question: one for everyone each day, a riddle at weekends */
+.qotd{margin:30px 0 8px;background:rgba(255,255,255,.04);border:1px solid rgba(240,182,63,.28);border-radius:18px;padding:20px 22px;}
+.qotd[hidden]{display:none;}
+.qotd-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.qotd-head h2{margin:0;font-size:20px;color:#f0b63f;}
+.qotd-streak{font-weight:800;font-size:14px;color:#f0c98c;}
+.qotd-q{font-size:19px;line-height:1.5;font-weight:700;margin:10px 0 14px;color:#fff;}
+.qotd-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qotd-opts button{font:inherit;font-weight:700;font-size:16px;text-align:left;padding:12px 14px;border-radius:12px;cursor:pointer;
+  background:rgba(255,255,255,.06);color:#eee8f7;border:2px solid rgba(255,255,255,.12);}
+.qotd-opts button:focus-visible,.qotd-foot button:focus-visible,.qotd-foot a:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.qotd-opts button.right{border-color:#5fd68a;background:rgba(95,214,138,.14);}
+.qotd-opts button.wrong{border-color:#ff7a6b;background:rgba(255,122,107,.12);}
+.qotd-opts button:disabled{cursor:default;}
+.qotd-res{min-height:1.4em;margin:12px 0 4px;font-weight:700;color:#cfc9e8;}
+.qotd-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;}
+.qotd-foot a{color:#f0b63f;font-weight:700;}
+.qotd-jump{display:inline-block;margin:6px 0 14px;font-weight:800;color:#f0b63f;text-decoration:none;border:1px solid rgba(240,182,63,.35);border-radius:999px;padding:7px 14px;font-size:15px;}
+.qotd-jump[hidden]{display:none;}
+.qotd-foot button[hidden]{display:none;}
+.qotd-foot button{font:inherit;font-size:15px;font-weight:700;background:none;border:1px solid rgba(255,255,255,.2);color:#eee8f7;border-radius:10px;padding:8px 12px;cursor:pointer;}
+@media (max-width:420px){ .qotd-opts{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -154,6 +177,7 @@
   </header>
 
   <section class="sec" data-sec="feat" aria-label="Start here">
+<a class="qotd-jump" id="qotdJump" href="#qotd" hidden>💡 Today's question</a>
     <div class="secrow"><h2 class="sectitle">Start here</h2><div class="secnote">the ones to try first</div></div>
     <div class="feat">
       <a class="fc f-circuit fbig" href="full-circuit.html" data-cat="game" data-title="Full Circuit" data-blurb="Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen with everyone's phones.">
@@ -186,6 +210,13 @@
   </section>
 
   <section class="sec" data-sec="multi" aria-label="Play together">
+<section class="qotd" id="qotd" aria-labelledby="qotdTitle" hidden>
+  <div class="qotd-head"><h2 id="qotdTitle">Today's question</h2><span class="qotd-streak" id="qotdStreak"></span></div>
+  <p class="qotd-q" id="qotdQ"></p>
+  <div class="qotd-opts" id="qotdOpts"></div>
+  <p class="qotd-res" id="qotdRes" aria-live="polite"></p>
+  <div class="qotd-foot"><a id="qotdMore" href="general-knowledge-quiz.html"></a><button id="qotdShare" type="button" hidden>Share</button><button id="qotdAnother" type="button">Try another</button></div>
+</section>
     <div class="secrow"><h2 class="sectitle">Play together</h2><div class="secnote"><a href="packs.html" style="color:var(--gold)">see the game night packs</a></div></div>
     <div class="grid">
       <a class="tc" href="full-circuit-host.html" data-cat="game multiplayer" data-title="Full Circuit: Team" data-blurb="Explore a strange house together. One of you goes into each room on your own phone while everyone watches the big screen and shouts. Win the parts of a sleeping machine, then become its circuit in the finale.">
@@ -398,6 +429,88 @@
     if(s!==shown){shown=s;btn.classList.toggle('show',s);} }
   window.addEventListener('scroll',chk,{passive:true}); chk();
   btn.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+})();
+</script>
+<script>
+/* Today's question: the same for everyone, picked from the date (UK time), so it
+   needs no server. Weekdays use the easier general-knowledge levels; weekends use
+   Creak & Coil's riddles. The streak is kept on this device only. */
+(function(){
+  var RIDDLES = [{"q": "I am a giant statue holding a torch, standing in New York harbour.", "correct": "The Statue of Liberty", "wrong": ["The Eiffel Tower", "Big Ben", "The Colossus"]}, {"q": "I am a ring of huge standing stones, raised long ago on a plain in England.", "correct": "Stonehenge", "wrong": ["The Colosseum", "The Pyramids", "Hadrian’s Wall"]}, {"q": "I am a large hopping animal from Australia, and I carry my baby in a pouch.", "correct": "A kangaroo", "wrong": ["A koala", "A wallaby", "A wombat"]}, {"q": "I am a small wooden string instrument, played with a bow under the chin.", "correct": "The violin", "wrong": ["The cello", "The guitar", "The harp"]}, {"q": "I am a popular hot drink, made from roasted beans, that helps people wake up.", "correct": "Coffee", "wrong": ["Tea", "Cocoa", "Cola"]}, {"q": "I am a desert animal with one or two humps, able to go a long time without water.", "correct": "A camel", "wrong": ["A llama", "A horse", "A donkey"]}, {"q": "I am a famous snow-capped volcano and the highest mountain in Japan.", "correct": "Mount Fuji", "wrong": ["Mount Everest", "Kilimanjaro", "Vesuvius"]}, {"q": "I am a wooden string instrument, usually with six strings, played by strumming.", "correct": "A guitar", "wrong": ["The violin", "The banjo", "The ukulele"]}, {"q": "I am a bird active at night, known for my large eyes and my ‘twit-twoo’ call.", "correct": "An owl", "wrong": ["An eagle", "A hawk", "A raven"]}, {"q": "I am a sea creature with eight arms, and I squirt ink to escape danger.", "correct": "An octopus", "wrong": ["A squid", "A jellyfish", "A crab"]}, {"q": "I am a tube with lenses that helps you see faraway stars and planets.", "correct": "A telescope", "wrong": ["A microscope", "A periscope", "Binoculars"]}, {"q": "I am a prickly plant that grows in the desert and stores water inside me.", "correct": "A cactus", "wrong": ["A fern", "A palm", "A rose"]}, {"q": "I am a tall tower by the sea, and my bright light warns ships of danger.", "correct": "A lighthouse", "wrong": ["A windmill", "A castle", "A pier"]}, {"q": "I am a pleated, skirt-like garment traditionally worn by men in Scotland.", "correct": "A kilt", "wrong": ["A toga", "A sarong", "A poncho"]}, {"q": "I am a tall structure whose sails turn in the wind to grind grain or make power.", "correct": "A windmill", "wrong": ["A lighthouse", "A water tower", "A crane"]}, {"q": "I am very big and very hot. I am actually a star. I sit at the centre of our solar system.", "correct": "The Sun", "wrong": ["The Moon", "A comet", "Jupiter"]}, {"q": "I am a country in Africa. A famous long river runs through me. I am home to ancient pyramids.", "correct": "Egypt", "wrong": ["Greece", "Mexico", "India"]}, {"q": "I was a scientist. I was born in Germany. I am known for wild, messy hair.", "correct": "Albert Einstein", "wrong": ["Isaac Newton", "Charles Darwin", "Galileo"]}, {"q": "I am a bird, but I cannot fly. I am black and white. I am an excellent swimmer.", "correct": "A penguin", "wrong": ["A puffin", "A dolphin", "An ostrich"]}, {"q": "You can see me in the night sky. I travel around the Earth. I appear to change shape through the month.", "correct": "The Moon", "wrong": ["The Sun", "Mars", "A star"]}, {"q": "I was English. I lived over 400 years ago. I was a writer.", "correct": "William Shakespeare", "wrong": ["Charles Dickens", "Mark Twain", "Jane Austen"]}, {"q": "I am a kind of mountain. Pressure builds up inside me. I can erupt.", "correct": "A volcano", "wrong": ["A glacier", "A canyon", "An earthquake"]}, {"q": "I am found in South America. I am enormous. I am famous as a rainforest.", "correct": "The Amazon", "wrong": ["The Sahara", "The Alps", "The Nile"]}, {"q": "I am a very big cat. I live mainly in Africa. The males have a large mane.", "correct": "A lion", "wrong": ["A tiger", "A leopard", "A cheetah"]}, {"q": "I am a country in Europe. I am famous for cheese and wine. My capital is Paris.", "correct": "France", "wrong": ["Italy", "Spain", "Germany"]}, {"q": "I appear up in the sky. I need both sunshine and rain. I am shaped like an arch.", "correct": "A rainbow", "wrong": ["A cloud", "A shooting star", "Lightning"]}, {"q": "I have no colour, taste or smell. I am essential for all living things. My chemical formula is H2O.", "correct": "Water", "wrong": ["Air", "Oil", "Milk"]}, {"q": "I sit on walls or desks. I have a face but no eyes. I have two or three hands.", "correct": "A clock", "wrong": ["A calendar", "A compass", "A mirror"]}, {"q": "I lived long ago. I was a queen. My kingdom was Egypt.", "correct": "Cleopatra", "wrong": ["Nefertiti", "Helen of Troy", "Boudicca"]}, {"q": "I come from an ancient legend. I was built of wood. I was disguised as a gift.", "correct": "The Trojan Horse", "wrong": ["The Ark", "Pandora’s Box", "The Labyrinth"]}, {"q": "I was a Roman leader and general. I helped turn Rome into an empire. A month of the year is named after me.", "correct": "Julius Caesar", "wrong": ["Augustus", "Nero", "Mark Antony"]}, {"q": "I appear in myths across the world. I am a huge, scaly reptile. I often have great wings.", "correct": "A dragon", "wrong": ["A dinosaur", "A serpent", "A griffin"]}, {"q": "I am very ancient. I am built of huge stone blocks. I have a square base and a pointed top.", "correct": "A pyramid", "wrong": ["A castle", "A temple", "A tower"]}, {"q": "I am a planet. I am a giant ball of gas. I am the sixth planet from the Sun.", "correct": "Saturn", "wrong": ["Jupiter", "Neptune", "Uranus"]}, {"q": "I am a big cat. I live in Africa. I am covered in spots.", "correct": "A cheetah", "wrong": ["A leopard", "A jaguar", "A lion"]}, {"q": "I am a musical instrument. I am usually made of wood. I have six strings.", "correct": "A guitar", "wrong": ["A violin", "A banjo", "A harp"]}, {"q": "I am a sweet treat. I come from the cacao bean. I can be dark, milk or white.", "correct": "Chocolate", "wrong": ["Toffee", "Fudge", "Caramel"]}, {"q": "I happen every four years. Athletes from many nations take part. I began in ancient Greece.", "correct": "The Olympics", "wrong": ["The World Cup", "The Commonwealth Games", "Wimbledon"]}, {"q": "I am inside every person. I am made of over 200 bones. I give the body its shape.", "correct": "A skeleton", "wrong": ["A ghost", "A mummy", "A statue"]}, {"q": "I am a very old, large building. I have thick stone walls. I often have towers and a moat.", "correct": "A castle", "wrong": ["A cathedral", "A palace", "A barn"]}, {"q": "I begin life as a caterpillar. I form a chrysalis. I emerge with colourful wings.", "correct": "A butterfly", "wrong": ["A moth", "A bee", "A dragonfly"]}, {"q": "I live in hot, dry places. I have one or two humps. I can go a long time without water.", "correct": "A camel", "wrong": ["A horse", "A llama", "A donkey"]}, {"q": "I fall from the sky in winter. I am made of frozen water. I am white and very light.", "correct": "A snowflake", "wrong": ["A raindrop", "A hailstone", "Frost"]}, {"q": "I lived in the Middle Ages. I wore a suit of armour. I rode a horse into battle.", "correct": "A knight", "wrong": ["A pirate", "A Viking", "A soldier"]}, {"q": "I live in the ocean. I am a mammal, not a fish. I breathe air through a blowhole.", "correct": "A whale", "wrong": ["A shark", "A dolphin", "A walrus"]}, {"q": "I am a quiet building. I am full of shelves. I hold thousands of books.", "correct": "A library", "wrong": ["A bookshop", "A museum", "A school"]}, {"q": "I sail the seas. I fly a flag with a skull. I hunt for buried treasure.", "correct": "A pirate", "wrong": ["A sailor", "A Viking", "A fisherman"]}, {"q": "I lived millions of years ago. I am now extinct. Some of my kind were enormous.", "correct": "A dinosaur", "wrong": ["A dragon", "A mammoth", "A crocodile"]}, {"q": "I am rather spooky. People say I haunt old houses. I am said to be see-through.", "correct": "A ghost", "wrong": ["A witch", "A zombie", "A vampire"]}, {"q": "I am a kind of vehicle. I travel deep underwater. I use a periscope to see above the surface.", "correct": "A submarine", "wrong": ["A ship", "A jet", "A tank"]}];
+  var $ = function(id){ return document.getElementById(id); };
+  var get = function(){ try{ return JSON.parse(localStorage.getItem('tb_qotd') || '{}'); }catch(e){ return {}; } };
+  var put = function(v){ try{ localStorage.setItem('tb_qotd', JSON.stringify(v)); }catch(e){} };
+  var test = (location.search.match(/[?&]qotd=(\d{4}-\d{2}-\d{2})/) || [])[1];
+  var today = test || new Date().toLocaleDateString('en-CA', { timeZone:'Europe/London' });
+  var p = today.split('-').map(Number), dayNum = Math.floor(Date.UTC(p[0], p[1]-1, p[2]) / 86400000);
+  var weekend = [0, 6].indexOf(new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()) >= 0;
+  var yesterday = new Date(Date.UTC(p[0], p[1]-1, p[2]) - 86400000).toISOString().slice(0, 10);
+  var shuffle = function(a, seed){ a = a.slice(); var s = seed || Math.random() * 1e9;
+    for(var i = a.length - 1; i > 0; i--){ s = (s * 9301 + 49297) % 233280; var j = Math.floor(s / 233280 * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
+  var pick = function(pool, n){ return pool[((n * 2654435761) >>> 0) % pool.length]; };
+  var show = function(q, daily){
+    var st = get(), done = daily && st.date === today ? st : null;
+    $('qotdTitle').textContent = daily ? (weekend ? "Today's riddle" : "Today's question") : 'Another one';
+    $('qotdQ').textContent = q.q;
+    var opts = shuffle([q.correct].concat(q.wrong.slice(0, 3)), daily ? dayNum : 0), box = $('qotdOpts'); box.innerHTML = '';
+    $('qotdRes').textContent = '';
+    opts.forEach(function(o){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = o;
+      b.addEventListener('click', function(){ answer(q, o, daily); });
+      box.appendChild(b);
+    });
+    if(done){ mark(q, done.pick, true); offerShare(q, done.pick === q.correct); } else if(daily) $('qotdShare').hidden = true;
+    if(!daily) $('qotdShare').hidden = true;
+    var s = get().streak || 0;
+    $('qotdStreak').textContent = s >= 2 ? '\uD83D\uDD25 ' + s + '-day streak' : '';
+    $('qotdMore').textContent = weekend ? 'More riddles like this in Creak & Coil' : 'Play the General Knowledge climb';
+    $('qotdMore').href = weekend ? 'creak.html' : 'general-knowledge-quiz.html';
+  };
+  var mark = function(q, chosen, again){
+    var right = chosen === q.correct;
+    [].forEach.call($('qotdOpts').children, function(b){ b.disabled = true;
+      if(b.textContent === q.correct) b.classList.add('right'); else if(b.textContent === chosen) b.classList.add('wrong'); });
+    $('qotdRes').textContent = (right ? 'Right! ' : 'Not quite. ') + 'The answer is ' + q.correct + '.' + (again ? ' Come back tomorrow for a new one.' : '');
+  };
+  var answer = function(q, chosen, daily){
+    if(daily){ var st = get();
+      if(st.date !== today){ st.streak = st.date === yesterday ? (st.streak || 0) + 1 : 1; st.date = today; st.pick = chosen; put(st); }
+      var s = st.streak || 0; $('qotdStreak').textContent = s >= 2 ? '\uD83D\uDD25 ' + s + '-day streak' : ''; }
+    mark(q, chosen, daily);
+    if(daily) offerShare(q, chosen === q.correct);
+  };
+  var offerShare = function(q, right){
+    var s = get().streak || 0, kind = weekend ? 'riddle' : 'question';
+    var text = 'Today\u2019s TierBrain ' + kind + ': \u201C' + (q.q.length > 110 ? q.q.slice(0, 107) + '\u2026' : q.q) + '\u201D ' +
+      (right ? '\u2705 Got it' : '\u274C It beat me') + (s >= 2 ? ', \uD83D\uDD25 ' + s + '-day streak' : '') + '. Can you?';
+    var url = 'https://tierbrain.co/#qotd', btn = $('qotdShare'); btn.hidden = false;
+    btn.onclick = function(){
+      if(navigator.share){ navigator.share({ text:text, url:url }).catch(function(){}); }
+      else window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url), '_blank', 'noopener');
+    };
+  };
+  var start = function(pool){
+    if(!pool.length) return;
+    show(pick(pool, dayNum), true);
+    $('qotdAnother').onclick = function(){ show(pool[Math.floor(Math.random() * pool.length)], false); };
+    $('qotd').hidden = false;
+    var jump = $('qotdJump'), box = $('qotd');
+    jump.textContent = '\uD83D\uDCA1 Today\u2019s ' + (weekend ? 'riddle' : 'question');
+    if(get().date){ jump.parentNode.insertBefore(box, jump); jump.hidden = true; }   /* returning player: the box goes to the top */
+    else jump.hidden = false;
+    if(location.hash === '#qotd') box.scrollIntoView({ block:'start' });
+  };
+  var fits = function(q){ return q && q.wrong && q.wrong.length >= 3 && q.q.length <= 140 && [q.correct].concat(q.wrong.slice(0, 3)).every(function(a){ return String(a).length <= 26; }); };
+  var go = function(){
+    if(weekend) return start(RIDDLES);
+    /* if the question file can't load (offline, or opened outside the site), show a riddle instead, so the box always appears */
+    var fellBack = false, fallback = function(){ if(fellBack || !$('qotd').hidden) return; fellBack = true; weekend = true; start(RIDDLES); };
+    var sc = document.createElement('script'); sc.src = 'questions.js?v=7';
+    sc.onload = function(){ try{ var b = window.TB.bank('gk'); start((b['1'] || []).concat(b['2'] || []).filter(fits)); }catch(e){ fallback(); } };
+    sc.onerror = fallback; setTimeout(fallback, 4000);
+    document.body.appendChild(sc);
+  };
+  if(document.readyState === 'complete') go(); else window.addEventListener('load', go);
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
