@@ -147,6 +147,11 @@
 .qotd-foot button[hidden]{display:none;}
 .qotd-foot button{font:inherit;font-size:15px;font-weight:700;background:none;border:1px solid rgba(255,255,255,.2);color:#eee8f7;border-radius:10px;padding:8px 12px;cursor:pointer;}
 @media (max-width:420px){ .qotd-opts{grid-template-columns:1fr;} }
+
+.tb-collapsed > .tb-more{display:none !important;}
+.tb-showall{display:block;margin:16px auto 4px;font:inherit;font-weight:800;color:#f2c95c;background:none;border:1px solid rgba(242,201,92,.45);border-radius:999px;padding:10px 22px;cursor:pointer;}
+.tb-showall:focus-visible{outline:3px solid #f2c95c;outline-offset:3px;}
+.tb-play-note{color:#a9a4cf;font-weight:700;margin:4px 0 14px;}
 </style>
 </head>
 <body>
@@ -429,6 +434,41 @@
     if(s!==shown){shown=s;btn.classList.toggle('show',s);} }
   window.addEventListener('scroll',chk,{passive:true}); chk();
   btn.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+})();
+</script>
+<script>
+/* Homepage layout A ("curated shop"): a lighter top, search where browsing
+   starts, and six games per section with "Show all". Searching or filtering
+   opens every section, so no game can be missed. */
+(function(){
+  var T = function(re){ return [].filter.call(document.querySelectorAll('body *'), function(e){ return e.children.length === 0 && re.test(e.textContent.trim()); }); };
+  var H = function(re){ return [].find.call(document.querySelectorAll('h2'), function(x){ return re.test(x.textContent); }); };
+  var eyebrow = T(/^A free hub of browser games$/)[0]; if(eyebrow) eyebrow.style.display = 'none';
+  var para = T(/^Quizzes, puzzles, party games/)[0]; if(para) para.textContent = 'Answer well, and something happens: a ladder holds, a throne is won, a case cracks open.';
+  var play = H(/Play together/), callout = T(/^Got people coming round\?$/)[0];
+  if(callout && play){ callout.parentElement.style.display = 'none';
+    var note = document.createElement('p'); note.className = 'tb-play-note'; note.textContent = 'Got people coming round? Put it on the big screen, everyone joins on their phone.';
+    play.parentElement.after(note); }
+  var input = document.querySelector('input'), wrap = input && input.parentElement;
+  var chips = ([].find.call(document.querySelectorAll('button'), function(b){ return b.textContent.trim() === 'All'; }) || {}).parentElement;
+  if(play && wrap){ var tray = document.createElement('div'); tray.style.margin = '6px 0 18px'; tray.appendChild(wrap); if(chips) tray.appendChild(chips);
+    play.parentElement.parentNode.insertBefore(tray, play.parentElement); }
+  var count = T(/^\d+ games$/)[0], jump = document.getElementById('qotdJump');
+  if(count && jump){ count.after(jump); jump.style.marginLeft = '10px'; }
+  var grids = [];
+  ['Play together', 'Adventures', 'Quick games', 'Quizzes'].forEach(function(n){
+    var hh = H(new RegExp(n)); if(!hh) return;
+    var c = [].find.call(document.querySelectorAll('a.tc'), function(a){ return hh.compareDocumentPosition(a) & 4; }); if(!c) return;
+    var g = c.parentElement, items = [].slice.call(g.children); if(items.length <= 6 || grids.indexOf(g) >= 0) return;
+    items.slice(6).forEach(function(x){ x.classList.add('tb-more'); });
+    g.classList.add('tb-collapsed'); grids.push(g);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'tb-showall'; b.textContent = 'Show all ' + items.length;
+    b.addEventListener('click', function(){ g.classList.remove('tb-collapsed'); b.remove(); });
+    g.after(b); g._btn = b;
+  });
+  var openAll = function(){ grids.forEach(function(g){ g.classList.remove('tb-collapsed'); if(g._btn){ g._btn.remove(); g._btn = null; } }); };
+  if(input) input.addEventListener('input', openAll, true);
+  if(chips) chips.addEventListener('click', openAll, true);
 })();
 </script>
 <script>
