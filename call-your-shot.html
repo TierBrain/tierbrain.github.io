@@ -3,23 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Answer, then throw a dart at the bullseye to stake how sure you are: bold for big points, safe for small.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://tierbrain.co/call-your-shot.html">
-<meta property="og:title" content="Call Your Shot">
-<meta property="og:description" content="Answer, then throw a dart at the bullseye to stake how sure you are: bold for big points, safe for small.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://tierbrain.co/call-your-shot.html">
-<script>
-/* Anyone arriving on the old github.io address is moved to the real domain,
-   keeping whatever page they asked for. Canonical tags alone are only a hint. */
-(function(){
-  if(location.hostname === 'tierbrain.github.io'){
-    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
-  }
-})();
-</script>
 <title>Call Your Shot | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,6 +198,20 @@
   .rnum{ text-shadow:0 1px 2px rgba(0,0,0,.45); }
   .rCertain .rnum{ color:#3a2600 !important; text-shadow:none; }
   .legend b{ color:var(--gold); }
+
+/* the question sits higher, closing the empty gap above it */
+#qcard{justify-content:flex-start !important;}
+
+#ringHunch,#ringFair,#ringCertain{box-shadow:inset 0 0 0 3px rgba(226,231,236,.9),0 0 0 2px rgba(0,0,0,.4) !important;}
+#ringHunch::before,#ringFair::before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;background:repeating-conic-gradient(rgba(10,10,10,.28) 0 1.2deg,transparent 1.2deg 18deg);}
+#ringCertain{box-shadow:inset 0 0 0 3px rgba(226,231,236,.9),0 0 18px rgba(255,214,90,.55) !important;}
+#ringHunch .rnum,#ringFair .rnum,#ringCertain .rnum{pointer-events:none;}
+.legend{font-size:15px !important;line-height:1.55 !important;}
+.dart{display:none !important;}
+.cys-dart{position:absolute;width:86px;height:24px;transform-origin:0 12px;pointer-events:none;z-index:6;filter:drop-shadow(2px 3px 2px rgba(0,0,0,.45));}
+.cys-ripple{position:fixed;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:3px solid #fff;pointer-events:none;z-index:50;animation:cysRip .5s ease-out forwards;}
+@keyframes cysRip{to{transform:scale(4.5);opacity:0;}}
+@media (prefers-reduced-motion: reduce){ .cys-ripple{display:none;} }
 </style>
   <script src="questions.js?v=7"></script>
 </head>
@@ -258,12 +255,12 @@
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Two beats:</b> pick your answer, then call your shot on the bullseye.</span></div>
       <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Bullseye is bold:</b> +3 if right but −3 if wrong; the outer ring is safe (+1, no penalty).</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 correct in a row moves you up a tier, the dart only moves your score.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 correct in a row moves you up a tier: the dart only moves your score.</span></div>
       <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code (optional)</div>
+    <div class="timelabel">Group code: optional</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start</button>
@@ -300,7 +297,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up: here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and scored <b id="tuCorr">0</b> points</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -320,7 +317,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet: be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -370,7 +367,7 @@
     renderStrikes(); newQuestion();
   }
 
-  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let TIME_LIMIT=150000;   // countdown length, set by the clock selector
   let playing=false;
   function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
   function tickTimer(){
@@ -432,7 +429,7 @@
     beep(540,0.05,'sine',0.12);
     $('phaseQ').classList.add('hidden');
     $('phaseThrow').classList.remove('hidden');
-    $('throwPrompt').textContent='You answered “'+o+'”, how sure are you?';
+    $('throwPrompt').textContent='You answered “'+o+'”: how sure are you?';
   }
   const PAY={1:{r:1,w:0,name:'Hunch'},2:{r:2,w:-1,name:'Fairly sure'},3:{r:3,w:-3,name:'Certain'}};
   const RINGID={1:'ringHunch',2:'ringFair',3:'ringCertain'};
@@ -449,7 +446,7 @@
     $('progbar').style.width=(answered/20*100)+'%';
     const sign=(delta>=0?'+':'');
     $('shotResult').innerHTML=(right?'<b style="color:var(--right)">Right!</b> ':'<b style="color:var(--wrong)">Wrong.</b> ')+sign+delta+' pts'+(right?'':' &nbsp;·&nbsp; it was '+escapeHtml(current.correct));
-    $('throwPrompt').textContent=PAY[ring].name+(right?', nailed it':', ouch');
+    $('throwPrompt').textContent=PAY[ring].name+(right?': nailed it':': ouch');
     setTimeout(function(){
       if(!playing) return;
       if(totalWrong>=4){ endOut(); return; }
@@ -511,7 +508,7 @@
   // start on menu
   renderStrikes();
   // ---- clock selector ----
-  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  const TIME_OPTS=[{n:'Chill',ms:210000,l:'3:30'},{n:'Classic',ms:150000,l:'2:30'},{n:'Hard',ms:90000,l:'1:30'}];
   (function(){ const row=$('timeRow'); if(!row) return;
     TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
       b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
@@ -575,18 +572,18 @@
     });
   }
   function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
-  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
   async function refreshShared(hi){
     setMode();
     const list=$('boardList'); $('boardEmpty').classList.add('hidden');
     list.innerHTML='<li class="bload">Loading\u2026</li>';
     try{
       BOARD=await sbLoad(); renderRows(BOARD,hi);
-      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
       $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
     }catch(err){
       list.innerHTML='';
-      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
       $('boardEmpty').classList.remove('hidden');
     }
   }
@@ -645,6 +642,45 @@
   };
 })();
 </script>
-<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script>
+/* The dart: flies in from below (large, as if leaving your hand), lands tip-first
+   where you tapped, wobbles as it sticks, and stays until the next question.
+   The thunk and ripple fire on impact. Reduced motion: it simply appears. */
+(function(){
+  var ac = null, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DART = '<svg width="86" height="24" viewBox="0 0 86 24" aria-hidden="true">'
+    + '<path d="M0 12 L12 10 L12 14 Z" fill="#d9dee3"/><rect x="12" y="9" width="8" height="6" rx="1" fill="#9aa3ab"/>'
+    + '<rect x="20" y="8" width="26" height="8" rx="3" fill="#c9a24a"/><path d="M24 8 V16 M29 8 V16 M34 8 V16 M39 8 V16" stroke="#7d5a22" stroke-width="1.4"/>'
+    + '<rect x="46" y="10.5" width="14" height="3" fill="#3a3f45"/>'
+    + '<path d="M60 12 L84 1 L78 12 L84 23 Z" fill="#e2553e"/><path d="M60 12 L84 1 L78 12 Z" fill="#ff7a5c"/></svg>';
+  var boom = function(x, y){
+    var d = document.createElement('div'); d.className = 'cys-ripple'; d.style.left = x + 'px'; d.style.top = y + 'px';
+    document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 600);
+    try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.type = 'triangle'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(70, t + .12);
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + .16); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + .18); }catch(x){}
+  };
+  document.addEventListener('click', function(e){
+    var r = e.target.closest && e.target.closest('#ringHunch,#ringFair,#ringCertain'); if(!r) return;
+    var board = r.parentElement, br = board.getBoundingClientRect();
+    [].forEach.call(document.querySelectorAll('.cys-dart'), function(d){ d.remove(); });
+    var dart = document.createElement('div'); dart.className = 'cys-dart'; dart.innerHTML = DART;
+    dart.style.left = (e.clientX - br.left) + 'px'; dart.style.top = (e.clientY - br.top - 12) + 'px';
+    board.appendChild(dart);
+    var rest = 'rotate(35deg)';
+    if(reduce){ dart.style.transform = rest; boom(e.clientX, e.clientY); return; }
+    var fly = dart.animate([
+      { transform:'translate(150px, 340px) rotate(35deg) scale(2.3)', opacity:0 },
+      { transform:'translate(110px, 240px) rotate(35deg) scale(1.9)', opacity:1, offset:.2 },
+      { transform:'translate(0, 0) ' + rest + ' scale(1)', opacity:1 }
+    ], { duration:330, easing:'cubic-bezier(.4,.1,.8,.6)', fill:'forwards' });
+    fly.onfinish = function(){
+      boom(e.clientX, e.clientY);
+      dart.animate([{ transform:'rotate(35deg)' }, { transform:'rotate(39deg)' }, { transform:'rotate(32deg)' }, { transform:'rotate(36.5deg)' }, { transform:rest }],
+        { duration:280, easing:'ease-out', fill:'forwards' });
+    };
+  }, true);
+})();
+</script>
 </body>
 </html>
