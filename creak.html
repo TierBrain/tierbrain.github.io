@@ -78,6 +78,10 @@
   .coffee{display:inline-block;margin-top:16px;color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.02em;text-decoration:none;opacity:.8;}
   .coffee:hover{opacity:1;color:var(--gold-hi);}
 </style>
+<style>
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;} }
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
 </head>
 <body>
   <header>
@@ -88,7 +92,7 @@
   <div class="wrap">
     <div class="boardwrap"><canvas id="board"></canvas></div>
     <div class="hud">
-      <div class="status" id="status">Roll to begin your climb.</div>
+      <div class="status" id="status" aria-live="polite" role="status">Roll to begin your climb.</div>
       <div class="die" id="die"></div>
     </div>
     <button class="btn" id="roll">Roll</button>
@@ -765,6 +769,26 @@ requestAnimationFrame(loop);
 
 // expose pure logic for testing
 window.__CC={genBoard,resolveLanding,TOP,COLS,ROWS,POOL,pickQuestion,slug,timerFor,spawnDebris,shake,punch,snakePointAt,loop,getParticles:function(){return particles;},setBoard:function(b){board=b;},spawnRocks,spawnWind,showRoc:function(){roc.show=true;roc.x=100;roc.y=100;}};
+</script>
+<div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+/* Comfort and access. For players who have asked for less movement, the screen
+   shake, camera punch and particle bursts are switched off at their source;
+   tokens still walk, climb and slide so the board stays readable. Answers are
+   announced for screen readers. */
+(function(){
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){
+    ['shake', 'punch', 'spawnDust', 'spawnDebris'].forEach(function(n){ if(typeof window[n] === 'function') window[n] = function(){}; });
+  }
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return; var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var got = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(got('right') || got('correct')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); } if(got('wrong')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
