@@ -109,6 +109,8 @@ body.host .app{max-width:1100px;} body.host .study{min-height:52vh;} body.host .
 .lobby h1{font-family:var(--serif);font-size:44px;margin:0 0 8px;color:var(--gold-hi);} .lobby p{color:var(--soft);line-height:1.6;margin:0 0 10px;}
 .code{font-family:var(--serif);font-size:64px;letter-spacing:.08em;color:var(--gold-hi);margin:6px 0;}
 .qr{background:#fff;border-radius:14px;padding:12px;width:220px;height:220px;} .qr img{width:100%;height:100%;display:block;}
+.skip{position:absolute;right:12px;top:12px;z-index:6;border:1px solid rgba(243,234,214,.3);background:rgba(10,20,15,.7);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:800;cursor:pointer;pointer-events:auto !important;}
+.skip[hidden]{display:none;} .skip:focus-visible{outline:3px solid var(--lamp);outline-offset:2px;}
 .plist{list-style:none;margin:10px 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:8px;} .plist li{background:rgba(243,234,214,.1);border-radius:999px;padding:6px 14px;font-weight:800;}
 .plist li.out{opacity:.35;text-decoration:line-through;} .plist li.now{background:var(--gold);color:#2a1a0c;}
 .turnbar{font-family:var(--serif);font-size:22px;color:var(--gold-hi);margin:0;}
@@ -135,6 +137,7 @@ body.host .app{max-width:1100px;} body.host .study{min-height:52vh;} body.host .
     <div class="cone"></div><svg class="lamp" viewBox="0 0 118 150" aria-hidden="true"><path d="M14 150 H62" stroke="#6b4a26" stroke-width="7" stroke-linecap="round"/><path d="M38 146 L30 70 L74 28" fill="none" stroke="#b8862f" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="70" r="5" fill="#d9b25a"/><path d="M60 10 L104 30 L86 62 L44 40 Z" fill="#2f5a3f" stroke="#1d3a28" stroke-width="2"/><ellipse cx="78" cy="52" rx="13" ry="6" fill="#fff1c9" transform="rotate(28 78 52)" style="filter:drop-shadow(0 0 10px #ffd79a)"/></svg>
     <div class="desk"></div>
     <div class="pile" id="pile"></div>
+    <button class="skip" id="skipBtn" type="button" hidden>Skip this turn</button>
   </section>
   <p class="hint" id="hint"></p>
   <section class="card" id="card" hidden aria-live="polite">
@@ -372,6 +375,7 @@ function nextTurn(advance){
   if(advance) P.idx = (P.idx + 1) % P.alive.length;
   P.turn = P.alive[P.idx]; P.seq++; P.phase = 'choose'; P.q = null; P.msg = '';
   hint(nameOf(P.turn) + ' is choosing a book.'); say(nameOf(P.turn) + '\u2019s turn.'); partyState(); watch();
+  $('skipBtn').textContent = 'Skip ' + nameOf(P.turn) + '\u2019s turn'; $('skipBtn').hidden = false;
 }
 function watch(){ clearInterval(P.movePoll); var seq = P.seq;
   P.movePoll = setInterval(async function(){ if(seq !== P.seq) return clearInterval(P.movePoll);
@@ -379,14 +383,18 @@ function watch(){ clearInterval(P.movePoll); var seq = P.seq;
     var pick = rows.filter(function(r){ return r.q_id === 'pick'; })[0], ans = rows.filter(function(r){ return r.q_id === 'zans'; })[0];
     if(P.phase === 'choose' && pick){ var i = parseInt(pick.choice, 10); if(i >= 0 && i < G.books.length - 1){ choose(i);
         P.q = { q:G.q.q, opts:[].map.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent; }), subj:G.books[i].subj, t:tierOf(i, G.books.length) }; P.phase = 'question'; partyState(); } }
-    else if(P.phase === 'question' && ans){ clearInterval(P.movePoll); P.phase = 'result';
+    else if(P.phase === 'question' && ans){ clearInterval(P.movePoll); P.phase = 'result'; $('skipBtn').hidden = true;
       var btn = [].filter.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent === ans.choice; })[0];
       P.msg = ans.choice === G.q.correct ? nameOf(P.turn) + ' got it right.' : nameOf(P.turn) + ' got it wrong. It was ' + G.q.correct + '.';
       partyState(); answer(ans.choice, btn || document.createElement('button')); }
   }, 800); }
 /* after each move: keep going, or knock out whoever toppled the pile */
+$('skipBtn').addEventListener('click', function(){ if(!P || G.busy || G.over) return; clearInterval(P.movePoll);
+  if(G.sel >= 0){ G.books[G.sel].el.classList.remove('pick'); G.sel = -1; } $('card').hidden = true; $('study').classList.remove('tight'); render();
+  P.msg = nameOf(P.turn) + '\u2019s turn was skipped.'; say(P.msg); nextTurn(true); });
 function partyAfterSettle(){ if(MODE === 'host' && P && !G.over) setTimeout(function(){ nextTurn(true); }, 900); }
 function partyKnockout(){
+  $('skipBtn').hidden = true;
   var who = P.turn; P.out.push(who); P.alive.splice(P.idx, 1); paintPlayers();
   if(P.alive.length <= 1){ P.winner = nameOf(P.alive[0]); P.phase = 'over'; P.msg = nameOf(who) + ' toppled the pile. ' + P.winner + ' is the last one standing!';
     partyState(); $('end').querySelector('h1').textContent = P.winner + ' wins'; $('endText').textContent = P.msg; $('endPts').textContent = ''; $('endBest').textContent = '';
