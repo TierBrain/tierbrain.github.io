@@ -83,6 +83,43 @@ button{font:inherit;color:inherit;}
 .go:focus-visible{outline:3px solid var(--lamp);outline-offset:3px;}
 .big{font-family:var(--serif);font-size:44px;color:var(--gold-hi);margin:4px 0;}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+
+/* ===== stage two: the lamp, real bindings, pages and dust ===== */
+.lamp{position:absolute;left:4%;top:0;width:118px;height:150px;pointer-events:none;z-index:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));}
+.cone{position:absolute;left:-10%;top:40px;width:120%;height:100%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 75% at 26% 0%,rgba(255,220,150,.30),rgba(255,200,120,.10) 45%,transparent 72%);}
+.book.cloth{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 2px,transparent 2px 4px),repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0 2px,transparent 2px 4px),
+  linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 35%,rgba(0,0,0,.28)) !important;}
+.book.leather{background-image:radial-gradient(circle at 20% 30%,rgba(255,255,255,.07) 0 1px,transparent 2px),radial-gradient(circle at 70% 60%,rgba(0,0,0,.12) 0 1px,transparent 2px),
+  linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 30%,rgba(0,0,0,.34)) !important;background-size:7px 7px,9px 9px,100% 100% !important;}
+.book.linen{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px),
+  linear-gradient(180deg,rgba(255,255,255,.14),rgba(0,0,0,.22)) !important;}
+.book .lbl{position:relative;padding:1px 8px;border-radius:2px;}
+.book.panel .lbl{background:rgba(0,0,0,.32);box-shadow:inset 0 0 0 1px rgba(241,211,140,.45);}
+.page{position:absolute;width:26px;height:34px;background:linear-gradient(180deg,#fbf6ea,#e9e0cc);border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:none;z-index:40;}
+.page::before{content:"";position:absolute;left:4px;right:4px;top:6px;bottom:6px;background:repeating-linear-gradient(180deg,rgba(80,60,40,.25) 0 1px,transparent 1px 4px);}
+.lamp,.cone{transition:opacity .35s,transform .35s;transform-origin:0 0;}
+.study.tight .lamp{opacity:.35;transform:scale(.7);} .study.tight .cone{opacity:.5;}
+.dust{position:absolute;width:10px;height:10px;border-radius:50%;background:rgba(230,215,185,.45);pointer-events:none;z-index:39;filter:blur(2px);}
+
+/* ===== party mode ===== */
+body.host .app{max-width:1100px;} body.host .study{min-height:52vh;} body.host .book,body.host .opt{pointer-events:none;}
+.lobby{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(10,18,14,.94);}
+.lobby[hidden]{display:none;} .lobby .box{max-width:760px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;}
+.lobby h1{font-family:var(--serif);font-size:44px;margin:0 0 8px;color:var(--gold-hi);} .lobby p{color:var(--soft);line-height:1.6;margin:0 0 10px;}
+.code{font-family:var(--serif);font-size:64px;letter-spacing:.08em;color:var(--gold-hi);margin:6px 0;}
+.qr{background:#fff;border-radius:14px;padding:12px;width:220px;height:220px;} .qr img{width:100%;height:100%;display:block;}
+.plist{list-style:none;margin:10px 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:8px;} .plist li{background:rgba(243,234,214,.1);border-radius:999px;padding:6px 14px;font-weight:800;}
+.plist li.out{opacity:.35;text-decoration:line-through;} .plist li.now{background:var(--gold);color:#2a1a0c;}
+.turnbar{font-family:var(--serif);font-size:22px;color:var(--gold-hi);margin:0;}
+@media (max-width:700px){ .lobby .box{grid-template-columns:1fr;} }
+/* the phone */
+.phone{position:fixed;inset:0;z-index:36;overflow:auto;padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,var(--wall2),var(--wall));}
+.phone[hidden]{display:none;} .phone h1{font-family:var(--serif);color:var(--gold-hi);font-size:34px;margin:0 0 10px;}
+.phone .msg{font-size:17px;line-height:1.5;color:var(--ink);margin:0 0 14px;}
+.phone input{width:100%;font:inherit;font-weight:800;font-size:18px;padding:12px;border-radius:10px;border:2px solid rgba(243,234,214,.25);background:rgba(10,20,15,.6);color:var(--ink);margin:0 0 12px;}
+.blist{display:grid;gap:8px;} .blist button{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:15px;color:var(--gold-hi);cursor:pointer;font-family:var(--serif);}
+.blist button small{font-family:var(--ui);color:var(--ink);opacity:.85;}
 @media (prefers-reduced-motion: reduce){ .book{transition:none;} .book.jam{animation:none;} }
 </style>
 </head>
@@ -95,6 +132,7 @@ button{font:inherit;color:inherit;}
     <button class="snd" id="snd" type="button" aria-label="Sound on" aria-pressed="true">&#x1F50A;</button>
   </header>
   <section class="study" id="study" aria-label="The pile of books">
+    <div class="cone"></div><svg class="lamp" viewBox="0 0 118 150" aria-hidden="true"><path d="M14 150 H62" stroke="#6b4a26" stroke-width="7" stroke-linecap="round"/><path d="M38 146 L30 70 L74 28" fill="none" stroke="#b8862f" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="70" r="5" fill="#d9b25a"/><path d="M60 10 L104 30 L86 62 L44 40 Z" fill="#2f5a3f" stroke="#1d3a28" stroke-width="2"/><ellipse cx="78" cy="52" rx="13" ry="6" fill="#fff1c9" transform="rotate(28 78 52)" style="filter:drop-shadow(0 0 10px #ffd79a)"/></svg>
     <div class="desk"></div>
     <div class="pile" id="pile"></div>
   </section>
@@ -105,11 +143,21 @@ button{font:inherit;color:inherit;}
   <p class="sr" id="say" aria-live="polite"></p>
 </div>
 
+<section class="lobby" id="lobby" hidden>
+  <div class="box">
+    <div><h1>Spines: party</h1><p>Scan the code, or go to the address below and enter the room code. Take turns pulling books; whoever topples the pile is out, and the last one standing wins.</p>
+      <div class="code" id="lcode"></div><p id="llink" style="font-weight:800;color:var(--ink)"></p><ul class="plist" id="lplayers"></ul>
+      <button class="go" id="lstart" type="button" disabled>Start the game</button> <span id="lneed" style="color:var(--soft);margin-left:8px">Needs at least 2 players</span></div>
+    <div class="qr"><img id="lqr" alt="QR code to join the game"></div>
+  </div>
+</section>
+<section class="phone" id="phone" hidden><h1>Spines</h1><p class="msg" id="pmsg"></p><div id="parea"></div></section>
 <section class="over" id="start">
   <div class="box">
     <h1>Spines</h1>
     <p>A pile of old books stands on the desk, each spine stamped with a subject. Choose a book, answer its question, and set it on top.</p>
     <p>Books near the bottom are worth more, but pulling them costs the pile its balance, and a wrong answer makes it sway. Keep it standing as long as you can.</p>
+    <p id="bankNote" hidden style="color:#ff917c;font-weight:800">The subject questions could not load, so every book will be General Knowledge for now. If you run this site: check that spines-bank.js sits beside spines.html, with exactly that name.</p>
     <button class="go" id="goBtn" type="button">Choose your first book</button>
   </div>
 </section>
@@ -134,6 +182,7 @@ var store = function(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }, reca
 /* ---------- questions by subject ---------- */
 var BANK = window.SPINES_BANK || { 'General Knowledge':{ '1':[{q:'How many days are in a week?',correct:'Seven',wrong:['Five','Six','Eight']}], '2':[{q:'What is the capital of France?',correct:'Paris',wrong:['Rome','Madrid','Berlin']}], '3':[{q:'What is the largest planet?',correct:'Jupiter',wrong:['Saturn','Neptune','Earth']}] } };
 var SUBJECTS = Object.keys(BANK), seen = {};
+if(!window.SPINES_BANK){ var bn = document.getElementById('bankNote'); if(bn) bn.hidden = false; }
 function ask(subj, tier){ var L = (BANK[subj][tier] || []).filter(function(q){ return !seen[q.q]; }); if(!L.length){ L = BANK[subj][tier] || BANK[subj]['1']; }
   var q = L[Math.floor(Math.random() * L.length)]; seen[q.q] = 1; return q; }
 function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -161,17 +210,18 @@ var COLOURS = ['#7a2430', '#1f3a5f', '#2f5a3f', '#8a6420', '#5b2d55', '#22575a',
 var LIMIT = 9;   /* degrees of lean the pile can bear */
 var G = null;
 function newBook(){ return { subj:SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)], col:COLOURS[Math.floor(Math.random() * COLOURS.length)],
-  w:150 + Math.floor(Math.random() * 80), h:26 + Math.floor(Math.random() * 9), jx:Math.round(Math.random() * 18 - 9), el:null }; }
+  w:150 + Math.floor(Math.random() * 80), h:26 + Math.floor(Math.random() * 9), jx:Math.round(Math.random() * 18 - 9), el:null,
+  kind:['cloth', 'leather', 'linen'][Math.floor(Math.random() * 3)], panel:Math.random() < .35 }; }
 function tierOf(i, n){ var r = i / (n - 1); return r < .34 ? '3' : (r < .67 ? '2' : '1'); }
 function depthName(t){ return t === '3' ? 'near the bottom' : (t === '2' ? 'in the middle' : 'near the top'); }
 function newGame(){
   G = { books:[], lean:0, pts:0, moved:0, busy:false, over:false, sel:-1 };
   for(var i = 0; i < 15; i++) G.books.push(newBook());
-  $('pile').innerHTML = ''; G.books.forEach(function(b){ makeEl(b); });
+  $('pile').innerHTML = ''; [].forEach.call(document.querySelectorAll('.page, .dust'), function(x){ x.remove(); }); G.books.forEach(function(b){ makeEl(b); });
   render(); hint('Choose a book. Lower books are worth more, but cost the pile its balance.'); $('card').hidden = true; $('end').hidden = true;
 }
-function makeEl(b){ var e = document.createElement('button'); e.type = 'button'; e.className = 'book'; e.textContent = b.subj;
-  e.style.width = b.w + 'px'; e.style.height = b.h + 'px'; e.style.background = 'linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.18)),' + b.col;
+function makeEl(b){ var e = document.createElement('button'); e.type = 'button'; e.className = 'book ' + b.kind + (b.panel ? ' panel' : ''); e.innerHTML = '<span class="lbl"></span>'; e.firstChild.textContent = b.subj;
+  e.style.width = b.w + 'px'; e.style.height = b.h + 'px'; e.style.backgroundColor = b.col;
   e.addEventListener('click', function(){ choose(G.books.indexOf(b)); }); b.el = e; $('pile').appendChild(e); }
 /* every book's place: stacked from the desk up, each shifted by the lean in proportion to its height */
 function render(){
@@ -192,12 +242,14 @@ function hint(t){ $('hint').textContent = t; }
 function choose(i){
   if(!G || G.busy || G.over || i < 0 || i >= G.books.length - 1) return; actx();
   if(G.sel >= 0) G.books[G.sel].el.classList.remove('pick');
+  noise(0, .05, .3, 1300, 'bandpass');
   var b = G.books[i], t = tierOf(i, G.books.length), q = ask(b.subj, t); G.sel = i; G.q = q; b.el.classList.add('pick');
   $('tag').textContent = b.subj + ', ' + depthName(t) + ', ' + t + (t === '1' ? ' point' : ' points'); $('q').textContent = q.q;
   var box = $('opts'); box.innerHTML = '';
   shuffle([q.correct].concat(q.wrong.slice(0, 3))).forEach(function(o){ var x = document.createElement('button'); x.type = 'button'; x.className = 'opt'; x.textContent = o;
     x.addEventListener('click', function(){ answer(o, x); }); box.appendChild(x); });
   $('card').hidden = false; hint(''); say(b.subj + ' question: ' + q.q);
+  $('study').classList.add('tight');
   render(); b.el.classList.add('pick');   /* the study is smaller with the card open, so the pile re-fits */
 }
 function answer(o, btn){
@@ -224,15 +276,20 @@ function pull(i){
   if(!reduce){ b.el.style.transform += ' translateX(' + (G.lean >= 0 ? -320 : 320) + 'px)'; }
   setTimeout(function(){
     G.books.splice(i, 1); G.books.push(b); b.jx = Math.round(Math.random() * 18 - 9);
-    $('pile').appendChild(b.el); render(); SFX.thump(.15); settle();
+    $('pile').appendChild(b.el); render();
+    if(!reduce){ var fin = b.el.style.transform; b.el.style.transition = 'none'; b.el.style.transform = fin + ' translate(' + (G.lean >= 0 ? -160 : 160) + 'px,-70px) rotate(' + (G.lean >= 0 ? -12 : 12) + 'deg)';
+      void b.el.offsetWidth; b.el.style.transition = 'transform .5s cubic-bezier(.3,1.25,.5,1)'; b.el.style.transform = fin;
+      setTimeout(function(){ b.el.style.transition = ''; }, 520); }
+    SFX.thump(reduce ? 0 : .42); setTimeout(settle, reduce ? 0 : 520);
   }, reduce ? 50 : 380);
 }
 function settle(){
-  render(); $('card').hidden = true; G.sel = -1;
+  render(); $('card').hidden = true; G.sel = -1; $('study').classList.remove('tight');
   var a = Math.abs(G.lean);
   if(a >= LIMIT) return collapse();
   if(a > LIMIT * .6) SFX.creak();
-  G.busy = false; render();
+  G.busy = false; render(); partyAfterSettle();
+  if(MODE === 'host') return;
   hint(a > LIMIT * .75 ? 'The pile is leaning badly. Pull from near the top.' : (a > LIMIT * .45 ? 'The pile is leaning. Careful now.' : 'Choose your next book.'));
   say('The pile leans ' + Math.round(a / LIMIT * 100) + ' percent of the way to falling.');
 }
@@ -242,16 +299,30 @@ function collapse(){
   var floor = 0, dir = Math.sign(G.lean) || 1, t0 = null, bodies = G.books.map(function(b, i){
     return { el:b.el, x:0, y:0, vx:dir * (60 + Math.random() * 180) * (0.4 + i / G.books.length), vy:-(Math.random() * 180), r:0, vr:dir * (90 + Math.random() * 240), base:b.el.style.transform }; });
   if(reduce){ G.books.forEach(function(b){ b.el.style.opacity = '.35'; }); return setTimeout(finish, 600); }
+  var thuds = 0; flutter(); dustPuff();
   var heights = []; var acc = 0; G.books.forEach(function(b){ heights.push(acc); acc += b.h; });
   var step = function(now){ if(t0 === null) t0 = now; var dt = Math.min(.033, (now - (step.last || now)) / 1000); step.last = now;
     bodies.forEach(function(p, i){ p.vy += 1500 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
       var ground = heights[i];   /* how far this book can fall before it meets the desk */
-      if(p.y > ground){ p.y = ground; p.vy *= -.28; p.vx *= .7; p.vr *= .6; }
+      if(p.y > ground){ if(!p.landed && p.vy > 200){ p.landed = true; if(thuds++ < 9) SFX.thump(0); } p.y = ground; p.vy *= -.28; p.vx *= .7; p.vr *= .6; }
       p.el.style.transform = p.base + ' translate(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px) rotate(' + p.r.toFixed(1) + 'deg)'; });
     if(now - t0 < 2100) requestAnimationFrame(step); else finish(); };
   requestAnimationFrame(step);
 }
+/* loose pages drift down, swaying, and a puff of dust rises from the desk */
+function flutter(){ var st = $('study'), w = st.clientWidth, h = st.clientHeight; noise(.15, 1.2, .07, 4200, 'bandpass', 1800);
+  for(var i = 0; i < 9; i++){ var pg = document.createElement('div'); pg.className = 'page'; st.appendChild(pg);
+    var x0 = w * (.3 + Math.random() * .4), y0 = h * (.15 + Math.random() * .35), drift = (Math.random() - .5) * 160, dur = 1600 + Math.random() * 900, spin = (Math.random() - .5) * 540;
+    pg.animate([{ transform:'translate(' + x0 + 'px,' + y0 + 'px) rotate(0deg)', opacity:0 }, { opacity:1, offset:.12 },
+      { transform:'translate(' + (x0 + drift * .5 + 30) + 'px,' + (y0 + (h - y0) * .5) + 'px) rotate(' + spin * .5 + 'deg)' },
+      { transform:'translate(' + (x0 + drift) + 'px,' + (h - 40) + 'px) rotate(' + spin + 'deg)', opacity:.9 }], { duration:dur, delay:200 + i * 90, easing:'ease-in', fill:'forwards' }); } }
+function dustPuff(){ var st = $('study'), w = st.clientWidth, h = st.clientHeight;
+  for(var i = 0; i < 14; i++){ var d = document.createElement('div'); d.className = 'dust'; st.appendChild(d);
+    var x = w / 2 + (Math.random() - .5) * 120, y = h - 40;
+    d.animate([{ transform:'translate(' + x + 'px,' + y + 'px) scale(.4)', opacity:0 }, { opacity:.8, offset:.2 },
+      { transform:'translate(' + (x + (Math.random() - .5) * 140) + 'px,' + (y - 30 - Math.random() * 60) + 'px) scale(' + (2 + Math.random() * 2) + ')', opacity:0 }], { duration:1300, delay:350 + Math.random() * 250, easing:'ease-out', fill:'forwards' }); } }
 function finish(){
+  if(MODE === 'host' && P){ return partyKnockout(); }
   var best = parseInt(recall('spines_best') || '0', 10); if(G.pts > best){ best = G.pts; store('spines_best', String(best)); }
   $('endText').textContent = 'You moved ' + G.moved + (G.moved === 1 ? ' book' : ' books') + ' before the pile gave way.';
   $('endPts').textContent = G.pts + ' points'; $('endBest').textContent = G.pts >= best && G.pts > 0 ? 'A new best.' : 'Your best: ' + best + ' points';
@@ -265,6 +336,100 @@ $('snd').addEventListener('click', function(){ if(window.tbSetMuted) window.tbSe
   this.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; this.setAttribute('aria-pressed', String(!m)); this.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); });
 (function(){ var m = !!window.tbMuted, s = $('snd'); s.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; s.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); })();
 window.addEventListener('resize', function(){ if(G) render(); });
+
+/* ==================== PARTY MODE ====================
+   spines.html?host is the big screen; phones join with spines.html?party=CODE.
+   Same rooms, players and moves tables as Full Circuit. The host runs the pile;
+   phones choose books and answer. Whoever topples the pile is out. */
+var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  var SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+var MODE = /[?&]host\b/.test(location.search) ? 'host' : (/[?&]party=[A-Za-z0-9]{4,6}/.test(location.search) ? 'phone' : 'solo');
+function sb(path, opts){ opts = opts || {}; return fetch(SB_URL + '/rest/v1/' + path, Object.assign({}, opts, { headers:Object.assign({ apikey:SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' }, opts.headers || {}) }))
+  .then(function(r){ return opts.method ? r.ok : r.json(); }).catch(function(){ return opts.method ? false : []; }); }
+var P = null;
+function partyState(extra){ var n = G ? G.books.length : 0;
+  var st = Object.assign({ game:'spines', phase:P.phase, turn:P.turn, turnName:nameOf(P.turn), seq:P.seq, alive:P.alive.map(nameOf), out:P.out.map(nameOf), lean:G ? Math.round(Math.min(100, Math.abs(G.lean) / LIMIT * 100)) : 0,
+    books:G ? G.books.map(function(b, i){ return { i:i, subj:b.subj, t:tierOf(i, n), top:i === n - 1, col:b.col }; }) : [], q:P.q || null, msg:P.msg || '', winner:P.winner || null }, extra || {});
+  return sb('rooms?code=eq.' + P.code, { method:'PATCH', body:JSON.stringify({ phase:st.phase, state:st }) }); }
+function nameOf(id){ var p = P && P.players.filter(function(x){ return x.id === id; })[0]; return p ? p.name : ''; }
+function paintPlayers(){ var ul = $('lplayers'); ul.innerHTML = '';
+  P.players.forEach(function(p){ var li = document.createElement('li'); li.textContent = p.name; if(P.out.indexOf(p.id) >= 0) li.className = 'out'; else if(p.id === P.turn) li.className = 'now'; ul.appendChild(li); }); }
+function hostStart(){
+  document.body.classList.add('host'); $('start').hidden = true;
+  var A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; P = { code:'', players:[], alive:[], out:[], idx:0, seq:0, turn:null, phase:'lobby', q:null };
+  for(var i = 0; i < 5; i++) P.code += A[Math.floor(Math.random() * A.length)];
+  var base = location.href.split('?')[0], link = base + '?party=' + P.code;
+  $('lcode').textContent = P.code; $('llink').textContent = link.replace(/^https?:\/\//, ''); $('lqr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(link);
+  $('lobby').hidden = false;
+  sb('rooms', { method:'POST', body:JSON.stringify({ code:P.code, phase:'lobby', state:{ game:'spines', phase:'lobby' } }) });
+  P.lobbyPoll = setInterval(async function(){ var r = await sb('players?code=eq.' + P.code + '&select=id,name&order=joined_at.asc'); if(Array.isArray(r)) P.players = r.slice(0, 8);
+    paintPlayers(); $('lstart').disabled = P.players.length < 2; $('lneed').hidden = P.players.length >= 2; }, 1500);
+  $('lstart').addEventListener('click', function(){ clearInterval(P.lobbyPoll); $('lobby').hidden = true; P.alive = P.players.map(function(p){ return p.id; }); P.idx = 0; newGame(); nextTurn(false); });
+}
+function nextTurn(advance){
+  if(advance) P.idx = (P.idx + 1) % P.alive.length;
+  P.turn = P.alive[P.idx]; P.seq++; P.phase = 'choose'; P.q = null; P.msg = '';
+  hint(nameOf(P.turn) + ' is choosing a book.'); say(nameOf(P.turn) + '\u2019s turn.'); partyState(); watch();
+}
+function watch(){ clearInterval(P.movePoll); var seq = P.seq;
+  P.movePoll = setInterval(async function(){ if(seq !== P.seq) return clearInterval(P.movePoll);
+    var rows = await sb('moves?code=eq.' + P.code + '&player_id=eq.' + P.turn + '&turn_seq=eq.' + seq + '&select=q_id,choice&order=q_id.asc'); if(!Array.isArray(rows)) return;
+    var pick = rows.filter(function(r){ return r.q_id === 'pick'; })[0], ans = rows.filter(function(r){ return r.q_id === 'zans'; })[0];
+    if(P.phase === 'choose' && pick){ var i = parseInt(pick.choice, 10); if(i >= 0 && i < G.books.length - 1){ choose(i);
+        P.q = { q:G.q.q, opts:[].map.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent; }), subj:G.books[i].subj, t:tierOf(i, G.books.length) }; P.phase = 'question'; partyState(); } }
+    else if(P.phase === 'question' && ans){ clearInterval(P.movePoll); P.phase = 'result';
+      var btn = [].filter.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent === ans.choice; })[0];
+      P.msg = ans.choice === G.q.correct ? nameOf(P.turn) + ' got it right.' : nameOf(P.turn) + ' got it wrong. It was ' + G.q.correct + '.';
+      partyState(); answer(ans.choice, btn || document.createElement('button')); }
+  }, 800); }
+/* after each move: keep going, or knock out whoever toppled the pile */
+function partyAfterSettle(){ if(MODE === 'host' && P && !G.over) setTimeout(function(){ nextTurn(true); }, 900); }
+function partyKnockout(){
+  var who = P.turn; P.out.push(who); P.alive.splice(P.idx, 1); paintPlayers();
+  if(P.alive.length <= 1){ P.winner = nameOf(P.alive[0]); P.phase = 'over'; P.msg = nameOf(who) + ' toppled the pile. ' + P.winner + ' is the last one standing!';
+    partyState(); $('end').querySelector('h1').textContent = P.winner + ' wins'; $('endText').textContent = P.msg; $('endPts').textContent = ''; $('endBest').textContent = '';
+    $('againBtn').textContent = 'New party'; $('againBtn').onclick = function(){ location.reload(); }; $('end').hidden = false; return; }
+  P.phase = 'result'; P.msg = nameOf(who) + ' toppled the pile and is out!'; partyState(); hint(P.msg);
+  if(P.idx >= P.alive.length) P.idx = 0;
+  setTimeout(function(){ newGame(); nextTurn(false); }, 3200);
+}
+/* ---------- the phone ---------- */
+function phoneStart(){
+  var code = (location.search.match(/[?&]party=([A-Za-z0-9]{4,6})/) || [])[1].toUpperCase(), key = 'spines_party_' + code, me = null;
+  try{ me = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+  $('start').hidden = true; document.querySelector('.app').hidden = true; $('phone').hidden = false;
+  var area = $('parea'), msg = function(t){ $('pmsg').textContent = t; }, last = '';
+  var join = function(){ msg('Room ' + code + '. What should we call you?'); area.innerHTML = '<input id="pname" maxlength="14" placeholder="Your name" aria-label="Your name"><button class="go" id="pjoin" type="button">Join</button>';
+    $('pjoin').onclick = async function(){ var name = ($('pname').value || '').trim().slice(0, 14); if(!name) return; this.disabled = true;
+      var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'p' + Math.random().toString(36).slice(2), now = new Date().toISOString();
+      if(await sb('players', { method:'POST', body:JSON.stringify({ id:id, code:code, name:name, tag:'spines', score:0, joined_at:now, last_seen:now }) })){ me = { id:id, name:name }; try{ localStorage.setItem(key, JSON.stringify(me)); }catch(e){} poll(); }
+      else { this.disabled = false; msg('Could not join. Check the room code and your connection.'); } }; };
+  var send = function(seq, qid, choice){ return sb('moves', { method:'POST', body:JSON.stringify({ code:code, player_id:me.id, turn_seq:seq, q_id:qid, choice:String(choice) }) }); };
+  var draw = function(st){
+    var mine = st.turn === me.id, sig = [st.phase, st.seq, mine, st.msg, (st.out || []).length].join('|'); if(sig === last) return; last = sig;
+    if((st.out || []).indexOf(me.name) >= 0 && st.phase !== 'over'){ msg('You toppled the pile, so you\u2019re out. Stay and watch who wins!'); area.innerHTML = ''; return; }
+    if(st.phase === 'lobby' || !st.phase){ msg('You\u2019re in, ' + me.name + '. Waiting for the host to start.'); area.innerHTML = ''; }
+    else if(st.phase === 'choose'){
+      if(!mine){ msg(st.turnName + ' is choosing a book. Watch the big screen.'); area.innerHTML = ''; return; }
+      msg('Your turn! Choose a book. Lower books score more, but shake the pile.'); area.innerHTML = '<div class="blist" id="blist"></div>';
+      st.books.slice().reverse().forEach(function(b){ if(b.top) return; var x = document.createElement('button'); x.type = 'button'; x.style.backgroundColor = b.col;
+        x.innerHTML = '<span></span><small></small>'; x.firstChild.textContent = b.subj; x.lastChild.textContent = depthName(b.t) + ', ' + b.t + (b.t === '1' ? ' point' : ' points');
+        x.onclick = function(){ [].forEach.call(document.querySelectorAll('#blist button'), function(y){ y.disabled = true; }); send(st.seq, 'pick', b.i); msg('Pulling ' + b.subj + '\u2026'); };
+        $('blist').appendChild(x); }); }
+    else if(st.phase === 'question' && st.q){
+      msg((mine ? 'Your question' : st.turnName + '\u2019s question. Shout your help!') + ' (' + st.q.subj + ')'); area.innerHTML = '<p class="msg" style="font-weight:800"></p><div class="opts" id="popts"></div>';
+      area.firstChild.textContent = st.q.q;
+      st.q.opts.forEach(function(o){ var x = document.createElement('button'); x.type = 'button'; x.className = 'opt'; x.textContent = o; x.disabled = !mine;
+        x.onclick = function(){ [].forEach.call(document.querySelectorAll('#popts .opt'), function(y){ y.disabled = true; }); x.classList.add('right'); send(st.seq, 'zans', o); msg('Answer sent. Watch the pile!'); };
+        $('popts').appendChild(x); }); }
+    else if(st.phase === 'result'){ msg(st.msg || 'Watch the big screen\u2026'); area.innerHTML = ''; }
+    else if(st.phase === 'over'){ msg(st.winner === me.name ? 'You won! Last one standing.' : (st.msg || 'Game over.')); area.innerHTML = ''; }
+  };
+  var poll = async function(){ var rows = await sb('rooms?code=eq.' + code + '&select=phase,state'); if(Array.isArray(rows) && rows[0]) draw(rows[0].state || {}); setTimeout(poll, 900); };
+  if(me) poll(); else join();
+}
+if(MODE === 'host') hostStart(); else if(MODE === 'phone') phoneStart();
+
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
