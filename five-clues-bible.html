@@ -224,6 +224,35 @@
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<style>
+/* ===== the case file ===== */
+#clueArea{position:relative;}
+#clueArea .clue{transform:rotate(var(--tilt,0deg));box-shadow:0 3px 10px rgba(0,0,0,.28);}
+#clueArea .clue:nth-child(odd){--tilt:-.6deg;} #clueArea .clue:nth-child(even){--tilt:.5deg;}
+#clueArea .clue.newclue{animation:fcSlide .38s cubic-bezier(.2,.8,.3,1);}
+@keyframes fcSlide{from{transform:translateX(28px) rotate(3deg);opacity:0;}to{transform:rotate(var(--tilt,0deg));opacity:1;}}
+.fc-ch{opacity:0;animation:fcType .01s forwards;}
+@keyframes fcType{to{opacity:1;}}
+.fc-seals{display:inline-flex;gap:5px;vertical-align:middle;margin-right:8px;}
+.fc-seals i{width:12px;height:12px;border-radius:50%;background:#f0b63f;box-shadow:0 0 8px rgba(240,182,63,.7);}
+.fc-seals i.out{background:rgba(255,255,255,.18);box-shadow:none;}
+.fc-seals i.snuff{animation:fcSnuff .5s ease-out;}
+@keyframes fcSnuff{0%{transform:scale(1.6);background:#ffdd88;}100%{transform:scale(1);}}
+.fc-shake{animation:fcShake .35s;}
+@keyframes fcShake{20%,60%{transform:translateX(-7px);}40%,80%{transform:translateX(7px);}}
+.fc-stamp{position:absolute;left:50%;top:50%;z-index:5;pointer-events:none;padding:8px 18px;border:5px solid currentColor;border-radius:10px;
+  font-weight:900;font-size:clamp(26px,9vw,40px);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  transform:translate(-50%,-50%) rotate(-9deg);opacity:.92;mix-blend-mode:screen;animation:fcStamp .32s cubic-bezier(.5,0,.8,.4) both;
+  -webkit-mask:radial-gradient(circle at 30% 40%,#000 55%,rgba(0,0,0,.65) 75%) ;}
+.fc-stamp.ok{color:#7fd6a0;} .fc-stamp.no{color:#ff7a6b;}
+@keyframes fcStamp{from{transform:translate(-50%,-50%) rotate(-9deg) scale(2.4);opacity:0;}to{transform:translate(-50%,-50%) rotate(-9deg) scale(1);opacity:.92;}}
+.fc-streak{display:inline-flex;margin-left:8px;font-weight:900;font-size:14px;color:#ffb347;text-shadow:0 0 calc(var(--h,1)*4px) rgba(255,150,40,.8);}
+.fc-streak[hidden]{display:none;}
+/* the Bible edition: ancient records rather than a police file */
+.fc-bible #clueArea .clue{background:linear-gradient(170deg,#efe2c4,#dcc9a2) !important;color:#3b2a18 !important;border-color:#b89a6c !important;}
+.fc-bible .fc-stamp{mix-blend-mode:multiply;opacity:1;} .fc-bible .fc-stamp.ok{color:#9a6b12;} .fc-bible .fc-stamp.no{color:#a3262a;}
+@media (prefers-reduced-motion: reduce){ #clueArea .clue.newclue,.fc-ch,.fc-seals i.snuff,.fc-shake,.fc-stamp{animation:none !important;opacity:1;} }
+</style>
 </head>
 <body>
 <div id="app">
@@ -418,7 +447,7 @@
     }
     const pts=6-cluesShown;
     $('ptsLine').textContent='Worth '+pts+' point'+(pts===1?'':'s')+' if you solve now';
-    $('nextClueBtn').style.display=(cluesShown>=5)?'none':'';
+    $('nextClueBtn').style.display=(cluesShown>=5)?'none':''; if(window.FC) FC.clues();
   }
   function clueMsg(t,c){ const m=$('clueMsg'); m.textContent=t||''; m.style.color=c||'var(--mut)'; }
   function norm(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(the|a|an)\b/g,' ').replace(/\s+/g,' ').trim(); }
@@ -428,7 +457,7 @@
     if(locked||!playing) return;
     const g=$('guessInput').value||''; if(!g.trim()) return;
     if(isRight(g)){ solveRound(true); return; }
-    if(cluesShown<5){ revealNext(); $('guessInput').value=''; clueMsg('Not quite, here is another clue.', getCSS('--l2')); sWrong(); }
+    if(cluesShown<5){ revealNext(); $('guessInput').value=''; clueMsg('Not quite, here is another clue.', getCSS('--l2')); if(window.FC) FC.miss(); sWrong(); }
     else { solveRound(false); }
   }
   function nextClue(){
@@ -453,11 +482,11 @@
     if(success){
       savedMs+=clueRemaining();
       const pts=6-cluesShown; correct+=pts; sRight(); streakW=0; streakC++;
-      clueMsg('Solved! +'+pts+', '+current.answer, getCSS('--right'));
+      clueMsg('Solved! +'+pts+', '+current.answer, getCSS('--right')); if(window.FC) FC.solved(pts);
       if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
     } else {
       totalWrong++; sWrong(); streakC=0; streakW++; renderStrikes();
-      clueMsg('The answer was: '+current.answer, getCSS('--wrong'));
+      clueMsg('The answer was: '+current.answer, getCSS('--wrong')); if(window.FC) FC.failed();
       if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
     }
     $('progbar').style.width=(answered/ROUNDS*100)+'%';
@@ -648,6 +677,50 @@
       case 'next': nextClue(); return true;
       case 'guessWrong': $('guessInput').value='__definitely_wrong__'; submitGuess(); return true;
     }
+  };
+})();
+</script>
+<script>
+/* The case file. Clues type themselves onto index cards (every letter stays in the
+   page, so screen readers read the whole clue); five seals show the case's value;
+   a stamp slams down at the end of each round. Sounds are synthesised and obey the
+   site-wide sound switch. */
+window.FC = (function(){
+  var ac = null, streak = 0, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(/bible/i.test(document.title + location.pathname)) document.documentElement.classList.add('fc-bible');
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended' && !window.tbMuted) ac.resume(); }catch(e){ ac = null; } return ac; };
+  var noise = function(t, d, v, f, type){ var a = ctx(); if(!a) return; var n = Math.floor(a.sampleRate * d), bf = a.createBuffer(1, n, a.sampleRate), c = bf.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = bf; fl.type = type || 'bandpass'; fl.frequency.value = f; g.gain.value = v;
+    s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); };
+  var tone = function(f, t, d, v, to){ var a = ctx(); if(!a) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.frequency.setValueAtTime(f, T); if(to) o.frequency.exponentialRampToValueAtTime(to, T + d);
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v, T + .01); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .05); };
+  var key = function(t){ noise(t, .025, .22, 2600 + Math.random() * 1600, 'highpass'); };
+  var thud = function(){ noise(0, .28, .5, 160, 'lowpass'); tone(90, 0, .3, .12, 50); noise(.01, .08, .18, 1800); };
+  var lastSeals = null;
+  var seals = function(){ var line = document.getElementById('ptsLine'), area = document.getElementById('clueArea'); if(!line || !area) return;
+    var shown = area.querySelectorAll('.clue').length, lit = Math.max(1, 6 - shown), box = line.querySelector('.fc-seals');
+    if(!box){ box = document.createElement('span'); box.className = 'fc-seals'; box.setAttribute('aria-hidden', 'true'); line.insertBefore(box, line.firstChild); }
+    if(box.parentNode !== line || !line.contains(box)){ line.insertBefore(box, line.firstChild); }
+    var html = ''; for(var i = 0; i < 5; i++) html += '<i class="' + (i < lit ? '' : 'out') + (lastSeals !== null && i === lit && lastSeals > lit ? ' snuff' : '') + '"></i>';
+    box.innerHTML = html; lastSeals = lit; };
+  var streakBadge = function(){ var p = document.getElementById('lvlPill'); if(!p) return; var b = document.getElementById('fcStreak');
+    if(!b){ b = document.createElement('span'); b.id = 'fcStreak'; b.className = 'fc-streak'; p.after(b); }
+    b.hidden = streak < 2; b.textContent = '\uD83D\uDD25 ' + streak + ' in a row'; b.style.setProperty('--h', Math.min(6, streak)); };
+  var stamp = function(text, ok){ var area = document.getElementById('clueArea'); if(!area) return; var s = document.createElement('div');
+    s.className = 'fc-stamp ' + (ok ? 'ok' : 'no'); s.textContent = text; s.setAttribute('aria-hidden', 'true'); area.appendChild(s); setTimeout(thud, reduce ? 0 : 300); };
+  return {
+    clues: function(){
+      var area = document.getElementById('clueArea'); if(!area) return;
+      if(area.querySelectorAll('.clue').length <= 1) lastSeals = null;
+      var nc = area.querySelector('.clue.newclue .cluetx');
+      if(nc && !reduce){ var t = nc.textContent, per = Math.min(22, 700 / Math.max(1, t.length));
+        nc.innerHTML = ''; for(var i = 0; i < t.length; i++){ var sp = document.createElement('span'); sp.className = 'fc-ch'; sp.textContent = t[i]; sp.style.animationDelay = (i * per).toFixed(0) + 'ms'; nc.appendChild(sp); }
+        for(var k = 0; k < Math.min(12, t.length); k++) key(k * (t.length * per / 1000) / Math.min(12, t.length)); }
+      seals(); },
+    miss: function(){ var g = document.getElementById('guessInput'); if(g){ g.classList.remove('fc-shake'); void g.offsetWidth; g.classList.add('fc-shake'); } tone(180, 0, .18, .09, 120); },
+    solved: function(pts){ streak++; streakBadge(); stamp('Solved +' + pts, true); },
+    failed: function(){ streak = 0; streakBadge(); stamp('Unsolved', false); }
   };
 })();
 </script>
