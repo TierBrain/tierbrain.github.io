@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.muted = localStorage.getItem('gty_muted') === '1'; }catch(e){ window.muted = false; }
+  var Wrapped = function(){ var c = new AC(); all.push(c); if(window.muted) try{ c.suspend(); }catch(e){} return c; }; Wrapped.prototype = AC.prototype;
+  window.AudioContext = Wrapped; window.webkitAudioContext = Wrapped;
+  window.gtySetMuted = function(m){ window.muted = m; try{ localStorage.setItem('gty_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="Slide the timeline to date a moment in history. Get close: the window tightens as you climb.">
 <meta property="og:type" content="website">
@@ -183,7 +192,53 @@
   .yrhint{color:var(--mut);font-size:13px;text-align:center;max-width:440px;}
   .yrlock{margin-top:2px;}
   .yearui.locked .yrnudge,.yearui.locked .yrslider{opacity:.45;pointer-events:none;}
+
+/* precision: the slider zooms in around your guess, and ±10 nudges sit beside ±1 */
+.gty-zoom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 2px 0;font-weight:800;font-size:14px;opacity:.85;}
+.gty-zoom button{font:inherit;font-weight:800;font-size:13px;border-radius:999px;padding:6px 12px;background:none;border:1px solid currentColor;cursor:pointer;color:inherit;}
+.gty-ten{font-size:14px !important;}
+.yrreadout{gap:6px !important;flex-wrap:nowrap !important;max-width:100%;}
+.yrnudge{width:46px !important;height:46px !important;min-width:0 !important;padding:0 !important;flex:none;}
+.yrval{font-size:clamp(38px,12vw,64px) !important;min-width:0 !important;}
+
+.gty-tl{position:relative;height:86px;margin:12px 4px 4px;}
+.gty-line{position:absolute;left:0;right:0;top:46px;height:3px;border-radius:2px;background:rgba(255,255,255,.25);}
+.gty-band{position:absolute;top:36px;height:23px;border-radius:6px;background:rgba(255,196,70,.28);box-shadow:0 0 14px rgba(255,196,70,.35);transform:scaleX(0);animation:gtyGrow .45s .55s ease-out forwards;}
+.gty-pin{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;font-weight:900;font-size:14px;white-space:nowrap;}
+.gty-pin i{display:block;width:3px;height:22px;border-radius:2px;margin-top:3px;} .gty-pin b{display:block;width:13px;height:13px;border-radius:50%;margin-top:-1px;}
+.gty-guess{color:#8fc7ff;animation:gtyFade .3s ease-out both;} .gty-guess i,.gty-guess b{background:#8fc7ff;}
+.gty-true{color:#ffcf5a;animation:gtyDrop .6s .35s cubic-bezier(.3,1.6,.5,1) both;} .gty-true i,.gty-true b{background:#ffcf5a;box-shadow:0 0 12px rgba(255,207,90,.7);}
+.gty-gap{position:absolute;top:47px;height:2px;background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 9px);opacity:0;animation:gtyFade .3s .8s forwards;}
+.gty-ends{position:absolute;left:0;right:0;top:64px;display:flex;justify-content:space-between;font-size:12px;opacity:.55;font-weight:700;}
+.gty-off{position:absolute;left:50%;top:62px;transform:translateX(-50%);white-space:nowrap;font-weight:900;font-size:14px;opacity:0;animation:gtyFade .3s .85s forwards;}
+.gty-streak{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-weight:900;font-size:14px;color:#ffb347;text-shadow:0 0 calc(var(--h,1)*4px) rgba(255,150,40,.8);}
+.gty-streak[hidden]{display:none;}
+.gty-rain{position:fixed;top:-30px;font-weight:900;font-size:16px;color:#ffcf5a;pointer-events:none;z-index:60;animation:gtyFall 1.5s ease-in forwards;}
+@keyframes gtyGrow{to{transform:scaleX(1);}} @keyframes gtyFade{from{opacity:0}to{opacity:1}}
+@keyframes gtyDrop{from{transform:translate(-50%,-40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes gtyFall{to{transform:translateY(110vh) rotate(var(--rot,90deg));opacity:.2;}}
+@media (prefers-reduced-motion: reduce){ .gty-band,.gty-guess,.gty-true,.gty-gap,.gty-off{animation:none;opacity:1;transform:none;} .gty-true,.gty-guess{transform:translateX(-50%);} .gty-rain{display:none;} }
+
+/* ===== the era world: the page changes beneath your finger as you slide ===== */
+#qcard .qbox{transition:background-color .5s,color .5s,border-color .5s,box-shadow .5s;position:relative;}
+#qcard .qbox.swap{animation:eraSwap .35s ease;}
+@keyframes eraSwap{40%{opacity:.25;transform:scale(.985);}}
+.era-label{display:block;font-size:13px;margin:0 0 6px;opacity:.75;letter-spacing:.01em;}
+#qcard .qbox.era-ms{background:radial-gradient(circle at 20% 30%,rgba(140,90,30,.12),transparent 50%),#efe0bd !important;color:#3b2412 !important;border:3px double #a3262a !important;box-shadow:inset 0 0 0 2px #d7a640,0 8px 24px rgba(0,0,0,.4) !important;}
+.era-ms #qtext{font-family:'IM Fell English',Georgia,serif !important;} .era-ms .era-label{font-family:'UnifrakturMaguntia',serif;font-size:17px;color:#a3262a;opacity:1;}
+#qcard .qbox.era-press{background:repeating-linear-gradient(90deg,rgba(120,95,60,.05) 0 1px,transparent 1px 7px),#f1e7cf !important;color:#2c2116 !important;border:1px solid #b8a37a !important;}
+.era-press #qtext{font-family:'IM Fell English',Georgia,serif !important;} .era-press .era-label{font-family:'IM Fell English',serif;font-style:italic;}
+#qcard .qbox.era-broad{background:#ece4d2 !important;color:#1f1a14 !important;border:0 !important;border-top:4px double #1f1a14 !important;border-bottom:4px double #1f1a14 !important;border-radius:2px !important;}
+.era-broad #qtext{font-family:'Playfair Display',Georgia,serif !important;} .era-broad .era-label{font-family:'Playfair Display',serif;font-style:italic;}
+#qcard .qbox.era-news{background:radial-gradient(rgba(0,0,0,.07) 1px,transparent 1.2px) 0 0/4px 4px,#d9d6cc !important;color:#161616 !important;border:0 !important;border-left:2px solid #555 !important;border-right:2px solid #555 !important;border-radius:0 !important;}
+.era-news #qtext{font-family:'Old Standard TT',Georgia,serif !important;} .era-news .era-label{font-family:'Old Standard TT',serif;text-transform:none;}
+#qcard .qbox.era-gloss{background:linear-gradient(90deg,#ff5f6d,#ffc371,#47c9ff) top/100% 6px no-repeat,#fbfbfb !important;color:#111 !important;border:0 !important;box-shadow:0 10px 26px rgba(0,0,0,.35) !important;}
+.era-gloss #qtext{font-weight:800;}
+#qcard .qbox.era-screen{background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px),#0d1420 !important;color:#9ff5d0 !important;border:1px solid #2bd6a0 !important;box-shadow:0 0 22px rgba(43,214,160,.35) !important;}
+.era-screen #qtext{font-family:'Space Mono',ui-monospace,monospace !important;font-size:.92em;} .era-screen .era-label{font-family:'Space Mono',monospace;}
+@media (prefers-reduced-motion: reduce){ #qcard .qbox{transition:none;} #qcard .qbox.swap{animation:none;} }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@700&family=Old+Standard+TT:wght@700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="app">
@@ -485,10 +540,10 @@
     $('qtext').textContent=current.q;
     guess=YR_MID;
     const box=$('opts'); box.className='yearui'; box.classList.remove('locked');
-    box.innerHTML='<div class="yrreadout"><button type="button" class="yrnudge" id="yrMinus">\u2212</button>'
+    box.innerHTML='<div class="yrreadout"><button type="button" class="yrnudge" id="yrMinus" aria-label="One year earlier">\u2212</button>'
       +'<span class="yrval" id="yrVal"></span>'
-      +'<button type="button" class="yrnudge" id="yrPlus">+</button></div>'
-      +'<input id="yrSlider" class="yrslider" type="range" min="'+YR_MIN+'" max="'+YR_MAX+'" step="1">'
+      +'<button type="button" class="yrnudge" id="yrPlus" aria-label="One year later">+</button></div>'
+      +'<input id="yrSlider" class="yrslider" type="range" aria-label="Your guess, as a year" min="'+YR_MIN+'" max="'+YR_MAX+'" step="1">'
       +'<div class="yrhint">Slide to your best guess, then lock it in. This level counts a hit within \u00b1'+TOL[level]+' years.</div>'
       +'<button type="button" class="cta yrlock" id="yrLock"></button>';
     const sl=$('yrSlider'), val=$('yrVal'), lock=$('yrLock');
@@ -526,11 +581,13 @@
       rl.textContent='It was '+current.year+'. You guessed '+guess+', '+(diff===0?'spot on!':(diff+' year'+(diff===1?'':'s')+' off'))+(right&&diff!==0?' (a hit!)':(!right?', just missed.':''));
       rl.style.color = right?'var(--right)':'var(--wrong)'; rl.classList.add('show');
     }
+  if(window.GTY) GTY.reveal(guess, current.year, TOL[roundLevel], right, rl);
+  startT += right ? 900 : 850;   /* the clock pauses while the timeline lands */
     if(right){
-      correct++; sRight(); streakW=0; streakC++;
+      correct++; if(!window.GTY) sRight(); streakW=0; streakC++;
       if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
     } else {
-      totalWrong++; sWrong(); streakC=0; streakW++;
+      totalWrong++; if(!window.GTY) sWrong(); streakC=0; streakW++;
       renderStrikes();
       if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
     }
@@ -543,7 +600,7 @@
       else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
       pendingMove=null;
       nextQuestion();
-    }, right?1000:1250);
+    }, right?1900:2100);   /* time for the timeline to land */
   }
 
   function endOut(){
@@ -713,6 +770,126 @@
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
 })();
+</script>
+<script>
+(function(){
+  var MIN = 1000, MAX = 2025, SPAN = 60;
+  var fire = function(sl){ sl.dispatchEvent(new Event('input', { bubbles:true })); sl.dispatchEvent(new Event('change', { bubbles:true })); };
+  var setup = function(sl){
+    if(sl._gty) return; sl._gty = true; MIN = +sl.min; MAX = +sl.max;
+    var bar = document.createElement('div'); bar.className = 'gty-zoom'; bar.innerHTML = '<span></span><button type="button" hidden>Full range</button>';
+    sl.after(bar); var lab = bar.querySelector('span'), out = bar.querySelector('button');
+    var zoom = function(){ var v = +sl.value, lo = Math.max(MIN, v - SPAN), hi = Math.min(MAX, v + SPAN);
+      sl.min = lo; sl.max = hi; sl.value = v; lab.textContent = 'Fine-tuning ' + lo + ' to ' + hi; out.hidden = false; };
+    var unzoom = function(){ var v = +sl.value; sl.min = MIN; sl.max = MAX; sl.value = v; lab.textContent = ''; out.hidden = true; };
+    sl.addEventListener('pointerup', function(){ if(out.hidden) setTimeout(zoom, 0); });
+    sl.addEventListener('keyup', function(e){ if(/Arrow|Page|Home|End/.test(e.key) && out.hidden) zoom(); });
+    out.addEventListener('click', unzoom);
+    /* ±10 beside the existing ±1 nudges */
+    var minus = document.getElementById('yrMinus'), plus = document.getElementById('yrPlus');
+    var ten = function(d, label){ var b = document.createElement('button'); b.type = 'button'; b.className = 'yrnudge gty-ten'; b.textContent = label; b.setAttribute('aria-label', (d > 0 ? 'Ten years later' : 'Ten years earlier'));
+      b.addEventListener('click', function(){ var lo = MIN, hi = MAX, v = Math.max(lo, Math.min(hi, +sl.value + d));
+        if(v < +sl.min || v > +sl.max){ sl.min = Math.max(MIN, v - SPAN); sl.max = Math.min(MAX, v + SPAN); if(!out.hidden) lab.textContent = 'Fine-tuning ' + sl.min + ' to ' + sl.max; }
+        sl.value = v; fire(sl); }); return b; };
+    if(minus && !minus.previousElementSibling) minus.before(ten(-10, '\u221210'));
+    if(plus) plus.after(ten(10, '+10'));
+  };
+  var scan = function(){ var sl = document.getElementById('yrSlider'); if(sl) setup(sl); };
+  new MutationObserver(scan).observe(document.body, { childList:true, subtree:true }); scan();
+})();
+</script>
+<script>
+/* The reveal: your guess lands, the true year drops in, the scoring window glows,
+   the gap counts up. Streaks and exact years get their moment. Bells are built
+   from layered inharmonic partials, each fading at its own rate. */
+window.GTY = (function(){
+  var ac = null, streak = 0, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume(); }catch(e){ ac = null; } return ac; };
+  var quiet = function(){ try{ return typeof muted !== 'undefined' && muted; }catch(e){ return false; } };
+  var bell = function(f, t, v){ var a = ctx(); if(!a || quiet()) return; [[1, 1], [2.76, .5], [5.4, .25], [8.93, .12]].forEach(function(p){
+    var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.frequency.value = f * p[0];
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime((v || .08) * p[1], T + .01); g.gain.exponentialRampToValueAtTime(.0001, T + 1.6 / p[0] + .2);
+    o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + 2); }); };
+  var soft = function(f, t, d){ var a = ctx(); if(!a || quiet()) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.type = 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(.07, T + .03); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .1); };
+  var st = { exact:function(){ [523.25, 659.25, 783.99, 1046.5].forEach(function(f, i){ bell(f, .35 + i * .07, .07); }); bell(1568, .75, .05); },
+    hit:function(){ bell(659.25, .35, .08); bell(987.77, .5, .06); }, close:function(){ soft(392, .35, .35); soft(440, .55, .5); }, miss:function(){ soft(392, .35, .35); soft(311.13, .6, .7); } };
+  var rain = function(y){ if(reduce) return; for(var i = 0; i < 14; i++){ var e = document.createElement('div'); e.className = 'gty-rain'; e.textContent = y;
+    e.style.left = (Math.random() * 92) + 'vw'; e.style.animationDelay = (Math.random() * .5 + .4) + 's'; e.style.setProperty('--rot', (Math.random() * 180 - 90) + 'deg');
+    document.body.appendChild(e); setTimeout(function(x){ return function(){ x.remove(); }; }(e), 2300); } };
+  var badge = function(){ var b = document.getElementById('gtyStreak');
+    if(!b){ var lv = [].find.call(document.querySelectorAll('*'), function(x){ return x.children.length === 0 && /^LEVEL \d/i.test(x.textContent.trim()); }); if(!lv) return;
+      b = document.createElement('span'); b.id = 'gtyStreak'; b.className = 'gty-streak'; lv.after(b); }
+    b.hidden = streak < 2; b.textContent = '\uD83D\uDD25 ' + streak + ' in a row'; b.style.setProperty('--h', Math.min(6, streak)); };
+  return { reveal: function(guess, year, tol, right, anchor){
+    var diff = Math.abs(guess - year), half = Math.max(diff * .75 + tol + 4, tol * 3, 12), mid = (guess + year) / 2, lo = Math.round(mid - half), hi = Math.round(mid + half);
+    var pos = function(y){ return ((y - lo) / (hi - lo) * 100).toFixed(2) + '%'; }, a = Math.min(guess, year), b = Math.max(guess, year);
+    var old = document.getElementById('gtyTl'); if(old) old.remove();
+    var tl = document.createElement('div'); tl.id = 'gtyTl'; tl.className = 'gty-tl'; tl.setAttribute('role', 'img');
+    tl.setAttribute('aria-label', 'Timeline: you guessed ' + guess + ', the answer was ' + year + ', ' + diff + (diff === 1 ? ' year' : ' years') + ' apart.');
+    tl.innerHTML = '<div class="gty-line"></div><div class="gty-band" style="left:' + pos(year - tol) + ';width:calc(' + pos(year + tol) + ' - ' + pos(year - tol) + ')"></div>'
+      + (diff ? '<div class="gty-gap" style="left:' + pos(a) + ';width:calc(' + pos(b) + ' - ' + pos(a) + ');color:' + (right ? '#7fd6a0' : '#ff8a73') + '"></div>' : '')
+      + '<div class="gty-pin gty-guess" style="left:' + pos(guess) + '">' + guess + '<i></i><b></b></div>'
+      + '<div class="gty-pin gty-true" style="left:' + pos(year) + '">' + year + '<i></i><b></b></div>'
+      + '<div class="gty-ends"><span>' + lo + '</span><span>' + hi + '</span></div><div class="gty-off" id="gtyOff"></div>';
+    anchor.after(tl);
+    var off = document.getElementById('gtyOff'), t0 = null, dur = reduce ? 0 : 450;
+    var label = function(n){ return diff === 0 ? 'Exact year!' : n + (n === 1 ? ' year' : ' years') + ' off' + (!right && diff <= tol * 2 ? '. So close!' : ''); };
+    var run = function(now){ if(t0 === null) t0 = now; var k = dur ? Math.min(1, (now - t0) / dur) : 1; off.textContent = label(Math.round(diff * k)); if(k < 1) requestAnimationFrame(run); };
+    setTimeout(function(){ requestAnimationFrame(run); }, reduce ? 0 : 850);
+    if(right){ streak++; if(diff === 0){ st.exact(); rain(year); } else st.hit(); } else { streak = 0; (diff <= tol * 2 ? st.close : st.miss)(); }
+    badge(); } };
+})();
+</script>
+<script>
+/* The era world. Six pages, from manuscript to screen; crossing into a new era
+   swaps the page and plays that era's instrument. Plucked strings use the
+   Karplus-Strong method: a burst of noise fed back through a short delay. */
+(function(){
+  var ERAS = [
+    { to:1449, cls:'era-ms', label:'A monk\u2019s manuscript', snd:'lute' }, { to:1699, cls:'era-press', label:'An early printed page', snd:'harpsichord' },
+    { to:1849, cls:'era-broad', label:'A broadsheet', snd:'quill' }, { to:1949, cls:'era-news', label:'A newspaper', snd:'typewriter' },
+    { to:1994, cls:'era-gloss', label:'A glossy magazine', snd:'piano' }, { to:99999, cls:'era-screen', label:'A screen', snd:'blip' } ];
+  var eraOf = function(y){ for(var i = 0; i < ERAS.length; i++) if(y <= ERAS[i].to) return ERAS[i]; return ERAS[ERAS.length - 1]; };
+  var ac = null, cur = null, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume(); }catch(e){ ac = null; } return ac; };
+  var quiet = function(){ try{ return typeof muted !== 'undefined' && muted; }catch(e){ return false; } };
+  var play = function(buf, v, t){ var a = ctx(); if(!a || quiet()) return; var s = a.createBufferSource(), g = a.createGain(); s.buffer = buf; g.gain.value = v; s.connect(g); g.connect(a.destination); s.start(a.currentTime + (t || 0)); };
+  var pluck = function(f, keep, bright){ var a = ctx(); if(!a) return null; var sr = a.sampleRate, n = Math.floor(sr * 1.4), N = Math.max(2, Math.round(sr / f)), buf = a.createBuffer(1, n, sr), y = buf.getChannelData(0);
+    for(var i = 0; i < N; i++) y[i] = Math.random() * 2 - 1;
+    for(i = N; i < n; i++) y[i] = keep * (bright ? (y[i - N] * .7 + y[i - N - 1] * .3) : (y[i - N] + y[i - N - 1]) * .5);
+    return buf; };
+  var noiseBuf = function(d, shape){ var a = ctx(); if(!a) return null; var n = Math.floor(a.sampleRate * d), b = a.createBuffer(1, n, a.sampleRate), c = b.getChannelData(0); for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * shape(i / n); return b; };
+  var tone = function(f, d, v, type){ var a = ctx(); if(!a || quiet()) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime; o.type = type || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v, T + .01); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .05); };
+  var SND = {
+    lute: function(){ var b = pluck(196, .996, false); if(b) play(b, .35); var c = pluck(293.66, .996, false); if(c) play(c, .22, .06); },
+    harpsichord: function(){ var b = pluck(392, .992, true); if(b) play(b, .28); var c = pluck(587.33, .99, true); if(c) play(c, .18, .05); },
+    quill: function(){ var b = noiseBuf(.22, function(x){ return (1 - x) * (.6 + .4 * Math.sin(x * 60)); }); if(b) play(b, .12); },
+    typewriter: function(){ var b = noiseBuf(.03, function(x){ return 1 - x; }); if(b){ play(b, .5); play(b, .4, .09); } tone(2093, .35, .05); },
+    piano: function(){ [[523.25, .09], [1046.5, .03], [1569.75, .015]].forEach(function(p){ tone(p[0], 1.1, p[1]); }); },
+    blip: function(){ tone(880, .08, .05, 'square'); setTimeout(function(){ tone(1318.5, .1, .05, 'square'); }, 70); }
+  };
+  var apply = function(y, sound){
+    var box = document.querySelector('#qcard .qbox'); if(!box) return; var e = eraOf(+y);
+    var lab = box.querySelector('.era-label'); if(!lab){ lab = document.createElement('span'); lab.className = 'era-label'; box.insertBefore(lab, box.firstChild); }
+    if(e === cur && box.classList.contains(e.cls)) return;
+    ERAS.forEach(function(x){ box.classList.remove(x.cls); }); box.classList.add(e.cls); lab.textContent = e.label;
+    if(cur && e !== cur && !reduce){ box.classList.remove('swap'); void box.offsetWidth; box.classList.add('swap'); }
+    if(sound && cur && e !== cur) SND[e.snd]();
+    cur = e;
+  };
+  document.addEventListener('input', function(ev){ if(ev.target && ev.target.id === 'yrSlider') apply(ev.target.value, true); }, true);
+  new MutationObserver(function(){ var sl = document.getElementById('yrSlider'), box = document.querySelector('#qcard .qbox');
+    if(sl && box && !box.querySelector('.era-label')){ cur = null; apply(sl.value, false); } }).observe(document.body, { childList:true, subtree:true });
+  window.GTY_ERA = { apply:apply, eras:ERAS };
+})();
+</script>
+<button type="button" id="gtySound" aria-pressed="true" aria-label="Sound on" style="position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,16,10,.7);color:#fff;font-size:19px;cursor:pointer;">🔊</button>
+<script>
+(function(){ var b = document.getElementById('gtySound');
+  var show = function(){ var m = !!window.muted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ window.gtySetMuted && window.gtySetMuted(!window.muted); show(); }); show(); })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
