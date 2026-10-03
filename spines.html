@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+/* one sound switch for every TierBrain game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spines | TierBrain</title>
+<meta name="description" content="A teetering pile of books, each spine a subject. Pull a book, answer its question, and set it on top, but every pull costs the pile its balance.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://tierbrain.co/spines.html">
+<meta name="theme-color" content="#14211b">
+<script>(function(){ if(location.hostname==='tierbrain.github.io'){ location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================
+   SPINES. A lamplit study at night, and a pile of old books.
+   The one bold thing is the pile itself: its lean, and its fall.
+   ========================================================== */
+:root{
+  --wall:#14211b; --wall2:#1d3128; --lamp:#ffd79a; --desk:#5a3a22; --desk-lo:#3c2614; --gold:#d9b25a; --gold-hi:#f1d38c;
+  --ink:#f3ead6; --soft:#b9c4b4; --good:#8fd6a5; --bad:#ff917c;
+  --serif:'Fraunces', Georgia, 'Times New Roman', serif; --ui:'Nunito', system-ui, -apple-system, sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{background:radial-gradient(ellipse at 22% 8%,rgba(255,215,154,.26),transparent 46%),linear-gradient(180deg,var(--wall2),var(--wall) 70%);background-color:var(--wall);
+  color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
+button{font:inherit;color:inherit;}
+.app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;padding:10px 14px 12px;gap:8px;}
+
+.strip{display:flex;align-items:center;gap:12px;}
+.name{font-family:var(--serif);font-weight:700;font-size:24px;margin-right:auto;color:var(--gold-hi);}
+.pts{font-weight:900;color:var(--gold-hi);white-space:nowrap;}
+.level{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px;color:var(--soft);}
+.level .bar{position:relative;width:64px;height:8px;border-radius:4px;background:rgba(243,234,214,.14);overflow:hidden;}
+.level .bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:4px;background:linear-gradient(90deg,var(--good),#f0c46a 55%,var(--bad));transition:width .5s;}
+.snd{background:none;border:0;font-size:18px;cursor:pointer;color:var(--soft);padding:2px;}
+
+/* the study: the pile stands on the desk */
+.study{position:relative;flex:1;min-height:260px;overflow:hidden;border-radius:14px;
+  background:radial-gradient(ellipse at 30% 0%,rgba(255,215,154,.18),transparent 60%);}
+.desk{position:absolute;left:-10%;right:-10%;bottom:0;height:34px;background:linear-gradient(180deg,var(--desk),var(--desk-lo));border-top:3px solid #7a5232;box-shadow:0 -6px 18px rgba(0,0,0,.35);}
+.pile{position:absolute;left:50%;bottom:34px;width:0;height:100%;}
+.book{position:absolute;left:0;bottom:0;border:0;padding:0 14px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  border-radius:3px 6px 6px 3px;font-family:var(--serif);font-weight:600;font-size:14px;letter-spacing:.01em;color:var(--gold-hi);
+  text-shadow:0 1px 0 rgba(0,0,0,.45);transition:transform .45s cubic-bezier(.3,.7,.3,1),filter .2s,box-shadow .2s;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -3px 0 rgba(0,0,0,.28),0 2px 3px rgba(0,0,0,.35);}
+.book::before,.book::after{content:"";position:absolute;top:4px;bottom:4px;width:2px;background:rgba(241,211,140,.55);border-radius:1px;}
+.book::before{left:8px;} .book::after{right:8px;}
+.book:focus-visible{outline:3px solid var(--lamp);outline-offset:2px;z-index:5;}
+.book.pick{filter:brightness(1.25);box-shadow:0 0 0 2px var(--lamp),0 0 22px rgba(255,215,154,.55);}
+.book[disabled]{cursor:default;}
+.book.jam{animation:jam .45s;}
+@keyframes jam{20%,60%{margin-left:-5px}40%,80%{margin-left:5px}}
+
+.hint{margin:0;font-size:15px;line-height:1.45;color:var(--soft);min-height:2.9em;}
+.card{background:rgba(10,20,15,.82);border:1px solid rgba(243,234,214,.16);border-radius:14px;padding:13px 14px;}
+.card[hidden]{display:none;}
+.card .tag{margin:0 0 4px;font-family:var(--serif);font-style:italic;color:var(--gold);font-size:15px;}
+.card .q{margin:0 0 10px;font-weight:800;font-size:17px;line-height:1.4;}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.opt{text-align:left;padding:11px 12px;border-radius:10px;border:2px solid rgba(243,234,214,.16);background:rgba(243,234,214,.06);font-weight:800;font-size:15px;cursor:pointer;}
+.opt:focus-visible{outline:3px solid var(--lamp);outline-offset:2px;}
+.opt.right{border-color:var(--good);background:rgba(143,214,165,.16);} .opt.wrong{border-color:var(--bad);background:rgba(255,145,124,.12);}
+.opt:disabled{cursor:default;}
+
+.over{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:24px 20px;background:rgba(10,18,14,.9);}
+.over[hidden]{display:none;}
+.over .box{max-width:400px;width:100%;}
+.over h1{font-family:var(--serif);font-weight:700;font-size:46px;line-height:1.05;margin:0 0 12px;color:var(--gold-hi);}
+.over p{color:var(--soft);font-size:16px;line-height:1.6;margin:0 0 12px;}
+.go{border:0;border-radius:12px;padding:13px 20px;font-weight:900;font-size:17px;cursor:pointer;color:#2a1a0c;background:linear-gradient(180deg,var(--gold-hi),var(--gold) 60%,#9a7428);box-shadow:0 3px 0 rgba(0,0,0,.35);}
+.go:focus-visible{outline:3px solid var(--lamp);outline-offset:3px;}
+.big{font-family:var(--serif);font-size:44px;color:var(--gold-hi);margin:4px 0;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@media (prefers-reduced-motion: reduce){ .book{transition:none;} .book.jam{animation:none;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="strip">
+    <span class="name">Spines</span>
+    <span class="level" aria-hidden="true">Lean <span class="bar"><i id="leanBar"></i></span></span>
+    <span class="pts" id="pts">0 pts</span>
+    <button class="snd" id="snd" type="button" aria-label="Sound on" aria-pressed="true">&#x1F50A;</button>
+  </header>
+  <section class="study" id="study" aria-label="The pile of books">
+    <div class="desk"></div>
+    <div class="pile" id="pile"></div>
+  </section>
+  <p class="hint" id="hint"></p>
+  <section class="card" id="card" hidden aria-live="polite">
+    <p class="tag" id="tag"></p><p class="q" id="q"></p><div class="opts" id="opts"></div>
+  </section>
+  <p class="sr" id="say" aria-live="polite"></p>
+</div>
+
+<section class="over" id="start">
+  <div class="box">
+    <h1>Spines</h1>
+    <p>A pile of old books stands on the desk, each spine stamped with a subject. Choose a book, answer its question, and set it on top.</p>
+    <p>Books near the bottom are worth more, but pulling them costs the pile its balance, and a wrong answer makes it sway. Keep it standing as long as you can.</p>
+    <button class="go" id="goBtn" type="button">Choose your first book</button>
+  </div>
+</section>
+<section class="over" id="end" hidden>
+  <div class="box">
+    <h1>It fell</h1>
+    <p id="endText"></p>
+    <div class="big" id="endPts"></div>
+    <p id="endBest"></p>
+    <button class="go" id="againBtn" type="button">Stack them again</button>
+  </div>
+</section>
+
+<script src="spines-bank.js?v=1" onerror="window.__noBank=1"></script>
+<script>
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+var say = function(t){ $('say').textContent = t; };
+var store = function(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }, recall = function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+
+/* ---------- questions by subject ---------- */
+var BANK = window.SPINES_BANK || { 'General Knowledge':{ '1':[{q:'How many days are in a week?',correct:'Seven',wrong:['Five','Six','Eight']}], '2':[{q:'What is the capital of France?',correct:'Paris',wrong:['Rome','Madrid','Berlin']}], '3':[{q:'What is the largest planet?',correct:'Jupiter',wrong:['Saturn','Neptune','Earth']}] } };
+var SUBJECTS = Object.keys(BANK), seen = {};
+function ask(subj, tier){ var L = (BANK[subj][tier] || []).filter(function(q){ return !seen[q.q]; }); if(!L.length){ L = BANK[subj][tier] || BANK[subj]['1']; }
+  var q = L[Math.floor(Math.random() * L.length)]; seen[q.q] = 1; return q; }
+function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+/* ---------- sound, built in the browser ---------- */
+var ac = null;
+function actx(){ try{ if(!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended' && !window.tbMuted) ac.resume(); }catch(e){ return null; } return ac; }
+function noise(t, d, v, f, type, sweep){ var a = actx(); if(!a) return; var n = Math.floor(a.sampleRate * d), b = a.createBuffer(1, n, a.sampleRate), c = b.getChannelData(0);
+  for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.5);
+  var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = b; fl.type = type || 'bandpass'; fl.frequency.setValueAtTime(f, T);
+  if(sweep) fl.frequency.exponentialRampToValueAtTime(sweep, T + d); g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); }
+function tone(f, t, d, v, to, type){ var a = actx(); if(!a) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.type = type || 'sine'; o.frequency.setValueAtTime(f, T);
+  if(to) o.frequency.exponentialRampToValueAtTime(to, T + d); g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v, T + .02); g.gain.exponentialRampToValueAtTime(.0001, T + d);
+  o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .05); }
+var SFX = {
+  slide: function(){ noise(0, .32, .16, 900, 'bandpass', 2400); },
+  thump: function(t){ noise(t || 0, .18, .45, 220, 'lowpass'); tone(85, t || 0, .2, .1, 55); },
+  creak: function(){ tone(140, 0, .55, .05, 95, 'sawtooth'); },
+  right: function(){ tone(659, 0, .25, .07); tone(988, .1, .35, .05); },
+  crash: function(){ for(var i = 0; i < 9; i++) noise(i * .09 + Math.random() * .05, .22, .35, 160 + Math.random() * 260, 'lowpass'); noise(.1, .8, .12, 3000, 'bandpass', 900); }
+};
+
+/* ---------- the pile ---------- */
+var COLOURS = ['#7a2430', '#1f3a5f', '#2f5a3f', '#8a6420', '#5b2d55', '#22575a', '#6b4423', '#3d3f6b', '#7c3b2b'];
+var LIMIT = 9;   /* degrees of lean the pile can bear */
+var G = null;
+function newBook(){ return { subj:SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)], col:COLOURS[Math.floor(Math.random() * COLOURS.length)],
+  w:150 + Math.floor(Math.random() * 80), h:26 + Math.floor(Math.random() * 9), jx:Math.round(Math.random() * 18 - 9), el:null }; }
+function tierOf(i, n){ var r = i / (n - 1); return r < .34 ? '3' : (r < .67 ? '2' : '1'); }
+function depthName(t){ return t === '3' ? 'near the bottom' : (t === '2' ? 'in the middle' : 'near the top'); }
+function newGame(){
+  G = { books:[], lean:0, pts:0, moved:0, busy:false, over:false, sel:-1 };
+  for(var i = 0; i < 15; i++) G.books.push(newBook());
+  $('pile').innerHTML = ''; G.books.forEach(function(b){ makeEl(b); });
+  render(); hint('Choose a book. Lower books are worth more, but cost the pile its balance.'); $('card').hidden = true; $('end').hidden = true;
+}
+function makeEl(b){ var e = document.createElement('button'); e.type = 'button'; e.className = 'book'; e.textContent = b.subj;
+  e.style.width = b.w + 'px'; e.style.height = b.h + 'px'; e.style.background = 'linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.18)),' + b.col;
+  e.addEventListener('click', function(){ choose(G.books.indexOf(b)); }); b.el = e; $('pile').appendChild(e); }
+/* every book's place: stacked from the desk up, each shifted by the lean in proportion to its height */
+function render(){
+  var y = 0, n = G.books.length, scale = Math.min(1, ($('study').clientHeight - 50) / G.books.reduce(function(s, b){ return s + b.h; }, 0));
+  $('pile').style.transform = 'scale(' + scale.toFixed(3) + ')'; $('pile').style.transformOrigin = '0 100%';
+  G.books.forEach(function(b, i){
+    var shift = Math.tan(G.lean * Math.PI / 180) * (y + b.h / 2) * 1.6;
+    b.el.style.transform = 'translate(' + (-b.w / 2 + b.jx + shift).toFixed(1) + 'px,' + (-y).toFixed(1) + 'px) rotate(' + (G.lean * .35).toFixed(2) + 'deg)';
+    b.el.style.zIndex = String(i + 1); y += b.h;
+    var t = tierOf(i, n), top = i === n - 1;
+    b.el.disabled = top || G.busy || G.over;
+    b.el.setAttribute('aria-label', top ? b.subj + ', the top book' : b.subj + ', ' + depthName(t) + ', ' + t + (t === '1' ? ' point' : ' points'));
+  });
+  var pct = Math.min(100, Math.abs(G.lean) / LIMIT * 100); $('leanBar').style.width = pct + '%'; $('pts').textContent = G.pts + ' pts';
+}
+function hint(t){ $('hint').textContent = t; }
+
+function choose(i){
+  if(!G || G.busy || G.over || i < 0 || i >= G.books.length - 1) return; actx();
+  if(G.sel >= 0) G.books[G.sel].el.classList.remove('pick');
+  var b = G.books[i], t = tierOf(i, G.books.length), q = ask(b.subj, t); G.sel = i; G.q = q; b.el.classList.add('pick');
+  $('tag').textContent = b.subj + ', ' + depthName(t) + ', ' + t + (t === '1' ? ' point' : ' points'); $('q').textContent = q.q;
+  var box = $('opts'); box.innerHTML = '';
+  shuffle([q.correct].concat(q.wrong.slice(0, 3))).forEach(function(o){ var x = document.createElement('button'); x.type = 'button'; x.className = 'opt'; x.textContent = o;
+    x.addEventListener('click', function(){ answer(o, x); }); box.appendChild(x); });
+  $('card').hidden = false; hint(''); say(b.subj + ' question: ' + q.q);
+  render(); b.el.classList.add('pick');   /* the study is smaller with the card open, so the pile re-fits */
+}
+function answer(o, btn){
+  if(G.busy) return; G.busy = true;
+  var i = G.sel, b = G.books[i], n = G.books.length, t = tierOf(i, n), risk = 1 - i / (n - 1), right = o === G.q.correct;
+  [].forEach.call(document.querySelectorAll('.opt'), function(x){ x.disabled = true; if(x.textContent === G.q.correct) x.classList.add('right'); });
+  var sign = Math.abs(G.lean) > .4 ? Math.sign(G.lean) : (Math.random() < .5 ? -1 : 1);
+  b.el.classList.remove('pick');
+  if(right){
+    SFX.right(); G.pts += +t; G.moved++;
+    G.lean += sign * (.35 + risk * 1.7);
+    setTimeout(function(){ pull(i); }, 450);
+    say('Right. You pulled ' + b.subj + ' ' + depthName(t) + '.');
+  } else {
+    btn.classList.add('wrong'); SFX.creak(); b.el.classList.remove('jam'); void b.el.offsetWidth; b.el.classList.add('jam');
+    G.lean += sign * (1.5 + risk * 1.6);
+    say('Not quite. The answer was ' + G.q.correct + '. The book jams and the pile sways.');
+    setTimeout(settle, 900);
+  }
+}
+/* the book slides out, the books above settle down, and it is laid on top */
+function pull(i){
+  var b = G.books[i]; SFX.slide();
+  if(!reduce){ b.el.style.transform += ' translateX(' + (G.lean >= 0 ? -320 : 320) + 'px)'; }
+  setTimeout(function(){
+    G.books.splice(i, 1); G.books.push(b); b.jx = Math.round(Math.random() * 18 - 9);
+    $('pile').appendChild(b.el); render(); SFX.thump(.15); settle();
+  }, reduce ? 50 : 380);
+}
+function settle(){
+  render(); $('card').hidden = true; G.sel = -1;
+  var a = Math.abs(G.lean);
+  if(a >= LIMIT) return collapse();
+  if(a > LIMIT * .6) SFX.creak();
+  G.busy = false; render();
+  hint(a > LIMIT * .75 ? 'The pile is leaning badly. Pull from near the top.' : (a > LIMIT * .45 ? 'The pile is leaning. Careful now.' : 'Choose your next book.'));
+  say('The pile leans ' + Math.round(a / LIMIT * 100) + ' percent of the way to falling.');
+}
+/* it falls: every book tumbles with its own spin and bounces on the desk */
+function collapse(){
+  G.over = true; G.busy = true; render(); SFX.crash(); say('The pile falls.');
+  var floor = 0, dir = Math.sign(G.lean) || 1, t0 = null, bodies = G.books.map(function(b, i){
+    return { el:b.el, x:0, y:0, vx:dir * (60 + Math.random() * 180) * (0.4 + i / G.books.length), vy:-(Math.random() * 180), r:0, vr:dir * (90 + Math.random() * 240), base:b.el.style.transform }; });
+  if(reduce){ G.books.forEach(function(b){ b.el.style.opacity = '.35'; }); return setTimeout(finish, 600); }
+  var heights = []; var acc = 0; G.books.forEach(function(b){ heights.push(acc); acc += b.h; });
+  var step = function(now){ if(t0 === null) t0 = now; var dt = Math.min(.033, (now - (step.last || now)) / 1000); step.last = now;
+    bodies.forEach(function(p, i){ p.vy += 1500 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+      var ground = heights[i];   /* how far this book can fall before it meets the desk */
+      if(p.y > ground){ p.y = ground; p.vy *= -.28; p.vx *= .7; p.vr *= .6; }
+      p.el.style.transform = p.base + ' translate(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px) rotate(' + p.r.toFixed(1) + 'deg)'; });
+    if(now - t0 < 2100) requestAnimationFrame(step); else finish(); };
+  requestAnimationFrame(step);
+}
+function finish(){
+  var best = parseInt(recall('spines_best') || '0', 10); if(G.pts > best){ best = G.pts; store('spines_best', String(best)); }
+  $('endText').textContent = 'You moved ' + G.moved + (G.moved === 1 ? ' book' : ' books') + ' before the pile gave way.';
+  $('endPts').textContent = G.pts + ' points'; $('endBest').textContent = G.pts >= best && G.pts > 0 ? 'A new best.' : 'Your best: ' + best + ' points';
+  $('end').hidden = false; $('againBtn').focus();
+}
+
+/* ---------- controls ---------- */
+$('goBtn').addEventListener('click', function(){ $('start').hidden = true; actx(); newGame(); });
+$('againBtn').addEventListener('click', function(){ newGame(); });
+$('snd').addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); var m = !!window.tbMuted;
+  this.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; this.setAttribute('aria-pressed', String(!m)); this.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); });
+(function(){ var m = !!window.tbMuted, s = $('snd'); s.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; s.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); })();
+window.addEventListener('resize', function(){ if(G) render(); });
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
