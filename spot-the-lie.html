@@ -192,6 +192,18 @@
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<style>
+/* the lie detector: a polygraph above the statements, and stamps on the cards */
+.lx-poly{display:block;width:100%;height:46px;margin:0 0 10px;}
+.lx-poly path{fill:none;stroke:#ff8a73;stroke-width:2;stroke-linejoin:round;}
+#opts > *{position:relative;}
+.lx-stamp{position:absolute;right:54px;top:-13px;z-index:3;padding:3px 10px;border:3px solid currentColor;border-radius:6px;font-weight:900;font-size:15px;letter-spacing:.08em;pointer-events:none;
+  transform:rotate(-8deg);animation:lxStamp .28s cubic-bezier(.5,0,.8,.4) both;}
+.lx-stamp.lie{color:#ff6b5b;font-size:17px;background:rgba(40,10,10,.85);} .lx-stamp.true{background:rgba(10,30,20,.85);} .lx-stamp.true{color:#7fd6a0;animation-delay:.25s;}
+@keyframes lxStamp{from{transform:rotate(-8deg) scale(2.2);opacity:0;}to{transform:rotate(-8deg) scale(1);opacity:1;}}
+.lx-tilt{transition:transform .5s ease .2s;transform:rotate(-1.6deg) translateX(-4px);}
+@media (prefers-reduced-motion: reduce){ .lx-stamp{animation:none;} .lx-tilt{transition:none;} }
+</style>
 </head>
 <body>
 <div id="app">
@@ -514,7 +526,7 @@
     if(locked) return; locked=true;
     const right=(choice===current.correct);
     answered++;
-    const box=$('opts'); box.classList.add('locked');
+    const box=$('opts'); box.classList.add('locked'); setTimeout(function(){ if(window.LX) LX.reveal(current, right, box); }, 0); startT += 900;   /* the clock pauses for the reveal */
     // reveal
     [...box.children].forEach(c=>{
       const label=c.querySelector('.txt').textContent;
@@ -543,7 +555,7 @@
       else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
       pendingMove=null;
       nextQuestion();
-    }, right?780:1050);
+    }, right?1680:1950);   /* time for the reveal to land */
   }
 
   function endOut(){
@@ -715,6 +727,38 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
+})();
+</script>
+<script>
+window.LX = (function(){
+  var ac = null, streak = 0, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended' && !window.tbMuted) ac.resume(); }catch(e){ ac = null; } return ac; };
+  var noise = function(t, d, v, f, type){ var a = ctx(); if(!a) return; var n = Math.floor(a.sampleRate * d), bf = a.createBuffer(1, n, a.sampleRate), c = bf.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = bf; fl.type = type || 'bandpass'; fl.frequency.value = f; g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); };
+  var tone = function(f, t, d, v){ var a = ctx(); if(!a) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v, T + .01); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .05); };
+  var badge = function(right){ streak = right ? streak + 1 : 0; var p = document.getElementById('lvlPill'); if(!p) return; var b = document.getElementById('xStreak');
+    if(!b){ b = document.createElement('span'); b.id = 'xStreak'; b.style.cssText = 'display:inline-flex;margin-left:8px;font-weight:900;font-size:14px;color:#ffb347'; p.after(b); }
+    b.hidden = streak < 2; b.textContent = '\uD83D\uDD25 ' + streak + ' in a row'; b.style.textShadow = '0 0 ' + Math.min(6, streak) * 4 + 'px rgba(255,150,40,.8)'; };
+
+  var svg = null, path = null, pts = [], spike = 0, raf = 0, t = 0;
+  var ensure = function(){ var box = document.getElementById('opts'); if(!box) return;
+    if(!svg || !document.body.contains(svg)){ svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'lx-poly'); svg.setAttribute('viewBox', '0 0 300 46'); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-hidden', 'true');
+      path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); svg.appendChild(path); box.parentNode.insertBefore(svg, box); pts = []; }
+    if(!raf && !reduce) loop(); };
+  var loop = function(){ t++; var calm = Math.sin(t / 5) * 4 + (Math.random() - .5) * 3; var y = 23 + calm + (spike > 0 ? (spike % 2 ? -1 : 1) * spike * 1.6 : 0); if(spike > 0) spike--;
+    pts.push(Math.max(2, Math.min(44, y))); if(pts.length > 100) pts.shift();
+    path.setAttribute('d', pts.map(function(v, i){ return (i ? 'L' : 'M') + (i * 3) + ' ' + v.toFixed(1); }).join(' ')); raf = requestAnimationFrame(loop); };
+  new MutationObserver(function(){ if(document.getElementById('opts')) ensure(); }).observe(document.body, { childList:true, subtree:true });
+  return { reveal: function(cur, right, box){
+    badge(right); spike = 14; noise(0, .35, .2, 2400); 
+    [].forEach.call(box.children, function(c){ var l = c.querySelector('.txt'); if(!l) return; var isLie = l.textContent === cur.correct;
+      var st = document.createElement('div'); st.className = 'lx-stamp ' + (isLie ? 'lie' : 'true'); st.textContent = isLie ? 'Lie' : 'True'; st.setAttribute('aria-hidden', 'true'); c.appendChild(st);
+      if(isLie) c.classList.add('lx-tilt'); });
+    setTimeout(function(){ noise(0, .2, .45, 170, 'lowpass'); tone(90, 0, .25, .1); }, reduce ? 0 : 280);
+    if(right) tone(783.99, .6, .35, .07); else tone(233, .6, .4, .08);
+  } };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

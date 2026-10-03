@@ -192,6 +192,16 @@
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<style>
+/* measure them up: each option grows a bar to its true size */
+#opts > *{position:relative;}
+.hx-bar{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:inherit;z-index:0;pointer-events:none;background:linear-gradient(90deg,rgba(143,199,255,.10),rgba(143,199,255,.28));transition:width .9s cubic-bezier(.25,.8,.3,1);}
+.hx-bar.win{background:linear-gradient(90deg,rgba(127,214,160,.14),rgba(127,214,160,.42));box-shadow:inset -3px 0 0 #7fd6a0;}
+.hx-num{position:absolute;right:16px;top:-12px;z-index:3;pointer-events:none;font-weight:900;font-size:13px;padding:2px 9px;border-radius:999px;background:rgba(8,20,16,.92);border:1px solid rgba(143,199,255,.5);color:#cfe6ff;}
+#opts > .correct .hx-num{border-color:#7fd6a0;color:#bff0d2;}
+#opts > * > :not(.hx-bar){position:relative;z-index:1;}
+@media (prefers-reduced-motion: reduce){ .hx-bar{transition:none;} }
+</style>
 </head>
 <body>
 <div id="app">
@@ -445,7 +455,7 @@
     if(locked) return; locked=true;
     const right=(choice===current.correct);
     answered++;
-    const box=$('opts'); box.classList.add('locked');
+    const box=$('opts'); box.classList.add('locked'); setTimeout(function(){ if(window.HX) HX.reveal(current, right, box); }, 0); startT += 900;   /* the clock pauses for the reveal */
     // reveal
     [...box.children].forEach(c=>{
       const label=c.querySelector('.txt').textContent;
@@ -474,7 +484,7 @@
       else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
       pendingMove=null;
       nextQuestion();
-    }, right?780:1050);
+    }, right?1680:1950);   /* time for the reveal to land */
   }
 
   function endOut(){
@@ -646,6 +656,38 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
+})();
+</script>
+<script>
+window.HX = (function(){
+  var ac = null, streak = 0, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended' && !window.tbMuted) ac.resume(); }catch(e){ ac = null; } return ac; };
+  var noise = function(t, d, v, f, type){ var a = ctx(); if(!a) return; var n = Math.floor(a.sampleRate * d), bf = a.createBuffer(1, n, a.sampleRate), c = bf.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = bf; fl.type = type || 'bandpass'; fl.frequency.value = f; g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); };
+  var tone = function(f, t, d, v){ var a = ctx(); if(!a) return; var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v, T + .01); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + d + .05); };
+  var badge = function(right){ streak = right ? streak + 1 : 0; var p = document.getElementById('lvlPill'); if(!p) return; var b = document.getElementById('xStreak');
+    if(!b){ b = document.createElement('span'); b.id = 'xStreak'; b.style.cssText = 'display:inline-flex;margin-left:8px;font-weight:900;font-size:14px;color:#ffb347'; p.after(b); }
+    b.hidden = streak < 2; b.textContent = '\uD83D\uDD25 ' + streak + ' in a row'; b.style.textShadow = '0 0 ' + Math.min(6, streak) * 4 + 'px rgba(255,150,40,.8)'; };
+
+  var parse = function(rev){ var out = {}; String(rev || '').replace(/([^:\u00b7|\n]+?):\s*([\d][\d,.]*)\s*([^\u00b7|\n,]*)/g, function(_, n, v, u){ out[n.trim().toLowerCase()] = { v:parseFloat(v.replace(/,/g, '')), txt:v + (u.trim() ? ' ' + u.trim() : '') }; }); return out; };
+  return { reveal: function(cur, right, box){
+    badge(right); var vals = parse(cur.reveal), opts = [].slice.call(box.children), max = 0, got = [];
+    opts.forEach(function(c){ var l = c.querySelector('.txt'); var k = l ? l.textContent.trim().toLowerCase() : ''; var hit = vals[k]; if(!hit){ for(var n in vals){ if(k && (n.indexOf(k) >= 0 || k.indexOf(n) >= 0)) hit = vals[n]; } } got.push(hit); if(hit && hit.v > max) max = hit.v; });
+    if(!max) return;
+    /* close pairs (years, near-equal heights) are measured from just below the smaller figure, so the gap shows */
+    var vs = got.filter(Boolean).map(function(h){ return h.v; }), min = Math.min.apply(null, vs), base = (min / max > .8) ? Math.max(0, min - (max - min) * 1.2) : 0;
+    opts.forEach(function(c, i){ var h = got[i]; if(!h) return; var bar = document.createElement('div'); bar.className = 'hx-bar' + (c.classList.contains('correct') ? ' win' : ''); c.insertBefore(bar, c.firstChild);
+      var num = document.createElement('div'); num.className = 'hx-num'; c.appendChild(num);
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ bar.style.width = Math.max(6, (h.v - base) / (max - base) * 100) + '%'; }); });
+      var t0 = null, dur = reduce ? 0 : 850, dec = (h.txt.split(' ')[0].split('.')[1] || '').length, unit = h.txt.indexOf(' ') > 0 ? h.txt.slice(h.txt.indexOf(' ')) : '';
+      var run = function(now){ if(t0 === null) t0 = now; var k = dur ? Math.min(1, (now - t0) / dur) : 1, e = 1 - Math.pow(1 - k, 3);
+        num.textContent = (h.v * e).toLocaleString('en-GB', { minimumFractionDigits:dec, maximumFractionDigits:dec }) + unit; if(k < 1) requestAnimationFrame(run); };
+      requestAnimationFrame(run); });
+    for(var k = 0; k < 6; k++) noise(k * .12, .02, .16, 3000, 'highpass');
+    if(right) [659.25, 987.77].forEach(function(f, i){ tone(f, .85 + i * .1, .4, .07); }); else tone(220, .85, .45, .08);
+  } };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
