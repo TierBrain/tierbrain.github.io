@@ -156,6 +156,14 @@ button{font:inherit;color:inherit;}
 .ed-bible .seascape.aground .shore{opacity:1;transform:none;}
 .ed-bible .ship.sunk{animation:aground 1.6s ease-out forwards !important;}
 @keyframes aground{to{transform:translate(42px,4px) rotate(11deg);opacity:1;}}
+
+/* the optional group leaderboard */
+.gc{display:block;margin:4px 0 6px;font-weight:800;font-size:14px;color:var(--soft);}
+.gc input,#nameIn{display:block;width:100%;margin-top:6px;font:inherit;font-weight:800;font-size:16px;padding:10px 12px;border-radius:10px;border:2px solid rgba(223,233,238,.2);background:rgba(7,19,32,.6);color:var(--foam);}
+.small{font-size:13px !important;line-height:1.5 !important;margin:0 0 16px !important;}
+#board{margin:14px 0 16px;text-align:left;} #board[hidden]{display:none;}
+#boardList{margin:10px 0 0;padding-left:22px;color:var(--foam);font-weight:700;} #boardList li{margin:3px 0;} #boardList .me{color:var(--brass-hi);}
+.saverow{display:flex;gap:8px;align-items:center;} .saverow #nameIn{margin:0;} .saverow .btn{flex:none;}
 @media (prefers-reduced-motion: reduce){ .tile.show .ink{animation:none;opacity:0;} .tile.show::after{display:none;} .marker.kick{animation:none;}
   .wave,.ship,.rain,.bottle{animation:none !important;} .flash{display:none;} .parch.unroll{animation:none;} .ship.sunk{opacity:.2;} }
 @media (max-width:340px){ .name{font-size:18px;} .hull i{width:11px;} .clock{min-width:0;} .strip{gap:6px;} .app{padding-left:10px;padding-right:10px;} }
@@ -208,6 +216,8 @@ button{font:inherit;color:inherit;}
     <p>A bottle has washed ashore, and the sea has smudged its message. Spin the helm to choose your waters, answer to earn letters, and read the message before your ship sinks.</p>
     <p>Calm waters give one letter, the open sea two, and a storm three, the only way to earn a vowel. Every letter still smudged when you solve is worth ten points. A wrong answer springs a leak; three, and she sinks.</p>
     <div class="clocks" id="clocks"></div>
+    <label class="gc" for="groupCode">Group code, optional<input id="groupCode" autocomplete="off" maxlength="24" placeholder="e.g. Smith family"></label>
+    <p class="small">Friends who enter the same code share a leaderboard. Leave blank to play on your own.</p>
     <button class="btn spin" id="goBtn" type="button">Uncork the bottle</button>
   </div>
 </section>
@@ -218,6 +228,7 @@ button{font:inherit;color:inherit;}
     <p id="endText"></p>
     <div class="big" id="endPts"></div>
     <p id="endBest"></p>
+    <div id="board" hidden><p id="boardTitle" style="margin:0 0 8px"></p><div class="saverow" id="saveRow"><input id="nameIn" maxlength="14" placeholder="Your name" aria-label="Your name"><button class="btn spin" id="saveBtn" type="button">Save</button></div><ol id="boardList"></ol></div>
     <button class="btn spin" id="againBtn" type="button">Another bottle</button>
   </div>
 </section>
@@ -439,6 +450,9 @@ function endGame(why){
   $('endTitle').textContent = why === 'sunk' ? (B ? 'Shipwrecked on Malta' : 'She sank') : (why === 'time' ? (B ? 'Night fell at sea' : 'The tide turned') : (B ? 'Every letter read' : 'Every bottle read'));
   $('endText').textContent = (why === 'sunk' ? (B ? 'The ship ran aground, but everyone came safely to land. ' : 'Three leaks and the ship went down. ') : '') + (B && why === 'done' ? 'You brought the whole message safely ashore. ' : '') + 'You read ' + G.solved + (G.solved === 1 ? ' message.' : ' messages.');
   $('endPts').textContent = G.pts + ' points'; $('endBest').textContent = G.pts >= best && G.pts > 0 ? 'A new best.' : 'Your best: ' + best + ' points';
+  RUN = { pts:G.pts, solved:G.solved, left:Math.max(0, Math.round((CLOCK_MS - (performance.now() - G.t0)) / 1000)), saved:false };
+  if(groupCode()){ $('board').hidden = false; $('saveRow').hidden = G.pts <= 0; $('saveBtn').disabled = false; $('saveBtn').textContent = 'Save';
+    try{ $('nameIn').value = localStorage.getItem('smudged_name') || ''; }catch(e){} loadBoard(); } else $('board').hidden = true;
   $('end').hidden = false; $('againBtn').focus();
 }
 
@@ -488,6 +502,31 @@ if(ED === 'bible'){
   $('goBtn').textContent = 'Open the letter'; $('againBtn').textContent = 'Another letter';
   if(window.__noBible || !window.TB_BIBLE) BANK = BIBLE_FALL;
 }
+
+/* ---------- the optional group leaderboard (same rules as the other games) ---------- */
+const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+var QUIZ_ID = ED === 'bible' ? 'qc_smudged-bible' : 'qc_smudged';
+function sbBase(){ return SB_URL + '/rest/v1/scores'; }
+function sbHeaders(x){ return Object.assign({ apikey:SB_KEY, Authorization:'Bearer ' + SB_KEY }, x || {}); }
+var GROUP_KEY = 'smudged_group_' + ED;
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+(function(){ var k = 'smudged_group_' + ED, i = $('groupCode'); try{ i.value = localStorage.getItem(k) || ''; }catch(e){} i.addEventListener('change', function(){ try{ localStorage.setItem(k, i.value.trim()); }catch(e){} }); })();
+var RUN = null;
+async function loadBoard(){ var code = groupCode(); if(!code) return;
+  $('boardTitle').textContent = 'The ' + $('groupCode').value.trim() + ' board';
+  try{ var r = await fetch(sbBase() + '?select=name,correct,level,time_left&quiz_id=eq.' + encodeURIComponent(QUIZ_ID) + '&group_code=eq.' + encodeURIComponent(code) + '&order=correct.desc,level.desc,time_left.desc&limit=10', { headers:sbHeaders() });
+    var rows = r.ok ? await r.json() : []; var ol = $('boardList'); ol.innerHTML = '';
+    if(!rows.length){ var li = document.createElement('li'); li.textContent = 'No scores yet. Be the first!'; li.style.listStyle = 'none'; ol.appendChild(li); }
+    rows.forEach(function(x){ var li = document.createElement('li'); li.textContent = x.name + ': ' + x.correct + ' points, ' + x.level + (x.level === 1 ? ' message' : ' messages'); if(RUN && RUN.saved && x.name === RUN.name && x.correct === RUN.pts) li.className = 'me'; ol.appendChild(li); });
+  }catch(e){ $('boardList').innerHTML = '<li style="list-style:none">The board could not load. Check the connection.</li>'; } }
+$('saveBtn').addEventListener('click', async function(){ if(!RUN || RUN.saved) return; var name = ($('nameIn').value || '').trim().slice(0, 14) || 'Player'; this.disabled = true; this.textContent = 'Saving\u2026';
+  try{ localStorage.setItem('smudged_name', name); }catch(e){}
+  try{ var r = await fetch(sbBase(), { method:'POST', headers:sbHeaders({ 'Content-Type':'application/json', Prefer:'return=minimal' }),
+      body:JSON.stringify([{ quiz_id:QUIZ_ID, group_code:groupCode(), name:name, correct:RUN.pts, level:RUN.solved, time_left:RUN.left }]) });
+    if(!r.ok) throw new Error('save'); RUN.saved = true; RUN.name = name; $('saveRow').hidden = true; await loadBoard();
+  }catch(e){ this.disabled = false; this.textContent = 'Try again'; } });
 /* ---------- controls ---------- */
 $('soundBtn').addEventListener('click', function(){ muted = !muted; this.textContent = muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
   this.setAttribute('aria-pressed', String(!muted)); this.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on'); if(AMB) AMB.master.gain.value = muted ? 0 : 1; });
