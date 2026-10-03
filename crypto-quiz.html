@@ -1,9 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Crypto Quiz — TierBrain</title>
+<title>Crypto Quiz | TierBrain</title>
+<link rel="canonical" href="https://tierbrain.co/crypto-quiz.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -156,6 +167,13 @@
   .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
   .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
 </style>
+<style>
+/* TierBrain standards */
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(15,14,36,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
 </head>
 <body>
 <div id="app">
@@ -180,7 +198,7 @@
   <div class="screen" id="startScreen">
     <div class="sub">Crypto & Blockchain</div>
     <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 questions on crypto fundamentals and history — Bitcoin's origins, blockchains, Ethereum and the key ideas, over four tiers up to Legends. The better you do, the harder it gets!</p>
+    <p class="lead">20 questions on crypto fundamentals and history, Bitcoin's origins, blockchains, Ethereum and the key ideas, over four tiers up to Legends. The better you do, the harder it gets!</p>
     <div class="rules">
       <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
       <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
@@ -189,7 +207,7 @@
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
-    <div class="timelabel">Group code — optional</div>
+    <div class="timelabel">Group code, optional</div>
     <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
     <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
     <button class="cta" id="startBtn">Start Quiz</button>
@@ -226,7 +244,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="lead">Your 2 minutes are up, here's how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -246,7 +264,7 @@
       </div>
     </div>
     <ul class="board" id="boardList"></ul>
-    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <p class="bempty hidden" id="boardEmpty">No scores yet, be the first!</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="boardPlay">Play</button>
       <button class="cta blue" id="boardBack">Menu</button>
@@ -691,5 +709,36 @@
 
 })();
 </script>
+<button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var b = document.getElementById('tbSnd');
+  var show = function(){ var m = !!window.tbMuted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); show(); }); show();
+  /* find a free corner: the button never sits on top of a game's own controls */
+  var spots = [{ left:'12px', right:'auto', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' }, { left:'auto', right:'12px', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' },
+               { left:'12px', right:'auto', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }, { left:'auto', right:'12px', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }];
+  var clash = function(){ var s = b.getBoundingClientRect();
+    return [].some.call(document.querySelectorAll('button, a, input, select, [role=button]'), function(e){ if(e === b || !e.offsetParent) return false; var r = e.getBoundingClientRect();
+      return r.width && !(r.right < s.left || r.left > s.right || r.bottom < s.top || r.top > s.bottom); }); };
+  var place = function(){ for(var i = 0; i < spots.length; i++){ var p = spots[i]; b.style.left = p.left; b.style.right = p.right; b.style.top = p.top; b.style.bottom = p.bottom; if(!clash()) return; }
+    var q = spots[0]; b.style.left = q.left; b.style.right = q.right; b.style.top = q.top; b.style.bottom = q.bottom; };
+  var later = 0; var replace = function(){ clearTimeout(later); later = setTimeout(place, 250); };
+  window.addEventListener('resize', replace); document.addEventListener('click', replace, true); setTimeout(place, 300); setInterval(place, 3000);
+  /* screen readers hear right and wrong the moment an answer is marked */
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  /* the answer's words only: leave out the A/B/C/D badge, and any closing full stop */
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/^[A-F]\s+(?=\S)/, '').replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return;
+      var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var gained = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(gained('good') || gained('correct') || gained('right')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); }
+      if(gained('bad') || gained('wrong') || gained('incorrect')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
