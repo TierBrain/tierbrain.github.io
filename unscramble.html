@@ -204,6 +204,22 @@
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<style>
+/* ===== wooden tiles that move like real ones ===== */
+#uTiles .utile,#uSlots .uslot.filled{background:linear-gradient(170deg,#f6e0ae,#d9b46c) !important;color:#3b2412 !important;border:0 !important;
+  box-shadow:inset 0 -3px 0 rgba(90,55,20,.28),inset 0 1px 0 rgba(255,255,255,.5),0 3px 7px rgba(0,0,0,.35) !important;font-family:Georgia,'Times New Roman',serif !important;font-weight:700 !important;}
+#uTiles .utile.used{opacity:.18 !important;box-shadow:none !important;}
+.ux-tumble{animation:uxTumble .5s cubic-bezier(.3,1.5,.5,1) both;}
+@keyframes uxTumble{from{transform:translateY(-70px) rotate(var(--r,20deg));opacity:0;}to{transform:none;opacity:1;}}
+.ux-pop{animation:uxPop .32s ease-out both;}
+@keyframes uxPop{50%{transform:translateY(-9px) scale(1.12);box-shadow:0 0 18px rgba(255,214,120,.9);}}
+#uSlots{position:relative;}
+#uSlots.ux-gleam::after{content:"";position:absolute;inset:-4px;pointer-events:none;border-radius:10px;background:linear-gradient(100deg,transparent 44%,rgba(255,248,225,.38) 50%,transparent 56%);
+  background-size:300% 100%;animation:uxGleam .8s ease-out .35s both;mix-blend-mode:screen;}
+@keyframes uxGleam{from{background-position:100% 0;}to{background-position:0 0;}}
+.ux-streak{display:inline-flex;margin-left:8px;font-weight:900;font-size:14px;color:#ffb347;text-shadow:0 0 calc(var(--h,1)*4px) rgba(255,150,40,.8);} .ux-streak[hidden]{display:none;}
+@media (prefers-reduced-motion: reduce){ .ux-tumble,.ux-pop{animation:none !important;} #uSlots.ux-gleam::after{display:none;} }
+</style>
 </head>
 <body>
 <div id="app">
@@ -499,7 +515,7 @@
     return queues[level][ptr[level]++];
   }
 
-  function nextQuestion(){
+  function nextQuestion(){ setTimeout(function(){ if(window.UX) UX.fresh(); }, 0);
     current=drawQuestion(); uSolved=false; uGuess=[];
     const word=current.word.toUpperCase();
     let arr; do { arr=shuffle(word.split('')); } while(arr.join('')===word && word.length>1);
@@ -528,7 +544,7 @@
   }
   function tapTile(idx){
     if(uSolved||locked) return; const L=uLetters[idx]; if(L.used) return;
-    L.used=true; uGuess.push(idx); renderSlots(); renderTiles();
+    const __r=window.UX?UX.from(idx):null; L.used=true; uGuess.push(idx); renderSlots(); renderTiles(); if(window.UX) UX.flew(__r);
     if(uGuess.length===current.word.length) checkWord();
   }
   function undoTile(){ if(uSolved||locked) return; const i=uGuess.pop(); if(i==null) return;
@@ -539,10 +555,10 @@
     const built=uGuess.map(i=>uLetters[i].ch).join('');
     if(built===current.word.toUpperCase()){
       uSolved=true; $('uMsg').textContent='Correct!'; $('uMsg').style.color='var(--right)';
-      $('uSlots').classList.add('good'); resolve(true);
+      $('uSlots').classList.add('good'); if(window.UX) UX.solved(); resolve(true);
     } else {
       $('uMsg').textContent='Not quite, try again'; $('uMsg').style.color='var(--wrong)';
-      const s=$('uSlots'); s.classList.add('shake'); setTimeout(()=>s.classList.remove('shake'),420);
+      const s=$('uSlots'); s.classList.add('shake'); if(window.UX) UX.miss(); setTimeout(()=>s.classList.remove('shake'),420);
       setTimeout(()=>{ if(!uSolved&&!locked){ clearAll(); } }, 600);
     }
   }
@@ -564,7 +580,7 @@
     if(locked) return; locked=true; answered++;
     if(success){ correct++; sRight(); streakW=0; streakC++;
       if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; } }
-    else { totalWrong++; sWrong(); streakC=0; streakW++; renderStrikes();
+    else { totalWrong++; sWrong(); if(window.UX) UX.failed(); streakC=0; streakW++; renderStrikes();
       if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; } }
     $('progbar').style.width=(answered/20*100)+'%';
     setTimeout(()=>{
@@ -749,6 +765,40 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
+})();
+</script>
+<script>
+/* Wooden tiles: they tumble in, fly to their slots, and a solved word plays a
+   rising tune. Xylophone notes use a struck bar's own overtone ratios. */
+window.UX = (function(){
+  var ac = null, streak = 0, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended' && !window.tbMuted) ac.resume(); }catch(e){ ac = null; } return ac; };
+  var clack = function(t, v){ var a = ctx(); if(!a) return; var n = Math.floor(a.sampleRate * .05), b = a.createBuffer(1, n, a.sampleRate), c = b.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    var s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + (t || 0); s.buffer = b; f.type = 'bandpass'; f.frequency.value = 1100 + Math.random() * 500; f.Q.value = 3; g.gain.value = v || .35;
+    s.connect(f); f.connect(g); g.connect(a.destination); s.start(T); };
+  var bar = function(freq, t){ var a = ctx(); if(!a) return; [[1, .12, .9], [3.93, .035, .25], [9.2, .012, .1]].forEach(function(p){
+    var o = a.createOscillator(), g = a.createGain(), T = a.currentTime + t; o.frequency.value = freq * p[0];
+    g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(p[1], T + .005); g.gain.exponentialRampToValueAtTime(.0001, T + p[2]); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + p[2] + .05); }); };
+  var SCALE = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+  var badge = function(){ var p = document.getElementById('lvlPill'); if(!p) return; var b = document.getElementById('uxStreak');
+    if(!b){ b = document.createElement('span'); b.id = 'uxStreak'; b.className = 'ux-streak'; p.after(b); }
+    b.hidden = streak < 2; b.textContent = '\uD83D\uDD25 ' + streak + ' in a row'; b.style.setProperty('--h', Math.min(6, streak)); };
+  return {
+    fresh: function(){ var ts = document.querySelectorAll('#uTiles .utile');
+      [].forEach.call(ts, function(t, i){ if(reduce) return; t.style.setProperty('--r', (Math.random() * 60 - 30).toFixed(0) + 'deg'); t.style.animationDelay = (i * 45) + 'ms'; t.classList.add('ux-tumble'); clack(.18 + i * .045, .22); }); },
+    from: function(idx){ var t = document.querySelectorAll('#uTiles .utile')[idx]; return t ? t.getBoundingClientRect() : null; },
+    flew: function(r){ var slots = document.querySelectorAll('#uSlots .uslot.filled'), dest = slots[slots.length - 1]; if(!dest) return;
+      if(r && !reduce){ var d = dest.getBoundingClientRect(), dx = r.left - d.left, dy = r.top - d.top;
+        dest.animate([{ transform:'translate(' + dx + 'px,' + dy + 'px) rotate(-8deg)' }, { transform:'translate(0,0) rotate(0)' }], { duration:220, easing:'cubic-bezier(.3,.8,.4,1)' }); }
+      clack(reduce ? 0 : .2, .32); },
+    solved: function(){ streak++; badge(); var sl = document.getElementById('uSlots'), ls = sl.querySelectorAll('.uslot');
+      [].forEach.call(ls, function(x, i){ if(!reduce){ x.style.animationDelay = (i * 70) + 'ms'; x.classList.add('ux-pop'); } bar(SCALE[Math.min(i, SCALE.length - 1)], i * .07); });
+      sl.classList.remove('ux-gleam'); void sl.offsetWidth; sl.classList.add('ux-gleam'); },
+    miss: function(){ clack(0, .4); var a = ctx(); if(a){ var o = a.createOscillator(), g = a.createGain(), T = a.currentTime; o.frequency.setValueAtTime(150, T); o.frequency.exponentialRampToValueAtTime(90, T + .18);
+      g.gain.setValueAtTime(.12, T); g.gain.exponentialRampToValueAtTime(.0001, T + .22); o.connect(g); g.connect(a.destination); o.start(T); o.stop(T + .25); } },
+    failed: function(){ streak = 0; badge(); }
+  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
