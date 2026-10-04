@@ -12,10 +12,10 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Spines | TierBrain</title>
-<meta name="description" content="A teetering pile of books, each spine a subject. Pull a book, answer its question, and set it on top, but every pull costs the pile its balance.">
+<title>Spines: Bible Edition | TierBrain</title>
+<meta name="description" content="A teetering pile of books, each spine a part of the Bible's story. Pull a book, answer its question and set it on top, but every pull costs the pile its balance. Alone or with friends.">
 <meta name="robots" content="noindex">
-<link rel="canonical" href="https://tierbrain.co/spines.html">
+<link rel="canonical" href="https://tierbrain.co/spines-bible.html">
 <meta name="theme-color" content="#14211b">
 <script>(function(){ if(location.hostname==='tierbrain.github.io'){ location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -186,7 +186,7 @@ var say = function(t){ $('say').textContent = t; };
 var store = function(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }, recall = function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } };
 
 /* ---------- edition: '?ed=bible' gives Spines: Bible Edition ---------- */
-var ED = /[?&]ed=bible\b/.test(location.search) ? 'bible' : 'house';
+var ED = 'bible';   /* always the Bible Edition. Generated from spines.html: edit that file, not this one */
 /* ---------- questions by subject ---------- */
 var BANK = window.SPINES_BANK || { 'General Knowledge':{ '1':[{q:'How many days are in a week?',correct:'Seven',wrong:['Five','Six','Eight']}], '2':[{q:'What is the capital of France?',correct:'Paris',wrong:['Rome','Madrid','Berlin']}], '3':[{q:'What is the largest planet?',correct:'Jupiter',wrong:['Saturn','Neptune','Earth']}] } };
 var SUBJECTS = Object.keys(BANK), seen = {};
