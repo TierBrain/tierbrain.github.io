@@ -176,6 +176,52 @@
 .cw.off{background:rgba(180,180,200,.06);color:#6a6f7e;letter-spacing:.15em;}
 .ciphernote{font-size:13px;color:#9aa2b0;line-height:1.55;text-align:center;margin-top:4px;}
 </style>
+<style>
+/* ===== the upgrade: typed reports, stamps, the storm ===== */
+.gx-ch{opacity:0;animation:gxType .01s forwards;} @keyframes gxType{to{opacity:1;}}
+#fileText.gx-done .gx-ch{animation:none;opacity:1;}
+.gx-stamp{position:absolute;right:16px;bottom:14px;z-index:4;pointer-events:none;padding:4px 12px;border:3px solid currentColor;border-radius:6px;
+  font-weight:700;font-size:17px;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-7deg);mix-blend-mode:multiply;animation:gxStamp .3s cubic-bezier(.5,0,.8,.4) both;}
+.gx-stamp.ok{color:#2f5a3f;} .gx-stamp.no{color:#a3262a;}
+@keyframes gxStamp{from{transform:rotate(-7deg) scale(2.3);opacity:0;}to{transform:rotate(-7deg) scale(1);opacity:.9;}}
+.gx-pop{display:inline-block;animation:gxPop .5s ease-out;} @keyframes gxPop{40%{transform:scale(1.45);color:#ffd27a;}}
+.gx-flash{position:fixed;inset:0;z-index:60;pointer-events:none;background:#dfe8ff;opacity:0;animation:gxFlash .9s ease-out forwards;}
+@keyframes gxFlash{8%{opacity:.28;}18%{opacity:0;}28%{opacity:.18;}100%{opacity:0;}}
+.gx-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@media (prefers-reduced-motion: reduce){ .gx-ch,.gx-stamp,.gx-pop{animation:none !important;opacity:1;} .gx-flash{display:none;} }
+</style>
+<style>
+/* ===== stage: fixes, collected clues, the accusation, verdict slam, cliff-hangers ===== */
+.file:has(.gx-stamp){padding-bottom:46px !important;}
+.gx-stamp{top:auto !important;bottom:10px !important;right:14px !important;left:auto !important;}
+.gx2-card{position:fixed;z-index:60;width:58px;height:40px;border-radius:4px;background:linear-gradient(170deg,#f3e6c8,#d9c29a);box-shadow:0 4px 12px rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none;}
+.gx2-bump{animation:gx2Bump .5s ease-out;} @keyframes gx2Bump{40%{transform:scale(1.6);color:#f1d38c;}}
+.gx2-acc{position:fixed;inset:0;z-index:70;background:radial-gradient(ellipse at 50% 18%,rgba(255,214,150,.10),rgba(5,6,10,.97) 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;cursor:pointer;}
+.gx2-lamp{position:absolute;top:0;left:50%;width:2px;height:120px;background:#5a4a33;transform-origin:50% 0;animation:gx2Swing 2.6s ease-in-out infinite;}
+.gx2-lamp::after{content:"";position:absolute;left:-16px;bottom:-14px;width:34px;height:18px;border-radius:50% 50% 6px 6px;background:#c9a24a;box-shadow:0 0 30px 10px rgba(255,210,130,.45);}
+@keyframes gx2Swing{0%,100%{transform:rotate(-7deg);}50%{transform:rotate(7deg);}}
+.gx2-row{display:flex;gap:clamp(10px,4vw,28px);align-items:flex-end;justify-content:center;flex-wrap:wrap;margin-top:60px;}
+.gx2-fig{display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.38;transition:opacity .6s,transform .7s cubic-bezier(.3,.8,.3,1),filter .6s;filter:brightness(.5);}
+.gx2-fig svg{width:clamp(54px,16vw,86px);height:auto;}
+.gx2-fig span{font-family:'Special Elite',monospace;font-size:13px;color:#e8dcc4;max-width:110px;text-align:center;}
+.gx2-fig.step{opacity:1;filter:brightness(1.15) drop-shadow(0 0 18px rgba(255,210,130,.55));transform:translateY(-10px) scale(1.12);}
+.gx2-fig.slip{opacity:0;transform:translateY(14px) scale(.92);transition:opacity 1.4s,transform 1.4s;}
+.gx2-cap{margin-top:34px;min-height:3em;font-family:'Special Elite',monospace;font-size:clamp(17px,4.6vw,22px);color:#f3e6c8;text-align:center;max-width:30em;line-height:1.45;}
+.gx2-guilty{display:inline-block;margin-top:12px;padding:4px 16px;border:3px solid #b8323a;color:#e0525a;font-family:'Special Elite',monospace;font-size:26px;letter-spacing:.12em;transform:rotate(-6deg);animation:gx2Slam .3s cubic-bezier(.5,0,.8,.4) both;}
+@keyframes gx2Slam{from{transform:rotate(-6deg) scale(2.4);opacity:0;}to{transform:rotate(-6deg) scale(1);opacity:1;}}
+.gx2-slam{animation:gx2Slam2 .32s cubic-bezier(.5,0,.8,.4) both;} @keyframes gx2Slam2{from{transform:scale(2.4) rotate(-8deg);opacity:0;}}
+.gx2-skip{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:18px;font-family:'Special Elite',monospace;font-size:13px;color:rgba(232,220,196,.5);}
+.gx2-coda{margin:22px 0 6px;padding:18px 18px 16px;border-radius:4px;background:linear-gradient(170deg,#efe2c4,#d8c39c);color:#2a2118;box-shadow:0 8px 22px rgba(0,0,0,.4);transform:rotate(-.6deg);text-align:left;}
+.gx2-coda .k{font-family:'Special Elite',monospace;font-size:12px;letter-spacing:.14em;color:#8a2a2a;margin:0 0 8px;}
+.gx2-coda p{font-family:'Special Elite',monospace;font-size:15px;line-height:1.55;margin:0 0 10px;}
+.gx2-coda .wire{font-weight:700;letter-spacing:.06em;}
+.gx2-coda button{margin-top:4px;border:0;border-radius:8px;padding:11px 16px;font-family:'Special Elite',monospace;font-size:15px;background:#2a2118;color:#f3e6c8;cursor:pointer;}
+.gx2-word{display:inline-block;opacity:0;margin-right:.4em;font-weight:700;font-size:20px;letter-spacing:.1em;color:#8a2a2a;animation:gx2Word .6s forwards;}
+@keyframes gx2Word{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+.gx2-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@media (prefers-reduced-motion: reduce){ .gx2-lamp{animation:none;} .gx2-fig,.gx2-fig.slip{transition:none;} .gx2-guilty,.gx2-slam,.gx2-word,.gx2-bump{animation:none;opacity:1;} }
+</style>
 </head>
 <body>
 <div id="app">
@@ -1349,6 +1395,145 @@ $('mute').addEventListener('click',function(){ muted=!muted; this.textContent=mu
 (function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
 buildSelect();
 rsize(); requestAnimationFrame(frame);
+</script>
+<div class="gx-sr" id="gxSay" role="status" aria-live="polite"></div>
+<script>
+/* The upgrade, wrapped around the game's own goTo and choose so its code stays untouched. Scene text types in like a
+   report (every letter stays in the page for screen readers; tap to finish). Deductions are stamped NOTED or WRONG
+   LEAD; the evidence count pops. Soft rain under the case; thunder and a flash when a case opens and at the
+   accusation. All sound follows the game's own sound button. */
+window.GX = (function(){
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, rain = null, timer = 0, lastAnswered = -1;
+  var ok = function(){ try{ return !muted && typeof actx !== 'undefined' && actx; }catch(e){ return false; } };
+  var say = function(t){ var s = document.getElementById('gxSay'); s.textContent = ''; setTimeout(function(){ s.textContent = t; }, 60); };
+  var noise = function(t, d, v, f, type){ if(!ok()) return; var a = actx, n = Math.floor(a.sampleRate * d), b = a.createBuffer(1, n, a.sampleRate), c = b.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.5);
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = b; fl.type = type || 'bandpass'; fl.frequency.value = f; g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); };
+  var thunder = function(){ noise(.1, 2.2, .3, 120, 'lowpass'); noise(.05, .5, .12, 600, 'lowpass');
+    if(!reduce){ var f = document.createElement('div'); f.className = 'gx-flash'; document.body.appendChild(f); setTimeout(function(){ f.remove(); }, 1000); } };
+  var rainOn = function(){ if(rain || !ok()) return; var a = actx, len = a.sampleRate * 2, b = a.createBuffer(1, len, a.sampleRate), c = b.getChannelData(0);
+    for(var i = 0; i < len; i++) c[i] = Math.random() * 2 - 1;
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(); s.buffer = b; s.loop = true; fl.type = 'bandpass'; fl.frequency.value = 2400; fl.Q.value = .5; g.gain.value = .025;
+    s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(); rain = g; };
+  setInterval(function(){ if(rain) rain.gain.value = ok() ? .025 : 0; var m = document.getElementById('mute');
+    if(m){ var on = !(typeof muted !== 'undefined' && muted); m.setAttribute('aria-label', on ? 'Sound on' : 'Sound off'); m.setAttribute('aria-pressed', String(on)); } }, 400);
+  var finish = function(){ var ft = document.getElementById('fileText'); if(ft) ft.classList.add('gx-done'); };
+  document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('#fileText')) finish(); }, true);
+  var api = {
+    scene: function(cur){
+      var ft = document.getElementById('fileText'); if(!ft || !cur) return; ft.classList.remove('gx-done'); clearTimeout(timer);
+      var opening = (typeof answered !== 'undefined' && answered === 0 && lastAnswered !== 0);
+      lastAnswered = (typeof answered !== 'undefined') ? answered : -1;
+      if(opening || cur.accuse){ rainOn(); thunder(); }
+      say((cur.head ? cur.head.charAt(0) + cur.head.slice(1).toLowerCase() + '. ' : '') + ft.textContent);
+      if(reduce) return;
+      var total = ft.textContent.length, per = Math.min(14, 1400 / Math.max(1, total)), n = 0;
+      [].forEach.call(ft.querySelectorAll('p'), function(p){ var t = p.textContent; p.textContent = '';
+        for(var i = 0; i < t.length; i++){ var sp = document.createElement('span'); sp.className = 'gx-ch'; sp.textContent = t[i]; sp.style.animationDelay = Math.round(n++ * per) + 'ms'; p.appendChild(sp); } });
+      for(var k = 0; k < 10; k++) noise(k * (total * per / 1000) / 10, .02, .07, 3000 + Math.random() * 1500, 'highpass');
+      timer = setTimeout(finish, total * per + 200);
+    },
+    answer: function(correct, right, accuse){
+      finish();
+      var file = document.getElementById('file') || (document.getElementById('fileText') || {}).parentNode;
+      if(file && !accuse){ if(getComputedStyle(file).position === 'static') file.style.position = 'relative';
+        var old = file.querySelector('.gx-stamp'); if(old) old.remove();
+        var st = document.createElement('div'); st.className = 'gx-stamp ' + (correct ? 'ok' : 'no'); st.textContent = correct ? 'Noted' : 'Wrong lead'; st.setAttribute('aria-hidden', 'true'); file.appendChild(st);
+        noise(.28, .2, .35, 180, 'lowpass'); }
+      if(correct){ var d = document.getElementById('dedN'); if(d){ d.classList.remove('gx-pop'); void d.offsetWidth; d.classList.add('gx-pop'); } }
+      var ans = right ? (right.t || right.text || '') : '';
+      say(correct ? 'Correct deduction.' : 'Wrong lead.' + (ans ? ' The answer was ' + ans + '.' : ''));
+    }
+  };
+  /* wrap the game's own functions: they run exactly as before, then the upgrade adds its touches */
+  if(typeof goTo === 'function'){ var _goTo = goTo; goTo = function(id){ var r = _goTo.apply(this, arguments); try{ api.scene(cur); }catch(e){} return r; }; }
+  if(typeof choose === 'function'){ var _choose = choose; choose = function(i, btn){ var was = locked; var r = _choose.apply(this, arguments);
+    if(!was){ try{ var list = cur._shown || cur.opts, o = list[i]; api.answer(!!o.correct, list.filter(function(x){ return x.correct; })[0], !!cur.accuse); }catch(e){} } return r; }; }
+  return api;
+})();
+</script>
+<div class="gx2-sr" id="gx2Say" role="status" aria-live="polite"></div>
+<script>
+/* Gaslight: collected clues, the accusation scene, the verdict slam, cliff-hangers
+   between cases (the thread is the lamp-oil cipher), and screen-reader scene text. */
+(function(){
+  var $g = function(id){ return document.getElementById(id); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, ac = null;
+  var soundOn = function(){ var m = $g('mute'); return !m || m.textContent.indexOf('\uD83D\uDD07') < 0; };
+  var ctx = function(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume(); }catch(e){ ac = null; } return ac; };
+  var noise = function(t, d, v, f, type){ if(!soundOn()) return; var a = ctx(); if(!a) return; var n = Math.floor(a.sampleRate * d), b = a.createBuffer(1, n, a.sampleRate), c = b.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    var s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(), T = a.currentTime + t; s.buffer = b; fl.type = type || 'bandpass'; fl.frequency.value = f; g.gain.value = v; s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(T); };
+  var thud = function(t){ noise(t || 0, .3, .5, 150, 'lowpass'); };
+  var scratch = function(){ noise(0, .18, .12, 5200); noise(.12, .12, .08, 4400); };
+  var say = function(t){ var e = $g('gx2Say'); e.textContent = ''; setTimeout(function(){ e.textContent = t; }, 60); };
+
+  /* give the clue counter room beside the sound button */
+  var dn = $g('dedN'); if(dn){ var row = dn.closest('div'); if(row) row.style.paddingRight = '54px'; }
+
+  /* screen readers: the whole scene, once the typewriter has finished */
+  var file = $g('file'), lastScene = '', tmr = 0;
+  if(file) new MutationObserver(function(){ clearTimeout(tmr); tmr = setTimeout(function(){
+      var c = file.cloneNode(true); [].forEach.call(c.querySelectorAll('.gx-stamp,.stamp'), function(x){ x.remove(); });
+      var t = c.innerText.replace(/\s+/g, ' ').trim(); if(t && t !== lastScene){ lastScene = t; say(t); } }, 1400); }).observe(file, { childList:true, subtree:true, characterData:true });
+
+  /* a collected clue: an evidence card slides from the file to the counter */
+  var lastN = dn ? parseInt(dn.textContent, 10) || 0 : 0;
+  if(dn) new MutationObserver(function(){ var n = parseInt(dn.textContent, 10) || 0; if(n > lastN && file){ var a = file.getBoundingClientRect(), b = dn.getBoundingClientRect();
+      scratch(); if(!reduce){ var cd = document.createElement('div'); cd.className = 'gx2-card'; cd.textContent = '\uD83D\uDD0D'; document.body.appendChild(cd);
+        cd.animate([{ left:(a.left + a.width / 2 - 29) + 'px', top:(a.top + a.height / 2 - 20) + 'px', transform:'rotate(-8deg) scale(1)', opacity:1 },
+                    { left:(b.left - 22) + 'px', top:(b.top - 12) + 'px', transform:'rotate(10deg) scale(.35)', opacity:.2 }], { duration:650, easing:'cubic-bezier(.5,0,.3,1)', fill:'forwards' });
+        setTimeout(function(){ cd.remove(); dn.classList.remove('gx2-bump'); void dn.offsetWidth; dn.classList.add('gx2-bump'); }, 640); } }
+    lastN = n; }).observe(dn, { childList:true, characterData:true, subtree:true });
+
+  /* the accusation: suspects under a swinging lamp; the accused steps into the light */
+  var FIG = '<svg viewBox="0 0 60 90" aria-hidden="true"><circle cx="30" cy="20" r="13" fill="#0c0d12"/><path d="M6 90 C6 52 16 40 30 40 C44 40 54 52 54 90 Z" fill="#0c0d12"/><path d="M14 16 Q30 2 46 16 L50 18 L10 18 Z" fill="#0c0d12"/></svg>';
+  if(typeof window.resolveEnding === 'function'){
+    var original = window.resolveEnding;
+    window.resolveEnding = function(){
+      var opts = [].slice.call(document.querySelectorAll('#storyView .opt'));
+      var nameOf = function(o){ var c = o.cloneNode(true); [].forEach.call(c.querySelectorAll('svg,i,.k,.dot'), function(x){ x.remove(); }); return c.textContent.replace(/\s+/g, ' ').trim(); };
+      var right = opts.filter(function(o){ return o.classList.contains('right'); })[0], wrong = opts.filter(function(o){ return o.classList.contains('wrong'); })[0];
+      if(opts.length < 2 || !right){ original(); return after(); }
+      var accused = wrong || right, guilty = !wrong, ov = document.createElement('div'); ov.className = 'gx2-acc';
+      ov.innerHTML = '<div class="gx2-lamp"></div><div class="gx2-row"></div><div class="gx2-cap" aria-live="polite"></div><div class="gx2-skip">tap to continue</div>';
+      opts.forEach(function(o){ var f = document.createElement('div'); f.className = 'gx2-fig'; f.innerHTML = FIG + '<span></span>'; f.lastChild.textContent = nameOf(o); f._o = o; ov.querySelector('.gx2-row').appendChild(f); });
+      document.body.appendChild(ov); var cap = ov.querySelector('.gx2-cap'), figs = [].slice.call(ov.querySelectorAll('.gx2-fig')), done = false, timers = [];
+      var at = function(ms, fn){ timers.push(setTimeout(fn, reduce ? Math.min(ms, 200) : ms)); };
+      cap.textContent = 'You gather them under the lamp.';
+      at(900, function(){ figs.forEach(function(f){ if(f._o === accused) f.classList.add('step'); }); cap.textContent = 'You point to ' + nameOf(accused) + '.'; thud(); });
+      at(2000, function(){ if(guilty){ cap.innerHTML = 'Unmasked.<br><span class="gx2-guilty">Guilty</span>'; thud(.05); }
+        else { cap.textContent = 'Not them. And in the confusion, the real culprit slips into the shadows.'; figs.forEach(function(f){ if(f._o === right) f.classList.add('slip'); }); } });
+      var finish = function(){ if(done) return; done = true; timers.forEach(clearTimeout); ov.remove(); original(); after(); };
+      at(guilty ? 3800 : 4600, finish); ov.addEventListener('click', finish);
+    };
+  }
+
+  /* the ending: the verdict slams down, then the thread pulls you on */
+  var CODA = {
+    qc_gaslight:{ k:'Later that night', p:['Back at your desk, a telegram is waiting. No sender, just a line of type:', '<span class="wire">SLEEPER SEVEN. MARSDEN TUNNEL. COME AT ONCE.</span>', 'The paper smells faintly of lamp-oil. Somebody knew you would be free tonight.'], next:'The Midnight Line', btn:'Take the night train \u203A' },
+    qc_midnight:{ k:'Among the dead man\u2019s papers', p:['A black calling card bearing a single name: <span class="wire">Sable</span>.', 'On the back, in fresh ink: <span class="wire">Blackfriars. Seven chairs. Bring a candle.</span>', 'Whoever wrote it wanted you to find it.'], next:'The Blackfriars Seance', btn:'Go to Blackfriars \u203A' }
+  };
+  function cipherDone(){ try{ return CIPHER_ORDER.every(function(it){ return !!lsGet('gl_cipher_' + it.id); }); }catch(e){ return false; } }
+  window.GX2_after = function(){ after(); };   /* lets a test replay the ending */
+  function after(){
+    var st = $g('endStamp'); if(st){ st.classList.remove('gx2-slam'); void st.offsetWidth; st.classList.add('gx2-slam'); thud(.1); }
+    var old = $g('gx2Coda'); if(old) old.remove();
+    var id = (typeof QUIZ_ID !== 'undefined') ? QUIZ_ID : window.QUIZ_ID, c = CODA[id], box = document.createElement('div'); box.className = 'gx2-coda'; box.id = 'gx2Coda';
+    if(c){ box.innerHTML = '<p class="k"></p>' + c.p.map(function(x){ return '<p>' + x + '</p>'; }).join('') + '<button type="button"></button>';
+      box.querySelector('.k').textContent = c.k.toUpperCase(); box.querySelector('button').textContent = c.btn;
+      box.querySelector('button').onclick = function(){ if(typeof showSelect === 'function') showSelect();
+        setTimeout(function(){ var card = [].filter.call(document.querySelectorAll('#selectScr button, #selectScr [role=button], #selectScr .case, #selectScr .card'), function(x){ return x.offsetParent && x.textContent.indexOf(c.next) >= 0; })[0]; if(card) card.click(); }, 250); }; }
+    else if(id === 'qc_seance'){
+      if(cipherDone()){ box.innerHTML = '<p class="k">THE LAST WORD</p><p>The cipher\u2019s final word falls into place:</p><p><span class="gx2-word" style="animation-delay:.4s">ASK</span><span class="gx2-word" style="animation-delay:1.2s">THE</span><span class="gx2-word" style="animation-delay:2s">MASTER</span></p>'
+          + '<p>A knock at the door. A message, as always. <span class="wire">They always send for you.</span></p><p>This time, you know who sent it. The reckoning is coming.</p>';
+        [0, .8, 1.6].forEach(function(t){ thud(.4 + t); }); }
+      else box.innerHTML = '<p class="k">AN UNFINISHED MESSAGE</p><p>Somewhere among your unsolved cases, a word of the lamp-oil cipher is still waiting. Find it, and the message will tell you who has been sending for you.</p>';
+    } else return;
+    var anchor = $g('endText'); if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(box, anchor.nextSibling); else $g('endScr').appendChild(box);
+    say(box.innerText.replace(/\s+/g, ' '));
+  }
+})();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
