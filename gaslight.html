@@ -440,288 +440,9 @@ const NAME_KEY='qc_name', GROUP_KEY='qc_group';
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- the case ---------- */
-const STORY_GASLIGHT={
- start:'intro',
- scenes:{
-  intro:{head:'CHRISTIE MANOR', art:'lamp', text:[
-    "Rain hammers the windows of Christie Manor. In the study, Clement Christie, collector, recluse, millionaire, lies dead at his desk, the door bolted from within.",
-    "Four people slept under this roof tonight, and not one of them will meet your eye. They sent for you. They always send for you.",
-    "Light a cigarette. The work begins."],
-    cont:'body'},
+const STORY_GASLIGHT={"start": "intro", "scenes": {"intro": {"head": "CHRISTIE MANOR", "art": "lamp", "text": ["Rain hammers the windows of Christie Manor. In the study, Clement Christie, collector, recluse, millionaire, lies dead at his desk, the door bolted from within.", "Four people slept under this roof tonight, and not one of them will meet your eye. They sent for you. They always send for you.", "The summons that brought you came, as they always do, with a line of advice from the Yard: Look at the nephew.", "Light a cigarette. The work begins."], "cont": "doctor"}, "doctor": {"head": "THE DOCTOR", "art": "lens", "text": ["The family physician arrives, rain streaming from his hat. Dr. Roland English kneels beside the body with the ease of long practice, and lifts the dead man's chin.", "'Smell that,' he says quietly. 'Sweet, and bitter. Almonds. I'm afraid this was no heart attack, inspector. Around midnight, I should judge, from the warmth of him.'"], "q": "That bitter-almond odour is the calling card of which poison?", "opts": [{"t": "Cyanide", "correct": true}, {"t": "Arsenic"}, {"t": "Strychnine"}, {"t": "Belladonna"}], "replyOk": "Cyanide. English nods, grave and approving. 'You know your poisons, inspector. I am glad they sent you.'", "replyNo": "You hazard a guess, and English gently corrects you. 'Cyanide, I'm afraid. The almonds never lie.' He is very helpful.", "ok": "lockedroom", "no": "lockedroom", "clue": "Cyanide. Dr. English puts the death around midnight."}, "lockedroom": {"head": "THE LOCKED ROOM", "art": "door", "text": ["The door was bolted from the inside, the brass key still in the lock. The windows are painted shut; the mud beneath them undisturbed. No passages, you check the panelling twice."], "q": "If no one could enter or leave, the poison must have been…", "opts": [{"t": "Given before he bolted the door", "correct": true}, {"t": "Posted through the keyhole"}, {"t": "The work of a ghost"}, {"t": "Proof of suicide"}], "replyOk": "The killer never needed to be in the room. The poison arrived earlier, and waited for the lock to turn.", "replyNo": "You hunt for trapdoors until your nails are full of splinters. There are none. The poison came in before the bolt slid home.", "ok": "tonic", "no": "tonic", "clue": "The poison was taken before the door was bolted."}, "tonic": {"head": "THE TONIC", "art": "note", "text": ["On the desk: a medicine bottle, half empty. 'Christie's Nightly Heart Tonic. One measure at eleven.' No maker's name; the chemist's number has been scratched from the label.", "Every night at eleven, Hollis mixes the dose and carries it up on a silver tray. Every night, Clement drinks it, then bolts the door."], "q": "To lace a nightly tonic without raising alarm, the killer needed…", "opts": [{"t": "Regular, trusted access to the bottle", "correct": true}, {"t": "A key to the study"}, {"t": "To be in the room at midnight"}, {"t": "A stranger's anonymity"}], "replyOk": "Trusted access. Someone close, week after week. And no one is closer to that bottle than the butler who carries it.", "replyNo": "No. The door was bolted, and the poison went in long before. The killer needed trusted access to the bottle, and no one has more of that than Hollis.", "ok": "butler", "no": "butler", "clue": "The poisoner needed trusted access to the nightly tonic."}, "butler": {"head": "THE BUTLER", "art": "watch", "text": ["Hollis was demoted last month, and has crept about the house since, ashen and silent. In his coat you find a pawn ticket for a gold watch.", "The man in debt. The man who mixes the tonic. The man who carried it up the stairs at eleven. He will not meet your eye."], "q": "A servant in debt who handles the poison every night gives you…", "opts": [{"t": "Means, and a motive", "correct": true}, {"t": "Proof of murder"}, {"t": "Nothing worth noting"}, {"t": "A confession"}], "replyOk": "Means, and a motive. Not proof. But Hollis goes into your notebook, underlined twice.", "replyNo": "Not proof, and not nothing: means, and a motive. Hollis goes into your notebook, underlined twice.", "ok": "widow", "no": "widow", "clue": "Hollis, in debt, mixes and carries the tonic each night."}, "widow": {"head": "THE WIDOW", "art": "mask", "cast": "widow", "text": ["Alana Christie, the young widow, dabs at dry eyes. 'I was at the opera all evening,' she says. 'Carmen. I wept at the final curtain.'", "But the coat hung by the door is soaked through, and the rain only began at ten, an hour before he died."], "q": "Her coat is drenched, yet she claims she was inside the opera all night. That means…", "opts": [{"t": "She was out in the rain, not at the opera all evening", "correct": true}, {"t": "The opera was rained out"}, {"t": "She is telling the whole truth"}, {"t": "The coat is not hers"}], "replyOk": "She lied about something. She was out in tonight's rain, near the hour he died. The widow just became interesting.", "replyNo": "You almost let it pass, then see the puddle spreading beneath her coat. She was out in the rain, not weeping in a dry opera box. She lied.", "ok": "diary", "no": "diary", "clue": "Alana Christie was out in the rain, not at the opera."}, "diary": {"head": "THE DIARY", "art": "book", "text": ["In a locked drawer, Christie's diary. The last entry is half in plain hand, 'He will not silence me', and ends in the private cipher he used for names: a pair of numbers, 18-5.", "You've seen this trick. He numbered the alphabet, A is 1."], "q": "In Christie's cipher (A=1, B=2, C=3...), 18-5 spells which initials?", "opts": [{"t": "R. E.", "correct": true}, {"t": "S. F."}, {"t": "Q. D."}, {"t": "A. E."}], "replyOk": "R.E. He was naming the man he feared would silence him. Initials R.E., keep them close.", "replyNo": "You fumble the count. Eighteen is R, five is E, R.E. He named someone, in his last hour. Remember it.", "ok": "widow2", "no": "widow2", "clue": "The diary's cipher names R. E."}, "widow2": {"head": "THE WIDOW'S SECRET", "art": "mask", "text": ["Pressed, Alana breaks. She slipped out at the interval to meet her solicitor, a Mr. Raymond Ellery, about a divorce. Clement was cruel, and a divorce would have left her with nothing.", "Raymond Ellery. R. E. And when you ask who can vouch for her, there is only Mr. Ellery, who in turn can be vouched for only by her."], "q": "Two suspects who vouch only for each other give you…", "opts": [{"t": "No alibi at all", "correct": true}, {"t": "A perfect alibi"}, {"t": "Proof of innocence"}, {"t": "A confession"}], "replyOk": "No alibi at all. A wife who wanted out, a solicitor called R. E., and a night they spent only with each other. The diary's initials have found a home.", "replyNo": "Think again: they vouch only for each other, so neither alibi stands. And Raymond Ellery's initials are R. E., just like the diary's.", "ok": "nephew", "no": "nephew", "clue": "Alana and her solicitor, Raymond Ellery, alibi only each other."}, "nephew": {"head": "THE NEPHEW", "art": "note", "cast": "nephew", "text": ["Julian Christie reeks of cigarettes and debt. In his coat you find a 'suicide note' in Clement's own hand, but the ink is wet and fresh, and Clement has been dead since nightfall."], "q": "Fresh ink on a note from a man dead for hours tells you…", "opts": [{"t": "The note was forged after death", "correct": true}, {"t": "Clement faked his death"}, {"t": "The note is genuine"}, {"t": "Nothing at all"}], "replyOk": "Forged, and recently. Someone wanted this death read as suicide.", "replyNo": "You nearly file it as suicide, until your thumb smears the wet ink. Dead men don't write fresh. Forged, and tonight.", "ok": "nephew2", "no": "nephew2", "clue": "The note in Clement's hand was forged after his death."}, "nephew2": {"head": "THE CONFESSION", "art": "note", "text": ["Julian Christie cracks almost at once. Yes, he forged the note: a few lines in his uncle's hand, promising him a share of the estate. He wrote it in the small hours, once the house had gone to bed.", "'But I wasn't even here when he died! I was at my club until twenty to twelve. Ask them!' Nobody has asked them yet."], "q": "A confessed forger with an alibi no one has checked is…", "opts": [{"t": "Still a suspect", "correct": true}, {"t": "Proven innocent"}, {"t": "Proven guilty"}, {"t": "Not worth your time"}], "replyOk": "Still a suspect. Forgery is not murder, but a frightened man with debts and a fresh lie stays on your list.", "replyNo": "Not yet. An alibi nobody has checked proves nothing either way. Julian stays on your list.", "ok": "clock", "no": "clock", "clue": "Julian forged the note; his club alibi is unchecked."}, "clock": {"head": "THE CLOCK", "art": "clock", "text": ["The study clock stopped when Christie fell against the desk, its hands frozen at the Roman numerals, XI. His tonic was taken at the same hour every night."], "q": "The clock reads 'XI'. What time did Clement die?", "opts": [{"t": "11 o'clock", "correct": true}, {"t": "9 o'clock"}, {"t": "12 o'clock"}, {"t": "6 o'clock"}], "replyOk": "Eleven, tonic hour. He died as the poisoned dose took hold.", "replyNo": "You misread the numerals and nothing fits. 'XI is eleven, detective,' sighs the coroner. Tonic hour.", "ok": "contradiction", "no": "contradiction", "clue": "The clock stopped at eleven, tonic hour."}, "contradiction": {"head": "THE MIDNIGHT WITNESS", "art": "eye", "text": ["But a delivery boy swears he saw Clement at the lit study window at midnight, a full hour after the clock says he died.", "You step into the rain and look up. The study window faces a tall gilt mirror on the far wall, and the gaslamp throws a man-shaped shadow against the glass."], "q": "How can Christie be dead at eleven yet 'seen' at midnight?", "opts": [{"t": "The boy saw a reflection or another figure, not the living man", "correct": true}, {"t": "Christie rose from the dead"}, {"t": "The clock is lying"}, {"t": "He truly died at midnight"}], "replyOk": "A trick of glass and lamplight. The clock holds: he died at eleven, tonic hour. Whoever told you midnight was wrong.", "replyNo": "You let the boy rewrite your timeline. But the dose, the stopped clock, and the cold of the body all say eleven. He saw a shadow, not a man.", "ok": "ledger", "no": "ledger", "clue": "The midnight figure was a reflection. Death came at eleven."}, "ledger": {"head": "THE CLUB LEDGER", "art": "note", "text": ["You send a constable to Julian's club. He comes back dripping, the porter's ledger under his coat: 'J. Christie, out, 11.40.' The club is forty minutes across the city by cab."], "q": "If Clement died at eleven, where was the forger when the poison struck?", "opts": [{"t": "Across the city, at his club", "correct": true}, {"t": "In the study"}, {"t": "On the stairs"}, {"t": "In the garden"}], "replyOk": "At his club, forty minutes away. Julian forged a note; he did not poison a tonic. Cross him off.", "replyNo": "The ledger says otherwise: at eleven, Julian was at his club across the city. He forged a note; he did not poison a tonic. Cross him off.", "ok": "butler2", "no": "butler2", "clue": "Julian left his club at 11.40, across the city."}, "butler2": {"head": "A LOYAL EYE", "art": "eye", "text": ["The pawnbroker confirms it: the watch was Hollis's own, his father's, pawned a month ago to pay a debt of honour. Shame, not theft.", "Cleared, Hollis lowers his voice. 'There's a thing I held back, sir. Twice this week I saw Dr. English at the medicine cabinet after midnight, with the tonic in his hands. Topping it up, he said.'"], "q": "A doctor handling his patient's tonic at night proves…", "opts": [{"t": "Nothing yet, but gives him the same access", "correct": true}, {"t": "That he is the killer"}, {"t": "That Hollis is lying"}, {"t": "That the tonic was harmless"}], "replyOk": "Nothing yet. A doctor has every reason to handle a tonic, and every chance to lace it. You write his name beneath the butler's, and cross the butler out.", "replyNo": "Careful: on its own it proves nothing, since doctors handle tonics. But it gives English the same access the butler had, every night for weeks.", "ok": "doctor2", "no": "doctor2", "clue": "Hollis is cleared. He saw Dr. English at the tonic after midnight."}, "doctor2": {"head": "THE DOCTOR AGAIN", "art": "lamp", "text": ["English finds you in the hall and lays a kind hand on your arm. 'A wretched business. After weeks of it, his poor heart simply gave out. You mustn't blame yourself.'", "Weeks. The coroner has not yet opened the body. Nobody has said a word to anyone about weeks.", "Back in the study, the blotter gives up one more secret: Clement's unsent letter to the medical board, about a patient's death his own physician covered up years ago."], "q": "A slow, rising dose given over weeks points to…", "opts": [{"t": "A patient, premeditated hand", "correct": true}, {"t": "A sudden quarrel"}, {"t": "An accident"}, {"t": "A passing stranger"}], "replyOk": "A patient, premeditated hand, with weeks of trusted access. And somebody who knew it was weeks before anyone told him.", "replyNo": "No. Weeks of rising doses mean a patient, premeditated hand. And somebody in this house already knew it was weeks.", "ok": "cab", "no": "cab", "clue": "Weeks of rising doses. Clement's unsent letter to the medical board."}, "cab": {"head": "THE CAB DRIVER", "art": "eye", "text": ["A cabman stamps in out of the rain, cap in hand. He drove a lady and a gentleman from the opera to Lincoln's Inn and back again, waiting outside the whole while, he says, from ten until long past midnight."], "q": "An independent witness turns a shared alibi into…", "opts": [{"t": "A true alibi", "correct": true}, {"t": "A conspiracy"}, {"t": "A coincidence"}, {"t": "A confession"}], "replyOk": "A true alibi. Alana and her solicitor were across the city all night. The diary's R. E. was never Raymond Ellery.", "replyNo": "No: a witness with no stake in it makes their alibi true. Alana and Ellery were across the city all night, so the diary's R. E. was someone else.", "ok": "cardg", "no": "cardg", "clue": "A cabman confirms Alana and Ellery were across the city."}, "cardg": {"head": "THE CALLING CARD", "art": "note", "text": ["Before you name anyone, you turn the dead man's pockets out one last time, and find what you missed: a small card, not in Christie's hand. Two lines of tiny numbers, and the thin oily reek of a trimmed lamp wick.", "You number the alphabet the way Christie did, A is 1. Twenty, eight, five. T. H. E. A word, and only a word, waiting on the rest. Someone stood in this room before you, and left it on purpose."], "cipher": "THE", "cont": "accuse"}, "accuse": {"head": "THE ACCUSATION", "art": "lens", "text": ["The household gathers in the parlour. The rain has not let up. Every eye turns to you.", "Name the murderer of Clement Christie."], "q": "Who killed Clement Christie?", "opts": [{"t": "Dr. English", "correct": true}, {"t": "Julian Christie"}, {"t": "Alana Christie"}, {"t": "Hollis the butler"}], "accuse": true}}};
 
-  body:{head:'THE BODY', art:'skull', text:[
-    "Christie is slumped over his ledgers, lips tinged faintly blue. The study is cold, and something sweetish hangs in that cold air, bitter almonds."],
-    q:"That bitter-almond odour is the calling card of which poison?",
-    opts:[{t:"Cyanide",correct:true},{t:"Arsenic"},{t:"Strychnine"},{t:"Belladonna"}],
-    replyOk:"Cyanide. The almond ghost on the air never lies. This was no natural death.",
-    replyNo:"You scribble 'heart failure', until the coroner leans in, sniffs, and mutters: 'Almonds. Cyanide.' A poisoning, then.",
-    ok:'lockedroom', no:'lockedroom'},
-
-  lockedroom:{head:'THE LOCKED ROOM', art:'door', text:[
-    "The door was bolted from the inside, the brass key still in the lock. The windows are painted shut; the mud beneath them undisturbed. No passages, you check the panelling twice."],
-    q:"If no one could enter or leave, the poison must have been…",
-    opts:[{t:"Given before he bolted the door",correct:true},{t:"Posted through the keyhole"},{t:"The work of a ghost"},{t:"Proof of suicide"}],
-    replyOk:"The killer never needed to be in the room. The poison arrived earlier, and waited for the lock to turn.",
-    replyNo:"You hunt for trapdoors until your nails are full of splinters. There are none. The poison came in before the bolt slid home.",
-    ok:'tonic', no:'tonic'},
-
-  tonic:{head:'THE TONIC', art:'bottle', text:[
-    "On the desk: a medicine bottle, half empty. 'Christie's Nightly Heart Tonic, compounded by Dr. R. English.' He took a dose each night, then bolted the door behind him."],
-    q:"To lace a nightly tonic without raising alarm, the killer needed…",
-    opts:[{t:"Regular, trusted access to the bottle",correct:true},{t:"A key to the city"},{t:"Brute strength"},{t:"To break in at midnight"}],
-    replyOk:"Someone close. Someone trusted. Hands on that bottle, week after week.",
-    replyNo:"You chase a midnight burglar, but the mud outside is smooth and untrodden. No one climbed in. They were welcomed through the front door.",
-    ok:'diary', no:'diary'},
-
-  diary:{head:'THE DIARY', art:'book', text:[
-    "In a locked drawer, Christie's diary. The last entry is half in plain hand, 'He will not silence me', and ends in the private cipher he used for names: a pair of numbers, 18-5.",
-    "You've seen this trick. He numbered the alphabet, A is 1."],
-    q:"In Christie's cipher (A=1, B=2, C=3...), 18-5 spells which initials?",
-    opts:[{t:"R. E.",correct:true},{t:"S. F."},{t:"Q. D."},{t:"A. E."}],
-    replyOk:"R.E. He was naming the man he feared would silence him. Initials R.E., keep them close.",
-    replyNo:"You fumble the count. Eighteen is R, five is E, R.E. He named someone, in his last hour. Remember it.",
-    ok:'widow', no:'widow'},
-
-  widow:{head:'THE WIDOW', art:'mask', cast:'widow', text:[
-    "Alana Christie, the young widow, dabs at dry eyes. 'I was at the opera all evening,' she says. 'Carmen. I wept at the final curtain.'",
-    "But the coat hung by the door is soaked through, and the rain only began at ten, an hour before he died."],
-    q:"Her coat is drenched, yet she claims she was inside the opera all night. That means…",
-    opts:[{t:"She was out in the rain, not at the opera all evening",correct:true},{t:"The opera was rained out"},{t:"She is telling the whole truth"},{t:"The coat is not hers"}],
-    replyOk:"She lied about something. She was out in tonight's rain, near the hour he died. The widow just became interesting.",
-    replyNo:"You almost let it pass, then see the puddle spreading beneath her coat. She was out in the rain, not weeping in a dry opera box. She lied.",
-    ok:'widow2', no:'widow2'},
-
-  widow2:{head:"THE WIDOW'S SECRET", art:'mask', text:[
-    "Pressed, Alana breaks. She slipped out at the interval, to meet a divorce lawyer. Clement was cruel and controlling, and she wanted free of him. In a divorce, she'd have left with nothing.",
-    "Motive enough to kill. But the lawyer kept her across the city until well past midnight."],
-    q:"She had a motive and a lie. And yet…",
-    opts:[{t:"Motive isn't proof; the lawyer's alibi clears her",correct:true},{t:"The lie alone convicts her"},{t:"She must be the poisoner"},{t:"A divorce is a kind of murder"}],
-    replyOk:"A motive and a secret don't make a murderer. The lawyer swears she never left his sight. Cross her off, reluctantly.",
-    replyNo:"You nearly charge her on the lie alone. Then the lawyer's statement lands: she was streets away when the tonic did its work. Guilty only of wanting to be free.",
-    ok:'nephew', no:'nephew'},
-
-  nephew:{head:'THE NEPHEW', art:'note', cast:'nephew', text:[
-    "Julian Christie reeks of cigarettes and debt. In his coat you find a 'suicide note' in Clement's own hand, but the ink is wet and fresh, and Clement has been dead since nightfall."],
-    q:"Fresh ink on a note from a man dead for hours tells you…",
-    opts:[{t:"The note was forged after death",correct:true},{t:"Clement faked his death"},{t:"The note is genuine"},{t:"Nothing at all"}],
-    replyOk:"Forged, and recently. Someone wanted this death read as suicide.",
-    replyNo:"You nearly file it as suicide, until your thumb smears the wet ink. Dead men don't write fresh. Forged, and tonight.",
-    ok:'nephew2', no:'nephew2'},
-
-  nephew2:{head:'THE CONFESSION', art:'note', text:[
-    "Julian crumbles. He came at eleven to beg for money, found Clement already slumped and blue, and panicked. He forged the note to stage a suicide, so the will would pay out clean and fast, before his creditors closed in.",
-    "He forged. He lied. He robbed a dead man of the truth. But the cyanide was already in Clement when Julian climbed the stairs."],
-    q:"Julian forged the note. Does that make him the poisoner?",
-    opts:[{t:"No, tampering isn't poisoning; the cyanide was already working",correct:true},{t:"Yes, the forger is the killer"},{t:"Only if he inherits"},{t:"Impossible to say"}],
-    replyOk:"A coward and a forger, but not your poisoner. He walked in on a corpse and made it worse. The real killer was long gone.",
-    replyNo:"You're ready to hang him for the note. But forgery isn't cyanide, and the poison was in Clement before Julian ever reached the door.",
-    ok:'butler', no:'butler'},
-
-  butler:{head:'THE BUTLER', art:'watch', cast:'butler', text:[
-    "Hollis, the butler, was demoted last month and has crept about ashen-faced since. In his quarters: a fan of pawn tickets, for his own gold watch, sold off quietly."],
-    q:"He pawned his own watch, not the Christie silver. His guilt is…",
-    opts:[{t:"Shame over his private debt, not murder",correct:true},{t:"Proof that he's the killer"},{t:"A clever double-bluff"},{t:"Tied to the poison"}],
-    replyOk:"A proud old man, too ashamed to admit he's broke. Loyal to the last. Not your killer.",
-    replyNo:"You snap the cuffs on Hollis; he weeps for a pawned watch and an empty purse, not for murder. Let him go.",
-    ok:'butler2', no:'butler2'},
-
-  butler2:{head:'A LOYAL EYE', art:'eye', text:[
-    "Grateful that you believed him, Hollis lowers his voice. 'There's a thing I held back, sir. Twice this week I saw Dr. English at the medicine cabinet after hours, past midnight, with the tonic in his hands. Refilling it, he said.'",
-    "A doctor has every reason to handle a tonic. And every chance to lace it."],
-    cont:'clock'},
-
-  clock:{head:'THE CLOCK', art:'clock', text:[
-    "The study clock stopped when Christie fell against the desk, its hands frozen at the Roman numerals, XI. His tonic was taken at the same hour every night."],
-    q:"The clock reads 'XI'. What time did Clement die?",
-    opts:[{t:"11 o'clock",correct:true},{t:"9 o'clock"},{t:"12 o'clock"},{t:"6 o'clock"}],
-    replyOk:"Eleven, tonic hour. He died as the poisoned dose took hold.",
-    replyNo:"You misread the numerals and nothing fits. 'XI is eleven, detective,' sighs the coroner. Tonic hour.",
-    ok:'contradiction', no:'contradiction'},
-
-  contradiction:{head:'THE MIDNIGHT WITNESS', art:'eye', text:[
-    "But a delivery boy swears he saw Clement at the lit study window at midnight, a full hour after the clock says he died.",
-    "You step into the rain and look up. The study window faces a tall gilt mirror on the far wall, and the gaslamp throws a man-shaped shadow against the glass."],
-    q:"How can Christie be dead at eleven yet 'seen' at midnight?",
-    opts:[{t:"The boy saw a reflection or another figure, not the living man",correct:true},{t:"Christie rose from the dead"},{t:"The clock is lying"},{t:"He truly died at midnight"}],
-    replyOk:"A trick of glass and lamplight, or someone else moving in that room at midnight. The clock holds. He died at eleven, by the tonic.",
-    replyNo:"You let the boy rewrite your timeline. But the dose, the stopped clock, and the cold of the body all say eleven. He saw a shadow, not a man.",
-    ok:'doctor', no:'doctor'},
-
-  doctor:{head:'THE DOCTOR', art:'bag', cast:'doctor', text:[
-    "Dr. Roland English, R.E., compounded that tonic. You dig into him.",
-    "Years ago he signed off a patient's death as natural; in truth his own blunder had killed her. Clement learned of it and, weeks ago, swore to lay the proof before the medical board. It would have ended English, his licence, his liberty, his name.",
-    "And still the doctor kept calling. Kept refilling the tonic. Drop by drop."],
-    cont:'method'},
-
-  method:{head:'THE METHOD', art:'bottle', text:[
-    "The autopsy returns. This was no single fatal glass. Cyanide had been building in Christie for weeks, small doses, climbing, until the last one stopped his heart."],
-    q:"Weeks of rising doses hidden in a nightly tonic point to…",
-    opts:[{t:"A patient, premeditated hand with weekly access",correct:true},{t:"A sudden crime of passion"},{t:"An accidental overdose"},{t:"A stranger off the street"}],
-    replyOk:"Not rage. Not chance. A cold, methodical hand that refilled that bottle week after week.",
-    replyNo:"You picture one frantic poisoning. But the body tells of weeks of creeping doses, patient, planned, by someone who held that bottle again and again.",
-    ok:'motive', no:'motive'},
-
-  motive:{head:'MEANS & MOTIVE', art:'scales', text:[
-    "Means: he mixed the tonic himself. Opportunity: he refilled it weekly, and Hollis saw him at it past midnight. Motive: Clement could destroy him with a word, and the diary named R.E."],
-    q:"Means, motive, and opportunity all converge on…",
-    opts:[{t:"Dr. English",correct:true},{t:"Alana Christie"},{t:"Julian the nephew"},{t:"Hollis the butler"}],
-    replyOk:"The doctor. The cure was the poison all along. Now make it stick.",
-    replyNo:"You drift back to the forged note, but forgery isn't cyanide. Only one hand mixed that tonic, week after week. Back to English.",
-    ok:'frame', no:'frame'},
-
-  frame:{head:'THE FRAME', art:'lens', text:[
-    "English is calm, helpful, almost eager, and he keeps steering you toward Julian. 'The boy forged a note, inspector. The boy was drowning in debt. Surely it is plain...'",
-    "It would be so easy to take the forged note as proof of murder and close the case on the frightened nephew."],
-    q:"Why does English keep pointing you at Julian?",
-    opts:[{t:"To pin his own murder on the panicking forger",correct:true},{t:"Because Julian is the real killer"},{t:"Out of honest concern"},{t:"He is trying to confess"}],
-    replyOk:"The killer wants the forger to hang in his place. Julian's note is a frightened man's crime, not proof of poison. You won't bite.",
-    replyNo:"You almost take the bait and charge Julian. But forgery isn't cyanide, and why would English push so hard, unless he had a reason to fear the truth?",
-    ok:'cardg', no:'cardg'},
-
-  cardg:{head:'THE CALLING CARD', art:'note', text:[
-    "Before you name him, you turn the dead man's pockets out one last time, and find what you missed: a small card, not in Christie's hand. Two lines of tiny numbers, and the thin oily reek of a trimmed lamp wick.",
-    "You number the alphabet the way Christie did, A is 1. Twenty, eight, five. T. H. E. A word, and only a word, waiting on the rest. Someone stood in this room before you, and left it on purpose."],
-    cipher:'THE', cont:'accuse'},
-
-  accuse:{head:'THE ACCUSATION', art:'lens', text:[
-    "The household gathers in the parlour. The rain has not let up. Every eye turns to you.",
-    "Name the murderer of Clement Christie."],
-    q:"Who killed Clement Christie?",
-    opts:[{t:"Dr. English",correct:true},{t:"Julian Christie"},{t:"Alana Christie"},{t:"Hollis the butler"}],
-    accuse:true}
- }
-};
-
-const STORY_MIDNIGHT={
- start:'intro',
- scenes:{
-  intro:{head:'THE MIDNIGHT LINE', art:'train', text:[
-    "The night express tears north through the storm, rain raking the windows like gravel. In Sleeper Seven, the passenger booked as 'Mr. Grey' lies dead, a single wound, the door bolted from the inside, the window latched against the gale.",
-    "The conductor woke you because you are the only detective aboard. Beyond the glass, the dark country flies past. No one steps off until dawn.",
-    "Light a cigarette. The work begins."],
-    cont:'body'},
-
-  body:{head:'THE WOUND', art:'skull', text:[
-    "Grey lies crumpled between the berths, one thin wound below the ribs. There is a great deal of blood, and no weapon anywhere in the compartment."],
-    q:"A thin, deep wound and no blade left behind suggests…",
-    opts:[{t:"A slender weapon, easily hidden or carried away",correct:true},{t:"A heavy axe"},{t:"No weapon at all"},{t:"A simple accident"}],
-    replyOk:"Something narrow and sharp, a stiletto, a long pin. The kind of thing that slides into a sleeve or a hatband and is gone.",
-    replyNo:"You search for a dropped knife and find none. The wound is narrow and deep, a slender thing, carried off on the killer's person.",
-    ok:'lockedcar', no:'lockedcar'},
-
-  lockedcar:{head:'SLEEPER SEVEN', art:'door', text:[
-    "The door was bolted from the inside; you broke it to get in. The window is latched and painted half shut, and at this speed, in this gale, no one is leaving by it."],
-    q:"Bolted within, the window useless, the killer must have…",
-    opts:[{t:"Left by some route not yet found",correct:true},{t:"Vanished into thin air"},{t:"Never existed; it was suicide"},{t:"Leapt from the window at full speed"}],
-    replyOk:"No one walks through a bolted door. There is another way out of Sleeper Seven, and you haven't found it yet.",
-    replyNo:"You toy with suicide, but a man does not stab himself and spirit away the blade. There is another way out of this room. Find it.",
-    ok:'ledger', no:'ledger'},
-
-  ledger:{head:'THE LEDGER', art:'book', text:[
-    "Sewn into the lining of Grey's case: a slim ledger. Columns of initials and sums, large sums, paid month after month by a dozen different hands."],
-    q:"A hidden ledger of names and steady secret payments means Grey was…",
-    opts:[{t:"A blackmailer, with many who'd want him dead",correct:true},{t:"A generous banker"},{t:"A humble railway clerk"},{t:"A lucky gambler"}],
-    replyOk:"Blackmail. 'Grey' bled a dozen people dry. Half this train may have wished him into the ground.",
-    replyNo:"You take it for honest accounts, until you see the same names bleed money monthly for nothing in return. Blackmail. He had no shortage of enemies.",
-    ok:'alias', no:'alias'},
-
-  alias:{head:'MR. GREY', art:'note', text:[
-    "His ticket says 'Grey,' but the silver cigarette case in his pocket is monogrammed with a curling 'S,' and a card tucked in the lining bears a name his victims would whisper in fear: Sable."],
-    q:"'Mr. Grey' carrying Sable's monogram and calling card tells you…",
-    opts:[{t:"He was travelling under a false name",correct:true},{t:"He stole the cigarette case"},{t:"Grey and Sable are brothers"},{t:"The card is a forgery"}],
-    replyOk:"Grey is Sable, a blackmailer riding incognito, hunting fresh prey or fleeing old. A man with everything to hide.",
-    replyNo:"You assume a borrowed case, until the hidden card names him plainly: Sable. 'Grey' was a mask the blackmailer wore aboard this train.",
-    ok:'actress', no:'actress'},
-
-  actress:{head:'THE ACTRESS', art:'mask', cast:'actress', text:[
-    "Miss Verne, a fading stage actress, is named in the ledger for a tidy monthly sum, an old scandal, she admits, that Sable held over her. Motive enough.",
-    "But the lounge steward swears she sat beneath his eye, sipping gin, from midnight until the alarm was raised."],
-    q:"Motive in the ledger, but a steward's alibi. So…",
-    opts:[{t:"Her alibi clears her, motive or not",correct:true},{t:"The motive alone convicts her"},{t:"Stewards always lie"},{t:"She killed him from the lounge"}],
-    replyOk:"A real motive, an unshakeable alibi. She hated him; she did not kill him. On.",
-    replyNo:"You lean on the motive and ignore the steward who never lost sight of her. She wanted Sable gone, but she was three carriages away when it happened.",
-    ok:'jeweller', no:'jeweller'},
-
-  jeweller:{head:'THE JEWELLER', art:'lens', cast:'jeweller', text:[
-    "Mr. Hahn, a jeweller, is bled worst of all in the ledger, and he threatened Sable loudly at dinner, before a dozen witnesses, swearing he'd 'see him in the ground.'",
-    "It is almost too neat. And those same witnesses had him at the card table through the small hours."],
-    q:"Hahn made the loudest threat of all. Does that make him the killer?",
-    opts:[{t:"No, the loud threat and a card-table alibi point away from him",correct:true},{t:"Yes, he as good as confessed"},{t:"Only if he lost at cards"},{t:"Certainly; he is the obvious man"}],
-    replyOk:"Men who shout their hatred rarely creep off to kill in the dark. And the cards held him all night. Too obvious, set him aside.",
-    replyNo:"You seize on the loud threat, but he was dealing hands in full view when Sable died. The obvious man is so rarely the right one.",
-    ok:'soldier', no:'soldier'},
-
-  soldier:{head:'THE SOLDIER', art:'eye', cast:'soldier', text:[
-    "Lieutenant Cross, young and sweating, paid Sable to bury a charge of desertion. He cannot meet your eye.",
-    "But he spent the night being violently ill in the washroom, the porter held the door and the basin both."],
-    q:"A trembling soldier with motive, and a porter for a witness. He is…",
-    opts:[{t:"Guilty of cowardice, not of murder",correct:true},{t:"Plainly the killer"},{t:"Faking the illness"},{t:"Beyond all suspicion"}],
-    replyOk:"A coward with a secret, not a killer. The porter never left his side. Another motive, another dead end.",
-    replyNo:"You press him hard and he weeps, but the porter swears he never left the washroom. Guilty of fear, not of poison or blade.",
-    ok:'tunnel', no:'tunnel'},
-
-  tunnel:{head:'THE TUNNEL', art:'lamp', text:[
-    "The conductor marks the time: the train ran into Marsden Tunnel at fourteen minutes past one, and the old carriage lamps gutter and die in the tunnels. Three full minutes of perfect dark."],
-    q:"Sable died in those three minutes. Why does the tunnel matter?",
-    opts:[{t:"The killer struck under cover of total darkness",correct:true},{t:"The tunnel fouled the air"},{t:"Its roar hid a gunshot"},{t:"It proves nothing at all"}],
-    replyOk:"Three minutes of blackout, enough to slip in, strike, and be gone before the lamps caught. The killer knew the timetable by heart.",
-    replyNo:"You overlook the dark. But the lamps died in Marsden Tunnel at 1:14, and in those black minutes a blade found Sable. The killer knew this line.",
-    ok:'connecting', no:'connecting'},
-
-  connecting:{head:'THE CONNECTING DOOR', art:'key', text:[
-    "You go over Sleeper Seven inch by inch, and behind the wardrobe, papered over but real, is a connecting door to Sleeper Eight. On Seven's side, the bolt is drawn back."],
-    q:"A bolted main door, but an open connecting door to Sleeper Eight, means…",
-    opts:[{t:"The killer locked Seven, then slipped through to Eight",correct:true},{t:"The door is purely decorative"},{t:"No one ever used it"},{t:"Sable unlocked it himself"}],
-    replyOk:"There it is. Lock the main door from inside, step through into Eight, and the 'sealed' room seals itself behind you. So, who had Sleeper Eight?",
-    replyNo:"You nearly miss it behind the wardrobe: a connecting door, unbolted on Seven's side. The locked room was never locked to the killer. Who held Eight?",
-    ok:'manifest', no:'manifest'},
-
-  manifest:{head:'THE MANIFEST', art:'ticket', text:[
-    "The conductor's manifest: Sleeper Eight was booked, and paid in cash, under the name 'Miss Lark.' Yet no passenger by that name has shown her face all night."],
-    q:"Sleeper Eight booked by a 'Miss Lark' no one has seen suggests…",
-    opts:[{t:"A passenger aboard under a false name",correct:true},{t:"A simple clerical error"},{t:"An empty, wasted booking"},{t:"A stowaway with no ticket"}],
-    replyOk:"Someone aboard is travelling as two people, her own seat, and 'Miss Lark' in Eight, with a quiet door between Eight and the dead man. Find the woman with two names.",
-    replyNo:"You shrug it off as a wasted berth. But 'Miss Lark' paid cash and never appeared, because she is already aboard, under another name, in another seat.",
-    ok:'governess', no:'governess'},
-
-  governess:{head:'THE GOVERNESS', art:'mask', cast:'governess', text:[
-    "You walk the carriages. The actress, the jeweller, the soldier, all watched, all placed. Only one passenger sits unwatched and alone: Miss Wren, a soft-spoken governess travelling, oddly, with no children in her charge.",
-    "In her glove lies a locket. Inside, the photograph of a man, and on its back a name you have read tonight: it stands in Sable's ledger, beside a final entry marked 'deceased, by his own hand.'"],
-    q:"The man in the governess's locket appears in Sable's ledger as a suicide. That makes her…",
-    opts:[{t:"Bound to Sable by a death he caused, a motive of revenge",correct:true},{t:"A grieving stranger, unconnected"},{t:"Merely one more blackmail victim"},{t:"Impossible to place"}],
-    replyOk:"Her father, surely, ruined and driven to his death by Sable's blackmail. She did not board this train by chance. She came for him.",
-    replyNo:"You take the locket for sentiment, until the name on its back matches the ledger's last line: a man Sable hounded to his grave. The quiet governess has the oldest motive of all.",
-    ok:'weapon', no:'weapon'},
-
-  weapon:{head:'THE HATPIN', art:'pin', text:[
-    "Miss Wren's travelling hat lies on the berth in Sleeper Eight, Eight, which she swore she had never entered. Two long steel hatpins are tucked in its band. There is room for a third, and it is gone."],
-    q:"A missing hatpin, and a thin deep wound that fits one exactly…",
-    opts:[{t:"The hatpin is the weapon; she is the killer",correct:true},{t:"Hatpins could never kill"},{t:"A mere coincidence of fashion"},{t:"The pin was simply mislaid"}],
-    replyOk:"A nine-inch steel pin, slid home and drawn out clean, the wound's perfect twin, and hers. The pieces lock together.",
-    replyNo:"You call the missing pin chance, but the wound is its exact shape, and the hat sits in a room she swore she never entered. The weapon is hers.",
-    ok:'motive', no:'motive'},
-
-  motive:{head:'MEANS, MOTIVE, MOMENT', art:'scales', text:[
-    "Means: the hatpin. Moment: the three black minutes in Marsden Tunnel. Opportunity: the connecting door from Eight, which 'Miss Lark' had paid for in cash. Motive: a father in the ledger, dead by his own hand."],
-    q:"Every thread, pin, tunnel, connecting door, locket, draws tight around…",
-    opts:[{t:"Miss Wren, the governess",correct:true},{t:"Mr. Hahn, the jeweller"},{t:"Miss Verne, the actress"},{t:"Lieutenant Cross"}],
-    replyOk:"The woman no one watched, travelling as two, who came aboard for one purpose. Now name her in the open.",
-    replyNo:"You drift back to the loud jeweller, but he never left the cards. Only one passenger held Eight, the pin, and the grief. Back to the governess.",
-    ok:'cardm', no:'cardm'},
-
-  cardm:{head:'THE CALLING CARD', art:'note', text:[
-    "Before the platform, you search Sleeper Seven once more, and find it wedged behind the mirror: a small card no passenger will claim. Two lines of numbers, and under the coal-smoke, the faint oily smell of a trimmed lamp wick.",
-    "You number the alphabet, A is 1. Thirteen, one, nineteen, twenty, five, eighteen. M. A. S. T. E. R. Master. The word sits in your palm like a cold coin, and you do not yet know why."],
-    cipher:'MASTER', cont:'accuse'},
-
-  accuse:{head:'THE ACCUSATION', art:'lens', text:[
-    "At dawn the train slows for the first station. The passengers gather in the swaying corridor, watching you.",
-    "Name the killer aboard the Midnight Line."],
-    q:"Who killed the blackmailer Sable?",
-    opts:[{t:"Miss Wren, the governess",correct:true},{t:"Mr. Hahn, the jeweller"},{t:"Miss Verne, the actress"},{t:"Lieutenant Cross"}],
-    accuse:true}
- }
-};
+const STORY_MIDNIGHT={"start": "intro", "scenes": {"intro": {"head": "THE MIDNIGHT LINE", "art": "train", "text": ["The night express tears north through the storm, rain raking the windows like gravel. In Sleeper Seven, the passenger booked as 'Mr. Grey' lies dead, a single wound, the door bolted from the inside, the window latched against the gale.", "The conductor woke you because you are the only detective aboard. Beyond the glass, the dark country flies past. No one steps off until dawn.", "Light a cigarette. The work begins.", "Your summons came with its usual line of advice: Look at the soldier."], "cont": "body"}, "body": {"head": "THE WOUND", "art": "skull", "text": ["Mr. Grey lies crumpled between the berths: one thin, edged wound below the ribs, a great deal of blood, and no weapon anywhere in the compartment.", "His face is grey and slack under the swinging lamp. Behind one ear, half hidden by his hair, there is a faint waxy smear, the colour of a peach."], "q": "A thin, deep wound and no blade left behind suggests…", "opts": [{"t": "A slender weapon, easily carried away", "correct": true}, {"t": "A gunshot"}, {"t": "A heavy blow"}, {"t": "An accident"}], "replyOk": "Something narrow and keen, the kind of blade that slides into a sleeve or a walking stick and is gone.", "replyNo": "No. A thin, deep wound with no blade left behind means something slender and sharp, carried away by whoever used it.", "ok": "lockedcar", "no": "lockedcar", "clue": "A thin, edged wound. A waxy smear behind one ear."}, "lockedcar": {"head": "SLEEPER SEVEN", "art": "door", "text": ["The door was bolted from the inside; the conductor broke it to get in. The window is latched and painted half shut, and at this speed, in this gale, no one is leaving by it.", "Behind the wardrobe, papered over but real, a connecting door into Sleeper Eight. On Seven's side its bolt is drawn back. Eight is empty, its bed unslept in.", "One more thing. The loop of the bell-pull, the cord that rings for the attendant, is tangled round the dead man's fingers."], "q": "A bolted main door and an unbolted connecting door mean…", "opts": [{"t": "The killer left through Sleeper Eight", "correct": true}, {"t": "He bolted himself in and took his own life"}, {"t": "The killer climbed out of the window"}, {"t": "The conductor is lying"}], "replyOk": "Bolt the main door from inside, step through into Eight, and the sealed room seals itself behind you.", "replyNo": "Think it through: the window is useless and the main door was bolted inside. The way out was the connecting door into empty Sleeper Eight.", "ok": "bell", "no": "bell", "clue": "The killer left through empty Sleeper Eight. The bell-pull loop is round his fingers."}, "bell": {"head": "THE BELL", "art": "clock", "text": ["The conductor shows you his board of little brass flags. Sleeper Seven's dropped at fourteen minutes past one, just as the train ran into Marsden Tunnel, where the old carriage lamps gutter out. Three full minutes of perfect dark.", "By the time he had found his way down the corridor with a match, the bell had stopped, and the door would not open."], "q": "If Grey rang for help in the tunnel, when did he die?", "opts": [{"t": "In those three dark minutes", "correct": true}, {"t": "Before the train left London"}, {"t": "At dawn"}, {"t": "Nobody can say"}], "replyOk": "In the dark of Marsden Tunnel, ringing for help that never came. Every alibi must answer for those three minutes.", "replyNo": "The bell says otherwise: he rang at 1.14, in the dark of the tunnel. Every alibi must answer for those three minutes.", "ok": "ledger", "no": "ledger", "clue": "Seven's bell rang at 1.14, in Marsden Tunnel."}, "ledger": {"head": "THE LEDGER", "art": "book", "text": ["Sewn into the lining of Grey's case: a slim ledger. Columns of initials and sums, large sums, paid month after month by a dozen different hands."], "q": "A hidden ledger of names and steady secret payments means Grey was…", "opts": [{"t": "A blackmailer, with many who'd want him dead", "correct": true}, {"t": "A generous banker"}, {"t": "A humble railway clerk"}, {"t": "A lucky gambler"}], "replyOk": "Blackmail. 'Grey' bled a dozen people dry. Half this train may have wished him into the ground.", "replyNo": "You take it for honest accounts, until you see the same names bleed money monthly for nothing in return. Blackmail. He had no shortage of enemies.", "ok": "alias", "no": "alias", "clue": "Grey was a blackmailer, paid by a dozen hands."}, "alias": {"head": "MR. GREY", "art": "note", "text": ["His ticket says 'Grey', but the silver cigarette case in his pocket is monogrammed with a curling S, and a card in the lining bears a name his victims whisper: Sable."], "q": "'Mr. Grey' carrying Sable's monogram and calling card tells you…", "opts": [{"t": "Sable was travelling under a false name", "correct": true}, {"t": "Grey had robbed Sable"}, {"t": "The card was put there by accident"}, {"t": "Grey and Sable were partners"}], "replyOk": "Grey is Sable, the blackmailer, riding incognito. Half this train had reason to want him dead.", "replyNo": "The simplest reading is the right one, for now: Grey is Sable, the blackmailer, riding under a false name.", "ok": "jeweller", "no": "jeweller", "clue": "Grey carries Sable's monogram and calling card."}, "jeweller": {"head": "THE JEWELLER", "art": "lens", "text": ["Mr. Hahn, a jeweller of Hatton Garden, is bled worst of all in the ledger. At dinner he banged the table before the whole car and swore he would 'see Sable in the ground'.", "He leans on a heavy black cane, silver-headed, though you notice he walks without the least limp. And from a quarter past twelve until long after the tunnel, a dozen men watched him lose at cards."], "q": "A man watched by a dozen witnesses through the blackout is…", "opts": [{"t": "Clear of the three minutes in the tunnel", "correct": true}, {"t": "Guilty, since he threatened Sable"}, {"t": "Lying about the cards"}, {"t": "The likeliest suspect"}], "replyOk": "Clear of the tunnel. Loud men rarely creep off to kill in the dark, and this one could not have moved without a dozen men seeing.", "replyNo": "Twelve witnesses say otherwise. Whatever he shouted at dinner, Hahn was at the card table through the tunnel.", "ok": "actress", "no": "actress", "clue": "Hahn threatened Sable, but was at cards through the tunnel. He carries a cane, but no limp."}, "actress": {"head": "THE ACTRESS", "art": "mask", "text": ["Miss Verne, a fading star of the music halls, paid Sable a tidy sum each month to keep an old scandal quiet. She makes no secret that she loathed him.", "And in the tunnel? 'Asleep in my berth, darling. Alone, alas.' Nobody can say otherwise."], "q": "A strong motive and no witness for the tunnel give you…", "opts": [{"t": "A suspect", "correct": true}, {"t": "Proof of guilt"}, {"t": "Proof of innocence"}, {"t": "Nothing at all"}], "replyOk": "A suspect: a reason to kill and nobody to vouch for her when the lamps went out.", "replyNo": "Not proof either way, but a motive and no witness make her a suspect.", "ok": "soldier", "no": "soldier", "clue": "Verne paid Sable, and was alone in the tunnel."}, "soldier": {"head": "THE SOLDIER", "art": "eye", "text": ["Lieutenant Cross, young and sweating, paid Sable to bury a charge of desertion. He cannot meet your eye. There is fresh blood on his shirt cuff.", "Where was he in the tunnel? He mumbles something about feeling unwell, and will not say more."], "q": "Blood on the cuff of a frightened man with a motive gives you…", "opts": [{"t": "Cause to suspect, not proof", "correct": true}, {"t": "Proof of murder"}, {"t": "Nothing worth noting"}, {"t": "A confession"}], "replyOk": "Cause to suspect. Blood can come from anywhere, but a man who will not account for himself goes into your notebook.", "replyNo": "Careful: blood alone is not proof. But a man with a motive who will not account for himself is a suspect.", "ok": "governess", "no": "governess", "clue": "Cross paid Sable. Fresh blood on his cuff."}, "governess": {"head": "THE GOVERNESS", "art": "pin", "text": ["Miss Wren, a quiet governess travelling with no children in her charge, holds a locket in her gloved hand. Her father's name is in Sable's ledger: a bank clerk, ruined, dead by his own hand last winter.", "Her travelling hat lies on the seat. Its band was made for three long steel hatpins. It holds two."], "q": "A missing hatpin, a long slender point, and a thin deep wound make her pin…", "opts": [{"t": "A possible weapon", "correct": true}, {"t": "Irrelevant"}, {"t": "Proof of murder"}, {"t": "A lucky charm"}], "replyOk": "A possible weapon, and a woman with the best reason of all to hate Sable. Wren goes to the top of your list.", "replyNo": "Do not dismiss it: a long steel pin could make a thin, deep wound. With her father in the ledger, Wren goes to the top of your list.", "ok": "cold", "no": "cold", "clue": "Wren's father is in the ledger. One hatpin missing."}, "cold": {"head": "THE COLD HAND", "art": "skull", "text": ["You go back to Sleeper Seven and kneel by the body again. His hand is cold through, not cooling. His jaw has set hard. The blood beneath him has dried black and cracked at the edges.", "A man who died forty minutes ago does not look like this."], "q": "After death, the stiffening of the body (rigor mortis) usually begins after about…", "opts": [{"t": "Two to four hours", "correct": true}, {"t": "Five minutes"}, {"t": "Two days"}, {"t": "A week"}], "replyOk": "Two to four hours. He was dead long before the tunnel, around midnight at the latest. Then who rang the bell?", "replyNo": "It is two to four hours. He was dead long before the tunnel, around midnight. Then who rang the bell?", "ok": "bell2", "no": "bell2", "clue": "Rigor and dried blood: he died around midnight, not in the tunnel."}, "bell2": {"head": "THE BELL AGAIN", "art": "train", "text": ["You ask the fireman about Marsden. 'Steepest drop on the line, sir. She lurches going in, every time. Spills the tea all down the train.'", "You look again at the bell-pull loop, wound round the dead man's fingers."], "q": "Who rang Sleeper Seven's bell at 1.14?", "opts": [{"t": "No one: the body slumped as the carriage lurched", "correct": true}, {"t": "Sable, with his last strength"}, {"t": "The killer, as he left"}, {"t": "The conductor, by mistake"}], "replyOk": "The dead hand rang it. Someone wound the loop round his fingers and let the tunnel do the rest. Every alibi for those three minutes is worthless.", "replyNo": "No: he was hours dead. The carriage lurched into the tunnel, the body slumped, and the loop round his fingers rang the bell. Every tunnel alibi is worthless.", "ok": "manifest", "no": "manifest", "clue": "The bell rang as the carriage lurched. Tunnel alibis are worthless."}, "manifest": {"head": "THE MANIFEST", "art": "ticket", "text": ["The conductor's manifest, in his careful copperplate. Sleeper Eight, the empty berth beside the dead man's, was booked and paid for in cash by a 'Miss Lark', who never came aboard.", "Seven: Mr. Grey, ticket 4466. Eight: Miss Lark, 4472. Nine: Mr. Hahn, 4471. Ten: Miss Verne, 4519. Eleven: Miss Wren, 4530. Twelve: Lt. Cross, 4533."], "q": "An empty berth beside the victim's, paid for in cash, suggests…", "opts": [{"t": "A door kept free for the killer", "correct": true}, {"t": "A passenger who missed the train"}, {"t": "A clerical mistake"}, {"t": "A berth for luggage"}], "replyOk": "A door kept free. Whoever paid for Eight wanted nobody between them and Sleeper Seven.", "replyNo": "Too convenient for chance: an empty berth beside the victim's, paid in cash, is a door kept free for the killer.", "ok": "lounge", "no": "lounge", "clue": "Sleeper Eight was booked in cash by an unseen 'Miss Lark'. Tickets: Hahn 4471, Lark 4472."}, "lounge": {"head": "THE LOUNGE", "art": "mask", "text": ["The lounge steward remembers midnight well: Miss Verne was holding court at the bar from half past eleven until one, three gins and a song.", "Shown the dead man's face by lamplight, she frowns. 'I know that face, darling. I can't think from where.'"], "q": "A witness who served her all through midnight proves…", "opts": [{"t": "Verne never left the lounge", "correct": true}, {"t": "She slipped out unseen"}, {"t": "The steward is her accomplice"}, {"t": "Nothing at all"}], "replyOk": "Verne was in the lounge when the man in Seven died. Cross her off. But that face troubles her.", "replyNo": "The steward served her right through midnight, so Verne never left the lounge. Cross her off.", "ok": "washroom", "no": "washroom", "clue": "Verne was in the lounge at midnight."}, "washroom": {"head": "THE WASHROOM", "art": "eye", "text": ["The porter tells it plainly. From a quarter to twelve the young lieutenant was sick as a dog, and he held his head over the basin until gone one. The lad put his hand through the mirror when the train swayed. 'Bled like a pig, sir.'"], "q": "A porter who never left his side from 11.45 proves…", "opts": [{"t": "Cross was not in Sleeper Seven", "correct": true}, {"t": "Cross is lying"}, {"t": "The porter did it"}, {"t": "Nothing at all"}], "replyOk": "Cross was in the washroom when the man in Seven died, and the blood is his own. A coward with a secret, not a killer.", "replyNo": "The porter never left him, so Cross was not in Sleeper Seven. The blood on his cuff is his own.", "ok": "hatpin", "no": "hatpin", "clue": "Cross was in the washroom with the porter from 11.45."}, "hatpin": {"head": "THE HATPIN", "art": "pin", "text": ["A waiter brings you Miss Wren's missing hatpin, found in the dining-car cushions. Its point is clean and bright.", "She was writing letters there all evening, she says, though the waiter only came to her table with tea at twenty past twelve. Before that, nobody noticed her."], "q": "A round, needle-pointed pin and a flat, edged wound are…", "opts": [{"t": "No match for each other", "correct": true}, {"t": "A perfect match"}, {"t": "Proof she did it"}, {"t": "Proof she is innocent"}], "replyOk": "No match. The wound has edges; a pin has none. Whatever killed him, it was not this. But Wren's evening still has a hole in it.", "replyNo": "Look again at the wound: it is flat and edged, and a pin is round. Whatever killed him, it was not this pin. But Wren's evening still has a hole in it.", "ok": "understudy", "no": "understudy", "clue": "Wren's pin is clean, and cannot make an edged wound. Her evening has a gap."}, "understudy": {"head": "THE UNDERSTUDY", "art": "mask", "text": ["Verne comes to the door of Seven, and goes white. 'Walter Pike. He was an understudy with me at the Alhambra, twenty years ago. Never got a part of his own. Poor Walter.'", "You look again at the peach-coloured smear behind his ear. Greasepaint, the kind an actor never quite scrubs off."], "q": "If the dead man was an actor playing Sable, the real Sable is…", "opts": [{"t": "Alive, and aboard this train", "correct": true}, {"t": "Dead somewhere else"}, {"t": "A story Pike made up"}, {"t": "Waiting at the next station"}], "replyOk": "Alive. Somebody hired a poor actor to wear his name and die in his place. And the real Sable is still on this train.", "replyNo": "Think: someone hired an actor to carry Sable's case, his card and his name. The real Sable is alive, and aboard this train.", "ok": "pages", "no": "pages", "clue": "The dead man is Walter Pike, an actor. Sable is alive."}, "pages": {"head": "THE LAST PAGES", "art": "book", "text": ["You turn the ledger's pages under the lamp. Years of entries have aged to a deep black-brown. All but one name: every payment from 'H., Hatton Garden' is written in ink still pale and blue-grey."], "q": "Old iron-gall ink darkens as it ages, from blue-grey to…", "opts": [{"t": "Black-brown", "correct": true}, {"t": "Bright red"}, {"t": "Pure white"}, {"t": "Green"}], "replyOk": "Black-brown, with time. These entries are pale. They were written within the week, by someone who wanted to look like Sable's victim.", "replyNo": "It darkens to black-brown with time. These entries are still pale, so they were written within the week.", "ok": "diamond", "no": "diamond", "clue": "Hahn's ledger entries were written this week."}, "diamond": {"head": "THE DIAMOND", "art": "lens", "text": ["In the corridor, Mr. Hahn bends over Miss Verne's ring with a connoisseur's smile. 'A fine stone, madam. Eighteen carat if it's a day. You'll find none purer.'"], "q": "In a diamond, the carat measures its…", "opts": [{"t": "Weight", "correct": true}, {"t": "Purity"}, {"t": "Colour"}, {"t": "Age"}], "replyOk": "Its weight. Gold is measured for purity; stones are weighed. Every jeweller in Hatton Garden knows it.", "replyNo": "It measures weight. Gold is measured for purity; stones are weighed. Every jeweller in Hatton Garden knows it.", "ok": "cardm", "no": "cardm", "clue": "Hahn thinks a carat measures purity."}, "cardm": {"head": "THE CALLING CARD", "art": "note", "text": ["Before the platform, you search Sleeper Seven once more, and find it wedged behind the mirror: a small card no passenger will claim. Two lines of numbers, and under the coal-smoke, the faint oily smell of a trimmed lamp wick.", "You number the alphabet, A is 1. Thirteen, one, nineteen, twenty, five, eighteen. M. A. S. T. E. R. Master. The word sits in your palm like a cold coin, and you do not yet know why."], "cipher": "MASTER", "cont": "accuse"}, "accuse": {"head": "THE ACCUSATION", "art": "lens", "text": ["At dawn the train slows for the first station. The passengers gather in the swaying corridor, watching you.", "Name the killer aboard the Midnight Line."], "q": "Who killed the man in Sleeper Seven?", "opts": [{"t": "Mr. Hahn, the jeweller", "correct": true}, {"t": "Miss Wren, the governess"}, {"t": "Miss Verne, the actress"}, {"t": "Lieutenant Cross"}], "accuse": true}}};
 
 /* ---------- helpers ---------- */
 const $=function(id){return document.getElementById(id);};
@@ -826,8 +547,8 @@ function choose(i,btn){
 /* ---------- ending ---------- */
 const ENDINGS_GASLIGHT={
   master:{verdict:'Master Detective', stamp:'SOLVED', tier:4, kicker:'AN AIRTIGHT CASE',
-    text:["You lay it out thread by thread, the weeks of creeping doses, the diary's last word 'R.E.', the butler's midnight glimpse, the frame English tried to hang on a panicking boy.",
-          "The forged note? A frightened heir, no more. The widow? Free, only guilty of wanting to be. Every strand in your hand. English's composure cracks as the cuffs close, they'll hang him by spring."]},
+    text:["You lay it out thread by thread: the doctor who swore to midnight when the clock said eleven, the man who spoke of weeks of poison before anyone had told him, the butler's glimpse at the cabinet, and Clement's unsent letter to the medical board.",
+          "The forged note? A frightened heir, no more. The widow and her solicitor? Free, guilty only of wanting to be. English's composure cracks as the cuffs close; they'll hang him by spring."]},
   closed:{verdict:'Case Closed', stamp:'CLOSED', tier:3, kicker:'JUSTICE, A LITTLE RUMPLED',
     text:["You name English, and most of it holds, the tonic, the motive, the method. But a thread or two slipped through your fingers, and the prosecutor frowns at the gaps.",
           "The jury sees enough. Justice is done, if you don't look too closely at the seams."]},
@@ -838,152 +559,19 @@ const ENDINGS_GASLIGHT={
     text:["The cuffs close on an innocent. Across the parlour, Dr. English allows himself the faintest smile, turns up his collar, and steps out into the rain.",
           "The cure was the poison, and you never caught it. He is never seen again."]}
 };
-const ENDINGS_MIDNIGHT={
-  master:{verdict:'Master Detective', stamp:'SOLVED', tier:4, kicker:'EVERY THREAD IN HAND',
-    text:["You walk them through it, the false name, the ledger, the three dark minutes in Marsden Tunnel, the connecting door from a berth booked in cash by a woman no one ever saw.",
-          "The locket. The missing pin. Miss Wren does not deny it; she only says he deserved worse. The cuffs are almost gentle, and even the conductor looks away."]},
-  closed:{verdict:'Case Closed', stamp:'CLOSED', tier:3, kicker:'JUSTICE ON THE DAWN RAILS',
-    text:["You name Miss Wren, and most of it holds, the pin, the connecting door, the grief in the locket. A thread or two slips, and a clever counsel may worry at the gaps.",
-          "But the locket damns her. Justice is done, swaying into the morning."]},
-  hunch:{verdict:'A Lucky Hunch', stamp:'SHAKY', tier:2, kicker:'RIGHT WOMAN, FRAYED NET',
-    text:["You point to the governess on instinct more than proof. She is taken at the platform, but half your case is air, and a sharp barrister will pick at every seam.",
-          "Right woman. Weak net. She may yet step down free."]},
-  wrong:{verdict:'The Wrong Passenger', stamp:'UNSOLVED', tier:1, kicker:'THE KILLER STEPS DOWN',
-    text:["The cuffs close on the wrong passenger as the train sighs into the station.",
-          "In the crowd on the platform, a quiet woman in grey adjusts her hat, one pin short, and walks free into the morning. You had the blackmailer's killer in your carriage, and you let her go."]}
-};
+const ENDINGS_MIDNIGHT={"master": {"verdict": "Master Detective", "stamp": "SOLVED", "tier": 4, "kicker": "EVERY THREAD IN HAND", "text": ["You walk them through it: a bell rung by a dead hand, a berth bought beside the victim's on the very next ticket, ledger pages still wet with this week's ink, and a jeweller who weighs purity in carats.", "You draw the blade from Hahn's silver-headed cane. The man who swore he'd see Sable in the ground has done exactly that: buried his own name in a poor actor's body. Sable goes quietly; he always knew how to lose at cards."]}, "closed": {"verdict": "Case Closed", "stamp": "CLOSED", "tier": 3, "kicker": "JUSTICE ON THE DAWN RAILS", "text": ["You name Hahn, and the murder holds: the empty berth, the bell, the blade in his cane. But you never see who he truly is.", "He hangs as a jeweller called Hahn, and the name Sable dies with him, which is exactly what he wanted."]}, "hunch": {"verdict": "A Lucky Hunch", "stamp": "SHAKY", "tier": 2, "kicker": "RIGHT WOMAN, FRAYED NET", "text": ["You point at the jeweller on instinct more than proof. He is taken at the platform, smiling, and his counsel is already counting the holes in your case.", "Right man. Weak net. He may yet step down free under a name that was never his."]}, "wrong": {"verdict": "The Wrong Passenger", "stamp": "UNSOLVED", "tier": 1, "kicker": "THE KILLER STEPS DOWN", "text": ["The cuffs close on the wrong passenger as the train sighs into the station. On the platform, Mr. Hahn tips his hat with the silver head of his cane and walks into the morning crowd.", "Later, you will learn that no jeweller named Hahn ever kept a shop in Hatton Garden. Sable is free, and officially dead."]}};
 
-const STORY_SEANCE={
- start:'intro',
- scenes:{
-  intro:{head:'BLACKFRIARS', art:'lamp', text:[
-    "Fog sits thick on Blackfriars, and the gas lamps drown in it. In a tall dark house, seven chairs ring a round table, and in one of them Professor Aldous Finch sits dead. He came tonight to prove the spirits a lie. The spirits, it seems, took offence.",
-    "The doors were locked. The circle held hands in the dark. And still a man died among them. Word reached you within the hour, as word always does. They always send for you.",
-    "Light a cigarette. The work begins."],
-    cont:'body'},
-
-  body:{head:'THE THROAT', art:'skull', text:[
-    "Finch is slumped forward, already cold. No wound, no blood, no bottle. But when you tilt his chin to the lamp, you find it: a thin livid line drawn clean around the throat, no thicker than a bootlace.",
-    "Not a blade. Not poison. Something was pulled tight about his neck in the dark, and drawn away again before the light returned."],
-    q:"A thin livid line at the throat, no blood and no weapon left behind, means Finch was:",
-    opts:[{t:"Strangled with a thin cord",correct:true},{t:"Poisoned"},{t:"Shot"},{t:"Frightened to death"}],
-    replyOk:"A garrotte. A length of cord looped, crossed, and hauled tight from behind, then carried off into the dark. Quick, silent, and close.",
-    replyNo:"You reach for poison out of habit, but there is no bottle, no smell, no froth. Only that clean thin line. He was throttled with a cord, and the cord is gone.",
-    clue:"Finch was strangled with a thin cord, taken away after.",
-    ok:'circle', no:'circle'},
-
-  circle:{head:'THE CIRCLE', art:'eye', text:[
-    "You rebuild the room. Seven sitters, hands joined around the table, the doors locked, the single lamp turned down to nothing. In that black minute came the raps, a choking gasp, and when the light rose Finch was slumped and still.",
-    "Every hand was held. That is the puzzle they hand you like a gift, and expect you to choke on it."],
-    q:"To loop a cord around a man's neck, the killer needed, above all:",
-    opts:[{t:"A hand freed in the dark",correct:true},{t:"A true spirit"},{t:"No hands at all, since it was suicide"},{t:"To reach through the locked door"}],
-    replyOk:"A joined circle in the dark is not proof. It is theatre. One hand slipped loose while the neighbours felt sure they still held it, and a cord does the rest.",
-    replyNo:"You toy with suicide, but a man does not garrotte himself from behind and hide the cord in a locked black room. A hand came free. Whose?",
-    clue:"In the dark, a sitter freed a hand to work the cord.",
-    ok:'medium', no:'medium'},
-
-  medium:{head:'THE MEDIUM', art:'mask', text:[
-    "Madame Vesper receives you in black lace, calm as still water. She speaks with the dead for a fee, and in the morning Finch meant to strip the paint from her act in the papers.",
-    "You know her kind of work. The trick they lean on is old: in the dark, one hand serves for two, so a medium can free a hand to ring bells and float trumpets while both neighbours swear she never moved."],
-    q:"Vesper's own 'one hand for two' trick tells you that:",
-    opts:[{t:"Any sitter could have freed a hand unseen",correct:true},{t:"Only spirits could reach Finch"},{t:"The circle proves everyone innocent"},{t:"Vesper is plainly the killer"}],
-    replyOk:"The very trick that sells her lie unlocks the room. If she can free a hand in the dark, so can the person beside her.",
-    replyNo:"You want to clap the cuffs on Vesper and be done. But the trick that damns her as a fraud clears the whole circle to move. The method is loose. The name is not.",
-    clue:"The medium's trick means any sitter could free a hand.",
-    ok:'threat', no:'threat'},
-
-  threat:{head:'THE NOTEBOOK', art:'book', text:[
-    "Finch kept a working notebook. Its last page lists the sitters, with a note torn away beside one name before you could read it. Above the list, underlined twice: 'They know I am coming. Someone told them.'",
-    "Finch expected to be stopped tonight. Which means his plan reached the killer's ear before he ever set foot in the room."],
-    q:"Finch wrote that someone had told the room he was coming. That means:",
-    opts:[{t:"A hand you cannot see arranged the killing",correct:true},{t:"Finch imagined it all"},{t:"No one could have known"},{t:"Finch meant to fake his death"}],
-    replyOk:"Someone fed the killer Finch's plan, quietly, in advance, then let a frightened sitter do the deed. A hand behind the hand. You have felt that shape before.",
-    replyNo:"You dismiss it as nerves, until the torn page nags. Finch was betrayed to the room before he arrived. Someone arranged the whole night.",
-    clue:"Someone unseen arranged the killing from a distance.",
-    ok:'raps', no:'raps'},
-
-  raps:{head:'THE RAPS', art:'note', text:[
-    "The sitters agree on one thing. Before the choking gasp, the table rapped. Not the usual nonsense, but a careful pattern, counted out: one knock, then nineteen, then eleven, then silence.",
-    "By Finch's chair lies a small card that no one admits to dropping. Two lines of tiny numbers, and the faint oily smell of a trimmed lamp wick. You have met this hand before."],
-    q:"Number the alphabet, A is 1. The raps, 1 then 19 then 11, spell:",
-    opts:[{t:"A, S, K  (ASK)",correct:true},{t:"C, A, T  (CAT)"},{t:"D, O, G  (DOG)"},{t:"R, E, D  (RED)"}],
-    replyOk:"ASK. No spirit sent it. A living hand did, in code, the way this one always speaks. Ask what? Ask whom? The card goes in your file, lamp-oil and all.",
-    replyNo:"You miscount into nonsense, then count again, slower. One, nineteen, eleven. A. S. K. Ask. Someone is asking you something, in the dark, in code.",
-    clue:"The raps spelled ASK, in code, on a lamp-oil card.",
-    cipher:'ASK',
-    ok:'cord', no:'cord'},
-
-  cord:{head:'THE CORD', art:'bag', text:[
-    "You hunt the weapon. Among Vesper's props hangs a spirit-trumpet on a braided silk cord, and a length of that cord has been cut clean away. The rigging is one loop short.",
-    "A yard of strong braided silk, cut from the medium's own gear, is exactly the garrotte you are looking for."],
-    q:"A length of cord cut from the seance rigging tells you the killer:",
-    opts:[{t:"Armed themselves from the room, on the spot",correct:true},{t:"Brought a pistol from outside"},{t:"Used no weapon at all"},{t:"Could not have been a sitter"}],
-    replyOk:"No need to smuggle a weapon past the door. The killer cut a garrotte from the props in the dark. Someone who knew that cord was there.",
-    replyNo:"You look for a weapon carried in from the street, and find none. The cord came from Vesper's own rigging, cut on the spot. An inside hand.",
-    clue:"The garrotte was cut from the medium's own cord.",
-    ok:'widow', no:'widow'},
-
-  widow:{head:'THE MOURNER', art:'mask', text:[
-    "Mrs. Harrow sat at Finch's left. A widow in deep mourning, she comes to Vesper each week to hear her drowned husband speak, and pays well for the comfort. Tonight her gloved hands would not stay still in her lap.",
-    "You ask her to remove her gloves. She hesitates a heartbeat too long. Across the inside of both forefingers runs a thin raw welt, the burn a cord leaves when it is hauled tight in a hurry."],
-    q:"Fresh rope-burn across the fingers of the woman seated at Finch's side means:",
-    opts:[{t:"Her hands drew the garrotte tight",correct:true},{t:"She wrings her hands from grief"},{t:"The gloves were borrowed"},{t:"It proves nothing at all"}],
-    replyOk:"The cord bit her own fingers as she pulled. The welt, the seat beside the corpse, the freed hand. The circle tightens around Mrs. Harrow.",
-    replyNo:"You nearly let her keep the gloves. When you insist, the welts are there, raw and fresh, on the very fingers that would haul a cord.",
-    clue:"Fresh rope-burn marks Harrow's fingers.",
-    ok:'steer', no:'steer'},
-
-  steer:{head:'YOUR ORDERS', art:'watch', text:[
-    "One thing will not sit right. The summons that sent you here tonight came with an instruction in a familiar hand: 'Press the assistant, Reeves. Press him hard.' You had not yet named a single suspect.",
-    "Whoever sends you your cases wanted you looking at the boy before you had looked at anyone. Colonel Strand, the host, a believer to the marrow, swears the spirits are real. Young Reeves swears he saw Mrs. Harrow move. And your own orders swear it was Reeves."],
-    q:"Your orders steered you at the assistant before you had found a thing. Why would the hand that sends you do that?",
-    opts:[{t:"To herd you away from the true killer",correct:true},{t:"Out of honest, helpful concern"},{t:"Because Reeves had confessed"},{t:"Idle instruction, meaning nothing"}],
-    replyOk:"The hand that gives you your cases is steering you off the trail before you begin. Not helping. Herding. You keep that thought off your lips and in your notebook.",
-    replyNo:"You almost charge Reeves on your orders alone. Then you catch it: someone wanted you aimed at the boy from the first minute, before the evidence spoke. You slow down. You wonder who sends you where.",
-    clue:"Your own orders tried to steer you off the killer.",
-    ok:'motive', no:'motive'},
-
-  motive:{head:'THE REASON', art:'scales', text:[
-    "It comes down to what Finch meant to do. In the morning he would publish every wire and trick of Vesper's act, and name her a fraud in cold print. For most of the sitters, an embarrassment.",
-    "For Mrs. Harrow, it was the end of the only voice that still gave her back her husband. Expose the medium, and the dead go quiet forever."],
-    q:"For Mrs. Harrow, silencing Finch before dawn would:",
-    opts:[{t:"Keep alive the lie that let her hear her husband",correct:true},{t:"Win her money from an estate"},{t:"Protect young Reeves"},{t:"Clear Vesper honestly"}],
-    replyOk:"Not greed. Grief. She killed to keep a comfort, because the truth Finch carried was crueller to her than murder. The saddest motive there is.",
-    replyNo:"You reach for money and find none. Her reason is quieter and worse: without Vesper's lie, her husband dies a second time. She could not bear the morning.",
-    clue:"Harrow's motive: to keep the lie that let her grieve.",
-    ok:'accuse', no:'accuse'},
-
-  accuse:{head:'THE ACCUSATION', art:'lens', text:[
-    "The sitters gather again around the cold table. The fog has not lifted. Every eye turns to you.",
-    "Name the hand that killed Professor Finch."],
-    q:"Who killed Professor Finch?",
-    opts:[{t:"Mrs. Harrow",correct:true},{t:"Madame Vesper"},{t:"Julian Reeves"},{t:"Colonel Strand"}],
-    accuse:true}
- }
-};
-const ENDINGS_SEANCE={
-  master:{verdict:'Master Detective', stamp:'SOLVED', tier:4, kicker:'THE CIRCLE BROKEN',
-    text:["You lay it bare: the freed hand, the cord cut from Vesper's own rigging, the rope-burn on a mourner's fingers, the grief that could not face the morning. Mrs. Harrow does not fight it. She asks only, softly, whether her husband saw. The cuffs are almost kind.",
-          "But you keep one card back, unshown to the room, its numbers reading ASK and smelling of lamp-oil. Someone knew Finch's plan before he arrived. Someone steered you at the boy before you had looked. Someone always sends for you. Stepping into the fog, you find yourself wondering, for the first time, who."]},
-  closed:{verdict:'Case Closed', stamp:'CLOSED', tier:3, kicker:'JUSTICE IN THE FOG',
-    text:["You name Mrs. Harrow, and most of it holds: the cord, the burn, the motive soft as grief. A thread or two slips, and a kind counsel may plead her sorrow to a jury.",
-          "The lace-draped medium goes free to lie another night. And the card in your pocket, two numbers and lamp-oil, keeps its own counsel, for now."]},
-  hunch:{verdict:'A Lucky Hunch', stamp:'SHAKY', tier:2, kicker:'RIGHT HAND, THIN THREAD',
-    text:["You point to the widow on feeling more than proof. She is led out weeping, and half your case is fog. A sharp barrister will make the rope-burn mean nothing.",
-          "Right hand, weak net. She may yet walk. And a card of two numbers sits in your pocket, unexplained, smelling faintly of lamp-oil."]},
-  wrong:{verdict:'The Wrong Hand', stamp:'UNSOLVED', tier:1, kicker:'THE CIRCLE HOLDS',
-    text:["The cuffs close on the wrong wrist. Across the cold table, Mrs. Harrow lowers her eyes, and the cut cord stays lost in her mourning veil.",
-          "The spirits keep their joke. Somewhere in the fog a lamp is trimmed, a card is written, and the hand that sends you your cases prepares to send you another."]}
-};
+const STORY_SEANCE={"start": "intro", "scenes": {"intro": {"head": "BLACKFRIARS", "art": "lamp", "text": ["Fog sits thick on Blackfriars, and the gas lamps drown in it. In a tall dark house, seven chairs ring a round table, and in one of them Professor Aldous Finch sits dead. He came tonight to prove the spirits a lie. The spirits, it seems, took offence.", "The doors were locked. The circle held hands in the dark. And still a man died among them. Word reached you within the hour, as word always does. They always send for you.", "Light a cigarette. The work begins."], "cont": "body"}, "body": {"head": "THE THROAT", "art": "skull", "text": ["Finch is slumped forward, already cold. No wound, no blood, no bottle. But when you tilt his chin to the lamp, you find it: a thin livid line drawn clean around the throat, no thicker than a bootlace.", "His hands lie open on the table. Under the nails of the right hand, and the right hand only, a few fine strands of braided silk."], "q": "A thin livid line at the throat, no blood and no weapon left behind, means Finch was…", "opts": [{"t": "Strangled with a thin cord", "correct": true}, {"t": "Poisoned"}, {"t": "Shot"}, {"t": "Frightened to death"}], "replyOk": "A cord, pulled tight in the dark and drawn away before the light returned. The spirits had hands, then.", "replyNo": "No. That thin line is the mark of a cord drawn tight about the throat. Finch was strangled.", "ok": "circle", "no": "circle", "clue": "Strangled with a thin cord. Silk under the right-hand nails only."}, "circle": {"head": "THE CIRCLE", "art": "eye", "text": ["You rebuild the room. Seven sitters, hands joined around the table, the doors locked, the single lamp turned down to nothing. In that black minute came the raps, a choking gasp, and when the light rose Finch was slumped and still.", "Every hand was held. That is the puzzle they hand you like a gift, and expect you to choke on it."], "q": "To loop a cord around a man's neck, the killer needed, above all:", "opts": [{"t": "A hand freed in the dark", "correct": true}, {"t": "A true spirit"}, {"t": "No hands at all, since it was suicide"}, {"t": "To reach through the locked door"}], "replyOk": "A joined circle in the dark is not proof. It is theatre. One hand slipped loose while the neighbours felt sure they still held it, and a cord does the rest.", "replyNo": "You toy with suicide, but a man does not garrotte himself from behind and hide the cord in a locked black room. A hand came free. Whose?", "clue": "In the dark, a sitter freed a hand to work the cord.", "ok": "medium", "no": "medium"}, "medium": {"head": "THE MEDIUM", "art": "mask", "text": ["Madame Vesper receives you in black lace, calm as still water. She speaks with the dead for a fee, and in the morning Finch meant to strip the paint from her act in the papers.", "You know her kind of work. The trick they lean on is old: in the dark, one hand serves for two, so a medium can free a hand to ring bells and float trumpets while both neighbours swear she never moved.", "As you turn to go, she murmurs, almost kindly: ‘They always send for you, don’t they, inspector?’"], "q": "Vesper's own 'one hand for two' trick tells you that:", "opts": [{"t": "Any sitter could have freed a hand unseen", "correct": true}, {"t": "Only spirits could reach Finch"}, {"t": "The circle proves everyone innocent"}, {"t": "Only the medium could free a hand"}], "replyOk": "The very trick that sells her lie unlocks the room. If she can free a hand in the dark, so can the person beside her.", "replyNo": "You want to clap the cuffs on Vesper and be done. But the trick that damns her as a fraud clears the whole circle to move. The method is loose. The name is not.", "clue": "The medium's trick means any sitter could free a hand.", "ok": "threat", "no": "threat"}, "threat": {"head": "THE NOTEBOOK", "art": "book", "text": ["Finch kept a working notebook. Its last page lists the sitters, and beside one name a line has been torn clean away. Above the list, underlined twice: 'They know I am coming. Someone told them.'"], "q": "Finch was expected tonight. So his killer…", "opts": [{"t": "Knew he was coming, and came prepared", "correct": true}, {"t": "Acted on a sudden impulse"}, {"t": "Was a stranger off the street"}, {"t": "Never meant to harm him"}], "replyOk": "Knew, and prepared. This was no fit of temper in the dark. And someone told them.", "replyNo": "Think again: Finch was expected, so the killer knew he was coming and came prepared.", "ok": "raps", "no": "raps", "clue": "Finch was expected. His killer came prepared."}, "raps": {"head": "THE RAPS", "art": "note", "text": ["The sitters agree on one thing. Before the choking gasp, the table rapped. Not the usual nonsense, but a careful pattern, counted out: one knock, then nineteen, then eleven, then silence.", "By Finch's chair lies a small card that no one admits to dropping. Two lines of tiny numbers, and the faint oily smell of a trimmed lamp wick. You have met this hand before."], "q": "Number the alphabet, A is 1. The raps, 1 then 19 then 11, spell:", "opts": [{"t": "A, S, K  (ASK)", "correct": true}, {"t": "C, A, T  (CAT)"}, {"t": "D, O, G  (DOG)"}, {"t": "R, E, D  (RED)"}], "replyOk": "ASK. No spirit sent it. A living hand did, in code, the way this one always speaks. Ask what? Ask whom? The card goes in your file, lamp-oil and all.", "replyNo": "You miscount into nonsense, then count again, slower. One, nineteen, eleven. A. S. K. Ask. Someone is asking you something, in the dark, in code.", "clue": "The raps spelled ASK, in code, on a lamp-oil card.", "cipher": "ASK", "ok": "cord", "no": "cord"}, "cord": {"head": "THE CORD", "art": "bag", "text": ["Among Vesper's props hangs a spirit-trumpet on a braided silk line, and a yard of that silk has been cut clean away. The rigging is one loop short.", "You hold the cut end to the lamp. It is filmed with the same fine grey dust as the rest of the rigging."], "q": "Dust lying on a cut end, just as on the uncut cord, means the cut was made…", "opts": [{"t": "Days ago, by someone with the run of this house", "correct": true}, {"t": "Tonight, in the dark"}, {"t": "By the spirits"}, {"t": "By a rat"}], "replyOk": "Days ago. Dust does not settle in an hour. Whoever cut this cord had the run of this house well before tonight.", "replyNo": "No: fresh cuts are clean. Dust lying on the cut end means it was made days ago, by someone with the run of this house.", "ok": "widow", "no": "widow", "clue": "The cord was cut days ago, by someone with the run of the house."}, "widow": {"head": "THE MOURNER", "art": "mask", "text": ["Mrs. Harrow sat at Finch's left: a widow in deep mourning, who comes each week to hear her drowned husband speak. Tonight her gloved hands would not stay still.", "You ask her to remove her gloves. Across the inside of both forefingers runs a thin raw welt. 'My rosary,' she says, too quickly."], "q": "A raw welt like that, across both forefingers, comes from…", "opts": [{"t": "A cord hauled hard and fast", "correct": true}, {"t": "Telling a rosary"}, {"t": "Cold weather"}, {"t": "Sewing"}], "replyOk": "A cord, hauled hard and fast, tonight. And she sat at his left hand. Mrs. Harrow goes to the top of your list.", "replyNo": "No rosary does that. A welt across both forefingers comes from a cord hauled hard and fast, and she sat at Finch's left hand.", "ok": "steer", "no": "steer", "clue": "A fresh cord-burn across Mrs. Harrow's forefingers."}, "steer": {"head": "YOUR ORDERS", "art": "watch", "text": ["One thing will not sit right. The summons that sent you here tonight came with an instruction in a familiar hand: 'Press the assistant, Reeves. Press him hard.' You had not yet named a single suspect.", "Young Reeves, pale as paper, swears he felt Mrs. Harrow move in the dark. And your own orders swear it was Reeves."], "q": "Your orders steered you at the assistant before you had found a thing. Why would the hand that sends you do that?", "opts": [{"t": "To herd you away from the true killer", "correct": true}, {"t": "Out of honest, helpful concern"}, {"t": "Because Reeves had confessed"}, {"t": "Idle instruction, meaning nothing"}], "replyOk": "The hand that gives you your cases is steering you off the trail before you begin. Not helping. Herding. You keep that thought off your lips and in your notebook.", "replyNo": "You almost charge Reeves on your orders alone. Then you catch it: someone wanted you aimed at the boy from the first minute, before the evidence spoke. You slow down. You wonder who sends you where.", "clue": "Your own orders tried to steer you off the killer.", "ok": "host", "no": "host"}, "host": {"head": "THE HOST", "art": "lamp", "text": ["Colonel Strand, whose house this is, is chairman of the Spiritualist Society and a believer to the marrow. He will not hear of murder. 'The professor mocked them, inspector, and they took him.'", "'I held his right hand myself,' he says, 'steady as a rock, until the light came.' He is pacing the hearth, turning his signet ring."], "q": "The creator of Sherlock Holmes was Spiritualism's most famous believer. Who was he?", "opts": [{"t": "Arthur Conan Doyle", "correct": true}, {"t": "Charles Dickens"}, {"t": "Bram Stoker"}, {"t": "H. G. Wells"}], "replyOk": "Conan Doyle, who believed to the last. The Colonel would have liked him. He has the same faith, and a great deal of it.", "replyNo": "It was Arthur Conan Doyle, who believed to the last. The Colonel would have liked him.", "ok": "seating", "no": "seating", "clue": "Strand says he held Finch's right hand all night."}, "seating": {"head": "THE SEATING", "art": "eye", "text": ["You set the chairs back as they stood. Finch. At his right, Colonel Strand. Then the Abernethy sisters, two old ladies who come for the company. Madame Vesper, across the table, six feet away. Young Reeves. And at Finch's left, Mrs. Harrow. Seven chairs, and the circle closes."], "q": "Who could loop a cord around a seated man's neck?", "opts": [{"t": "Only someone within arm's reach", "correct": true}, {"t": "Anyone at the table"}, {"t": "Only the medium"}, {"t": "Someone outside the room"}], "replyOk": "Only his neighbours: Mrs. Harrow at his left, the Colonel at his right. Vesper and Reeves could not reach him without climbing over someone.", "replyNo": "Look at the chairs: only his two neighbours, Mrs. Harrow and the Colonel, could reach his throat.", "ok": "sisters", "no": "sisters", "clue": "Only Finch's neighbours could reach him: Harrow and Strand."}, "sisters": {"head": "THE SISTERS", "art": "eye", "text": ["Miss Ida Abernethy is quite deaf, but quite certain. She held her sister's hand all night, and the Colonel's right hand in her left, cold as a fish. Miss Maud held Ida and Madame Vesper. Neither let go."], "q": "If the Colonel's right hand was held all night, any free hand of his was…", "opts": [{"t": "His left, the side nearest Finch", "correct": true}, {"t": "His right"}, {"t": "Neither"}, {"t": "Both"}], "replyOk": "His left. The hand on Finch's side. Which, he tells you, held Finch's right hand steady as a rock.", "replyNo": "His left: the sisters held his right all night. The hand on Finch's side was the only one he could have freed.", "ok": "trumpet", "no": "trumpet", "clue": "The sisters held Strand's right hand all night."}, "trumpet": {"head": "THE TRUMPET", "art": "lamp", "text": ["Every sitter agrees on this. At the very moment of the choking gasp, the spirit-trumpet, painted to glow in the dark, rose and floated high on the far side of the room, turning slowly, as if something unseen held it."], "q": "A trumpet that 'floats' on a silk line over a hook needs…", "opts": [{"t": "Someone hauling the line", "correct": true}, {"t": "A real spirit"}, {"t": "A clockwork motor"}, {"t": "Nothing at all"}], "replyOk": "Someone hauling the line, hand over hand. A burning sort of work, if you do it in a hurry.", "replyNo": "No spirit floats a trumpet: someone hauls its line over a hook, hand over hand.", "ok": "secret", "no": "secret", "clue": "The trumpet floated on the far side as Finch choked."}, "secret": {"head": "THE MOURNER'S SECRET", "art": "mask", "text": ["Shown the cut rigging, Mrs. Harrow breaks. There is no drowned husband. Vesper pays her to sit in the circle, weep, and free a hand in the dark to haul the trumpet line. The welt is from the silk.", "'I never touched the professor,' she whispers. 'I was hauling the trumpet when he choked. I swear it.'"], "q": "A sitter paid to fake the spirits is guilty of…", "opts": [{"t": "Fraud", "correct": true}, {"t": "Nothing at all"}, {"t": "Witchcraft"}, {"t": "Treason"}], "replyOk": "Fraud, plainly. Whether it is anything more, you will have to decide.", "replyNo": "Fraud, plainly. Whether it is anything more, you will have to decide.", "ok": "assistant", "no": "assistant", "clue": "Harrow is Vesper's paid confederate. She hauled the trumpet line."}, "assistant": {"head": "THE ASSISTANT", "art": "note", "text": ["Pressed, as your orders demanded, Reeves turns out his pockets: a gold sovereign and an unsigned note, smelling faintly of lamp-oil. 'When the lamp goes down, rap once, then nineteen, then eleven.' He did, with his knee. He never knew why.", "Mrs. Harrow held his hand all night, as he held hers. It is the one thing they agree on."], "q": "A boy paid by an unseen hand to rap out a word is…", "opts": [{"t": "A messenger, not a murderer", "correct": true}, {"t": "The killer"}, {"t": "A true medium"}, {"t": "The one who sent the note"}], "replyOk": "A messenger. Somebody wanted that word rapped in this room tonight, and paid a frightened boy to do it.", "replyNo": "He is a messenger. Somebody wanted that word rapped in this room tonight, and paid a frightened boy to do it.", "ok": "righthand", "no": "righthand", "clue": "Reeves rapped the word for a sovereign and a lamp-oil note."}, "righthand": {"head": "THE RIGHT HAND", "art": "lens", "text": ["You go back to the body. Under the nails of Finch's right hand, the braided silk. Under the left, nothing at all.", "A drowning man grabs at whatever is choking him."], "q": "Silk under the nails of one hand only means…", "opts": [{"t": "That hand was free to claw at the cord", "correct": true}, {"t": "He was left-handed"}, {"t": "He tied the knot himself"}, {"t": "Nothing at all"}], "replyOk": "That hand was free. In the dark, while the cord bit, Finch's right hand clawed at it, and nobody was holding it.", "replyNo": "Think: silk under one set of nails means that hand clawed at the cord, so it was free in the dark.", "ok": "grate", "no": "grate", "clue": "Finch's right hand was free to claw at the cord."}, "grate": {"head": "THE GRATE", "art": "book", "text": ["In the study fireplace, among the ashes, a scrap of paper that would not burn: the line torn from Finch's notebook. '...the Society's subscriptions, paid to V. these six years. Ask the chairman.'"], "q": "A society's money paid in secret to a fraud is…", "opts": [{"t": "Embezzlement, with someone to be ruined", "correct": true}, {"t": "A charitable gift"}, {"t": "A legal investment"}, {"t": "A spirit's wages"}], "replyOk": "Embezzlement. Six years of members' money paid to a fraud, and in the morning Finch meant to print it.", "replyNo": "It is embezzlement: members' money paid in secret to a fraud. In the morning, Finch meant to print it.", "ok": "accuse", "no": "accuse", "clue": "The Society's money was paid in secret to Vesper."}, "accuse": {"head": "THE ACCUSATION", "art": "lens", "text": ["The sitters gather again around the cold table. The fog has not lifted. Every eye turns to you.", "Name the hand that killed Professor Finch."], "q": "Who killed Professor Finch?", "opts": [{"t": "Colonel Strand", "correct": true}, {"t": "Mrs. Harrow"}, {"t": "Madame Vesper"}, {"t": "Julian Reeves"}], "accuse": true}}};
+const ENDINGS_SEANCE={"master": {"verdict": "Master Detective", "stamp": "SOLVED", "tier": 4, "kicker": "THE CIRCLE BROKEN", "text": ["You lay it bare: silk under the nails of the hand the Colonel swore he held, his other hand gripped all night by a deaf old lady, a cord cut days ago in his own house, and six years of the Society's money paid to a fraud.", "Mrs. Harrow was hauling the trumpet when Finch choked. The Colonel was not. In his waistcoat you find a card that smells of lamp-oil: 'He comes Thursday.' The hand that sends you your cases warned the killer too. Stepping into the fog, you find yourself wondering, for the first time, who."]}, "closed": {"verdict": "Case Closed", "stamp": "CLOSED", "tier": 3, "kicker": "JUSTICE IN THE FOG", "text": ["You name the Colonel, and the murder holds: the hand he let go, the dusty cut, the silk under Finch's nails.", "But the Society's books are never opened, and the card in his waistcoat is never found. Someone, somewhere, is relieved."]}, "hunch": {"verdict": "A Lucky Hunch", "stamp": "SHAKY", "tier": 2, "kicker": "RIGHT HAND, THIN THREAD", "text": ["You point at the Colonel on feeling more than proof. A believer's word against yours, and half the jury believes in the spirits too.", "Right hand, weak net. He may yet walk, and the fog keeps its secrets."]}, "wrong": {"verdict": "The Wrong Hand", "stamp": "UNSOLVED", "tier": 1, "kicker": "THE CIRCLE HOLDS", "text": ["The cuffs close on the wrong wrist. Across the cold table, Colonel Strand bows his head, as if in prayer, and thanks the spirits for their justice.", "Later, he closes the door of his tall house behind you. Somewhere in the fog a lamp wick is trimmed, and a card is written for the next of your cases."]}};
 
 const CASES=[
- {key:'gaslight', id:'qc_gaslight', title:'The Gaslight Affair', tag:'A locked-room poisoning', total:14, cut:'manor',
+ {key:'gaslight', id:'qc_gaslight', title:'The Gaslight Affair', tag:'A locked-room poisoning', total:15, cut:'manor',
   hook:"Clement Christie lies poisoned in his bolted study. Four souls under one roof, a city of rain outside. Read the scene, trust your deductions, your verdict writes the ending.",
   story:STORY_GASLIGHT, endings:ENDINGS_GASLIGHT},
- {key:'midnight', id:'qc_midnight', title:'The Midnight Line', tag:'Murder aboard the night express', total:13, cut:'train',
+ {key:'midnight', id:'qc_midnight', title:'The Midnight Line', tag:'Murder aboard the night express', total:18, cut:'train',
   hook:"A blackmailer lies dead in a bolted sleeper as the night express tears through the storm. No one steps off until dawn. Find the killer in your carriage.",
   story:STORY_MIDNIGHT, endings:ENDINGS_MIDNIGHT},
- {key:'seance', id:'qc_seance', title:'The Blackfriars Seance', tag:'Murder in a locked seance', total:9, cut:'seance',
+ {key:'seance', id:'qc_seance', title:'The Blackfriars Seance', tag:'Murder in a locked seance', total:16, cut:'seance',
   hook:"A debunker lies dead at a seance table, in a locked room, in the dark, every hand joined in the circle. That night the table rapped a message in code. Read the room, trust your deductions, and mind who sends you where.",
   story:STORY_SEANCE, endings:ENDINGS_SEANCE}
 ];
@@ -1041,7 +629,7 @@ function renderCipher(){ var body=$('ciphrBody'), stamp=$('ciphrStamp'); if(!bod
   var complete=have>=CIPHER_ORDER.length;
   body.innerHTML='<div class="cipherline">'+parts.join(' ')+'</div>'+
     (complete
-      ? '<p class="ciphernote">The message is complete: ASK THE MASTER. The man who hands you every case, who sends for you and steers you and stays forever above suspicion, is the hand behind them all. The reckoning is coming.</p>'
+      ? '<p class="ciphernote">The message is complete: ASK THE MASTER. Someone has been sending for you all along, and steering you. The reckoning is coming.</p>'
       : '<p class="ciphernote">A message is assembling, one case at a time, in a hand that smells of lamp-oil. Solve more cases to complete it.</p>');
   if(stamp) stamp.textContent=complete?'DECODED':'ENCODED';
 }
@@ -1509,30 +1097,566 @@ window.GX = (function(){
     };
   }
 
-  /* the ending: the verdict slams down, then the thread pulls you on */
+  /* the ending: the verdict slams down, the result is remembered, and the thread pulls you on */
   var CODA = {
-    qc_gaslight:{ k:'Later that night', p:['Back at your desk, a telegram is waiting. No sender, just a line of type:', '<span class="wire">SLEEPER SEVEN. MARSDEN TUNNEL. COME AT ONCE.</span>', 'The paper smells faintly of lamp-oil. Somebody knew you would be free tonight.'], next:'The Midnight Line', btn:'Take the night train \u203A' },
-    qc_midnight:{ k:'Among the dead man\u2019s papers', p:['A black calling card bearing a single name: <span class="wire">Sable</span>.', 'On the back, in fresh ink: <span class="wire">Blackfriars. Seven chairs. Bring a candle.</span>', 'Whoever wrote it wanted you to find it.'], next:'The Blackfriars Seance', btn:'Go to Blackfriars \u203A' }
+    qc_gaslight:{ k:'Later that night', p:['Back at your desk, a telegram is waiting. No sender, just a line of type:', '<span class="wire">SLEEPER SEVEN. MARSDEN TUNNEL. COME AT ONCE.</span>', 'The paper smells faintly of lamp-oil. Somebody knew you would be free tonight.'], next:'The Midnight Line', btn:'Take the night train ›' },
+    qc_midnight:{ k:'Among Sable’s papers', p:['A black calling card bearing a single name: <span class="wire">Sable</span>.', 'On the back, in fresh ink: <span class="wire">Blackfriars. Seven chairs. Bring a candle.</span>', 'Whoever wrote it wanted you to find it.'], next:'The Blackfriars Seance', btn:'Go to Blackfriars ›' }
   };
-  function cipherDone(){ try{ return CIPHER_ORDER.every(function(it){ return !!lsGet('gl_cipher_' + it.id); }); }catch(e){ return false; } }
+  var FIRST3 = ['qc_gaslight', 'qc_midnight', 'qc_seance'];
+  function tierKey(){ if(!accusedRight) return 'wrong'; if(deductions >= TOTAL_DED - 2) return 'master'; if(deductions >= Math.ceil(TOTAL_DED * 0.55)) return 'closed'; return 'hunch'; }
+  /* a case counts as played if it has an ending on record, or (from before this update) a solved stamp or its cipher word */
+  function ended(id){ try{ return !!(lsGet('gl_end_' + id) || lsGet('gl_solved_' + id) || lsGet('gl_cipher_' + id)); }catch(e){ return false; } }
+  function unlock(id){ if(lsGet('gl_unlock_' + id) === '1') return false; lsSet('gl_unlock_' + id, '1'); lsSet('gl_reveal_' + id, '1'); return true; }
+  var LASTWORD = '<p class="k">THE LAST WORD</p><p>The cipher’s final word falls into place:</p><p><span class="gx2-word" style="animation-delay:.4s">ASK</span><span class="gx2-word" style="animation-delay:1.2s">THE</span><span class="gx2-word" style="animation-delay:2s">MASTER</span></p>';
+  var FOURTH = '<p>As you close the file, a card slips out that you have never seen before. The same tiny numbers, the same smell of lamp-oil, and beneath them, in plain ink:</p><p><span class="wire">AND I WILL ANSWER. CUTLER’S LANE, CLERKENWELL.</span></p><p>You thought it was over. Someone else does not.</p>';
+  function toFiles(label){ return '<button type="button" data-files="1">' + label + '</button>'; }
   window.GX2_after = function(){ after(); };   /* lets a test replay the ending */
   function after(){
     var st = $g('endStamp'); if(st){ st.classList.remove('gx2-slam'); void st.offsetWidth; st.classList.add('gx2-slam'); thud(.1); }
     var old = $g('gx2Coda'); if(old) old.remove();
     var id = (typeof QUIZ_ID !== 'undefined') ? QUIZ_ID : window.QUIZ_ID, c = CODA[id], box = document.createElement('div'); box.className = 'gx2-coda'; box.id = 'gx2Coda';
-    if(c){ box.innerHTML = '<p class="k"></p>' + c.p.map(function(x){ return '<p>' + x + '</p>'; }).join('') + '<button type="button"></button>';
+    var key = tierKey(); try{ lsSet('gl_end_' + id, key); }catch(e){}
+    var opened4 = FIRST3.indexOf(id) >= 0 && FIRST3.every(ended) && unlock('qc_lamp');
+    var opened5 = id === 'qc_lamp' && accusedRight && unlock('qc_master');
+    if(opened4){ box.innerHTML = LASTWORD + FOURTH + toFiles('Back to the case files ›'); [0, .8, 1.6].forEach(function(t){ thud(.4 + t); }); }
+    else if(c){ box.innerHTML = '<p class="k"></p>' + c.p.map(function(x){ return '<p>' + x + '</p>'; }).join('') + '<button type="button"></button>';
       box.querySelector('.k').textContent = c.k.toUpperCase(); box.querySelector('button').textContent = c.btn;
       box.querySelector('button').onclick = function(){ if(typeof showSelect === 'function') showSelect();
         setTimeout(function(){ var card = [].filter.call(document.querySelectorAll('#selectScr button, #selectScr [role=button], #selectScr .case, #selectScr .card'), function(x){ return x.offsetParent && x.textContent.indexOf(c.next) >= 0; })[0]; if(card) card.click(); }, 250); }; }
     else if(id === 'qc_seance'){
-      if(cipherDone()){ box.innerHTML = '<p class="k">THE LAST WORD</p><p>The cipher\u2019s final word falls into place:</p><p><span class="gx2-word" style="animation-delay:.4s">ASK</span><span class="gx2-word" style="animation-delay:1.2s">THE</span><span class="gx2-word" style="animation-delay:2s">MASTER</span></p>'
-          + '<p>A knock at the door. A message, as always. <span class="wire">They always send for you.</span></p><p>This time, you know who sent it. The reckoning is coming.</p>';
-        [0, .8, 1.6].forEach(function(t){ thud(.4 + t); }); }
-      else box.innerHTML = '<p class="k">AN UNFINISHED MESSAGE</p><p>Somewhere among your unsolved cases, a word of the lamp-oil cipher is still waiting. Find it, and the message will tell you who has been sending for you.</p>';
-    } else return;
+      if(FIRST3.every(ended)){ box.innerHTML = LASTWORD + '<p>A knock at the door. A message, as always. <span class="wire">They always send for you.</span></p>'; [0, .8, 1.6].forEach(function(t){ thud(.4 + t); }); }
+      else box.innerHTML = '<p class="k">AN UNFINISHED MESSAGE</p><p>Somewhere among your unfinished cases, a word of the lamp-oil cipher is still waiting. Find it, and the message will tell you who has been sending for you.</p>'; }
+    else if(id === 'qc_lamp'){
+      box.innerHTML = '<p class="k">IN THE CELLS</p><p>Quill laughs through the bars. “You think I chose your cases? I only sent the wires. I copy out what I’m given, and I send it where I’m told.”</p><p>“Ask who tells me where to send you.”</p>' + (opened5 ? '<p>At your lodgings, a telegram is already waiting.</p>' + toFiles('Back to the case files ›') : ''); }
+    else if(id === 'qc_master'){
+      var rec = function(cid, caught, free, sly){ var k2 = lsGet('gl_end_' + cid); return '<p>' + (k2 === 'wrong' ? free : (sly && k2 !== 'master' ? sly : caught)) + '</p>'; };
+      var perfect = FIRST3.concat(['qc_lamp']).every(function(x){ return lsGet('gl_end_' + x) === 'master'; }) && key === 'master';
+      box.innerHTML = '<p class="k">THE RECORD</p>' + rec('qc_gaslight', 'Dr. English: caught.', 'Dr. English: walked into the rain.') + rec('qc_midnight', 'Sable: unmasked.', 'Sable: walked free, officially dead.', 'Sable: hanged as a jeweller called Hahn.')
+        + rec('qc_seance', 'Colonel Strand: caught.', 'Colonel Strand: closed his door on you.') + '<p>Mr. Quill: taken in the yard.</p><p>Madame Vesper: taken in the circle.</p>'
+        + '<p>' + (perfect ? '“I sent for the best,” she says, as they lead her out. “That was my only error.”' : '“I sent for you,” she says, as they lead her out, “because you always missed something. Tonight, you didn’t.”') + '</p>'
+        + '<p class="k" style="margin-top:14px">THE END OF THE GASLIGHT FILES</p>'; }
+    else return;
+    var fb = box.querySelector('[data-files]'); if(fb) fb.onclick = function(){ if(typeof showSelect === 'function') showSelect(); };
     var anchor = $g('endText'); if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(box, anchor.nextSibling); else $g('endScr').appendChild(box);
     say(box.innerText.replace(/\s+/g, ' '));
   }
+})();
+</script>
+<script>
+/* ==========================================================
+   GXD: moments of danger. A full-screen cutscene drawn live on a
+   canvas, frozen at its most dangerous frame, then a choice against
+   a burning fuse. Wrong or too slow, and the case closes without you.
+   ========================================================== */
+window.GXD = (function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var quiet = function(){ try{ return typeof muted !== 'undefined' && !!muted; }catch(e){ return false; } };
+  var moreTime = false; try{ moreTime = localStorage.getItem('gl_moretime') === '1'; }catch(e){}
+  var css = document.createElement('style');
+  css.textContent = "#gxd{position:fixed;inset:0;z-index:200;background:#07080d;color:#f3e6c8;font-family:Nunito,system-ui,sans-serif;overflow:hidden;}" +
+    "#gxd[hidden]{display:none;} #gxdCv{position:absolute;inset:0;width:100%;height:100%;display:block;}" +
+    ".gxd-bar{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;background:linear-gradient(180deg,rgba(5,6,10,.85),transparent);}" +
+    ".gxd-t{font-family:'Special Elite','Courier New',monospace;font-size:13px;letter-spacing:.12em;color:#b9ad95;margin-right:auto;text-transform:uppercase;}" +
+    ".gxd-pill{border:1px solid rgba(243,230,200,.3);background:rgba(10,12,18,.7);color:#f3e6c8;border-radius:999px;padding:7px 12px;font:800 13px Nunito,sans-serif;cursor:pointer;}" +
+    ".gxd-pill[aria-pressed=\"true\"]{border-color:#ffc46e;color:#ffc46e;}" +
+    ".gxd-cap{position:absolute;left:16px;right:16px;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:4;font-family:'Special Elite','Courier New',monospace;font-size:clamp(17px,4.6vw,22px);line-height:1.45;text-align:center;text-shadow:0 2px 10px #000,0 0 2px #000;transition:opacity .6s;}" +
+    ".gxd-over{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent 38%,rgba(4,5,9,.78) 58%,rgba(4,5,9,.94));}" +
+    ".gxd-over[hidden],.gxd-end[hidden]{display:none;}" +
+    ".gxd-fusebox{position:relative;height:10px;margin:0 0 16px;} .gxd-fuse{position:absolute;left:0;top:4px;height:2px;background:repeating-linear-gradient(90deg,#9a8a6a 0 6px,#6b5d45 6px 9px);}" +
+    ".gxd-spark{position:absolute;top:-4px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle,#fff6c8 0 18%,#ffb347 40%,rgba(255,120,40,0) 70%);}" +
+    ".gxd-q{font-family:'Special Elite','Courier New',monospace;font-size:clamp(18px,5vw,23px);line-height:1.4;margin:0 0 14px;text-shadow:0 2px 12px #000;}" +
+    ".gxd-q small{display:block;font-size:.72em;color:#ffc46e;letter-spacing:.14em;margin-bottom:6px;}" +
+    ".gxd-opts{display:grid;gap:10px;} .gxd-opt{text-align:left;font-family:'Special Elite','Courier New',monospace;font-size:17px;color:#f3e6c8;background:rgba(10,12,18,.82);border:1px solid rgba(243,230,200,.35);border-radius:6px;padding:14px;cursor:pointer;}" +
+    ".gxd-opt:focus-visible,.gxd-pill:focus-visible,.gxd-go:focus-visible{outline:3px solid #ffc46e;outline-offset:2px;}" +
+    ".gxd-end{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 22px;}" +
+    ".gxd-end .k{font-family:'Special Elite',monospace;letter-spacing:.2em;font-size:13px;color:#b9ad95;margin-bottom:10px;}" +
+    ".gxd-end h2{font-family:'Special Elite',monospace;font-weight:400;font-size:clamp(30px,9vw,44px);line-height:1.1;margin:0 0 16px;color:#e0525a;}" +
+    ".gxd-end p{font-family:'Special Elite',monospace;font-size:16px;line-height:1.6;max-width:26em;margin:0 auto 12px;}" +
+    ".gxd-go{margin-top:10px;font:800 16px Nunito,sans-serif;color:#2a1a0c;background:linear-gradient(180deg,#f6d38a,#d9a74a);border:0;border-radius:10px;padding:13px 22px;cursor:pointer;}" +
+    ".gxd-go.ghost{background:none;color:#f3e6c8;border:1px solid rgba(243,230,200,.35);}" +
+    ".gxd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}";
+  document.head.appendChild(css);
+  var root = document.createElement('div'); root.id = 'gxd'; root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'A moment of danger');
+  root.innerHTML = '<canvas id="gxdCv" aria-hidden="true"></canvas><div class="gxd-bar"><span class="gxd-t" id="gxdT"></span><button class="gxd-pill" id="gxdMore" type="button" aria-pressed="false">More time</button></div>' +
+    '<div class="gxd-cap" id="gxdCap"></div><section class="gxd-over" id="gxdChoice" hidden><div class="gxd-fusebox" aria-hidden="true"><div class="gxd-fuse" id="gxdFuse"></div><div class="gxd-spark" id="gxdSpark"></div></div>' +
+    '<p class="gxd-q" id="gxdQ"></p><div class="gxd-opts" id="gxdOpts"></div></section><section class="gxd-end" id="gxdEnd" hidden aria-live="assertive"></section><p class="gxd-sr" id="gxdSay" aria-live="polite"></p>';
+  document.body.appendChild(root);
+  var showMore = function(){ var b = $('gxdMore'); b.setAttribute('aria-pressed', String(moreTime)); b.textContent = moreTime ? 'More time: on' : 'More time'; };
+  $('gxdMore').onclick = function(){ moreTime = !moreTime; try{ localStorage.setItem('gl_moretime', moreTime ? '1' : '0'); }catch(e){} showMore(); }; showMore();
+  var cv = $('gxdCv'), g = cv.getContext('2d'), W = 0, H = 0, DPR = 1;
+  function size(){ DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; g.setTransform(DPR, 0, 0, DPR, 0, 0); }
+  addEventListener('resize', function(){ if(!root.hidden) size(); });
+  function say(t){ var e = $('gxdSay'); e.textContent = ''; setTimeout(function(){ e.textContent = t; }, 50); }
+  var clamp = function(x){ return Math.max(0, Math.min(1, x)); };
+  var rng = (function(){ var s = 7; return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; })();
+
+/* ================= sound, synthesised ================= */
+var ac = null, master = null, beds = [];
+function audio(){ if(ac) return ac; try{ ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = quiet() ? 0 : 1; master.connect(ac.destination); }catch(e){ ac = null; } return ac; }
+function noiseBuf(sec, brown){ var n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0), last = 0;
+  for(var i = 0; i < n; i++){ var w = Math.random() * 2 - 1; if(brown){ last = (last + .02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w; } return b; }
+function bed(brown, type, f, vol){ if(!ac) return { gain:{ value:0 } }; var s = ac.createBufferSource(), fl = ac.createBiquadFilter(), gn = ac.createGain(); s.buffer = noiseBuf(3, brown); s.loop = true; fl.type = type; fl.frequency.value = f; gn.gain.value = vol;
+  s.connect(fl); fl.connect(gn); gn.connect(master); s.start(); var o = { src:s, gain:gn, filter:fl }; beds.push(o); return o; }
+function hush(){ beds.forEach(function(b){ try{ b.src.stop(); }catch(e){} }); beds = []; }
+function burst(t, d, vol, f, type){ if(!ac) return; var n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), c = b.getChannelData(0);
+  for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+  var s = ac.createBufferSource(), fl = ac.createBiquadFilter(), gn = ac.createGain(), T = ac.currentTime + t; s.buffer = b; fl.type = type || 'bandpass'; fl.frequency.value = f; fl.Q.value = 1.2; gn.gain.value = vol;
+  s.connect(fl); fl.connect(gn); gn.connect(master); s.start(T); }
+function tone(f, t, d, vol, to, type){ if(!ac) return; var o = ac.createOscillator(), gn = ac.createGain(), T = ac.currentTime + t; o.type = type || 'sine'; o.frequency.setValueAtTime(f, T); if(to) o.frequency.exponentialRampToValueAtTime(to, T + d);
+  gn.gain.setValueAtTime(.0001, T); gn.gain.exponentialRampToValueAtTime(vol, T + .02); gn.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(gn); gn.connect(master); o.start(T); o.stop(T + d + .05); }
+function bell(t){ [[220, 1], [528, .45], [740, .25], [1105, .14]].forEach(function(p){ tone(p[0], t, 2.6, .09 * p[1]); }); }
+function clop(t, vol){ burst(t, .05, vol, 1500 + Math.random() * 500); burst(t, .09, vol * .9, 180, 'lowpass'); }
+function thud(t, vol){ burst(t, .35, vol || .6, 140, 'lowpass'); tone(70, t, .4, .15, 40); }
+function gunshot(t){ burst(t, .25, .9, 300, 'lowpass'); burst(t, .08, .7, 3000, 'highpass'); tone(90, t, .5, .2, 40); }
+function shatter(t){ for(var i = 0; i < 14; i++) burst(t + Math.random() * .45, .05 + Math.random() * .08, .18, 3500 + Math.random() * 4000, 'highpass'); }
+/* ================= shared scenery ================= */
+var drops = []; for(var i = 0; i < 140; i++) drops.push({ x:rng(), y:rng(), l:.5 + rng() * .8, v:.6 + rng() * .6 });
+function rain(now, alpha, clip){ g.save(); if(clip){ g.beginPath(); g.rect(clip[0], clip[1], clip[2], clip[3]); g.clip(); }
+  g.strokeStyle = 'rgba(190,205,230,' + alpha + ')'; g.lineWidth = 1; g.beginPath();
+  drops.forEach(function(d){ var y = ((d.y * H + now * .9 * d.v) % (H + 40)) - 20, x = (d.x * W * 1.2 - (now * .15 * d.v) % (W * .2)); g.moveTo(x, y); g.lineTo(x - 4 * d.l, y + 18 * d.l); }); g.stroke(); g.restore(); }
+function glow(x, y, r, col, a){ var gr = g.createRadialGradient(x, y, 1, x, y, r); gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+function vignette(a){ var vg = g.createRadialGradient(W / 2, H * .5, H * .2, W / 2, H * .5, H * .85); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,' + a + ')'); g.fillStyle = vg; g.fillRect(-W, -20, W * 3, H + 40); }
+function ring(x, y, r){ g.strokeStyle = 'rgba(255,196,110,.95)'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); }
+
+/* ================= the scenes ================= */
+var st = {};
+var cabWindows = []; for(i = 0; i < 28; i++) cabWindows.push({ side:i % 2, fx:rng(), fy:rng(), lit:rng() < .35 });
+/* head-on silhouette: cab and driver behind, horse in blinkers in front, all rim-lit by the cab's lamps */
+function drawCab(vx, hz, s, t){
+  var base = hz + (H * .98 - hz) * Math.min(1, s), sc = H * .78 * s, cx = vx + (1 - s) * W * .06;
+  var dark = '#030305', rim = 'rgba(255,205,140,' + Math.min(.55, s * .8) + ')', lw = sc * .3, ly = base - sc * .66;
+  /* the lamps' glare through the fog */
+  [cx - lw, cx + lw].forEach(function(x){
+    var r = sc * .9 + 30, beam = g.createRadialGradient(x, ly, 1, x, ly, r);
+    beam.addColorStop(0, 'rgba(255,238,195,' + Math.min(.85, .3 + s) + ')'); beam.addColorStop(.1, 'rgba(255,205,135,' + Math.min(.35, .08 + s * .4) + ')'); beam.addColorStop(1, 'rgba(255,190,110,0)');
+    g.fillStyle = beam; g.beginPath(); g.arc(x, ly, r, 0, Math.PI * 2); g.fill(); });
+  g.lineJoin = 'round';
+  /* the driver, high on his box, in a top hat */
+  g.fillStyle = dark;
+  g.beginPath(); g.ellipse(cx, base - sc * 1.08, sc * .07, sc * .08, 0, 0, Math.PI * 2); g.fill();
+  g.fillRect(cx - sc * .05, base - sc * 1.28, sc * .1, sc * .14); g.fillRect(cx - sc * .08, base - sc * 1.15, sc * .16, sc * .025);
+  /* the cab's hood and body */
+  g.beginPath(); g.moveTo(cx - sc * .32, base - sc * .42); g.lineTo(cx - sc * .3, base - sc * .9); g.quadraticCurveTo(cx, base - sc * 1.06, cx + sc * .3, base - sc * .9); g.lineTo(cx + sc * .32, base - sc * .42); g.closePath(); g.fill();
+  g.strokeStyle = rim; g.lineWidth = Math.max(1, sc * .004); g.stroke();
+  /* the number board, blank, above the horse's ears */
+  g.fillStyle = '#15171d'; g.fillRect(cx - sc * .08, base - sc * .97, sc * .16, sc * .06);
+  if(st.freeze){ g.strokeStyle = 'rgba(255,196,110,.95)'; g.lineWidth = Math.max(1.5, sc * .006); g.strokeRect(cx - sc * .09, base - sc * .98, sc * .18, sc * .08); }
+  /* the big wheels, edge on */
+  g.strokeStyle = dark; g.lineWidth = sc * .028; [cx - sc * .38, cx + sc * .38].forEach(function(x){ g.beginPath(); g.ellipse(x, base - sc * .33, sc * .045, sc * .32, 0, 0, Math.PI * 2); g.stroke(); });
+  /* the shafts, running forward to the horse */
+  g.lineWidth = sc * .018; g.beginPath(); g.moveTo(cx - sc * .26, base - sc * .5); g.lineTo(cx - sc * .17, base - sc * .38); g.moveTo(cx + sc * .26, base - sc * .5); g.lineTo(cx + sc * .17, base - sc * .38); g.stroke();
+  /* the horse: legs mid-gallop, deep chest, collar, neck, long face, blinkers, ears and forelock */
+  var bob = Math.sin(t / 75) * sc * .018, hb = base - sc * .3 + bob, stride = Math.sin(t / 70);
+  g.lineCap = 'round'; g.lineWidth = sc * .04;
+  [[-.07, stride], [.07, -stride]].forEach(function(l){ var lift = Math.max(0, l[1]) * sc * .14;
+    g.beginPath(); g.moveTo(cx + sc * l[0], hb - sc * .05); g.lineTo(cx + sc * l[0] * 1.15, base - sc * .1 - lift); g.lineTo(cx + sc * l[0] * 1.25, base - sc * .02 - lift * .6); g.stroke(); });
+  var horse = new Path2D();
+  horse.ellipse(cx, hb - sc * .14, sc * .16, sc * .17, 0, 0, Math.PI * 2);
+  horse.moveTo(cx - sc * .1, hb - sc * .24); horse.quadraticCurveTo(cx - sc * .09, hb - sc * .44, cx - sc * .06, hb - sc * .52); horse.lineTo(cx + sc * .06, hb - sc * .52); horse.quadraticCurveTo(cx + sc * .09, hb - sc * .44, cx + sc * .1, hb - sc * .24); horse.closePath();
+  horse.moveTo(cx - sc * .07, hb - sc * .7); horse.quadraticCurveTo(cx - sc * .075, hb - sc * .5, cx - sc * .05, hb - sc * .36); horse.quadraticCurveTo(cx, hb - sc * .32, cx + sc * .05, hb - sc * .36); horse.quadraticCurveTo(cx + sc * .075, hb - sc * .5, cx + sc * .07, hb - sc * .7); horse.quadraticCurveTo(cx, hb - sc * .76, cx - sc * .07, hb - sc * .7);
+  horse.moveTo(cx - sc * .06, hb - sc * .7); horse.lineTo(cx - sc * .05, hb - sc * .82); horse.lineTo(cx - sc * .025, hb - sc * .71);
+  horse.moveTo(cx + sc * .06, hb - sc * .7); horse.lineTo(cx + sc * .05, hb - sc * .82); horse.lineTo(cx + sc * .025, hb - sc * .71);
+  g.fillStyle = dark; g.fill(horse); g.strokeStyle = rim; g.lineWidth = Math.max(1, sc * .005); g.stroke(horse);
+  /* blinkers and the collar, catching a little light */
+  g.fillStyle = dark; g.strokeStyle = rim;
+  [-1, 1].forEach(function(d){ g.beginPath(); g.rect(cx + d * sc * .075 - sc * .025, hb - sc * .62, sc * .05, sc * .07); g.fill(); g.stroke(); });
+  g.lineWidth = Math.max(1, sc * .012); g.beginPath(); g.ellipse(cx, hb - sc * .27, sc * .11, sc * .05, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+  /* forelock between the ears */
+  g.beginPath(); g.moveTo(cx - sc * .02, hb - sc * .72); g.quadraticCurveTo(cx, hb - sc * .62, cx + sc * .02, hb - sc * .72); g.fill();
+  /* the lamps themselves, blazing */
+  [cx - lw, cx + lw].forEach(function(x){ g.fillStyle = '#fff6dc'; g.beginPath(); g.arc(x, ly, Math.max(1.5, sc * .035), 0, Math.PI * 2); g.fill(); });
+  /* eyes, a glint beside each blinker */
+  if(s > .3){ g.fillStyle = 'rgba(255,225,180,.7)'; g.beginPath(); g.arc(cx - sc * .045, hb - sc * .6, sc * .006, 0, 7); g.arc(cx + sc * .045, hb - sc * .6, sc * .006, 0, 7); g.fill(); }
+}
+
+var shards = []; for(i = 0; i < 26; i++) shards.push({ a:rng() * Math.PI * 2, v:.4 + rng() * .9, r:rng() * 6, sz:4 + rng() * 10 });
+var flames = []; for(i = 0; i < 22; i++) flames.push({ side:i % 3 === 2 ? 1 : 0, row:Math.floor(rng() * 6), d:rng(), ph:rng() * 6, on:rng() });
+var embers = []; for(i = 0; i < 40; i++) embers.push({ x:rng(), y:rng(), v:.3 + rng() * .7 });
+
+var SCENES = {
+ cab:{ part:'Part 4', title:'The Cab', lead:1800, T:6400, fuse:8, loseFx:'crack',
+  caps:[[0, 'Nine o’clock. The Yard’s cab, number 214, is due at the gate.'], [2600, 'Hooves, somewhere in the fog. Coming fast.']],
+  q:'A cab is charging out of the fog, straight at you. Your Yard cab is always number 214. This one carries no number at all.',
+  opts:[['Wait for it. It must be the Yard cab.', false], ['Step out and wave it down.', false], ['Dive behind the horse trough.', true]],
+  winH:'Behind the Trough', winP:['You throw yourself behind the horse trough as the wheels thunder past an inch from your heel, and the cab is gone into the fog.', 'Sergeant Pell hauls you up, white to the lips. “That was no Yard cab, sir. Ours is two-fourteen.” So who knew a cab was coming for you at nine?'],
+  loseP:['They find you at the gate at dawn, the rain still falling.', 'Somewhere in Clerkenwell a lamp wick is trimmed, and a card is written for the next detective they send for.'],
+  start:function(){ bell(.1); bell(1.6); bell(3.1); st.rainBed = bed(false, 'highpass', 2600, .045); st.rumble = bed(true, 'lowpass', 140, 0); st.nextClop = 0; },
+  tick:function(p, now){ st.s = p <= 0 ? 0 : .04 + Math.pow(p, 2.4) * .58; st.shake = p * p * 9; st.rumble.gain.value = p * p * .9;
+    if(p > 0 && now >= st.nextClop){ var gap = 520 - p * 380; clop(0, .08 + p * .5); clop(gap / 2000, .06 + p * .45); st.nextClop = now + gap; } },
+  onFreeze:function(){ st.rumble.gain.value = .25; burst(0, .5, .35, 3200, 'highpass'); tone(110, 0, 1.4, .08, 70, 'sawtooth'); },
+  onWin:function(){ burst(0, .4, .3, 600, 'lowpass'); burst(.15, .7, .25, 1800); }, winMs:650,
+  win:function(k){ st.pass = k; st.s = .62 + k * 1.1; st.shake = (1 - k) * 12; st.rumble.gain.value = (1 - k) * .9; if(k >= 1) st.s = 0; },
+  onLose:function(){ burst(0, .35, .7, 220, 'lowpass'); burst(0, .25, .5, 2600); tone(60, 0, .8, .2, 30); },
+  draw:function(now){
+    var hz = H * .47, vx = W * .5;
+    if(st.pass) g.translate(-st.pass * W * .35, 0);
+    g.fillStyle = '#0b0d14'; g.fillRect(-W, -20, W * 3, H + 40);
+    var sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, '#070912'); sky.addColorStop(1, '#1a2133'); g.fillStyle = sky; g.fillRect(-W, -20, W * 3, hz + 20);
+    g.fillStyle = '#05060b';
+    g.beginPath(); g.moveTo(-W, -20); g.lineTo(W * .36, hz - H * .02); g.lineTo(W * .36, hz + 6); g.lineTo(-W, H * .82); g.fill();
+    g.beginPath(); g.moveTo(W * 2, -20); g.lineTo(W * .64, hz - H * .02); g.lineTo(W * .64, hz + 6); g.lineTo(W * 2, H * .82); g.fill();
+    cabWindows.forEach(function(w){ if(!w.lit) return; var dx = w.fx * .3, x = w.side ? W * (.66 + dx * 1.1) : W * (.34 - dx * 1.1), y = hz - H * (.05 + w.fy * .25) * (1 + dx * 2), sz = 4 + dx * 18;
+      g.fillStyle = 'rgba(255,190,110,' + (.25 + w.fy * .35) + ')'; g.fillRect(x - sz / 2, y, sz, sz * 1.4); });
+    var road = g.createLinearGradient(0, hz, 0, H); road.addColorStop(0, '#141826'); road.addColorStop(1, '#0a0c13'); g.fillStyle = road;
+    g.beginPath(); g.moveTo(vx - 6, hz); g.lineTo(vx + 6, hz); g.lineTo(W * 1.25, H); g.lineTo(-W * .25, H); g.fill();
+    g.strokeStyle = 'rgba(160,170,200,.045)'; g.lineWidth = 1;
+    for(var k = 1; k < 22; k++){ var yy = hz + (H - hz) * Math.pow(k / 22, 2.2); g.beginPath(); g.moveTo(0, yy); g.lineTo(W, yy); g.stroke(); }
+    var lx = W * .13, ltop = H * .3, flick = .85 + Math.sin(now / 90) * .05 + Math.sin(now / 37) * .03;
+    g.fillStyle = '#0d0e12'; g.fillRect(lx - 3, ltop, 6, H * .58); g.fillRect(lx - 10, ltop - 26, 20, 28);
+    glow(lx, ltop - 12, H * .32, '255,175,90', .5 * flick);
+    g.fillStyle = 'rgba(255,214,150,' + flick + ')'; g.fillRect(lx - 6, ltop - 20, 12, 14);
+    if(st.s > 0) drawCab(vx, hz, st.s, now);
+    var tx = W * .6, ty = H * .8;
+    g.fillStyle = '#0b0c11'; g.fillRect(tx, ty, W * .44, H * .1); g.fillStyle = '#16181f'; g.fillRect(tx, ty, W * .44, 6);
+    g.fillStyle = 'rgba(150,170,210,.25)'; g.fillRect(tx + 8, ty + 8, W * .44 - 16, 2);
+    for(var f = 0; f < 3; f++){ var fy = hz - 20 + f * H * .12, off = ((now / (60 + f * 30)) % W);
+      var fg = g.createLinearGradient(0, fy - 60, 0, fy + 60); fg.addColorStop(0, 'rgba(70,78,100,0)'); fg.addColorStop(.5, 'rgba(70,78,100,' + (.05 + f * .02) + ')'); fg.addColorStop(1, 'rgba(70,78,100,0)');
+      g.fillStyle = fg; g.fillRect(-W + off, fy - 60, W * 3, 120); }
+    rain(now, .22); vignette(.75);
+    if(st.freeze){ g.fillStyle = 'rgba(120,10,20,.12)'; g.fillRect(-W, 0, W * 3, H); }
+  } },
+
+ gas:{ part:'Part 4', title:'The Gas', lead:600, T:5600, fuse:20, loseFx:'gas',
+  caps:[[0, 'Crane’s cellar. His ledger of deliveries lies open on the bench.'], [2400, 'Behind you, the door slams. A key turns.'], [4200, 'Then a hiss, low along the floor.']],
+  q:'The gas is rising. The door’s lock is a ring of six letter dials. Scratched beside the keyhole: “ASK, AND I WILL…”',
+  opts:[['ANSWER', true], ['MASTER', false], ['SILENT', false], ['LANTERN', false]],
+  winH:'The Last Dial', winP:['The sixth dial clicks home. The lock gives, and you stagger up the steps into the rain, coughing, alive.', 'Whoever set this trap knew the cipher, and knew you would come to Crane’s cellar tonight.'],
+  loseP:['The gas finds you before the last dial turns.', 'In the morning, Kit finds two bodies in Crane’s cellar among the lamps, and one of them is the detective they always sent for.'],
+  start:function(){ st.hiss = bed(false, 'highpass', 4200, 0); st.slammed = false; st.drip = 0; },
+  tick:function(p, now){ if(now > st.drip){ tone(1400 + Math.random() * 500, 0, .12, .03); st.drip = now + 900 + Math.random() * 1400; }
+    if(p > .32 && !st.slammed){ st.slammed = true; thud(0, .8); burst(.25, .1, .2, 2200); st.shake = 10; setTimeout(function(){ st.shake = 0; }, reduce ? 0 : 260); }
+    st.hiss.gain.value = clamp((p - .45) / .55) * .09; },
+  onFreeze:function(){ st.hiss.gain.value = .11; },
+  onWin:function(){ for(var i = 0; i < 6; i++) burst(i * .09, .03, .3, 2500); thud(.65, .3); burst(.75, 1, .12, 900); }, winMs:1300,
+  onLose:function(){ tone(55, 0, 2.4, .12, 35); },
+  draw:function(now){
+    var p = st.p, k = clamp((p - .32) / .68), out = st.out === 'win' ? st.outK : 0;
+    g.fillStyle = '#0f0b08'; g.fillRect(-W, -20, W * 3, H + 40);
+    g.strokeStyle = 'rgba(255,190,120,.04)'; g.lineWidth = 1;
+    for(var y = 8, r = 0; y < H; y += 22, r++){ g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for(var x = (r % 2) * 24; x < W; x += 48){ g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 22); g.stroke(); } }
+    var L = k > 0 ? Math.max(0, 1 - k * 5) * (.6 + Math.random() * .4) : (.9 + Math.sin(now / 80) * .05);
+    g.fillStyle = 'rgba(150,170,215,' + (.05 + k * .03) + ')'; g.beginPath(); g.moveTo(W * .08, H * .06); g.lineTo(W * .2, H * .06); g.lineTo(W * .52, H * .92); g.lineTo(W * .26, H * .92); g.fill();
+    g.fillStyle = '#05040a'; g.fillRect(W * .08, H * .04, W * .12, H * .03); g.strokeStyle = '#1c1a20'; g.lineWidth = 3; for(var bx = 0; bx < 4; bx++){ g.beginPath(); g.moveTo(W * (.09 + bx * .03), H * .04); g.lineTo(W * (.09 + bx * .03), H * .07); g.stroke(); }
+    [[0, W * .24], [W * .76, W]].forEach(function(side){ for(var row = 0; row < 3; row++){ var sy = H * (.34 + row * .16);
+      g.fillStyle = '#1b130c'; g.fillRect(side[0], sy, side[1] - side[0], 5);
+      for(var lx2 = side[0] + 10; lx2 < side[1] - 14; lx2 += 26){ g.fillStyle = '#0c0907'; g.fillRect(lx2, sy - 26, 14, 26); g.beginPath(); g.ellipse(lx2 + 7, sy - 30, 5, 8, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = 'rgba(255,200,130,' + (.06 + .12 * L) + ')'; g.fillRect(lx2 + 2, sy - 22, 2, 16); } } });
+    var dx0 = W * .27, dx1 = W * .73, dy0 = H * .14, dy1 = H * .7;
+    g.fillStyle = '#1e150d'; g.fillRect(dx0, dy0, dx1 - dx0, dy1 - dy0);
+    g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 2; for(var pl = 1; pl < 6; pl++){ var px = dx0 + (dx1 - dx0) * pl / 6; g.beginPath(); g.moveTo(px, dy0); g.lineTo(px, dy1); g.stroke(); }
+    g.fillStyle = '#0b0908'; [.2, .8].forEach(function(f){ g.fillRect(dx0 - 4, dy0 + (dy1 - dy0) * f, dx1 - dx0 + 8, 10); });
+    if(out){ g.fillStyle = 'rgba(40,55,80,' + out + ')'; g.fillRect(dx0, dy0, (dx1 - dx0) * out, dy1 - dy0); rain(now, .2 * out, [dx0, dy0, (dx1 - dx0) * out, dy1 - dy0]); }
+    var lampX = W * .5, lampY = H * .07;
+    g.strokeStyle = '#0a0806'; g.lineWidth = 2; g.beginPath(); g.moveTo(lampX, 0); g.lineTo(lampX, lampY - 14); g.stroke();
+    g.fillStyle = '#0a0806'; g.fillRect(lampX - 10, lampY - 14, 20, 26);
+    if(L > .02){ glow(lampX, lampY, H * .55, '255,180,95', .45 * L); g.fillStyle = 'rgba(255,220,160,' + L + ')'; g.fillRect(lampX - 5, lampY - 8, 10, 14); }
+    g.fillStyle = 'rgba(0,0,0,' + (.42 * k * (1 - out)) + ')'; g.fillRect(-W, -20, W * 3, H + 40);
+    var cx = W * .5, cy = H * .36, dw = Math.min(30, W * .072), letters = out ? 'ANSWER' : (st.freeze ? 'A?????' : 'QZKERT');
+    for(var d = 0; d < 6; d++){ var x0 = cx + (d - 3) * (dw + 4) + 2;
+      g.fillStyle = '#5a4524'; g.fillRect(x0, cy - 18, dw, 36); g.fillStyle = '#c9a24a'; g.fillRect(x0 + 2, cy - 16, dw - 4, 32);
+      g.fillStyle = '#2a1d0c'; g.font = '700 ' + Math.round(dw * .7) + 'px "Special Elite", monospace'; g.textAlign = 'center'; g.fillText(letters[d], x0 + dw / 2, cy + dw * .25); }
+    if(st.freeze || out){ g.strokeStyle = 'rgba(255,196,110,.9)'; g.lineWidth = 2; g.strokeRect(cx - 3 * (dw + 4) - 4, cy - 24, 6 * (dw + 4) + 8, 48);
+      g.fillStyle = 'rgba(235,225,205,.8)'; g.font = Math.round(Math.min(18, W * .042)) + 'px "Special Elite", monospace'; g.fillText('ASK, AND I WILL…', cx, cy - 40); }
+    var hh = H * (.06 + k * .5) * (1 - out);
+    if(hh > 1){ var gg = g.createLinearGradient(0, H - hh, 0, H); gg.addColorStop(0, 'rgba(110,170,80,0)'); gg.addColorStop(1, 'rgba(110,170,80,' + (.28 * k) + ')'); g.fillStyle = gg; g.fillRect(-W, H - hh, W * 3, hh);
+      for(var b2 = 0; b2 < 6; b2++){ var ex = ((b2 * 97 + now * .02 * (b2 % 2 ? 1 : -1)) % (W + 200)) - 100; g.fillStyle = 'rgba(120,180,90,' + (.07 * k) + ')'; g.beginPath(); g.ellipse(ex, H - hh * .4, 120, hh * .35, 0, 0, Math.PI * 2); g.fill(); } }
+    g.fillStyle = '#0b0907'; g.fillRect(0, H * .9, W * .12, 8); g.fillRect(W * .88, H * .9, W * .12, 8);
+    vignette(.8);
+    if(st.freeze){ g.fillStyle = 'rgba(40,90,30,.1)'; g.fillRect(-W, 0, W * 3, H); }
+  } },
+
+ window:{ part:'Part 5', title:'The Window', lead:800, T:5200, fuse:6, loseFx:'crack',
+  caps:[[0, 'Midnight. Your lodgings. Three old case files, side by side.'], [2800, 'High in the church tower opposite, something glints.']],
+  q:'The glass bursts. The hole is high in the pane; the bullet is buried low in the floorboards. A second shot is coming.',
+  opts:[['Drop below the window sill.', true], ['Run for the door.', false], ['Go to the window and look.', false]],
+  winH:'Below the Sill', winP:['You drop below the sill as the second shot splinters the desk where your head had been.', 'High in the glass, low in the floor: whoever is firing is above you, in the church tower. And they knew which window was yours.'],
+  loseP:['The second shot does not miss.', 'Your landlady finds the three old case files scattered across the floor in the morning, and no one left to read them.'],
+  start:function(){ st.rainBed = bed(false, 'highpass', 2600, .05); st.tickAt = 0; st.shot = false; },
+  tick:function(p, now){ if(now > st.tickAt){ burst(0, .015, .08, 3500, 'highpass'); st.tickAt = now + 1000; } },
+  onFreeze:function(){ gunshot(0); shatter(.02); st.freezeAt = performance.now(); st.shake = 14; setTimeout(function(){ st.shake = 0; }, reduce ? 0 : 300); tone(50, .1, 2, .1, 45); },
+  onWin:function(){ thud(0, .5); gunshot(.25); burst(.3, .2, .4, 900); }, winMs:900,
+  win:function(k){ st.drop = k; },
+  onLose:function(){ gunshot(0); },
+  draw:function(now){
+    var p = st.p, ft = st.freeze || st.out ? performance.now() - (st.freezeAt || 0) : -1, drop = st.drop || 0;
+    g.translate(0, drop * H * .35);
+    g.fillStyle = '#15110d'; g.fillRect(-W, -H, W * 3, H * 3);
+    g.strokeStyle = 'rgba(255,220,180,.025)'; g.lineWidth = 6; for(var sx = 0; sx < W; sx += 22){ g.beginPath(); g.moveTo(sx, 0); g.lineTo(sx, H); g.stroke(); }
+    var x0 = W * .2, x1 = W * .8, y0 = H * .07, y1 = H * .28;
+    var sky = g.createLinearGradient(0, y0, 0, y1); sky.addColorStop(0, '#0a0d18'); sky.addColorStop(1, '#1d2438'); g.fillStyle = sky; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    g.fillStyle = '#05060a';
+    g.beginPath(); g.moveTo(x0, y1); for(var rx = 0; rx <= 6; rx++){ g.lineTo(x0 + (x1 - x0) * rx / 6, y1 - H * (.05 + (rx % 2) * .03)); } g.lineTo(x1, y1); g.fill();
+    var tx0 = W * .56, tx1 = W * .72; g.fillRect(tx0, y0 - 10, tx1 - tx0, y1 - y0 + 10); g.beginPath(); g.moveTo(tx0 - 4, y0 + 4); g.lineTo((tx0 + tx1) / 2, y0 - H * .06); g.lineTo(tx1 + 4, y0 + 4); g.fill();
+    var bx = (tx0 + tx1) / 2, by = y0 + H * .1; g.fillStyle = '#10131c'; g.beginPath(); g.moveTo(bx - 10, by + 20); g.lineTo(bx - 10, by); g.arc(bx, by, 10, Math.PI, 0); g.lineTo(bx + 10, by + 20); g.fill();
+    if(p > .4 && p < 1 && Math.sin(now / 140) > .85){ glow(bx, by + 8, 10, '255,255,230', .9); }
+    if(ft >= 0 && ft < 140){ glow(bx, by + 8, 60, '255,230,170', 1); }
+    rain(now, .25, [x0, y0, x1 - x0, y1 - y0]);
+    g.strokeStyle = '#0b0807'; g.lineWidth = 6; g.beginPath(); g.moveTo((x0 + x1) / 2, y0); g.lineTo((x0 + x1) / 2, y1); g.moveTo(x0, y0 + (y1 - y0) / 3); g.lineTo(x1, y0 + (y1 - y0) / 3); g.moveTo(x0, y0 + 2 * (y1 - y0) / 3); g.lineTo(x1, y0 + 2 * (y1 - y0) / 3); g.stroke();
+    g.lineWidth = 12; g.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    g.fillStyle = '#0d0a08'; g.fillRect(x0 - 16, y1 + 6, x1 - x0 + 32, 12);
+    g.fillStyle = '#1f130f'; g.fillRect(0, 0, x0 - 6, H * .34); g.fillRect(x1 + 6, 0, W - x1, H * .34);
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 2; for(var cf = 0; cf < 4; cf++){ g.beginPath(); g.moveTo(cf * (x0 / 4), 0); g.lineTo(cf * (x0 / 4) + 6, H * .34); g.stroke(); g.beginPath(); g.moveTo(x1 + 10 + cf * ((W - x1) / 4), 0); g.lineTo(x1 + 16 + cf * ((W - x1) / 4), H * .34); g.stroke(); }
+    var hx = W * .42, hy = y0 + (y1 - y0) * .2;
+    if(ft >= 0){ g.strokeStyle = 'rgba(230,235,245,.8)'; g.lineWidth = 1.2; for(var cr = 0; cr < 9; cr++){ var a = cr / 9 * Math.PI * 2; g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + Math.cos(a) * 34, hy + Math.sin(a) * 26); g.stroke(); }
+      g.fillStyle = '#05060a'; g.beginPath(); g.arc(hx, hy, 4, 0, 7); g.fill();
+      if(!reduce && ft < 1200) shards.forEach(function(s){ var d = ft / 1000 * s.v * H * .6, x = hx + Math.cos(s.a) * (d + s.r), y = hy + Math.sin(s.a) * d * .6 + d * d / (H * 1.4), sz = s.sz * (1 + ft / 500);
+        g.fillStyle = 'rgba(210,225,245,' + (.55 * (1 - ft / 1200)) + ')'; g.beginPath(); g.moveTo(x, y - sz / 2); g.lineTo(x + sz / 3, y + sz / 2); g.lineTo(x - sz / 3, y + sz / 3); g.fill(); }); }
+    var lampX = W * .16, lampY = H * .345, fl = .9 + Math.sin(now / 90) * .05;
+    glow(lampX, lampY + 10, H * .4, '255,180,95', .42 * fl);
+    g.fillStyle = '#123a24'; g.beginPath(); g.moveTo(lampX - 30, lampY); g.lineTo(lampX + 30, lampY); g.lineTo(lampX + 18, lampY - 22); g.lineTo(lampX - 18, lampY - 22); g.fill();
+    g.fillStyle = '#0c0907'; g.fillRect(lampX - 3, lampY, 6, H * .08);
+    g.fillStyle = '#20140c'; g.fillRect(-10, H * .37, W * .78, H * .04);
+    [[.1, -.04], [.26, .03], [.42, -.02]].forEach(function(c, n){ g.save(); g.translate(W * c[0] + 30, H * .38); g.rotate(c[1]); g.fillStyle = 'rgba(232,218,188,.85)'; g.fillRect(-28, -6, 56, 12); g.restore(); });
+    g.fillStyle = '#100b08'; g.fillRect(-10, H * .41, W + 20, H * .62); g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1; for(var fb = 0; fb < 20; fb++){ g.beginPath(); g.moveTo(0, H * (.42 + fb * .03)); g.lineTo(W, H * (.42 + fb * .03)); g.stroke(); }
+    var fx = W * .66, fy = H * .45; if(ft >= 0){ g.fillStyle = '#050403'; g.beginPath(); g.ellipse(fx, fy, 7, 3, 0, 0, 7); g.fill(); }
+    if(st.freeze && ft > 500){ ring(hx, hy, 40); ring(fx, fy, 16); }
+    vignette(.7);
+  } },
+
+ archive:{ part:'Part 5', title:'The Archive', lead:600, T:5400, fuse:8, loseFx:'fire',
+  caps:[[0, 'The Yard’s archive, after midnight. The old telegram forms, box by box.'], [2200, 'Glass smashes on the far shelves. Fire runs along the paper like a fuse.']],
+  q:'Smoke is rolling along the ceiling. The left door is hot to the touch; the right one is cool.',
+  opts:[['Walk upright to the left door.', false], ['Crawl low to the right door.', true], ['Stay and save the files.', false]],
+  winH:'Under the Smoke', winP:['You crawl beneath the smoke to the cool door and out into the corridor, one scorched telegram form crushed in your fist.', 'Across its top, still legible: “Handed in at Blackfriars Bridge.”'],
+  loseP:['The smoke takes you before the flames do.', 'By morning the archive is ash, and every summons that ever sent for you has burned with it.'],
+  start:function(){ st.roar = bed(true, 'lowpass', 220, 0); st.crash = false; st.crackAt = 0; },
+  tick:function(p, now){ var f = clamp((p - .3) / .7); if(p > .3 && !st.crash){ st.crash = true; shatter(0); burst(.1, .6, .3, 700); }
+    st.roar.gain.value = f * .7; if(f > 0 && now > st.crackAt){ burst(0, .03, .05 + f * .2, 1200 + Math.random() * 2000); st.crackAt = now + 60 + (1 - f) * 300 + Math.random() * 120; } },
+  onFreeze:function(){ st.roar.gain.value = .8; },
+  onWin:function(){ thud(0, .4); }, winMs:900, win:function(k){ st.cool = k; st.roar.gain.value = (1 - k) * .8; },
+  onLose:function(){ burst(0, 1.4, .3, 400, 'lowpass'); },
+  draw:function(now){
+    var p = st.p, f = st.freeze ? 1 : clamp((p - .3) / .7), vx = W * .5, vy = H * .3, bw = Math.min(W * .36, 170), bh = H * .16;
+    g.fillStyle = '#100d0a'; g.fillRect(-W, -20, W * 3, H + 40);
+    g.fillStyle = '#17120c'; g.beginPath(); g.moveTo(0, 0); g.lineTo(vx - bw, vy - bh); g.lineTo(vx - bw, vy + bh); g.lineTo(0, H); g.fill();
+    g.beginPath(); g.moveTo(W, 0); g.lineTo(vx + bw, vy - bh); g.lineTo(vx + bw, vy + bh); g.lineTo(W, H); g.fill();
+    g.fillStyle = '#0c0a08'; g.beginPath(); g.moveTo(0, H); g.lineTo(vx - bw, vy + bh); g.lineTo(vx + bw, vy + bh); g.lineTo(W, H); g.fill();
+    g.strokeStyle = 'rgba(255,200,140,.06)'; g.lineWidth = 1;
+    for(var sl = 1; sl < 8; sl++){ var t2 = sl / 8; [[0, -1], [W, 1]].forEach(function(e){ var ex = e[0], tx = vx + e[1] * bw; g.beginPath(); g.moveTo(ex, H * t2); g.lineTo(tx, vy - bh + 2 * bh * t2); g.stroke();
+      for(var bk = 0; bk < 8; bk++){ var u = bk / 8, x = ex + (tx - ex) * u, y = H * t2 + ((vy - bh + 2 * bh * t2) - H * t2) * u, s2 = (1 - u) * 30 + 6; g.fillStyle = 'rgba(120,90,55,' + (.25 + (bk % 3) * .08) + ')'; g.fillRect(x - (e[1] < 0 ? 0 : s2 * .6), y - s2, s2 * .6, s2 * .95); } }); }
+    g.fillStyle = '#1a140e'; g.fillRect(vx - bw, vy - bh, bw * 2, bh * 2);
+    var dw = bw * .62, dh = bh * 1.55, dTop = vy + bh - dh;
+    g.fillStyle = '#2a1608'; g.fillRect(vx - bw * .08 - dw, dTop, dw, dh);
+    g.strokeStyle = 'rgba(255,' + (110 + Math.random() * 30) + ',40,' + (.35 + f * .55) + ')'; g.lineWidth = 3; g.strokeRect(vx - bw * .08 - dw, dTop, dw, dh);
+    glow(vx - bw * .08 - dw / 2, dTop + dh / 2, dw, '255,120,40', .25 * f);
+    g.fillStyle = '#0e1116'; g.fillRect(vx + bw * .08, dTop, dw, dh); g.strokeStyle = 'rgba(120,140,170,.35)'; g.lineWidth = 1.5; g.strokeRect(vx + bw * .08, dTop, dw, dh);
+    g.fillStyle = '#7a6a4a'; g.fillRect(vx + bw * .08 + dw * .12, dTop + dh * .55, 5, 5); g.fillRect(vx - bw * .08 - dw * .12 - 5, dTop + dh * .55, 5, 5);
+    if(f > 0){ glow(W * .15, H * .5, H * .7, '255,120,40', .35 * f);
+      flames.forEach(function(fl){ if(fl.on > f * 1.3) return; var t2 = (fl.row + 1) / 8, u = fl.d * .8, ex = fl.side ? W : 0, tx = vx + (fl.side ? 1 : -1) * bw, x = ex + (tx - ex) * u, y = H * t2 + ((vy - bh + 2 * bh * t2) - H * t2) * u, sz = ((1 - u) * 60 + 14) * (.8 + .3 * Math.sin(now / 90 + fl.ph));
+        var fg = g.createLinearGradient(0, y - sz * 1.4, 0, y); fg.addColorStop(0, 'rgba(255,220,120,0)'); fg.addColorStop(.5, 'rgba(255,150,50,.75)'); fg.addColorStop(1, 'rgba(255,90,30,.9)'); g.fillStyle = fg;
+        g.beginPath(); g.moveTo(x - sz * .35, y); g.quadraticCurveTo(x - sz * .4, y - sz * .7, x + Math.sin(now / 120 + fl.ph) * sz * .15, y - sz * 1.4); g.quadraticCurveTo(x + sz * .4, y - sz * .7, x + sz * .35, y); g.fill(); });
+      if(!reduce) embers.forEach(function(e){ var y = H - ((e.y * H + now * .12 * e.v) % H), x = e.x * W * .6 + Math.sin(now / 300 + e.y * 9) * 12; g.fillStyle = 'rgba(255,170,70,' + (.6 * f) + ')'; g.fillRect(x, y, 2, 2); }); }
+    var sm = H * (.04 + .26 * f);
+    var sg = g.createLinearGradient(0, 0, 0, sm); sg.addColorStop(0, 'rgba(18,15,14,.97)'); sg.addColorStop(.75, 'rgba(26,22,20,.88)'); sg.addColorStop(1, 'rgba(26,22,20,0)'); g.fillStyle = sg; g.fillRect(-W, -20, W * 3, sm + 20);
+    for(var bl = 0; bl < 7; bl++){ var bx2 = ((bl * 131 + now * .03) % (W + 240)) - 120; g.fillStyle = 'rgba(30,26,24,' + (.5 * f) + ')'; g.beginPath(); g.ellipse(bx2, sm * .85, 110, 34, 0, 0, Math.PI * 2); g.fill(); }
+    vignette(.75);
+    if(st.cool){ g.fillStyle = 'rgba(20,32,52,' + st.cool + ')'; g.fillRect(-W, -20, W * 3, H + 40); }
+  } },
+
+ lamp:{ part:'Part 5', title:'The Last Lamp', lead:600, T:6600, fuse:15, loseFx:'fade',
+  caps:[[0, 'Blackfriars. Seven chairs. Vesper takes your right hand.'], [2400, 'One by one, the lamps go out.'], [5000, 'A voice in the dark: “They always send for you, don’t they, inspector?”']],
+  q:'The hand at your right lets go. A cord settles round your throat. Name the Master before the last lamp dies.',
+  opts:[['Madame Vesper', true], ['Sir Edmund Vale', false], ['Sergeant Pell', false], ['Colonel Strand', false]],
+  winH:'The Lamp Flares', winP:['“Vesper.” The word is barely a breath, but the last lamp flares, and the light comes up on Madame Vesper with the cord in her hands.', 'Sergeant Pell has her by the wrist before she can pull. They always sent for you. Tonight, you came for her.'],
+  loseP:['The name is wrong, and the cord does not wait.', 'They find you in the circle at dawn, like Finch, a hand still held on either side.'],
+  start:function(){ st.drone = bed(true, 'lowpass', 90, .0); st.out7 = 0; st.whisper = false; },
+  tick:function(p, now){ st.drone.gain.value = .25 + p * .35; var outN = Math.floor(clamp((p - .25) / .75) * 6);
+    while(st.out7 < outN){ st.out7++; burst(0, .25, .12, 700); }
+    if(p > .66 && !st.whisper){ st.whisper = true; for(var w = 0; w < 5; w++) burst(w * .16, .14, .07, 2600 + w * 200); } },
+  onFreeze:function(){ tone(48, 0, 3, .14, 40); },
+  onWin:function(){ burst(0, .6, .2, 600); tone(392, .2, 1.6, .06); tone(523, .3, 1.6, .05); }, winMs:1200, win:function(k){ st.flare = k; },
+  onLose:function(){ tone(40, 0, 2, .16, 28); },
+  draw:function(now){
+    var p = st.p, outN = Math.floor(clamp((p - .25) / .75) * 6), fuse = st.freeze ? st.fuseLeft : 1, flare = st.flare || 0;
+    g.fillStyle = '#060509'; g.fillRect(-W, -20, W * 3, H + 40);
+    var cx = W * .5, cy = H * .33, rx = W * .44, ry = H * .085;
+    var order = [3, 2, 4, 1, 5, 6, 0];
+    var lamps = []; for(var n = 0; n < 7; n++){ var a = Math.PI / 2 + n / 7 * Math.PI * 2; lamps.push({ x:cx + Math.cos(a) * rx * .9, y:cy + Math.sin(a) * ry * .9, on:true }); }
+    for(var o = 0; o < outN; o++) lamps[order[o]].on = false;
+    var fr = lamps[0];
+    var light = function(L){ return L.on ? (L === fr && st.freeze ? Math.max(.05, fuse) : 1) * (.85 + Math.sin(now / 70 + L.x) * .1) : 0; };
+    lamps.forEach(function(L){ var li = light(L); if(li > 0) glow(L.x, L.y - 10, H * .3 * li + flare * H * .6, '255,175,90', .32 * li + flare * .5); });
+    [[-.72, -.02], [-.38, -.09], [0, -.11], [.38, -.09], [.72, -.02]].forEach(function(s2, si){ var sx = cx + s2[0] * rx, sy = cy + s2[1] * H - ry * .4, near = 0;
+      lamps.forEach(function(L){ var dd = Math.hypot(L.x - sx, L.y - sy); near += light(L) * Math.max(0, 1 - dd / (W * .45)); }); near = Math.min(1, near) + flare;
+      g.fillStyle = '#030305'; g.beginPath(); g.ellipse(sx, sy + H * .02, W * .09, H * .055, 0, Math.PI, 0); g.fill(); g.beginPath(); g.arc(sx, sy - H * .035, W * .045, 0, Math.PI * 2); g.fill();
+      if(si === 2){ g.fillRect(sx - W * .06, sy - H * .085, W * .12, H * .012); g.fillRect(sx - W * .03, sy - H * .12, W * .06, H * .04); }
+      g.strokeStyle = 'rgba(255,190,120,' + (.5 * near) + ')'; g.lineWidth = 1.2; g.beginPath(); g.arc(sx, sy - H * .035, W * .045, Math.PI * .1, Math.PI * .9); g.stroke(); });
+    g.fillStyle = '#140d08'; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(255,190,120,.18)'; g.lineWidth = 1.5; g.stroke();
+    lamps.forEach(function(L){ var li = light(L); g.fillStyle = '#3a2a12'; g.fillRect(L.x - 6, L.y - 4, 12, 6);
+      if(li > 0){ var fh = 14 * li + flare * 10; g.fillStyle = 'rgba(255,225,160,' + Math.min(1, .5 + li) + ')'; g.beginPath(); g.ellipse(L.x, L.y - 6 - fh / 2, 3 + li, fh / 2, 0, 0, Math.PI * 2); g.fill(); }
+      else { g.fillStyle = 'rgba(160,150,140,.15)'; g.fillRect(L.x - .5, L.y - 16, 1, 10); } });
+    g.fillStyle = '#030305'; g.beginPath(); g.ellipse(W * .98, H * .47, W * .16, H * .1, -.3, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,190,120,.25)'; g.beginPath(); g.ellipse(W * .9, H * .5, W * .05, H * .015, -.4, 0, Math.PI * 2); g.fill();
+    if(st.freeze || (st.out === 'lose')){ var tight = st.out === 'lose' ? 1 : 1 - fuse, sag = H * (.06 - .05 * tight), ry2 = H * .44;
+      g.strokeStyle = '#3a2816'; g.lineWidth = 9; g.beginPath(); g.moveTo(-10, ry2 - H * .04); g.quadraticCurveTo(W / 2, ry2 + sag - H * .04, W + 10, ry2 - H * .04); g.stroke();
+      g.strokeStyle = 'rgba(255,200,140,.5)'; g.lineWidth = 2; g.stroke();
+      var rv = g.createRadialGradient(W / 2, H / 2, H * .25, W / 2, H / 2, H * .8); rv.addColorStop(0, 'rgba(120,0,10,0)'); rv.addColorStop(1, 'rgba(120,0,10,' + (.25 + .35 * tight) + ')'); g.fillStyle = rv; g.fillRect(-W, -20, W * 3, H + 40); }
+    vignette(.6 * (1 - flare));
+  } }
+};
+
+
+
+  /* ---- the sixth scene: the yard at Scotland Yard ---- */
+  SCENES.yard = { part:'Part 4', title:'The Yard', lead:600, T:6000, fuse:10, loseFx:'crack',
+    caps:[[0, 'Scotland Yard, past two. One by one, the lamps in the yard go out.'], [2800, 'Two figures come towards you out of the dark.']],
+    loseP:['The shot comes before your mistake has left your lips.', 'They find you in the yard at dawn, under the dead lamps, and the night clerk files the report himself.'],
+    start:function(){ st.rainBed = bed(false, 'highpass', 2600, .04); st.out6 = 0; st.step = 0; },
+    tick:function(p, now){ var outN = Math.floor(clamp((p - .1) / .6) * 5); while(st.out6 < outN){ st.out6++; burst(0, .3, .12, 600); }
+      if(p > .3 && now > st.step){ burst(0, .04, .08 + p * .2, 500, 'lowpass'); burst(.21, .04, .07 + p * .2, 430, 'lowpass'); st.step = now + 640 - p * 120; } },
+    onFreeze:function(){ burst(0, .02, .4, 4000, 'highpass'); burst(.09, .03, .35, 3200, 'highpass'); tone(52, .1, 2.4, .12, 44); },
+    onWin:function(){ burst(0, .5, .2, 700); tone(392, .1, 1.2, .05); }, winMs:1000, win:function(k){ st.flare = k; },
+    onLose:function(){ gunshot(0); },
+    draw:function(now){
+      var p = st.p, vx = W * .5, vy = H * .3, outN = Math.floor(clamp((p - .1) / .6) * 5), flare = st.flare || 0;
+      g.fillStyle = '#090b11'; g.fillRect(-W, -20, W * 3, H + 40);
+      g.fillStyle = '#10131c'; g.beginPath(); g.moveTo(0, 0); g.lineTo(vx - W * .16, vy - H * .1); g.lineTo(vx - W * .16, vy + H * .08); g.lineTo(0, H); g.fill();
+      g.beginPath(); g.moveTo(W, 0); g.lineTo(vx + W * .16, vy - H * .1); g.lineTo(vx + W * .16, vy + H * .08); g.lineTo(W, H); g.fill();
+      g.fillStyle = '#0c0e14'; g.beginPath(); g.moveTo(0, H); g.lineTo(vx - W * .16, vy + H * .08); g.lineTo(vx + W * .16, vy + H * .08); g.lineTo(W, H); g.fill();
+      g.strokeStyle = 'rgba(160,170,200,.05)'; g.lineWidth = 1; for(var k = 1; k < 16; k++){ var yy = vy + H * .08 + (H - vy - H * .08) * Math.pow(k / 16, 2); g.beginPath(); g.moveTo(0, yy); g.lineTo(W, yy); g.stroke(); }
+      g.fillStyle = '#15192a'; g.fillRect(vx - W * .16, vy - H * .1, W * .32, H * .18);
+      g.fillStyle = '#04050a'; g.beginPath(); g.moveTo(vx - W * .08, vy + H * .08); g.lineTo(vx - W * .08, vy - H * .02); g.arc(vx, vy - H * .02, W * .08, Math.PI, 0); g.lineTo(vx + W * .08, vy + H * .08); g.fill();
+      var lamps = [[.06, .22, .9], [.94, .22, .9], [.2, .27, .6], [.8, .27, .6], [.3, .29, .42], [.7, .29, .42]], order = [5, 4, 3, 2, 1];
+      lamps.forEach(function(L, n){ var on = order.indexOf(n) < 0 || order.indexOf(n) >= outN || flare > 0, x = W * L[0], y = H * L[1], sz = L[2];
+        g.fillStyle = '#0a0b10'; g.fillRect(x - 5 * sz, y - 4, 10 * sz, 22 * sz);
+        if(on){ var fl = (.85 + Math.sin(now / 80 + n) * .08) * (flare ? 1 + flare : 1); glow(x, y + 6 * sz, H * .22 * sz * fl, '255,180,95', .35 * fl); g.fillStyle = 'rgba(255,220,160,.95)'; g.fillRect(x - 3 * sz, y, 6 * sz, 9 * sz); } });
+      var walk = clamp((p - .3) / .7), s2 = .06 + Math.pow(walk, 1.6) * .5;
+      [[-1, 0], [1, 1.7]].forEach(function(f, idx){ if(p < .3) return; var sc = H * .5 * s2, base = vy + H * .08 + (H * .56 - vy - H * .08) * (s2 / .56), x = vx + f[0] * W * (.06 + s2 * .3), bob = Math.sin(now / 160 + f[1]) * sc * .015;
+        g.fillStyle = '#020204';
+        g.beginPath(); g.moveTo(x - sc * .16, base); g.lineTo(x - sc * .2, base - sc * .55); g.quadraticCurveTo(x, base - sc * .72 + bob, x + sc * .2, base - sc * .55); g.lineTo(x + sc * .16, base); g.fill();
+        g.beginPath(); g.arc(x, base - sc * .8 + bob, sc * .08, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.ellipse(x, base - sc * .87 + bob, sc * .12, sc * .025, 0, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(x, base - sc * .9 + bob, sc * .075, sc * .05, 0, Math.PI, 0); g.fill();
+        g.strokeStyle = 'rgba(255,200,140,' + (.25 + s2 * .3) + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(x - sc * .2, base - sc * .55); g.quadraticCurveTo(x, base - sc * .72 + bob, x + sc * .2, base - sc * .55); g.stroke();
+        if(idx === 1 && st.freeze){ g.strokeStyle = '#020204'; g.lineWidth = sc * .05; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - sc * .14, base - sc * .55); g.lineTo(x - sc * .42, base - sc * .62); g.stroke();
+          g.fillStyle = '#020204'; g.fillRect(x - sc * .5, base - sc * .66, sc * .1, sc * .04); if(Math.sin(now / 120) > .6) glow(x - sc * .5, base - sc * .64, 10, '255,240,210', .9); } });
+      for(var f2 = 0; f2 < 2; f2++){ var fy = vy + H * (.05 + f2 * .1), off = ((now / (70 + f2 * 30)) % W);
+        var fg = g.createLinearGradient(0, fy - 60, 0, fy + 60); fg.addColorStop(0, 'rgba(70,78,100,0)'); fg.addColorStop(.5, 'rgba(70,78,100,.06)'); fg.addColorStop(1, 'rgba(70,78,100,0)'); g.fillStyle = fg; g.fillRect(-W + off, fy - 60, W * 3, 120); }
+      rain(now, .18); vignette(.75 * (1 - flare * .6));
+      if(st.freeze){ g.fillStyle = 'rgba(120,10,20,.1)'; g.fillRect(-W, 0, W * 3, H); }
+    } };
+
+  /* ---- the engine ---- */
+  var S = null, raf = 0, capTimers = [], fuseTimer = 0, CB = null, Q = '', OPTS = [], KIND = '', TITLE = '';
+  function cap(text){ var c = $('gxdCap'); c.style.opacity = 0; setTimeout(function(){ c.textContent = text; c.style.opacity = 1; }, reduce ? 0 : 250); if(text) say(text); }
+  function frame(now){
+    if(!S){ raf = 0; return; }
+    if(!st.t0) st.t0 = now; var t = now - st.t0;
+    if(st.phase === 'approach'){ var T = reduce ? Math.min(1500, S.T) : S.T; st.p = clamp((t - S.lead) / T); if(S.tick) S.tick(st.p, now); if(st.p >= 1) freeze(); }
+    g.save(); if(st.shake && !reduce) g.translate((Math.random() - .5) * st.shake, (Math.random() - .5) * st.shake);
+    S.draw(now); g.restore();
+    if(st.fx) overlayFx(st.fx);
+    raf = requestAnimationFrame(frame);
+  }
+  function overlayFx(fx){ g.save();
+    if(fx.lines){ g.strokeStyle = 'rgba(240,235,225,' + fx.a + ')'; g.lineWidth = 1.4; g.lineCap = 'round'; fx.lines.forEach(function(L){ g.beginPath(); g.moveTo(L[0][0], L[0][1]); for(var i = 1; i < L.length; i++) g.lineTo(L[i][0], L[i][1]); g.stroke(); }); }
+    if(fx.tint){ g.fillStyle = 'rgba(' + fx.tint + ',' + Math.min(1, fx.dark * 1.6) * .55 + ')'; g.fillRect(0, 0, W, H); }
+    g.fillStyle = 'rgba(0,0,0,' + fx.dark + ')'; g.fillRect(0, 0, W, H); g.restore(); }
+  function crackLines(){ var ox = W * .5, oy = H * .42, lines = [];
+    for(var i = 0; i < 11; i++){ var a = (i / 11) * Math.PI * 2 + Math.random() * .4, x = ox, y = oy, L = [[x, y]], len = H * (.25 + Math.random() * .5);
+      for(var k = 0; k < 7; k++){ a += (Math.random() - .5) * .5; x += Math.cos(a) * len / 7; y += Math.sin(a) * len / 7; L.push([x, y]); } lines.push(L); } return lines; }
+  function run(kind, q, opts, cb, title){
+    KIND = kind; Q = q; OPTS = opts; CB = cb; TITLE = title || ''; S = SCENES[kind];
+    hush(); capTimers.forEach(clearTimeout); capTimers = []; clearInterval(fuseTimer);
+    root.hidden = false; size(); $('gxdChoice').hidden = true; $('gxdEnd').hidden = true; $('gxdCap').textContent = ''; $('gxdT').textContent = TITLE || S.title;
+    audio(); if(ac && ac.state === 'suspended') ac.resume(); if(master) master.gain.value = quiet() ? 0 : 1;
+    st = { t0:0, phase:'approach', p:0, shake:0, freeze:false, out:null, outK:0, fx:null, fuseLeft:1 };
+    if(S.start) S.start();
+    S.caps.forEach(function(c){ capTimers.push(setTimeout(function(){ if(st.phase === 'approach') cap(c[1]); }, reduce ? c[0] * .35 : c[0])); });
+    if(!raf) raf = requestAnimationFrame(frame);
+  }
+  function freeze(){
+    st.phase = 'choice'; st.freeze = true; capTimers.forEach(clearTimeout); cap('');
+    if(S.onFreeze) S.onFreeze();
+    var opts = OPTS.slice(); for(var i = opts.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), tmp = opts[i]; opts[i] = opts[j]; opts[j] = tmp; }
+    $('gxdQ').innerHTML = '<small>DANGER</small>'; $('gxdQ').appendChild(document.createTextNode(Q));
+    var box = $('gxdOpts'); box.innerHTML = '';
+    opts.forEach(function(o){ var b = document.createElement('button'); b.type = 'button'; b.className = 'gxd-opt'; b.textContent = o.t; b.onclick = function(){ resolve(!!o.correct, false, o.t); }; box.appendChild(b); });
+    $('gxdChoice').hidden = false; box.firstChild.focus({ preventScroll:true });
+    var dur = S.fuse * 1000 * (moreTime ? 2 : 1), t0 = performance.now(), warned = false;
+    say('Danger. ' + Q + ' You have ' + dur / 1000 + ' seconds.');
+    fuseTimer = setInterval(function(){
+      var left = Math.max(0, 1 - (performance.now() - t0) / dur), w = $('gxdChoice').clientWidth - 32; st.fuseLeft = left;
+      $('gxdFuse').style.width = (left * w) + 'px'; $('gxdSpark').style.left = (left * w) + 'px';
+      if(Math.random() < .5) burst(0, .02, .03, 5000, 'highpass');
+      if(!warned && left * dur < 5000){ warned = true; say('Five seconds.'); }
+      if(left <= 0) resolve(false, true, '');
+    }, 60);
+  }
+  function resolve(ok, timeout, text){
+    if(st.phase !== 'choice') return;
+    clearInterval(fuseTimer); $('gxdChoice').hidden = true; st.phase = 'out'; st.freeze = false; st.out = ok ? 'win' : 'lose';
+    var ms = ok ? (S.winMs || 800) : (reduce ? 500 : 1900), t0 = performance.now();
+    if(ok){ if(S.onWin) S.onWin(); } else { if(S.onLose) S.onLose(); st.fx = { lines:S.loseFx === 'crack' ? crackLines() : null, tint:S.loseFx === 'gas' ? '40,90,30' : S.loseFx === 'fire' ? '160,60,10' : null, a:0, dark:0 }; if(!reduce && S.loseFx === 'crack') st.shake = 18; }
+    (function step(now){ var k = clamp((now - t0) / (reduce ? 1 : ms)); st.outK = k;
+      if(ok){ if(S.win) S.win(k); }
+      else { st.fx.a = Math.min(1, k * 3); st.fx.dark = clamp((k - .3) / .7); st.shake = st.shake ? (1 - k) * 18 : 0; }
+      if(k < 1) requestAnimationFrame(step); else setTimeout(function(){ ok ? finish(true, text) : death(timeout); }, ok ? 300 : 0); })(t0);
+  }
+  function close(){ S = null; hush(); capTimers.forEach(clearTimeout); clearInterval(fuseTimer); root.hidden = true; g.clearRect(0, 0, W, H); }
+  function finish(ok, text){ var cb = CB; close(); if(cb) cb(ok, text); }
+  function death(timeout){
+    hush(); var e = $('gxdEnd'); e.hidden = false;
+    e.innerHTML = '<p class="k">' + (timeout ? 'YOU HESITATED' : 'THE WRONG CHOICE') + '</p><h2>The Case Closes Without You</h2>' + S.loseP.map(function(){ return '<p></p>'; }).join('') +
+      '<button class="gxd-go" id="gxdAgain" type="button">Try again from this moment</button><button class="gxd-go ghost" id="gxdLeave" type="button">Back to the case files</button>';
+    var ps = e.querySelectorAll('p:not(.k)'); S.loseP.forEach(function(t, i){ ps[i].textContent = t; });
+    say(e.innerText.replace(/\s+/g, ' '));
+    $('gxdAgain').onclick = function(){ run(KIND, Q, OPTS, CB, TITLE); };
+    $('gxdLeave').onclick = function(){ finish(false, ''); };
+    $('gxdAgain').focus();
+  }
+  return { run:run, scenes:SCENES, isOpen:function(){ return !root.hidden; } };
+})();
+
+</script>
+<script>
+/* Parts 4 and 5: hidden case files, moments of danger, and faces from the past. */
+(function(){
+  var DATA = {"P4": {"start": "intro", "scenes": {"intro": {"head": "CUTLER’S LANE", "art": "lamp", "text": ["The fourth card brought you here: Cutler’s Lane, Clerkenwell, a lamp-maker’s shop with its shutters half down and the gas still burning inside.", "Abel Crane lies across his bench among wicks and chimneys and cans of oil, a trimmed wick still pinched between his fingers. He has been dead an hour, no more.", "On the wall, a card is pinned like a butterfly: your name, your lodgings, and one word. SOON. For the first time, the case is about you."], "cont": "bench"}, "bench": {"head": "THE BENCH", "art": "bottle", "text": ["Stacks of small white cards, cut to size. Pots of ink. Cans of lamp-oil, and a pair of wick-scissors worn bright with use.", "Scratched into the bench, over and over, the alphabet with a number beneath each letter. A is 1."], "q": "A man who trims wicks all day writes cards that smell of…", "opts": [{"t": "Lamp-oil", "correct": true}, {"t": "Rosewater"}, {"t": "Tobacco"}, {"t": "Gunpowder"}], "replyOk": "Lamp-oil. Every card that ever waited for you at a murder was written at this bench.", "replyNo": "It is lamp-oil, of course. Every card that ever waited for you was written at this bench.", "clue": "Crane wrote the lamp-oil cards, at his bench.", "ok": "apprentice", "no": "apprentice"}, "apprentice": {"head": "THE APPRENTICE", "art": "eye", "text": ["Kit, Crane’s apprentice, sits on the stairs with his cap in his hands. He is fifteen, and he has been crying.", "‘He said a gentleman from the police would come at six,’ Kit says. ‘He was going to tell you everything. He said he was sick of it.’ The clock on the wall says ten past seven."], "q": "A man killed an hour before he could talk to you was…", "opts": [{"t": "Silenced", "correct": true}, {"t": "Robbed"}, {"t": "Unlucky"}, {"t": "Taken ill"}], "replyOk": "Silenced. Someone knew Crane meant to talk, and knew when.", "replyNo": "Think again: he died an hour before he could talk. He was silenced.", "clue": "Crane meant to tell you everything at six. He was silenced first.", "ok": "letters", "no": "letters"}, "letters": {"head": "THE LETTERS", "art": "note", "text": ["In a biscuit tin under the bench: Crane’s instructions. Letters in a neat clerk’s hand, each with a banknote, each telling him what to write on a card and where to leave it. No signature. Every envelope carries the same postmark: Whitehall, S.W.", "You wire the Yard for a cab home. The night clerk wires straight back: a cab will be at the gate at nine, as always."], "q": "Whitehall is home to…", "opts": [{"t": "Scotland Yard", "correct": true}, {"t": "The Bank of England"}, {"t": "St Paul’s Cathedral"}, {"t": "The Tower of London"}], "replyOk": "Scotland Yard. The orders for every card came from the street where you collect your cases.", "replyNo": "Whitehall is home to Scotland Yard: the street where you collect your cases.", "clue": "Crane’s orders were posted in Whitehall, by the Yard.", "ok": "cab", "no": "cab"}, "cab": {"head": "THE CAB", "art": "lamp", "danger": "cab", "text": ["You waited at the gate for the cab the Yard had promised at nine."], "q": "A cab is charging out of the fog, straight at you. Your Yard cab is always number 214. This one carries no number at all.", "opts": [{"t": "Dive behind the horse trough.", "correct": true}, {"t": "Wait for it. It must be the Yard cab.", "correct": false}, {"t": "Step out and wave it down.", "correct": false}], "replyOk": "You throw yourself behind the horse trough as the wheels thunder past an inch from your heel. Sergeant Pell hauls you up, white to the lips. ‘That was no Yard cab, sir. Ours is two-fourteen.’", "clue": "The cab that tried to kill you carried no number.", "ok": "sergeant"}, "sergeant": {"head": "THE SERGEANT", "art": "eye", "text": ["Sergeant Tom Pell was walking to meet you, he says, and saw the cab come out of the fog. He is a big, slow, steady man, and his hands are shaking.", "‘Nobody knew you’d be at that gate, sir,’ he says, ‘bar me, and the Yard.’"], "q": "Who knew a cab was coming for you at nine?", "opts": [{"t": "Whoever sent for it", "correct": true}, {"t": "Nobody at all"}, {"t": "Only Kit"}, {"t": "Only the driver"}], "replyOk": "Whoever sent for it. And the cab was booked by the Yard, as every cab you take is booked.", "replyNo": "Think: whoever sent for the cab knew. And it was booked by the Yard, as every cab you take is.", "clue": "Only whoever booked your cab knew you’d be at the gate.", "ok": "cellar", "no": "cellar"}, "cellar": {"head": "THE CELLAR", "art": "book", "text": ["Back at Cutler’s Lane, Pell keeps the door while you take a lantern down to Crane’s cellar. Racks of lamps, drums of oil, and on a shelf by the stairs, a ledger.", "Every card Crane ever wrote: the date, the words, the place. Christie Manor. Sleeper Seven. Blackfriars. Each one a case of yours, and each written before you were sent."], "q": "Cards written before you were ever sent to the case mean Crane was…", "opts": [{"t": "Told in advance where you would be sent", "correct": true}, {"t": "Guessing"}, {"t": "Following you"}, {"t": "Working alone"}], "replyOk": "Told in advance. Someone knew which cases you would be given before you were given them.", "replyNo": "No: each was written before you were sent. Someone told him where you would go.", "clue": "Every card was written before you were sent to the case.", "ok": "gas", "no": "gas"}, "gas": {"head": "THE GAS", "art": "lamp", "danger": "gas", "text": ["The cellar door slammed behind you, and a key turned. Someone opened the gas taps from the stair."], "q": "The gas is rising. The door’s lock is a ring of six letter dials. Scratched beside the keyhole: “ASK, AND I WILL…”", "opts": [{"t": "ANSWER", "correct": true}, {"t": "MASTER", "correct": false}, {"t": "SILENT", "correct": false}, {"t": "LANTERN", "correct": false}], "replyOk": "The sixth dial clicks home. The lock gives, and you stagger up the steps into the rain, coughing, alive. Pell is lying in the passage with a lump on his head the size of an egg.", "clue": "The cellar lock was set to the words on your cards.", "ok": "locked"}, "locked": {"head": "WHO LOCKED IT", "art": "key", "text": ["Pell swears he never saw who struck him. The lock on the cellar door is new brass, fitted this week. Kit says Crane never bought it."], "q": "A lock set to a word from your own cards means whoever set it knew…", "opts": [{"t": "The cipher, and your cases", "correct": true}, {"t": "Nothing about you"}, {"t": "Only Crane’s habits"}, {"t": "Only the shop"}], "replyOk": "The cipher, and your cases. Someone inside the business of sending for you.", "replyNo": "Think: it was set to your own cards’ words. Whoever set it knew the cipher, and your cases.", "clue": "Whoever set the lock knew the cipher, and your cases.", "ok": "nightdesk", "no": "nightdesk"}, "nightdesk": {"head": "THE NIGHT DESK", "art": "ticket", "text": ["At the Yard, past one in the morning, you go through the night desk’s ledger while Mr. Quill, the night clerk, makes tea in the back room. He is a thin, pale man with ink on his cuffs, and he has sent you every summons you ever had.", "Every telegram in your name is here. The wire to Christie Manor. The wire to the night express. The wire to Blackfriars. Tonight’s cab at nine, booked in Quill’s hand. And a note in Sergeant Pell’s hand, from last week: Inspector to be given the Blackfriars case."], "q": "The man who sends every summons knows…", "opts": [{"t": "Where you will be, and when", "correct": true}, {"t": "Nothing about your cases"}, {"t": "Only your name"}, {"t": "Who the killers are"}], "replyOk": "Where you will be, and when. Every time.", "replyNo": "He knows where you will be, and when. Every time.", "clue": "Quill sends every summons. Pell asked for you at Blackfriars.", "ok": "face", "no": "face"}, "face": {"head": "A FACE FROM THE PAST", "art": "mask", "text": ["{FACE_P4}"], "q": "An enemy from an old case, here tonight, means…", "opts": [{"t": "Someone has kept them close, and useful", "correct": true}, {"t": "A coincidence"}, {"t": "They came to confess"}, {"t": "Nothing at all"}], "replyOk": "Someone has kept them close, and useful, and tonight they are here.", "replyNo": "It is no coincidence: someone has kept them close, and useful.", "clue": "{FACE} is free, and at the Yard tonight.", "ok": "yard", "no": "yard"}, "yard": {"head": "THE YARD", "art": "lamp", "danger": "yard", "text": ["You stepped out into the Yard’s courtyard for air."], "q": "One of the two figures coming towards you killed Abel Crane, and is raising a pistol. Name the killer.", "opts": [{"t": "Mr. Quill", "correct": true}, {"t": "Sergeant Pell", "correct": false}, {"t": "Kit", "correct": false}, {"t": "{FACE}", "correct": false}], "accuse": true}}}, "E4": {"master": {"verdict": "Master Detective", "stamp": "SOLVED", "tier": 4, "kicker": "EVERY THREAD IN HAND", "text": ["You call the name into the dark: “Quill.” The pistol wavers, and Pell is on him before he can steady it.", "The cab booked for nine, the lock set to your own cipher, the ledger of every summons in his hand. He sent for you every time, and tonight he sent you to die."]}, "closed": {"verdict": "Case Closed", "stamp": "SOLVED", "tier": 3, "kicker": "MOST OF IT HOLDS", "text": ["You name Quill, and the pistol comes down. The cab, the lock, the telegrams: most of it holds.", "But he will not say who he answers to, and you are not sure you have asked the right question."]}, "hunch": {"verdict": "A Lucky Hunch", "stamp": "SOLVED", "tier": 2, "kicker": "RIGHT MAN, WEAK NET", "text": ["You call Quill’s name on instinct, and Pell takes him. Right man, thin case.", "Through the bars of the cells he smiles at you, as if you had done exactly what he was told you would."]}, "wrong": {"verdict": "The Wrong Name", "stamp": "UNSOLVED", "tier": 1, "kicker": "THE SHOT CAME FIRST", "text": ["The shot comes before your mistake has left your lips."]}}, "P5": {"start": "intro", "scenes": {"intro": {"head": "A SUMMONS", "art": "note", "text": ["Midnight, at your lodgings. Quill is in the cells, and still a telegram comes, as one always does.", "No order this time. Only: COME ALONE. E.V.", "E.V. Sir Edmund Vale, the Assistant Commissioner, whose initials have sat at the foot of every summons you ever had. You light a lamp and lay out your three old case files."], "cont": "orders"}, "orders": {"head": "THE OLD ORDERS", "art": "book", "text": ["Side by side, the three summonses. Each came with its line of advice. Look at the nephew. Look at the soldier. Press the assistant, Reeves."], "q": "Each of those orders pointed you at…", "opts": [{"t": "An innocent", "correct": true}, {"t": "The killer"}, {"t": "A witness"}, {"t": "Nobody in particular"}], "replyOk": "An innocent, every time. Someone wanted each case closed on the wrong person, by you.", "replyNo": "Look again: each order pointed at an innocent. Someone wanted each case closed on the wrong person.", "clue": "Every order you were ever given pointed at an innocent.", "ok": "window", "no": "window"}, "window": {"head": "THE WINDOW", "art": "eye", "danger": "window", "text": ["A shot came through your window as you read."], "q": "The glass bursts. The hole is high in the pane; the bullet is buried low in the floorboards. A second shot is coming.", "opts": [{"t": "Drop below the window sill.", "correct": true}, {"t": "Run for the door.", "correct": false}, {"t": "Go to the window and look.", "correct": false}], "replyOk": "You drop below the sill as the second shot splinters the desk where your head had been. High in the glass, low in the floor: whoever is firing is above you.", "clue": "Someone fired at you from above, through your window.", "ok": "tower"}, "tower": {"head": "THE TOWER", "art": "lamp", "text": ["Pell finds the place at first light: the belfry of the church opposite, a spent cartridge on the boards, and a trimmed lamp wick, still smelling of oil.", "Whoever fired knew which window was yours."], "q": "A hole high in the glass and a bullet low in the floor means the shot came from…", "opts": [{"t": "Above, from the tower", "correct": true}, {"t": "The street"}, {"t": "The room next door"}, {"t": "Below"}], "replyOk": "Above. From the tower, by someone who knew which window was yours.", "replyNo": "It came from above: high in the glass, low in the floor. From the tower.", "clue": "The rifleman fired from the church tower opposite.", "ok": "edmund", "no": "edmund"}, "edmund": {"head": "SIR EDMUND", "art": "scales", "text": ["Sir Edmund Vale receives you in his dressing gown, bewildered. He has never signed a summons to you in his life. ‘My dear fellow, cases are given out by the night desk. I barely know your name.’", "Every telegram you hold is in the same hand, and it is not his."], "q": "The handwriting on a telegram form belongs to…", "opts": [{"t": "The clerk who copied it out", "correct": true}, {"t": "The sender"}, {"t": "The telegraph boy"}, {"t": "Nobody"}], "replyOk": "The clerk. The initials prove nothing at all; Quill wrote them, like everything else.", "replyNo": "It is the clerk’s: each message is copied out by hand at the office. The initials prove nothing.", "clue": "The telegram forms are in the clerk’s hand. E.V. proves nothing.", "ok": "sergeant", "no": "sergeant"}, "sergeant": {"head": "THE SERGEANT", "art": "eye", "text": ["Pell was at the cab. Pell was struck down at the cellar door. Pell asked for you on the Blackfriars case, and Pell was first to the tower this morning.", "He knows how it looks. ‘I’ve been watching your back, sir,’ he says. ‘Somebody had to.’"], "q": "A man who has been near every danger is…", "opts": [{"t": "Either your guard or your hunter", "correct": true}, {"t": "Plainly guilty"}, {"t": "Plainly innocent"}, {"t": "Of no interest"}], "replyOk": "Your guard, or your hunter. You do not yet know which, and he knows you do not.", "replyNo": "Careful: he may be your guard or your hunter. You cannot tell yet.", "clue": "Pell has been near every danger: your guard, or your hunter.", "ok": "archive", "no": "archive"}, "archive": {"head": "THE ARCHIVE", "art": "book", "danger": "archive", "text": ["You went to the Yard’s archive for the original telegram forms. Someone set it alight around you."], "q": "Smoke is rolling along the ceiling. The left door is hot to the touch; the right one is cool.", "opts": [{"t": "Crawl low to the right door.", "correct": true}, {"t": "Walk upright to the left door.", "correct": false}, {"t": "Stay and save the files.", "correct": false}], "replyOk": "You crawl beneath the smoke to the cool door and out into the corridor, one scorched telegram form crushed in your fist.", "clue": "Someone burned the archive to destroy the telegram forms.", "ok": "form"}, "form": {"head": "THE SCORCHED FORM", "art": "note", "text": ["Across the top of the scorched form, still legible: Handed in at Blackfriars Bridge.", "The counter clerk there remembers the sender of every one of your summonses: someone in a long black coat, collar up and hat brim down, who paid in coins and never said a word."], "q": "Every summons handed in at Blackfriars means the sender…", "opts": [{"t": "Lives or works near Blackfriars", "correct": true}, {"t": "Works at the Yard"}, {"t": "Lives in Clerkenwell"}, {"t": "Was never in London"}], "replyOk": "Near Blackfriars. Where the séance was. Where it all began.", "replyNo": "The sender handed them in at Blackfriars, so lives or works nearby.", "clue": "Every summons was handed in at Blackfriars Bridge.", "ok": "face", "no": "face"}, "face": {"head": "A FACE FROM THE PAST", "art": "mask", "text": ["{FACE_P5}"], "q": "An old enemy, paid in names and secrets, was working for…", "opts": [{"t": "Someone who collects other people’s secrets", "correct": true}, {"t": "The police"}, {"t": "Nobody"}, {"t": "Themselves alone"}], "replyOk": "Someone who collects secrets, and spends them.", "replyNo": "Think: paid in names and secrets. Someone who collects other people’s secrets.", "clue": "{FACE} was paid by the Master in names and secrets.", "ok": "parlour", "no": "parlour"}, "parlour": {"head": "THE PARLOUR", "art": "mask", "text": ["Madame Vesper has retired, she says, since the unpleasantness at Blackfriars. Her parlour on Blackfriars Bridge Road is all black lace and lamplight, and she pours your tea with a steady hand.", "Her client book lies open on the table. Lt. A. Cross. Mrs. A. Christie. Col. Strand. Grieving people, all of them, who came to hear the dead, and told her everything."], "q": "What does a medium hear from the grieving?", "opts": [{"t": "Everything they would tell no one else", "correct": true}, {"t": "Nothing of use"}, {"t": "Only the weather"}, {"t": "Only lies"}], "replyOk": "Everything. Every secret, from every grieving client, in the dark.", "replyNo": "Everything: the grieving tell a medium what they would tell no one else.", "clue": "Vesper’s clients came from every one of your cases.", "ok": "chairs", "no": "chairs"}, "chairs": {"head": "SEVEN CHAIRS", "art": "lamp", "text": ["One last wire, pushed under your door: BLACKFRIARS. SEVEN CHAIRS. BRING A CANDLE.", "The tall house at Blackfriars, one last time. Sir Edmund is there, and Pell, and {FACE}, and Madame Vesper, smiling, who takes your right hand as you sit. Seven chairs, and the circle closes."], "cont": "lastlamp"}, "lastlamp": {"head": "THE LAST LAMP", "art": "lamp", "danger": "lamp", "text": [], "q": "The hand at your right lets go. A cord settles round your throat. Name the Master before the last lamp dies.", "opts": [{"t": "Madame Vesper", "correct": true}, {"t": "Sir Edmund Vale", "correct": false}, {"t": "Sergeant Pell", "correct": false}, {"t": "{FACE}", "correct": false}], "accuse": true}}}, "E5": {"master": {"verdict": "Master Detective", "stamp": "SOLVED", "tier": 4, "kicker": "THE MASTER UNMASKED", "text": ["“Vesper.” The last lamp flares, and the light comes up on Madame Vesper with the cord in her hands. Pell has her by the wrist before she can pull.", "Every secret she ever heard in the dark, sold to the people who would kill to keep them. Every case closed neatly on an innocent, by the detective she sent for. Not tonight."]}, "closed": {"verdict": "Case Closed", "stamp": "SOLVED", "tier": 3, "kicker": "THE MASTER TAKEN", "text": ["“Vesper.” The cord slackens and the lamp flares. She is taken, still smiling.", "Her client book burns before morning, and most of her clients will never be named. But the Master is caught."]}, "hunch": {"verdict": "A Lucky Hunch", "stamp": "SOLVED", "tier": 2, "kicker": "RIGHT NAME, LITTLE PROOF", "text": ["You gasp her name on instinct, and Pell drags her back from the circle. Right name, little proof.", "She says nothing at all. Her lawyers say a great deal."]}, "wrong": {"verdict": "The Wrong Name", "stamp": "UNSOLVED", "tier": 1, "kicker": "THE CORD DID NOT WAIT", "text": ["The name is wrong, and the cord does not wait."]}}, "FACES": {"sable": {"name": "Sable", "p4": "On the Yard’s steps, tipping his hat with the silver head of a cane, stands a man who is supposed to be dead: the jeweller Hahn. Sable. ‘Good evening, inspector. You look as if you’ve seen a cab.’", "p5": "You find Sable at his club, alive, unrepentant and very calm. ‘I never saw the Master’s face, inspector. Letters came, smelling of lamp-oil, with the names of people worth bleeding. I was paid in secrets.’"}, "strand": {"name": "Colonel Strand", "p4": "In the Yard’s hall, turning his signet ring, waits Colonel Strand, free since the séance. ‘The spirits told me you would be here tonight, inspector. They tell me a great deal.’", "p5": "Colonel Strand receives you in his tall house. ‘I paid for warnings, inspector. That Finch was coming. That you were. The letters smelled of lamp-oil, and the price was always another secret.’"}, "english": {"name": "Dr. English", "p4": "In the Yard’s hall, in a wet coat, sits Dr. Roland English, who walked out of Christie Manor into the rain and was never seen again. ‘You look unwell, inspector,’ he says. ‘Have you been near gas?’", "p5": "Dr. English, cornered at last in a Southwark lodging house, talks quickly. ‘The poison came by post. So did the warning that Christie meant to expose me. I paid for both in other people’s secrets.’"}, "harrow": {"name": "Mrs. Harrow", "p4": "In the Yard’s hall, in her old mourning black, waits Mrs. Harrow, out of prison this week. ‘I came to warn you,’ she says. ‘Someone has been asking where you live.’", "p5": "Mrs. Harrow twists her gloves. ‘I only ever hauled a trumpet line, inspector. But the money never came from Vesper’s purse. It came in letters, smelling of lamp-oil, with orders for us both.’"}}, "T4": 8, "T5": 7};
+  var jesc = function(t){ return JSON.stringify(t).slice(1, -1); };
+  function faceKey(){ var e = function(id){ return lsGet('gl_end_' + id) || (lsGet('gl_solved_' + id) === '1' ? 'closed' : (lsGet('gl_cipher_' + id) ? 'wrong' : null)); };
+    if(e('qc_midnight') === 'wrong') return 'sable'; if(e('qc_seance') === 'wrong') return 'strand'; if(e('qc_gaslight') === 'wrong') return 'english'; return 'harrow'; }
+  function withFace(o){ var f = DATA.FACES[faceKey()];
+    return JSON.parse(JSON.stringify(o).replace(/\{FACE_P4\}/g, jesc(f.p4)).replace(/\{FACE_P5\}/g, jesc(f.p5)).replace(/\{FACE\}/g, jesc(f.name))); }
+  CASES.push({ key:'lamp', id:'qc_lamp', title:'The Lamp-Oil Hand', tag:'Somebody wants you dead', total:DATA.T4, cut:'lamp', hidden:true, danger:true,
+      hook:"The cards led here: a lamp-maker’s shop in Clerkenwell, and the man who wrote them dead at his bench. Tonight the case is hunting you.", raw:DATA.P4, rawEnd:DATA.E4 },
+    { key:'master', id:'qc_master', title:'They Always Send For You', tag:'The last case', total:DATA.T5, cut:'master', hidden:true, danger:true,
+      hook:"Midnight, and a telegram, as always. But this one carries no order, only two initials, and someone in London has decided you have seen enough.", raw:DATA.P5, rawEnd:DATA.E5 });
+  var css = document.createElement('style');
+  css.textContent = ".casecard.gx3-new{animation:gx3Drop 1.1s cubic-bezier(.3,1.35,.5,1) .35s both;} @keyframes gx3Drop{from{transform:translateY(-160%) rotate(-9deg);opacity:0;}70%{opacity:1;}to{transform:none;opacity:1;}}" +
+    ".casecard.gx3-new .cs{animation:gx2Slam .3s cubic-bezier(.5,0,.8,.4) 1.45s both;} @media (prefers-reduced-motion: reduce){ .casecard.gx3-new,.casecard.gx3-new .cs{animation:none;} }";
+  document.head.appendChild(css);
+  var ac3 = null; function knock(t){ try{ if(typeof muted !== 'undefined' && muted) return; ac3 = ac3 || new (window.AudioContext || window.webkitAudioContext)(); var n = Math.floor(ac3.sampleRate * .3), b = ac3.createBuffer(1, n, ac3.sampleRate), c = b.getChannelData(0);
+    for(var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2); var s = ac3.createBufferSource(), f = ac3.createBiquadFilter(), g = ac3.createGain(); s.buffer = b; f.type = 'lowpass'; f.frequency.value = 160; g.gain.value = .6; s.connect(f); f.connect(g); g.connect(ac3.destination); s.start(ac3.currentTime + t); }catch(e){} }
+  /* case files: hidden parts appear only once unlocked; a new one drops onto the pile */
+  window.buildSelect = function(){ var w = $('caseList'); if(!w) return; w.innerHTML = ''; var fresh = null;
+    CASES.forEach(function(c){ if(c.hidden && lsGet('gl_unlock_' + c.id) !== '1') return;
+      var solved = lsGet('gl_solved_' + c.id) === '1', b = document.createElement('button'); b.className = 'casecard' + (solved ? ' solved' : '');
+      b.innerHTML = '<div class="ct">' + esc(c.title) + '</div><div class="cg">' + esc(c.tag) + '</div><span class="cs">' + (solved ? 'SOLVED' : 'UNSOLVED') + '</span>';
+      if(c.hidden && lsGet('gl_reveal_' + c.id) === '1'){ b.classList.add('gx3-new'); lsSet('gl_reveal_' + c.id, ''); fresh = c; }
+      b.addEventListener('click', function(){ openCase(c); }); w.appendChild(b); });
+    if(fresh){ knock(1.2); knock(1.5); var sr = document.getElementById('gx2Say'); if(sr){ sr.textContent = ''; setTimeout(function(){ sr.textContent = 'A new case file has appeared: ' + fresh.title + '.'; }, 1600); } } };
+  /* opening a hidden part fills in the face from the past, and warns of danger */
+  var _openCase = window.openCase, NOTE = null;
+  window.openCase = function(c){ if(c.raw){ c.story = withFace(c.raw); c.endings = withFace(c.rawEnd); }
+    _openCase(c); var m = document.querySelector('#startScr .muted'); if(m){ if(NOTE === null) NOTE = m.textContent;
+      m.textContent = c.danger ? 'Wrong calls cost you the truth. In a moment of danger, they cost you your life.' : NOTE; } };
+  var _play = window.playCutscene;
+  window.playCutscene = function(kind, done){ var k = kind === 'lamp' ? 'manor' : kind === 'master' ? 'seance' : kind; _play(k, done);
+    if(kind === 'lamp') $('cutSub').textContent = 'Clerkenwell · the lamp-maker’s shop';
+    if(kind === 'master') $('cutSub').textContent = 'Blackfriars · seven chairs, one last time'; };
+  /* a danger scene plays its cutscene; survive and the story goes on, die and try again from that moment */
+  var _goTo = window.goTo;
+  window.goTo = function(id){ var sc = STORY && STORY.scenes[id]; if(!sc || !sc.danger) return _goTo(id);
+    try{ stopCast(); }catch(e){}
+    GXD.run(sc.danger, sc.q, sc.opts, function(ok, text){
+      if(!ok){ showSelect(); return; }
+      if(sc.accuse){ var qw = $('qwrap'); if(qw) qw.innerHTML = ''; cur = sc; accusedRight = true; chosen = text; resolveEnding(); return; }
+      notebook.push({ head:sc.head || '', clue:sc.clue || '', got:true });
+      var wid = id + '__survived'; STORY.scenes[wid] = { head:sc.head, art:sc.art, text:(sc.text || []).concat([sc.replyOk]), cont:sc.ok }; _goTo(wid); }); };
+  /* the case files may already be on screen from before this loaded: draw them again */
+  var sel = $('selectScr'); if(sel && !sel.classList.contains('hide')) buildSelect();
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
