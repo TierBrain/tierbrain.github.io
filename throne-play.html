@@ -3,13 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="description" content="Join Hold The Throne on your phone. Type the code from the big screen, take your place in the queue, and win the throne.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://tierbrain.co/throne-play.html">
-<meta property="og:title" content="Hold The Throne: join">
-<meta property="og:description" content="Join Hold The Throne on your phone. Type the code from the big screen, take your place in the queue, and win the throne.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
-<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/throne-play.html">
 <script>
 /* Anyone arriving on the old github.io address is moved to the real domain,
@@ -134,6 +127,20 @@ $('joinBtn').addEventListener('click', join);
 async function beat(){ const now=Date.now(); if(now-lastBeat<10000) return; lastBeat=now; try{ await sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){} }
 
 function role(st){ if(st.champ&&st.champ.id===myId) return 'champ'; if(st.chal&&st.chal.id===myId) return 'chal'; const i=(st.queue||[]).findIndex(p=>p.id===myId); if(i>=0) return 'q'+(i+1); return 'spec'; }
+/* Queue info for waiting players. A winner stays on and only the loser re-joins the back,
+   so the queue moves by one seat per question: position N plays about N questions from now. */
+function queueInfo(st, pos){
+  const q=st.queue||[]; const n=parseInt(pos,10); if(!n) return '';
+  const left=Math.max(0,(st.qTotal||0)-(st.qIndex||0));
+  let h='';
+  if(n===1) h+='<div class="pa-msg" style="margin-top:6px">You\u2019re the next challenger!</div>';
+  else {
+    const ahead=q.slice(0,Math.min(2,n-1)).map(p=>esc(p.name)).join(', ');
+    h+='<div class="pa-msg" style="margin-top:6px">About '+n+' questions until you\u2019re up</div><div class="pa-hint">Ahead of you: '+ahead+(n-1>2?' +'+(n-3)+' more':'')+'</div>';
+  }
+  if(st.qTotal && n>left) h+='<div class="pa-hint">Heads up: the game may end before your turn.</div>';
+  return h;
+}
 function area(){ return $('playCard'); }
 function setHTML(h){ area().innerHTML=h; }
 
@@ -161,7 +168,7 @@ function render(st){
   if(phase==='finintro'){ if(lastSig!=='finintro'){ lastSig='finintro'; const m=(st.finintro&&st.finintro.msg)||'Grand Finale!';
       const mine=(st.champ&&st.champ.id===myId)||(st.chal&&st.chal.id===myId);
       setHTML('<div class="pa-title">\ud83d\udc51 Grand Finale</div><div class="pa-msg">'+esc(m)+'</div>'+(mine?'<div class="pa-good" style="margin-top:8px">You\u2019re in it, get ready!</div>':'<div class="pa-hint">Watch the showdown!</div>')); } return; }
-  if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'); } return; }
+  if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; const qp=(r[0]==='q')?r.slice(1):null; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'+(qp?'<div class="pa-hint">You\u2019re #'+qp+' in the queue.</div>':'')); } return; }
 
   if(phase==='gameover'){ if(lastSig!=='over'){ lastSig='over'; const w=st.winner||{}; const mine=w.id===myId;
       const su=st.summary||{}; let extra=''; if(su.flawless){ extra='A flawless run! \ud83d\udc51'; } else if(su.finaleScore&&su.finalists){ extra='Finale: '+(su.finaleScore[su.finalists.closer.id]||0)+'\u2013'+(su.finaleScore[su.finalists.king.id]||0); }
@@ -182,7 +189,7 @@ function render(st){
           st.q.opts.forEach(function(o){ optline+='<div class="watchopt">'+esc(o)+'</div>'; });
           optline+='</div><div class="watchnote">Only the two at the front can answer.</div>';
         }
-        if(pos) setHTML('<div class="pa-title">In the queue</div><div class="pa-good" style="color:var(--gold-hi)">#'+pos+'</div><div class="pa-hint">Get ready. Winner stays on.</div>'+line+qline+optline);
+        if(pos) setHTML('<div class="pa-title">In the queue</div><div class="pa-good" style="color:var(--gold-hi)">#'+pos+'</div><div class="pa-hint">Winner stays on.</div>'+queueInfo(st,pos)+line+qline+optline);
         else setHTML('<div class="pa-title">Watching\u2026</div>'+line+qline+optline); }
       return;
     }
@@ -227,6 +234,5 @@ function render(st){
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 </script>
-<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

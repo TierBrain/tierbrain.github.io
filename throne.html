@@ -105,7 +105,16 @@
   .hostbubble.pop{animation:bpop .35s cubic-bezier(.2,1.3,.4,1) both;}
   @keyframes bpop{from{opacity:0;transform:translateX(-50%) translateY(-5px) scale(.85);}to{opacity:1;transform:translateX(-50%);}}
   .banner.good{animation:bgood .5s ease both;} @keyframes bgood{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
-  @media (prefers-reduced-motion:reduce){ .hostbubble.pop,.banner.good{animation:none;} }
+  /* Dethroning: a challenger beats a reigning champion. 'big' is for breaking a streak of 3+. */
+  .banner.fallen{background:radial-gradient(60% 90% at 50% 40%,rgba(245,178,62,.16),transparent 70%);}
+  .banner.fallen .fall-title{font-size:.62em;letter-spacing:.22em;color:var(--gold);margin-bottom:6px;animation:ftitle .6s cubic-bezier(.2,1.4,.4,1) both;}
+  .banner.fallen .fall-crown{display:block;margin:0 auto 6px;width:clamp(70px,9vw,120px);height:auto;transform-origin:50% 100%;animation:crownfall 1.1s cubic-bezier(.5,0,.9,.4) both;}
+  .banner.fallen.big .fall-crown{width:clamp(90px,12vw,160px);animation:crownfall 1.5s cubic-bezier(.5,0,.9,.4) both;}
+  .banner.fallen .sub{animation:ftitle .6s .5s ease both;}
+  @keyframes crownfall{0%{transform:translateY(-40px) rotate(0);opacity:0;}15%{opacity:1;transform:translateY(0) rotate(0);}55%{transform:translateY(0) rotate(-6deg);}100%{transform:translateY(22px) rotate(-38deg) scale(.9);opacity:.35;}}
+  @keyframes ftitle{from{opacity:0;transform:scale(1.35);}to{opacity:1;transform:none;}}
+  body.shake{animation:shake .6s ease;} @keyframes shake{10%,90%{transform:translate(-3px,1px);}20%,80%{transform:translate(5px,-2px);}30%,50%,70%{transform:translate(-7px,3px);}40%,60%{transform:translate(7px,-3px);}}
+  @media (prefers-reduced-motion:reduce){ .hostbubble.pop,.banner.good,.banner.fallen .fall-title,.banner.fallen .fall-crown,.banner.fallen .sub{animation:none;} body.shake{animation:none;} }
   .hoflist{display:flex;flex-direction:column;gap:8px;}
   .hofempty{color:var(--dim);font-weight:700;}
   .hofrow{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.04);border-radius:11px;padding:9px 13px;font-weight:800;}
@@ -631,6 +640,9 @@ const POOL = (window.TB && window.TB.bank && Object.keys(window.TB.bank('gk')||{
   ? [].concat(window.TB.bank('gk')['1']||[], window.TB.bank('gk')['2']||[], window.TB.bank('gk')['3']||[], window.TB.bank('gk')['4']||[])
   : POOL_LOCAL;
 function slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+/* Stable question ID: hash of the question text, so two questions that happen to
+   share an answer (e.g. 'Seven') are never mistaken for duplicates. */
+function qid(o){ if(o._id) return o._id; const t=String(o.q||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); let h=5381; for(let i=0;i<t.length;i++){ h=((h<<5)+h+t.charCodeAt(i))>>>0; } return (o._id='q'+h.toString(36)); }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
 const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -641,6 +653,8 @@ const SFX=(function(){ let ac=null,master=null,on=true;
   return {
     on:function(){ on=true; ctx(); }, mute:function(m){ on=!m; if(master) master.gain.value=m?0:0.9; }, isOn:function(){ return on; },
     theme:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [523,659,784,1047].forEach(function(f,i){ tone(f,t+i*0.1,0.32,'triangle',0.18); }); },
+    fall:function(big){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [[392,0],[330,0.16],[262,0.32],[196,0.5]].forEach(function(p){ tone(p[0],t+p[1],0.42,'sawtooth',0.14); }); noise(t+0.55,0.35,0.22,180);
+      if(big){ for(let i=0;i<14;i++) noise(t+i*0.045,0.05,0.09,200+i*10); tone(98,t+0.55,0.9,'triangle',0.22); noise(t+0.62,0.5,0.2,120); } },
     sting:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; tone(659,t,0.12,'triangle',0.16); tone(988,t+0.08,0.24,'triangle',0.15); },
     tick:function(){ const a=ctx(); if(!a||!on)return; tone(1200,a.currentTime,0.05,'square',0.07); },
     correct:function(){ const a=ctx(); if(!a||!on)return; const t=a.currentTime; [880,1320,1760].forEach(function(f,i){ tone(f,t,0.9,'sine',i===0?0.22:(i===1?0.14:0.08)); }); },
@@ -675,9 +689,9 @@ function topicMatches(q, t){
 }
 function topicPool(){
   if(!TOPIC) return POOL;
-  const f = POOL.filter(function(q){ return topicMatches(q, TOPIC); });
-  return f.length ? f : POOL;   // never leave the game with nothing to ask
+  return POOL.filter(function(q){ return topicMatches(q, TOPIC); });   // no silent fallback: Start is blocked if this is empty
 }
+function topicEmpty(){ return !!TOPIC && topicPool().length===0; }
 const COUNTDOWN_MS=3000;
 let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIndex:0, qTotal:20,
         q:null, qId:null, answerer:null, buzzWin:0, ansWin:0, lockedOut:[], firstResolved:false,
@@ -833,14 +847,22 @@ async function grade(choice){
 }
 async function win(p){
   const isChamp = G.champ && p.id===G.champ.id;
+  const fallen = (!isChamp && G.champ && G.streak>=1) ? {name:G.champ.name, streak:G.streak} : null;   // a reigning champion was just beaten
   G.pendingLoser = isChamp? G.chal : G.champ;
   if(isChamp){ G.streak++; } else { G.champ={id:p.id,name:p.name}; G.streak=1; }
   G.totalCorrect[p.id]=(G.totalCorrect[p.id]||0)+1;
   G.bestStreak[p.id]=Math.max(G.bestStreak[p.id]||0, G.streak);
   G.lastWinner={id:p.id,name:p.name};
   if(G.pendingLoser) blemish(G.pendingLoser.id);
-  SFX.correct(); HS('celebrate');
   G.outcome='win';
+  if(fallen){
+    const big = fallen.streak>=3;
+    SFX.correct(); SFX.fall(big); HS(big?'celebrate':'point');
+    hostSay(big ? pick(['A reign is over!','The mighty have fallen!','Unbelievable!']) : pick(['New champion!','Off the throne!','A changing of the guard!']));
+    banner(true, esc(p.name)+' takes the throne!', esc(fallen.name)+(fallen.streak>1?' falls after '+fallen.streak+' in a row':' is dethroned'), big?'fallenbig':'fallen', big?4400:3400);
+    return;
+  }
+  SFX.correct(); HS('celebrate');
   banner(true, esc(p.name)+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
 }
 function blemish(id){ if(id && G.blemished.indexOf(id)<0) G.blemished.push(id); }
@@ -851,9 +873,9 @@ async function bothMiss(){ G.outcome='bothmiss'; G.pendingLoser=null;
   SFX.wrong(); HS('wince');
   banner(false, 'Nobody got it!', 'Both step aside. Two new challengers.');
 }
-function banner(ok,msg,sub){
-  G.phase='reveal'; G.revealOk=ok; G.revealMsg=msg; G.revealSub=sub; writeState(); render();
-  clearTimeout(G._t); G._t=setTimeout(afterReveal, REVEAL_MS);
+function banner(ok,msg,sub,kind,ms){
+  G.phase='reveal'; G.revealOk=ok; G.revealMsg=msg; G.revealSub=sub; G.revealKind=kind||''; writeState(); render();
+  clearTimeout(G._t); G._t=setTimeout(afterReveal, ms||REVEAL_MS);
 }
 function afterReveal(){
   if(G.mode==='finale'){
@@ -905,9 +927,9 @@ function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=strea
   writeState(); render(); writeLegend(winner, flawless);
 }
 function pickQuestion(){ const pool=topicPool();
-  let cand=pool.filter(o=>!G.used.has(o.tag||slug(o.correct)));
+  let cand=pool.filter(o=>!G.used.has(qid(o)));
   if(!cand.length){ G.used=new Set(); cand=pool.slice(); }
-  const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(it.tag||slug(it.correct)); return it; }
+  const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(qid(it)); return it; }
 function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
   G.q={ q:it.q, opts, correctIdx:opts.indexOf(it.correct) };
   G.qId=G.code+':'+(G.mode==='finale'?'F':'')+G.qIndex+':'+Math.floor(Math.random()*1e6);
@@ -961,7 +983,11 @@ function render(){
   if(showBanner){
     const b=$('banner');
     if(G.phase==='finintro'){ b.className='banner good'; b.innerHTML='👑 Grand Finale<div class="sub">'+esc(G.finIntroMsg||'')+'</div>'; }
-    else if(G.phase==='reveal'){ b.className='banner '+(G.revealOk?'good':'bad'); b.innerHTML=G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>'; }
+    else if(G.phase==='reveal'){ const k=G.revealKind||''; const sig=G.qId+'|'+G.revealMsg; if(!(k && b.dataset.sig===sig)){   // a re-render must not restart the dethroning animation
+    b.dataset.sig=k?sig:''; b.className='banner '+(G.revealOk?'good':'bad')+(k?(' fallen'+(k==='fallenbig'?' big':'')):'');
+    const crown=k?'<svg class="fall-crown" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 58 L14 18 L36 38 L50 8 L64 38 L86 18 L92 58 Z" fill="#f5b23e" stroke="#ffd47a" stroke-width="3" stroke-linejoin="round"/><rect x="8" y="58" width="84" height="8" rx="2" fill="#c98a1c"/><circle cx="14" cy="16" r="5" fill="#ffd47a"/><circle cx="50" cy="6" r="5" fill="#ffd47a"/><circle cx="86" cy="16" r="5" fill="#ffd47a"/></svg>':'';
+    b.innerHTML=(k?crown+'<div class="fall-title">THE THRONE HAS FALLEN!</div>':'')+G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>';
+    if(k==='fallenbig'){ document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); setTimeout(function(){ document.body.classList.remove('shake'); }, 700); } } }
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
       let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
@@ -980,7 +1006,14 @@ function render(){
   // play view
   $('qnum').textContent='Question '+G.qIndex; $('qmeta').textContent='of '+G.qTotal;
   { const pr=$('prog'); if(pr) pr.style.width=Math.min(100,(G.qIndex/G.qTotal)*100)+'%'; }
-  { const be=$('best'); if(be){ const sk=streakKing(); be.textContent = (sk&&sk.s>0)? ('Longest streak so far: '+sk.s+', '+sk.name) : ''; } }
+  { const be=$('best'); if(be){ const sk=streakKing(); let t='';
+    if(sk&&sk.s>0){
+      const ch=G.champ, away=!isLive(sk.id)?' (away)':'';
+      if(ch && sk.id===ch.id) t='Finale race: '+sk.name+' leads on streak ('+sk.s+') and holds the throne. A win outright unless dethroned.';
+      else if(ch) t='Finale race: '+sk.name+' (longest streak, '+sk.s+')'+away+' vs '+ch.name+' (on the throne now). The last question decides the second seat.';
+      else t='Longest streak so far: '+sk.s+', '+sk.name;
+    }
+    be.textContent=t; } }
   if(G.mode==='finale' && G.finalists){ $('qnum').textContent='Grand Finale'; $('qmeta').textContent='first to 2'; const pr=$('prog'); if(pr) pr.style.width='100%'; const be=$('best'); if(be) be.textContent=scoreStr(); }
   $('qtext').textContent=G.q?G.q.q:',';
   const opts=$('opts'); opts.innerHTML='';
@@ -1156,7 +1189,7 @@ function playSting(key, done){
   timer=setTimeout(finish, T.dur);
 }
 
-$('startBtn').addEventListener('click', function(){ if(livePlayers().length<2) return; playSting('throne', startGame); });
+$('startBtn').addEventListener('click', function(){ if(livePlayers().length<2) return; if(topicEmpty()){ updateTopicNote(); const ti=$('topicIn'); if(ti) ti.focus(); return; } playSting('throne', startGame); });
 /* Up to 50 questions. Past 20 it steps in fives, so a long game is a few taps
    rather than thirty. Both pools are far larger than 50, so no repeats. */
 function qStep(n){ return n > 20 ? 5 : 1; }
@@ -1181,7 +1214,7 @@ function updateTopicNote(){
   if(!TOPIC){ note.textContent='Leave blank for all topics.'; note.className='topicnote'; return; }
   const n = POOL.filter(function(q){ return topicMatches(q, TOPIC); }).length;
   if(n===0){
-    note.textContent='Nothing found for that. The game will use every topic instead.';
+    note.textContent='Nothing found for that topic. Change or clear it to start.';
     note.className='topicnote bad';
   } else if(n < 10){
     note.textContent = n + ' question' + (n===1?'':'s') + ' on that. Questions will repeat in a longer game.';
