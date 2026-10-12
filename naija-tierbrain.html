@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Naija TierBrain — 20 Questions</title>
+<meta name="theme-color" content="#031f15">
+<meta name="description" content="20 questions on Nigeria: history, geography, culture, music, Nollywood and leaders. Climb four levels. Free, no sign-up.">
+<meta property="og:title" content="Naija TierBrain: how well do you know Nigeria?">
+<meta property="og:description" content="20 questions, four levels. Can you reach Legends?">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#031f15; --bg1:#06402a; --card:#0a3324; --card2:#104532;
+    --ink:#f4fbf7; --mut:#a9d1bd; --line:#1f6e4c;
+    --l1:#a6efc6; --l2:#4fd48f; --l3:#11a964; --l4:#ffffff;
+    --gold:#ffffff; --right:#5be39b; --wrong:#ff5d8a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(0,135,81,.45), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(255,255,255,.07), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#03231a;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#03231a;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(2,28,19,.97),rgba(5,52,35,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,#ffffff,#7fe3a9);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#cfeadc;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#e4f5ec;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#fff;
+    background:linear-gradient(180deg,#0aa465,#008751);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #00573a,0 12px 26px rgba(0,135,81,.45);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #00573a;}
+  button.cta.blue{background:linear-gradient(180deg,#ffffff,#d6ece1);box-shadow:0 7px 0 #8fb8a2,0 12px 26px rgba(255,255,255,.18);color:#00573a;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8fb8a2;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fe0b5;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#cfeadc;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#03231a;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#03231a;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#03231a;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#03231a;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#03231a;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+
+  /* ---------- Naija polish ---------- */
+  #app{padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));}
+  .flagbar{display:flex;height:6px;border-radius:6px;overflow:hidden;flex:none;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+  .flagbar i{flex:1;background:#008751;}.flagbar i:nth-child(2){background:#fff;}
+  .flag{display:flex;width:60px;height:40px;border-radius:7px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .flag i{flex:1;background:#008751;}.flag i:nth-child(2){background:#fff;}
+  .qbox{border-top:4px solid #008751;}
+  .opt{min-height:56px;}
+  .opt:hover{border-color:#fff;}
+  button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+  .sharerow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .sharebtn{display:inline-block;text-decoration:none;font-family:'Baloo 2';font-weight:700;font-size:15px;color:#fff;border:2px solid var(--line);border-radius:30px;padding:9px 18px;background:rgba(255,255,255,.05);}
+  .sharebtn:hover{border-color:#fff;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+  .coffee{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .coffee p{font-weight:700;font-size:15px;color:#cfeadc;margin:0;}
+  .coffeebtn{display:inline-block;text-decoration:none;font-family:'Baloo 2';font-weight:700;font-size:16px;color:#fff;background:linear-gradient(180deg,#0aa465,#008751);border-radius:30px;padding:10px 24px;box-shadow:0 4px 0 #00573a;}
+  .coffeebtn:active{transform:translateY(3px);box-shadow:0 1px 0 #00573a;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="flagbar" aria-hidden="true"><i></i><i></i><i></i></div>
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap" aria-hidden="true"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display" role="status" aria-live="polite"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="flag" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="sub">Nigeria Trivia</div>
+    <h1 class="big display">Naija TierBrain</h1>
+    <p class="lead">20 questions on Nigeria — its history, geography, culture, music, Nollywood and leaders. Four tiers now — climb through Easy, Medium and Hard all the way to the new Legends tier!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right answers in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code — optional</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <div class="coffee"><p>If you liked the game, buy me a coffee.</p><a class="coffeebtn" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Buy me a coffee</a></div>
+    <div class="sharerow"></div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <div class="coffee"><p>If you liked the game, buy me a coffee.</p><a class="coffeebtn" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Buy me a coffee</a></div>
+    <div class="sharerow"></div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up — here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <div class="coffee"><p>If you liked the game, buy me a coffee.</p><a class="coffeebtn" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Buy me a coffee</a></div>
+    <div class="sharerow"></div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet — be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (Nigeria: verify all facts before publishing) ============
+  const BANK={
+    1:[
+      {q:"When did Nigeria gain independence from Britain?",correct:"1 October 1960",wrong:["1 January 1914", "12 June 1993", "29 May 1999"]},
+      {q:"Which is Nigeria's most populous city?",correct:"Lagos",wrong:["Abuja", "Kano", "Ibadan"]},
+      {q:"What is the capital of Nigeria?",correct:"Abuja",wrong:["Lagos", "Kaduna", "Port Harcourt"]},
+      {q:"How many states does Nigeria have, not counting the FCT?",correct:"36",wrong:["30", "32", "40"]},
+      {q:"Eba, a popular Nigerian swallow, is made from:",correct:"Garri (cassava)",wrong:["Rice", "Beans", "Plantain"]},
+      {q:"Which is NOT one of Nigeria's three major indigenous languages?",correct:"Swahili",wrong:["Hausa", "Yoruba", "Igbo"]},
+      {q:"What is Nigeria's official language?",correct:"English",wrong:["Hausa", "Yoruba", "French"]},
+      {q:"What is Nigeria's currency?",correct:"Naira",wrong:["Cedi", "Rand", "Shilling"]},
+      {q:"What is the name of Nigeria's film industry?",correct:"Nollywood",wrong:["Lagoswood", "Afrowood", "Abujawood"]},
+      {q:"Who pioneered Afrobeat music?",correct:"Fela Kuti",wrong:["King Sunny Ade", "Ebenezer Obey", "Victor Olaiya"]},
+      {q:"Which artist is nicknamed the \"African Giant\"?",correct:"Burna Boy",wrong:["Wizkid", "Davido", "Olamide"]},
+      {q:"What is the Nigerian men's football team nicknamed?",correct:"Super Eagles",wrong:["Black Stars", "Indomitable Lions", "Desert Foxes"]},
+      {q:"Who succeeded Muhammadu Buhari as President in 2023?",correct:"Bola Tinubu",wrong:["Goodluck Jonathan", "Atiku Abubakar", "Peter Obi"]},
+      {q:"Nigeria's national colours are green and what?",correct:"White",wrong:["Red", "Yellow", "Blue"]},
+      {q:"Which rice dish sparks a famous friendly rivalry between Nigeria and Ghana?",correct:"Jollof rice",wrong:["Fried rice", "Coconut rice", "Rice and stew"]},
+      {q:"Suya, a popular street food, is made from:",correct:"Spiced grilled meat on skewers",wrong:["Steamed bean pudding", "Fried dough balls", "Pounded yam"]},
+      {q:"Moin moin is a steamed pudding made mainly from:",correct:"Beans",wrong:["Rice", "Cassava", "Maize"]},
+      {q:"How many vertical stripes does the Nigerian flag have?",correct:"Three",wrong:["Two", "Four", "Five"]},
+      {q:"Which Nigerian singer is nicknamed \"Starboy\"?",correct:"Wizkid",wrong:["Davido", "Burna Boy", "Rema"]},
+      {q:"What is Nigeria's biggest export?",correct:"Crude oil",wrong:["Cocoa", "Tin", "Rubber"]},
+      {q:"Egusi soup is made from the ground seeds of which plant?",correct:"Melon",wrong:["Pumpkin", "Groundnut", "Sesame"]},
+      {q:"In which region of Africa is Nigeria?",correct:"West Africa",wrong:["East Africa", "North Africa", "Southern Africa"]},
+      {q:"Nigeria takes its name from which river?",correct:"The Niger",wrong:["The Benue", "The Cross River", "The Ogun"]},
+      {q:"Nigeria's southern coast lies on which gulf?",correct:"The Gulf of Guinea",wrong:["The Gulf of Aden", "The Persian Gulf", "The Gulf of Mexico"]},
+      {q:"Which bird sits on top of Nigeria's coat of arms?",correct:"An eagle",wrong:["A parrot", "A hornbill", "An ostrich"]}
+    ],
+    2:[
+      {q:"Who was Nigeria's first Prime Minister?",correct:"Abubakar Tafawa Balewa",wrong:["Nnamdi Azikiwe", "Obafemi Awolowo", "Ahmadu Bello"]},
+      {q:"The Nigerian Civil War (Biafran War) took place between:",correct:"1967 and 1970",wrong:["1960 and 1963", "1975 and 1979", "1983 and 1985"]},
+      {q:"Democracy Day in Nigeria is now marked on which date?",correct:"12 June",wrong:["1 October", "29 May", "15 January"]},
+      {q:"In which year did the Fourth Republic begin with a return to civilian rule?",correct:"1999",wrong:["1979", "1993", "2007"]},
+      {q:"Which two rivers meet at Lokoja?",correct:"Niger and Benue",wrong:["Niger and Kaduna", "Benue and Cross", "Ogun and Osun"]},
+      {q:"Zuma Rock, a giant monolith, is close to which city?",correct:"Abuja",wrong:["Enugu", "Calabar", "Jos"]},
+      {q:"Which country borders Nigeria to the west?",correct:"Benin",wrong:["Niger", "Cameroon", "Chad"]},
+      {q:"In Naija Pidgin, \"Wetin dey?\" means roughly:",correct:"What's going on?",wrong:["Where is it?", "Who is there?", "How much?"]},
+      {q:"In which year did Nigeria win Olympic football gold?",correct:"1996",wrong:["1992", "2000", "2008"]},
+      {q:"Who wrote the novel Things Fall Apart?",correct:"Chinua Achebe",wrong:["Wole Soyinka", "Chimamanda Adichie", "Ben Okri"]},
+      {q:"Who was Nigeria's first President, from 1963?",correct:"Nnamdi Azikiwe",wrong:["Tafawa Balewa", "Yakubu Gowon", "Obafemi Awolowo"]},
+      {q:"Who was Head of State during the civil war?",correct:"Yakubu Gowon",wrong:["Murtala Mohammed", "Olusegun Obasanjo", "Ibrahim Babangida"]},
+      {q:"Who was sworn in as President on 29 May 1999?",correct:"Olusegun Obasanjo",wrong:["Shehu Shagari", "Muhammadu Buhari", "Umaru Yar'Adua"]},
+      {q:"Which northern city is famed for the ancient Kurmi Market and a centuries-old walled city?",correct:"Kano",wrong:["Maiduguri", "Sokoto", "Katsina"]},
+      {q:"What is the capital of Rivers State?",correct:"Port Harcourt",wrong:["Calabar", "Uyo", "Owerri"]},
+      {q:"Where is the oil-rich Niger Delta?",correct:"In the south, on the Atlantic coast",wrong:["In the north-east", "In the north-west", "In the centre"]},
+      {q:"What is the capital of Oyo State?",correct:"Ibadan",wrong:["Ogbomosho", "Oyo", "Abeokuta"]},
+      {q:"Calabar is the capital of which state?",correct:"Cross River",wrong:["Akwa Ibom", "Rivers", "Bayelsa"]},
+      {q:"Lake Chad touches which north-eastern Nigerian state?",correct:"Borno",wrong:["Kebbi", "Taraba", "Ebonyi"]},
+      {q:"Who wrote the novel Half of a Yellow Sun?",correct:"Chimamanda Ngozi Adichie",wrong:["Buchi Emecheta", "Ben Okri", "Chinua Achebe"]},
+      {q:"Which Nigerian businessman founded the Dangote Group?",correct:"Aliko Dangote",wrong:["Femi Otedola", "Mike Adenuga", "Tony Elumelu"]},
+      {q:"In which year was the naira introduced, replacing the Nigerian pound?",correct:"1973",wrong:["1960", "1985", "1999"]},
+      {q:"What is the Nigerian women's national football team called?",correct:"The Super Falcons",wrong:["The Lionesses", "The Black Queens", "The Super Eagles"]},
+      {q:"Which city is nicknamed the \"Coal City\"?",correct:"Enugu",wrong:["Jos", "Owerri", "Aba"]},
+      {q:"Jos is the capital of which state?",correct:"Plateau",wrong:["Benue", "Nasarawa", "Kogi"]}
+    ],
+    3:[
+      {q:"Who is credited with the 1914 amalgamation of Northern and Southern Nigeria?",correct:"Frederick Lugard",wrong:["David Livingstone", "Cecil Rhodes", "Mungo Park"]},
+      {q:"In which year did the capital officially move from Lagos to Abuja?",correct:"1991",wrong:["1983", "1999", "1960"]},
+      {q:"What is Nigeria's highest mountain?",correct:"Chappal Waddi",wrong:["Zuma Rock", "Olumo Rock", "Mount Patti"]},
+      {q:"Which is Nigeria's largest state by land area?",correct:"Niger State",wrong:["Borno", "Kano", "Lagos"]},
+      {q:"The Argungu Festival in Kebbi State is best known for:",correct:"A fishing contest",wrong:["Horse racing", "Masquerades", "Wrestling"]},
+      {q:"The Osun-Osogbo Sacred Grove, a UNESCO World Heritage Site, is in which state?",correct:"Osun",wrong:["Oyo", "Ogun", "Ondo"]},
+      {q:"Who won the 1986 Nobel Prize in Literature, the first African to do so?",correct:"Wole Soyinka",wrong:["Chinua Achebe", "Naguib Mahfouz", "Nadine Gordimer"]},
+      {q:"Goodluck Jonathan became President in 2010 after the death of:",correct:"Umaru Musa Yar'Adua",wrong:["Sani Abacha", "Murtala Mohammed", "Shehu Shagari"]},
+      {q:"Which Head of State was killed in a failed coup in February 1976?",correct:"Murtala Mohammed",wrong:["Johnson Aguiyi-Ironsi", "Ibrahim Babangida", "Yakubu Gowon"]},
+      {q:"Who is widely believed to have won the annulled 12 June 1993 election?",correct:"MKO Abiola",wrong:["Bashir Tofa", "Sani Abacha", "Ibrahim Babangida"]},
+      {q:"Who was President of Nigeria's Second Republic, from 1979 to 1983?",correct:"Shehu Shagari",wrong:["Olusegun Obasanjo", "Muhammadu Buhari", "Nnamdi Azikiwe"]},
+      {q:"Which city was capital of the Northern Region in the First Republic?",correct:"Kaduna",wrong:["Kano", "Sokoto", "Jos"]},
+      {q:"In which year did Nigeria win its first Africa Cup of Nations?",correct:"1980",wrong:["1976", "1994", "2013"]},
+      {q:"In which year did Ngozi Okonjo-Iweala become Director-General of the WTO?",correct:"2021",wrong:["2019", "2023", "2017"]},
+      {q:"Who is often called the father of Nigerian nationalism?",correct:"Herbert Macaulay",wrong:["Obafemi Awolowo", "Ahmadu Bello", "Tafawa Balewa"]},
+      {q:"The Alaafin is the traditional ruler of which city?",correct:"Oyo",wrong:["Ife", "Ibadan", "Abeokuta"]},
+      {q:"Nigeria won the first FIFA U-16 (now U-17) World Cup in which year?",correct:"1985",wrong:["1983", "1989", "1991"]},
+      {q:"In which year did Nigeria join OPEC?",correct:"1971",wrong:["1960", "1975", "1980"]},
+      {q:"The 1929 Aba Women's War was a protest against:",correct:"British colonial rule and taxation",wrong:["The slave trade", "Military rule", "A religious ban"]},
+      {q:"Which city was capital of the Eastern Region before the civil war?",correct:"Enugu",wrong:["Port Harcourt", "Calabar", "Owerri"]},
+      {q:"Nnamdi Azikiwe founded which newspaper in 1937?",correct:"West African Pilot",wrong:["Daily Times", "The Punch", "The Guardian"]},
+      {q:"Obafemi Awolowo was Premier of which region in the 1950s?",correct:"Western Region",wrong:["Northern Region", "Eastern Region", "Mid-Western Region"]},
+      {q:"Ahmadu Bello, Premier of the Northern Region, held which title?",correct:"Sardauna of Sokoto",wrong:["Emir of Kano", "Ooni of Ife", "Alaafin of Oyo"]},
+      {q:"Who won Nigeria's first individual Olympic gold, in the 1996 long jump?",correct:"Chioma Ajunwa",wrong:["Falilat Ogunkoya", "Mary Onyali", "Blessing Okagbare"]},
+      {q:"Which Nigerian author won the 1991 Booker Prize for The Famished Road?",correct:"Ben Okri",wrong:["Chinua Achebe", "Wole Soyinka", "Helon Habila"]},
+      {q:"Kainji Dam is built on which river?",correct:"The Niger",wrong:["The Benue", "The Kaduna", "The Cross River"]},
+      {q:"Olumo Rock is a famous landmark in which city?",correct:"Abeokuta",wrong:["Ibadan", "Ilorin", "Akure"]}
+    ],
+    4:[
+      {q:"Who ruled Nigeria as military Head of State from 1985 to 1993?",correct:"Ibrahim Babangida",wrong:["Sani Abacha", "Muhammadu Buhari", "Ernest Shonekan"]},
+      {q:"Who headed the Interim National Government in 1993?",correct:"Ernest Shonekan",wrong:["Sani Abacha", "Ibrahim Babangida", "Abdulsalami Abubakar"]},
+      {q:"Which ruler died suddenly in June 1998, opening the way to civilian rule?",correct:"Sani Abacha",wrong:["Abdulsalami Abubakar", "Ibrahim Babangida", "Murtala Mohammed"]},
+      {q:"The Nok culture, famed for terracotta sculptures, is linked to which region?",correct:"North-central Nigeria",wrong:["South-east Nigeria", "The Niger Delta", "South-west Nigeria"]},
+      {q:"The Benin Bronzes come from the Kingdom of Benin, in which modern state?",correct:"Edo",wrong:["Delta", "Ondo", "Ogun"]},
+      {q:"Who founded the Sokoto Caliphate in 1804?",correct:"Usman dan Fodio",wrong:["Ahmadu Bello", "Rabih az-Zubayr", "Samori Toure"]},
+      {q:"Who is best known as the leader of the January 1966 coup?",correct:"Chukwuma Kaduna Nzeogwu",wrong:["Yakubu Gowon", "Murtala Mohammed", "Buka Suka Dimka"]},
+      {q:"Nigeria's first commercial oil well, drilled in 1956, is named after which town in today's Bayelsa State?",correct:"Oloibiri",wrong:["Warri", "Bonny", "Ughelli"]},
+      {q:"Which city is home to Ahmadu Bello University?",correct:"Zaria",wrong:["Kano", "Kaduna", "Ibadan"]},
+      {q:"Queen Amina, the warrior queen, ruled which Hausa city-state?",correct:"Zazzau (Zaria)",wrong:["Kano", "Katsina", "Gobir"]},
+      {q:"Which city is regarded as the spiritual cradle of the Yoruba people?",correct:"Ile-Ife",wrong:["Oyo", "Ibadan", "Abeokuta"]},
+      {q:"The ancient Igbo-Ukwu bronzes were found in which present-day state?",correct:"Anambra",wrong:["Enugu", "Imo", "Abia"]},
+      {q:"Who handed power to Olusegun Obasanjo in May 1999?",correct:"Abdulsalami Abubakar",wrong:["Sani Abacha", "Ernest Shonekan", "Ibrahim Babangida"]},
+      {q:"On what date did Nigeria's first military coup take place?",correct:"15 January 1966",wrong:["29 July 1966", "13 February 1976", "31 December 1983"]},
+      {q:"In which year did Muhammadu Buhari first become Head of State?",correct:"1983",wrong:["1975", "1979", "1985"]},
+      {q:"The Sukur Cultural Landscape, a UNESCO World Heritage Site, is in which state?",correct:"Adamawa",wrong:["Bauchi", "Taraba", "Gombe"]},
+      {q:"Which leader introduced the Structural Adjustment Programme in 1986?",correct:"Ibrahim Babangida",wrong:["Sani Abacha", "Muhammadu Buhari", "Olusegun Obasanjo"]},
+      {q:"Nigeria's first university, founded in 1948, was:",correct:"University College, Ibadan",wrong:["University of Nigeria, Nsukka", "Ahmadu Bello University", "University of Lagos"]},
+      {q:"Yoruba and Igbo belong to which language family?",correct:"Niger-Congo",wrong:["Afroasiatic", "Nilo-Saharan", "Indo-European"]},
+      {q:"In which year did Gowon create Nigeria's first 12 states?",correct:"1967",wrong:["1963", "1970", "1976"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};updateShare();
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};updateShare();
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};updateShare();
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_naija-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function updateShare(){
+    const t='I got '+lastRun.correct+'/20 on Naija TierBrain (reached Level '+lastRun.level+'). Can you beat me?';
+    const u=location.protocol.indexOf('http')===0?' '+location.href:'';
+    const q=encodeURIComponent(t+u);
+    document.querySelectorAll('.sharerow').forEach(function(r){
+      r.innerHTML='<a class="sharebtn" target="_blank" rel="noopener" href="https://wa.me/?text='+q+'">Share on WhatsApp</a><a class="sharebtn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+q+'">Share on X</a>';
+    });
+  }
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet \u2014 be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet \u2014 be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board \u2014 check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+</body>
+</html>
