@@ -15,7 +15,8 @@
   }
 })();
 </script>
-<meta name="theme-color" content="#161232">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%231c1013'/%3E%3Cg transform='translate(2.4 2.4) scale(.9)'%3E%3Cdefs%3E%3CclipPath id='c'%3E%3Cpath d='M22.3 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.3 38Z'/%3E%3Cpath d='M25.7 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.7 38Z'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23c)'%3E%3Crect y='5' width='48' height='11.07' fill='%23f2d27a'/%3E%3Crect y='19.47' width='48' height='9.07' fill='%23d9694f'/%3E%3Crect y='31.93' width='48' height='10.07' fill='%2386bf9d'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#1c1013">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/">
 <meta property="og:title" content="TierBrain | Free Quizzes, Puzzles &amp; Party Games Online">
@@ -29,145 +30,322 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script>(function(){var t=null;try{t=localStorage.getItem('tb-theme')}catch(e){}
+if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';}
+document.documentElement.setAttribute('data-theme',t);
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#f8f0e2':'#1c1013');})();</script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   a{text-decoration:none;color:inherit;}
-  :root{--bg0:#0c0a1e;--bg1:#161232;--bg2:#0d1430;--ink:#f4f1ff;--mut:#a9a4cf;--line:rgba(255,255,255,.10);--gold:#f2c95c;}
-  html,body{min-height:100%;}
-  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
-    background:radial-gradient(90% 60% at 15% -10%,rgba(201,138,224,.16),transparent 55%),
-      radial-gradient(70% 50% at 100% 0%,rgba(61,143,232,.14),transparent 55%),
+  :root{color-scheme:dark;
+    --bg0:#130a0d;--bg1:#1c1013;--bg2:#241418;--ink:#fbf1e2;--ink-strong:#ffffff;--mut:#c2a99a;
+    --w:255,255,255;--line:rgba(var(--w),.10);
+    --g:230,182,85;--em:217,105,79;--sg:134,191,157;--wr:232,118,95;
+    --gold:#e6b655;--gold-hi:#efc66f;--on-gold:#1c1013;
+    --amber:#e0a458;--ember:#d9694f;--sage:#86bf9d;--rose:#d98f8f;--pale:#f2d27a;--wood:#9b7455;--wrong:#e8765f;
+    --t1:#86bf9d;--t2:#e0a458;--t3:#d9694f;--t4:#f2d27a;--rung-ink:#1c1013;
+    --card1:rgba(var(--w),.065);--card2:rgba(var(--w),.03);--field:rgba(var(--w),.05);
+    --streak:#f0c98c;--res:#d9c8b8;--search-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23c2a99a' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+    --display:'Baloo 2','Nunito',system-ui,sans-serif;--acc:var(--gold);}
+  :root[data-theme="light"]{color-scheme:light;
+    --bg0:#fcf7ee;--bg1:#f8f0e2;--bg2:#f4e9d6;--ink:#2a1a14;--ink-strong:#1c1013;--mut:#6b5649;
+    --w:60,36,28;--line:rgba(var(--w),.16);
+    --g:133,89,10;--em:176,56,35;--sg:42,117,80;--wr:176,56,35;
+    --gold:#85590a;--gold-hi:#6f4807;--on-gold:#fff8ea;
+    --amber:#9c5808;--ember:#b03823;--sage:#2a7550;--rose:#a64a52;--pale:#856000;--wood:#8a6246;--wrong:#b03823;
+    --t1:#2a7050;--t2:#a85a08;--t3:#b03823;--t4:#8a6100;--rung-ink:#fffaf0;
+    --card1:#fffdf8;--card2:#fbf5ea;--field:#fffdf8;
+    --streak:#85590a;--res:#5a4639;--search-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236b5649' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");}
+  html{min-height:100%;scroll-padding-top:16px;}
+  body{min-height:100%;font-family:'Nunito',system-ui,sans-serif;color:var(--ink);line-height:1.5;
+    background:radial-gradient(90% 60% at 15% -10%,rgba(var(--g),.10),transparent 55%),
+      radial-gradient(70% 50% at 100% 0%,rgba(var(--em),.10),transparent 55%),
       linear-gradient(165deg,var(--bg0),var(--bg1) 55%,var(--bg2));
     background-attachment:fixed;padding-bottom:70px;}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
-  header{padding:34px 0 4px;}
-  .word{font-family:'Baloo 2';font-weight:700;font-size:21px;}
+  .skip{position:absolute;left:12px;top:-64px;z-index:100;background:var(--gold);color:var(--on-gold);font-weight:800;padding:10px 16px;border-radius:10px;}
+  .skip:focus{top:12px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px;}
+
+  /* brand + hero */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:28px 0 0;}
+  .theme-toggle{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(var(--w),.04);color:var(--gold);display:grid;place-items:center;cursor:pointer;transition:border-color .16s,background .16s;}
+  .theme-toggle:hover{border-color:rgba(var(--g),.6);background:rgba(var(--g),.10);}
+  .theme-toggle svg{width:20px;height:20px;}
+  :root[data-theme="light"] .ico-sun{display:none;} :root:not([data-theme="light"]) .ico-moon{display:none;}
+  .brand{display:inline-flex;align-items:center;gap:10px;}
+  .brand svg{width:38px;height:38px;flex:none;}
+  .word{font-family:var(--display);font-weight:500;font-size:26px;letter-spacing:-.01em;}
   .word b{color:var(--gold);font-weight:800;}
-  .hero{margin-top:26px;max-width:640px;}
-  .hero .eyebrow{font-weight:800;color:var(--mut);font-size:13.5px;margin-bottom:9px;}
-  .hero h1{font-family:'Baloo 2';font-weight:700;font-size:clamp(28px,5.2vw,42px);line-height:1.14;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:36px;align-items:center;margin-top:36px;}
+  .hero h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,7.2vw,62px);line-height:1.03;letter-spacing:-.015em;text-wrap:balance;}
   .hero h1 em{font-style:normal;color:var(--gold);}
-  .hero p{margin-top:11px;color:var(--mut);font-weight:600;font-size:15.5px;line-height:1.6;max-width:520px;}
-  .occasion{display:block;margin-top:18px;max-width:520px;padding:14px 16px;border-radius:14px;
-    background:linear-gradient(135deg,rgba(242,201,92,.14),rgba(201,138,224,.10));
-    border:1px solid rgba(242,201,92,.34);transition:border-color .16s;}
-  .occasion:hover{border-color:var(--gold);}
-  .occasion:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
-  .occasion b{font-family:'Baloo 2';font-weight:700;font-size:16px;color:var(--gold);display:block;}
-  .occasion span{display:block;margin-top:3px;color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.5;}
-  .utility{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;align-items:center;}
-  .search{flex:1;min-width:210px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
-    padding:13px 15px;color:var(--ink);font-weight:700;font-size:15px;font-family:inherit;}
+  .hero .lede{margin-top:16px;color:var(--mut);font-weight:600;font-size:17.5px;line-height:1.6;max-width:30em;}
+  .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;align-items:center;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:800;font-size:15.5px;font-family:inherit;transition:transform .16s ease,background .16s ease,border-color .16s ease;}
+  .btn-main{background:var(--gold);color:var(--on-gold);box-shadow:0 8px 22px rgba(var(--g),.22);}
+  .btn-main:hover{transform:translateY(-2px);background:var(--gold-hi);}
+  .btn-ghost{color:var(--gold);border:1px solid rgba(var(--g),.5);background:rgba(var(--g),.06);}
+  .btn-ghost:hover{border-color:var(--gold);background:rgba(var(--g),.12);}
+  .hero-note{margin-top:16px;color:var(--mut);font-weight:700;font-size:13.5px;}
+  .hero-art{width:100%;max-width:440px;height:auto;justify-self:end;}
+  .hero-art text{font-family:var(--display);font-weight:800;font-size:17px;fill:var(--rung-ink);text-anchor:middle;}
+  .hero-art .rail{fill:var(--wood);} .hero-art .r1{fill:var(--t1);} .hero-art .r2{fill:var(--t2);} .hero-art .r3{fill:var(--t3);} .hero-art .r4{fill:var(--t4);}
+  .hero-art .tok{fill:var(--ink);stroke:var(--t4);stroke-width:3;} .hero-art .star{fill:var(--t4);}
+
+  /* sections */
+  .secrow{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin:60px 0 18px;gap:6px 14px;}
+  .sec[data-sec="feat"] .secrow{margin-top:44px;}
+  .sec[data-sec="feat"]{--acc:var(--gold);} .sec[data-sec="multi"]{--acc:var(--sage);}
+  .sec[data-sec="adv"]{--acc:var(--ember);} .sec[data-sec="quick"]{--acc:var(--amber);} .sec[data-sec="quiz"]{--acc:var(--gold);}
+  .sectitle{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.01em;margin:0;}
+  .sectitle::before{content:"";width:8px;height:24px;border-radius:3px;background:var(--acc);flex:none;}
+  .secnote{color:var(--mut);font-weight:700;font-size:13.5px;text-align:right;}
+  .secnote a{color:var(--gold);font-weight:800;}
+  .secnote a:hover{text-decoration:underline;}
+
+  /* search + filters */
+  .tray{margin-top:46px;}
+  .utility{display:flex;gap:10px 12px;flex-wrap:wrap;align-items:center;}
+  .search{flex:1;min-width:230px;-webkit-appearance:none;appearance:none;
+    background:var(--field) var(--search-icon) no-repeat 15px 50%;
+    border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 44px;color:var(--ink);font-weight:700;font-size:16px;font-family:inherit;min-height:48px;}
   .search::placeholder{color:var(--mut);}
   .search:focus{border-color:var(--gold);}
   .pills{display:flex;gap:7px;flex-wrap:wrap;}
-  .pill{padding:13px 16px;border-radius:999px;font-weight:800;font-size:13px;border:1px solid var(--line);
-    color:var(--mut);background:rgba(255,255,255,.03);cursor:pointer;font-family:inherit;min-height:44px;}
-  a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px;}
-  .pill.on{background:var(--gold);color:#241a12;border-color:var(--gold);}
-  .count{color:var(--mut);font-weight:700;font-size:13px;margin-top:12px;}
-  .secrow{display:flex;align-items:baseline;justify-content:space-between;margin:46px 0 16px;gap:14px;}
-  .sectitle{font-family:'Baloo 2';font-weight:700;font-size:21px;margin:0;}
-  .secnote{color:var(--mut);font-weight:700;font-size:13px;text-align:right;}
-  .feat{display:grid;grid-template-columns:1.35fr 1fr;gap:15px;}
-  .feat-side{display:grid;grid-template-rows:1fr 1fr 1fr;gap:15px;}
-  .fc{position:relative;border-radius:20px;overflow:hidden;padding:20px;display:flex;flex-direction:column;
-    justify-content:flex-end;min-height:176px;transition:transform .18s ease,box-shadow .18s ease;}
-  .fc:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(0,0,0,.4);}
-  .fc h3{font-family:'Baloo 2';font-weight:700;font-size:20px;position:relative;z-index:1;}
-  .fc p{font-weight:700;font-size:12.8px;margin-top:5px;max-width:38ch;line-height:1.45;position:relative;z-index:1;
-    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-  .fc .tag{align-self:flex-start;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;z-index:1;
-    position:relative;margin-bottom:auto;}
+  .pill{padding:0 16px;border-radius:999px;font-weight:800;font-size:13.5px;border:1px solid var(--line);color:var(--mut);background:rgba(var(--w),.03);cursor:pointer;font-family:inherit;min-height:44px;transition:border-color .16s,color .16s;}
+  .pill:hover{color:var(--ink);border-color:rgba(var(--w),.28);}
+  .pill.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold);}
+  .count{color:var(--mut);font-weight:800;font-size:13.5px;margin-left:auto;}
+
+  /* featured */
+  .feat{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;}
+  .feat-side{display:grid;grid-template-rows:repeat(3,1fr);gap:16px;}
+  .fc{position:relative;border-radius:22px;overflow:hidden;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;min-height:168px;transition:transform .18s ease,box-shadow .18s ease;}
+  .fc::before{content:"";position:absolute;inset:0;background:radial-gradient(70% 60% at 88% 8%,rgba(255,255,255,.10),transparent 60%);}
+  .fc:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(0,0,0,.4);}
+  .fc h3{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.15;position:relative;z-index:1;}
+  .fc p{font-weight:700;font-size:14px;margin-top:6px;max-width:40ch;line-height:1.5;position:relative;z-index:1;}
+  .fc .tag{align-self:flex-start;font-weight:800;font-size:12px;padding:5px 11px;border-radius:999px;z-index:1;position:relative;margin-bottom:auto;}
   .fc .art{position:absolute;inset:0;width:100%;height:100%;}
-  .fbig{min-height:340px;} .fbig h3{font-size:26px;}
-  .f-creak{grid-row:1/3;background:repeating-linear-gradient(115deg,rgba(0,0,0,.16) 0 2px,transparent 2px 26px),
-    linear-gradient(200deg,#3a2a1c,#1c130d 70%);color:#f6ead9;border:1px solid rgba(201,146,78,.35);}
+  .fbig{min-height:360px;} .fbig h3{font-size:34px;} .fbig p{font-size:15.5px;max-width:34ch;}
+  .f-creak{background:repeating-linear-gradient(115deg,rgba(0,0,0,.16) 0 2px,transparent 2px 26px),linear-gradient(200deg,#3a2a1c,#1c130d 70%);color:#f6ead9;border:1px solid rgba(201,146,78,.35);}
   .f-creak .tag{background:rgba(201,146,78,.22);color:#f0c98c;} .f-creak p{color:#d8c3a8;}
-  .f-gas{background:linear-gradient(200deg,#241d2c,#100c14 75%);color:#e9dfc8;border:1px solid rgba(201,162,74,.3);}
-  .f-gas .tag{background:rgba(201,162,74,.18);color:#d8bd7c;} .f-gas p{color:#b9ad9a;} .f-gas h3{font-family:'Fraunces',serif;}
-.f-circuit{background:linear-gradient(200deg,#3a2616,#1a0f08 75%);color:#f0e4cc;border:1px solid rgba(233,196,127,.35);}
-.f-circuit .tag{background:rgba(233,196,127,.18);color:#e9c47f;}
-.f-circuit p{color:#c9b69a;}
-.f-circuit h3{font-family:'Fraunces',serif;}
+  .f-circuit{background:linear-gradient(200deg,#3a2616,#1a0f08 75%);color:#f0e4cc;border:1px solid rgba(233,196,127,.35);}
+  .f-circuit .tag{background:rgba(233,196,127,.18);color:#e9c47f;} .f-circuit p{color:#c9b69a;}
   .f-throne{background:linear-gradient(200deg,#3a1622,#160a10 75%);color:#f6e6c8;border:1px solid rgba(245,178,62,.35);}
-  .f-throne .tag{background:rgba(245,178,62,.2);color:#ffd47a;} .f-throne p{color:#dcbfa0;}
-  .f-quiz{background:linear-gradient(200deg,#10303a,#081820 75%);color:#dff6f2;border:1px solid rgba(47,182,166,.3);}
-  .f-quiz .tag{background:rgba(47,182,166,.18);color:#79e6d8;} .f-quiz p{color:#9fc9c2;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:13px;}
-  .tc{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:15px;padding:15px;
-    display:flex;flex-direction:column;transition:transform .16s ease,border-color .16s ease;}
-  .tc:hover{transform:translateY(-2px);border-color:rgba(242,201,92,.4);}
-  .tc h4{font-family:'Baloo 2';font-weight:700;font-size:15.5px;}
-  .tc p{color:var(--mut);font-weight:600;font-size:12.6px;line-height:1.5;margin-top:5px;flex:1;
-    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-  .tc .meta{color:var(--gold);font-weight:800;font-size:11px;margin-top:9px;opacity:.85;}
-  .qgroup{margin-bottom:22px;}
-  .qgname{font-weight:800;font-size:12.5px;color:var(--mut);margin-bottom:9px;font-family:inherit;}
-  .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px;}
-  .qc{background:rgba(255,255,255,.03);border-left:3px solid var(--gold);border-radius:4px 12px 12px 4px;
-    padding:12px 13px;transition:background .16s ease,transform .16s ease;}
-  .qc:hover{background:rgba(255,255,255,.07);transform:translateX(2px);}
-  .qc h5{font-family:'Baloo 2';font-weight:700;font-size:14px;}
-  .qc span{color:var(--mut);font-weight:700;font-size:11.2px;margin-top:3px;display:block;}
+  .f-throne .tag{background:rgba(245,178,62,.2);color:#f2d27a;} .f-throne p{color:#dcbfa0;}
+  .f-quiz{background:linear-gradient(200deg,#1f3a2c,#101d16 75%);color:#e3f3e8;border:1px solid rgba(134,191,157,.3);}
+  .f-quiz .tag{background:rgba(134,191,157,.18);color:#b4dcc3;} .f-quiz p{color:#a9c9b5;}
+
+  /* game cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .tc{background:linear-gradient(180deg,var(--card1),var(--card2));border:1px solid var(--line);border-radius:16px;padding:17px 16px 15px;display:flex;flex-direction:column;
+    box-shadow:inset 0 3px 0 rgba(var(--w),.12);box-shadow:inset 0 3px 0 color-mix(in srgb,var(--acc) 75%,transparent);
+    transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;}
+  .tc:hover{transform:translateY(-3px);border-color:rgba(var(--w),.3);border-color:color-mix(in srgb,var(--acc) 55%,transparent);}
+  .tc[data-cat~="bible"]{--acc:var(--gold);}
+  .tc h4{font-family:var(--display);font-weight:700;font-size:17.5px;line-height:1.2;}
+  .tc p{color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.5;margin-top:6px;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .tc .meta{color:var(--acc);font-weight:800;font-size:12px;margin-top:12px;}
+  .newb{display:inline-block;background:var(--gold);color:var(--on-gold);border-radius:999px;padding:1px 8px;margin-right:6px;font-size:11px;font-weight:900;font-style:normal;}
+  .tb-collapsed > .tb-more{display:none !important;}
+  .tb-showall{display:block;margin:18px auto 0;font:inherit;font-weight:800;font-size:14.5px;color:var(--gold);background:rgba(var(--g),.06);border:1px solid rgba(var(--g),.45);border-radius:999px;min-height:46px;padding:0 24px;cursor:pointer;transition:background .16s;}
+  .tb-showall:hover{background:rgba(var(--g),.14);}
+  .tb-play-note{color:var(--mut);font-weight:700;font-size:14.5px;margin:-6px 0 18px;}
+
+  /* quizzes */
+  .qgroup{margin-bottom:26px;}
+  .qgname{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:17px;color:var(--ink);margin-bottom:11px;}
+  .qgname::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--qc,var(--gold));}
+  .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:11px;}
+  .qc{background:rgba(var(--w),.04);border-left:4px solid var(--qc,var(--gold));border-radius:6px 14px 14px 6px;padding:14px 15px;transition:background .16s ease,transform .16s ease;}
+  .qc:hover{background:rgba(var(--w),.08);transform:translateX(3px);}
+  .qc h5{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.25;}
+  .qc span{color:var(--mut);font-weight:700;font-size:12.5px;margin-top:3px;display:block;}
   .nores{color:var(--mut);font-weight:700;padding:30px 0;text-align:center;display:none;}
-  #toTop{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
-    background:linear-gradient(180deg,#2a2450,#191536);color:var(--gold);display:flex;align-items:center;justify-content:center;
-    cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.4);opacity:0;visibility:hidden;transform:translateY(8px);
-    transition:opacity .25s,transform .25s,visibility .25s;z-index:80;}
-  #toTop.show{opacity:1;visibility:visible;transform:none;}
-  footer{margin-top:52px;text-align:center;color:var(--mut);font-size:12.5px;font-weight:700;}
-  .tipline{margin-top:18px;color:var(--mut);font-weight:700;font-size:12.5px;}
-  .support{display:inline-flex;align-items:center;gap:8px;margin-top:9px;text-decoration:none;font-weight:800;font-size:13px;
-    color:var(--gold);border:1px solid rgba(242,201,92,.4);border-radius:999px;padding:9px 16px;}
+
+  /* footer */
+  footer{margin-top:72px;padding-top:32px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:13.5px;font-weight:700;}
+  .foot-brand{display:inline-flex;align-items:center;gap:8px;}
+  .foot-brand svg{width:24px;height:24px;} .foot-brand .word{font-size:19px;}
+  .foot-line{margin-top:8px;}
+  .tipline{margin-top:20px;}
+  .support{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-weight:800;font-size:14px;color:var(--gold);border:1px solid rgba(var(--g),.45);border-radius:999px;min-height:44px;padding:0 18px;transition:background .16s;}
+  .support:hover{background:rgba(var(--g),.12);}
   .support svg{width:16px;height:16px;}
-  @media(max-width:820px){ .feat{grid-template-columns:1fr;} .feat-side{grid-template-rows:none;}
-    .f-creak{grid-row:auto;} .fbig{min-height:240px;} }
+
+  .foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 20px;margin-top:18px;}
+  .foot-links a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:800;font-size:14px;}
+  .foot-links a:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px;}
+  .foot-fine{max-width:62ch;margin:18px auto 0;font-size:12.5px;line-height:1.6;font-weight:600;color:var(--mut);}
+  .foot-fine a{color:var(--ink);font-weight:800;text-decoration:underline;text-underline-offset:3px;}
+  #toTop{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:linear-gradient(180deg,#3a2228,#26151a);color:#e6b655;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.4);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility .25s;z-index:80;}
+  #toTop.show{opacity:1;visibility:visible;transform:none;}
+
+  /* today's question */
+  .qotd{margin:36px 0 0;border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,rgba(var(--g),.11),rgba(var(--em),.08) 60%,rgba(var(--w),.03));border:1px solid rgba(var(--g),.32);}
+  .qotd[hidden]{display:none;}
+  .qotd-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .qotd-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:22px;color:var(--gold);}
+  .qotd-streak{font-weight:800;font-size:14px;color:var(--streak);}
+  .qotd-q{font-size:20px;line-height:1.5;font-weight:700;margin:10px 0 16px;color:var(--ink-strong);max-width:46em;}
+  .qotd-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;counter-reset:opt;}
+  .qotd-opts button{display:flex;align-items:center;gap:12px;font:inherit;font-weight:700;font-size:16px;text-align:left;min-height:52px;padding:10px 14px;border-radius:14px;cursor:pointer;background:rgba(var(--w),.06);color:var(--ink);border:2px solid rgba(var(--w),.12);transition:border-color .16s,background .16s;}
+  .qotd-opts button::before{counter-increment:opt;content:counter(opt,upper-alpha);flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:rgba(var(--w),.1);font-size:13px;font-weight:900;color:var(--mut);}
+  .qotd-opts button:not(:disabled):hover{border-color:rgba(var(--g),.6);background:rgba(var(--g),.08);}
+  .qotd-opts button.right{border-color:var(--sage);background:rgba(var(--sg),.16);}
+  .qotd-opts button.wrong{border-color:var(--wrong);background:rgba(var(--wr),.12);}
+  .qotd-opts button:disabled{cursor:default;}
+  .qotd-res{min-height:1.4em;margin:14px 0 4px;font-weight:700;color:var(--res);}
+  .qotd-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;}
+  .qotd-foot a{color:var(--gold);font-weight:800;}
+  .qotd-foot button{font:inherit;font-size:15px;font-weight:700;background:none;border:1px solid rgba(var(--w),.22);color:var(--ink);border-radius:999px;min-height:40px;padding:0 16px;cursor:pointer;}
+  .qotd-foot button:hover{border-color:rgba(var(--w),.5);}
+  .qotd-foot button[hidden]{display:none;}
+
+  @media(max-width:820px){
+    .hero{grid-template-columns:1fr;margin-top:26px;} .hero-art{display:none;}
+    .feat{grid-template-columns:1fr;} .feat-side{grid-template-rows:none;} .fbig{min-height:260px;}
+    .sectitle{font-size:25px;} .secrow{margin-top:48px;} }
+  @media(max-width:520px){ .qotd-opts{grid-template-columns:1fr;} .qotd{padding:18px;} .count{margin-left:0;width:100%;} .btn{flex:1 1 100%;} }
+  @media(prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth;} }
   @media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+  .qotd-ph{margin:36px 0 0;min-height:300px;border-radius:22px;border:1px dashed var(--line);display:grid;place-items:center;color:var(--mut);font-weight:700;font-size:14px;}
+  .qotd:not([hidden]) ~ .qotd-ph{display:none;}
+  @media(max-width:520px){ .qotd-ph{min-height:470px;} }
 
-/* Today's question: one for everyone each day, a riddle at weekends */
-.qotd{margin:30px 0 8px;background:rgba(255,255,255,.04);border:1px solid rgba(240,182,63,.28);border-radius:18px;padding:20px 22px;}
-.qotd[hidden]{display:none;}
-.qotd-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-.qotd-head h2{margin:0;font-size:20px;color:#f0b63f;}
-.qotd-streak{font-weight:800;font-size:14px;color:#f0c98c;}
-.qotd-q{font-size:19px;line-height:1.5;font-weight:700;margin:10px 0 14px;color:#fff;}
-.qotd-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.qotd-opts button{font:inherit;font-weight:700;font-size:16px;text-align:left;padding:12px 14px;border-radius:12px;cursor:pointer;
-  background:rgba(255,255,255,.06);color:#eee8f7;border:2px solid rgba(255,255,255,.12);}
-.qotd-opts button:focus-visible,.qotd-foot button:focus-visible,.qotd-foot a:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
-.qotd-opts button.right{border-color:#5fd68a;background:rgba(95,214,138,.14);}
-.qotd-opts button.wrong{border-color:#ff7a6b;background:rgba(255,122,107,.12);}
-.qotd-opts button:disabled{cursor:default;}
-.qotd-res{min-height:1.4em;margin:12px 0 4px;font-weight:700;color:#cfc9e8;}
-.qotd-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;}
-.qotd-foot a{color:#f0b63f;font-weight:700;}
-.qotd-jump{display:inline-block;margin:6px 0 14px;font-weight:800;color:#f0b63f;text-decoration:none;border:1px solid rgba(240,182,63,.35);border-radius:999px;padding:7px 14px;font-size:15px;}
-.qotd-jump[hidden]{display:none;}
-.qotd-foot button[hidden]{display:none;}
-.qotd-foot button{font:inherit;font-size:15px;font-weight:700;background:none;border:1px solid rgba(255,255,255,.2);color:#eee8f7;border-radius:10px;padding:8px 12px;cursor:pointer;}
-@media (max-width:420px){ .qotd-opts{grid-template-columns:1fr;} }
-
-.tb-collapsed > .tb-more{display:none !important;}
-.tb-showall{display:block;margin:16px auto 4px;font:inherit;font-weight:800;color:#f2c95c;background:none;border:1px solid rgba(242,201,92,.45);border-radius:999px;padding:10px 22px;cursor:pointer;}
-.tb-showall:focus-visible{outline:3px solid #f2c95c;outline-offset:3px;}
-.tb-play-note{color:#a9a4cf;font-weight:700;margin:4px 0 14px;}
+  /* tonight presets */
+  .tonight{--acc:var(--gold);}
+  .tonight .secrow{margin-top:56px;}
+  .tn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .tn{display:flex;flex-direction:column;background:linear-gradient(180deg,var(--card1),var(--card2));border:1px solid var(--line);border-radius:18px;padding:18px 16px 16px;
+    box-shadow:inset 0 3px 0 rgba(var(--w),.12);box-shadow:inset 0 3px 0 color-mix(in srgb,var(--acc) 75%,transparent);}
+  .tn h3{font-family:var(--display);font-weight:800;font-size:20px;line-height:1.15;}
+  .tn-meta{color:var(--acc);font-weight:800;font-size:12px;margin-top:6px;}
+  .tn-desc{color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.5;margin-top:8px;flex:1;}
+  .tn-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;}
+  .tn-chip{display:inline-flex;align-items:center;min-height:40px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:rgba(var(--w),.04);font-weight:800;font-size:13px;line-height:1.2;color:var(--ink);transition:border-color .16s,background .16s;}
+  .tn-chip:hover{border-color:rgba(var(--w),.3);border-color:color-mix(in srgb,var(--acc) 65%,transparent);background:rgba(var(--w),.08);}
+  @media(max-width:980px){ .tn-grid{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:520px){ .tn-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:84%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;margin-right:-20px;padding-right:20px;scrollbar-width:thin;}
+    .tn{scroll-snap-align:start;} }
 </style>
+<noscript><style>.qotd-ph{display:none!important;}</style></noscript>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<clipPath id="tbClip"><path d="M22.8 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.8 38Z"/><path d="M25.2 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.2 38Z"/></clipPath>
+<clipPath id="tbClipS"><path d="M22.3 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.3 38Z"/><path d="M25.7 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.7 38Z"/></clipPath>
+<symbol id="tbMark" viewBox="0 0 48 48"><g clip-path="url(#tbClip)"><rect y="5" width="48" height="8.45" style="fill:var(--t4)"/><rect y="15.85" width="48" height="6.45" style="fill:var(--t3)"/><rect y="24.7" width="48" height="6.45" style="fill:var(--t2)"/><rect y="33.55" width="48" height="8.45" style="fill:var(--t1)"/></g></symbol>
+<symbol id="tbMarkS" viewBox="0 0 48 48"><g clip-path="url(#tbClipS)"><rect y="5" width="48" height="11.07" style="fill:var(--t4)"/><rect y="19.47" width="48" height="9.07" style="fill:var(--t3)"/><rect y="31.93" width="48" height="10.07" style="fill:var(--t1)"/></g></symbol>
+</defs></svg>
+<a class="skip" href="#main">Skip to the games</a>
 <div class="wrap">
 <main id="main">
-  <header>
-    <div class="word">Tier<b>Brain</b></div>
-    <div class="hero">
-      <div class="eyebrow">A free hub of browser games</div>
-      <h1>Games that run on <em>what you know.</em></h1>
-      <p>Quizzes, puzzles, party games and detective mysteries. Answer well, and something happens: a ladder holds, a throne is won, a case cracks open.</p>
-      <a class="occasion" href="packs.html">
-        <b>Got people coming round?</b>
-        <span>Put it on the big screen, everyone joins on their phone. Game night, sorted.</span>
-      </a>
+  <header class="top">
+    <a class="brand" href="./" aria-label="TierBrain home"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#tbMark"/></svg><span class="word">Tier<b>Brain</b></span></a>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </header>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <div class="hero-copy">
+      <h1 id="heroTitle">Games that run on <em>what you know.</em></h1>
+      <p class="lede">Answer well, and something happens: a ladder holds, a throne is won, a case cracks open.</p>
+      <div class="hero-actions">
+        <a class="btn btn-main" id="surprise" href="higher-lower.html">Surprise me</a>
+        <a class="btn btn-ghost" href="packs.html">Host a game night</a>
+      </div>
+      <p class="hero-note">Free in your browser. No app, no sign-up.</p>
     </div>
+    <svg class="hero-art" viewBox="0 0 440 330" aria-hidden="true">
+      <rect x="136" y="34" width="10" height="282" rx="5" class="rail"/>
+      <rect x="294" y="34" width="10" height="282" rx="5" class="rail"/>
+      <rect x="141" y="240" width="158" height="44" rx="12" class="r1"/>
+      <rect x="141" y="170" width="158" height="44" rx="12" class="r2"/>
+      <rect x="141" y="100" width="158" height="44" rx="12" class="r3"/>
+      <rect x="141" y="30"  width="158" height="44" rx="12" class="r4"/>
+      <text x="220" y="268">Easy</text><text x="220" y="198">Medium</text><text x="220" y="128">Hard</text><text x="220" y="58">Legends</text>
+      <circle class="tok" cx="220" cy="157" r="9"/>
+      <path d="M380 4 L383 11 L390.5 11.5 L384.6 16.3 L386.5 23.5 L380 19.5 L373.5 23.5 L375.4 16.3 L369.5 11.5 L377 11 Z" class="star" transform="translate(-160 2)"/>
+    </svg>
+  </section>
+
+  <section class="tonight" id="tonight" aria-labelledby="tonightTitle">
+    <div class="secrow"><h2 class="sectitle" id="tonightTitle">Playing tonight?</h2><div class="secnote">Pick a mood, then a game, or <a href="#tray">browse everything</a></div></div>
+    <div class="tn-grid">
+      <article class="tn" style="--acc:var(--sage)">
+        <h3>Family night</h3>
+        <p class="tn-meta">Shared boards</p>
+        <p class="tn-desc">Shared boards and races everyone can join from a phone.</p>
+        <div class="tn-chips"><a class="tn-chip" href="creak-multi.html">Creak &amp; Coil: Shared Climb</a><a class="tn-chip" href="standing-room-multi.html">Standing Room: Together</a><a class="tn-chip" href="spines.html">Spines</a><a class="tn-chip" href="finish-line.html">Finish Line</a></div>
+      </article>
+      <article class="tn" style="--acc:var(--pale)">
+        <h3>Church or small group</h3>
+        <p class="tn-meta">Bible · big screen</p>
+        <p class="tn-desc">Bible games for a group. Put it on the big screen and join on phones.</p>
+        <div class="tn-chips"><a class="tn-chip" href="show.html">Chapter &amp; Verse</a><a class="tn-chip" href="full-circuit-bible-host.html">Full Circuit: Bible Team</a><a class="tn-chip" href="throne-bible.html">Hold The Throne: Bible</a><a class="tn-chip" href="first-finger-bible.html">First Finger: Bible</a></div>
+      </article>
+      <article class="tn" style="--acc:var(--ember)">
+        <h3>Quiz night</h3>
+        <p class="tn-meta">Teams and buzzers</p>
+        <p class="tn-desc">A big screen, teams and buzzers. Best with three or more players.</p>
+        <div class="tn-chips"><a class="tn-chip" href="show-gen.html">The Big Quiz</a><a class="tn-chip" href="throne.html">Hold The Throne</a><a class="tn-chip" href="first-finger.html">First Finger</a><a class="tn-chip" href="tug-of-war.html">Tug of War</a></div>
+      </article>
+      <article class="tn" style="--acc:var(--amber)">
+        <h3>Just me, five minutes</h3>
+        <p class="tn-meta">Solo · quick rounds</p>
+        <p class="tn-desc">One phone and a few spare minutes. Quick rounds, four difficulty tiers.</p>
+        <div class="tn-chips"><a class="tn-chip" href="five-clues.html">Five Clues</a><a class="tn-chip" href="snap-sort.html">Snap Sort</a><a class="tn-chip" href="higher-lower.html">Higher or Lower</a><a class="tn-chip" href="wheel.html">Smudged</a></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="qotd" id="qotd" aria-labelledby="qotdTitle" hidden>
+  <div class="qotd-head"><h2 id="qotdTitle">Today's question</h2><span class="qotd-streak" id="qotdStreak"></span></div>
+  <p class="qotd-q" id="qotdQ"></p>
+  <div class="qotd-opts" id="qotdOpts"></div>
+  <p class="qotd-res" id="qotdRes" aria-live="polite"></p>
+  <div class="qotd-foot"><a id="qotdMore" href="general-knowledge-quiz.html"></a><button id="qotdShare" type="button" hidden>Share</button><button id="qotdAnother" type="button">Try another</button></div>
+</section>
+  <div class="qotd-ph" aria-hidden="true">Loading today’s question…</div>
+
+  <section class="sec" id="start" data-sec="feat" aria-label="Start here">
+    <div class="secrow"><h2 class="sectitle">Start here</h2><div class="secnote">the ones to try first</div></div>
+    <div class="feat">
+      <a class="fc f-circuit fbig" href="full-circuit.html" data-cat="game" data-title="Full Circuit" data-blurb="Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen with everyone's phones.">
+        <span class="tag">New · solo or team</span><svg class="art" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <g fill="none" stroke="#e9c47f" stroke-width="2.5" opacity=".32" stroke-linecap="round"><path d="M232 470 V258 Q232 186 300 186 Q368 186 368 258 V470"/><path d="M300 186 V470"/><circle cx="324" cy="336" r="4"/><circle cx="168" cy="150" r="22"/><path d="M146 150 H190 M168 128 V172"/></g>
+ <polyline points="46,420 84,380 70,368 118,330 102,318 160,270" fill="none" stroke="#f2d27a" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/></svg>
+        <h3>Full Circuit</h3><p>Five rooms, five ways to answer, and the parts of a machine that has slept for a hundred years. Play alone, or as a team on the big screen.</p></a>
+      <div class="feat-side">
+      <a class="fc f-creak" href="creak.html" data-cat="game" data-title="Creak &amp; Coil" data-blurb="A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.">
+        <span class="tag">Solo · beat your best</span><svg class="art" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <g stroke="#c9924e" stroke-width="2.5" opacity=".32" stroke-linecap="round">
+  <line x1="70" y1="20" x2="40" y2="230"/><line x1="110" y1="14" x2="86" y2="230"/>
+  <line x1="76" y1="46" x2="104" y2="46"/><line x1="73" y1="80" x2="101" y2="80"/>
+  <line x1="70" y1="116" x2="98" y2="116"/><line x1="66" y1="154" x2="95" y2="154"/><line x1="62" y1="192" x2="91" y2="192"/></g>
+ <path d="M180 30 C230 70,150 110,210 150 S320 190,270 235" fill="none" stroke="#86bf9d" stroke-width="6" opacity=".28" stroke-linecap="round"/>
+ <circle cx="180" cy="30" r="8" fill="#86bf9d" opacity=".35"/></svg>
+        <h3>Creak &amp; Coil</h3><p>Snakes and ladders on a board that is falling apart. Answer fast to hold a ladder, dodge a snake and reach the summit.</p></a>
+      <a class="fc f-throne" href="throne.html" data-cat="game multiplayer" data-title="Hold The Throne" data-blurb="A winner-stays-on buzzer gauntlet: two players duel on a question, the winner keeps their seat and takes on the next challenger from the queue. Build a streak, survive to the Grand Finale, and earn a place among the Legends. An animated host runs the whole show. Best with 3+ players, on your phones.">
+        <span class="tag">Live · winner stays on</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <g opacity=".3" stroke="#f2d27a" fill="none" stroke-width="2.4" stroke-linejoin="round"><path d="M250 22 L262 44 L278 26 L285 50 L300 32 L295 60 L256 60 Z"/></g>
+ <g opacity=".2" stroke="#f2d27a" stroke-width="1.6" fill="none"><circle cx="40" cy="124" r="15"/><circle cx="92" cy="124" r="15"/><line x1="55" y1="124" x2="77" y2="124"/></g></svg>
+        <h3>Hold The Throne</h3><p>Winner stays on. Duel on the buzzer, keep your seat and take on the queue. Best with 3+ players on their phones.</p></a>
+      <a class="fc f-quiz" href="show-gen.html" data-cat="game multiplayer" data-title="The Big Quiz" data-blurb="The full game-show experience: an animated host runs four rounds (Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale) while two teams play along on their phones. One screen hosts (a laptop, a TV, even a phone); everyone else joins with a code. Grab a group and play.">
+        <span class="tag">Live · game-show night</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <g opacity=".22" fill="none" stroke="#86bf9d" stroke-width="2.2"><rect x="238" y="18" width="76" height="52" rx="8"/><line x1="238" y1="82" x2="314" y2="82"/><line x1="252" y1="96" x2="300" y2="96"/></g>
+ <g opacity=".26" fill="#86bf9d"><circle cx="44" cy="122" r="9"/><circle cx="76" cy="122" r="9"/><circle cx="108" cy="122" r="9"/></g></svg>
+        <h3>The Big Quiz</h3><p>A game show with an animated host. Four rounds, two teams, everyone playing on their phones.</p></a>
+      </div>
+    </div>
+  </section>
+
+  <div class="tray" id="tray">
     <div class="utility">
       <input class="search" id="q" type="search" aria-label="Search games and quizzes" placeholder="Search games &amp; quizzes…" autocomplete="off">
       <div class="pills" id="pills" role="group" aria-label="Filter by type">
@@ -177,72 +355,34 @@
         <button class="pill" data-f="multiplayer" aria-pressed="false">Multiplayer</button>
         <button class="pill" data-f="puzzle" aria-pressed="false">Puzzle</button>
       </div>
+      <div class="count" id="count" role="status" aria-live="polite">64 games</div>
     </div>
-    <div class="count" id="count" role="status" aria-live="polite">64 games</div>
-  </header>
-
-  <section class="sec" data-sec="feat" aria-label="Start here">
-<a class="qotd-jump" id="qotdJump" href="#qotd" hidden>💡 Today's question</a>
-    <div class="secrow"><h2 class="sectitle">Start here</h2><div class="secnote">the ones to try first</div></div>
-    <div class="feat">
-      <a class="fc f-circuit fbig" href="full-circuit.html" data-cat="game" data-title="Full Circuit" data-blurb="Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen with everyone's phones.">
-        <span class="tag">New · solo or team</span><svg class="art" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
- <g fill="none" stroke="#e9c47f" stroke-width="2.5" opacity=".32" stroke-linecap="round"><path d="M232 470 V258 Q232 186 300 186 Q368 186 368 258 V470"/><path d="M300 186 V470"/><circle cx="324" cy="336" r="4"/><circle cx="168" cy="150" r="22"/><path d="M146 150 H190 M168 128 V172"/></g>
- <polyline points="46,420 84,380 70,368 118,330 102,318 160,270" fill="none" stroke="#9fe8ff" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/></svg>
-        <h3>Full Circuit</h3><p>Explore a strange house of five rooms, each a different way to answer, and win the parts of a machine that has slept for a hundred years. Play alone, or as a team on one big screen.</p></a>
-      <div class="feat-side">
-      <a class="fc f-creak" href="creak.html" data-cat="game" data-title="Creak &amp; Coil" data-blurb="A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.">
-        <span class="tag">Solo · beat your best</span><svg class="art" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
- <g stroke="#c9924e" stroke-width="2.5" opacity=".32" stroke-linecap="round">
-  <line x1="70" y1="20" x2="40" y2="230"/><line x1="110" y1="14" x2="86" y2="230"/>
-  <line x1="76" y1="46" x2="104" y2="46"/><line x1="73" y1="80" x2="101" y2="80"/>
-  <line x1="70" y1="116" x2="98" y2="116"/><line x1="66" y1="154" x2="95" y2="154"/><line x1="62" y1="192" x2="91" y2="192"/></g>
- <path d="M180 30 C230 70,150 110,210 150 S320 190,270 235" fill="none" stroke="#57b26a" stroke-width="6" opacity=".28" stroke-linecap="round"/>
- <circle cx="180" cy="30" r="8" fill="#57b26a" opacity=".35"/></svg>
-        <h3>Creak &amp; Coil</h3><p>A snakes-and-ladders climb where the board is falling apart. Rickety ladders rot and collapse, sleeping snakes wake and strike, and a great bird, rockfalls and storms shake up the ascent. Answer fast to hold a ladder or dodge a snake, and race to the summit before the way up crumbles.</p></a>
-      <a class="fc f-throne" href="throne.html" data-cat="game multiplayer" data-title="Hold The Throne" data-blurb="A winner-stays-on buzzer gauntlet: two players duel on a question, the winner keeps their seat and takes on the next challenger from the queue. Build a streak, survive to the Grand Finale, and earn a place among the Legends. An animated host runs the whole show. Best with 3+ players, on your phones.">
-        <span class="tag">Live · winner stays on</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
- <g opacity=".3" stroke="#ffd47a" fill="none" stroke-width="2.4" stroke-linejoin="round"><path d="M250 22 L262 44 L278 26 L285 50 L300 32 L295 60 L256 60 Z"/></g>
- <g opacity=".2" stroke="#ffd47a" stroke-width="1.6" fill="none"><circle cx="40" cy="124" r="15"/><circle cx="92" cy="124" r="15"/><line x1="55" y1="124" x2="77" y2="124"/></g></svg>
-        <h3>Hold The Throne</h3><p>A winner-stays-on buzzer gauntlet: two players duel on a question, the winner keeps their seat and takes on the next challenger from the queue. Build a streak, survive to the Grand Finale, and earn a place among the Legends. An animated host runs the whole show. Best with 3+ players, on your phones.</p></a>
-      <a class="fc f-quiz" href="show-gen.html" data-cat="game multiplayer" data-title="The Big Quiz" data-blurb="The full game-show experience: an animated host runs four rounds (Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale) while two teams play along on their phones. One screen hosts (a laptop, a TV, even a phone); everyone else joins with a code. Grab a group and play.">
-        <span class="tag">Live · game-show night</span><svg class="art" viewBox="0 0 340 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
- <g opacity=".22" fill="none" stroke="#79e6d8" stroke-width="2.2"><rect x="238" y="18" width="76" height="52" rx="8"/><line x1="238" y1="82" x2="314" y2="82"/><line x1="252" y1="96" x2="300" y2="96"/></g>
- <g opacity=".26" fill="#79e6d8"><circle cx="44" cy="122" r="9"/><circle cx="76" cy="122" r="9"/><circle cx="108" cy="122" r="9"/></g></svg>
-        <h3>The Big Quiz</h3><p>The full game-show experience: an animated host runs four rounds (Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale) while two teams play along on their phones. One screen hosts (a laptop, a TV, even a phone); everyone else joins with a code. Grab a group and play.</p></a>
-      </div>
-    </div>
-  </section>
+  </div>
 
   <section class="sec" data-sec="multi" aria-label="Play together">
-<section class="qotd" id="qotd" aria-labelledby="qotdTitle" hidden>
-  <div class="qotd-head"><h2 id="qotdTitle">Today's question</h2><span class="qotd-streak" id="qotdStreak"></span></div>
-  <p class="qotd-q" id="qotdQ"></p>
-  <div class="qotd-opts" id="qotdOpts"></div>
-  <p class="qotd-res" id="qotdRes" aria-live="polite"></p>
-  <div class="qotd-foot"><a id="qotdMore" href="general-knowledge-quiz.html"></a><button id="qotdShare" type="button" hidden>Share</button><button id="qotdAnother" type="button">Try another</button></div>
-</section>
-    <div class="secrow"><h2 class="sectitle">Play together</h2><div class="secnote"><a href="packs.html" style="color:var(--gold)">see the game night packs</a></div></div>
+
+    <div class="secrow"><h2 class="sectitle">Play together</h2><div class="secnote"><a href="packs.html">see the game night packs</a></div></div>
+    <p class="tb-play-note">Got people coming round? Put it on the big screen, everyone joins on their phone.</p>
     <div class="grid">
       <a class="tc" href="full-circuit-host.html" data-cat="game multiplayer" data-title="Full Circuit: Team" data-blurb="Explore a strange house together. One of you goes into each room on your own phone while everyone watches the big screen and shouts. Win the parts of a sleeping machine, then become its circuit in the finale.">
-        <h4>Full Circuit: Team</h4><p>One of you goes into each room while the rest watch and shout. Then the whole team becomes the machine&rsquo;s circuit.</p><span class="meta">New · 3-8 players · big screen</span></a>
-      <a class="tc" href="show.html" data-cat="game multiplayer" data-title="Chapter &amp; Verse" data-blurb="The Bible game show: an animated host runs four rounds while two teams play along on their phones. Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale, with 486 Scripture questions.">
-        <h4>Chapter &amp; Verse</h4><p>The Bible game show. Four rounds, an animated host, two teams on their phones. Built for church groups, youth nights and family gatherings.</p><span class="meta">Live · 426 questions · 4 rounds</span></a>
-      <a class="tc" href="throne-bible.html" data-cat="game multiplayer" data-title="Hold The Throne: Bible Edition" data-blurb="The winner-stays-on buzzer gauntlet, with a Scripture question bank. Two players duel, the winner keeps their seat and faces the next challenger from the queue.">
-        <h4>Hold The Throne: Bible</h4><p>The buzzer gauntlet with a Scripture bank. Win the duel, keep your seat, take on the queue. Best with 3+ players.</p><span class="meta">Live · 407 questions · winner stays on</span></a>
+        <h4>Full Circuit: Team</h4><p>One of you enters each room while the rest shout. Then the whole team becomes the circuit.</p><span class="meta">New · 3-8 players · big screen</span></a>
+      <a class="tc" href="show.html" data-cat="game multiplayer bible" data-title="Chapter &amp; Verse" data-blurb="The Bible game show: an animated host runs four rounds while two teams play along on their phones. Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale, with 486 Scripture questions.">
+        <h4>Chapter &amp; Verse</h4><p>The Bible game show. Four rounds, an animated host, two teams on their phones.</p><span class="meta">Live · 426 questions · 4 rounds</span></a>
+      <a class="tc" href="throne-bible.html" data-cat="game multiplayer bible" data-title="Hold The Throne: Bible Edition" data-blurb="The winner-stays-on buzzer gauntlet, with a Scripture question bank. Two players duel, the winner keeps their seat and faces the next challenger from the queue.">
+        <h4>Hold The Throne: Bible</h4><p>The buzzer gauntlet with a Scripture bank. Win the duel, keep your seat.</p><span class="meta">Live · 407 questions · winner stays on</span></a>
       <a class="tc" href="full-circuit-bible-host.html" data-cat="game multiplayer bible" data-title="Full Circuit: Bible Edition, Team" data-blurb="Five Bible stories, one big screen and everyone's phones. One of you steps into each story while the rest watch and shout, then the whole group marches round the walls of Jericho.">
-        <h4>Full Circuit: Bible Edition, Team</h4><p>Five Bible stories, one of you in each while the rest shout, then everyone marches round the walls of Jericho.</p><span class="meta">New · 3-8 players · big screen</span></a>
+        <h4>Full Circuit: Bible Edition, Team</h4><p>Five Bible stories, one player in each, then everyone marches round Jericho.</p><span class="meta">New · 3-8 players · big screen</span></a>
       <a class="tc" href="standing-room-multi.html" data-cat="game multiplayer" data-title="Standing Room: Together" data-blurb="Everyone stands on one floor. Every step anyone takes sinks a board for good. Answer right to choose your step. Last one standing wins.">
         <h4>Standing Room: Together</h4><p>One floor, everybody on it. Every step any of you takes sinks a board for all of you.</p><span class="meta">Live · 2-6 players · shared board</span></a>
       <a class="tc" href="creak-multi.html" data-cat="game multiplayer" data-title="Creak &amp; Coil: The Shared Climb" data-blurb="The multiplayer race up one rotting board. Everyone climbs the same ladders, so a wrong answer snaps a rung for all of you.">
-        <h4>Creak &amp; Coil: Shared Climb</h4><p>The race up one rotting board. Everyone shares the same ladders, so a wrong answer costs the whole table.</p><span class="meta">Live · 2-6 players · shared board</span></a>
+        <h4>Creak &amp; Coil: Shared Climb</h4><p>One rotting board, one shared climb. A wrong answer costs the whole table.</p><span class="meta">Live · 2-6 players · shared board</span></a>
       <a class="tc" href="finish-line.html" data-cat="game multiplayer" data-title="Finish Line" data-blurb="A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.">
-        <h4>Finish Line</h4><p>A real-time race: everyone joins the same code, then every right answer moves your racer forward. First to the finish line wins.</p><span class="meta">Multiplayer race</span></a>
+        <h4>Finish Line</h4><p>A real-time race. Every right answer moves your racer forward; first to the line wins.</p><span class="meta">Multiplayer race</span></a>
       <a class="tc" href="tug-of-war.html" data-cat="game multiplayer" data-title="Tug of War" data-blurb="Two teams, one rope. Every right answer hauls it your way and a wrong one lets it slip: first side over the line wins.">
-        <h4>Tug of War</h4><p>Two teams, one rope. Every right answer hauls it your way and a wrong one lets it slip: first side over the line wins.</p><span class="meta">Multiplayer · teams</span></a>
+        <h4>Tug of War</h4><p>Two teams, one rope. Right answers haul it your way, wrong ones let it slip.</p><span class="meta">Multiplayer · teams</span></a>
       <a class="tc" href="first-finger.html" data-cat="game multiplayer" data-title="First Finger" data-blurb="Same question for everyone at once: the first correct answer takes the point. A wrong buzz locks you out, so be quick but sure.">
-        <h4>First Finger</h4><p>Same question for everyone at once: the first correct answer takes the point. A wrong buzz locks you out, so be quick but sure.</p><span class="meta">Multiplayer buzzer</span></a>
-      <a class="tc" href="first-finger-bible.html" data-cat="game multiplayer" data-title="First Finger: Bible" data-blurb="The buzzer race with a Bible question bank: same fast, first-correct-wins format, scripture edition.">
+        <h4>First Finger</h4><p>Same question for everyone. First correct answer takes the point; a wrong buzz locks you out.</p><span class="meta">Multiplayer buzzer</span></a>
+      <a class="tc" href="first-finger-bible.html" data-cat="game multiplayer bible" data-title="First Finger: Bible" data-blurb="The buzzer race with a Bible question bank: same fast, first-correct-wins format, scripture edition.">
         <h4>First Finger: Bible</h4><p>The buzzer race with a Bible question bank: same fast, first-correct-wins format, scripture edition.</p><span class="meta">Multiplayer buzzer</span></a>
     </div>
   </section>
@@ -251,31 +391,31 @@
     <div class="secrow"><h2 class="sectitle">Adventures &amp; puzzles</h2><div class="secnote">take your time</div></div>
     <div class="grid">
       <a class="tc" href="spines.html" data-cat="game puzzle multiplayer" data-title="Spines" data-blurb="A teetering pile of books, each spine a subject. Pull a book, answer its question and set it on top, but every pull costs the pile its balance. Play alone, or with friends on a big screen: whoever topples it is out.">
-        <h4>Spines</h4><p>A teetering pile of books, each spine a subject. Pull one, answer it, set it on top, and don't let it fall. Alone or with friends.</p><span class="meta">New · solo or party · 7 subjects</span></a>
+        <h4>Spines</h4><p>Pull a book from a teetering pile, answer it, set it on top. Don’t let it fall.</p><span class="meta">New · solo or party · 7 subjects</span></a>
       <a class="tc" href="spines-bible.html" data-cat="game puzzle multiplayer bible" data-title="Spines: Bible Edition" data-blurb="A teetering pile of books, each spine a part of the Bible's story. Pull a book, answer its question and set it on top, but every pull costs the pile its balance. Alone or with friends on a big screen.">
-        <h4>Spines: Bible Edition</h4><p>A teetering pile of books, each spine a part of the Bible's story. Pull one, answer it, and don't let it fall. Alone or with friends.</p><span class="meta">New · solo or party · Bible</span></a>
+        <h4>Spines: Bible Edition</h4><p>A teetering pile of Bible books. Pull one, answer it, and don’t let it fall.</p><span class="meta">New · solo or party · Bible</span></a>
       <a class="tc" href="gaslight.html" data-cat="game" data-title="Gaslight" data-blurb="Noir detective cases where your deductions write the ending. Crack a locked-room poisoning, or a murder aboard the night express: a wrong call reroutes the case, it never ends it.">
-        <h4>Gaslight</h4><p>Noir detective cases where your deductions write the ending. A wrong call reroutes the case, it never ends it.</p><span class="meta">Detective fiction · noir cases</span></a>
+        <h4>Gaslight</h4><p>Noir cases where your deductions write the ending. A wrong call reroutes, never ends.</p><span class="meta">Detective fiction · noir cases</span></a>
       <a class="tc" href="full-circuit-bible.html" data-cat="game puzzle bible" data-title="Full Circuit: Bible Edition" data-blurb="Step into five Bible stories, from Samuel's call to Jonah in the deep, gather what you find, and march round the walls of Jericho.">
         <h4>Full Circuit: Bible Edition</h4><p>Five Bible stories, five ways to answer, and the walls of Jericho at the end.</p><span class="meta">New · Solo · 5 stories</span></a>
       <a class="tc" href="standing-room.html" data-cat="game puzzle" data-title="Standing Room" data-blurb="You and an opponent on a floor above deep water. Every step you take sinks the board behind you. Answer right and you choose where to step; answer wrong and the water chooses.">
         <h4>Standing Room</h4><p>Every step sinks the board behind you. Answer right to choose where you go. Last one standing wins.</p><span class="meta">Solo · vs the machine</span></a>
       <a class="tc" href="quiet-line.html" data-cat="game puzzle" data-title="The Quiet Line" data-blurb="A decoding puzzle. Words arrive spelled in keypad digits, a clue tells you what each one means, and every word you decode gives up a letter of the hidden transmission.">
-        <h4>The Quiet Line</h4><p>Words arrive as keypad digits over a failing signal. Decode them all and they spell the transmission.</p><span class="meta">Solo · decoding puzzle</span></a>
+        <h4>The Quiet Line</h4><p>Words arrive as keypad digits over a failing signal. Decode them to spell the message.</p><span class="meta">Solo · decoding puzzle</span></a>
       <a class="tc" href="quiet-line-vault.html" data-cat="game puzzle" data-title="The Vault" data-blurb="Seven doors, one below the last, each held shut by a word spelled in keypad digits. Decode your way down before the lock holds.">
-        <h4>The Vault</h4><p>Seven doors, each held by a word you cannot see. Decode your way down. Three wrong entries and it stays shut.</p><span class="meta">Solo · 7 doors</span></a>
+        <h4>The Vault</h4><p>Seven doors, each held by a word you cannot see. Three wrong entries and it stays shut.</p><span class="meta">Solo · 7 doors</span></a>
       <a class="tc" href="core.html" data-cat="game adventure" data-title="Reach the Core" data-blurb="Chart a branching route from the rim to the galactic core. Every jump throws an obstacle your way: answer to pass. Choose your path; three wrong and the run ends in the void.">
-        <h4>Reach the Core</h4><p>Chart a branching route from the rim to the galactic core. Every jump throws an obstacle your way: answer to pass. Choose your path; three wrong and the run ends in the void.</p><span class="meta">Solo adventure</span></a>
+        <h4>Reach the Core</h4><p>Chart a branching route from the rim to the galactic core. Answer to pass each obstacle.</p><span class="meta">Solo adventure</span></a>
       <a class="tc" href="castle.html" data-cat="game adventure" data-title="Escape the Keep" data-blurb="The same branching escape recast in a crumbling castle: gateways, portcullises, knights and locked vaults stand between you and the gate.">
-        <h4>Escape the Keep</h4><p>The same branching escape recast in a crumbling castle: gateways, portcullises, knights and locked vaults stand between you and the gate.</p><span class="meta">Solo adventure</span></a>
+        <h4>Escape the Keep</h4><p>The branching escape in a crumbling castle: portcullises, knights and locked vaults.</p><span class="meta">Solo adventure</span></a>
       <a class="tc" href="labyrinth.html" data-cat="game adventure" data-title="Out of the Labyrinth" data-blurb="The branching escape as an ancient maze: passages, closing walls, and a Minotaur or two between you and the centre.">
-        <h4>Out of the Labyrinth</h4><p>The branching escape as an ancient maze: passages, closing walls, and a Minotaur or two between you and the centre.</p><span class="meta">Solo adventure</span></a>
+        <h4>Out of the Labyrinth</h4><p>The branching escape as an ancient maze, with closing walls and a Minotaur or two.</p><span class="meta">Solo adventure</span></a>
       <a class="tc" href="claim.html" data-cat="game strategy" data-title="Claim the Board" data-blurb="A frontier land rush: stake claims across a 5×5 board by answering, jump the Rustler's plots with two right in a row, and hold the most land when the dust settles.">
-        <h4>Claim the Board</h4><p>A frontier land rush: stake claims across a 5×5 board by answering, jump the Rustler's plots with two right in a row, and hold the most land when the dust settles.</p><span class="meta">Solo · vs the Rustler</span></a>
+        <h4>Claim the Board</h4><p>A frontier land rush on a 5×5 board. Answer to stake claims and outdo the Rustler.</p><span class="meta">Solo · vs the Rustler</span></a>
       <a class="tc" href="jigsaw.html" data-cat="game puzzle" data-title="Jigsaw" data-blurb="Drag the scattered pieces home to rebuild a freshly generated picture: race the clock across four sizes, from a 12-piece warm-up to a 48-piece master.">
-        <h4>Jigsaw</h4><p>Drag the scattered pieces home to rebuild a freshly generated picture: race the clock across four sizes, from a 12-piece warm-up to a 48-piece master.</p><span class="meta">Solo · 4 sizes</span></a>
+        <h4>Jigsaw</h4><p>Drag scattered pieces home to rebuild a fresh picture. Four sizes, from 12 to 48 pieces.</p><span class="meta">Solo · 4 sizes</span></a>
       <a class="tc" href="piece-by-piece.html" data-cat="game puzzle" data-title="Piece by Piece" data-blurb="A flag builds itself piece by piece: name the country before it finishes. Guess early off a few pieces for big points; one guess only.">
-        <h4>Piece by Piece</h4><p>A flag builds itself piece by piece: name the country before it finishes. Guess early off a few pieces for big points; one guess only.</p><span class="meta">Solo · climbing tiers</span></a>
+        <h4>Piece by Piece</h4><p>A flag builds itself piece by piece. Name the country early for big points.</p><span class="meta">Solo · climbing tiers</span></a>
     </div>
   </section>
 
@@ -283,29 +423,29 @@
     <div class="secrow"><h2 class="sectitle">Quick games</h2><div class="secnote">a few minutes each</div></div>
     <div class="grid">
       <a class="tc" href="wheel.html" data-cat="game puzzle" data-title="Smudged" data-blurb="A message in a bottle, smudged by the sea. Spin the helm to choose your waters, answer to wipe letters clean, and read the message before your ship sinks.">
-        <h4>Smudged</h4><p>A message in a bottle, smudged by the sea. Spin the helm, answer to wipe letters clean, and read it before your ship sinks.</p><span class="meta">New · Solo · 120 messages</span></a>
+        <h4>Smudged</h4><p>A message in a bottle, smudged by the sea. Answer to wipe the letters clean.</p><span class="meta">New · Solo · 120 messages</span></a>
       <a class="tc" href="smudged-bible.html" data-cat="game puzzle bible" data-title="Smudged: Bible Edition" data-blurb="A letter carried through the storm on Paul's voyage to Rome. Spin the helm, answer Bible questions to wipe letters clean, and read the message before the ship runs aground.">
-        <h4>Smudged: Bible Edition</h4><p>A letter carried through the storm on Paul's voyage to Rome. Answer Bible questions to wipe the letters clean.</p><span class="meta">New · Solo · 120 messages</span></a>
+        <h4>Smudged: Bible Edition</h4><p>A letter carried through Paul’s storm at sea. Answer to wipe the letters clean.</p><span class="meta">New · Solo · 120 messages</span></a>
       <a class="tc" href="brain-coaster.html" data-cat="game" data-title="Brain Coaster" data-blurb="A quiz that powers a rollercoaster: answer right to crest the hill and plunge. Keep your streak alive; three brakes ends the ride.">
-        <h4>Brain Coaster</h4><p>A quiz that powers a rollercoaster: answer right to crest the hill and plunge. Keep your streak alive; three brakes ends the ride.</p><span class="meta">Quiz-powered · clear every track</span></a>
+        <h4>Brain Coaster</h4><p>A quiz that powers a rollercoaster. Answer right to crest the hill; three brakes ends the ride.</p><span class="meta">Quiz-powered · clear every track</span></a>
       <a class="tc" href="wall.html" data-cat="game" data-title="Wall of Fame" data-blurb="See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.">
-        <h4>Wall of Fame</h4><p>See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.</p><span class="meta">Live · all games</span></a>
+        <h4>Wall of Fame</h4><p>The reigning champions, all-time records and latest results across the hub.</p><span class="meta">Live · all games</span></a>
       <a class="tc" href="five-clues.html" data-cat="game" data-title="Five Clues" data-blurb="Guess the hidden answer from clues revealed one at a time: the fewer you need, the more points you score.">
-        <h4>Five Clues</h4><p>Guess the hidden answer from clues revealed one at a time: the fewer you need, the more points you score.</p><span class="meta">Solve fast · 4 tiers</span></a>
-      <a class="tc" href="five-clues-bible.html" data-cat="game" data-title="Five Clues: Bible" data-blurb="The Five Clues format with a scripture twist: name the person, place or event from the Bible.">
+        <h4>Five Clues</h4><p>Guess the answer from clues revealed one at a time. Fewer clues, more points.</p><span class="meta">Solve fast · 4 tiers</span></a>
+      <a class="tc" href="five-clues-bible.html" data-cat="game bible" data-title="Five Clues: Bible" data-blurb="The Five Clues format with a scripture twist: name the person, place or event from the Bible.">
         <h4>Five Clues: Bible</h4><p>The Five Clues format with a scripture twist: name the person, place or event from the Bible.</p><span class="meta">Solve fast · 4 tiers</span></a>
       <a class="tc" href="snap-sort.html" data-cat="game" data-title="Snap Sort" data-blurb="Tap left or right to bin each item before its timer runs out: build a streak, but three misses ends your run.">
-        <h4>Snap Sort</h4><p>Tap left or right to bin each item before its timer runs out: build a streak, but three misses ends your run.</p><span class="meta">Reflex + knowledge · 4 tiers</span></a>
+        <h4>Snap Sort</h4><p>Tap left or right to bin each item before its timer runs out. Three misses ends the run.</p><span class="meta">Reflex + knowledge · 4 tiers</span></a>
       <a class="tc" href="call-your-shot.html" data-cat="game" data-title="Call Your Shot" data-blurb="Answer, then throw a dart at the bullseye to stake how sure you are: bold for big points, safe for small.">
-        <h4>Call Your Shot</h4><p>Answer, then throw a dart at the bullseye to stake how sure you are: bold for big points, safe for small.</p><span class="meta">Confidence game · 4 tiers</span></a>
+        <h4>Call Your Shot</h4><p>Answer, then throw a dart to stake how sure you are. Bold for big points.</p><span class="meta">Confidence game · 4 tiers</span></a>
       <a class="tc" href="matchup.html" data-cat="game" data-title="Match Up" data-blurb="Link each item to its partner: capitals, authors, elements and more. Clear the board and climb the tiers.">
-        <h4>Match Up</h4><p>Link each item to its partner: capitals, authors, elements and more. Clear the board and climb the tiers.</p><span class="meta">Endless pairs · 4 tiers</span></a>
+        <h4>Match Up</h4><p>Link each item to its partner: capitals, authors, elements and more.</p><span class="meta">Endless pairs · 4 tiers</span></a>
       <a class="tc" href="higher-lower.html" data-cat="game" data-title="Higher or Lower" data-blurb="Which is bigger? Tallest, longest, fastest, oldest: the category keeps switching.">
         <h4>Higher or Lower</h4><p>Which is bigger? Tallest, longest, fastest, oldest: the category keeps switching.</p><span class="meta">Endless rounds · 4 tiers</span></a>
       <a class="tc" href="odd-one-out.html" data-cat="game" data-title="Odd One Out" data-blurb="Three belong together, one doesn't: spot it. The hidden link is revealed after.">
         <h4>Odd One Out</h4><p>Three belong together, one doesn't: spot it. The hidden link is revealed after.</p><span class="meta">Endless puzzles · 4 tiers</span></a>
       <a class="tc" href="guess-the-year.html" data-cat="game" data-title="Guess the Year" data-blurb="Slide through time as the page changes from manuscript to screen. Lock in your year, watch it land on the timeline, and chase exact-year streaks.">
-        <h4>Guess the Year</h4><p>Slide through time as the page changes from manuscript to screen. Lock in your year, watch it land on the timeline, and chase exact-year streaks.</p><span class="meta">Endless rounds · 4 tiers</span></a>
+        <h4>Guess the Year</h4><p>Slide through time, lock in your year and chase exact-year streaks.</p><span class="meta">Endless rounds · 4 tiers</span></a>
       <a class="tc" href="fact-fiction.html" data-cat="game" data-title="Fact or Fiction" data-blurb="True or false? Snap judgements, with famous myths waiting to trip you up near the top.">
         <h4>Fact or Fiction</h4><p>True or false? Snap judgements, with famous myths waiting to trip you up near the top.</p><span class="meta">Endless rounds · 4 tiers</span></a>
       <a class="tc" href="spot-the-lie.html" data-cat="game" data-title="Spot the Lie" data-blurb="Three statements, one is made up. Find the fib: they get sneakier as you climb.">
@@ -319,7 +459,7 @@
 
   <section class="sec" data-sec="quiz" aria-label="Quizzes">
     <div class="secrow"><h2 class="sectitle">Quizzes</h2><div class="secnote">pick a subject, climb the tiers</div></div>
-      <div class="qgroup"><h3 class="qgname">Sport</h3>
+      <div class="qgroup" style="--qc:var(--sage)"><h3 class="qgname">Sport</h3>
         <div class="qgrid">
         <a class="qc" href="leeds-rhinos-quiz.html" data-cat="quiz" data-title="Leeds Rhinos" data-blurb="Headingley legends, Grand Finals and the golden generation.">
           <h5>Leeds Rhinos</h5><span>127 questions · 4 tiers</span></a>
@@ -334,7 +474,7 @@
         <a class="qc" href="wrestling-quiz.html" data-cat="quiz" data-title="Wrestling" data-blurb="WWE, WCW and ECW to Japan, Lucha Libre and World of Sport: stars, world titles, events and matches.">
           <h5>Wrestling</h5><span>240 questions · 4 tiers</span></a>
         </div></div>
-      <div class="qgroup"><h3 class="qgname">Music</h3>
+      <div class="qgroup" style="--qc:var(--ember)"><h3 class="qgname">Music</h3>
         <div class="qgrid">
         <a class="qc" href="afrobeats-quiz.html" data-cat="quiz" data-title="Afrobeats" data-blurb="From Fela's Afrobeat to Burna, Wizkid, Davido and the global takeover: the stars, the hits, the awards and the roots.">
           <h5>Afrobeats</h5><span>120 questions · 4 tiers</span></a>
@@ -345,14 +485,14 @@
         <a class="qc" href="music-quiz.html" data-cat="quiz" data-title="Music" data-blurb="Pop, rock, classical and jazz: instruments, artists and theory.">
           <h5>Music</h5><span>180 questions · 4 tiers</span></a>
         </div></div>
-      <div class="qgroup"><h3 class="qgname">Faith</h3>
+      <div class="qgroup" style="--qc:var(--pale)"><h3 class="qgname">Faith</h3>
         <div class="qgrid">
         <a class="qc" href="bible-quiz.html" data-cat="quiz" data-title="The Bible" data-blurb="Famous stories, parables, passages and people, from Genesis to Revelation.">
           <h5>The Bible</h5><span>128 questions · 4 tiers</span></a>
         <a class="qc" href="religion-quiz.html" data-cat="quiz" data-title="World Religions" data-blurb="The major faiths: texts, founders, festivals and figures, from Christianity to Buddhism.">
           <h5>World Religions</h5><span>120 questions · 4 tiers</span></a>
         </div></div>
-      <div class="qgroup"><h3 class="qgname">Screen & Culture</h3>
+      <div class="qgroup" style="--qc:var(--rose)"><h3 class="qgname">Screen &amp; Culture</h3>
         <div class="qgrid">
         <a class="qc" href="film-screen-quiz.html" data-cat="quiz" data-title="Film &amp; Screen" data-blurb="Movies, TV, actors and directors, from blockbusters to world cinema.">
           <h5>Film &amp; Screen</h5><span>180 questions · 4 tiers</span></a>
@@ -361,7 +501,7 @@
         <a class="qc" href="scifi-quiz.html" data-cat="quiz" data-title="Science Fiction" data-blurb="The books, films, authors and big ideas that built the genre.">
           <h5>Science Fiction</h5><span>120 questions · 4 tiers</span></a>
         </div></div>
-      <div class="qgroup"><h3 class="qgname">Knowledge</h3>
+      <div class="qgroup" style="--qc:var(--amber)"><h3 class="qgname">Knowledge</h3>
         <div class="qgrid">
         <a class="qc" href="general-knowledge-quiz.html" data-cat="quiz" data-title="General Knowledge" data-blurb="A big shuffled pool across four tiers. Climb from Easy through Medium and Hard all the way to the new Legends tier.">
           <h5>General Knowledge</h5><span>1,000 questions · Legends tier</span></a>
@@ -382,10 +522,15 @@
   <div class="nores" id="nores">No games match that search.</div>
 
   <footer>
+    <div class="foot-brand"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#tbMarkS"/></svg><span class="word">Tier<b>Brain</b></span></div>
+    <div class="foot-line">Free in your browser. No app, no sign-up.</div>
+    <nav class="foot-links" aria-label="About and legal"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></nav>
     <div class="tipline">Made for fun. If you enjoy it:</div>
     <a class="support" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
       Buy me a coffee</a>
+    <p class="foot-fine">TierBrain is an independent site. It is not affiliated with, endorsed by or sponsored by any club, league, broadcaster, programme or brand named in a quiz. Names are used only to describe what a quiz is about. Spotted a wrong answer? <a href="contact.html#report">Tell us</a>.</p>
+    <p class="foot-fine">© 2026 TierBrain</p>
   </footer>
 </main>
 </div>
@@ -424,6 +569,7 @@
         g.style.display=gv?'':'none';
       });
     });
+    var narrowed=(filter!=='all'||term); ['qotd','tonight'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=narrowed?'none':'';}); var ph=document.querySelector('.qotd-ph'); if(ph) ph.style.display=narrowed?'none':'';
     countEl.textContent = shown + (shown===1?' game':' games');
     noresEl.style.display = shown?'none':'block';
   }
@@ -443,38 +589,58 @@
 })();
 </script>
 <script>
-/* Homepage layout A ("curated shop"): a lighter top, search where browsing
-   starts, and six games per section with "Show all". Searching or filtering
-   opens every section, so no game can be missed. */
+/* Light/dark toggle: follows the device setting until the visitor picks one, then remembers it. */
 (function(){
-  var T = function(re){ return [].filter.call(document.querySelectorAll('body *'), function(e){ return e.children.length === 0 && re.test(e.textContent.trim()); }); };
-  var H = function(re){ return [].find.call(document.querySelectorAll('h2'), function(x){ return re.test(x.textContent); }); };
-  var eyebrow = T(/^A free hub of browser games$/)[0]; if(eyebrow) eyebrow.style.display = 'none';
-  var para = T(/^Quizzes, puzzles, party games/)[0]; if(para) para.textContent = 'Answer well, and something happens: a ladder holds, a throne is won, a case cracks open.';
-  var play = H(/Play together/), callout = T(/^Got people coming round\?$/)[0];
-  if(callout && play){ callout.parentElement.style.display = 'none';
-    var note = document.createElement('p'); note.className = 'tb-play-note'; note.textContent = 'Got people coming round? Put it on the big screen, everyone joins on their phone.';
-    play.parentElement.after(note); }
-  var input = document.querySelector('input'), wrap = input && input.parentElement;
-  var chips = ([].find.call(document.querySelectorAll('button'), function(b){ return b.textContent.trim() === 'All'; }) || {}).parentElement;
-  if(play && wrap){ var tray = document.createElement('div'); tray.style.margin = '6px 0 18px'; tray.appendChild(wrap); if(chips) tray.appendChild(chips);
-    play.parentElement.parentNode.insertBefore(tray, play.parentElement); }
-  var count = T(/^\d+ games$/)[0], jump = document.getElementById('qotdJump');
-  if(count && jump){ count.after(jump); jump.style.marginLeft = '10px'; }
-  var grids = [];
-  ['Play together', 'Adventures', 'Quick games', 'Quizzes'].forEach(function(n){
-    var hh = H(new RegExp(n)); if(!hh) return;
-    var c = [].find.call(document.querySelectorAll('a.tc'), function(a){ return hh.compareDocumentPosition(a) & 4; }); if(!c) return;
-    var g = c.parentElement, items = [].slice.call(g.children); if(items.length <= 6 || grids.indexOf(g) >= 0) return;
+  var b = document.getElementById('themeToggle'); if(!b) return;
+  var root = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  function cur(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function label(){ var l = cur() === 'light'; b.setAttribute('aria-label', l ? 'Switch to dark mode' : 'Switch to light mode'); b.title = l ? 'Dark mode' : 'Light mode'; }
+  function apply(t, save){
+    root.setAttribute('data-theme', t);
+    if(meta) meta.setAttribute('content', t === 'light' ? '#f8f0e2' : '#1c1013');
+    if(save){ try{ localStorage.setItem('tb-theme', t); }catch(e){} }
+    label();
+  }
+  b.addEventListener('click', function(){ apply(cur() === 'light' ? 'dark' : 'light', true); });
+  var mq = window.matchMedia && matchMedia('(prefers-color-scheme: light)');
+  if(mq && mq.addEventListener) mq.addEventListener('change', function(e){
+    var saved = null; try{ saved = localStorage.getItem('tb-theme'); }catch(_){}
+    if(saved !== 'light' && saved !== 'dark') apply(e.matches ? 'light' : 'dark', false);
+  });
+  label();
+})();
+</script>
+<script>
+/* Six games per section with "Show all". Searching or filtering opens every
+   section so nothing is hidden. Also: "New" badges and the Surprise me button. */
+(function(){
+  var input = document.getElementById('q'), pills = document.getElementById('pills'), grids = [];
+  [].forEach.call(document.querySelectorAll('.sec[data-sec="multi"],.sec[data-sec="adv"],.sec[data-sec="quick"]'), function(sec){
+    var g = sec.querySelector('.grid'); if(!g) return;
+    var items = [].slice.call(g.children); if(items.length <= 6) return;
     items.slice(6).forEach(function(x){ x.classList.add('tb-more'); });
     g.classList.add('tb-collapsed'); grids.push(g);
     var b = document.createElement('button'); b.type = 'button'; b.className = 'tb-showall'; b.textContent = 'Show all ' + items.length;
-    b.addEventListener('click', function(){ g.classList.remove('tb-collapsed'); b.remove(); });
+    b.addEventListener('click', function(){ g.classList.remove('tb-collapsed'); b.remove(); g._btn = null; });
     g.after(b); g._btn = b;
   });
   var openAll = function(){ grids.forEach(function(g){ g.classList.remove('tb-collapsed'); if(g._btn){ g._btn.remove(); g._btn = null; } }); };
   if(input) input.addEventListener('input', openAll, true);
-  if(chips) chips.addEventListener('click', openAll, true);
+  if(pills) pills.addEventListener('click', openAll, true);
+
+  [].forEach.call(document.querySelectorAll('.tc .meta'), function(m){
+    var t = m.textContent; if(t.indexOf('New \u00B7 ') !== 0) return;
+    var i = document.createElement('i'); i.className = 'newb'; i.textContent = 'New';
+    m.textContent = t.slice(6); m.insertBefore(i, m.firstChild);
+  });
+
+  var rnd = document.getElementById('surprise');
+  if(rnd) rnd.addEventListener('click', function(e){
+    var pool = [].filter.call(document.querySelectorAll('.sec[data-sec="adv"] a.tc, .sec[data-sec="quick"] a.tc'), function(a){
+      return !/bible|wall/.test(a.getAttribute('href')) && a.getAttribute('data-cat').indexOf('multiplayer') < 0; });
+    if(!pool.length) return;
+    e.preventDefault(); location.href = pool[Math.floor(Math.random() * pool.length)].getAttribute('href');
+  });
 })();
 </script>
 <script>
@@ -540,10 +706,7 @@
     show(pick(pool, dayNum), true);
     $('qotdAnother').onclick = function(){ show(pool[Math.floor(Math.random() * pool.length)], false); };
     $('qotd').hidden = false;
-    var jump = $('qotdJump'), box = $('qotd');
-    jump.textContent = '\uD83D\uDCA1 Today\u2019s ' + (weekend ? 'riddle' : 'question');
-    if(get().date){ jump.parentNode.insertBefore(box, jump); jump.hidden = true; }   /* returning player: the box goes to the top */
-    else jump.hidden = false;
+    var box = $('qotd');
     if(location.hash === '#qotd') box.scrollIntoView({ block:'start' });
   };
   var fits = function(q){ return q && q.wrong && q.wrong.length >= 3 && q.q.length <= 140 && [q.correct].concat(q.wrong.slice(0, 3)).every(function(a){ return String(a).length <= 26; }); };
