@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About | TierBrain</title>
+<meta name="description" content="What TierBrain is: a free hub of quiz games you play in your browser, with no app and no account.">
+<link rel="canonical" href="https://tierbrain.co/about.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%231c1013'/%3E%3Cg transform='translate(2.4 2.4) scale(.9)'%3E%3Cdefs%3E%3CclipPath id='c'%3E%3Cpath d='M22.3 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.3 38Z'/%3E%3Cpath d='M25.7 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.7 38Z'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23c)'%3E%3Crect y='5' width='48' height='11.07' fill='%23f2d27a'/%3E%3Crect y='19.47' width='48' height='9.07' fill='%23d9694f'/%3E%3Crect y='31.93' width='48' height='10.07' fill='%2386bf9d'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#1c1013">
+<script>(function(){var t=null;try{t=localStorage.getItem('tb-theme')}catch(e){}
+if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';}
+document.documentElement.setAttribute('data-theme',t);
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#f8f0e2':'#1c1013');})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  a{text-decoration:none;color:inherit;}
+  :root{color-scheme:dark;
+    --bg0:#130a0d;--bg1:#1c1013;--bg2:#241418;--ink:#fbf1e2;--ink-strong:#ffffff;--mut:#c2a99a;
+    --w:255,255,255;--line:rgba(var(--w),.10);
+    --g:230,182,85;--em:217,105,79;--sg:134,191,157;--wr:232,118,95;
+    --gold:#e6b655;--gold-hi:#efc66f;--on-gold:#1c1013;
+    --amber:#e0a458;--ember:#d9694f;--sage:#86bf9d;--rose:#d98f8f;--pale:#f2d27a;--wood:#9b7455;--wrong:#e8765f;
+    --t1:#86bf9d;--t2:#e0a458;--t3:#d9694f;--t4:#f2d27a;--rung-ink:#1c1013;
+    --card1:rgba(var(--w),.065);--card2:rgba(var(--w),.03);--field:rgba(var(--w),.05);
+    --streak:#f0c98c;--res:#d9c8b8;--search-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23c2a99a' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+    --display:'Baloo 2','Nunito',system-ui,sans-serif;--acc:var(--gold);}
+  :root[data-theme="light"]{color-scheme:light;
+    --bg0:#fcf7ee;--bg1:#f8f0e2;--bg2:#f4e9d6;--ink:#2a1a14;--ink-strong:#1c1013;--mut:#6b5649;
+    --w:60,36,28;--line:rgba(var(--w),.16);
+    --g:133,89,10;--em:176,56,35;--sg:42,117,80;--wr:176,56,35;
+    --gold:#85590a;--gold-hi:#6f4807;--on-gold:#fff8ea;
+    --amber:#9c5808;--ember:#b03823;--sage:#2a7550;--rose:#a64a52;--pale:#856000;--wood:#8a6246;--wrong:#b03823;
+    --t1:#2a7050;--t2:#a85a08;--t3:#b03823;--t4:#8a6100;--rung-ink:#fffaf0;
+    --card1:#fffdf8;--card2:#fbf5ea;--field:#fffdf8;
+    --streak:#85590a;--res:#5a4639;--search-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236b5649' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");}
+  html{min-height:100%;scroll-padding-top:16px;}
+  body{min-height:100%;font-family:'Nunito',system-ui,sans-serif;color:var(--ink);line-height:1.5;
+    background:radial-gradient(90% 60% at 15% -10%,rgba(var(--g),.10),transparent 55%),
+      radial-gradient(70% 50% at 100% 0%,rgba(var(--em),.10),transparent 55%),
+      linear-gradient(165deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+    background-attachment:fixed;padding-bottom:70px;}
+  .skip{position:absolute;left:12px;top:-64px;z-index:100;background:var(--gold);color:var(--on-gold);font-weight:800;padding:10px 16px;border-radius:10px;}
+  .skip:focus{top:12px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px;}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:28px 0 0;}
+  .theme-toggle{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(var(--w),.04);color:var(--gold);display:grid;place-items:center;cursor:pointer;transition:border-color .16s,background .16s;}
+  .theme-toggle:hover{border-color:rgba(var(--g),.6);background:rgba(var(--g),.10);}
+  .theme-toggle svg{width:20px;height:20px;}
+  :root[data-theme="light"] .ico-sun{display:none;} :root:not([data-theme="light"]) .ico-moon{display:none;}
+  .brand{display:inline-flex;align-items:center;gap:10px;}
+  .brand svg{width:38px;height:38px;flex:none;}
+  .word{font-family:var(--display);font-weight:500;font-size:26px;letter-spacing:-.01em;}
+  .word b{color:var(--gold);font-weight:800;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:800;font-size:15.5px;font-family:inherit;transition:transform .16s ease,background .16s ease,border-color .16s ease;}
+  .btn-main{background:var(--gold);color:var(--on-gold);box-shadow:0 8px 22px rgba(var(--g),.22);}
+  .btn-main:hover{transform:translateY(-2px);background:var(--gold-hi);}
+  .doc{max-width:720px;margin:34px auto 0;}
+  .back{display:inline-flex;align-items:center;min-height:44px;color:var(--gold);font-weight:800;font-size:14.5px;}
+  .back:hover{text-decoration:underline;text-underline-offset:3px;}
+  .doc h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6.4vw,50px);line-height:1.06;letter-spacing:-.015em;margin-top:8px;text-wrap:balance;}
+  .lede{margin-top:16px;font-size:18px;line-height:1.65;color:var(--mut);font-weight:600;}
+  .updated{margin-top:12px;font-size:13.5px;color:var(--mut);font-weight:700;}
+  .doc h2{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:800;font-size:24px;line-height:1.2;margin:44px 0 6px;}
+  .doc h2::before{content:"";width:7px;height:20px;border-radius:3px;background:var(--gold);flex:none;}
+  .doc p,.doc li{font-size:16.5px;line-height:1.7;font-weight:600;margin-top:10px;}
+  .doc ul{padding-left:22px;margin-top:6px;} .doc li{margin-top:8px;}
+  .doc li::marker{color:var(--gold);}
+  .doc p a,.doc li a{color:var(--gold);font-weight:800;text-decoration:underline;text-underline-offset:3px;}
+  .doc strong{font-weight:800;}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .btn-ghost{color:var(--gold);border:1px solid rgba(var(--g),.5);background:rgba(var(--g),.06);}
+  .btn-ghost:hover{border-color:var(--gold);background:rgba(var(--g),.12);}
+  .callout{margin-top:22px;border:1px solid var(--line);background:linear-gradient(180deg,var(--card1),var(--card2));border-radius:16px;padding:4px 18px 18px;}
+  footer{margin-top:72px;padding-top:32px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:13.5px;font-weight:700;}
+  .foot-brand{display:inline-flex;align-items:center;gap:8px;}
+  .foot-brand svg{width:24px;height:24px;} .foot-brand .word{font-size:19px;}
+  .foot-line{margin-top:8px;}
+  .tipline{margin-top:20px;}
+  .support{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-weight:800;font-size:14px;color:var(--gold);border:1px solid rgba(var(--g),.45);border-radius:999px;min-height:44px;padding:0 18px;transition:background .16s;}
+  .support:hover{background:rgba(var(--g),.12);}
+  .support svg{width:16px;height:16px;}
+  
+  .foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 20px;margin-top:18px;}
+  .foot-links a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:800;font-size:14px;}
+  .foot-links a:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px;}
+  .foot-fine{max-width:62ch;margin:18px auto 0;font-size:12.5px;line-height:1.6;font-weight:600;color:var(--mut);}
+  .foot-fine a{color:var(--ink);font-weight:800;text-decoration:underline;text-underline-offset:3px;}
+
+  @media(max-width:520px){ .btn{flex:1 1 100%;} .doc h2{font-size:22px;} }
+  @media(prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth;} }
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<clipPath id="tbClip"><path d="M22.8 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.8 38Z"/><path d="M25.2 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.2 38Z"/></clipPath>
+<clipPath id="tbClipS"><path d="M22.3 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.3 38Z"/><path d="M25.7 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.7 38Z"/></clipPath>
+<symbol id="tbMark" viewBox="0 0 48 48"><g clip-path="url(#tbClip)"><rect y="5" width="48" height="8.45" style="fill:var(--t4)"/><rect y="15.85" width="48" height="6.45" style="fill:var(--t3)"/><rect y="24.7" width="48" height="6.45" style="fill:var(--t2)"/><rect y="33.55" width="48" height="8.45" style="fill:var(--t1)"/></g></symbol>
+<symbol id="tbMarkS" viewBox="0 0 48 48"><g clip-path="url(#tbClipS)"><rect y="5" width="48" height="11.07" style="fill:var(--t4)"/><rect y="19.47" width="48" height="9.07" style="fill:var(--t3)"/><rect y="31.93" width="48" height="10.07" style="fill:var(--t1)"/></g></symbol>
+</defs></svg>
+<a class="skip" href="#main">Skip to the content</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./" aria-label="TierBrain home"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#tbMark"/></svg><span class="word">Tier<b>Brain</b></span></a>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </header>
+  <main id="main" class="doc">
+    <a class="back" href="./">Back to the games</a>
+    <h1>About TierBrain</h1>
+    <p class="lede">TierBrain is a free hub of quiz games you play in your browser. No app to install and no account to make.</p>
+    
+
+    <h2>What you’ll find</h2>
+    <p>Games that run on what you know. Answer well and something happens: a ladder holds, a throne is won, a case cracks open. There are solo adventures and puzzles, quick rounds you can play in a minute, and party games where one screen hosts and everyone joins on their phone with a code.</p>
+    <h2>How tiers work</h2>
+    <p>Most games climb four tiers: Easy, Medium, Hard and Legends. Start where you’re comfortable and work your way up.</p>
+    <h2>Who it’s for</h2>
+    <p>Families, friends, small groups and churches, or just you with a few spare minutes. There are no accounts, and we don’t ask for your name or email to play.</p>
+    <h2>Questions, and getting them right</h2>
+    <p>We want the questions to be right. Facts change and mistakes slip through, especially in sport, politics and crypto, where things move quickly. If you spot a wrong or out-of-date answer, please <a href="contact.html#report">tell us</a> and we’ll check it.</p>
+    <h2>Independent and unofficial</h2>
+    <p>Some quizzes are about clubs, TV shows, artists and other well-known names. TierBrain is an independent site and is not affiliated with, endorsed by or sponsored by any of them. Names are used only to describe what a quiz is about, and they belong to their owners. See the <a href="terms.html#unofficial">terms</a> for more.</p>
+    <h2>Keeping it going</h2>
+    <p>TierBrain is free to play. If you enjoy it, you can support it by <a href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">buying a coffee</a>.</p>
+    <h2>Say hello</h2>
+    <p>Questions, ideas or problems? Head to the <a href="contact.html">contact page</a>.</p>
+  </main>
+  <footer>
+    <div class="foot-brand"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#tbMarkS"/></svg><span class="word">Tier<b>Brain</b></span></div>
+    <div class="foot-line">Free in your browser. No app, no sign-up.</div>
+    <nav class="foot-links" aria-label="About and legal"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></nav>
+    <div class="tipline">Made for fun. If you enjoy it:</div>
+    <a class="support" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      Buy me a coffee</a>
+    <p class="foot-fine">TierBrain is an independent site. It is not affiliated with, endorsed by or sponsored by any club, league, broadcaster, programme or brand named in a quiz. Names are used only to describe what a quiz is about. Spotted a wrong answer? <a href="contact.html#report">Tell us</a>.</p>
+    <p class="foot-fine">© 2026 TierBrain</p>
+  </footer>
+</div>
+<script>
+/* Light/dark toggle: follows the device setting until the visitor picks one, then remembers it. */
+(function(){
+  var b = document.getElementById('themeToggle'); if(!b) return;
+  var root = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  function cur(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function label(){ var l = cur() === 'light'; b.setAttribute('aria-label', l ? 'Switch to dark mode' : 'Switch to light mode'); b.title = l ? 'Dark mode' : 'Light mode'; }
+  function apply(t, save){
+    root.setAttribute('data-theme', t);
+    if(meta) meta.setAttribute('content', t === 'light' ? '#f8f0e2' : '#1c1013');
+    if(save){ try{ localStorage.setItem('tb-theme', t); }catch(e){} }
+    label();
+  }
+  b.addEventListener('click', function(){ apply(cur() === 'light' ? 'dark' : 'light', true); });
+  var mq = window.matchMedia && matchMedia('(prefers-color-scheme: light)');
+  if(mq && mq.addEventListener) mq.addEventListener('change', function(e){
+    var saved = null; try{ saved = localStorage.getItem('tb-theme'); }catch(_){}
+    if(saved !== 'light' && saved !== 'dark') apply(e.matches ? 'light' : 'dark', false);
+  });
+  label();
+})();
+</script>
+</body>
+</html>
