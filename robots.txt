@@ -1,10 +1,7 @@
 User-agent: *
 Allow: /
-
-# Supabase API paths the games call. Never pages on this domain, so crawling
-# them only produces 404s and wastes crawl budget.
-Disallow: /rest/
+# Player-side join pages have no value in search results
+Disallow: /throne-play.html
+Disallow: /play-gen.html
 
 Sitemap: https://tierbrain.co/sitemap.xml
-Sitemap: https://tierbrain.co/sitemap-questions.xml
-Sitemap: https://tierbrain.co/sitemap-answers.xml
