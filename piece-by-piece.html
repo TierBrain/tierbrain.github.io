@@ -32,6 +32,8 @@
   .name{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);color:var(--ink);
     font:inherit;font-weight:600;font-size:15px;padding:13px 15px;border-radius:13px;margin-bottom:16px;text-align:center;}
   .name::placeholder{color:var(--mut);}
+  .field-label{width:100%;max-width:320px;margin:0 0 6px;color:var(--mut);font-size:13px;font-weight:700;}
+  .field-hint{max-width:320px;margin:-8px 0 16px;color:var(--mut);font-size:12px;line-height:1.5;text-align:center;}
   .big{background:var(--gold);color:#23180a;border:none;font:inherit;font-weight:800;font-size:18px;
     padding:15px 40px;border-radius:14px;cursor:pointer;}
   .big:active{transform:scale(.98);}
@@ -103,9 +105,12 @@
   <div class="kick">T I E R B R A I N</div>
   <h1><span class="star">&#10022;</span> Piece by Piece</h1>
   <p class="sub">An image builds itself, piece by piece. Name it before it finishes, the sooner you call it, the more you score. One guess. Pick a category:</p>
-  <input id="nameInput" class="name" maxlength="16" placeholder="Your name (for the leaderboard)" autocomplete="off">
-  <input id="groupInput" class="name" maxlength="24" placeholder="Group code (optional)" autocomplete="off">
-  <p style="margin:6px 2px 0;font-size:13px;line-height:1.4;opacity:.65;text-align:center">Optional: friends who enter the same code share a private Wall of Fame.</p>
+  <label class="field-label" for="nameInput">Nickname</label>
+  <input id="nameInput" class="name" maxlength="16" placeholder="e.g. Alex" autocomplete="off" aria-describedby="nameHint">
+  <p class="field-hint" id="nameHint">Don't use your full name. Scores are public when you leave the group code blank.</p>
+  <label class="field-label" for="groupInput">Group code (optional)</label>
+  <input id="groupInput" class="name" maxlength="24" placeholder="Group code" autocomplete="off" aria-describedby="groupHint">
+  <p class="field-hint" id="groupHint">Friends who enter the same code share a Wall of Fame. Anyone with the code can view the group's results.</p>
   <div class="decks">
     <button class="big deckbtn" id="deckFlags">Flags</button>
     <button class="big deckbtn" id="deckPlanets">Planets &amp; Moons</button>
@@ -141,7 +146,7 @@
     <h2>Run over <span class="star">&#10022;</span></h2>
     <div class="score" id="ovScore">0</div>
     <div class="sub2" id="ovSub"></div>
-    <div class="lbhead">Top scores</div>
+    <div class="lbhead" id="lbHead">Top scores</div>
     <div class="lb" id="ovLb"><div class="lbmsg">Loading leaderboard&hellip;</div></div>
     <div class="row2">
       <button class="big ghostbtn" id="againBtn">Play again</button>
@@ -627,17 +632,21 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&am
 function submitAndLoad(secs){
   var nm=(document.getElementById('nameInput').value||'').trim().slice(0,16)||'Anon';
   var box=document.getElementById('ovLb');box.innerHTML='<div class="lbmsg">Saving your score\u2026</div>';
-  var code=tbGroup(); var body=[{quiz_id:QUIZ_ID,group_code:deckKey+(code?'~'+code:''),name:nm,correct:score,level:correctCount,time_left:secs}];
+  var code=tbGroup(), scope=deckKey+(code?'~'+code:'');
+  document.getElementById('lbHead').textContent=code?'Top scores \u00b7 group '+code:'Top public scores';
+  var body=[{quiz_id:QUIZ_ID,group_code:scope,name:nm,correct:score,level:correctCount,time_left:secs}];
   fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify(body)})
     .catch(function(){})
-    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=like.'+deckKey+'*&order=correct.desc,time_left.asc&limit=8',{headers:sbHeaders()});})
-    .then(function(r){return r.json();})
+    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+encodeURIComponent(scope)+'&order=correct.desc,time_left.asc&limit=8',{headers:sbHeaders()});})
+    .then(function(r){if(!r.ok)throw new Error('load');return r.json();})
     .then(function(rows){
-      if(!rows||!rows.length){box.innerHTML='<div class="lbmsg">No scores yet, you\u2019re the first!</div>';return;}
+      // Keep public, group and category results separate even if a response is mixed.
+      rows=Array.isArray(rows)?rows.filter(function(r){return r&&r.quiz_id===QUIZ_ID&&r.group_code===scope;}):[];
+      if(!rows.length){box.innerHTML='<div class="lbmsg">No scores yet, you\u2019re the first!</div>';return;}
       var marked=false,html='';
       for(var i=0;i<rows.length;i++){
         var you=(!marked&&rows[i].name===nm&&rows[i].correct===score);if(you)marked=true;
-        html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+rows[i].correct+'</span></div>';
+        html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+esc(rows[i].correct)+'</span></div>';
       }
       box.innerHTML=html;
     })

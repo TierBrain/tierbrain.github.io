@@ -425,14 +425,6 @@
     $('menuBtn2').addEventListener('click',function(){ stopAllNet(); show('menu'); }); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 
-  window.__core_test=function(cmd,arg){
-    if(cmd==='gencheck'){ for(var t=0;t<TIERS.length;t++){ for(var k=0;k<60;k++){ var m=genMap(t); var v=validateMap(m); if(v!=='ok') return 'FAIL t'+t+':'+v; } } return 'OK'; }
-    if(cmd==='simulate'){ return simulate(arg); }
-    if(cmd==='world'){ return W.id+'|'+W.brand+'|'+W.types.enemy.label; }
-    if(cmd==='seedcheck'){ function sig(m){ return m.rows.map(function(r){ return r.map(function(n){ return n.type[0]; }).join(''); }).join('|'); }
-      var A=sig(genMap(2,mulberry32(hstr('ROOM')))),B=sig(genMap(2,mulberry32(hstr('ROOM')))),C=sig(genMap(2,mulberry32(hstr('ROOM2')))); return (A===B&&A!==C)?'OK':('FAIL '+A+' :: '+C); }
-    if(cmd==='digest'){ var d=digest(arg); return JSON.stringify({go:d.go,tier:d.tier,n:d.players.length,order:sortStandings(d.players).map(function(p){ return p.name+':'+(p.fin!=null?'F':p.state)+':'+p.depth; })}); }
-    return 'unknown'; };
   function validateMap(m){ var idsl=Object.keys(m.nodes); for(var i=0;i<idsl.length;i++){ var n=m.nodes[idsl[i]]; if(n.type!=='start'&&n.in.length===0) return 'in'; if(n.type!=='core'&&n.out.length===0) return 'out'; }
     var seen={},q=[m.startId]; seen[m.startId]=1; while(q.length){ var c=m.nodes[q.shift()]; c.out.forEach(function(b){ if(!seen[b]){ seen[b]=1; q.push(b); } }); }
     if(!seen[m.coreId]) return 'core'; for(var j=0;j<idsl.length;j++){ if(!seen[idsl[j]]) return 'island'; } return 'ok'; }

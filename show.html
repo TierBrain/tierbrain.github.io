@@ -2094,7 +2094,8 @@ $('startShow').addEventListener('click', function(){ if(!room){ alert('Still con
   $('pauseBtn').addEventListener('click', function(){ G.paused=!G.paused; $('pauseBtn').textContent=G.paused?'Resume':'Pause'; });
   $('skipBtn').addEventListener('click', function(){ if(G.phase==='question') closeQuestion(); else if(G.phase==='reveal') nextQuestion(); else if(G.phase==='round_intro'){ if(G.type==='buzzer') startBuzzerQuestion(); else if(G.type==='fiveclues') startCluesQuestion(); else presentQuestion(); } else if(G.phase==='bz'){ if(G.buzz&&G.buzz.phase==='reveal') nextBuzzerQuestion(); else buzzerReveal(); } else if(G.phase==='fc'){ if(G.fc&&G.fc.phase==='reveal') nextCluesQuestion(); else closeClues(); } });
   const _waitRoom=setInterval(function(){ if(typeof room!=='undefined' && room){ clearInterval(_waitRoom); if(G.phase==='lobby'){ showPanel('join'); setRoom({phase:'lobby', q_id:'', state:{}}); } document.body.classList.remove('playing','ops-open'); setCompact(false); refreshLineup(); } }, 400);
-  globalThis.__E={buildRapid:buildRapid,buildVerse:buildVerse,buildShowOrder:buildShowOrder,startShow:startShow,startRoundByPtr:startRoundByPtr,presentQuestion:presentQuestion,closeQuestion:closeQuestion,nextQuestion:nextQuestion,endRound:endRound,setRounds:function(n){ADMIN_ROUNDS=n;},buildBuzzer:buildBuzzer,buildClues:buildClues,startBuzzerQuestion:startBuzzerQuestion,startCluesQuestion:startCluesQuestion,closeClues:closeClues,nextCluesQuestion:nextCluesQuestion,get fc(){return G.fc;},finaleShow:finaleShow,resolveLanes:resolveLanes,buzzerReveal:buzzerReveal,nextBuzzerQuestion:nextBuzzerQuestion,get order(){return SHOW_ORDER;},get buzz(){return G.buzz;},get G(){return G;}};
+  /* The opening cutscene only needs to request a normal show start. */
+  document.addEventListener('tb:start-show', startShow);
 </script>
 
 
@@ -2168,7 +2169,7 @@ $('startShow').addEventListener('click', function(){ if(!room){ alert('Still con
       if(opened || !cutsOn() || !window.TBScenes || (typeof room !== 'undefined' && !room)) return;
       e.stopImmediatePropagation(); e.preventDefault(); opened = true;
       /* the opening replaces the old title sting, so go straight into the show */
-      playScene('opening', {}, function(){ if(globalThis.__E && __E.startShow) __E.startShow(); else start.click(); setTimeout(function(){ opened = false; }, 1500); });
+      playScene('opening', {}, function(){ document.dispatchEvent(new Event('tb:start-show')); setTimeout(function(){ opened = false; }, 1500); });
     }, true);
     var ct = $('cutsToggle'); if(ct){ ct.checked = cutsOn(); ct.addEventListener('change', function(){ lsSet(KEY_CUTS, ct.checked ? '1' : '0'); }); }
     var sb = $('soundBtn'), on = lsGet(KEY_SOUND, '1') === '1'; applySound(on);

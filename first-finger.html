@@ -121,8 +121,8 @@
     <div class="sub">TierBrain</div>
     <h1 class="display">First Finger</h1>
     <p class="lead">Everyone sees the same question at once, first correct answer takes the point. A wrong buzz locks you out of that one, so be quick but be sure. Most points after 12 rounds wins.</p>
-    <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
-    <div class="field"><label>Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="BUZZ1" autocomplete="off"></div>
+    <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
+    <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="BUZZ1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Enter room</button>
     <p class="note">Same code = same buzzer room. Needs at least 2 players.</p>
@@ -347,18 +347,6 @@
   $('menuBtn').addEventListener('click',leave);
   document.addEventListener('keydown',function(e){ if(phase!=='play'||mode!=='ask') return; var n=parseInt(e.key,10); if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); } });
 
-  window.__ff_test={
-    enter:function(n,c){ $('nameIn').value=n; $('codeIn').value=c; enterRoom(); },
-    go:function(){ pressGo(); },
-    forceStart:function(){ buildOrder(); phase='play'; dispQ=0; answeredQ=-1; ended=false; localSkip={}; mode='ask'; qStart=Date.now(); lastRes=null; },
-    order:function(){ return order.slice(); },
-    correct:function(){ answer(qOf(dispQ)[1], {classList:{add:function(){}}}); },
-    wrong:function(){ answer(qOf(dispQ)[2][0], {classList:{add:function(){}}}); },
-    poll:function(){ return poll(); },
-    advance:function(){ if(lastRes) drive(lastRes); },
-    setDisp:function(q){ dispQ=q; },
-    state:function(){ return {phase:phase, dispQ:dispQ, mode:mode, answeredQ:answeredQ, currentQ:lastRes?lastRes.currentQ:0, present:lastRes?lastRes.present:{}, ended:ended}; }
-  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

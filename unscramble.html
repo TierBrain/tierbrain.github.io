@@ -533,7 +533,6 @@
     $('qcount').textContent='WORD '+(answered+1)+' OF 20';
     $('progbar').style.width=(answered/20*100)+'%';
     $('uHint').textContent=current.hint||'';
-    if(window.__qc_test) window.__qc_test(word);
     $('uMsg').textContent=''; $('uSlots').classList.remove('good');
     renderSlots(); renderTiles();
     locked=false;

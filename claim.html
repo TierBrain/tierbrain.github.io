@@ -324,15 +324,6 @@
     $('menuBtn2').addEventListener('click',function(){ stopTimers(); show('menu'); }); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 
-  // ---------- test hook ----------
-  window.__claim_test=function(cmd){
-    if(cmd==='fill'){ for(var k=0;k<300;k++){ var g=newGame(),steps=0;
-        while(!full(g)&&steps<2000){ var e=eligible(g,YOU); if(e.length){ var fre=e.filter(function(t){return g.g[t[0]][t[1]]===FREE;}); var p=(fre.length?fre:e)[rnd((fre.length?fre:e).length)]; g.g[p[0]][p[1]]=YOU; }
-          if(full(g)) break; var rp=rustlerPick(g); if(rp) g.g[rp[0]][rp[1]]=RIV; else if(!e.length) break; steps++; }
-        var cc=counts(g); if(cc.free!==0) return 'FAIL free='+cc.free+' steps='+steps; if(cc.you+cc.riv!==25) return 'FAIL sum'; if(cc.you===cc.riv) return 'TIE (unexpected on odd board)'; }
-      return 'OK'; }
-    if(cmd==='elig'){ var g=newGame(); return JSON.stringify({you:eligible(g,YOU).length, riv:eligible(g,RIV).length, c:counts(g)}); }
-    return 'unknown'; };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

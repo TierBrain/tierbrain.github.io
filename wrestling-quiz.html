@@ -589,14 +589,6 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
-  window.__qc_test=function(cmd){
-    switch(cmd){
-      case 'start': startGame(); return true;
-      case 'state': return {level:level,answered:answered,correct:correct,totalWrong:totalWrong,playing:playing};
-      case 'answerCorrect': answer(current.correct); return true;
-      case 'answerWrong': answer(current.wrong[0]); return true;
-    }
-  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

@@ -646,17 +646,6 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
-  window.__qc_test=function(cmd){
-    switch(cmd){
-      case 'start': startGame(); return true;
-      case 'state': return {level:level,answered:answered,points:correct,totalWrong:totalWrong,playing:playing,phase:phase};
-      case 'pickCorrect': pickAnswer(current.correct,null); return true;
-      case 'pickWrong': pickAnswer(current.wrong[0],null); return true;
-      case 'throwCertain': throwDart(3); return true;
-      case 'throwFair': throwDart(2); return true;
-      case 'throwHunch': throwDart(1); return true;
-    }
-  };
 })();
 </script>
 <script>

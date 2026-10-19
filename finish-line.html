@@ -138,8 +138,8 @@
     <div class="sub">TierBrain</div>
     <h1 class="display">Finish Line</h1>
     <p class="lead">A live race for 2 or more. Everyone enters the same race code, then answers as fast as they can, every right answer moves your racer forward. First to the finish line wins.</p>
-    <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
-    <div class="field"><label>Race code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="RACE1" autocomplete="off"></div>
+    <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
+    <div class="field"><label for="codeIn">Race code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="RACE1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Join race</button>
     <p class="note">Tip: pick any code and tell your friends. Same code, same race.</p>
@@ -442,16 +442,6 @@
     var n=parseInt(e.key,10); if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); }
   });
 
-  // ---- test hook (no network needed; harness stubs fetch) ----
-  window.__race_test={
-    join:function(n,c){ $('nameIn').value=n; $('codeIn').value=c; doJoin(); },
-    go:function(){ pressGo(); },
-    forceStart:function(){ startRace(); },
-    poll:function(){ return poll(); },
-    correct:function(){ answer(current[1], document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
-    wrong:function(){ var w=current[2][0]; answer(w, document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
-    state:function(){ return {phase:phase, progress:progress, started:started, players:JSON.parse(JSON.stringify(players)), finishers:orderedFinishers()}; }
-  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

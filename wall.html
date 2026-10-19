@@ -153,6 +153,7 @@
   /* ---- scope / group ---- */
   .scope{max-width:520px;margin:20px auto 0;text-align:center}
   .grpform{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .grpform label{flex-basis:100%;color:var(--mut);font-size:.82rem;font-weight:700}
   .grpinput{font-family:'Nunito';font-weight:700;font-size:.95rem;color:var(--ink);
     background:rgba(255,255,255,.05);border:1px solid var(--panel-line);border-radius:999px;
     padding:10px 16px;width:min(220px,60%);text-transform:uppercase;letter-spacing:.08em}
@@ -223,7 +224,7 @@
   <footer class="foot">
     <p>Think you belong on the wall?</p>
     <a class="btn" href="./index.html">Pick a game and play ›</a>
-    <p class="small">Titles update the moment someone beats the standing best. Playing with friends? Enter the same group code in any game, then open this wall with that code for a private leaderboard of just your circle.</p>
+    <p class="small">Titles update the moment someone beats the standing best. Playing with friends? Enter the same group code in any game, then open this wall with that code for a shared group leaderboard. Anyone with the code can view the group's results.</p>
   </footer>
 
 </div>
@@ -270,14 +271,14 @@
       ],
       recent:[
         {quiz_id:'qc_piecebypiece',group_code:'animals',name:'Marcus',correct:910,created_at:iso(25*6e4)},
-        {quiz_id:'qc_jigsaw',level:4,name:'Priya',time_left:171,created_at:iso(2*36e5)},
+        {quiz_id:'qc_jigsaw',group_code:'global',level:4,name:'Priya',time_left:171,created_at:iso(2*36e5)},
         {quiz_id:'qc_piecebypiece',group_code:'flags',name:'Leo',correct:720,created_at:iso(1*D)},
         {quiz_id:'qc_piecebypiece',group_code:'planets',name:'Dani',correct:540,created_at:iso(2*D)}
       ]
     };
   }
 
-  // ---- multi-game registry (private wall) ----
+  // ---- multi-game registry (group wall) ----
   var REG=[
     {id:'qc_general-knowledge-quiz',label:'General Knowledge',href:'./general-knowledge-quiz.html',mode:'score'},
     {id:'qc_bible-quiz',label:'The Bible',href:'./bible-quiz.html',mode:'score'},
@@ -314,6 +315,25 @@
     {id:'qc_braincoaster',label:'Brain Coaster',href:'./brain-coaster.html',mode:'score'}
   ];
   var REGMAP={}; REG.forEach(function(r){REGMAP[r.id]=r;});
+  var PUBLIC_SCOPES={
+    qc_piecebypiece:DECKS.map(function(d){return d.key;}),
+    qc_jigsaw:['global'],
+    qc_braincoaster:['global']
+  };
+  // Display filtering is a second guard against mixed responses, not database authorization.
+  function isPublicScore(row){
+    if(!row || !Object.prototype.hasOwnProperty.call(PUBLIC_SCOPES,row.quiz_id))return false;
+    return PUBLIC_SCOPES[row.quiz_id].indexOf(row.group_code)!==-1;
+  }
+  function isGroupScore(row){
+    if(!row || !GROUP)return false;
+    if(row.quiz_id==='qc_piecebypiece'){
+      return DECKS.some(function(d){return row.group_code===d.key+'~'+GROUP;});
+    }
+    if(row.quiz_id==='qc_jigsaw')return row.group_code==='global~'+GROUP;
+    return Object.prototype.hasOwnProperty.call(REGMAP,row.quiz_id) && row.group_code===GROUP;
+  }
+  function scoreRows(rows,allow){return Array.isArray(rows)?rows.filter(allow):[];}
   function scoreSort(a,b){return n(b.correct)-n(a.correct) || n(b.level)-n(a.level);}
   function levelSort(a,b){return n(b.level)-n(a.level) || n(b.correct)-n(a.correct);}
   function gameLabel(q,gc){
@@ -322,6 +342,7 @@
     var g=REGMAP[q]; return g?g.label:'a game';
   }
   function renderGroup(rows){
+    rows=scoreRows(rows,isGroupScore);
     var byQ={}; rows.forEach(function(r){ (byQ[r.quiz_id]=byQ[r.quiz_id]||[]).push(r); });
     var titles=[], html='';
     var pbp=byQ['qc_piecebypiece']||[];
@@ -407,7 +428,7 @@
   }
   function get(url){return fetch(url,{headers:sbHeaders()}).then(function(r){
     if(!r.ok)throw new Error('http '+r.status); return r.json();});}
-  function activeGroup(){var m=/[?&]group=([A-Za-z0-9_-]{1,24})/.exec(location.search||'');return m?m[1].toUpperCase():'';}
+  function activeGroup(){var g=new URLSearchParams(location.search||'').get('group')||'';return /^[A-Za-z0-9_-]{1,24}$/.test(g)?g.toUpperCase():'';}
   function deckOf(gc){return String(gc==null?'':gc).split('~')[0];}
 
   // scope + fetch ---------------------------------------------------
@@ -418,14 +439,16 @@
   }
   if(GROUP){
     var ins=DECKS.map(function(d){return d.key+'~'+GROUP;}).join(',');
-    var gurl=sbBase()+'?or=(group_code.eq.'+GROUP+',group_code.eq.global~'+GROUP+',group_code.in.('+ins+'))&order=created_at.desc&limit=2000';
+    var groupGames=REG.map(function(g){return g.id;}).join(',');
+    var gurl=sbBase()+'?or=(and(quiz_id.eq.qc_piecebypiece,group_code.in.('+ins+')),and(quiz_id.eq.qc_jigsaw,group_code.eq.global~'+GROUP+'),and(quiz_id.in.('+groupGames+'),group_code.eq.'+GROUP+'))&order=created_at.desc&limit=2000';
     get(gurl).then(function(rows){ renderGroup(rows||[]); }).catch(function(){document.getElementById('champs').innerHTML='<div class="note">The hall is resting, couldn\u2019t reach the scoreboard just now. Check your connection and refresh.</div>';});
     return;
   }
-  var pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&order=correct.desc,time_left.asc&limit=1500';
-  var jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&order=time_left.asc&limit=1500';
+  var publicDecks=PUBLIC_SCOPES.qc_piecebypiece.join(',');
+  var pbpU=sbBase()+'?quiz_id=eq.qc_piecebypiece&group_code=in.('+publicDecks+')&order=correct.desc,time_left.asc&limit=1500';
+  var jigU=sbBase()+'?quiz_id=eq.qc_jigsaw&group_code=eq.global&order=time_left.asc&limit=1500';
   var bcU=sbBase()+'?quiz_id=eq.qc_braincoaster&group_code=eq.global&order=correct.desc,level.desc&limit=50';
-  var recU=sbBase()+'?quiz_id=in.(qc_jigsaw,qc_piecebypiece,qc_braincoaster)&order=created_at.desc&limit=18';
+  var recU=sbBase()+'?or=(and(quiz_id.eq.qc_piecebypiece,group_code.in.('+publicDecks+')),and(quiz_id.in.(qc_jigsaw,qc_braincoaster),group_code.eq.global))&order=created_at.desc&limit=18';
   Promise.all([get(pbpU),get(jigU),get(recU),get(bcU)]).then(function(res){
     render(res[0]||[], res[1]||[], res[2]||[], res[3]||[]);
   }).catch(function(e){
@@ -435,6 +458,10 @@
 
   // render ----------------------------------------------------------
   function render(pbp, jig, recent, bc){
+    pbp=scoreRows(pbp,function(r){return isPublicScore(r)&&r.quiz_id==='qc_piecebypiece';});
+    jig=scoreRows(jig,function(r){return isPublicScore(r)&&r.quiz_id==='qc_jigsaw';});
+    recent=scoreRows(recent,isPublicScore);
+    bc=scoreRows(bc,function(r){return isPublicScore(r)&&r.quiz_id==='qc_braincoaster';});
     var titles=[]; // {holder, created_at}
     var champHTML='';
 
@@ -601,9 +628,10 @@
   function renderScope(){
     var el=document.getElementById('scope'); if(!el) return;
     if(GROUP){
-      el.innerHTML='<div class="banner"><span>\u{1F512} Private wall \u00b7 <b>'+esc(GROUP)+'</b></span>'
+      el.innerHTML='<div class="banner"><span>Group wall \u00b7 <b>'+esc(GROUP)+'</b></span>'
         +'<button class="lnk" id="copyInvite" type="button">Copy invite link</button>'
-        +'<a class="lnk" href="./wall.html">Show everyone</a></div>';
+        +'<a class="lnk" href="./wall.html">Show public wall</a></div>'
+        +'<div class="scopehint">Anyone with this code can view the group\u2019s results.</div>';
       var cp=document.getElementById('copyInvite');
       if(cp)cp.addEventListener('click',function(){
         var url=location.origin+location.pathname+'?group='+GROUP;
@@ -614,9 +642,10 @@
     } else {
       var saved=''; try{saved=(localStorage.getItem('qc_group')||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'');}catch(e){}
       el.innerHTML='<form class="grpform" id="grpForm">'
-        +'<input id="grpInput" class="grpinput" maxlength="24" placeholder="Group code" autocomplete="off" value="'+esc(saved)+'">'
+        +'<label for="grpInput">Group code</label>'
+        +'<input id="grpInput" class="grpinput" maxlength="24" placeholder="Group code" autocomplete="off" aria-describedby="scopeHint" value="'+esc(saved)+'">'
         +'<button class="grpbtn" type="submit">View group \u203a</button></form>'
-        +'<div class="scopehint">Viewing the full hall, enter your group\u2019s code for a private wall.</div>';
+        +'<div class="scopehint" id="scopeHint">Viewing public scores. Enter a group code for a shared wall; anyone with the code can view it.</div>';
       var f=document.getElementById('grpForm');
       if(f)f.addEventListener('submit',function(ev){ev.preventDefault();
         var c=(document.getElementById('grpInput').value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);
