@@ -848,6 +848,7 @@ function afterReveal(){
   else if(G.outcome==='bothmiss'){ enqueue(G.champ); enqueue(G.chal); G.champ=dequeue(); G.chal=dequeue(); G.streak=0; }
   if(!G.champ || !G.chal){ G.phase='gameover'; G.winner=G.champ||G.chal; G.deadmsg='Not enough players left.'; writeState(); render(); return; }
   G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds, streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
+  if(G.qIndex>=G.qTotal && G.outcome==='win') G.betweenMsg='That was the last question! Time to crown a champion…';
   writeState(); render();
   clearTimeout(G._t); G._t=setTimeout(nextOrEnd, BETWEEN_MS);
 }
@@ -870,7 +871,7 @@ function enterFinale(){
   G.phase='finintro'; if(window.ThroneHall) ThroneHall.finale(); G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+', first to 2 wins.';
   SFX.sting(); HS('present'); hostSay(pick(QUIPS.finale));
   writeState(); render();
-  clearTimeout(G._t); G._t=setTimeout(serveQuestion, 3200);
+  clearTimeout(G._t); G._t=setTimeout(serveQuestion, (window.ThroneHall && ThroneHall.finaleMs) ? ThroneHall.finaleMs() : 3200);
 }
 function scoreStr(){ const c=G.finalists.closer, k=G.finalists.king; return esc(c.name)+' '+(G.finaleScore[c.id]||0)+' - '+(G.finaleScore[k.id]||0)+' '+esc(k.name); }
 function gradeFinale(ok){
@@ -1193,12 +1194,12 @@ function updateTopicNote(){
   updateTopicNote();
 })();
 $('qMinus').addEventListener('click', ()=>{
-  const step = qStep(G.qTotal > 20 ? G.qTotal - 1 : G.qTotal);
+  const step = qStep(G.qTotal);
   G.qTotal = Math.max(3, G.qTotal - step);
   $('qTot').textContent = G.qTotal;
 });
 $('qPlus').addEventListener('click', ()=>{
-  G.qTotal = Math.min(50, G.qTotal + qStep(G.qTotal));
+  G.qTotal = Math.min(50, G.qTotal + qStep(G.qTotal + 1));
   $('qTot').textContent = G.qTotal;
 });
 $('newBtn').addEventListener('click', ()=>{ clearTimeout(G._t); location.reload(); });
@@ -1252,7 +1253,7 @@ setInterval(tick, 300);
     var host = window.HOST && window.HOST.person ? window.HOST.person() : null;
     TBScenes.play(st, 'throne', kind, Object.assign({ person:host, onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
   }
-  window.ThroneHall = { finale: function(){ playScene('break', { name:'The Grand Finale' }); } };
+  window.ThroneHall = { finale: function(){ playScene('break', { name:'The Grand Finale' }); }, finaleMs: function(){ return (window.TBScenes && cutsOn()) ? 5600 : 3200; } };
 
   document.addEventListener('DOMContentLoaded', function(){
     drawBg();
