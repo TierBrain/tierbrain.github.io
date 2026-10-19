@@ -89,7 +89,11 @@
     }
     window.addEventListener('resize', function(){ size(); if(RM && started) render(now()); });
     /* with reduced motion the host is drawn as a still picture, so redraw it whenever its box changes size */
-    if(window.ResizeObserver) new ResizeObserver(function(){ var w = W; size(); if(RM && started && W !== w) render(now()); }).observe(canvas);
+    var isPortrait = false;
+    if(window.ResizeObserver) new ResizeObserver(function(){
+      var r = canvas.getBoundingClientRect(); if(Math.abs(r.width - W) < .5 && Math.abs(r.height - H) < .5) return;
+      size(); if(isPortrait) portrait(); else if(RM && started) render(now());
+    }).observe(canvas);
 
     function setPose(name){
       var p = POSES[name] || POSES.idle; target = p; poseAt = now();
@@ -359,6 +363,7 @@
 
     /* a head-and-shoulders portrait for the host picker */
     function portrait(){
+      isPortrait = true;
       if(!W){ size(); if(!W) return; }
       X.clearRect(0, 0, W, H);
       var g = X.createRadialGradient(W/2, H*.4, 0, W/2, H*.4, W*.7); g.addColorStop(0, '#3a2228'); g.addColorStop(1, '#1c1013'); X.fillStyle = g; X.fillRect(0, 0, W, H);
