@@ -13,12 +13,12 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="description" content="The multiplayer race up one rotting board. Everyone climbs the same ladders, so a wrong answer snaps a rung for all of you.">
+<meta name="description" content="One rotting board, one shared climb. A wrong answer costs the whole table. Free to play in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/creak-multi.html">
-<meta property="og:title" content="Creak &amp; Coil: The Shared Climb">
-<meta property="og:description" content="The multiplayer race up one rotting board. Everyone climbs the same ladders, so a wrong answer snaps a rung for all of you.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta property="og:title" content="Creak &amp; Coil: Shared Climb | Free party game | TierBrain">
+<meta property="og:description" content="One rotting board, one shared climb. A wrong answer costs the whole table. Free to play in your browser.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/creak-multi.html">
 <script>
@@ -30,13 +30,13 @@
   }
 })();
 </script>
-<title>Creak &amp; Coil · Multiplayer</title>
+<title>Creak &amp; Coil: Shared Climb | Free party game | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#151936;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--line:rgba(245,178,62,.18);--good:#57d38a;--bad:#e0728a;}
+  :root{--indigo:#1c1013;--indigo2:#130a0d;--panel:#26151a;--gold:#e6b655;--gold-hi:#f2d27a;--teal:#86bf9d;--teal-hi:#b4dcc3;--ink:#fbf1e2;--dim:#c2a99a;--line:rgba(230,182,85,.18);--good:#86bf9d;--bad:#e8765f;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% -5%,rgba(245,178,62,.10),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% -5%,rgba(230,182,85,.10),transparent 55%),linear-gradient(180deg,#1c1013,#130a0d);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
   header{text-align:center;padding:16px 16px 6px;}
   h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(22px,5vw,32px);}
   h1 b{color:var(--gold-hi);} h1 .amp{color:var(--teal-hi);font-style:italic;}
@@ -50,9 +50,9 @@
   .roster{margin-top:18px;text-align:left;}
   .roster .row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;}
   .roster .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
-  .btn{border:0;border-radius:14px;padding:15px 26px;font-weight:900;font-size:17px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;box-shadow:0 6px 0 #9c631f;margin-top:18px;width:100%;max-width:280px;}
-  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #9c631f;}
-  .btn:disabled{opacity:.45;box-shadow:0 6px 0 #9c631f;transform:none;}
+  .btn{border:0;border-radius:14px;padding:15px 26px;font-weight:900;font-size:17px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);color:#241a12;box-shadow:0 6px 0 #8a5f0a;margin-top:18px;width:100%;max-width:280px;}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
+  .btn:disabled{opacity:.45;box-shadow:0 6px 0 #8a5f0a;transform:none;}
   .hint{color:var(--dim);font-size:13px;font-weight:700;margin-top:10px;}
 
   .boardwrap{width:100%;position:relative;margin-top:10px;}
@@ -61,9 +61,9 @@
   .turnbar{width:100%;display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center;}
   .chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:7px 13px 7px 9px;font-weight:800;font-size:13px;}
   .chip .dot{width:10px;height:10px;border-radius:50%;}
-  .chip.active{background:rgba(245,178,62,.16);border-color:var(--gold);color:var(--gold-hi);}
+  .chip.active{background:rgba(230,182,85,.16);border-color:var(--gold);color:var(--gold-hi);}
   .die{display:none;width:52px;height:52px;flex:0 0 auto;border-radius:13px;background:#fff;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.4);margin:12px auto 0;}
-  .die .pip{position:absolute;width:10px;height:10px;border-radius:50%;background:#20233c;transform:translate(-50%,-50%);}
+  .die .pip{position:absolute;width:10px;height:10px;border-radius:50%;background:#2e1c20;transform:translate(-50%,-50%);}
   .die.rolling{animation:cmshake .5s ease;}
   @keyframes cmshake{0%,100%{transform:none;}20%{transform:translateY(-6px) rotate(-8deg);}50%{transform:translateY(2px) rotate(9deg);}75%{transform:translateY(-3px) rotate(-5deg);}}
   .chip{transition:background .25s,border-color .25s,color .25s;}
@@ -77,7 +77,7 @@
   .status{width:100%;text-align:center;color:var(--dim);font-weight:800;font-size:14px;margin-top:12px;min-height:20px;}
   .status b{color:var(--gold-hi);}
 
-  .overlay{position:fixed;inset:0;background:rgba(8,10,28,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;z-index:20;backdrop-filter:blur(3px);}
+  .overlay{position:fixed;inset:0;background:rgba(19,10,13,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;z-index:20;backdrop-filter:blur(3px);}
   .overlay.hide{display:none;}
   .overlay .big{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(30px,8vw,48px);color:var(--gold-hi);}
   .overlay .line{font-weight:800;color:var(--ink);}
@@ -104,6 +104,14 @@
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#130a0d">
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Creak &amp; Coil: Shared Climb | Free party game | TierBrain">
+<meta name="twitter:description" content="One rotting board, one shared climb. A wrong answer costs the whole table. Free to play in your browser.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
 </head>
 <body>
   <header>
@@ -160,7 +168,7 @@
    big:    the headline stat, e.g. '22 turns'
    lines:  array of small caption lines under the big stat
    footer: bottom-line, e.g. 'Can you beat me?'
-   accent: hex colour for the glow/border, e.g. '#f5b23e'
+   accent: hex colour for the glow/border, e.g. '#e6b655'
    ============================================================ */
 (function(){
   function esc(s){ return String(s==null?'':s); }
@@ -175,8 +183,8 @@
   .tbs-canwrap canvas{display:block;width:100%;height:auto;}
   .tbs-actions{display:flex;gap:10px;margin-top:16px;}
   .tbs-btn{flex:1;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;
-    font-family:inherit;color:#fff;background:linear-gradient(180deg,#3fc79a,#1f9d76);box-shadow:0 6px 0 #14684c;}
-  .tbs-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #14684c;}
+    font-family:inherit;color:#fff;background:linear-gradient(180deg,#3fc79a,#1f9d76);box-shadow:0 6px 0 #2a7550;}
+  .tbs-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #2a7550;}
   .tbs-btn.ghost{background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.18);}
   .tbs-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:0;
     background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer;}
@@ -216,7 +224,7 @@
 
   function draw(opts){
     const cv=document.getElementById('tbsCanvas'), ctx=cv.getContext('2d');
-    const W=cv.width, H=cv.height, accent=opts.accent||'#f5b23e';
+    const W=cv.width, H=cv.height, accent=opts.accent||'#e6b655';
     // background
     const bg=ctx.createLinearGradient(0,0,0,H);
     bg.addColorStop(0,'#12142b'); bg.addColorStop(1,'#080a1a');
@@ -294,7 +302,7 @@ const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 const COLS=10, ROWS=10, TOP=COLS*ROWS;
-const PALETTE=['#f5b23e','#2fb6a6','#e0728a','#8f7be6','#57d38a','#5aa9e6'];
+const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#86bf9d','#5aa9e6'];
 const SFX=(function(){ let ac=null;
   function ctx(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
   function tone(f,t,d,type,v){ const a=ctx(); if(!a) return; const o=a.createOscillator(), g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
@@ -547,7 +555,7 @@ function drawCells(){
     }
     ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
     roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
-    if(n===TOP){ ctx.fillStyle='rgba(245,178,62,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
+    if(n===TOP){ ctx.fillStyle='rgba(230,182,85,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
     ctx.fillStyle='rgba(183,176,162,.55)'; ctx.font='700 '+Math.max(8,CELL*0.22)+'px Nunito, sans-serif';
     ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText(n, x+5, y+4);
   }
@@ -582,11 +590,11 @@ function drawSnake(s){
   ctx.fillStyle='#57b26a'; ctx.beginPath(); ctx.arc(head.x,head.y,CELL*0.19,0,7); ctx.fill();
   const eo=CELL*0.06, ey=head.y-eo*0.4;
   if((s.stir||0)===0){
-    ctx.strokeStyle='#20233c'; ctx.lineWidth=Math.max(1.3,CELL*0.02); ctx.lineCap='round';
+    ctx.strokeStyle='#2e1c20'; ctx.lineWidth=Math.max(1.3,CELL*0.02); ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(head.x-eo-CELL*0.025,ey); ctx.lineTo(head.x-eo+CELL*0.025,ey); ctx.moveTo(head.x+eo-CELL*0.025,ey); ctx.lineTo(head.x+eo+CELL*0.025,ey); ctx.stroke();
   } else {
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.045,0,7); ctx.arc(head.x+eo,ey,CELL*0.045,0,7); ctx.fill();
-    ctx.fillStyle='#20233c'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.02,0,7); ctx.arc(head.x+eo,ey,CELL*0.02,0,7); ctx.fill();
+    ctx.fillStyle='#2e1c20'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.02,0,7); ctx.arc(head.x+eo,ey,CELL*0.02,0,7); ctx.fill();
   }
 }
 function drawTokens(){
@@ -834,7 +842,7 @@ function showWin(){
   $('ovShare').onclick=function(){
     TBShare.open({ game:'creak-multi', kicker:'Creak & Coil \u00b7 Multiplayer', big:G.winner.name,
       lines:['Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.', 'Finished in '+G.turnSeq+' turns with '+alive+' of '+totalL+' ladders still standing.'],
-      footer:'Think you can beat them?', accent:'#f5b23e',
+      footer:'Think you can beat them?', accent:'#e6b655',
       shareText:G.winner.name+' just won a race up Creak & Coil. Think you can beat them?' });
   };
 }
@@ -898,5 +906,6 @@ window.__CM={ genBoard, resolveLanding, TOP, getG:function(){return G;}, setG:fu
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>

@@ -15,7 +15,7 @@
   }
 })();
 </script>
-<meta name="theme-color" content="#161232">
+<meta name="theme-color" content="#130a0d">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/host.html">
@@ -33,15 +33,15 @@
 
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  :root{ --ink:#f4f1ff; --mut:#a9a4cf; --gold:#f2c95c; --lilac:#d9c8ff; --line:rgba(255,255,255,.14); }
+  :root{ --ink:#fbf1e2; --mut:#c2a99a; --gold:#e6b655; --lilac:#f2d27a; --line:rgba(255,255,255,.14); }
   html,body{min-height:100%;}
   body{
     font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
     background:
-      radial-gradient(110% 80% at 85% -10%, rgba(201,138,224,.20), transparent 55%),
-      radial-gradient(90% 70% at 0% 110%, rgba(61,143,232,.16), transparent 55%),
+      radial-gradient(110% 80% at 85% -10%, rgba(230,182,85,.20), transparent 55%),
+      radial-gradient(90% 70% at 0% 110%, rgba(217,105,79,.16), transparent 55%),
       radial-gradient(80% 60% at 110% 110%, rgba(255,93,158,.14), transparent 55%),
-      linear-gradient(165deg,#0c0a1e,#161232 60%,#0d1430);
+      linear-gradient(165deg,#130a0d,#1c1013 60%,#241418);
     background-attachment:fixed;
     display:flex;flex-direction:column;align-items:center;
     padding:clamp(20px,6vw,40px) 18px 60px;min-height:100dvh;
@@ -62,7 +62,7 @@
   h1{font-family:'Baloo 2';font-weight:800;line-height:.96;font-size:clamp(38px,10vw,66px);
     background:linear-gradient(110deg,#fff,var(--lilac) 40%,var(--gold));-webkit-background-clip:text;
     background-clip:text;color:transparent;letter-spacing:-1px;}
-  .tag{margin-top:14px;color:#cdc7ee;font-weight:700;font-size:clamp(16px,3.8vw,20px);line-height:1.5;}
+  .tag{margin-top:14px;color:#e8d9c8;font-weight:700;font-size:clamp(16px,3.8vw,20px);line-height:1.5;}
   .sub{margin-top:10px;color:var(--mut);font-weight:600;font-size:15px;line-height:1.6;max-width:520px;margin-left:auto;margin-right:auto;}
 
   .whofor{max-width:680px;width:100%;text-align:center;color:var(--mut);font-weight:700;font-size:14px;
@@ -75,7 +75,7 @@
     border:1px solid var(--line);border-radius:18px;padding:20px 18px;overflow:hidden;
     animation:rise .7s cubic-bezier(.2,.8,.2,1) both;}
   .tcard::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--a),var(--b));}
-  .t1{--a:#3ad1d1;--b:#46d6ff;} .t2{--a:#f2c95c;--b:#ff9b3d;} .t3{--a:#ff5db0;--b:#b794ff;}
+  .t1{--a:#3ad1d1;--b:#46d6ff;} .t2{--a:#e6b655;--b:#ff9b3d;} .t3{--a:#ff5db0;--b:#b794ff;}
   .tname{font-family:'Baloo 2';font-weight:800;font-size:17px;}
   .tprice{font-family:'Baloo 2';font-weight:800;font-size:22px;margin-top:4px;color:var(--gold);}
   .tprice small{font-family:'Nunito';font-weight:700;font-size:12px;color:var(--mut);}
@@ -94,16 +94,16 @@
   input[type="email"], select{
     width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);
     color:var(--ink);padding:14px 15px;font-size:15px;font-family:inherit;font-weight:700;outline:none;}
-  input[type="email"]::placeholder{color:rgba(244,241,255,.4);}
+  input[type="email"]::placeholder{color:rgba(251,241,226,.4);}
   input[type="email"]:focus, select:focus{border-color:var(--gold);}
   select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%23a9a4cf' stroke-width='2' fill='none' fill-rule='evenodd'/></svg>");
     background-repeat:no-repeat;background-position:right 15px center;padding-right:38px;}
-  select option{background:#1a1638;color:var(--ink);}
+  select option{background:#26151a;color:var(--ink);}
   .hp{position:absolute;left:-9999px;opacity:0;}
 
   .cta{margin-top:6px;border:0;border-radius:14px;padding:15px;font-family:'Baloo 2';font-weight:800;font-size:16px;
-    color:#241a12;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);box-shadow:0 6px 0 #9c631f;}
-  .cta:active{transform:translateY(4px);box-shadow:0 2px 0 #9c631f;}
+    color:#241a12;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);box-shadow:0 6px 0 #8a5f0a;}
+  .cta:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
   .cta:disabled{opacity:.6;cursor:default;}
   .note{text-align:center;color:var(--mut);font-size:12px;font-weight:700;margin-top:12px;}
 
@@ -121,6 +121,9 @@
   @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
   @media(prefers-reduced-motion:reduce){ *{animation:none !important;} }
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
 
@@ -238,5 +241,6 @@ form.addEventListener('submit', async function(e){
 });
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>

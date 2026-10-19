@@ -13,12 +13,12 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="From Fela&#x27;s Afrobeat to Burna, Wizkid, Davido and the global takeover: the stars, the hits, the awards and the roots.">
+<meta name="description" content="A free Afrobeats quiz with 120 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/afrobeats-quiz.html">
-<meta property="og:title" content="Afrobeats">
-<meta property="og:description" content="From Fela&#x27;s Afrobeat to Burna, Wizkid, Davido and the global takeover: the stars, the hits, the awards and the roots.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta property="og:title" content="Afrobeats Quiz: 120 questions, four tiers | TierBrain">
+<meta property="og:description" content="A free Afrobeats quiz with 120 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/afrobeats-quiz.html">
 <script>
@@ -30,16 +30,16 @@
   }
 })();
 </script>
-<title>Afrobeats Quiz | TierBrain</title>
+<title>Afrobeats Quiz: 120 questions, four tiers | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg0:#14100a; --bg1:#241a10; --card:#241a12; --card2:#30241a;
-    --ink:#fdf2e6; --mut:#c9b49a; --line:#4a3a28;
-    --l1:#36c98a; --l2:#f6b73c; --l3:#ff7a3d; --l4:#ff5db0;
-    --gold:#ffc24a; --right:#36c98a; --wrong:#ff5d6e;
+    --bg0:#130a0d; --bg1:#1c1013; --card:#26151a; --card2:#2e1c20;
+    --ink:#fbf1e2; --mut:#c2a99a; --line:#4a3238;
+    --l1:#86bf9d; --l2:#e0a458; --l3:#d9694f; --l4:#f2d27a;
+    --gold:#e6b655; --right:#86bf9d; --wrong:#e8765f;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -57,7 +57,7 @@
   /* ---------- HUD ---------- */
   #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
-    padding:6px 14px;border-radius:30px;color:#10142e;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+    padding:6px 14px;border-radius:30px;color:#1c1013;box-shadow:0 4px 14px rgba(0,0,0,.3);}
   .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
     display:flex;align-items:center;gap:6px;}
   .timer svg{width:17px;height:17px;opacity:.85}
@@ -98,33 +98,33 @@
   /* ---------- toast ---------- */
   #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
     font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
-    color:#0e142e;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    color:#1c1013;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
     box-shadow:0 8px 24px rgba(0,0,0,.35);}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   /* ---------- overlays ---------- */
-  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(14,19,48,.97),rgba(27,33,80,.98));
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(19,10,13,.97),rgba(38,21,26,.98));
     display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
     padding:26px;gap:16px;z-index:10;overflow-y:auto;}
   .screen.hidden{display:none;}
   .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
     background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
-  .lead{font-size:clamp(15px,3.8vw,18px);color:#cdd3ff;font-weight:600;max-width:430px;line-height:1.5;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#fbf1e2;font-weight:600;max-width:430px;line-height:1.5;}
   .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
     padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
-  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#dfe3ff;font-weight:600;line-height:1.35;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#fbf1e2;font-weight:600;line-height:1.35;}
   .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
-  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#10142e;
-    background:linear-gradient(180deg,var(--gold),#f5a93a);border:none;cursor:pointer;
-    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #b9801f,0 12px 26px rgba(245,170,60,.4);
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#1c1013;
+    background:linear-gradient(180deg,var(--gold),#e6b655);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(230,182,85,.4);
     transition:transform .08s,box-shadow .08s;}
-  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #b9801f;}
-  button.cta.blue{background:linear-gradient(180deg,#6fa8ff,#3d7fe8);box-shadow:0 7px 0 #2b5cad,0 12px 26px rgba(60,120,230,.4);color:#fff;}
-  button.cta.blue:active{box-shadow:0 3px 0 #2b5cad;}
-  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#8fb6ff;
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #8a5f0a;}
+  button.cta.blue{background:linear-gradient(180deg,#e0a458,#c98a3e);box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(224,164,88,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8a5f0a;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#f2d27a;
     font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
-  .statline{font-size:clamp(16px,4vw,20px);color:#cdd3ff;font-weight:700;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#fbf1e2;font-weight:700;}
   .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
   .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
 
@@ -145,7 +145,7 @@
     background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
     text-align:center;outline:none;}
   .namebox input:focus{border-color:var(--gold);}
-  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#0e142e;border:none;cursor:pointer;
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#1c1013;border:none;cursor:pointer;
     padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
     box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
   button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
@@ -155,7 +155,7 @@
   .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
     border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
-  .timeopt.sel{color:#10142e;background:var(--gold);border-color:var(--gold);}
+  .timeopt.sel{color:#1c1013;background:var(--gold);border-color:var(--gold);}
   .timeopt:active{transform:scale(.95);}
   .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
   .timer.low svg{color:var(--wrong);}
@@ -167,13 +167,13 @@
   .scorebtn:hover{opacity:1;text-decoration:underline;}
   .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
   .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
-  .brow.me{background:var(--gold);color:#10142e;}
+  .brow.me{background:var(--gold);color:#1c1013;}
   .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
-  .brow.me .brk{color:#10142e;}
+  .brow.me .brk{color:#1c1013;}
   .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
   .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
-  .brow.me .bmeta{color:#10142e;}
+  .brow.me .bmeta{color:#1c1013;}
   .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
   .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
   .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
@@ -186,10 +186,18 @@
 <style>
 /* TierBrain standards */
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
-.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(15,14,36,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(19,10,13,.72);color:#fff;font-size:19px;cursor:pointer;}
 .tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
 .tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Afrobeats Quiz: 120 questions, four tiers | TierBrain">
+<meta name="twitter:description" content="A free Afrobeats quiz with 120 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
 </head>
 <body>
 <div id="app">
@@ -743,5 +751,6 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
 </body>
 </html>

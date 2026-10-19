@@ -180,6 +180,10 @@
   .coffeebtn{display:inline-block;text-decoration:none;font-family:'Baloo 2';font-weight:700;font-size:16px;color:#fff;background:linear-gradient(180deg,#0aa465,#008751);border-radius:30px;padding:10px 24px;box-shadow:0 4px 0 #00573a;}
   .coffeebtn:active{transform:translateY(3px);box-shadow:0 1px 0 #00573a;}
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
 </head>
 <body>
 <div id="app">
@@ -694,5 +698,6 @@
 
 })();
 </script>
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
 </body>
 </html>

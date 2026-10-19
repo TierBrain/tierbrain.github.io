@@ -26,17 +26,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#f4eede; --ink-dim:#b7b0a2;
-    --indigo:#0e1230; --indigo2:#080a1c;
-    --gold:#f5b23e; --gold-hi:#ffd47a; --gold-ink:#3a2a10;
-    --teal:#2fb6a6; --teal-hi:#79e6d8; --teal-ink:#0c2c29;
-    --card:#151936; --line:rgba(245,178,62,.16); --ruby:#c0455e;
+    --ink:#fbf1e2; --ink-dim:#c2a99a;
+    --indigo:#1c1013; --indigo2:#130a0d;
+    --gold:#e6b655; --gold-hi:#f2d27a; --gold-ink:#3a2a10;
+    --teal:#86bf9d; --teal-hi:#b4dcc3; --teal-ink:#0c2c29;
+    --card:#26151a; --line:rgba(230,182,85,.16); --ruby:#c9553f;
   }
   *{box-sizing:border-box;}
   html,body{height:100%; margin:0;}
   body{
     font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
-    background:radial-gradient(120% 70% at 50% -10%, rgba(245,178,62,.10), transparent 55%),
+    background:radial-gradient(120% 70% at 50% -10%, rgba(230,182,85,.10), transparent 55%),
       linear-gradient(180deg,var(--indigo),var(--indigo2)); background-attachment:fixed;
     -webkit-tap-highlight-color:transparent; overscroll-behavior:none;
   }
@@ -68,15 +68,15 @@
   /* waiting */
   .badge{align-self:center; padding:7px 18px; border-radius:999px; font-family:'Nunito'; font-weight:800; font-size:13px;
     letter-spacing:2px; text-transform:uppercase;}
-  .badge.youth{background:rgba(245,178,62,.18); color:var(--gold-hi); border:1px solid rgba(245,178,62,.5);}
-  .badge.adult{background:rgba(47,182,166,.16); color:var(--teal-hi); border:1px solid rgba(47,182,166,.5);}
+  .badge.youth{background:rgba(230,182,85,.18); color:var(--gold-hi); border:1px solid rgba(230,182,85,.5);}
+  .badge.adult{background:rgba(134,191,157,.16); color:var(--teal-hi); border:1px solid rgba(134,191,157,.5);}
   .in-card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 22px; text-align:center;}
   .in-card .hi{font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--ink-dim); letter-spacing:1px;}
   .in-card .who{font-family:'Fraunces',serif; font-weight:700; font-size:34px; margin:4px 0 14px; line-height:1.1;}
   .score-pill{display:inline-flex; align-items:baseline; gap:8px; background:rgba(255,255,255,.05); border-radius:14px; padding:10px 18px;}
   .score-pill b{font-size:30px;} .score-pill span{color:var(--ink-dim); font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase;}
   .waitline{margin-top:20px; color:var(--ink-dim); font-weight:700;}
-  .heart{display:inline-block; width:9px; height:9px; border-radius:50%; background:#57d38a; margin-right:7px; vertical-align:middle; animation:beat 2s infinite;}
+  .heart{display:inline-block; width:9px; height:9px; border-radius:50%; background:#86bf9d; margin-right:7px; vertical-align:middle; animation:beat 2s infinite;}
   @keyframes beat{0%,100%{opacity:1;}50%{opacity:.35;}}
   .room-note{color:var(--ink-dim); font-weight:800; font-size:13px; text-align:center; margin-top:22px; letter-spacing:1px;}
   .leave{background:none; border:none; color:var(--ink-dim); font-weight:800; font-size:13px; text-decoration:underline; cursor:pointer; margin-top:14px; align-self:center;}
@@ -90,7 +90,7 @@
   .pa-title{font-family:'Fraunces',serif; font-weight:700; font-size:30px; text-align:center;}
   .pa-msg{color:var(--ink-dim); font-weight:700; font-size:17px; text-align:center;}
   .pa-qhead{margin-bottom:16px;}
-  .pa-prompt{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#b7b0a2;margin-bottom:7px;text-align:center;}
+  .pa-prompt{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#c2a99a;margin-bottom:7px;text-align:center;}
   .pa-question{font-size:21px;font-weight:800;line-height:1.32;text-align:center;color:#f6f0e2;}
   .pa-question.verse{font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;}
   .pblank{display:inline-block;min-width:2.4em;border-bottom:2px solid currentColor;margin:0 .16em;vertical-align:baseline;}
@@ -104,12 +104,12 @@
     background:var(--card); border:2px solid transparent; display:flex; flex-direction:column; gap:8px; align-items:flex-start;
     color:var(--ink); font-family:'Nunito'; transition:transform .08s, opacity .3s;}
   .pbtn:active{transform:scale(.97);}
-  .pbtn .pk{width:34px; height:34px; border-radius:9px; background:var(--oc); color:#0e1230;
+  .pbtn .pk{width:34px; height:34px; border-radius:9px; background:var(--oc); color:#1c1013;
     display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:19px;}
   .pbtn .pt{font-weight:800; font-size:16px; line-height:1.15;}
   .pbtn.mine{border-color:var(--oc); box-shadow:0 0 0 3px color-mix(in srgb, var(--oc) 35%, transparent);}
-  .pbtn.good{border-color:#57d38a; background:rgba(87,211,138,.15);}
-  .pbtn.bad{border-color:#c0455e; background:rgba(192,69,94,.15);}
+  .pbtn.good{border-color:#86bf9d; background:rgba(87,211,138,.15);}
+  .pbtn.bad{border-color:#c9553f; background:rgba(192,69,94,.15);}
   .pbtn.dim{opacity:.4;}
   .locked-note{text-align:center; font-weight:800; color:var(--gold-hi); font-size:15px; letter-spacing:.5px;}
   .buzzwrap{display:flex; justify-content:center; padding:12px 0;}
@@ -120,11 +120,15 @@
   .buzzbtn:active,.buzzbtn.hit{transform:translateY(8px) scale(.98); box-shadow:0 4px 0 #7c1626, 0 8px 20px rgba(0,0,0,.5);}
   @keyframes buzzpulse{0%,100%{box-shadow:0 12px 0 #7c1626, 0 0 0 0 rgba(255,107,107,.5);}50%{box-shadow:0 12px 0 #7c1626, 0 0 0 22px rgba(255,107,107,0);}}
   .bzcd{height:10px; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; margin:6px 0 12px;}
-  .bzcdfill{height:100%; width:100%; background:linear-gradient(90deg,#e0728a,#f5b23e); border-radius:6px;}
+  .bzcdfill{height:100%; width:100%; background:linear-gradient(90deg,#e8765f,#e6b655); border-radius:6px;}
   .buzzbtn.practice{width:min(46vw,170px); height:min(46vw,170px); font-size:min(9vw,32px);}
   @media (prefers-reduced-motion:reduce){ .buzzbtn{animation:none;} }
   @media (prefers-reduced-motion:reduce){ .heart{animation:none;} }
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#130a0d">
 </head>
 <body>
 <div class="app">
@@ -227,7 +231,7 @@ function startHeartbeat(){
   const beat=()=> sb('players?id=eq.'+me.id, {method:'PATCH', body:JSON.stringify({last_seen:new Date().toISOString()})}).catch(()=>{});
   beat(); hb=setInterval(beat, 12000);
 }
-const OPTC=['#f5b23e','#2fb6a6','#8f7be6','#e0728a'], OPTL=['A','B','C','D'];
+const OPTC=['#e6b655','#86bf9d','#8f7be6','#e8765f'], OPTL=['A','B','C','D'];
 let curQid=null, answered=false, myChoice=-1, lastSig='';
 let bzBuzzedQid=null, bzAnsQid=-1, bzAnsChoice=-1;
 let cluesAnsQid=-1, cluesAnsChoice=-1, cluesMyLevel=0;
@@ -479,5 +483,6 @@ prefillCode();
 tryResume();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>

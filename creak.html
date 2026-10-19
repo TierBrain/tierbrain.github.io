@@ -24,9 +24,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#151936;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--line:rgba(245,178,62,.18);--good:#57d38a;--bad:#e0728a;--wood:#c9924e;--wood-dk:#8a5a2b;--snake:#57b26a;}
+  :root{--indigo:#1c1013;--indigo2:#130a0d;--panel:#26151a;--gold:#e6b655;--gold-hi:#f2d27a;--teal:#86bf9d;--teal-hi:#b4dcc3;--ink:#fbf1e2;--dim:#c2a99a;--line:rgba(230,182,85,.18);--good:#86bf9d;--bad:#e8765f;--wood:#c9924e;--wood-dk:#8a5a2b;--snake:#57b26a;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% -5%,rgba(245,178,62,.10),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% -5%,rgba(230,182,85,.10),transparent 55%),linear-gradient(180deg,#1c1013,#130a0d);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
   header{text-align:center;padding:16px 16px 6px;}
   h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(26px,6vw,40px);letter-spacing:.01em;}
   h1 b{color:var(--gold-hi);}
@@ -39,14 +39,14 @@
   .status{font-weight:800;color:var(--dim);font-size:15px;flex:1;min-height:22px;}
   .status b{color:var(--gold-hi);}
   .die{width:58px;height:58px;flex:0 0 auto;border-radius:14px;background:#fff;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.4);}
-  .die .pip{position:absolute;width:11px;height:11px;border-radius:50%;background:#20233c;transform:translate(-50%,-50%);}
+  .die .pip{position:absolute;width:11px;height:11px;border-radius:50%;background:#2e1c20;transform:translate(-50%,-50%);}
   .die.rolling{animation:shake .5s ease;}
   @keyframes shake{0%,100%{transform:none;}20%{transform:translateY(-6px) rotate(-8deg);}50%{transform:translateY(2px) rotate(9deg);}75%{transform:translateY(-3px) rotate(-5deg);}}
-  .btn{border:0;border-radius:14px;padding:16px 26px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;box-shadow:0 6px 0 #9c631f;margin-top:16px;width:100%;max-width:280px;}
-  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #9c631f;}
-  .btn:disabled{opacity:.5;box-shadow:0 6px 0 #9c631f;transform:none;cursor:default;}
+  .btn{border:0;border-radius:14px;padding:16px 26px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);color:#241a12;box-shadow:0 6px 0 #8a5f0a;margin-top:16px;width:100%;max-width:280px;}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
+  .btn:disabled{opacity:.5;box-shadow:0 6px 0 #8a5f0a;transform:none;cursor:default;}
   .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:none;border:1px solid var(--line);font-size:15px;padding:12px 20px;}
-  .overlay{position:fixed;inset:0;background:rgba(8,10,28,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;z-index:20;backdrop-filter:blur(3px);}
+  .overlay{position:fixed;inset:0;background:rgba(19,10,13,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;z-index:20;backdrop-filter:blur(3px);}
   .overlay.hide{display:none;}
   .overlay .big{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(30px,8vw,52px);color:var(--gold-hi);}
   .overlay .line{color:var(--ink);font-weight:800;font-size:18px;}
@@ -59,7 +59,7 @@
   .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
   .confetti span{position:absolute;top:-8%;animation:fall linear forwards;}
   @keyframes fall{to{transform:translateY(115vh) rotate(400deg);opacity:.35;}}
-  .qoverlay{position:fixed;inset:0;background:rgba(8,10,28,.86);display:flex;align-items:center;justify-content:center;padding:20px;z-index:25;backdrop-filter:blur(3px);}
+  .qoverlay{position:fixed;inset:0;background:rgba(19,10,13,.86);display:flex;align-items:center;justify-content:center;padding:20px;z-index:25;backdrop-filter:blur(3px);}
   .qoverlay.hide{display:none;}
   .qcard{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.55);}
   .qkind{text-align:center;font-weight:900;font-size:15px;margin-bottom:12px;}
@@ -70,7 +70,7 @@
   .qopts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .qopt{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);border:2px solid transparent;border-radius:12px;padding:13px 12px;font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;text-align:left;font-family:inherit;}
   .qopt .qk{width:28px;height:28px;flex:0 0 auto;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#12162e;}
-  .qopt.c0 .qk{background:#f5b23e;} .qopt.c1 .qk{background:#2fb6a6;} .qopt.c2 .qk{background:#8f7be6;} .qopt.c3 .qk{background:#e0728a;}
+  .qopt.c0 .qk{background:#e6b655;} .qopt.c1 .qk{background:#86bf9d;} .qopt.c2 .qk{background:#8f7be6;} .qopt.c3 .qk{background:#e8765f;}
   .qopt:active{transform:scale(.98);}
   .qopt.right{border-color:var(--good);background:rgba(87,211,138,.16);}
   .qopt.wrong{border-color:var(--bad);opacity:.6;}
@@ -86,6 +86,10 @@
 <meta name="twitter:title" content="Creak &amp; Coil: a snakes and ladders quiz game | TierBrain">
 <meta name="twitter:description" content="Snakes and ladders on a board that is falling apart. Ladders rot, snakes strike and storms tear holes in the ground. Answer fast to climb.">
 <meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#130a0d">
 </head>
 <body>
   <header>
@@ -133,7 +137,7 @@
    big:    the headline stat, e.g. '22 turns'
    lines:  array of small caption lines under the big stat
    footer: bottom-line, e.g. 'Can you beat me?'
-   accent: hex colour for the glow/border, e.g. '#f5b23e'
+   accent: hex colour for the glow/border, e.g. '#e6b655'
    ============================================================ */
 (function(){
   function esc(s){ return String(s==null?'':s); }
@@ -148,8 +152,8 @@
   .tbs-canwrap canvas{display:block;width:100%;height:auto;}
   .tbs-actions{display:flex;gap:10px;margin-top:16px;}
   .tbs-btn{flex:1;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;
-    font-family:inherit;color:#fff;background:linear-gradient(180deg,#3fc79a,#1f9d76);box-shadow:0 6px 0 #14684c;}
-  .tbs-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #14684c;}
+    font-family:inherit;color:#fff;background:linear-gradient(180deg,#3fc79a,#1f9d76);box-shadow:0 6px 0 #2a7550;}
+  .tbs-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #2a7550;}
   .tbs-btn.ghost{background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.18);}
   .tbs-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:0;
     background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer;}
@@ -189,7 +193,7 @@
 
   function draw(opts){
     const cv=document.getElementById('tbsCanvas'), ctx=cv.getContext('2d');
-    const W=cv.width, H=cv.height, accent=opts.accent||'#f5b23e';
+    const W=cv.width, H=cv.height, accent=opts.accent||'#e6b655';
     // background
     const bg=ctx.createLinearGradient(0,0,0,H);
     bg.addColorStop(0,'#12142b'); bg.addColorStop(1,'#080a1a');
@@ -453,7 +457,7 @@ function drawCells(){
     }
     ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
     roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
-    if(n===TOP){ ctx.fillStyle='rgba(245,178,62,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
+    if(n===TOP){ ctx.fillStyle='rgba(230,182,85,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
     ctx.fillStyle='rgba(183,176,162,.55)';
     ctx.font='700 '+Math.max(8,CELL*0.24)+'px Nunito, sans-serif';
     ctx.textAlign='left'; ctx.textBaseline='top';
@@ -503,14 +507,14 @@ function drawSnake(s){
   ctx.fillStyle='#57b26a'; ctx.beginPath(); ctx.arc(head.x,head.y,CELL*0.20,0,7); ctx.fill();
   const eo=CELL*0.07, ey=head.y-eo*0.4, stir=s.stir||0, awake=(stir>0||(s._writhe||0)>0.05);
   if(!awake){
-    ctx.strokeStyle='#20233c'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.lineCap='round';
+    ctx.strokeStyle='#2e1c20'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(head.x-eo-CELL*0.03,ey); ctx.lineTo(head.x-eo+CELL*0.03,ey); ctx.moveTo(head.x+eo-CELL*0.03,ey); ctx.lineTo(head.x+eo+CELL*0.03,ey); ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='800 '+Math.max(9,CELL*0.2)+'px Nunito, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('z', head.x+CELL*0.2, head.y-CELL*0.24 + Math.sin(T*0.004)*CELL*0.05);
   } else {
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.055,0,7); ctx.arc(head.x+eo,ey,CELL*0.055,0,7); ctx.fill();
-    ctx.fillStyle='#20233c'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.024,0,7); ctx.arc(head.x+eo,ey,CELL*0.024,0,7); ctx.fill();
-    const tong=CELL*(0.16+0.06*Math.sin(T*0.02)); ctx.strokeStyle='#e0728a'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.beginPath(); ctx.moveTo(head.x,head.y+CELL*0.15); ctx.lineTo(head.x,head.y+CELL*0.15+tong); ctx.stroke();
+    ctx.fillStyle='#2e1c20'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.024,0,7); ctx.arc(head.x+eo,ey,CELL*0.024,0,7); ctx.fill();
+    const tong=CELL*(0.16+0.06*Math.sin(T*0.02)); ctx.strokeStyle='#e8765f'; ctx.lineWidth=Math.max(1.5,CELL*0.022); ctx.beginPath(); ctx.moveTo(head.x,head.y+CELL*0.15); ctx.lineTo(head.x,head.y+CELL*0.15+tong); ctx.stroke();
   }
   ctx.restore();
 }
@@ -520,7 +524,7 @@ function drawToken(){
   const bob=tokenMoving?0:Math.sin(T*0.004)*CELL*0.03; const x=tokenPix.x, y=tokenPix.y+bob;
   ctx.save();
   ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
-  ctx.fillStyle='#f5b23e'; ctx.beginPath(); ctx.arc(x,y,CELL*0.26,0,7); ctx.fill();
+  ctx.fillStyle='#e6b655'; ctx.beginPath(); ctx.arc(x,y,CELL*0.26,0,7); ctx.fill();
   ctx.restore();
   ctx.fillStyle='#241a12'; ctx.beginPath(); ctx.arc(x,y,CELL*0.12,0,7); ctx.fill();
 }
@@ -615,7 +619,7 @@ function drawRoc(){ if(!roc.show) return; const flap=Math.sin(T*0.02); ctx.save(
   ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(CELL*0.42,-CELL*0.28-flap*CELL*0.28,CELL*0.58,CELL*0.06); ctx.quadraticCurveTo(CELL*0.34,CELL*0.06,0,0); ctx.fill();
   ctx.fillStyle='#6b4a8a'; ctx.beginPath(); ctx.ellipse(0,0,CELL*0.2,CELL*0.13,0,0,7); ctx.fill();
   ctx.beginPath(); ctx.arc(CELL*0.19,-CELL*0.03,CELL*0.08,0,7); ctx.fill();
-  ctx.fillStyle='#f5b23e'; ctx.beginPath(); ctx.moveTo(CELL*0.26,-CELL*0.03); ctx.lineTo(CELL*0.37,0); ctx.lineTo(CELL*0.26,CELL*0.03); ctx.fill();
+  ctx.fillStyle='#e6b655'; ctx.beginPath(); ctx.moveTo(CELL*0.26,-CELL*0.03); ctx.lineTo(CELL*0.37,0); ctx.lineTo(CELL*0.26,CELL*0.03); ctx.fill();
   ctx.restore(); }
 async function flyRoc(toN){ const s0=squareCenter(pos), dest=squareCenter(toN); roc={show:true,x:-CELL,y:s0.y-CELL*2};
   await addTween(500,function(t){ const e=ease(t); roc.x=lerp(-CELL,s0.x,e); roc.y=lerp(s0.y-CELL*2,s0.y-CELL*0.55,e); });
@@ -749,7 +753,7 @@ function win(){
   $('overlay').classList.remove('hide');
   const shareLines=['Answered '+correct+' of '+total+' correctly, with '+left+' of '+tot+' ladders left standing.'];
   $('ovShare').onclick=function(){ TBShare.open({ game:'creak', kicker:'Creak & Coil', big:turns+' turns',
-    lines:shareLines, footer: isBest?'A new best. Can you beat it?':'Can you beat me?', accent:'#f5b23e',
+    lines:shareLines, footer: isBest?'A new best. Can you beat it?':'Can you beat me?', accent:'#e6b655',
     shareText:'I climbed Creak & Coil in '+turns+' turns. Can you beat me?' }); };
 }
 function newGame(){
@@ -795,5 +799,6 @@ window.__CC={genBoard,resolveLanding,TOP,COLS,ROWS,POOL,pickQuestion,slug,timerF
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>

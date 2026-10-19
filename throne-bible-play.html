@@ -17,9 +17,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{--indigo:#0e1230;--indigo2:#080a1c;--panel:#161a38;--gold:#f5b23e;--gold-hi:#ffd47a;--teal:#2fb6a6;--teal-hi:#79e6d8;--ink:#f4eede;--dim:#b7b0a2;--good:#57d38a;--bad:#e0728a;}
+  :root{--indigo:#1c1013;--indigo2:#130a0d;--panel:#26151a;--gold:#e6b655;--gold-hi:#f2d27a;--teal:#86bf9d;--teal-hi:#b4dcc3;--ink:#fbf1e2;--dim:#c2a99a;--good:#86bf9d;--bad:#e8765f;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% 0%,rgba(245,178,62,.12),transparent 55%),linear-gradient(180deg,#0e1230,#080a1c);min-height:100vh;display:flex;flex-direction:column;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:radial-gradient(120% 60% at 50% 0%,rgba(230,182,85,.12),transparent 55%),linear-gradient(180deg,#1c1013,#130a0d);min-height:100vh;display:flex;flex-direction:column;}
   .brand{text-align:center;padding:18px 16px 4px;font-family:'Fraunces',serif;font-weight:700;font-size:26px;}
   .brand b{color:var(--gold-hi);}
   .tag{text-align:center;color:var(--dim);font-weight:800;font-size:13px;margin-bottom:10px;}
@@ -27,8 +27,8 @@
   .area{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 20px 40px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-weight:800;color:var(--dim);font-size:13px;margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;}
-  input{width:100%;background:var(--panel);border:1px solid rgba(245,178,62,.2);border-radius:12px;padding:16px;color:var(--ink);font-size:20px;font-weight:800;font-family:inherit;text-align:center;letter-spacing:.1em;}
-  .btn{width:100%;border:0;border-radius:14px;padding:17px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0912f);color:#241a12;margin-top:6px;}
+  input{width:100%;background:var(--panel);border:1px solid rgba(230,182,85,.2);border-radius:12px;padding:16px;color:var(--ink);font-size:20px;font-weight:800;font-family:inherit;text-align:center;letter-spacing:.1em;}
+  .btn{width:100%;border:0;border-radius:14px;padding:17px;font-weight:900;font-size:18px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);color:#241a12;margin-top:6px;}
   .btn:disabled{opacity:.5;}
   .err{color:var(--bad);font-weight:800;text-align:center;min-height:20px;margin-bottom:8px;}
   .pa-title{font-family:'Fraunces',serif;font-weight:700;font-size:24px;text-align:center;margin-bottom:6px;}
@@ -39,8 +39,8 @@
   .count{font-variant-numeric:tabular-nums;}
   .buzzwrap{display:flex;justify-content:center;padding:14px 0;}
   .buzzbtn{width:min(70vw,280px);height:min(70vw,280px);border-radius:50%;border:0;cursor:pointer;font-family:'Fraunces',serif;font-weight:700;font-size:min(15vw,60px);color:#fff;
-    background:radial-gradient(circle at 40% 34%,#ff6d7e,#d5324a 62%,#a3283b);box-shadow:0 14px 0 #7c1e2d,0 20px 34px rgba(0,0,0,.5);}
-  .buzzbtn:active{transform:translateY(8px);box-shadow:0 6px 0 #7c1e2d,0 10px 20px rgba(0,0,0,.5);}
+    background:radial-gradient(circle at 40% 34%,#ff6d7e,#d5324a 62%,#a3283b);box-shadow:0 14px 0 #7a2a1f,0 20px 34px rgba(0,0,0,.5);}
+  .buzzbtn:active{transform:translateY(8px);box-shadow:0 6px 0 #7a2a1f,0 10px 20px rgba(0,0,0,.5);}
   .buzzbtn.hit{animation:hit .3s ease;}
   @keyframes hit{50%{transform:scale(1.05);}}
   .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
@@ -65,6 +65,10 @@
     color:rgba(244,238,222,.62);}
   .watchnote{text-align:center;color:var(--dim);font-weight:700;font-size:12px;margin-top:9px;min-height:16px;}
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#130a0d">
 </head>
 <body>
   <div class="brand">Hold The <b>Throne</b></div>
@@ -93,7 +97,7 @@ async function sb(path, opts){ opts=opts||{}; try{
 }catch(e){ return opts.method?null:[]; } }
 
 const $=id=>document.getElementById(id);
-const OPTC=['#f5b23e','#2fb6a6','#8f7be6','#e0728a'];
+const OPTC=['#e6b655','#86bf9d','#8f7be6','#e8765f'];
 let myId=(crypto.randomUUID?crypto.randomUUID():('id'+Math.random().toString(36).slice(2)+Date.now()));
 let code='', myName='', joined=false;
 let lastSig='', curQid=null, buzzedQid=null, answeredQid=null, lastBeat=0;
@@ -245,5 +249,6 @@ function render(st){
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 </script>
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>

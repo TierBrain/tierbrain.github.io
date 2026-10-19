@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.">
+<meta name="description" content="The reigning champions, all-time records and latest results across the hub. Free to play in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/wall.html">
-<meta property="og:title" content="Wall of Fame">
-<meta property="og:description" content="See who holds every title across the hub: the reigning champions, the all-time records and the latest results. Beat the best and the crown is yours.">
-<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<meta property="og:title" content="Wall of Fame | Free online game | TierBrain">
+<meta property="og:description" content="The reigning champions, all-time records and latest results across the hub. Free to play in your browser.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/wall.html">
 <script>
@@ -20,17 +20,17 @@
   }
 })();
 </script>
-<title>Wall of Fame · TierBrain</title>
+<title>Wall of Fame | Free online game | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg0:#0c1030; --bg1:#171248; --bg2:#0a0c24;
+    --bg0:#1c1013; --bg1:#26151a; --bg2:#130a0d;
     --panel:rgba(255,255,255,.045); --panel-line:rgba(255,255,255,.10);
-    --ink:#eef0ff; --mut:#9aa0cf; --faint:#6f74a3;
+    --ink:#fbf1e2; --mut:#c2a99a; --faint:#8c7466;
     --gold:#f4cf78; --gold-deep:#caa244; --gold-glow:rgba(244,207,120,.35);
-    --violet:#8a6cff; --violet-soft:rgba(138,108,255,.16);
+    --violet:#d9694f; --violet-soft:rgba(217,105,79,.16);
     --rad:18px;
   }
   *{box-sizing:border-box}
@@ -38,7 +38,7 @@
   body{
     font-family:'Nunito',system-ui,sans-serif; color:var(--ink);
     background:
-      radial-gradient(1200px 700px at 50% -10%, rgba(138,108,255,.22), transparent 60%),
+      radial-gradient(1200px 700px at 50% -10%, rgba(217,105,79,.22), transparent 60%),
       radial-gradient(900px 600px at 85% 10%, rgba(244,207,120,.08), transparent 55%),
       linear-gradient(160deg,var(--bg1) 0%, var(--bg0) 45%, var(--bg2) 100%);
     background-attachment:fixed; min-height:100vh;
@@ -110,7 +110,7 @@
   .stat{font-variant-numeric:tabular-nums;font-weight:800;color:var(--ink);font-size:1.02rem}
   .stat .u{color:var(--mut);font-weight:700;font-size:.85em}
   .meta{margin-top:9px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .reign{font-size:.72rem;font-weight:800;letter-spacing:.02em;color:#0c0c14;
+  .reign{font-size:.72rem;font-weight:800;letter-spacing:.02em;color:#130a0d;
     background:linear-gradient(180deg,var(--gold),var(--gold-deep));padding:3px 9px;border-radius:999px;white-space:nowrap}
   .takeit{font-size:.74rem;font-weight:800;color:var(--violet);opacity:.0;transition:.16s}
   .plaque:hover .takeit{opacity:1}
@@ -121,8 +121,8 @@
 
   /* ---- records ---- */
   .records{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-  .rec{border-radius:var(--rad);padding:16px;background:var(--violet-soft);border:1px solid rgba(138,108,255,.28)}
-  .rec .label{font-weight:800;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#b9a6ff}
+  .rec{border-radius:var(--rad);padding:16px;background:var(--violet-soft);border:1px solid rgba(217,105,79,.28)}
+  .rec .label{font-weight:800;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#f2d27a}
   .rec .big{font-family:'Baloo 2';font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums;margin:.18em 0 .04em}
   .rec .by{color:var(--mut);font-size:.92rem}
   .rec .by b{color:var(--ink)}
@@ -145,7 +145,7 @@
   .foot{margin-top:46px;text-align:center;color:var(--mut)}
   .foot p{margin:.2em 0 1em;font-size:.95rem}
   .btn{display:inline-block;text-decoration:none;font-weight:800;padding:12px 22px;border-radius:999px;
-    color:#0c0c14;background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+    color:#130a0d;background:linear-gradient(180deg,var(--gold),var(--gold-deep));
     box-shadow:0 12px 30px -14px var(--gold-glow);transition:transform .15s}
   .btn:hover{transform:translateY(-2px)}
   .foot .small{font-size:.8rem;color:var(--faint);max-width:52ch;margin:18px auto 0;line-height:1.55}
@@ -158,11 +158,11 @@
     padding:10px 16px;width:min(220px,60%);text-transform:uppercase;letter-spacing:.08em}
   .grpinput::placeholder{color:var(--faint);letter-spacing:0;text-transform:none}
   .grpinput:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
-  .grpbtn{font-family:'Baloo 2';font-weight:700;font-size:.92rem;color:#0c0c14;cursor:pointer;
+  .grpbtn{font-family:'Baloo 2';font-weight:700;font-size:.92rem;color:#130a0d;cursor:pointer;
     border:0;border-radius:999px;padding:10px 18px;background:linear-gradient(180deg,var(--gold),var(--gold-deep))}
   .scopehint{color:var(--faint);font-size:.82rem;margin-top:9px}
   .banner{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
-    font-weight:700;color:var(--mut);background:var(--violet-soft);border:1px solid rgba(138,108,255,.32);
+    font-weight:700;color:var(--mut);background:var(--violet-soft);border:1px solid rgba(217,105,79,.32);
     border-radius:999px;padding:9px 18px;font-size:.92rem}
   .banner b{color:var(--ink);letter-spacing:.08em}
   .lnk{font-family:'Nunito';font-weight:800;font-size:.82rem;color:var(--violet);background:none;
@@ -178,6 +178,14 @@
     .plaque,.btn{transition:none}
   }
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Wall of Fame | Free online game | TierBrain">
+<meta name="twitter:description" content="The reigning champions, all-time records and latest results across the hub. Free to play in your browser.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="theme-color" content="#130a0d">
 </head>
 <body>
 <div class="wrap">
@@ -628,5 +636,6 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
 </html>
