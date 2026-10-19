@@ -28,6 +28,8 @@ OVERRIDES = {
                       "A full game show with an animated host: Rapid-Fire, Fill the Gap, Five Clues and a Buzzer finale. One big screen hosts, and everyone plays on their phones."),
     "wheel.html": ("Smudged: a message-in-a-bottle word puzzle | TierBrain",
                    "A message in a bottle, smudged by the sea. Spin the helm, answer to earn letters, and read the message before your ship sinks."),
+    "daily.html": ("Daily Ascent: a daily quiz ladder | TierBrain",
+                   "Six questions climb from Easy to Legends, the same for everyone each day. Back your confidence and build a calibration rating. Free, no sign-up."),
     "throne-play.html": ("Hold The Throne: join a game | TierBrain",
                          "Join a Hold The Throne game on your phone. Enter the room code and your name, then grab the buzzer."),
 }
