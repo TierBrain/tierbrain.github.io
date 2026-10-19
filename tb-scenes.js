@@ -48,6 +48,8 @@
     page: function(at){ for(var i = 0; i < 5; i++) noise(at + i*.07, .09, 'highpass', 2500, .8, .07); },
     shush: function(at){ noise(at, .9, 'bandpass', 3800, 1.6, .22, .08); },
     flame: function(at){ noise(at, .45, 'lowpass', 900, .7, .25, .03); },
+    thump: function(at){ tone(at, 95, .22, 'sine', .22, 55); noise(at, .12, 'lowpass', 500, .8, .14, .003); },
+    creak: function(at){ var a = ac(); if(!a) return; tone(at, 180, .7, 'sawtooth', .025, 120); noise(at, .6, 'bandpass', 700, 6, .05, .2); },
     chime: function(at){ [784, 988, 1175].forEach(function(f, i){ tone(at + i*.09, f, .8, 'sine', .07); }); }
   };
 
@@ -220,6 +222,64 @@
     X.restore();
   }
 
+  /* Spines: the lamp clicks on and the books stack themselves on the desk */
+  var SP_COLS = ['#5a2a24','#2f5a3f','#7a5a22','#2a3f5a','#6e3a52','#3d4a2a','#8a3a2a','#2a5a56','#5a4a2a','#4a2a5a','#2f4a3a','#7a2a2a'];
+  var SP_SUBJ = ['History','Science','Music','Sport','Film & Screen','Geography','Art','Words','Nature','Myths','Food','General Knowledge'];
+  var SP_BIBLE = ['Kings','Prophets','Parables','Miracles','Psalms','Women of the Bible','The Exodus','Early Church','Life of Jesus','Patriarchs','Wisdom','Judges'];
+  SCENES.spines = {
+    opening: { dur: 8.6,
+      cues: [ [.3, 'flame'] ].concat(SP_COLS.map(function(c, i){ return [1.0 + i*.22, 'thump']; })).concat([[4.0, 'creak'], [4.9, 'shush'], [5.9, 'chime']]),
+      host: [ [0, 'hidden'], [3.6, 'show'], [3.7, 'present'], [4.75, 'shush', 'Shh… steady now.'], [6.2, 'welcome', 'Whoever topples the pile is out!'], [8.0, 'calm'] ],
+      back: function(X, W, H, t, o){ spStudy(X, W, H, t, ease(seg(t, .2, .9))); },
+      front: function(X, W, H, t, o){ spPile(X, W, H, t, o, function(i){ return easeOut(seg(t, .85 + i*.22, 1.15 + i*.22)); }, t > 3.9 && t < 5.2 ? Math.sin((t - 3.9)*9)*(1 - seg(t, 3.9, 5.2))*.05 : 0);
+        spTitle(X, W, H, ease(seg(t, 5.8, 6.4)), o.title || 'Spines', o.sub || ''); }
+    },
+    brk: { dur: 3.6, cues: [[.1, 'thump'], [.35, 'thump'], [.6, 'thump'], [.85, 'thump'], [1.2, 'chime']], host: [ [0, 'show'], [.2, 'present'] ],
+      back: function(X, W, H, t){ spStudy(X, W, H, t, 1); },
+      front: function(X, W, H, t, o){ spPile(X, W, H, t, o, function(i){ return easeOut(seg(t, i*.08, .3 + i*.08)); }, 0);
+        spTitle(X, W, H, ease(seg(t, .9, 1.4)) - ease(seg(t, 3.0, 3.5)), o.name || 'A fresh pile', o.round || ''); }
+    }
+  };
+  function spStudy(X, W, H, t, lamp){
+    var g = X.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d3128'); g.addColorStop(1, '#0c1511'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+    var lx = W*.16, flick = RM ? 1 : 1 + Math.sin(t*11)*.015;
+    var cg = X.createRadialGradient(lx + W*.1, H*.2, 0, lx + W*.1, H*.25, H*1.1*flick); cg.addColorStop(0, 'rgba(255,220,150,' + (.34*lamp) + ')'); cg.addColorStop(.5, 'rgba(255,200,120,' + (.1*lamp) + ')'); cg.addColorStop(1, 'rgba(0,0,0,0)');
+    X.fillStyle = cg; X.fillRect(0, 0, W, H);
+    /* the banker's lamp */
+    var s = Math.min(H/230, W/420); X.save(); X.translate(lx - 50*s, H*.86 - 150*s); X.scale(s, s);
+    X.strokeStyle = '#6b4a26'; X.lineWidth = 7; X.lineCap = 'round'; X.beginPath(); X.moveTo(14, 150); X.lineTo(62, 150); X.stroke();
+    X.strokeStyle = '#b8862f'; X.lineWidth = 5; X.beginPath(); X.moveTo(38, 146); X.lineTo(30, 70); X.lineTo(74, 28); X.stroke();
+    X.fillStyle = '#2f5a3f'; X.beginPath(); X.moveTo(60, 10); X.lineTo(104, 30); X.lineTo(86, 62); X.lineTo(44, 40); X.closePath(); X.fill();
+    X.fillStyle = 'rgba(255,241,201,' + (.25 + lamp*.75) + ')'; X.beginPath(); X.ellipse(78, 52, 13, 6, .49, 0, 7); X.fill(); X.restore();
+    /* the desk */
+    var dy = H*.86; X.fillStyle = '#5a3a22'; X.fillRect(0, dy, W, H - dy); X.fillStyle = '#7a5232'; X.fillRect(0, dy, W, 3);
+    X.fillStyle = 'rgba(0,0,0,.35)'; X.fillRect(0, dy + 3, W, 6);
+  }
+  function spPile(X, W, H, t, o, drop, sway){
+    var subj = (o.subjects && o.subjects.length) ? o.subjects : (o.bible ? SP_BIBLE : SP_SUBJ), n = SP_COLS.length, dy = H*.86, bh = Math.min(H*.045, 28), cx = W*.5, y = dy;
+    X.save(); X.translate(cx, dy); X.rotate(sway); X.translate(-cx, -dy);
+    for(var i = 0; i < n; i++){
+      var d = drop(i); if(d <= 0){ y -= bh; continue; }
+      var bw = Math.min(W*.2, H*.42)*(.82 + rnd(i*7)*.3), jx = (rnd(i*3) - .5)*W*.012, by = y - bh, fy = -H*.4 + (by + H*.4)*d;
+      X.fillStyle = SP_COLS[i]; X.fillRect(cx - bw/2 + jx, fy, bw, bh - 1.5);
+      X.fillStyle = 'rgba(255,255,255,.12)'; X.fillRect(cx - bw/2 + jx, fy, bw, 2);
+      X.fillStyle = 'rgba(241,211,140,.55)'; X.fillRect(cx - bw/2 + jx + 6, fy + 3, 2, bh - 7); X.fillRect(cx + bw/2 + jx - 8, fy + 3, 2, bh - 7);
+      X.fillStyle = '#f1d38c'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.font = '600 ' + Math.round(bh*.46) + "px Fraunces, Georgia, serif";
+      X.fillText(subj[i % subj.length], cx + jx, fy + bh*.52);
+      y -= bh;
+    }
+    X.restore();
+  }
+  function spTitle(X, W, H, u, a, b){
+    if(u <= 0) return; X.save(); X.globalAlpha = Math.min(1, u);
+    var w = Math.min(W*.5, H*.95), h = b ? H*.2 : H*.15, x = W*.5 - w/2, y = H*.05 - (1 - u)*H*.06;
+    X.fillStyle = 'rgba(12,22,17,.88)'; rr(X, x, y, w, h, 12); X.fill(); X.strokeStyle = 'rgba(217,178,90,.7)'; X.lineWidth = 2; rr(X, x + 5, y + 5, w - 10, h - 10, 9); X.stroke();
+    X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = '#f1d38c'; X.font = '700 ' + Math.round(h*(b ? .34 : .5)) + "px Fraunces, Georgia, serif";
+    X.fillText(a, W/2, y + h*(b ? .4 : .52));
+    if(b){ X.fillStyle = '#b9c4b4'; X.font = '700 ' + Math.round(h*.17) + 'px Nunito, system-ui, sans-serif'; X.fillText(b, W/2, y + h*.74); }
+    X.restore();
+  }
+
   /* ---------- player ---------- */
   function play(stage, show, kind, o){
     o = o || {}; var def = SCENES[show] && SCENES[show][kind === 'break' ? 'brk' : 'opening']; if(!def) return null;
@@ -228,10 +288,10 @@
     wrap.style.cssText = 'position:absolute;inset:0;z-index:50;overflow:hidden;background:#0c0608;cursor:pointer;transition:opacity .45s;';
     var back = document.createElement('canvas'), front = document.createElement('canvas'), hostBox = document.createElement('div'), hostCv = document.createElement('canvas'), bubble = document.createElement('div');
     [back, front].forEach(function(c){ c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;'; });
-    hostBox.style.cssText = 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
+    hostBox.style.cssText = show === 'spines' ? 'position:absolute;left:58%;width:40%;bottom:0;height:74%;transition:none;' : 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
     hostCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
     bubble.className = 'tb-scene-bubble hide';
-    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
+    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%',spines:'54%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%',spines:'26%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
     hostBox.appendChild(hostCv);
     var skip = document.createElement('div'); skip.textContent = 'Tap to skip';
     skip.style.cssText = 'position:absolute;right:12px;bottom:10px;font:800 12px Nunito,system-ui,sans-serif;color:rgba(251,241,226,.55);pointer-events:none;';

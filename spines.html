@@ -123,6 +123,23 @@ body.host .app{max-width:1100px;} body.host .study{min-height:52vh;} body.host .
 .blist{display:grid;gap:8px;} .blist button{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:15px;color:var(--gold-hi);cursor:pointer;font-family:var(--serif);}
 .blist button small{font-family:var(--ui);color:var(--ink);opacity:.85;}
 @media (prefers-reduced-motion: reduce){ .book{transition:none;} .book.jam{animation:none;} }
+/* ===== Spines party: the archivist at the desk ===== */
+.sphost{display:none;}
+body.host .sphost{display:block;position:absolute;right:1%;bottom:34px;width:min(24%,300px);aspect-ratio:4/5;z-index:3;pointer-events:none;}
+body.host .sphost canvas{position:absolute;inset:0;width:100%;height:100%;}
+body.host .sphost .hostbubble{position:absolute;bottom:92%;right:8%;max-width:240%;width:max-content;background:#f3ead6;color:#14211b;font:800 clamp(14px,1.3vw,20px)/1.25 var(--ui);
+  padding:8px 13px;border-radius:14px 14px 4px 14px;box-shadow:0 8px 20px rgba(0,0,0,.4);}
+body.host .sphost .hostbubble.hide{display:none;}
+body.host .app{max-width:1280px;}
+body.host .pile{left:44%;}
+.spset{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0 16px;color:var(--soft);font-weight:800;}
+.spset label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.spset .hlab{margin-left:6px;}
+.spset [data-host-picker]{display:inline-flex;gap:4px;flex-wrap:wrap;}
+.tb-face{width:34px;height:34px;border-radius:9px;border:2px solid transparent;padding:0;overflow:hidden;cursor:pointer;background:#14211b;}
+.tb-face canvas{display:block;width:100%;height:100%;}
+.tb-face[aria-pressed="true"]{border-color:var(--gold);}
+.tb-face:focus-visible{outline:3px solid var(--lamp);outline-offset:2px;}
 </style>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
@@ -485,6 +502,83 @@ function phoneStart(){
   if(me) poll(); else join();
 }
 if(MODE === 'host') hostStart(); else if(MODE === 'phone') phoneStart();
+</script>
+<script src="tb-hosts.js"></script>
+<script src="tb-scenes.js"></script>
+<script>
+/* ---- Spines party: the archivist host, cutscenes and host picker (big screen only) ---- */
+(function(){
+  if(typeof MODE === 'undefined' || MODE !== 'host' || !window.TBHost) return;
+  var KEY_CUTS = 'tb-cutscenes-spines';
+  function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  var BIBLE = typeof ED !== 'undefined' && ED === 'bible';
+
+  /* the archivist stands at the right of the desk */
+  var box = document.createElement('div'); box.className = 'sphost';
+  box.innerHTML = '<canvas id="hostCv"></canvas><div class="hostbubble hide" id="hostBubble"></div>';
+  $('study').appendChild(box);
+  var host = TBHost.create($('hostCv'), $('hostBubble'), 'spines', null, { transparent:true }); window.HOST = host;
+  host.start(); host.set('calm');
+  var bubT = 0;
+  function say(t, pose){ if(pose) host.set(pose); var b = $('hostBubble'); b.textContent = t; b.classList.remove('hide'); clearTimeout(bubT); bubT = setTimeout(function(){ b.classList.add('hide'); }, 2600); }
+
+  var L = {
+    turn: ['{n}, your turn.', 'Over to you, {n}.', '{n}, choose carefully.', 'Your pull, {n}.'],
+    ask: ['Hmm, let’s see…', 'A good one, this.', 'Take your time.'],
+    right: ['Lovely!', 'Well pulled!', 'Just so.', 'Splendid!'],
+    wrong: ['Oh dear…', 'Careful!', 'It’s swaying…', 'Not quite!'],
+    lean: ['Shh… steady now.', 'Nobody breathe.', 'It’s leaning…'],
+    fall: ['Oh no!', 'Timber!', 'Down it goes!'],
+    win: ['{n} is the last one standing!', 'Bravo, {n}!']
+  };
+  function line(k, n){ return pick(L[k]).replace('{n}', n || ''); }
+
+  /* react to the game */
+  var _next = window.nextTurn, _choose = window.choose, _answer = window.answer, _settle = window.settle, _collapse = window.collapse, _knock = window.partyKnockout;
+  window.nextTurn = function(adv){ var r = _next.apply(this, arguments); try{ say(line('turn', nameOf(P.turn)), 'present'); }catch(e){} return r; };
+  window.choose = function(i){ var r = _choose.apply(this, arguments); try{ say(line('ask'), 'ask'); }catch(e){} return r; };
+  window.answer = function(o){ var right = G && G.q && o === G.q.correct; var r = _answer.apply(this, arguments); say(line(right ? 'right' : 'wrong'), right ? 'celebrate' : 'wince'); return r; };
+  window.settle = function(){ var r = _settle.apply(this, arguments);
+    try{ if(!G.over && Math.abs(G.lean) > LIMIT*.6) setTimeout(function(){ say(line('lean'), 'shush'); }, 300); }catch(e){} return r; };
+  window.collapse = function(){ say(line('fall'), 'wince'); return _collapse.apply(this, arguments); };
+  window.partyKnockout = function(){
+    var who = nameOf(P.turn), r = _knock.apply(this, arguments);
+    if(P.phase === 'over'){ setTimeout(function(){ say(line('win', P.winner), 'celebrate'); }, 200); }
+    else { var left = P.alive.length; playScene('break', { name:who + ' is out', round:left + (left === 1 ? ' player left' : ' players left'), bible:BIBLE }); }
+    return r;
+  };
+
+  /* cutscenes */
+  function cutsOn(){ return lsGet(KEY_CUTS, '1') === '1'; }
+  function subjects(){ try{ var s = SUBJECTS.slice(), out = []; for(var i = 0; i < 12; i++) out.push(s[(i*5 + 3) % s.length]); return out; }catch(e){ return null; } }
+  function playScene(kind, opts, done){
+    if(!window.TBScenes || !cutsOn()){ if(done) done(); return; }
+    TBScenes.mute(!!window.tbMuted);
+    var st = document.createElement('div'); st.style.cssText = 'position:fixed;inset:0;z-index:80;'; document.body.appendChild(st);
+    TBScenes.play(st, 'spines', kind, Object.assign({ person:host.person(), subjects:subjects(), onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
+  }
+
+  /* lobby settings: cutscenes on or off, and who hosts */
+  var lb = document.querySelector('#lobby .box > div');
+  var set = document.createElement('div'); set.className = 'spset';
+  set.innerHTML = '<label><input type="checkbox" id="cutsToggle"> Cutscenes</label><span class="hlab">Host</span><span data-host-picker></span>';
+  lb.insertBefore(set, $('lstart'));
+  var ct = $('cutsToggle'); ct.checked = cutsOn(); ct.addEventListener('change', function(){ lsSet(KEY_CUTS, ct.checked ? '1' : '0'); });
+  TBHost.picker(set.querySelector('[data-host-picker]'), host, 'spines');
+
+  /* the opening plays when the game starts */
+  var start = $('lstart'), opened = false;
+  start.addEventListener('click', function(e){
+    if(opened || start.disabled || !cutsOn()) return;
+    e.stopImmediatePropagation(); e.preventDefault(); opened = true;
+    $('lobby').hidden = true;
+    playScene('opening', { title:BIBLE ? 'Spines: Bible Edition' : 'Spines', bible:BIBLE }, function(){ start.click(); });
+  }, true);
+})();
+
 
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->

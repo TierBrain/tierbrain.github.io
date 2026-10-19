@@ -44,6 +44,9 @@
               sleeve:[110,150,118], cuff:[96,136,104], prop:'book', bg:'study', energy:.85, hat:null, tabard:false, brooch:true, wrap:[96,136,104] },
     throne: { name:'Hold The Throne', coat:[196,72,54], coatDark:[140,46,36], lapel:[230,182,85], shirt:[251,241,226], tie:null,
               sleeve:[70,40,36], cuff:[230,182,85], prop:'trumpet', bg:'hall', energy:1.05, hat:'cap', tabard:true, brooch:false, wrap:[122,42,31] }
+    ,
+    spines: { name:'Spines', coat:[96,112,72], coatDark:[66,80,48], lapel:[74,88,54], shirt:[244,236,218], tie:[122,42,31],
+              sleeve:[222,208,182], cuff:[196,180,150], prop:'glass', bg:'library', energy:.95, hat:null, tabard:false, brooch:false, wrap:[47,90,63] }
   };
   /* ---------- the people who can host any show ---------- */
   var PEOPLE = {
@@ -59,7 +62,7 @@
     sofia:  { skin:[220,170,130],hair:[70,40,26],    iris:[70,48,30],  lip:[170,84,88],  hairStyle:'long',     earrings:true, lashes:true }
   };
   var ORDER = ['marcus','ruth','priya','grace','samuel','amira','jun','callum','harjit','sofia'];
-  var DEFAULT = { quiz:'marcus', verse:'ruth', throne:'priya' };
+  var DEFAULT = { quiz:'marcus', verse:'ruth', throne:'priya', spines:'grace' };
   function compose(who, person){
     var show = SHOWS[who] || SHOWS.quiz, p = PEOPLE[person] || PEOPLE[DEFAULT[who] || 'marcus'], c = {}, k;
     for(k in show) c[k] = show[k];
@@ -151,6 +154,19 @@
             while(bxp < sx0 + sw2 - 6){ var bw = 6 + rnd(seed)*10, bh = H*.12 + rnd(seed+1)*H*.05, cs = [[134,72,60],[96,120,90],[150,112,60],[86,70,100],[170,140,96]][Math.floor(rnd(seed+2)*5)];
               X.fillStyle = rgb(shade(cs, .7)); X.fillRect(bxp, ry + H*.17 - bh, bw - 1.5, bh); bxp += bw; seed += 3; } } }
         g = X.createRadialGradient(W/2, H*.42, 0, W/2, H*.42, H*.9); g.addColorStop(0, 'rgba(255,214,140,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+      } else if(C.bg === 'library'){
+        g = X.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d3128'); g.addColorStop(1, '#0f1a15'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+        /* tall shelves behind, books in green, oxblood and ochre */
+        var cols = Math.max(3, Math.round(W/90)), cw = W/cols;
+        for(var c2 = 0; c2 < cols; c2++){ var x0 = c2*cw;
+          X.fillStyle = 'rgba(40,26,16,.75)'; X.fillRect(x0 + 2, 0, cw - 4, H);
+          for(var r2 = 0; r2 < 5; r2++){ var ry2 = H*.06 + r2*H*.19; X.fillStyle = 'rgba(20,12,8,.95)'; X.fillRect(x0, ry2 + H*.16, cw, Math.max(3, H*.016));
+            var bx2 = x0 + 5, sd = c2*31 + r2*7;
+            while(bx2 < x0 + cw - 7){ var bw2 = 5 + rnd(sd)*9, bh2 = H*.1 + rnd(sd + 1)*H*.05, cc = [[60,96,70],[110,40,34],[150,112,50],[46,70,90],[120,98,70]][Math.floor(rnd(sd + 2)*5)];
+              X.fillStyle = rgb(shade(cc, .62)); X.fillRect(bx2, ry2 + H*.16 - bh2, bw2 - 1.2, bh2); bx2 += bw2; sd += 3; } } }
+        /* green-shaded banker's lamp glow from above */
+        g = X.createRadialGradient(W*.5, -H*.05, 0, W*.5, -H*.05, H*1.0); g.addColorStop(0, 'rgba(255,215,154,.30)'); g.addColorStop(.5, 'rgba(255,215,154,.08)'); g.addColorStop(1, 'rgba(0,0,0,0)'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+        var vg2 = X.createRadialGradient(W/2, H*.55, H*.2, W/2, H*.55, H*.9); vg2.addColorStop(0, 'rgba(0,0,0,0)'); vg2.addColorStop(1, 'rgba(0,0,0,.45)'); X.fillStyle = vg2; X.fillRect(0, 0, W, H);
       } else {
         g = X.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#22121a'); g.addColorStop(1, '#130a0d'); X.fillStyle = g; X.fillRect(0, 0, W, H);
         /* throne silhouette */
@@ -217,6 +233,12 @@
         X.strokeStyle = 'rgba(122,42,31,.35)'; X.lineWidth = .7;
         for(var j = -5; j <= 3; j += 2.6){ X.beginPath(); X.moveTo(-9.5, j); X.lineTo(-2.5, j); X.moveTo(2.5, j); X.lineTo(9.5, j); X.stroke(); }
         X.fillStyle = '#e6b655'; X.fillRect(4, 6, 2, 7);
+      } else if(C.prop === 'glass'){
+        X.rotate(.25 + P.prop*.5);
+        X.strokeStyle = '#3a2418'; X.lineWidth = 4; X.lineCap = 'round'; X.beginPath(); X.moveTo(0, 6); X.lineTo(0, -16); X.stroke();
+        X.strokeStyle = '#d9b25a'; X.lineWidth = 3.2; X.beginPath(); X.arc(0, -27, 10.5, 0, 7); X.stroke();
+        X.fillStyle = 'rgba(200,230,255,.28)'; X.beginPath(); X.arc(0, -27, 9, 0, 7); X.fill();
+        X.fillStyle = 'rgba(255,255,255,.6)'; X.beginPath(); X.ellipse(-3.5, -31, 3, 1.6, -.6, 0, 7); X.fill();
       } else if(C.prop === 'trumpet'){
         X.rotate(.35 + P.prop*.45);
         X.strokeStyle = '#e6b655'; X.lineWidth = 3; X.lineCap = 'round'; X.beginPath(); X.moveTo(0, 6); X.lineTo(0, -36); X.stroke();
