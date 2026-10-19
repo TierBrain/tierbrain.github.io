@@ -95,6 +95,24 @@
   .ovstand .rank{width:1.4em;}
   .btn.ghost2{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:none;border:1px solid var(--line);}
   .foot{color:var(--dim);font-size:11px;font-weight:700;padding:10px 16px 20px;text-align:center;}
+/* ===== Creak & Coil: Shared Climb, the mountain guide ===== */
+.cchost{display:none;}
+body.cc-playing .cchost{display:block;position:fixed;right:max(2vw,calc(50vw - 640px));bottom:7vh;width:min(22vw,300px);aspect-ratio:4/5;z-index:5;pointer-events:none;}
+.cchost canvas{position:absolute;inset:0;width:100%;height:100%;}
+.cchost .hostbubble{position:absolute;bottom:92%;right:6%;width:max-content;max-width:150%;background:#fbf1e2;color:#1c1013;font-weight:800;font-size:clamp(14px,1.2vw,19px);line-height:1.25;
+  padding:8px 12px;border-radius:14px 14px 4px 14px;box-shadow:0 8px 20px rgba(0,0,0,.4);}
+.cchost .hostbubble.hide{display:none;}
+body.cc-playing #tb-shell, body.cc-playing .foot{display:none;}
+.ccset{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;margin:12px 0 4px;font-weight:800;font-size:13px;color:var(--dim);}
+.ccset label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.ccset .hlab{margin-left:6px;}
+.ccset [data-host-picker]{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:center;}
+.tb-face{width:34px;height:34px;border-radius:9px;border:2px solid transparent;padding:0;overflow:hidden;cursor:pointer;background:#1c1013;}
+.tb-face canvas{display:block;width:100%;height:100%;}
+.tb-face[aria-pressed="true"]{border-color:var(--gold);}
+.tb-face:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+@media (max-width:1000px){ body.cc-playing .cchost{display:none;} }
+.cchost canvas, .tb-face canvas{background:none;border:0;border-radius:0;box-shadow:none;}
 </style>
   <script src="questions.js?v=7"></script>
 <style>
@@ -297,7 +315,7 @@ async function sb(path, opts){ opts=opts||{}; try{
   return opts.method?{ok:false}:[];
 }catch(e){ return opts.method?null:[]; } }
 function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
-function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.github.io'; }
+function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.co'; }
 const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
@@ -874,6 +892,88 @@ createRoom().then(function(){ loop(); });
 window.__CM={ genBoard, resolveLanding, TOP, getG:function(){return G;}, setG:function(patch){Object.assign(G,patch);},
   resolveTurn, ageLadders, snakeActs, pickQuestion, askQuestionFor, showWin, playAgain, pollPlayers, reconcileDropouts, maybeEvent, rocEvent, rockfallEvent, stormEvent, tearTiles, fallTo, isCrater, fallIntoCrater,
   startGame:function(){ G.phase='live'; G.board=genBoard(); G.order=G.players.map(p=>p.id); G.turnIdx=0; G.turnSeq=0; G.winner=null; G.positions={}; usedTags=new Set(); G.order.forEach(pid=>G.positions[pid]=1); settleStationaryTokens(null); } };
+</script>
+<script src="tb-hosts.js"></script>
+<script src="tb-scenes.js"></script>
+<script>
+/* ---- Creak & Coil: Shared Climb, the mountain guide host, cutscenes and host picker ---- */
+(function(){
+  if(!window.TBHost) return;
+  var KEY_CUTS = 'tb-cutscenes-guide';
+  function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  /* the guide stands beside the board on the big screen */
+  var box = document.createElement('div'); box.className = 'cchost';
+  box.innerHTML = '<canvas id="hostCv"></canvas><div class="hostbubble hide" id="hostBubble"></div>';
+  document.body.appendChild(box);
+  var host = TBHost.create(document.getElementById('hostCv'), document.getElementById('hostBubble'), 'guide', null, { transparent:true }); window.HOST = host;
+  host.start(); host.set('calm');
+  var bubT = 0;
+  function say(t, pose){ if(pose) host.set(pose); var b = document.getElementById('hostBubble'); b.textContent = t; b.classList.remove('hide'); clearTimeout(bubT); bubT = setTimeout(function(){ b.classList.add('hide'); }, 2600); }
+
+  /* every event in the climb is announced through setStatus, so the guide reacts to those */
+  var R = [
+    [/Waiting for <b>([^<]+)<\/b>/, 'present', ['{1}, your roll!', 'Over to you, {1}.', 'Roll on, {1}!']],
+    [/answered right and climbs/, 'celebrate', ['Up you go!', 'Good climbing!', 'Hold that ladder!']],
+    [/the rung snaps/, 'wince', ['Snap! Careful!', 'Ooh, that rung!']],
+    [/slips past the sleeping snake/, 'shush', ['Shh… tiptoe past.']],
+    [/woke the snake/, 'wince', ['Snake! Down you go!', 'You woke it!']],
+    [/Roc sweeps down/, 'celebrate', ['Hold on to your hat!', 'What a lift!']],
+    [/Rocks come loose/, 'wince', ['Rockfall! Look out!']],
+    [/scrambles clear/, 'celebrate', ['Nimble!', 'Clear of the rocks!']],
+    [/caught in the rockfall/, 'wince', ['Ouch! Back down.']],
+    [/gale sweeps/, 'wince', ['Brace yourselves!']],
+    [/shelters the ladders/, 'celebrate', ['The ladders hold!']],
+    [/storm batters|tears tiles/, 'wince', ['The mountain shakes!']],
+    [/ladder crumbles/, 'wince', ['There goes a ladder!']],
+    [/snake lashes out/, 'wince', ['That snake’s angry!']],
+    [/falls through a hole/, 'wince', ['Mind the holes!']],
+    [/took too long/, 'ask', ['Come on, roll!']]
+  ];
+  var _status = window.setStatus;
+  window.setStatus = function(html){
+    var r = _status.apply(this, arguments), txt = String(html || '');
+    for(var i = 0; i < R.length; i++){ var m = txt.match(R[i][0]); if(m){ var line = pick(R[i][2]).replace('{1}', (m[1] || '').replace(/&amp;/g, '&')); say(line, R[i][1]); break; } }
+    return r;
+  };
+  var _q = window.showQOverlay; if(_q) window.showQOverlay = function(){ var r = _q.apply(this, arguments); host.set('ask'); return r; };
+
+  function cutsOn(){ return lsGet(KEY_CUTS, '1') === '1'; }
+  function playScene(kind, opts, done){
+    if(!window.TBScenes || !cutsOn()){ if(done) done(); return; }
+    var st = document.createElement('div'); st.style.cssText = 'position:fixed;inset:0;z-index:1200;'; document.body.appendChild(st);
+    TBScenes.play(st, 'guide', kind, Object.assign({ person:host.person(), onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
+  }
+
+  /* playing: show the guide; summit: a short scene, then the results */
+  var _start = window.startGame;
+  window.startGame = function(){ var r = _start.apply(this, arguments); document.body.classList.add('cc-playing'); say('Rope up, everyone!', 'welcome'); return r; };
+  var _win = window.showWin;
+  window.showWin = function(){ var r = _win.apply(this, arguments); var w = G.winner ? G.winner.name : '';
+    host.set('celebrate'); playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns' }); return r; };
+  var _again = window.playAgain;
+  window.playAgain = function(){ document.body.classList.remove('cc-playing'); host.set('calm'); return _again.apply(this, arguments); };
+
+  /* lobby: cutscenes and host */
+  var pre = document.getElementById('lobbyPre');
+  var set = document.createElement('div'); set.className = 'ccset';
+  set.innerHTML = '<label><input type="checkbox" id="cutsToggle"> Cutscenes</label><span class="hlab">Host</span><span data-host-picker></span>';
+  pre.insertBefore(set, document.getElementById('startBtn'));
+  var ct = document.getElementById('cutsToggle'); ct.checked = cutsOn(); ct.addEventListener('change', function(){ lsSet(KEY_CUTS, ct.checked ? '1' : '0'); });
+  TBHost.picker(set.querySelector('[data-host-picker]'), host, 'guide');
+
+  /* the opening plays when the climb starts */
+  var start = document.getElementById('startBtn'), opened = false;
+  start.addEventListener('click', function(e){
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(opened || start.disabled || G.players.length < 2) return;
+    if(!cutsOn()){ startGame(); return; }
+    opened = true; playScene('opening', {}, function(){ startGame(); opened = false; });
+  }, true);
+})();
+
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
 <script>

@@ -52,6 +52,7 @@
     creak: function(at){ var a = ac(); if(!a) return; tone(at, 180, .7, 'sawtooth', .025, 120); noise(at, .6, 'bandpass', 700, 6, .05, .2); },
     splash: function(at){ noise(at, .7, 'lowpass', 1400, .7, .3, .01); noise(at + .05, .5, 'bandpass', 3200, 1.2, .1, .02); tone(at, 160, .3, 'sine', .12, 60); },
     whistle: function(at){ tone(at, 2100, .55, 'sine', .08, 2300); tone(at + .6, 2100, .25, 'sine', .07); },
+    hiss: function(at){ noise(at, 1.0, 'highpass', 5000, .7, .12, .2); },
     chime: function(at){ [784, 988, 1175].forEach(function(f, i){ tone(at + i*.09, f, .8, 'sine', .07); }); }
   };
 
@@ -272,13 +273,13 @@
     }
     X.restore();
   }
-  function spTitle(X, W, H, u, a, b){
+  function spTitle(X, W, H, u, a, b, yf){
     if(u <= 0) return; X.save(); X.globalAlpha = Math.min(1, u);
-    var w = Math.min(W*.5, H*.95), h = b ? H*.2 : H*.15, x = W*.5 - w/2, y = H*.05 - (1 - u)*H*.06;
+    var w = Math.min(W*.5, H*.95), h = b ? H*.2 : H*.15, x = (yf ? W*.36 : W*.5) - w/2, y = (yf || H*.05) - (1 - u)*H*.06;
     X.fillStyle = 'rgba(12,22,17,.88)'; rr(X, x, y, w, h, 12); X.fill(); X.strokeStyle = 'rgba(217,178,90,.7)'; X.lineWidth = 2; rr(X, x + 5, y + 5, w - 10, h - 10, 9); X.stroke();
     X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = '#f1d38c'; X.font = '700 ' + Math.round(h*(b ? .34 : .5)) + "px Fraunces, Georgia, serif";
-    X.fillText(a, W/2, y + h*(b ? .4 : .52));
-    if(b){ X.fillStyle = '#b9c4b4'; X.font = '700 ' + Math.round(h*.17) + 'px Nunito, system-ui, sans-serif'; X.fillText(b, W/2, y + h*.74); }
+    X.fillText(a, x + w/2, y + h*(b ? .4 : .52));
+    if(b){ X.fillStyle = '#b9c4b4'; X.font = '700 ' + Math.round(h*.17) + 'px Nunito, system-ui, sans-serif'; X.fillText(b, x + w/2, y + h*.74); }
     X.restore();
   }
 
@@ -318,6 +319,47 @@
     }
   }
 
+  /* Creak & Coil: dusk on the mountain, ladders lean up the face and a snake slides in */
+  SCENES.guide = {
+    opening: { dur: 8.6,
+      cues: [ [.3, 'whoosh'], [1.3, 'creak'], [1.75, 'creak'], [2.2, 'creak'], [2.65, 'creak'], [3.3, 'hiss'], [4.2, 'thump'], [5.4, 'fanfare'], [5.5, 'applause', 1.4] ],
+      host: [ [0, 'hidden'], [3.6, 'show'], [3.7, 'wince', 'Watch out for snakes!'], [5.3, 'welcome', 'Rope up, everyone!'], [7.6, 'present'] ],
+      back: function(X, W, H, t){ ccMountain(X, W, H, t, ease(seg(t, 0, 1.0))); ccLadders(X, W, H, function(i){ return easeOut(seg(t, 1.2 + i*.45, 1.7 + i*.45)); }); ccSnake(X, W, H, t, ease(seg(t, 3.2, 4.2))); },
+      front: function(X, W, H, t, o){ spTitle(X, W, H, ease(seg(t, 5.2, 5.8)), o.title || 'Creak & Coil', o.sub || 'The shared climb'); }
+    },
+    brk: { dur: 4.0, cues: [ [.2, 'drumroll', 1.0], [1.2, 'fanfare'], [1.3, 'applause', 1.8] ], host: [ [0, 'show'], [.3, 'point'], [1.2, 'celebrate'] ],
+      back: function(X, W, H, t){ ccMountain(X, W, H, t, 1); ccFlag(X, W, H, t, easeOut(seg(t, .4, 1.2))); },
+      front: function(X, W, H, t, o){ spTitle(X, W, H, ease(seg(t, 1.2, 1.7)) - ease(seg(t, 3.4, 3.9)), o.name || 'Summit!', o.round || '', H*.62); }
+    }
+  };
+  function ccMountain(X, W, H, t, d){
+    var g = X.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#24151e'); g.addColorStop(.55, '#6a332c'); g.addColorStop(1, '#1c1013'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+    X.fillStyle = 'rgba(255,200,120,' + .55*d + ')'; X.beginPath(); X.arc(W*.15, H*(.62 - .1*d), Math.min(W, H)*.09, 0, 7); X.fill();
+    X.fillStyle = '#3a2228'; X.beginPath(); X.moveTo(0, H); X.lineTo(0, H*.62); X.lineTo(W*.18, H*.4); X.lineTo(W*.42, H*.2); X.lineTo(W*.66, H*.46); X.lineTo(W*.82, H*.3); X.lineTo(W, H*.5); X.lineTo(W, H); X.closePath(); X.fill();
+    X.fillStyle = 'rgba(251,241,226,.9)'; X.beginPath(); X.moveTo(W*.42, H*.2); X.lineTo(W*.48, H*.29); X.lineTo(W*.45, H*.27); X.lineTo(W*.41, H*.31); X.lineTo(W*.37, H*.28); X.closePath(); X.fill();
+  }
+  function ccLadders(X, W, H, up){
+    var spots = [[.3, .9, .62], [.47, .72, .44], [.36, .52, .3], [.5, .34, .16]];
+    for(var i = 0; i < spots.length; i++){ var u = up(i); if(u <= 0) continue;
+      var x = W*spots[i][0], y0 = H*spots[i][1], y1 = H*spots[i][2], len = (y0 - y1)*u, lean = .18*(1 - u) + .08;
+      X.save(); X.translate(x, y0); X.rotate(i % 2 ? lean : -lean);
+      X.strokeStyle = '#c9924e'; X.lineWidth = Math.max(3, H*.008); X.beginPath(); X.moveTo(-H*.025, 0); X.lineTo(-H*.025, -len); X.moveTo(H*.025, 0); X.lineTo(H*.025, -len); X.stroke();
+      X.lineWidth = Math.max(2, H*.005); for(var r = H*.03; r < len; r += H*.035){ X.beginPath(); X.moveTo(-H*.025, -r); X.lineTo(H*.025, -r); X.stroke(); }
+      X.restore(); }
+  }
+  function ccSnake(X, W, H, t, d){
+    if(d <= 0) return; var x0 = W*(.05 + .2*d), y = H*.86, n = 26, seg2 = W*.012;
+    X.strokeStyle = '#57b26a'; X.lineWidth = Math.max(8, H*.022); X.lineCap = 'round'; X.lineJoin = 'round'; X.beginPath();
+    for(var i = 0; i < n; i++){ var x = x0 - i*seg2, yy = y + Math.sin(i*.6 - t*6)*H*.018; if(i) X.lineTo(x, yy); else X.moveTo(x, yy); } X.stroke();
+    X.fillStyle = '#57b26a'; X.beginPath(); X.ellipse(x0 + H*.012, y + Math.sin(-t*6)*H*.018, H*.024, H*.016, 0, 0, 7); X.fill();
+    X.fillStyle = '#1c1013'; X.beginPath(); X.arc(x0 + H*.02, y - H*.006 + Math.sin(-t*6)*H*.018, H*.0045, 0, 7); X.fill();
+  }
+  function ccFlag(X, W, H, t, u){
+    var x = W*.42, y = H*.2 + (1 - u)*H*.3; if(u <= 0) return;
+    X.strokeStyle = '#3a2420'; X.lineWidth = 4; X.beginPath(); X.moveTo(x, H*.21); X.lineTo(x, y - H*.12); X.stroke();
+    var wv = RM ? 0 : Math.sin(t*8)*H*.008; X.fillStyle = '#e6b655'; X.beginPath(); X.moveTo(x, y - H*.12); X.lineTo(x + H*.1, y - H*.1 + wv); X.lineTo(x, y - H*.07); X.closePath(); X.fill();
+  }
+
   /* ---------- player ---------- */
   function play(stage, show, kind, o){
     o = o || {}; var def = SCENES[show] && SCENES[show][kind === 'break' ? 'brk' : 'opening']; if(!def) return null;
@@ -325,11 +367,11 @@
     var wrap = document.createElement('div'); wrap.className = 'tb-scene';
     wrap.style.cssText = 'position:absolute;inset:0;z-index:50;overflow:hidden;background:#0c0608;cursor:pointer;transition:opacity .45s;';
     var back = document.createElement('canvas'), front = document.createElement('canvas'), hostBox = document.createElement('div'), hostCv = document.createElement('canvas'), bubble = document.createElement('div');
-    [back, front].forEach(function(c){ c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;'; });
-    hostBox.style.cssText = (show === 'spines' || show === 'harbour') ? 'position:absolute;left:58%;width:40%;bottom:0;height:74%;transition:none;' : 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
-    hostCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+    [back, front].forEach(function(c){ c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;background:none;border:0;border-radius:0;box-shadow:none;margin:0;'; });
+    hostBox.style.cssText = (show === 'spines' || show === 'harbour' || show === 'guide') ? 'position:absolute;left:58%;width:40%;bottom:0;height:74%;transition:none;' : 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
+    hostCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;background:none;border:0;border-radius:0;box-shadow:none;margin:0;';
     bubble.className = 'tb-scene-bubble hide';
-    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%',spines:'54%',harbour:'54%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%',spines:'26%',harbour:'26%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
+    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%',spines:'54%',harbour:'54%',guide:'54%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%',spines:'26%',harbour:'26%',guide:'26%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
     hostBox.appendChild(hostCv);
     var skip = document.createElement('div'); skip.textContent = 'Tap to skip';
     skip.style.cssText = 'position:absolute;right:12px;bottom:10px;font:800 12px Nunito,system-ui,sans-serif;color:rgba(251,241,226,.55);pointer-events:none;';
