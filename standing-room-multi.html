@@ -96,6 +96,26 @@
   .winner h2{font-weight:800;font-size:clamp(26px,5vw,40px);}
   .winner p{color:rgba(232,220,196,.7);font-weight:600;margin-top:10px;}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+/* ===== Standing Room: Together, the harbourmaster ===== */
+.srhost{position:relative;width:100%;aspect-ratio:4/4.2;margin-bottom:-6px;}
+.srhost canvas{position:absolute;inset:0;width:100%;height:100%;}
+.srhost .hostbubble{position:absolute;top:0;left:0;max-width:92%;background:var(--bone);color:#101b22;font-weight:800;font-size:15px;line-height:1.25;
+  padding:8px 12px;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:2;}
+.srhost .hostbubble.hide{display:none;}
+.arena{grid-template-columns:minmax(0,1fr) 300px;}
+.srset{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:14px;font-weight:700;font-size:14px;color:rgba(232,220,196,.75);}
+.srset label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.srset .hlab{margin-left:6px;}
+.srset [data-host-picker]{display:inline-flex;gap:4px;flex-wrap:wrap;}
+.tb-face{width:34px;height:34px;border-radius:9px;border:2px solid transparent;padding:0;overflow:hidden;cursor:pointer;background:#16232b;}
+.tb-face canvas{display:block;width:100%;height:100%;}
+.tb-face[aria-pressed="true"]{border-color:var(--gold);}
+.tb-face:focus-visible{outline:3px solid var(--bone);outline-offset:2px;}
+@media(max-width:820px){.srhost{width:220px;margin:0 auto;}}
+
+.srhost.atend{width:min(300px,70vw);margin:0 auto 4px;}
+.srhost.atend .hostbubble{left:50%;transform:translateX(-50%);white-space:nowrap;}
+body.sr-playing #tb-shell{display:none;}
 </style>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
@@ -469,6 +489,87 @@ $('againBtn').addEventListener('click',function(){
 
 createRoom().then(function(){ pollPlayers(); setInterval(function(){ if(G.phase==='lobby') pollPlayers(); },1500); });
 window.__SR=G;
+</script>
+<script src="tb-hosts.js"></script>
+<script src="tb-scenes.js"></script>
+<script>
+/* ---- Standing Room: Together, the harbourmaster host, cutscenes and host picker ---- */
+(function(){
+  if(!window.TBHost || typeof G === 'undefined') return;
+  var KEY_CUTS = 'tb-cutscenes-harbour';
+  function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  /* the harbourmaster stands at the top of the side column */
+  var box = document.createElement('div'); box.className = 'srhost';
+  box.innerHTML = '<canvas id="hostCv"></canvas><div class="hostbubble hide" id="hostBubble"></div>';
+  var side = document.querySelector('.side'); side.insertBefore(box, side.firstChild);
+  var host = TBHost.create(document.getElementById('hostCv'), document.getElementById('hostBubble'), 'harbour', null, { transparent:true }); window.HOST = host;
+  host.start(); host.set('calm');
+  var bubT = 0;
+  function say(t, pose){ if(pose) host.set(pose); var b = document.getElementById('hostBubble'); b.textContent = t; b.classList.remove('hide'); clearTimeout(bubT); bubT = setTimeout(function(){ b.classList.add('hide'); }, 2600); }
+  var L = {
+    turn: ['{n}, your step.', 'Over to you, {n}.', '{n}, mind your footing.', 'Your turn, {n}.'],
+    right: ['Good! Pick your board.', 'Well answered!', 'Choose where you stand.'],
+    wrong: ['The water chooses!', 'Oh, wobbly…', 'Hold on tight!'],
+    slow: ['Too slow! The water chooses.'],
+    under: ['Man overboard!', 'Splash!', 'Into the drink!'],
+    win: ['{n} is still standing!', 'Bravo, {n}!']
+  };
+  function line(k, n){ return pick(L[k]).replace('{n}', n || ''); }
+  function outCount(){ var c = 0; for(var k in G.outOf) if(G.outOf[k]) c++; return c; }
+  function cutsOn(){ return lsGet(KEY_CUTS, '1') === '1'; }
+  function playScene(kind, opts, done){
+    if(!window.TBScenes || !cutsOn()){ if(done) done(); return; }
+    var st = document.createElement('div'); st.style.cssText = 'position:fixed;inset:0;z-index:80;'; document.body.appendChild(st);
+    TBScenes.play(st, 'harbour', kind, Object.assign({ person:host.person(), onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
+  }
+  function wentUnder(before){
+    if(outCount() <= before || G.phase !== 'live') return;
+    var gone = G.order.filter(function(p){ return G.outOf[p]; }), who = nameOf(gone[gone.length - 1]), left = alive().length;
+    say(line('under'), 'wince');
+    if(left > 1) playScene('break', { name:who + ' went under', round:left + ' left on the boards' });
+  }
+
+  /* react to the game */
+  var _ask = window.askTurn, _res = window.resolveAnswer, _finish = window.finish;
+  window.askTurn = function(){ var b = outCount(), r = _ask.apply(this, arguments);
+    if(G.phase === 'live'){ wentUnder(b); setTimeout(function(){ if(G.phase === 'live') say(line('turn', nameOf(G.order[G.turn])), 'present'); }, outCount() > b ? 900 : 0); }
+    return r; };
+  window.resolveAnswer = function(who, choice){ var right = G.q && choice === G.q.correct, b = outCount(), r = _res.apply(this, arguments);
+    if(right) say(line('right'), 'celebrate'); else say(line(choice === '__timeout__' ? 'slow' : 'wrong'), 'wince');
+    return r; };
+  /* at the end the harbourmaster moves to the winner's screen */
+  var home = box.parentNode, win = document.querySelector('#endStage .winner');
+  window.finish = function(){ var r = _finish.apply(this, arguments); var left = alive();
+    document.body.classList.remove('sr-playing');
+    if(win){ win.insertBefore(box, win.firstChild); box.classList.add('atend'); host.resize(); }
+    if(left.length === 1) setTimeout(function(){ say(line('win', nameOf(left[0])), 'celebrate'); }, 300); else say('Everyone\u2019s in the water!', 'wince');
+    return r; };
+  document.getElementById('againBtn').addEventListener('click', function(){ home.insertBefore(box, home.firstChild); box.classList.remove('atend'); host.resize(); host.set('calm'); });
+  var _start = window.startGame;
+  window.startGame = function(){ var r = _start.apply(this, arguments); if(G.phase === 'live') document.body.classList.add('sr-playing'); return r; };
+
+  /* lobby: cutscenes and host */
+  var card = document.querySelectorAll('.lobby .card')[1];
+  var set = document.createElement('div'); set.className = 'srset';
+  set.innerHTML = '<label><input type="checkbox" id="cutsToggle"> Cutscenes</label><span class="hlab">Host</span><span data-host-picker></span>';
+  card.insertBefore(set, document.getElementById('startBtn'));
+  var ct = document.getElementById('cutsToggle'); ct.checked = cutsOn(); ct.addEventListener('change', function(){ lsSet(KEY_CUTS, ct.checked ? '1' : '0'); });
+  TBHost.picker(set.querySelector('[data-host-picker]'), host, 'harbour');
+
+  /* the opening plays when the game starts */
+  var start = document.getElementById('startBtn'), opened = false;
+  start.addEventListener('click', function(e){
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(opened || start.disabled) return;
+    if(!cutsOn()){ startGame(); return; }
+    opened = true;
+    playScene('opening', {}, function(){ startGame(); opened = false; });
+  }, true);
+})();
+
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 <script src="tb-shell.js" data-tone="dark" defer></script>

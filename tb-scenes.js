@@ -50,6 +50,8 @@
     flame: function(at){ noise(at, .45, 'lowpass', 900, .7, .25, .03); },
     thump: function(at){ tone(at, 95, .22, 'sine', .22, 55); noise(at, .12, 'lowpass', 500, .8, .14, .003); },
     creak: function(at){ var a = ac(); if(!a) return; tone(at, 180, .7, 'sawtooth', .025, 120); noise(at, .6, 'bandpass', 700, 6, .05, .2); },
+    splash: function(at){ noise(at, .7, 'lowpass', 1400, .7, .3, .01); noise(at + .05, .5, 'bandpass', 3200, 1.2, .1, .02); tone(at, 160, .3, 'sine', .12, 60); },
+    whistle: function(at){ tone(at, 2100, .55, 'sine', .08, 2300); tone(at + .6, 2100, .25, 'sine', .07); },
     chime: function(at){ [784, 988, 1175].forEach(function(f, i){ tone(at + i*.09, f, .8, 'sine', .07); }); }
   };
 
@@ -280,6 +282,42 @@
     X.restore();
   }
 
+  /* Standing Room: the boards are laid over the water by lantern light, then one sinks */
+  SCENES.harbour = {
+    opening: { dur: 8.4,
+      cues: [ [.3, 'chime'] ].concat([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(function(i){ return [1.0 + i*.12, 'thump']; })).concat([[3.4, 'splash'], [4.4, 'whistle'], [5.6, 'applause', 1.2]]),
+      host: [ [0, 'hidden'], [3.0, 'show'], [3.1, 'present'], [3.5, 'wince', 'Mind the gaps!'], [4.4, 'point'], [5.6, 'welcome', 'Last one standing wins!'], [7.6, 'calm'] ],
+      back: function(X, W, H, t){ srWater(X, W, H, t, ease(seg(t, 0, 1.0))); srDeck(X, W, H, t, function(i){ return easeOut(seg(t, 1.0 + i*.12, 1.3 + i*.12)); }, i => i === 9 ? seg(t, 3.3, 4.0) : 0); },
+      front: function(X, W, H, t, o){ spTitle(X, W, H, ease(seg(t, 5.4, 6.0)), o.title || 'Standing Room', o.sub || 'Together'); }
+    },
+    brk: { dur: 3.6, cues: [ [.4, 'splash'] ], host: [ [0, 'show'], [.3, 'wince'], [1.4, 'calm'] ],
+      back: function(X, W, H, t){ srWater(X, W, H, t, 1); srDeck(X, W, H, t, function(){ return 1; }, i => i === 6 ? seg(t, .3, 1.1) : 0); },
+      front: function(X, W, H, t, o){ spTitle(X, W, H, ease(seg(t, 1.0, 1.5)) - ease(seg(t, 3.0, 3.5)), o.name || 'Into the water', o.round || ''); }
+    }
+  };
+  function srWater(X, W, H, t, moon){
+    var g = X.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1c2c34'); g.addColorStop(.5, '#16232b'); g.addColorStop(1, '#0a1216'); X.fillStyle = g; X.fillRect(0, 0, W, H);
+    var mx = W*.82, my = H*(.3 - .14*moon), mr = Math.min(W, H)*.055;
+    X.fillStyle = 'rgba(232,220,196,' + (.85*moon) + ')'; X.beginPath(); X.arc(mx, my, mr, 0, 7); X.fill();
+    var wl = H*.42; X.fillStyle = '#101b22'; X.fillRect(0, wl, W, H - wl);
+    for(var k = 0; k < 18; k++){ var wy = wl + 4 + k*k*1.2, ph = RM ? 0 : t*1.4 + k;
+      X.strokeStyle = 'rgba(232,220,196,' + (.16 - k*.007)*moon + ')'; X.lineWidth = 1.3; X.beginPath(); X.moveTo(mx - 24 - k*5 + Math.sin(ph)*7, wy); X.lineTo(mx + 24 + k*5 + Math.sin(ph)*7, wy); X.stroke(); }
+  }
+  function srDeck(X, W, H, t, lay, sink){
+    var n = 4, size = Math.min(W*.44, H*.72), tile = size/n, gap = tile*.07, x0 = W*.37 - size/2, y0 = H*.44;
+    for(var i = 0; i < n*n; i++){
+      var r = Math.floor(i/n), c = i % n, d = lay(i), s = sink(i); if(d <= 0) continue;
+      var x = x0 + c*tile, y = y0 + r*tile*.62 - (1 - d)*H*.3 + s*tile*.8, a = 1 - s;
+      if(a <= 0) continue;
+      X.save(); X.globalAlpha = a; X.translate(x + tile/2, y + tile*.31); X.rotate(s*.3);
+      var gg = X.createLinearGradient(0, -tile*.31, 0, tile*.31); gg.addColorStop(0, '#a58760'); gg.addColorStop(1, '#6b5540');
+      X.fillStyle = gg; X.fillRect(-tile/2 + gap/2, -tile*.31 + gap/2, tile - gap, tile*.62 - gap);
+      X.fillStyle = 'rgba(0,0,0,.35)'; X.fillRect(-tile/2 + gap/2, tile*.31 - gap/2 - 3, tile - gap, 3);
+      X.restore();
+      if(s > 0 && s < 1 && !RM){ X.strokeStyle = 'rgba(232,220,196,' + (1 - s)*.7 + ')'; X.lineWidth = 2; X.beginPath(); X.ellipse(x + tile/2, y0 + r*tile*.62 + tile*.5, tile*(.3 + s*.8), tile*(.08 + s*.2), 0, 0, 7); X.stroke(); }
+    }
+  }
+
   /* ---------- player ---------- */
   function play(stage, show, kind, o){
     o = o || {}; var def = SCENES[show] && SCENES[show][kind === 'break' ? 'brk' : 'opening']; if(!def) return null;
@@ -288,10 +326,10 @@
     wrap.style.cssText = 'position:absolute;inset:0;z-index:50;overflow:hidden;background:#0c0608;cursor:pointer;transition:opacity .45s;';
     var back = document.createElement('canvas'), front = document.createElement('canvas'), hostBox = document.createElement('div'), hostCv = document.createElement('canvas'), bubble = document.createElement('div');
     [back, front].forEach(function(c){ c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;'; });
-    hostBox.style.cssText = show === 'spines' ? 'position:absolute;left:58%;width:40%;bottom:0;height:74%;transition:none;' : 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
+    hostBox.style.cssText = (show === 'spines' || show === 'harbour') ? 'position:absolute;left:58%;width:40%;bottom:0;height:74%;transition:none;' : 'position:absolute;left:22%;width:56%;bottom:0;height:78%;transition:none;';
     hostCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
     bubble.className = 'tb-scene-bubble hide';
-    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%',spines:'54%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%',spines:'26%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
+    bubble.style.cssText = 'position:absolute;left:' + ({quiz:'61%',verse:'60%',throne:'61%',spines:'54%',harbour:'54%'}[show] || '60%') + ';top:' + ({quiz:'40%',verse:'22%',throne:'24%',spines:'26%',harbour:'26%'}[show] || '24%') + ';max-width:34%;background:#fbf1e2;color:#1c1013;font:800 clamp(13px,2.2vw,22px)/1.25 Nunito,system-ui,sans-serif;padding:.5em .8em;border-radius:14px 14px 14px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:none;';
     hostBox.appendChild(hostCv);
     var skip = document.createElement('div'); skip.textContent = 'Tap to skip';
     skip.style.cssText = 'position:absolute;right:12px;bottom:10px;font:800 12px Nunito,system-ui,sans-serif;color:rgba(251,241,226,.55);pointer-events:none;';
