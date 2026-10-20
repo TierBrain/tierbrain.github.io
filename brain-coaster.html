@@ -133,6 +133,8 @@
   .lrow .sc{color:var(--gold);font-family:'Baloo 2';font-weight:800;}
   .lrow.me{background:rgba(255,194,74,.12);border-radius:8px;}
   .muted{color:var(--mut);font-size:13px;font-weight:700;}
+  .score-action{font:inherit;font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:6px 3px;cursor:pointer;}
+  .score-action[hidden]{display:none;}
   @media (max-height:680px){ .how{display:none;} }
 </style>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -191,6 +193,9 @@
     </div>
     <div class="board" id="board">
       <h4><span id="boardTitle">This device</span><span id="boardYou"></span></h4>
+      <div class="muted" id="scoreStatus" role="status" aria-live="polite" data-state="idle"></div>
+      <button class="score-action" id="scoreRetry" type="button" hidden>Retry rejected scores</button>
+      <button class="score-action" id="boardRefresh" type="button" hidden>Refresh leaderboard</button>
       <div id="boardList"><div class="muted">–</div></div>
     </div>
     <div class="row2">
@@ -610,14 +615,10 @@ function grandFinale(){
   $('overScr').classList.remove('hide');
   finaleBoard();
 }
-async function finaleBoard(){
-  const list=$('boardList'); $('boardTitle').textContent='\ud83c\udfc6 Brain Coaster Champions';
-  list.innerHTML='<div class="muted">Carving your name at the very top\u2026</div>';
-  const name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider'; lsSet(NAME_KEY,name);
-  try{ await submitRow('qc_braincoaster','global',name,score,bestStreak); }catch(e){}
-  if(groupCode()){ try{ await submitRow('qc_braincoaster',groupCode(),name,score,bestStreak); }catch(e){} }
-  try{ const rows=await fetchBoard('qc_braincoaster','global'); renderBoard(rows,list); }
-  catch(e){ list.innerHTML='<div class="muted">You\u2019ve conquered every track, a true champion! (The Wall was unreachable just now; your run is saved on this device.)</div>'; }
+function finaleBoard(){
+  const code=groupCode(),targets=[scoreTarget('qc_braincoaster','global')];
+  if(code&&code!=='global')targets.push(scoreTarget('qc_braincoaster',code));
+  return openScoreBoard('qc_braincoaster','global',targets,'\ud83c\udfc6 Brain Coaster Champions',false);
 }
 
 /* ---------------- update loop ---------------- */
@@ -835,6 +836,9 @@ function frame(ts){
 
 /* ---------------- flow ---------------- */
 function startGame(cat){
+  scoreRun={saves:Object.create(null),result:null};activeScoreBoard=null;scoreBoardRequest++;
+  $('scoreStatus').textContent='';$('scoreStatus').dataset.state='idle';
+  $('scoreRetry').hidden=true;$('boardRefresh').hidden=true;
   if(cat) activeCat=cat;
   initTrack();
   cartHill=0; cartX=footX(0); vel=0;
@@ -882,11 +886,62 @@ async function fetchTop(){ return fetchBoard(quizId(), boardCode()); }
 async function submitRow(qid,code,name,corr,lvl){
   const body=[{quiz_id:qid, group_code:code, name:name, correct:corr, level:lvl, time_left:0}];
   const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
-  if(!res.ok) throw new Error('save');
+  if(!res.ok){ const error=new Error('save');error.rejected=res.status>=400&&res.status<500&&res.status!==408;throw error; }
+}
+let scoreRun={saves:Object.create(null),result:null},activeScoreBoard=null,scoreBoardRequest=0;
+function completedScore(){
+  if(!scoreRun.result)scoreRun.result={quiz_id:quizId(),correct:score,level:bestStreak,finale:tourComplete};
+  return scoreRun.result;
+}
+function scoreTarget(qid,code){
+  const key=qid+'|'+code;
+  if(!scoreRun.saves[key]){
+    const result=completedScore(),name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider';lsSet(NAME_KEY,name);
+    scoreRun.saves[key]={run:scoreRun,state:'idle',label:code==='global'?'Public score':'Group score',row:{quiz_id:qid,group_code:code,name:name,correct:result.correct,level:result.level,time_left:0}};
+  }
+  return scoreRun.saves[key];
+}
+async function saveScoreTarget(save,retry){
+  if(save.state==='saving')return save.promise;
+  if(save.state!=='idle'&&!(retry&&save.state==='failed'))return;
+  save.state='saving';
+  save.promise=(async function(){
+    try{const row=save.row;await submitRow(row.quiz_id,row.group_code,row.name,row.correct,row.level);save.state='saved';}
+    catch(error){save.state=error.rejected?'failed':'unknown';}
+  })();
+  return save.promise;
 }
 async function submitScore(){
-  const name=($('nameInput').value||'Rider').trim().slice(0,18)||'Rider'; lsSet(NAME_KEY,name);
-  await submitRow(quizId(), boardCode(), name, score, bestStreak);
+  const result=completedScore();
+  return saveScoreTarget(scoreTarget(result.quiz_id,boardCode()),false);
+}
+function showScoreStatus(view){
+  if(view!==activeScoreBoard||view.run!==scoreRun)return;
+  const messages={saving:' is saving\u2026',saved:' saved.',failed:' was not saved. You can retry the rejected save.',unknown:': Could not confirm whether it saved. Refresh the leaderboard to check; it will not be submitted again.'};
+  const states=view.saves.map(function(save){return save.state;}),status=$('scoreStatus');
+  status.textContent=view.saves.length?view.saves.map(function(save){return save.label+(messages[save.state]||' is waiting to save.');}).join(' '):'No hills cleared; this run is not added to the leaderboard.';
+  status.dataset.state=states.includes('saving')?'saving':states.includes('failed')?'failed':states.includes('unknown')?'unknown':states.length?'saved':'idle';
+  $('scoreRetry').hidden=!states.includes('failed')||states.includes('saving');
+  $('boardRefresh').hidden=states.includes('saving');
+}
+async function refreshScoreBoard(view){
+  if(!view||view!==activeScoreBoard||view.run!==scoreRun)return;
+  const request=++scoreBoardRequest,list=$('boardList');
+  list.innerHTML='<div class="muted">Loading the leaderboard\u2026</div>';
+  try{
+    const rows=await fetchBoard(view.qid,view.code);
+    if(view!==activeScoreBoard||view.run!==scoreRun||request!==scoreBoardRequest)return;
+    renderBoard(rows,list);
+  }catch(error){if(view===activeScoreBoard&&view.run===scoreRun&&request===scoreBoardRequest)list.innerHTML='<div class="muted">Leaderboard unavailable right now. You can refresh it without saving again.</div>';}
+}
+async function openScoreBoard(qid,code,targets,title,retry){
+  const view={run:scoreRun,qid:qid,code:code,saves:targets,title:title};activeScoreBoard=view;scoreBoardRequest++;
+  $('boardTitle').textContent=title;
+  $('boardList').innerHTML='<div class="muted">Loading the leaderboard\u2026</div>';
+  const attempts=targets.map(function(save){return saveScoreTarget(save,retry);});
+  showScoreStatus(view);await Promise.all(attempts);
+  if(view!==activeScoreBoard||view.run!==scoreRun)return;
+  showScoreStatus(view);return refreshScoreBoard(view);
 }
 function renderBoard(rows,list){
   const me=(lsGet(NAME_KEY)||'').toLowerCase();
@@ -899,13 +954,12 @@ function renderBoard(rows,list){
   }).join('');
 }
 function setBoardTitle(){ $('boardTitle').textContent = catOf(activeCat).label + ' · ' + (groupCode()? ('Group '+groupCode()) : 'Global'); }
-async function submitAndLoad(){
-  setBoardTitle();
-  const list=$('boardList');
-  list.innerHTML='<div class="muted">Loading the leaderboard…</div>';
-  if(score>0){ try{ await submitScore(); }catch(e){} }
-  try{ const rows=await fetchTop(); renderBoard(rows,list); }
-  catch(e){ list.innerHTML='<div class="muted">Couldn\u2019t reach the leaderboard right now, your best is saved on this device.</div>'; }
+function submitAndLoad(){
+  const result=completedScore();
+  if(result.finale)return finaleBoard();
+  const code=boardCode(),title=catOf(activeCat).label+' \u00b7 '+(groupCode()?'Group '+groupCode():'Global');
+  const targets=result.correct>0?[scoreTarget(result.quiz_id,code)]:[];
+  return openScoreBoard(result.quiz_id,code,targets,title,false);
 }
 
 /* ---------------- audio (optional) ---------------- */
@@ -942,11 +996,13 @@ function buildCats(){
 buildCats();
 $('againBtn').addEventListener('click',function(){ startGame(); });
 $('changeBtn').addEventListener('click',showStart);
+$('scoreRetry').addEventListener('click',function(){const view=activeScoreBoard;if(view&&view.run===scoreRun)openScoreBoard(view.qid,view.code,view.saves,view.title,true);});
+$('boardRefresh').addEventListener('click',function(){refreshScoreBoard(activeScoreBoard);});
 $('nextBtn').addEventListener('click',nextCategory);
 $('mute').addEventListener('click',function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(!muted) audioOn(); });
 (function(){ const ni=$('nameInput'); if(ni) ni.value=lsGet(NAME_KEY)||''; })();
 (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
-  gi.addEventListener('input',function(){ lsSet(GROUP_KEY, this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24)); setBoardTitle(); });
+  gi.addEventListener('input',function(){ lsSet(GROUP_KEY, this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24)); });
   gi.addEventListener('change',function(){ if(mode==='over') submitAndLoad(); });
 })();
 

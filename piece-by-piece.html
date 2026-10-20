@@ -85,6 +85,8 @@
   .lbrow .nm{flex:1;padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .lbrow.you{color:var(--gold);font-weight:700;}
   .lbmsg{color:var(--mut);font-size:12.5px;}
+  .score-action{font:inherit;font-size:12px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:6px 3px;cursor:pointer;}
+  .score-action[hidden]{display:none;}
   .row2{display:flex;gap:10px;}
   .row2 .big{flex:1;padding:13px;font-size:16px;}
   .ghostbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);}
@@ -147,6 +149,9 @@
     <div class="score" id="ovScore">0</div>
     <div class="sub2" id="ovSub"></div>
     <div class="lbhead" id="lbHead">Top scores</div>
+    <div class="lbmsg" id="scoreStatus" role="status" aria-live="polite" data-state="idle"></div>
+    <button class="score-action" id="scoreRetry" type="button" hidden>Retry save</button>
+    <button class="score-action" id="boardRefresh" type="button" hidden>Refresh leaderboard</button>
     <div class="lb" id="ovLb"><div class="lbmsg">Loading leaderboard&hellip;</div></div>
     <div class="row2">
       <button class="big ghostbtn" id="againBtn">Play again</button>
@@ -629,36 +634,64 @@ function gameOver(){
   showScreen('over');submitAndLoad(secs);
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
+var scoreSave=null,scoreBoardRequest=0;
+function showScoreStatus(save){
+  if(save!==scoreSave)return;
+  var messages={saving:'Saving your score\u2026',saved:'Score saved.',failed:'Score not saved. You can retry the save.',unknown:'Could not confirm whether your score saved. Refresh the leaderboard to check; it will not be submitted again.'};
+  var status=document.getElementById('scoreStatus');
+  status.textContent=messages[save.state]||'';status.dataset.state=save.state;
+  document.getElementById('scoreRetry').hidden=save.state!=='failed';
+  document.getElementById('boardRefresh').hidden=save.state==='saving';
+}
+async function saveCompletedScore(save){
+  if(save!==scoreSave||(save.state!=='idle'&&save.state!=='failed'))return;
+  save.state='saving';showScoreStatus(save);
+  try{
+    var response=await fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify([save.row])});
+    save.state=response.ok?'saved':(response.status>=400&&response.status<500&&response.status!==408?'failed':'unknown');
+  }catch(e){save.state='unknown';}
+  if(save!==scoreSave)return;
+  showScoreStatus(save);return loadScoreBoard(save);
+}
+async function loadScoreBoard(save){
+  if(!save||save!==scoreSave)return;
+  var request=++scoreBoardRequest,box=document.getElementById('ovLb');
+  box.innerHTML='<div class="lbmsg">Loading leaderboard\u2026</div>';
+  try{
+    var response=await fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+encodeURIComponent(save.row.group_code)+'&order=correct.desc,time_left.asc&limit=8',{headers:sbHeaders()});
+    if(!response.ok)throw new Error('load');
+    var rows=await response.json();
+    if(save!==scoreSave||request!==scoreBoardRequest)return;
+    rows=Array.isArray(rows)?rows.filter(function(r){return r&&r.quiz_id===QUIZ_ID&&r.group_code===save.row.group_code;}):[];
+    if(!rows.length){box.innerHTML='<div class="lbmsg">No scores on this board yet.</div>';return;}
+    var marked=false,html='';
+    for(var i=0;i<rows.length;i++){
+      var you=(!marked&&rows[i].name===save.row.name&&rows[i].correct===save.row.correct);if(you)marked=true;
+      html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+esc(rows[i].correct)+'</span></div>';
+    }
+    box.innerHTML=html;
+  }catch(e){if(save===scoreSave&&request===scoreBoardRequest)box.innerHTML='<div class="lbmsg">Leaderboard unavailable right now. You can refresh it without saving again.</div>';}
+}
 function submitAndLoad(secs){
+  if(scoreSave)return;
   var nm=(document.getElementById('nameInput').value||'').trim().slice(0,16)||'Anon';
-  var box=document.getElementById('ovLb');box.innerHTML='<div class="lbmsg">Saving your score\u2026</div>';
   var code=tbGroup(), scope=deckKey+(code?'~'+code:'');
   document.getElementById('lbHead').textContent=code?'Top scores \u00b7 group '+code:'Top public scores';
-  var body=[{quiz_id:QUIZ_ID,group_code:scope,name:nm,correct:score,level:correctCount,time_left:secs}];
-  fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify(body)})
-    .catch(function(){})
-    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+encodeURIComponent(scope)+'&order=correct.desc,time_left.asc&limit=8',{headers:sbHeaders()});})
-    .then(function(r){if(!r.ok)throw new Error('load');return r.json();})
-    .then(function(rows){
-      // Keep public, group and category results separate even if a response is mixed.
-      rows=Array.isArray(rows)?rows.filter(function(r){return r&&r.quiz_id===QUIZ_ID&&r.group_code===scope;}):[];
-      if(!rows.length){box.innerHTML='<div class="lbmsg">No scores yet, you\u2019re the first!</div>';return;}
-      var marked=false,html='';
-      for(var i=0;i<rows.length;i++){
-        var you=(!marked&&rows[i].name===nm&&rows[i].correct===score);if(you)marked=true;
-        html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+esc(rows[i].correct)+'</span></div>';
-      }
-      box.innerHTML=html;
-    })
-    .catch(function(){box.innerHTML='<div class="lbmsg">Leaderboard unavailable right now.</div>';});
+  scoreSave={state:'idle',row:{quiz_id:QUIZ_ID,group_code:scope,name:nm,correct:score,level:correctCount,time_left:secs}};
+  return saveCompletedScore(scoreSave);
 }
 function startGame(key){deckKey=key;ITEMS=DECKS[key].items;maxTier=DECKS[key].max;
+  scoreSave=null;scoreBoardRequest++;
+  document.getElementById('scoreStatus').textContent='';document.getElementById('scoreStatus').dataset.state='idle';
+  document.getElementById('scoreRetry').hidden=true;document.getElementById('boardRefresh').hidden=true;
   tier=1;score=0;lives=3;streakDisp=0;rightRun=0;wrongRun=0;correctCount=0;bestTier=1;lastFlag=-1;
   gameStartMs=Date.now();showScreen('game');updateHUD();
   requestAnimationFrame(nextRound);
 }
 document.getElementById('deckFlags').addEventListener('click',function(){startGame('flags');});document.getElementById('deckPlanets').addEventListener('click',function(){startGame('planets');});document.getElementById('deckAnimals').addEventListener('click',function(){startGame('animals');});document.getElementById('deckObjects').addEventListener('click',function(){startGame('objects');});document.getElementById('deckSports').addEventListener('click',function(){startGame('sports');});
 document.getElementById('againBtn').addEventListener('click',function(){startGame(deckKey);});
+document.getElementById('scoreRetry').addEventListener('click',function(){if(scoreSave&&scoreSave.state==='failed')saveCompletedScore(scoreSave);});
+document.getElementById('boardRefresh').addEventListener('click',function(){loadScoreBoard(scoreSave);});
 document.getElementById('menuBtn').addEventListener('click',function(){clearInterval(intervalId);clearTimeout(graceId);showScreen('menu');});
 var rtid=null;
 window.addEventListener('resize',function(){
