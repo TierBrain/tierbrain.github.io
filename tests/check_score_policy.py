@@ -267,9 +267,18 @@ def run_checks(report_path: Path) -> dict:
                                    "-c", "max_connections=20"]).strip()
             deadline = time.monotonic() + 30
             while True:
-                ready = subprocess.run(DOCKER + ["exec", name, "pg_isready", "-U", "postgres"],
-                                       text=True, capture_output=True, env=env, timeout=5)
-                if ready.returncode == 0:
+                # The image starts a temporary server during initialization.
+                # Wait for PID 1 to exec the final server before probing SQL;
+                # pg_isready alone can succeed just before that temp server stops.
+                process = subprocess.run(DOCKER + ["exec", name, "cat", "/proc/1/comm"],
+                                         text=True, capture_output=True, env=env, timeout=5)
+                ready = None
+                if process.returncode == 0 and process.stdout.strip() == 'postgres':
+                    ready = subprocess.run(DOCKER + ["exec", name, "psql", "-X", "-qAt",
+                                            "-v", "ON_ERROR_STOP=1", "-U", "postgres",
+                                            "-d", "postgres", "-c", "SELECT 1"],
+                                           text=True, capture_output=True, env=env, timeout=5)
+                if ready is not None and ready.returncode == 0 and ready.stdout.strip() == '1':
                     break
                 if time.monotonic() >= deadline:
                     raise AssertionError("Isolated PostgreSQL did not become ready")
