@@ -9,3 +9,5 @@ shots/
 seo-metadata.csv
 *.patch
 *.bundle
+supabase/.temp/
+supabase/.branches/

@@ -73,6 +73,9 @@
   .board-lb .lbrow .nm{flex:1; padding:0 8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .board-lb .lbrow.you{color:var(--gold); font-weight:700;}
   .board-lb .lbmsg{color:var(--mut); font-size:12.5px;}
+  .score-status{color:var(--mut);font-size:12.5px;}
+  .score-action{font:inherit;font-size:12px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:6px 3px;cursor:pointer;}
+  .score-action[hidden]{display:none;}
   .winbtns{display:flex; gap:10px;}
   .winbtns .btn{flex:1; padding:13px;}
   .lbhead{font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.7px; margin-bottom:8px;}
@@ -121,6 +124,9 @@
     <div class="time" id="winTime">0:00</div>
     <div class="note" id="winNote"></div>
     <div class="lbhead" id="lbHead">Fastest times</div>
+    <div class="score-status" id="scoreStatus" role="status" aria-live="polite" data-state="idle"></div>
+    <button class="score-action" id="scoreRetry" type="button" hidden>Retry save</button>
+    <button class="score-action" id="boardRefresh" type="button" hidden>Refresh leaderboard</button>
     <div class="board-lb" id="winLb"><div class="lbmsg">Loading leaderboard&hellip;</div></div>
     <div class="winbtns">
       <button class="btn" id="againBtn">Play again</button>
@@ -907,6 +913,9 @@ cv.addEventListener('pointerup',onUp,{passive:false});
 cv.addEventListener('pointercancel',function(){drag=null;});
 
 function startTier(t){
+  scoreSave=null;scoreBoardRequest++;
+  document.getElementById('scoreStatus').textContent='';document.getElementById('scoreStatus').dataset.state='idle';
+  document.getElementById('scoreRetry').hidden=true;document.getElementById('boardRefresh').hidden=true;
   tier=t; cols=t.cols; rows=t.rows; ghostOn=!!t.ghost;
   sceneFn=nextScene(); pieces=[]; solved=false; drag=null; peekUntil=0;
   showScreen('game');
@@ -927,28 +936,51 @@ function finish(){
 
 /* ---- shared Supabase leaderboard (per tier, fastest first) ---- */
 function sbHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};}
+var scoreSave=null,scoreBoardRequest=0;
+function showScoreStatus(save){
+  if(save!==scoreSave)return;
+  var messages={saving:'Saving your time\u2026',saved:'Time saved.',failed:'Time not saved. You can retry the save.',unknown:'Could not confirm whether your time saved. Refresh the leaderboard to check; it will not be submitted again.'};
+  var status=document.getElementById('scoreStatus');
+  status.textContent=messages[save.state]||'';status.dataset.state=save.state;
+  document.getElementById('scoreRetry').hidden=save.state!=='failed';
+  document.getElementById('boardRefresh').hidden=save.state==='saving';
+}
+async function saveCompletedScore(save){
+  if(save!==scoreSave||(save.state!=='idle'&&save.state!=='failed'))return;
+  save.state='saving';showScoreStatus(save);
+  try{
+    var response=await fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify([save.row])});
+    save.state=response.ok?'saved':(response.status>=400&&response.status<500&&response.status!==408?'failed':'unknown');
+  }catch(e){save.state='unknown';}
+  if(save!==scoreSave)return;
+  showScoreStatus(save);return loadScoreBoard(save);
+}
+async function loadScoreBoard(save){
+  if(!save||save!==scoreSave)return;
+  var request=++scoreBoardRequest,box=document.getElementById('winLb');
+  box.innerHTML='<div class="lbmsg">Loading leaderboard\u2026</div>';
+  try{
+    var response=await fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+encodeURIComponent(save.row.group_code)+'&level=eq.'+save.row.level+'&order=time_left.asc&limit=8',{headers:sbHeaders()});
+    if(!response.ok)throw new Error('load');
+    var rows=await response.json();
+    if(save!==scoreSave||request!==scoreBoardRequest)return;
+    rows=Array.isArray(rows)?rows.filter(function(r){return r&&r.quiz_id===QUIZ_ID&&r.group_code===save.row.group_code&&Number(r.level)===save.row.level;}):[];
+    if(!rows.length){box.innerHTML='<div class="lbmsg">No times on this board yet.</div>';return;}
+    var marked=false,html='';
+    for(var i=0;i<rows.length;i++){
+      var you=(!marked&&rows[i].name===save.row.name&&rows[i].time_left===save.row.time_left);if(you)marked=true;
+      html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+fmt(rows[i].time_left)+'</span></div>';
+    }
+    box.innerHTML=html;
+  }catch(e){if(save===scoreSave&&request===scoreBoardRequest)box.innerHTML='<div class="lbmsg">Leaderboard unavailable right now. You can refresh it without saving again.</div>';}
+}
 function submitAndLoad(secs){
+  if(scoreSave)return;
   var nm=(document.getElementById('nameInput').value||'').trim().slice(0,16)||'Anon';
-  var box=document.getElementById('winLb'); box.innerHTML='<div class="lbmsg">Saving your time\u2026</div>';
   var code=tbGroup(), scope=GROUP+(code?'~'+code:''), boardTier=tier.key;
   document.getElementById('lbHead').textContent='Fastest '+(code?'group':'public')+' times \u00b7 '+tier.name+(code?' \u00b7 '+code:'');
-  var body=[{quiz_id:QUIZ_ID,group_code:scope,name:nm,correct:pieces.length,level:boardTier,time_left:secs}];
-  fetch(sbBase(),{method:'POST',headers:Object.assign(sbHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify(body)})
-    .catch(function(){})
-    .then(function(){return fetch(sbBase()+'?quiz_id=eq.'+QUIZ_ID+'&group_code=eq.'+encodeURIComponent(scope)+'&level=eq.'+boardTier+'&order=time_left.asc&limit=8',{headers:sbHeaders()});})
-    .then(function(r){if(!r.ok)throw new Error('load');return r.json();})
-    .then(function(rows){
-      // Keep public, group and tier results separate even if a response is mixed.
-      rows=Array.isArray(rows)?rows.filter(function(r){return r&&r.quiz_id===QUIZ_ID&&r.group_code===scope&&Number(r.level)===boardTier;}):[];
-      if(!rows.length){box.innerHTML='<div class="lbmsg">No times yet, you\u2019re the first!</div>';return;}
-      var marked=false, html='';
-      for(var i=0;i<rows.length;i++){
-        var you=(!marked && rows[i].name===nm && rows[i].time_left===secs); if(you)marked=true;
-        html+='<div class="lbrow'+(you?' you':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(rows[i].name)+'</span><span>'+fmt(rows[i].time_left)+'</span></div>';
-      }
-      box.innerHTML=html;
-    })
-    .catch(function(){box.innerHTML='<div class="lbmsg">Leaderboard unavailable right now.</div>';});
+  scoreSave={state:'idle',row:{quiz_id:QUIZ_ID,group_code:scope,name:nm,correct:pieces.length,level:boardTier,time_left:secs}};
+  return saveCompletedScore(scoreSave);
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
 
@@ -966,6 +998,8 @@ document.getElementById('peekBtn').addEventListener('click',function(){peekUntil
 document.getElementById('menuBtn').addEventListener('click',function(){running=false;showScreen('menu');});
 document.getElementById('winMenuBtn').addEventListener('click',function(){showScreen('menu');});
 document.getElementById('againBtn').addEventListener('click',function(){startTier(tier);});
+document.getElementById('scoreRetry').addEventListener('click',function(){if(scoreSave&&scoreSave.state==='failed')saveCompletedScore(scoreSave);});
+document.getElementById('boardRefresh').addEventListener('click',function(){loadScoreBoard(scoreSave);});
 
 var rtid=null;
 window.addEventListener('resize',function(){
