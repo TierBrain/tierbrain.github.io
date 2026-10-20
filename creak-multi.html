@@ -113,16 +113,6 @@ body.cc-playing #tb-shell, body.cc-playing .foot{display:none;}
 .tb-face:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
 @media (max-width:1000px){ body.cc-playing .cchost{display:none;} }
 .cchost canvas, .tb-face canvas{background:none;border:0;border-radius:0;box-shadow:none;}
-/* On wide screens the question floats over the board as a card, so it never falls below the fold */
-@media (min-width:1000px){
-  body.cc-playing .qview{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,calc(100vw - 48px));z-index:40;margin:0;padding:22px 24px;
-    background:linear-gradient(180deg,#2a1719,#1d0f11);border:2px solid rgba(230,182,85,.55);box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 9999px rgba(10,4,6,.45);animation:ccq .35s cubic-bezier(.2,1.3,.4,1);}
-  body.cc-playing .qview .qtext{font-size:24px;}
-  body.cc-playing .qview .qkind{font-size:15px;}
-}
-@keyframes ccq{from{opacity:0;transform:translate(-50%,-44%) scale(.94);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
-@media (prefers-reduced-motion:reduce){ body.cc-playing .qview{animation:none;} }
-body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
 </style>
   <script src="questions.js?v=7"></script>
 <style>
@@ -447,7 +437,7 @@ function confetti(){ const c=$('confetti'); if(!c) return; c.innerHTML=''; const
   for(let i=0;i<26;i++){ const sp=document.createElement('span'); sp.textContent=em[i%em.length]; sp.style.left=(Math.random()*100)+'%';
     sp.style.animationDelay=(Math.random()*0.9)+'s'; sp.style.animationDuration=(2+Math.random()*1.4)+'s'; sp.style.fontSize=(14+Math.random()*16)+'px'; c.appendChild(sp); } }
 function showQOverlay(kind, text, opts){ const v=$('qview'); if(!v) return; v.style.display='block';
-  $('qkind').textContent = ({ladder:'\ud83e\ude9c Climbing a ladder', rock:'\ud83e\udea8 Rockfall! Scramble clear', storm:'\ud83c\udf29\ufe0f Storm! Shelter the ladders'})[kind] || '\ud83d\udc0d Passing a sleeping snake';
+  $('qkind').textContent = kind==='ladder' ? '\ud83e\ude9c Climbing a ladder' : '\ud83d\udc0d Passing a sleeping snake';
   $('qtext').textContent = text;
   $('qopts').innerHTML = opts.map(function(o){ return '<div class="qopt">'+o.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</div>'; }).join(''); }
 function hideQOverlay(){ const v=$('qview'); if(v) v.style.display='none'; }
@@ -688,7 +678,7 @@ async function createRoom(){
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
 function writeState(){ setRoom({state:{
   game:'creak-multi', phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx,
-  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ
+  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner
 }}); }
 
 async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
@@ -898,6 +888,10 @@ $('ovAgain').addEventListener('click', playAgain);
 window.addEventListener('resize', resize);
 createRoom().then(function(){ loop(); });
 
+// expose for headless testing
+window.__CM={ genBoard, resolveLanding, TOP, getG:function(){return G;}, setG:function(patch){Object.assign(G,patch);},
+  resolveTurn, ageLadders, snakeActs, pickQuestion, askQuestionFor, showWin, playAgain, pollPlayers, reconcileDropouts, maybeEvent, rocEvent, rockfallEvent, stormEvent, tearTiles, fallTo, isCrater, fallIntoCrater,
+  startGame:function(){ G.phase='live'; G.board=genBoard(); G.order=G.players.map(p=>p.id); G.turnIdx=0; G.turnSeq=0; G.winner=null; G.positions={}; usedTags=new Set(); G.order.forEach(pid=>G.positions[pid]=1); settleStationaryTokens(null); } };
 </script>
 <script src="tb-hosts.js"></script>
 <script src="tb-scenes.js"></script>
