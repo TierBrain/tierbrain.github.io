@@ -41,6 +41,8 @@ jobs:
         run: |
           docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
           python tests/check_score_policy.py
+      - name: Verify cleanup permissions and rollback in disposable PostgreSQL
+        run: python tests/check_cleanup_permissions.py
       - name: Build and validate preview and production hosting assets
         run: |
           python build-site.py --preview

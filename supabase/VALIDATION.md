@@ -47,3 +47,8 @@ rollout/rollback procedure in `SCORE-REPAIR.md`. These tests establish input
 compatibility and save-state
 behavior; they do not establish host/player authorization, server-verified
 gameplay or full Supabase Auth/Realtime behavior.
+
+The separate cleanup-permission repair was subsequently applied as migration
+`20261020221724`. Its 24 isolated checks passed, and production metadata confirmed
+only the removal of authenticated EXECUTE. Security advisors then returned no
+lints. See [MAINTENANCE-REPAIR.md](MAINTENANCE-REPAIR.md) for its limits and rollback.
