@@ -1,10 +1,10 @@
 # TierBrain hosting recommendation
 
-Reviewed against official documentation on 19 October 2026. This document proposes a migration; no account connection, deployment or DNS change has been made.
+Reviewed on 20 October 2026. This work has not deployed to Cloudflare or changed DNS.
 
 ## Recommendation
 
-Use **Cloudflare Workers Static Assets**, keeping GitHub for source control and Supabase for multiplayer/database. TierBrain's existing HTML/JavaScript can run without a framework rewrite or a Worker script. Cloudflare now recommends Workers for new projects; Pages continues to work, but new development focuses on Workers. [Cloudflare guidance](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/#use-workers-static-assets-for-new-projects)
+Use **Cloudflare Workers Static Assets**, keeping GitHub and Supabase. Existing HTML/JavaScript runs without a framework rewrite or Worker script. Cloudflare recommends Workers for new projects; Pages continues to work. [Cloudflare guidance](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/#use-workers-static-assets-for-new-projects)
 
 Moving hosting does **not** fix Supabase permissions, scoring, retention or excessive browser-to-Supabase requests. Those require separate repairs. Cloudflare controls on the website do not protect a directly accessible Supabase endpoint.
 
@@ -18,7 +18,7 @@ GitHub Pages is a poor fit for the planned paid service: its documented limits p
 | Free builds | 3,000 build minutes/month | 500 builds/month |
 | URL compatibility | Can preserve `.html` paths explicitly | Automatically redirects `.html` to extensionless paths |
 
-Sources: [Workers billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/), [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [Workers builds](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/), [Pages pricing](https://developers.cloudflare.com/pages/functions/pricing/), [Pages limits](https://developers.cloudflare.com/pages/platform/limits/), [Pages routing](https://developers.cloudflare.com/pages/configuration/serving-pages/). These are current terms, not price guarantees; server code, builds, Supabase and other services have separate quotas/costs.
+Sources: [Workers billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/), [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [Workers builds](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/), [Pages pricing](https://developers.cloudflare.com/pages/functions/pricing/), [Pages limits](https://developers.cloudflare.com/pages/platform/limits/), [Pages routing](https://developers.cloudflare.com/pages/configuration/serving-pages/). Terms may change; other services have separate quotas/costs.
 
 ## Prepare locally now
 
@@ -28,16 +28,25 @@ Sources: [Workers billing](https://developers.cloudflare.com/workers/static-asse
 
 ## Migration checklist — after local review and authorisation
 
-1. Connect only the intended GitHub repository. Configure the protected production branch and [preview builds](https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/); restrict previews with [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/cloudflare-access/). Use isolated test data, because preview hosting alone does not isolate Supabase.
+1. Connect only the intended GitHub repository. Match project name `tierbrain` to Wrangler, use repository root, and set an explicit build command: Workers Builds ignores Wrangler's custom build setting. For initial review use `python3 build-site.py --preview` and deploy command `npx wrangler deploy`. No build environment variable is required. Final **Deploy** starts hosting; leave custom domains unconfigured. [Build settings](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
 2. Test games, joining/reconnecting, redirects, headers, search metadata and real 404 responses. Review Auth redirect URLs and any application/Edge Function CORS origin checks **if used**; retaining `https://tierbrain.co` normally preserves its existing origin. Do not broadly allow every preview domain. [Supabase redirects](https://supabase.com/docs/guides/auth/redirect-urls)
 3. Export DNS records and record current hosting/settings. Review all imported records, preserving MX, SPF, DKIM, DMARC, verification records and other subdomains. For an active Cloudflare zone, follow the nameserver and DNSSEC sequence; domain registration need not move. [DNS migration](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
 4. Add `tierbrain.co` through Workers **Custom Domains** after resolving conflicting hosting records; configure `www` deliberately. Cloudflare creates the domain's DNS record. Verify HTTPS, email and gameplay before retiring the old host. [Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 
-## Local verification completed
+## Preview and production builds
 
-Wrangler **4.151.2** ran this branch locally with `wrangler dev --local`, without login or deployment. Twelve HTTP checks passed: homepage and explicit `.html` URLs, extensionless redirects with query strings preserved, nested question/answer URLs, real 404 responses, exclusion of repository docs/config, security headers and join-page noindex headers. The generated homepage rewrite resolves `/` under `html_handling: "none"`.
+Run `python3 build-site.py --preview` for display review. Only generated `dist/` changes: CSP blocks backend connections and form submissions, static responses gain `noindex`, and pages show a preview notice. Multiplayer, live scores and forms are unavailable; isolated test Supabase is required to test them. Restrict hosted review with [Access](https://developers.cloudflare.com/workers/configuration/cloudflare-access/). Cloudflare branch isolation does not isolate hardcoded external services.
 
-For a local routing check, run `npx wrangler@4.151.2 dev --local` after installing the required local tooling. This server verifies hosting behaviour; use `python preview-site.py` for a visual preview with external browser connections blocked. A normal Wrangler preview does not itself isolate production Supabase, so do not run live multiplayer through it before configuring staging data.
+For local routing review run these sequentially:
+
+```sh
+python3 build-site.py --preview
+npx wrangler@4.151.2 dev --local
+```
+
+Wrangler has no custom build hook, so it serves the existing `dist/` without resetting preview mode. Earlier local routing/header checks passed without deployment.
+
+For production set the dashboard build command to `python3 build-site.py` before approval to promote. This preserves source pages and normal backend behaviour. If using optional `TIERBRAIN_PREVIEW=1` locally, unset it before a production build. Host permission/scoring repairs still need separate verification.
 
 ## Rollback
 

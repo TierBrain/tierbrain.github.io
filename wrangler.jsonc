@@ -3,7 +3,6 @@
   // Prepared for local verification only. No account, routes or domain attached.
   "name": "tierbrain",
   "compatibility_date": "2026-10-19",
-  "build": { "command": "python3 build-site.py" },
   "assets": {
     "directory": "./dist",
     "html_handling": "none",

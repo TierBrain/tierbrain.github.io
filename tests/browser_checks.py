@@ -29,7 +29,7 @@ GROUP = "SYNTHGROUP"
 DECKS = ("flags", "planets", "animals", "objects", "sports")
 DEBUG_PAGES = (
     "call-your-shot", "castle", "claim", "core", "creak-multi-play",
-    "creak-multi", "creak", "finish-line", "first-finger-bible", "first-finger",
+    "creak-multi", "creak-multi 5", "creak", "finish-line", "first-finger-bible", "first-finger",
     "five-clues-bible", "five-clues", "labyrinth", "matchup", "recall",
     "show-gen", "show", "snap-sort", "standing-room-multi", "tug-of-war",
     "unscramble", "wrestling-quiz",

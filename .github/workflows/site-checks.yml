@@ -32,11 +32,13 @@ jobs:
         run: python scripts/check_site.py
       - name: Validate catalogue totals and targets
         run: python sync-catalogue.py --check
-      - name: Verify validator detects broken fixtures
+      - name: Verify validators and preview build isolation
         run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Run browser regressions with synthetic data and blocked external requests
         run: python tests/browser_checks.py
-      - name: Build and validate only the public hosting assets
+      - name: Build and validate preview and production hosting assets
         run: |
+          python build-site.py --preview
+          python scripts/check_site.py --root dist
           python build-site.py
           python scripts/check_site.py --root dist
