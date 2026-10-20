@@ -1,8 +1,8 @@
 # Score repair validation
 
 Validated locally on 20 October 2026 against repository base
-`1851291d24e9890ebf4869068e010e71aac83e36`. No production score submissions,
-database changes or deployment were performed for this batch.
+`1851291d24e9890ebf4869068e010e71aac83e36`. Pre-deployment tests used synthetic
+data and did not make production score submissions or database changes.
 
 - Source and production asset checks: 153 HTML pages, 292 JavaScript blocks,
   sitemap/local targets and catalogue validation passed. Preview and production
@@ -27,9 +27,23 @@ network mode `none`, no published ports and no TCP listener. Its database and
 password were synthetic/local only. All browser requests to external hosts were
 intercepted; live backend requests were zero.
 
-The source project was reviewed on PostgreSQL 17.6. This batch has not yet been
-tested through its live PostgREST service. The migration guards the known policy
-baseline, and deployment still requires the transactional target checks in
-`SCORE-REPAIR.md`. These tests establish input compatibility and save-state
+The source project runs PostgreSQL 17.6. On 20 October 2026 the guarded migration
+was applied as server version `20261020180854`. A subsequent read-only evaluation
+of the actual installed policy passed 79 synthetic cases (34 accepted, 45 denied).
+The four remaining malformed numeric cases are covered by local column-type
+tests. All 81 existing score row hashes matched before/after, and catalog
+comparison confirmed that only the intended INSERT check changed. Columns,
+constraints, indexes, ownership, RLS flags, SELECT rules, grants and incoming role
+memberships were preserved. No fabricated leaderboard scores were inserted.
+
+Supabase security advisors returned the same pre-existing warning about signed-in
+execution of `cleanup_old_events()`, with no new score-policy warning. Its
+[remediation guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+belongs to the separate maintenance-permissions repair.
+
+Score inserts have not been exercised through the live PostgREST service; normal
+owner gameplay remains the final end-to-end check. Follow the transactional
+rollout/rollback procedure in `SCORE-REPAIR.md`. These tests establish input
+compatibility and save-state
 behavior; they do not establish host/player authorization, server-verified
 gameplay or full Supabase Auth/Realtime behavior.

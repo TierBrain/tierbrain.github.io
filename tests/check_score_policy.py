@@ -27,7 +27,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
 FIXTURE = ROOT / "tests/fixtures/scores_baseline.sql"
-MIGRATION = ROOT / "supabase/migrations/20261020171656_score_game_contracts.sql"
+MIGRATION = ROOT / "supabase/migrations/20261020180854_score_game_contracts.sql"
 ROLLBACK = ROOT / "supabase/rollback/score_game_contracts.sql"
 DOCKER = ["docker", "--host=unix:///var/run/docker.sock"]
 TASK_LABEL = "tierbrain-score-policy-tests"

@@ -2,7 +2,9 @@
 
 This batch fixes valid results being rejected for Piece by Piece, Jigsaw and
 Brain Coaster, and shows save failures separately from leaderboard loading.
-It is prepared for review; no production database migration has been applied.
+The production database migration was applied on 20 October 2026 as version
+`20261020180854`. The reviewed client rollout is tracked in
+[PR #2](https://github.com/TierBrain/tierbrain.github.io/pull/2).
 
 For example, a Piece by Piece result of 92 points after one correct answer used
 to fail the quiz limit of 20. A Jigsaw Master finish sends 48 pieces, and Brain
@@ -63,7 +65,7 @@ Supabase Auth/Realtime tests for later multiplayer changes.
    strict baseline guard and a three-second lock timeout. If it aborts, review
    drift instead of removing the guard. Reconcile existing remote migration
    history before using any CLI push command: this repo is not a full baseline.
-3. Apply only `migrations/20261020171656_score_game_contracts.sql` as one
+3. Apply only `migrations/20261020180854_score_game_contracts.sql` as one
    transaction through the established migration path. For a reviewed direct
    `psql` application, use `-X -v ON_ERROR_STOP=1 --single-transaction`.
 4. Verify the resulting policy, unchanged SELECT/grants and retained row count;
@@ -81,6 +83,9 @@ Keep an explicit migration-history record for any rollback rather than blindly
 re-running or repairing migration versions. Reverting the frontend commit is
 independent and leaves database records untouched.
 
-The new SQL file was created with Supabase CLI `migration new` (2.81.3; official
-release checksum verified). Credentials, private snapshots and local test
+The SQL file was created with Supabase CLI `migration new` (2.81.3; official
+release checksum verified). After the tested SQL was applied through Supabase
+MCP, the filename was aligned to its actual server-recorded version; the SQL
+content is unchanged. Do not apply it again to the source project. Credentials,
+private snapshots and local test
 passwords must never be committed to this public repository.
