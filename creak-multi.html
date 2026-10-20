@@ -898,10 +898,6 @@ $('ovAgain').addEventListener('click', playAgain);
 window.addEventListener('resize', resize);
 createRoom().then(function(){ loop(); });
 
-// expose for headless testing
-window.__CM={ genBoard, resolveLanding, TOP, getG:function(){return G;}, setG:function(patch){Object.assign(G,patch);},
-  resolveTurn, ageLadders, snakeActs, pickQuestion, askQuestionFor, showWin, playAgain, pollPlayers, reconcileDropouts, maybeEvent, rocEvent, rockfallEvent, stormEvent, tearTiles, fallTo, isCrater, fallIntoCrater,
-  startGame:function(){ G.phase='live'; G.board=genBoard(); G.order=G.players.map(p=>p.id); G.turnIdx=0; G.turnSeq=0; G.winner=null; G.positions={}; usedTags=new Set(); G.order.forEach(pid=>G.positions[pid]=1); settleStationaryTokens(null); } };
 </script>
 <script src="tb-hosts.js"></script>
 <script src="tb-scenes.js"></script>

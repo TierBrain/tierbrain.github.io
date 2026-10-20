@@ -136,8 +136,8 @@
     <div class="sub">TierBrain</div>
     <h1 class="display">Tug of War</h1>
     <p class="lead">A live tug for two sides. Everyone enters the same room code and picks a team, then every right answer hauls the rope your way, and a wrong one lets it slip back. First side to drag the rope past their line wins.</p>
-    <div class="field"><label>Your name</label><input id="nameIn" maxlength="14" placeholder="e.g. Alex" autocomplete="off"></div>
-    <div class="field"><label>Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
+    <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
+    <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Enter room</button>
     <p class="note">Pick any code and tell your friends, same code = same match.</p>
@@ -427,18 +427,6 @@
     if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); }
   });
 
-  // test hook (network stubbed by harness)
-  window.__tug_test={
-    enter:function(n,c){ $('nameIn').value=n; $('codeIn').value=c; enterRoom(); },
-    side:function(s){ pickSide(s); },
-    go:function(){ pressGo(); },
-    forceStart:function(){ startTug(); },
-    correct:function(){ answer(current[1], document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
-    wrong:function(){ answer(current[2][0], document.getElementById('opts').children[0]||{classList:{add:function(){}}}); },
-    poll:function(){ return poll(); },
-    timeup:function(){ checkEnd(true); },
-    state:function(){ return {phase:phase, side:side, myCorrect:myCorrect, myWrong:myWrong, R:ropeOf(lastPlayers), ended:ended, players:JSON.parse(JSON.stringify(lastPlayers))}; }
-  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

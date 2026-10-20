@@ -656,15 +656,6 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
-  window.__qc_test=function(cmd){
-    switch(cmd){
-      case 'start': startGame(); return true;
-      case 'state': return {level:level,answered:answered,correct:correct,totalWrong:totalWrong,playing:playing,clues:cluesShown};
-      case 'guessRight': $('guessInput').value=current.answer; submitGuess(); return true;
-      case 'next': nextClue(); return true;
-      case 'guessWrong': $('guessInput').value='__definitely_wrong__'; submitGuess(); return true;
-    }
-  };
 })();
 </script>
 <script>

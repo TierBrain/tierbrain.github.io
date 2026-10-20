@@ -624,25 +624,6 @@
   $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
   $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
 
-  window.__qc_test=function(cmd){
-    switch(cmd){
-      case 'start': startGame(); return true;
-      case 'state': return {level:level,answered:answered,correct:correct,totalWrong:totalWrong,playing:playing,
-        unmatched:(board?board.leftOrder.filter(function(p){return !board.matched[p];}).length:0)};
-      case 'matchCorrect': {
-        for(var k=0;k<board.leftOrder.length;k++){ var p=board.leftOrder[k]; if(board.matched[p]) continue;
-          for(var m=0;m<board.rightOrder.length;m++){ if(board.rightOrder[m]===p && !board.matched[board.rightOrder[m]]){ attemptMatch(k,m); return true; } } }
-        return false;
-      }
-      case 'matchWrong': {
-        var lk=-1,lp=-1;
-        for(var k=0;k<board.leftOrder.length;k++){ if(!board.matched[board.leftOrder[k]]){ lk=k; lp=board.leftOrder[k]; break; } }
-        if(lk<0) return false;
-        for(var m=0;m<board.rightOrder.length;m++){ var rp=board.rightOrder[m]; if(rp!==lp && !board.matched[rp]){ attemptMatch(lk,m); return true; } }
-        return false;
-      }
-    }
-  };
 })();
 </script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>

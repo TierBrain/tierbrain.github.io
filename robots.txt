@@ -5,3 +5,5 @@ Disallow: /throne-play.html
 Disallow: /play-gen.html
 
 Sitemap: https://tierbrain.co/sitemap.xml
+Sitemap: https://tierbrain.co/sitemap-questions.xml
+Sitemap: https://tierbrain.co/sitemap-answers.xml

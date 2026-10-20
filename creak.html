@@ -775,8 +775,6 @@ window.addEventListener('resize', resize);
 resize();
 requestAnimationFrame(loop);
 
-// expose pure logic for testing
-window.__CC={genBoard,resolveLanding,TOP,COLS,ROWS,POOL,pickQuestion,slug,timerFor,spawnDebris,shake,punch,snakePointAt,loop,getParticles:function(){return particles;},setBoard:function(b){board=b;},spawnRocks,spawnWind,showRoc:function(){roc.show=true;roc.x=100;roc.y=100;}};
 </script>
 <div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
 <script>

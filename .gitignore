@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+.wrangler/
+dist/
+test-results/
+shots/
+seo-metadata.csv
+*.patch
+*.bundle

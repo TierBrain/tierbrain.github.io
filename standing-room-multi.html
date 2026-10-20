@@ -488,7 +488,6 @@ $('againBtn').addEventListener('click',function(){
 });
 
 createRoom().then(function(){ pollPlayers(); setInterval(function(){ if(G.phase==='lobby') pollPlayers(); },1500); });
-window.__SR=G;
 </script>
 <script src="tb-hosts.js"></script>
 <script src="tb-scenes.js"></script>
