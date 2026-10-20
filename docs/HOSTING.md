@@ -1,6 +1,40 @@
-# TierBrain hosting recommendation
+# TierBrain hosting and deployment
 
-Reviewed on 20 October 2026. This work has not deployed to Cloudflare or changed DNS.
+Deployment status on 20 October 2026: `tierbrain.co` serves Cloudflare Workers
+Static Assets from Worker `tierbrain`. GitHub remains the source repository,
+Supabase remains the backend, and Porkbun remains the registrar and email
+forwarding provider. Nameservers are `carrera.ns.cloudflare.com` and
+`ignat.ns.cloudflare.com`. The temporary Worker hostname is
+`tierbrain.tierbrainsite.workers.dev`.
+
+Production uses repository root `/`, build command `python3 build-site.py`, and
+deploy command `npx wrangler deploy`. The migration initially deployed branch
+`review/cloudflare-migration`; after merging that branch, select `main` as the
+Worker's production branch and verify a new build from its exact commit. GitHub
+Site checks validate changes; Cloudflare's separate Git integration deploys the
+selected production branch. Keep automatic branch previews disabled until they
+explicitly use the restricted preview build.
+
+The apex uses the Worker's managed Custom Domain. `www` is a proxied A record
+with placeholder address `192.0.2.0`; a Single Redirect runs before origin access.
+Its matching expression is:
+
+```text
+(http.host eq "www.tierbrain.co") or (http.host eq "tierbrain.co" and not ssl)
+```
+
+Its dynamic target is `concat("https://tierbrain.co", http.request.uri.path)`,
+status 301, with Preserve query string enabled. This redirects HTTP apex and all
+www traffic to HTTPS apex without a loop. The old GitHub web A/CNAME records
+were replaced. Both Porkbun MX records and SPF remain unchanged; the owner
+confirmed a fresh forwarding test after the nameserver switch.
+
+The production Worker and custom domain passed thirteen HTTP/routing/header
+checks and four guarded browser checks (desktop/mobile homepage and two solo
+game starts). Sixteen final canonical-redirect checks passed, including encoded
+paths and join query strings. No live backend requests or score/room mutations
+were made during these checks. Live multiplayer and backend authorization remain
+unverified.
 
 ## Recommendation
 
@@ -46,7 +80,7 @@ npx wrangler@4.151.2 dev --local
 
 Wrangler has no custom build hook, so it serves the existing `dist/` without resetting preview mode. Earlier local routing/header checks passed without deployment.
 
-For production set the dashboard build command to `python3 build-site.py` before approval to promote. This preserves source pages and normal backend behaviour. If using optional `TIERBRAIN_PREVIEW=1` locally, unset it before a production build. Host permission/scoring repairs still need separate verification.
+Production uses dashboard build command `python3 build-site.py`. This preserves source pages and normal backend behaviour. If using optional `TIERBRAIN_PREVIEW=1` locally, unset it before a production build. Host permission/scoring repairs still need separate verification.
 
 ## Rollback
 

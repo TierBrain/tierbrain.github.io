@@ -1,6 +1,11 @@
 # Repair branch and validation
 
-Prepared on `repair/audit-followups` from public source commit `a39c6fbcc532b5a01ad9309f9eb69de1d900cb05`.
+Originally prepared from public source commit
+`a39c6fbcc532b5a01ad9309f9eb69de1d900cb05`. The final migration branch
+`review/cloudflare-migration` includes upstream `main` through
+`1fdb8334735c16eefd6645671c95974884fbdc18`, preserving all seven newer uploads.
+The owner subsequently connected the verified Cloudflare deployment to
+`tierbrain.co`; see [HOSTING.md](HOSTING.md) for current hosting and update settings.
 
 ## Included
 
@@ -9,7 +14,7 @@ Prepared on `repair/audit-followups` from public source commit `a39c6fbcc532b5a0
 - Associated labels and nickname guidance on the audited joining/score screens.
 - Counts validated against the homepage's existing catalogue, Sport Pack wording, and all three sitemaps advertised in robots.txt.
 - A pull-request validation workflow with read-only GitHub permissions. It validates local links, JavaScript, JSON/JSON-LD and sitemaps, then runs isolated browser regression tests with synthetic data.
-- A public-asset-only build and prepared Cloudflare Workers Static Assets configuration. No deployment or DNS change is part of this branch.
+- A public-asset-only build and Cloudflare Workers Static Assets configuration. The owner completed the account-side domain and DNS migration separately from these source changes.
 
 ## Run checks
 
@@ -54,8 +59,22 @@ The publishable browser key remains public by design. Moving hosting or removing
 
 ## Verification result
 
-The source and 176-asset public build passed validation: 152 HTML files, 282 JavaScript checks, 61 structured-data blocks, 1,597 local URL targets and three sitemaps. Five validator regression tests and seven isolated browser test groups passed, including mixed public/group responses, exact game scopes, removed debug controls and both game-show cutscene continuations. Wrangler 4.151.2 passed twelve local hosting/routing/header checks. No live backend requests or deployments were used for these tests.
+The final source and public build passed validation: 153 HTML files, 292
+JavaScript checks, 61 structured-data blocks, 1,614 local URL targets and three
+sitemaps. Ten validator/build regression tests and seven isolated browser test
+groups passed, including mixed public/group responses, exact game scopes,
+removed debug controls, both game-show cutscene continuations and the newly
+uploaded alternate Creak page. Wrangler 4.151.2 passed twelve local hosting
+checks. The hosted production Worker and custom domain each passed thirteen
+HTTP/routing/header checks and four guarded browser checks. Sixteen final
+HTTP/HTTPS apex/www routing checks passed with path/query preservation.
+No live backend requests were made during verification.
 
 ## Release review
 
-Review the patch, run checks, and test the Cloudflare preview with staging data before changing production. Keep current `.html` canonical URLs and existing query strings. Check that missing URLs return 404. New production headers restrict framing to the same origin; decide separately if third-party embedding is a required feature. Existing free-game promises are retained.
+For future releases, review the patch and run the checks. Use the restricted
+Cloudflare preview for display/routing review and an isolated staging backend
+for multiplayer or score changes. Keep current `.html` canonical URLs and
+existing query strings, and check that missing URLs return 404. Production headers
+restrict framing to the same origin; decide separately if third-party embedding
+is a required feature. Existing free-game promises are retained.
