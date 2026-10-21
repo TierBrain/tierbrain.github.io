@@ -1,0 +1,66 @@
+name: tierbrain-bigquiz-acceptance
+services:
+  db:
+    image: postgres:17.11@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?run prepare.py first}
+      POSTGRES_DB: postgres
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?run prepare.py first}
+      REST_DB_PASSWORD: ${REST_DB_PASSWORD:?run prepare.py first}
+    networks: [acceptance]
+    healthcheck:
+      # The entrypoint's temporary init server can answer Unix pg_isready early.
+      # Require the final PID 1 server and TCP readiness instead.
+      test: ["CMD-SHELL", "test \"$$(cat /proc/1/comm)\" = postgres && pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql/data
+    restart: "no"
+  auth:
+    image: supabase/gotrue:v2.187.0@sha256:8b0b3f68d9a8667e183b481ff74f5d72eedc1e8b70f6bde2aab1e5d79d16df62
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: http://auth:9999
+      GOTRUE_SITE_URL: http://driver
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_DB_PASSWORD}@db:5432/postgres?sslmode=disable
+      GOTRUE_DB_NAMESPACE: auth
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:?run prepare.py first}
+      GOTRUE_JWT_EXP: "60"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "true"
+      GOTRUE_RATE_LIMIT_ANONYMOUS_USERS: "1000"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_LOG_LEVEL: error
+    networks: [acceptance]
+    restart: "no"
+  rest:
+    image: postgrest/postgrest:v14.5@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${REST_DB_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:?run prepare.py first}
+      PGRST_JWT_AUD: authenticated
+      PGRST_SERVER_PORT: "3000"
+      PGRST_LOG_LEVEL: error
+    networks: [acceptance]
+    restart: "no"
+  driver:
+    # Prepared by prepare.py from the root-inspected official Node 22 digest.
+    image: ${TEST_DRIVER_IMAGE:?set the inspected official Node 22 image digest}
+    entrypoint: ["node", "-e", "setInterval(() => {}, 2147483647)"]
+    networks: [acceptance]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+networks:
+  acceptance:
+    internal: true
