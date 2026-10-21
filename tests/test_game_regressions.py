@@ -80,6 +80,20 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("async function holdOutcome()", source)
         self.assertEqual(source.count("await holdOutcome();"), 2, "both end-of-turn paths must hold the outcome")
 
+    def test_throne_host_never_runs_two_polls_at_once(self):
+        """Bug: on a slow connection the 300ms poll overlapped itself and graded one answer several times
+        (a first win showed 'A streak of 2', and a one-question Grand Finale ended 2-0)."""
+        for page in ("throne.html", "throne-bible.html"):
+            with self.subTest(page=page):
+                source = read(page)
+                self.assertIn("if(tickBusy) return;", source)
+                self.assertIn("try{ await tickOnce(); } finally { tickBusy=false; }", source)
+
+    def test_standing_room_acts_on_each_reply_once(self):
+        """Same overlap risk in Standing Room's answer and step polls: a reply must be acted on once."""
+        source = read("standing-room-multi.html")
+        self.assertEqual(source.count("if(busy || gen!==pollGen) return; busy=true;"), 2)
+
     def test_hosted_games_load_the_host_and_cutscene_engines(self):
         """Bug guard: an older upload of a hosted game drops its animated host and cutscenes."""
         for name in ("tb-hosts.js", "tb-scenes.js"):
