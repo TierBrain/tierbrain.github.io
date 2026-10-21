@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A free Geography quiz with 768 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/geography-quiz.html">
+<meta property="og:title" content="Geography Quiz: 768 questions, four tiers | TierBrain">
+<meta property="og:description" content="A free Geography quiz with 768 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/geography-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Geography Quiz: 768 questions, four tiers | TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#130a0d; --bg1:#1c1013; --card:#26151a; --card2:#2e1c20;
+    --ink:#fbf1e2; --mut:#c2a99a; --line:#4a3238;
+    --l1:#86bf9d; --l2:#e0a458; --l3:#d9694f; --l4:#f2d27a;
+    --gold:#e6b655; --right:#86bf9d; --wrong:#e8765f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(69,200,170,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(70,120,220,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#1c1013;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#1c1013;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(19,10,13,.97),rgba(38,21,26,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#fbf1e2;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#fbf1e2;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#1c1013;
+    background:linear-gradient(180deg,var(--gold),#e6b655);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(230,182,85,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #8a5f0a;}
+  button.cta.blue{background:linear-gradient(180deg,#e0a458,#c98a3e);box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(224,164,88,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8a5f0a;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#f2d27a;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#fbf1e2;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#1c1013;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#1c1013;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#1c1013;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#1c1013;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#1c1013;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+<style>
+/* TierBrain standards */
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(19,10,13,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Geography Quiz: 768 questions, four tiers | TierBrain">
+<meta name="twitter:description" content="A free Geography quiz with 768 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Geography Trivia</div>
+    <h1 class="big display">TierBrain</h1>
+    <p class="lead">20 questions from a big pool: countries, capitals, rivers, mountains and the UK, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code (optional)</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"What is the capital of Northern Ireland?","correct":"Belfast","wrong":["Derry","Armagh","Newry"]},
+      {"q":"Which country is directly south of the USA?","correct":"Mexico","wrong":["Canada","Cuba","Brazil"]},
+      {"q":"Which country is directly north of the USA?","correct":"Canada","wrong":["Mexico","Greenland","Russia"]},
+      {"q":"Which country is the UK's nearest neighbour across the Channel?","correct":"France","wrong":["Spain","Germany","Belgium"]},
+      {"q":"Which country shares a land border with Northern Ireland?","correct":"The Republic of Ireland","wrong":["Scotland","Wales","Iceland"]},
+      {"q":"Which three countries make up Great Britain?","correct":"England, Scotland and Wales","wrong":["England, Wales and Ireland","England, Scotland and Ireland","Scotland, Wales and Ireland"]},
+      {"q":"Which four countries make up the United Kingdom?","correct":"England, Scotland, Wales and Northern Ireland","wrong":["England, Scotland, Wales and Ireland","England, Wales, Ireland and France","England, Scotland, Ireland and the Isle of Man"]},
+      {"q":"Which ocean lies to the west of the UK?","correct":"The Atlantic","wrong":["The Pacific","The Indian","The Arctic"]},
+      {"q":"Which is the biggest continent?","correct":"Asia","wrong":["Africa","Europe","Antarctica"]},
+      {"q":"Which is the smallest continent?","correct":"Australia (Oceania)","wrong":["Europe","Antarctica","South America"]},
+      {"q":"On which continent is Brazil?","correct":"South America","wrong":["North America","Africa","Asia"]},
+      {"q":"On which continent is Kenya?","correct":"Africa","wrong":["Asia","South America","Europe"]},
+      {"q":"On which continent is India?","correct":"Asia","wrong":["Africa","Europe","Oceania"]},
+      {"q":"On which continent is Canada?","correct":"North America","wrong":["South America","Europe","Asia"]},
+      {"q":"On which continent is Italy?","correct":"Europe","wrong":["Asia","Africa","South America"]},
+      {"q":"On which continent is Argentina?","correct":"South America","wrong":["North America","Europe","Africa"]},
+      {"q":"On which continent do kangaroos live in the wild?","correct":"Australia","wrong":["Africa","South America","Asia"]},
+      {"q":"Which ice-covered continent is around the South Pole?","correct":"Antarctica","wrong":["The Arctic","Greenland","Iceland"]},
+      {"q":"Which country has the most famous pyramids?","correct":"Egypt","wrong":["Mexico","Peru","Sudan"]},
+      {"q":"In which city is the Colosseum?","correct":"Rome","wrong":["Athens","Florence","Milan"]},
+      {"q":"In which country is the city of Toronto?","correct":"Canada","wrong":["The USA","Australia","Ireland"]},
+      {"q":"In which country is the city of Barcelona?","correct":"Spain","wrong":["Italy","Portugal","France"]},
+      {"q":"In which country is the city of Amsterdam?","correct":"The Netherlands","wrong":["Belgium","Germany","Denmark"]},
+      {"q":"In which country is the city of Venice?","correct":"Italy","wrong":["France","Croatia","Greece"]},
+      {"q":"In which country is Mount Everest, on its border with China?","correct":"Nepal","wrong":["India","Pakistan","Bhutan"]},
+      {"q":"Which river flows through Liverpool to the sea?","correct":"The Mersey","wrong":["The Tyne","The Thames","The Clyde"]},
+      {"q":"Which river flows through Newcastle?","correct":"The Tyne","wrong":["The Wear","The Tees","The Mersey"]},
+      {"q":"Which river flows through Glasgow?","correct":"The Clyde","wrong":["The Forth","The Tay","The Dee"]},
+      {"q":"What do we call a map of the whole world drawn on a ball?","correct":"A globe","wrong":["An atlas","A chart","A compass"]},
+      {"q":"On a map, which direction is usually at the top?","correct":"North","wrong":["South","East","West"]},
+      {"q":"What are the four main points of the compass?","correct":"North, south, east and west","wrong":["Up, down, left and right","Front, back, top and bottom","Left, right, near and far"]},
+      {"q":"Which direction is opposite to west?","correct":"East","wrong":["North","South","Up"]},
+      {"q":"Is it usually hotter near the equator or near the poles?","correct":"Near the equator","wrong":["Near the poles","It is the same everywhere","It depends on the day"]},
+      {"q":"What do you call a very hot, dry place with lots of sand?","correct":"A desert","wrong":["A forest","A swamp","A lake"]},
+      {"q":"What do you call a large area of water surrounded by land?","correct":"A lake","wrong":["A river","A sea","A stream"]},
+      {"q":"What do you call the place where a river starts?","correct":"The source","wrong":["The mouth","The bank","The estuary"]},
+      {"q":"What do you call the sloping land at the side of a river?","correct":"The bank","wrong":["The bed","The source","The delta"]},
+      {"q":"What do you call a huge wave caused by an earthquake under the sea?","correct":"A tsunami","wrong":["A tornado","A hurricane","A monsoon"]},
+      {"q":"What do you call a spinning column of wind that touches the ground?","correct":"A tornado","wrong":["A tsunami","An avalanche","A glacier"]},
+      {"q":"What do you call snow sliding fast down a mountain?","correct":"An avalanche","wrong":["A landslide","A blizzard","A glacier"]},
+      {"q":"What do you call a heavy snowstorm with strong winds?","correct":"A blizzard","wrong":["A drizzle","A heatwave","A drought"]},
+      {"q":"What do you call a long time with no rain?","correct":"A drought","wrong":["A flood","A storm","A monsoon"]},
+      {"q":"What do you call water covering land that is usually dry?","correct":"A flood","wrong":["A drought","A frost","A fog"]},
+      {"q":"Which is bigger, a sea or a pond?","correct":"A sea","wrong":["A pond","They are the same","It depends on the weather"]},
+      {"q":"What colour are seas and oceans usually shown on maps?","correct":"Blue","wrong":["Green","Brown","Red"]},
+      {"q":"What colour are forests and parks usually shown on maps?","correct":"Green","wrong":["Blue","Red","Yellow"]},
+      {"q":"What do you call a small drawing of the land showing roads and towns?","correct":"A map","wrong":["A poster","A diary","A ticket"]},
+      {"q":"What do you call the address code at the end of a UK address, like SW1A 1AA?","correct":"A postcode","wrong":["A phone number","A PIN","A password"]},
+      {"q":"Which country has the city of New York?","correct":"The USA","wrong":["Canada","England","Australia"]},
+      {"q":"Which country's flag is red with a white cross?","correct":"Switzerland","wrong":["England","Denmark","Sweden"]},
+      {"q":"Which country's flag has the Stars and Stripes?","correct":"The USA","wrong":["Australia","Liberia","Malaysia"]},
+      {"q":"What are the colours of the French flag?","correct":"Blue, white and red","wrong":["Green, white and red","Red, yellow and black","Blue and yellow"]},
+      {"q":"What are the colours of the Italian flag?","correct":"Green, white and red","wrong":["Blue, white and red","Red and yellow","Black, red and gold"]},
+      {"q":"What are the colours of the German flag?","correct":"Black, red and gold","wrong":["Red, white and blue","Green, white and orange","Blue and white"]},
+      {"q":"What are the colours of the Irish flag?","correct":"Green, white and orange","wrong":["Green, white and red","Blue, white and red","Red and white"]},
+      {"q":"What colour is the cross on the flag of England?","correct":"Red","wrong":["Blue","Green","Black"]},
+      {"q":"What is the flag of Scotland called?","correct":"The Saltire","wrong":["The Union Jack","The Red Dragon","The Tricolour"]},
+      {"q":"What animal is on the flag of Wales?","correct":"A dragon","wrong":["A lion","A unicorn","An eagle"]},
+      {"q":"Which country is famous for the Statue of Liberty?","correct":"The USA","wrong":["France","Canada","England"]},
+      {"q":"Which country is famous for Big Ben and Buckingham Palace?","correct":"The United Kingdom","wrong":["Ireland","France","Germany"]},
+      {"q":"Which country is famous for its many fjords and the northern lights?","correct":"Norway","wrong":["Spain","Italy","Egypt"]},
+      {"q":"Which country is famous for maple syrup?","correct":"Canada","wrong":["Mexico","Brazil","Portugal"]},
+      {"q":"Which country is home to the city of Mumbai?","correct":"India","wrong":["Pakistan","Sri Lanka","Bangladesh"]},
+      {"q":"Which European country is famous for waffles and chocolate in Brussels?","correct":"Belgium","wrong":["Austria","Finland","Greece"]},
+      {"q":"Which ocean is between Europe and North America?","correct":"The Atlantic","wrong":["The Pacific","The Indian","The Southern"]},
+      {"q":"Which ocean is the biggest?","correct":"The Pacific","wrong":["The Atlantic","The Indian","The Arctic"]},
+      {"q":"Which ocean is around the North Pole?","correct":"The Arctic","wrong":["The Antarctic","The Indian","The Pacific"]},
+      {"q":"How many oceans are usually named today?","correct":"Five","wrong":["Three","Seven","Four"]},
+      {"q":"Which is the largest island in the British Isles?","correct":"Great Britain","wrong":["Ireland","The Isle of Man","Anglesey"]},
+      {"q":"Which island lies off the north-west coast of Wales?","correct":"Anglesey","wrong":["The Isle of Wight","Jersey","Arran"]},
+      {"q":"Which Scottish island is famous for its Cuillin mountains and a bridge?","correct":"Skye","wrong":["Arran","Mull","Islay"]},
+      {"q":"Which city is known as the Big Apple?","correct":"New York","wrong":["Chicago","Los Angeles","Boston"]},
+      {"q":"Which city is called the Eternal City?","correct":"Rome","wrong":["Athens","Paris","Jerusalem"]},
+      {"q":"Which city is called the City of Love, or City of Light?","correct":"Paris","wrong":["Venice","Rome","Vienna"]},
+      {"q":"Which city has canals instead of roads and gondolas?","correct":"Venice","wrong":["Amsterdam","Bruges","Stockholm"]},
+      {"q":"Which famous US city is known for its casinos in the desert?","correct":"Las Vegas","wrong":["Miami","Houston","Denver"]},
+      {"q":"Which American state is made up of islands in the Pacific?","correct":"Hawaii","wrong":["Alaska","Florida","California"]},
+      {"q":"Which US state is famous for its sunshine, Miami and theme parks in Orlando?","correct":"Florida","wrong":["Texas","Arizona","Georgia"]},
+      {"q":"Which country is the home of the kiwi bird?","correct":"New Zealand","wrong":["Australia","Kenya","India"]},
+      {"q":"Which country is the home of the Great Pyramid of Giza and the River Nile?","correct":"Egypt","wrong":["Sudan","Morocco","Libya"]},
+      {"q":"Which country is the home of samba and the Rio Carnival?","correct":"Brazil","wrong":["Mexico","Spain","Cuba"]},
+      {"q":"Which country is the home of flamenco and bullfighting?","correct":"Spain","wrong":["Portugal","Italy","Mexico"]},
+      {"q":"Which country is home to lions, giraffes and the Maasai Mara reserve?","correct":"Kenya","wrong":["Egypt","Morocco","Libya"]},
+      {"q":"What is the name of the famous red rock in the middle of Australia?","correct":"Uluru","wrong":["Ayers Peak","Red Mountain","Kata Rock"]},
+      {"q":"Which famous clock tower stands at the Houses of Parliament?","correct":"Big Ben","wrong":["The Shard","The Gherkin","Tower Bridge"]},
+      {"q":"Which London bridge opens up to let ships through?","correct":"Tower Bridge","wrong":["London Bridge","Westminster Bridge","Millennium Bridge"]},
+      {"q":"Which big wheel stands on London's South Bank?","correct":"The London Eye","wrong":["The Shard","The Orbit","The Monument"]},
+      {"q":"Which London building is the tallest in the UK?","correct":"The Shard","wrong":["The Gherkin","Big Ben","The London Eye"]},
+      {"q":"Which famous circle of standing stones is in Wiltshire?","correct":"Stonehenge","wrong":["Avebury Ring","Callanish","Castlerigg"]},
+      {"q":"Which famous Scottish lake is said to have a monster?","correct":"Loch Ness","wrong":["Loch Lomond","Loch Tay","Loch Awe"]},
+      {"q":"What is the highest mountain in the UK?","correct":"Ben Nevis","wrong":["Snowdon","Scafell Pike","Slieve Donard"]},
+      {"q":"What is the highest mountain in England?","correct":"Scafell Pike","wrong":["Helvellyn","Snowdon","Ben Nevis"]},
+      {"q":"Which sea separates Great Britain from Ireland?","correct":"The Irish Sea","wrong":["The North Sea","The Celtic Sea","The Baltic Sea"]},
+      {"q":"Which narrow sea separates England from France?","correct":"The English Channel","wrong":["The North Sea","The Irish Sea","The Bay of Biscay"]},
+      {"q":"What do you call a man-made waterway for boats?","correct":"A canal","wrong":["A creek","A fjord","A lagoon"]},
+      {"q":"What do you call a deep, narrow valley with steep sides, often cut by a river?","correct":"A gorge","wrong":["A meadow","A plain","A plateau"]},
+      {"q":"What do you call the flat land near a river that floods?","correct":"A floodplain","wrong":["A plateau","A summit","A peninsula"]},
+      {"q":"What do you call land almost surrounded by water but joined to the mainland?","correct":"A peninsula","wrong":["An island","A lagoon","An isthmus"]},
+      {"q":"What do you call a big group of islands?","correct":"An archipelago","wrong":["A peninsula","A continent","A delta"]},
+      {"q":"What do you call a bend in a river?","correct":"A meander","wrong":["A source","A tributary","An estuary"]},
+      {"q":"What do you call a stream or river that flows into a bigger river?","correct":"A tributary","wrong":["A meander","A delta","A source"]},
+      {"q":"What do you call a fast-moving section of a river with rocks and white water?","correct":"Rapids","wrong":["A delta","A lagoon","A marsh"]},
+      {"q":"What do you call wet, muddy land where plants such as reeds grow?","correct":"A marsh","wrong":["A desert","A tundra","A plateau"]},
+      {"q":"What is the capital of England?","correct":"London","wrong":["Manchester","Birmingham","Liverpool"]},
+      {"q":"What is the capital of Scotland?","correct":"Edinburgh","wrong":["Glasgow","Aberdeen","Dundee"]},
+      {"q":"What is the capital of Wales?","correct":"Cardiff","wrong":["Swansea","Newport","Wrexham"]},
+      {"q":"What is the capital of France?","correct":"Paris","wrong":["Lyon","Marseille","Nice"]},
+      {"q":"What is the capital of Italy?","correct":"Rome","wrong":["Milan","Venice","Naples"]},
+      {"q":"What is the capital of Spain?","correct":"Madrid","wrong":["Barcelona","Seville","Valencia"]},
+      {"q":"What is the capital of Germany?","correct":"Berlin","wrong":["Munich","Hamburg","Frankfurt"]},
+      {"q":"What is the capital of the Republic of Ireland?","correct":"Dublin","wrong":["Cork","Galway","Limerick"]},
+      {"q":"What is the capital of the United States?","correct":"Washington, D.C.","wrong":["New York","Los Angeles","Chicago"]},
+      {"q":"What is the capital of Japan?","correct":"Tokyo","wrong":["Osaka","Kyoto","Hiroshima"]},
+      {"q":"What is the capital of China?","correct":"Beijing","wrong":["Shanghai","Hong Kong","Guangzhou"]},
+      {"q":"What is the capital of Russia?","correct":"Moscow","wrong":["St Petersburg","Kazan","Novosibirsk"]},
+      {"q":"What is the capital of Egypt?","correct":"Cairo","wrong":["Alexandria","Luxor","Giza"]},
+      {"q":"What is the capital of Greece?","correct":"Athens","wrong":["Thessaloniki","Sparta","Corinth"]},
+      {"q":"What is the tallest mountain in the world?","correct":"Mount Everest","wrong":["K2","Mont Blanc","Kilimanjaro"]},
+      {"q":"Which is the longest river in Africa?","correct":"The Nile","wrong":["The Congo","The Niger","The Zambezi"]},
+      {"q":"Which river flows through London?","correct":"The Thames","wrong":["The Severn","The Trent","The Mersey"]},
+      {"q":"In which country is the Great Wall?","correct":"China","wrong":["Japan","India","Mongolia"]},
+      {"q":"In which country is the Taj Mahal?","correct":"India","wrong":["Pakistan","Nepal","Bangladesh"]},
+      {"q":"What is the imaginary line around the middle of the Earth called?","correct":"The equator","wrong":["The meridian","The tropic","The horizon"]},
+      {"q":"Which is the largest country in the world by area?","correct":"Russia","wrong":["China","The USA","Canada"]},
+      {"q":"Which country has a flag with a red maple leaf?","correct":"Canada","wrong":["The USA","Japan","Switzerland"]},
+      {"q":"Which wall was built by the Romans across northern England?","correct":"Hadrian's Wall","wrong":["The Great Wall","The Berlin Wall","Offa's Dyke"]},
+      {"q":"Which country is shaped a bit like a boot kicking a ball?","correct":"Italy","wrong":["Greece","Spain","Norway"]},
+      {"q":"Which is the biggest US state by area?","correct":"Alaska","wrong":["Texas","California","Montana"]},
+      {"q":"Which is the largest country in South America?","correct":"Brazil","wrong":["Argentina","Peru","Chile"]},
+      {"q":"Which country is made up of two main islands, the North Island and the South Island?","correct":"New Zealand","wrong":["Japan","Ireland","Iceland"]},
+      {"q":"Which country is home to Mount Fuji?","correct":"Japan","wrong":["China","South Korea","Indonesia"]},
+      {"q":"What is the capital of Canada?","correct":"Ottawa","wrong":["Toronto","Vancouver","Montreal"]},
+      {"q":"What is the capital of Australia?","correct":"Canberra","wrong":["Sydney","Melbourne","Perth"]},
+      {"q":"What is the capital of India?","correct":"New Delhi","wrong":["Mumbai","Kolkata","Chennai"]},
+      {"q":"What is the capital of Portugal?","correct":"Lisbon","wrong":["Porto","Madrid","Faro"]},
+      {"q":"What is the capital of the Netherlands?","correct":"Amsterdam","wrong":["Rotterdam","Utrecht","Eindhoven"]},
+      {"q":"What is the capital of Belgium?","correct":"Brussels","wrong":["Antwerp","Bruges","Ghent"]},
+      {"q":"What is the capital of Norway?","correct":"Oslo","wrong":["Bergen","Stockholm","Trondheim"]},
+      {"q":"What is the capital of Sweden?","correct":"Stockholm","wrong":["Gothenburg","Oslo","Malmo"]},
+      {"q":"What is the capital of Denmark?","correct":"Copenhagen","wrong":["Aarhus","Oslo","Odense"]},
+      {"q":"What is the capital of Austria?","correct":"Vienna","wrong":["Salzburg","Innsbruck","Graz"]},
+      {"q":"What is the capital of Kenya?","correct":"Nairobi","wrong":["Mombasa","Kampala","Addis Ababa"]},
+      {"q":"What is the capital of Nigeria?","correct":"Abuja","wrong":["Lagos","Kano","Ibadan"]},
+      {"q":"What is the capital of Mexico?","correct":"Mexico City","wrong":["Cancun","Guadalajara","Monterrey"]},
+      {"q":"What is the capital of Argentina?","correct":"Buenos Aires","wrong":["Cordoba","Rosario","Montevideo"]},
+      {"q":"What is the capital of South Korea?","correct":"Seoul","wrong":["Busan","Pyongyang","Incheon"]},
+      {"q":"Which English city is famous for the Beatles and its waterfront docks?","correct":"Liverpool","wrong":["Bristol","Hull","Plymouth"]},
+      {"q":"Which English city is often called England's second city?","correct":"Birmingham","wrong":["Manchester","Leeds","Bristol"]},
+      {"q":"Which Scottish city is the largest?","correct":"Glasgow","wrong":["Edinburgh","Aberdeen","Dundee"]},
+      {"q":"Which Welsh city is home to the Principality Stadium?","correct":"Cardiff","wrong":["Swansea","Newport","Bangor"]},
+      {"q":"Which English city has a famous university and punting on the River Cam?","correct":"Cambridge","wrong":["Oxford","Durham","York"]},
+      {"q":"Which city has the 'dreaming spires' and the River Isis?","correct":"Oxford","wrong":["Cambridge","Bath","Winchester"]},
+      {"q":"Which seaside town has a famous Tower and illuminations in Lancashire?","correct":"Blackpool","wrong":["Brighton","Scarborough","Margate"]},
+      {"q":"Which English seaside city has a famous pier and the Royal Pavilion?","correct":"Brighton","wrong":["Blackpool","Southend","Bournemouth"]},
+      {"q":"Which county in the far south-west of England has Land's End?","correct":"Cornwall","wrong":["Devon","Dorset","Somerset"]},
+      {"q":"Which is the largest county in England?","correct":"North Yorkshire","wrong":["Cornwall","Kent","Cumbria"]},
+      {"q":"Which English county is known as the Garden of England?","correct":"Kent","wrong":["Surrey","Sussex","Norfolk"]},
+      {"q":"Which area of north-west England has many lakes and mountains?","correct":"The Lake District","wrong":["The Peak District","The Cotswolds","The Fens"]},
+      {"q":"Which part of Scotland is wild, mountainous and in the north?","correct":"The Highlands","wrong":["The Lowlands","The Borders","Fife"]},
+      {"q":"Which large country lies to the north of Spain, across the Pyrenees?","correct":"France","wrong":["Italy","Portugal","Germany"]},
+      {"q":"Which country is directly west of Spain?","correct":"Portugal","wrong":["France","Italy","Morocco"]},
+      {"q":"Which country shares a long border with Germany and has Vienna as its capital?","correct":"Austria","wrong":["Switzerland","Poland","Hungary"]},
+      {"q":"Which country is found between France and Germany, famous for the Alps and watches?","correct":"Switzerland","wrong":["Belgium","Austria","Luxembourg"]},
+      {"q":"Which large country covers the whole of a continent?","correct":"Australia","wrong":["Brazil","Canada","India"]},
+      {"q":"Which sea lies between Europe and Africa?","correct":"The Mediterranean","wrong":["The Baltic","The North Sea","The Red Sea"]},
+      {"q":"Which country is an island in the Atlantic famous for geysers and volcanoes?","correct":"Iceland","wrong":["Ireland","Greenland","Malta"]},
+      {"q":"Which country is a big island in the Indian Ocean, home to lemurs?","correct":"Madagascar","wrong":["Sri Lanka","Mauritius","Jamaica"]},
+      {"q":"Which Caribbean island country is the birthplace of reggae music?","correct":"Jamaica","wrong":["Cuba","Barbados","Trinidad and Tobago"]},
+      {"q":"Which country is famous for the city of Marrakech and the Atlas Mountains?","correct":"Morocco","wrong":["Egypt","Tunisia","Kenya"]},
+      {"q":"In which country is the Matterhorn, on its border with Italy?","correct":"Switzerland","wrong":["Austria","France","Germany"]},
+      {"q":"In which city is the Acropolis?","correct":"Athens","wrong":["Rome","Istanbul","Cairo"]},
+      {"q":"In which city is the Kremlin and Red Square?","correct":"Moscow","wrong":["St Petersburg","Kyiv","Warsaw"]},
+      {"q":"In which city is the Brandenburg Gate?","correct":"Berlin","wrong":["Vienna","Munich","Prague"]},
+      {"q":"In which city is the Golden Gate Bridge?","correct":"San Francisco","wrong":["Los Angeles","Seattle","New York"]},
+      {"q":"In which city is Times Square?","correct":"New York","wrong":["Chicago","Boston","Washington, D.C."]},
+      {"q":"In which country is Niagara Falls, on the border with the USA?","correct":"Canada","wrong":["Mexico","Brazil","Argentina"]},
+      {"q":"In which country is Christ the Redeemer, a giant statue above Rio de Janeiro?","correct":"Brazil","wrong":["Argentina","Mexico","Portugal"]},
+      {"q":"In which country is Machu Picchu?","correct":"Peru","wrong":["Mexico","Chile","Bolivia"]},
+      {"q":"In which country is the ancient city of Petra?","correct":"Jordan","wrong":["Egypt","Greece","Turkey"]},
+      {"q":"In which country is Table Mountain?","correct":"South Africa","wrong":["Kenya","Australia","Chile"]},
+      {"q":"Which river is the longest in South America?","correct":"The Amazon","wrong":["The Orinoco","The Parana","The Magdalena"]},
+      {"q":"Which mountain range runs down the west side of South America?","correct":"The Andes","wrong":["The Rockies","The Alps","The Himalayas"]},
+      {"q":"Which mountain range contains Mount Everest?","correct":"The Himalayas","wrong":["The Andes","The Rockies","The Alps"]},
+      {"q":"Which mountain range runs through western North America?","correct":"The Rocky Mountains","wrong":["The Andes","The Urals","The Pyrenees"]},
+      {"q":"Which mountain range in Europe includes Mont Blanc?","correct":"The Alps","wrong":["The Pyrenees","The Carpathians","The Apennines"]},
+      {"q":"Which mountains separate France and Spain?","correct":"The Pyrenees","wrong":["The Alps","The Apennines","The Vosges"]},
+      {"q":"Which line divides the Earth into the Northern and Southern Hemispheres?","correct":"The equator","wrong":["The prime meridian","The Tropic of Cancer","The Arctic Circle"]},
+      {"q":"Which hemisphere is the UK in?","correct":"The Northern Hemisphere","wrong":["The Southern Hemisphere","Both","Neither"]},
+      {"q":"What do we call the very cold, treeless land near the Arctic?","correct":"Tundra","wrong":["Savannah","Rainforest","Prairie"]},
+      {"q":"What do we call the hot grassland in Africa with scattered trees?","correct":"Savannah","wrong":["Tundra","Taiga","Moor"]},
+      {"q":"What do we call a hot, wet forest near the equator?","correct":"A rainforest","wrong":["A desert","A tundra","A prairie"]},
+      {"q":"What do we call a green spot in a desert where water is found?","correct":"An oasis","wrong":["A dune","A canyon","A mesa"]},
+      {"q":"What do we call a hill of sand made by the wind?","correct":"A dune","wrong":["A delta","A dam","A dell"]},
+      {"q":"What do we call water that comes out of the ground naturally?","correct":"A spring","wrong":["A puddle","A pond","A pool"]},
+      {"q":"What do we call a wall built across a river to hold back water?","correct":"A dam","wrong":["A weir","A lock","A pier"]},
+      {"q":"What do we call frozen water moving slowly down a mountain?","correct":"A glacier","wrong":["A geyser","An avalanche","A blizzard"]},
+      {"q":"What do we call hot water shooting up out of the ground?","correct":"A geyser","wrong":["A glacier","A spring","A fountain"]},
+      {"q":"What do we call the hot melted rock that pours out of a volcano?","correct":"Lava","wrong":["Ash","Steam","Clay"]}
+    ],
+    2:[
+      {"q":"What is the capital of Poland?","correct":"Warsaw","wrong":["Krakow","Gdansk","Prague"]},
+      {"q":"What is the capital of the Czech Republic?","correct":"Prague","wrong":["Brno","Bratislava","Vienna"]},
+      {"q":"What is the capital of Hungary?","correct":"Budapest","wrong":["Bucharest","Belgrade","Vienna"]},
+      {"q":"What is the capital of Finland?","correct":"Helsinki","wrong":["Tampere","Turku","Tallinn"]},
+      {"q":"What is the capital of Switzerland?","correct":"Bern","wrong":["Zurich","Geneva","Basel"]},
+      {"q":"What is the capital of Turkey?","correct":"Ankara","wrong":["Istanbul","Izmir","Antalya"]},
+      {"q":"What is the capital of Brazil?","correct":"Brasilia","wrong":["Rio de Janeiro","Sao Paulo","Salvador"]},
+      {"q":"What is the capital of Peru?","correct":"Lima","wrong":["Cusco","Quito","La Paz"]},
+      {"q":"What is the capital of Colombia?","correct":"Bogota","wrong":["Medellin","Cartagena","Caracas"]},
+      {"q":"What is the capital of Chile?","correct":"Santiago","wrong":["Valparaiso","Lima","Buenos Aires"]},
+      {"q":"What is the capital of South Africa where Parliament sits?","correct":"Cape Town","wrong":["Pretoria","Johannesburg","Durban"]},
+      {"q":"What is the capital of Ghana?","correct":"Accra","wrong":["Kumasi","Lagos","Lome"]},
+      {"q":"What is the capital of Ethiopia?","correct":"Addis Ababa","wrong":["Asmara","Nairobi","Khartoum"]},
+      {"q":"What is the capital of Saudi Arabia?","correct":"Riyadh","wrong":["Jeddah","Mecca","Dubai"]},
+      {"q":"What is the capital of the United Arab Emirates?","correct":"Abu Dhabi","wrong":["Dubai","Sharjah","Doha"]},
+      {"q":"What is the capital of Pakistan?","correct":"Islamabad","wrong":["Karachi","Lahore","Peshawar"]},
+      {"q":"What is the capital of Vietnam?","correct":"Hanoi","wrong":["Ho Chi Minh City","Da Nang","Hue"]},
+      {"q":"What is the capital of the Philippines?","correct":"Manila","wrong":["Cebu","Davao","Quezon Island"]},
+      {"q":"What is the capital of New Zealand?","correct":"Wellington","wrong":["Auckland","Christchurch","Dunedin"]},
+      {"q":"What is the capital of Jamaica?","correct":"Kingston","wrong":["Montego Bay","Spanish Town","Ocho Rios"]},
+      {"q":"What is the capital of Cuba?","correct":"Havana","wrong":["Santiago de Cuba","Kingston","San Juan"]},
+      {"q":"Which country's capital is Reykjavik?","correct":"Iceland","wrong":["Norway","Greenland","Faroe Islands"]},
+      {"q":"Which country's capital is Lisbon?","correct":"Portugal","wrong":["Spain","Brazil","Italy"]},
+      {"q":"Which country's capital is Nairobi?","correct":"Kenya","wrong":["Uganda","Tanzania","Ethiopia"]},
+      {"q":"Which country's capital is Kathmandu?","correct":"Nepal","wrong":["Bhutan","Tibet","Bangladesh"]},
+      {"q":"Which country's capital is Bangkok?","correct":"Thailand","wrong":["Cambodia","Myanmar","Laos"]},
+      {"q":"Which country's capital is Tehran?","correct":"Iran","wrong":["Iraq","Afghanistan","Syria"]},
+      {"q":"Which country's capital is Baghdad?","correct":"Iraq","wrong":["Iran","Syria","Jordan"]},
+      {"q":"Which country's capital is Kyiv?","correct":"Ukraine","wrong":["Belarus","Russia","Moldova"]},
+      {"q":"Which country's capital is Dublin?","correct":"Ireland","wrong":["Scotland","Wales","Iceland"]},
+      {"q":"Which country's capital is Copenhagen?","correct":"Denmark","wrong":["Norway","Sweden","Finland"]},
+      {"q":"Which country's capital is Edinburgh?","correct":"Scotland","wrong":["Northern Ireland","Wales","England"]},
+      {"q":"Which is the longest river in Europe?","correct":"The Volga","wrong":["The Danube","The Rhine","The Dnieper"]},
+      {"q":"Which river flows through Cairo?","correct":"The Nile","wrong":["The Euphrates","The Jordan","The Niger"]},
+      {"q":"Which river flows through Prague?","correct":"The Vltava","wrong":["The Danube","The Elbe","The Oder"]},
+      {"q":"Which river flows through Cologne and Basel?","correct":"The Rhine","wrong":["The Rhone","The Danube","The Main"]},
+      {"q":"Which river flows through Lisbon?","correct":"The Tagus","wrong":["The Douro","The Guadalquivir","The Ebro"]},
+      {"q":"Which river flows through Seville?","correct":"The Guadalquivir","wrong":["The Tagus","The Ebro","The Douro"]},
+      {"q":"Which river flows through Florence and Pisa?","correct":"The Arno","wrong":["The Tiber","The Po","The Adige"]},
+      {"q":"Which river flows through St Petersburg?","correct":"The Neva","wrong":["The Volga","The Don","The Moskva"]},
+      {"q":"Which river flows through Moscow?","correct":"The Moskva","wrong":["The Neva","The Volga","The Don"]},
+      {"q":"Which river flows through New York City's west side?","correct":"The Hudson","wrong":["The Potomac","The Delaware","The Charles"]},
+      {"q":"Which river flows through Washington, D.C.?","correct":"The Potomac","wrong":["The Hudson","The James","The Delaware"]},
+      {"q":"Which great river flows through New Orleans?","correct":"The Mississippi","wrong":["The Missouri","The Colorado","The Ohio"]},
+      {"q":"Which river carved the Grand Canyon?","correct":"The Colorado","wrong":["The Rio Grande","The Mississippi","The Snake"]},
+      {"q":"Which river flows through Delhi?","correct":"The Yamuna","wrong":["The Ganges","The Indus","The Brahmaputra"]},
+      {"q":"Which river flows through Shanghai into the sea?","correct":"The Yangtze","wrong":["The Yellow River","The Pearl River","The Mekong"]},
+      {"q":"Which UK river flows through Bristol?","correct":"The Avon","wrong":["The Severn","The Wye","The Exe"]},
+      {"q":"Which river flows through York and Leeds?","correct":"The Ouse and the Aire","wrong":["The Tyne and the Wear","The Trent and the Don","The Tees and the Swale"]},
+      {"q":"Which river flows through Nottingham?","correct":"The Trent","wrong":["The Soar","The Derwent","The Ouse"]},
+      {"q":"Which river flows through Edinburgh into the Firth of Forth?","correct":"The Water of Leith","wrong":["The Clyde","The Tay","The Tweed"]},
+      {"q":"Which river forms much of the border between England and Scotland in the east?","correct":"The Tweed","wrong":["The Tyne","The Esk","The Eden"]},
+      {"q":"Which river, famous for its valley and Tintern Abbey, forms part of the border between England and Wales?","correct":"The Wye","wrong":["The Severn","The Taff","The Usk"]},
+      {"q":"Which is the highest mountain in Northern Ireland?","correct":"Slieve Donard","wrong":["Slieve Gullion","Sperrin Mountain","Carrauntoohil"]},
+      {"q":"Which is the highest mountain in the Republic of Ireland?","correct":"Carrauntoohil","wrong":["Slieve Donard","Croagh Patrick","Lugnaquilla"]},
+      {"q":"Which mountain range runs down the spine of northern England?","correct":"The Pennines","wrong":["The Cheviots","The Cotswolds","The Mendips"]},
+      {"q":"Which hills stretch across the border between England and Scotland?","correct":"The Cheviot Hills","wrong":["The Pennines","The Malverns","The Chilterns"]},
+      {"q":"Which hills in south-west England give their name to a famous limestone gorge, Cheddar?","correct":"The Mendip Hills","wrong":["The Quantocks","The Cotswolds","The Brecon Beacons"]},
+      {"q":"Which upland area in Devon is famous for its tors and ponies?","correct":"Dartmoor","wrong":["Exmoor","Bodmin Moor","The Peak District"]},
+      {"q":"Which national park in Wales contains Pen y Fan?","correct":"The Brecon Beacons (Bannau Brycheiniog)","wrong":["Snowdonia (Eryri)","The Pembrokeshire Coast","The Gower"]},
+      {"q":"Which national park was the first in the UK, designated in 1951?","correct":"The Peak District","wrong":["The Lake District","Snowdonia","Dartmoor"]},
+      {"q":"Which is the largest national park in the UK?","correct":"The Cairngorms","wrong":["The Lake District","Snowdonia","The Yorkshire Dales"]},
+      {"q":"Which English region is very flat and low-lying, around the Wash?","correct":"The Fens","wrong":["The Weald","The Wolds","The Broads"]},
+      {"q":"Which Norfolk wetland area is a network of rivers and lakes formed from old peat diggings?","correct":"The Broads","wrong":["The Fens","The Levels","The Wash"]},
+      {"q":"Which Somerset area is low-lying land that often floods?","correct":"The Somerset Levels","wrong":["The Fens","The Broads","The Mendips"]},
+      {"q":"What is the name of the large bay on the east coast of England between Lincolnshire and Norfolk?","correct":"The Wash","wrong":["The Solent","The Humber","Morecambe Bay"]},
+      {"q":"What is the name of the strait between the Isle of Wight and the mainland?","correct":"The Solent","wrong":["The Wash","The Menai Strait","The Minch"]},
+      {"q":"Which estuary on England's east coast is crossed by a famous suspension bridge near Hull?","correct":"The Humber","wrong":["The Thames","The Severn","The Wash"]},
+      {"q":"Which bay in Lancashire and Cumbria is known for its dangerous quicksands?","correct":"Morecambe Bay","wrong":["Cardigan Bay","Swansea Bay","Robin Hood's Bay"]},
+      {"q":"Which Welsh bay is the largest in Wales?","correct":"Cardigan Bay","wrong":["Swansea Bay","Carmarthen Bay","Tremadog Bay"]},
+      {"q":"Which Scottish firth lies between Edinburgh and Fife?","correct":"The Firth of Forth","wrong":["The Moray Firth","The Firth of Clyde","The Solway Firth"]},
+      {"q":"Which Scottish loch is the largest by volume of water?","correct":"Loch Ness","wrong":["Loch Lomond","Loch Awe","Loch Morar"]},
+      {"q":"Which is the deepest loch in Scotland?","correct":"Loch Morar","wrong":["Loch Ness","Loch Lomond","Loch Tay"]},
+      {"q":"Which is the largest lake in England?","correct":"Windermere","wrong":["Ullswater","Coniston Water","Derwentwater"]},
+      {"q":"Which is the largest country in Europe entirely within the continent?","correct":"Ukraine","wrong":["France","Spain","Germany"]},
+      {"q":"Which is the smallest country in Europe by area, after Vatican City?","correct":"Monaco","wrong":["San Marino","Liechtenstein","Malta"]},
+      {"q":"Which tiny country lies between Austria and Switzerland?","correct":"Liechtenstein","wrong":["Luxembourg","Andorra","San Marino"]},
+      {"q":"Which small country lies in the Pyrenees between France and Spain?","correct":"Andorra","wrong":["Monaco","San Marino","Liechtenstein"]},
+      {"q":"Which small country is completely surrounded by Italy, besides Vatican City?","correct":"San Marino","wrong":["Monaco","Malta","Andorra"]},
+      {"q":"Which country is made up of more than 17,000 islands?","correct":"Indonesia","wrong":["The Philippines","Japan","Greece"]},
+      {"q":"Which country has the most islands in the world, by some counts over 200,000?","correct":"Sweden","wrong":["Indonesia","Canada","Norway"]},
+      {"q":"Which is the highest active volcano in Europe?","correct":"Mount Etna","wrong":["Vesuvius","Stromboli","Hekla"]},
+      {"q":"On which island is Mount Etna?","correct":"Sicily","wrong":["Sardinia","Corsica","Crete"]},
+      {"q":"Which island in the Mediterranean is divided between Greek Cypriot and Turkish Cypriot areas?","correct":"Cyprus","wrong":["Crete","Malta","Rhodes"]},
+      {"q":"Which French island in the Mediterranean was Napoleon's birthplace?","correct":"Corsica","wrong":["Sardinia","Elba","Sicily"]},
+      {"q":"Which group of Atlantic islands belongs to Portugal and includes Sao Miguel?","correct":"The Azores","wrong":["The Canary Islands","Cape Verde","The Balearics"]},
+      {"q":"Which Portuguese island is famous for its wine and Funchal?","correct":"Madeira","wrong":["The Azores","Porto Santo","Tenerife"]},
+      {"q":"Which British Overseas Territory sits at the southern tip of Spain?","correct":"Gibraltar","wrong":["Ceuta","Malta","Andorra"]},
+      {"q":"What is the name of the famous rock in Gibraltar home to Barbary macaques?","correct":"The Rock of Gibraltar","wrong":["Ayers Rock","The Rock of Cashel","Bass Rock"]},
+      {"q":"Which two bodies of water does the Strait of Gibraltar connect?","correct":"The Atlantic and the Mediterranean","wrong":["The Mediterranean and the Red Sea","The Atlantic and the North Sea","The Black Sea and the Mediterranean"]},
+      {"q":"Which canal links the Atlantic and Pacific Oceans through Central America?","correct":"The Panama Canal","wrong":["The Suez Canal","The Kiel Canal","The Nicaragua Canal"]},
+      {"q":"Which sea lies between Italy and the Balkans?","correct":"The Adriatic Sea","wrong":["The Aegean Sea","The Ionian Sea","The Tyrrhenian Sea"]},
+      {"q":"Which sea lies between Greece and Turkey?","correct":"The Aegean Sea","wrong":["The Adriatic Sea","The Black Sea","The Ionian Sea"]},
+      {"q":"Which sea lies between Saudi Arabia and Africa?","correct":"The Red Sea","wrong":["The Arabian Sea","The Dead Sea","The Persian Gulf"]},
+      {"q":"Which sea lies between Sweden and Finland's south coasts and the Baltic states?","correct":"The Baltic Sea","wrong":["The North Sea","The White Sea","The Barents Sea"]},
+      {"q":"Which is the saltiest of these: the Dead Sea, the Red Sea or the Baltic?","correct":"The Dead Sea","wrong":["The Red Sea","The Baltic Sea","They are all the same"]},
+      {"q":"Which continent has the most countries?","correct":"Africa","wrong":["Asia","Europe","South America"]},
+      {"q":"How many countries are there in Africa, as generally recognised?","correct":"54","wrong":["48","60","72"]},
+      {"q":"Which country has the largest population in Africa?","correct":"Nigeria","wrong":["Ethiopia","Egypt","South Africa"]},
+      {"q":"Which country is home to the Serengeti National Park?","correct":"Tanzania","wrong":["Kenya","Uganda","Zambia"]},
+      {"q":"Which country is home to Victoria Falls, along with Zimbabwe?","correct":"Zambia","wrong":["Botswana","Mozambique","Malawi"]},
+      {"q":"Which is the largest country lying entirely in Asia?","correct":"China","wrong":["India","Kazakhstan","Saudi Arabia"]},
+      {"q":"Which country is the most populous in South America?","correct":"Brazil","wrong":["Argentina","Colombia","Peru"]},
+      {"q":"Which country in South America is home to the Atacama Desert?","correct":"Chile","wrong":["Peru","Bolivia","Argentina"]},
+      {"q":"Which country in South America is landlocked, with La Paz as its seat of government?","correct":"Bolivia","wrong":["Paraguay","Ecuador","Uruguay"]},
+      {"q":"Which other South American country is landlocked besides Bolivia?","correct":"Paraguay","wrong":["Uruguay","Ecuador","Guyana"]},
+      {"q":"Which country in South America has English as its official language?","correct":"Guyana","wrong":["Suriname","French Guiana","Belize"]},
+      {"q":"Which country owns the Galapagos Islands?","correct":"Ecuador","wrong":["Peru","Chile","Colombia"]},
+      {"q":"Which country owns the Falkland Islands?","correct":"The United Kingdom","wrong":["Argentina","Chile","Uruguay"]},
+      {"q":"Which country owns Greenland, as a self-governing territory?","correct":"Denmark","wrong":["Norway","Canada","Iceland"]},
+      {"q":"Which US state is the largest by population?","correct":"California","wrong":["Texas","Florida","New York"]},
+      {"q":"Which US state is known as the Lone Star State?","correct":"Texas","wrong":["Alaska","California","Nevada"]},
+      {"q":"Which US state has the Grand Canyon?","correct":"Arizona","wrong":["Nevada","Utah","Colorado"]},
+      {"q":"Which US state has Mount Rushmore?","correct":"South Dakota","wrong":["North Dakota","Wyoming","Montana"]},
+      {"q":"Which US city is known as the Windy City?","correct":"Chicago","wrong":["Boston","New York","Detroit"]},
+      {"q":"Which US city is known as Motor City for its car industry?","correct":"Detroit","wrong":["Chicago","Cleveland","Pittsburgh"]},
+      {"q":"Which US city is home to the Space Needle?","correct":"Seattle","wrong":["Portland","San Francisco","Denver"]},
+      {"q":"Which Canadian province is mainly French-speaking?","correct":"Quebec","wrong":["Ontario","Manitoba","Alberta"]},
+      {"q":"Which is the largest city in Canada?","correct":"Toronto","wrong":["Montreal","Vancouver","Ottawa"]},
+      {"q":"Which Canadian city lies on the Pacific coast?","correct":"Vancouver","wrong":["Toronto","Halifax","Winnipeg"]},
+      {"q":"Which Australian state is an island south of the mainland?","correct":"Tasmania","wrong":["Victoria","Queensland","South Australia"]},
+      {"q":"Which Australian state has Brisbane as its capital?","correct":"Queensland","wrong":["New South Wales","Victoria","Western Australia"]},
+      {"q":"Which New Zealand city is the largest?","correct":"Auckland","wrong":["Wellington","Christchurch","Hamilton"]},
+      {"q":"What is the Maori name for New Zealand, now widely used?","correct":"Aotearoa","wrong":["Te Ika","Waitangi","Rotorua"]},
+      {"q":"Which country's largest city is Istanbul, which straddles Europe and Asia?","correct":"Turkey","wrong":["Greece","Bulgaria","Georgia"]},
+      {"q":"Which city is in two continents, Europe and Asia?","correct":"Istanbul","wrong":["Moscow","Cairo","Athens"]},
+      {"q":"Which Indian city was formerly called Calcutta?","correct":"Kolkata","wrong":["Chennai","Mumbai","Bengaluru"]},
+      {"q":"Which Indian city was formerly called Madras?","correct":"Chennai","wrong":["Kolkata","Hyderabad","Pune"]},
+      {"q":"Which Indian city is the centre of the IT industry, sometimes called India's Silicon Valley?","correct":"Bengaluru","wrong":["Mumbai","Chennai","Kolkata"]},
+      {"q":"Which country is home to the city of Lahore?","correct":"Pakistan","wrong":["India","Bangladesh","Afghanistan"]},
+      {"q":"Which country is home to the city of Dhaka?","correct":"Bangladesh","wrong":["Pakistan","Myanmar","Nepal"]},
+      {"q":"Which city-state in South-East Asia is also a country?","correct":"Singapore","wrong":["Hong Kong","Macau","Brunei"]},
+      {"q":"Which island is shared by Haiti and the Dominican Republic?","correct":"Hispaniola","wrong":["Cuba","Puerto Rico","Jamaica"]},
+      {"q":"What is the name of the large peninsula containing Spain and Portugal?","correct":"The Iberian Peninsula","wrong":["The Italian Peninsula","The Balkan Peninsula","The Scandinavian Peninsula"]},
+      {"q":"What is the name of the peninsula containing Norway and Sweden?","correct":"The Scandinavian Peninsula","wrong":["The Jutland Peninsula","The Kola Peninsula","The Iberian Peninsula"]},
+      {"q":"Which peninsula forms the mainland of Denmark?","correct":"Jutland","wrong":["Scandinavia","Kola","Crimea"]},
+      {"q":"Which peninsula in the Black Sea was annexed by Russia in 2014?","correct":"Crimea","wrong":["Kola","Kamchatka","Jutland"]},
+      {"q":"Which far-eastern Russian peninsula is famous for its volcanoes?","correct":"Kamchatka","wrong":["Crimea","Kola","Chukotka"]},
+      {"q":"Which country is home to the ancient temple complex of Angkor Wat?","correct":"Cambodia","wrong":["Thailand","Laos","Vietnam"]},
+      {"q":"Which country is home to the rock fortress of Sigiriya?","correct":"Sri Lanka","wrong":["India","Nepal","Myanmar"]},
+      {"q":"Which country is home to the Alhambra palace in Granada?","correct":"Spain","wrong":["Portugal","Morocco","Italy"]},
+      {"q":"Which country is home to the fairy-tale castle of Neuschwanstein?","correct":"Germany","wrong":["Austria","Switzerland","Czech Republic"]},
+      {"q":"Which country is home to the ancient city of Ephesus?","correct":"Turkey","wrong":["Greece","Italy","Lebanon"]},
+      {"q":"Which country is home to the Chichen Itza pyramid?","correct":"Mexico","wrong":["Guatemala","Peru","Belize"]},
+      {"q":"Which country is home to the Moai statues of Easter Island?","correct":"Chile","wrong":["Peru","New Zealand","Ecuador"]},
+      {"q":"Which country is home to the Blue Mosque and Hagia Sophia?","correct":"Turkey","wrong":["Iran","Egypt","Morocco"]},
+      {"q":"Which country is home to the Burj Khalifa, which became the world's tallest building in 2010?","correct":"The United Arab Emirates","wrong":["Saudi Arabia","Qatar","China"]},
+      {"q":"Which city is home to the Petronas Towers?","correct":"Kuala Lumpur","wrong":["Singapore","Jakarta","Bangkok"]},
+      {"q":"Which city is home to the Forbidden City?","correct":"Beijing","wrong":["Shanghai","Tokyo","Seoul"]},
+      {"q":"Which city is home to the Little Mermaid statue?","correct":"Copenhagen","wrong":["Oslo","Stockholm","Amsterdam"]},
+      {"q":"Which city is home to the Manneken Pis statue?","correct":"Brussels","wrong":["Amsterdam","Antwerp","Luxembourg"]},
+      {"q":"Which city is home to the Charles Bridge?","correct":"Prague","wrong":["Budapest","Vienna","Krakow"]},
+      {"q":"Which city is home to St Basil's Cathedral with its onion domes?","correct":"Moscow","wrong":["St Petersburg","Kyiv","Minsk"]},
+      {"q":"Which city is home to the Trevi Fountain?","correct":"Rome","wrong":["Florence","Milan","Naples"]},
+      {"q":"Which city is home to the Rialto Bridge?","correct":"Venice","wrong":["Florence","Verona","Padua"]},
+      {"q":"Which city is home to the Hermitage Museum?","correct":"St Petersburg","wrong":["Moscow","Vienna","Berlin"]},
+      {"q":"Which city is home to the Prado Museum?","correct":"Madrid","wrong":["Barcelona","Lisbon","Seville"]},
+      {"q":"Which city is home to the Uffizi Gallery?","correct":"Florence","wrong":["Rome","Venice","Milan"]},
+      {"q":"Which city is home to the Rijksmuseum?","correct":"Amsterdam","wrong":["Rotterdam","Brussels","The Hague"]},
+      {"q":"Which city is home to the CN Tower?","correct":"Toronto","wrong":["Vancouver","Montreal","Calgary"]},
+      {"q":"Which city is home to the Gateway Arch?","correct":"St Louis","wrong":["Chicago","Kansas City","Denver"]},
+      {"q":"Which city is home to Sugarloaf Mountain?","correct":"Rio de Janeiro","wrong":["Sao Paulo","Buenos Aires","Lima"]},
+      {"q":"Which city is home to the Atomium, built for the 1958 World's Fair?","correct":"Brussels","wrong":["Paris","Amsterdam","Antwerp"]},
+      {"q":"Which Scottish castle is famous for appearing above Loch Ness?","correct":"Urquhart Castle","wrong":["Eilean Donan","Dunnottar","Stirling Castle"]},
+      {"q":"Which Scottish castle on a small island at three lochs is one of the most photographed?","correct":"Eilean Donan","wrong":["Urquhart","Dunvegan","Inveraray"]},
+      {"q":"Which castle built by Edward I stands beside a famous walled town on the north Wales coast?","correct":"Conwy Castle","wrong":["Harlech Castle","Beaumaris Castle","Pembroke Castle"]},
+      {"q":"Which English castle in Berkshire is the oldest occupied castle in the world?","correct":"Windsor Castle","wrong":["Warwick Castle","Leeds Castle","Dover Castle"]},
+      {"q":"Which cathedral city in Kent is the seat of the senior archbishop of the Church of England?","correct":"Canterbury","wrong":["Rochester","Winchester","Lincoln"]},
+      {"q":"Which Northumberland island is reached by a tidal causeway?","correct":"Holy Island (Lindisfarne)","wrong":["Farne Island","St Michael's Mount","Coquet Island"]},
+      {"q":"Which Cornish island with a castle can be reached on foot at low tide?","correct":"St Michael's Mount","wrong":["Lundy","Tresco","Looe Island"]},
+      {"q":"Which Dorset coastline is a UNESCO World Heritage Site famous for fossils?","correct":"The Jurassic Coast","wrong":["The Heritage Coast","The Fossil Coast","The Golden Cap Coast"]},
+      {"q":"Which natural limestone arch is on the Dorset coast near Lulworth?","correct":"Durdle Door","wrong":["The Needles","Old Harry Rocks","Green Bridge of Wales"]},
+      {"q":"Which white chalk stacks stand off the western tip of the Isle of Wight?","correct":"The Needles","wrong":["Old Harry Rocks","The Seven Sisters","Durdle Door"]},
+      {"q":"Which sea stack off Orkney is a famous climb, 137 metres tall?","correct":"The Old Man of Hoy","wrong":["The Old Man of Storr","Am Buachaille","The Needle"]},
+      {"q":"Which rock formation on Skye has a famous pinnacle?","correct":"The Old Man of Storr","wrong":["The Old Man of Hoy","The Quiraing Spire","Ben Nevis"]},
+      {"q":"Which cave on the island of Staffa inspired Mendelssohn?","correct":"Fingal's Cave","wrong":["Smoo Cave","Wookey Hole","Gaping Gill"]},
+      {"q":"Which gorge in Somerset contains caves where a 9,000-year-old skeleton was found?","correct":"Cheddar Gorge","wrong":["Avon Gorge","Gordale Scar","Winnats Pass"]},
+      {"q":"What is a fjord?","correct":"A long, narrow sea inlet carved by a glacier","wrong":["A round lake in a volcanic crater","A flat-topped hill with steep sides","A fan of sediment at a river mouth"]},
+      {"q":"What is a delta?","correct":"A landform at a river mouth where sediment builds up","wrong":["The high spring where a river begins","A deep trench on the ocean floor","A low gap between two mountains"]},
+      {"q":"What is an atoll?","correct":"A ring-shaped coral reef or island","wrong":["A cone-shaped volcanic peak","A high, flat desert plateau","A sandy island in a river"]},
+      {"q":"What is a mesa?","correct":"A flat-topped hill with steep sides","wrong":["A deep, narrow river canyon","A ring of coral round a lagoon","A dry, salty lake bed"]},
+      {"q":"What is a tributary?","correct":"A stream or river that flows into a larger river","wrong":["The place where a river meets the sea","A wall built to hold back a river","A lake formed behind a dam"]},
+      {"q":"What is an estuary?","correct":"The tidal mouth of a river where it meets the sea","wrong":["The spring where a river begins","A steep drop where a river falls","A lake fed by underground springs"]},
+      {"q":"What is a watershed?","correct":"The high ground separating river basins","wrong":["The spillway at the side of a dam","A barrier built to stop floods","A small island in a river"]},
+      {"q":"What is the name for an area of land drained by a river and its tributaries?","correct":"A drainage basin","wrong":["A floodplain","An oxbow","A delta"]},
+      {"q":"What is the name of a horseshoe-shaped lake left behind when a river meander is cut off?","correct":"An oxbow lake","wrong":["A tarn","A loch","A lagoon"]},
+      {"q":"What is the name of a small mountain lake in a hollow carved by a glacier?","correct":"A tarn","wrong":["An oxbow","A lagoon","A mere"]},
+      {"q":"What is the name of a bowl-shaped hollow on a mountainside carved by a glacier?","correct":"A corrie","wrong":["An arete","A drumlin","An esker"]},
+      {"q":"What is the name of a sharp ridge between two glacial hollows?","correct":"An arete","wrong":["A corrie","A moraine","A drumlin"]},
+      {"q":"What is the name of the rocks and debris deposited by a glacier?","correct":"Moraine","wrong":["Scree","Loess","Alluvium"]},
+      {"q":"What is the name of loose broken rock at the foot of a cliff or slope?","correct":"Scree","wrong":["Moraine","Shale","Tuff"]},
+      {"q":"What is the name for an underground layer of rock that holds water?","correct":"An aquifer","wrong":["A geyser","A spring line","A water table"]},
+      {"q":"What are the huge moving slabs of the Earth's crust called?","correct":"Tectonic plates","wrong":["Fault lines","Continental shelves","Ocean ridges"]},
+      {"q":"What is the name of the long crack in the Earth's crust in California?","correct":"The San Andreas Fault","wrong":["The Great Rift","The Ring of Fire","The Mariana Fault"]},
+      {"q":"What is the name of the horseshoe-shaped zone of volcanoes and earthquakes around the Pacific?","correct":"The Ring of Fire","wrong":["The Pacific Rim","The Rift Valley","The Volcanic Belt"]},
+      {"q":"Which long valley stretches through East Africa from Ethiopia to Mozambique?","correct":"The Great Rift Valley","wrong":["The Nile Valley","The Zambezi Valley","The Congo Basin"]},
+      {"q":"Which mid-ocean ridge runs down the middle of the Atlantic?","correct":"The Mid-Atlantic Ridge","wrong":["The East Pacific Rise","The Rift Ridge","The Atlantic Trench"]},
+      {"q":"What colour is the background of the flag of Brazil?","correct":"Green","wrong":["Blue","Yellow","White"]},
+      {"q":"What is written on the flag of Brazil?","correct":"Ordem e Progresso","wrong":["Liberdade","Brasil Unido","Deus e Patria"]},
+      {"q":"Which country's flag has a single large yellow star on red, with no other stars?","correct":"Vietnam","wrong":["China","Morocco","Turkey"]},
+      {"q":"Which country's flag shows a green field with a white crescent and star and a white stripe?","correct":"Pakistan","wrong":["Turkey","Algeria","Malaysia"]},
+      {"q":"Which Nordic country's flag is a blue cross on a white background?","correct":"Finland","wrong":["Sweden","Iceland","Norway"]},
+      {"q":"Which Nordic country's flag is a yellow cross on a blue background?","correct":"Sweden","wrong":["Finland","Denmark","Norway"]},
+      {"q":"Which country's flag has a red cross outlined in white on a blue field?","correct":"Iceland","wrong":["Norway","Finland","Faroe Islands"]},
+      {"q":"Which country's flag shows a red circle on a green background?","correct":"Bangladesh","wrong":["Japan","Palau","Laos"]},
+      {"q":"Which country's flag shows five yellow stars on a red field?","correct":"China","wrong":["Vietnam","North Korea","Turkey"]},
+      {"q":"Which country's flag shows a white crescent and star on red?","correct":"Turkey","wrong":["Pakistan","Algeria","Tunisia"]},
+      {"q":"Which country's flag is a white cross on red, often said to be the oldest national flag still used?","correct":"Denmark","wrong":["Switzerland","Norway","England"]},
+      {"q":"Which country's flag is a blue cross outlined in white on a red field?","correct":"Norway","wrong":["Iceland","Denmark","Finland"]},
+      {"q":"Which country's flag features a blue wheel called the Ashoka Chakra?","correct":"India","wrong":["Sri Lanka","Nepal","Bangladesh"]},
+      {"q":"Which country's flag shows the Union Jack, the Southern Cross and a large seven-pointed star?","correct":"Australia","wrong":["New Zealand","Fiji","Papua New Guinea"]},
+      {"q":"Which country used a plain green flag from 1977 to 2011?","correct":"Libya","wrong":["Saudi Arabia","Pakistan","Mauritania"]}
+    ],
+    3:[
+      {"q":"What is the capital of Croatia?","correct":"Zagreb","wrong":["Split","Dubrovnik","Ljubljana"]},
+      {"q":"What is the capital of Slovenia?","correct":"Ljubljana","wrong":["Zagreb","Bratislava","Maribor"]},
+      {"q":"What is the capital of Slovakia?","correct":"Bratislava","wrong":["Kosice","Prague","Budapest"]},
+      {"q":"What is the capital of Romania?","correct":"Bucharest","wrong":["Budapest","Cluj-Napoca","Sofia"]},
+      {"q":"What is the capital of Bulgaria?","correct":"Sofia","wrong":["Plovdiv","Varna","Bucharest"]},
+      {"q":"What is the capital of Serbia?","correct":"Belgrade","wrong":["Novi Sad","Zagreb","Sarajevo"]},
+      {"q":"What is the capital of Bosnia and Herzegovina?","correct":"Sarajevo","wrong":["Mostar","Banja Luka","Belgrade"]},
+      {"q":"What is the capital of Albania?","correct":"Tirana","wrong":["Durres","Skopje","Podgorica"]},
+      {"q":"What is the capital of North Macedonia?","correct":"Skopje","wrong":["Ohrid","Tirana","Pristina"]},
+      {"q":"What is the capital of Montenegro?","correct":"Podgorica","wrong":["Kotor","Budva","Tirana"]},
+      {"q":"What is the capital of Lithuania?","correct":"Vilnius","wrong":["Kaunas","Riga","Tallinn"]},
+      {"q":"What is the capital of Latvia?","correct":"Riga","wrong":["Vilnius","Tallinn","Daugavpils"]},
+      {"q":"What is the capital of Estonia?","correct":"Tallinn","wrong":["Tartu","Riga","Helsinki"]},
+      {"q":"What is the capital of Belarus?","correct":"Minsk","wrong":["Gomel","Vilnius","Kyiv"]},
+      {"q":"What is the capital of Moldova?","correct":"Chisinau","wrong":["Tiraspol","Bucharest","Odesa"]},
+      {"q":"What is the capital of Georgia, the country?","correct":"Tbilisi","wrong":["Batumi","Yerevan","Baku"]},
+      {"q":"What is the capital of Armenia?","correct":"Yerevan","wrong":["Tbilisi","Baku","Gyumri"]},
+      {"q":"What is the capital of Azerbaijan?","correct":"Baku","wrong":["Tbilisi","Yerevan","Ganja"]},
+      {"q":"What is the capital of Kazakhstan?","correct":"Astana","wrong":["Almaty","Tashkent","Bishkek"]},
+      {"q":"What is the capital of Afghanistan?","correct":"Kabul","wrong":["Kandahar","Herat","Islamabad"]},
+      {"q":"What is the capital of Syria?","correct":"Damascus","wrong":["Aleppo","Beirut","Amman"]},
+      {"q":"What is the capital of Lebanon?","correct":"Beirut","wrong":["Damascus","Tripoli","Byblos"]},
+      {"q":"What is the capital of Jordan?","correct":"Amman","wrong":["Petra","Damascus","Aqaba"]},
+      {"q":"What is the capital of Qatar?","correct":"Doha","wrong":["Dubai","Manama","Muscat"]},
+      {"q":"What is the capital of Oman?","correct":"Muscat","wrong":["Salalah","Doha","Sana'a"]},
+      {"q":"What is the capital of Kuwait?","correct":"Kuwait City","wrong":["Riyadh","Manama","Basra"]},
+      {"q":"What is the capital of Bahrain?","correct":"Manama","wrong":["Doha","Riyadh","Muscat"]},
+      {"q":"What is the capital of Myanmar since 2006?","correct":"Naypyidaw","wrong":["Yangon","Mandalay","Bago"]},
+      {"q":"What is the capital of Malaysia?","correct":"Kuala Lumpur","wrong":["Penang","George Town","Johor Bahru"]},
+      {"q":"What is the capital of Laos?","correct":"Vientiane","wrong":["Luang Prabang","Phnom Penh","Hanoi"]},
+      {"q":"What is the capital of Cambodia?","correct":"Phnom Penh","wrong":["Siem Reap","Vientiane","Bangkok"]},
+      {"q":"What is the capital of Mongolia?","correct":"Ulaanbaatar","wrong":["Erdenet","Astana","Hohhot"]},
+      {"q":"What is the capital of North Korea?","correct":"Pyongyang","wrong":["Seoul","Kaesong","Wonsan"]},
+      {"q":"Which city is the seat of Taiwan's government?","correct":"Taipei","wrong":["Kaohsiung","Taichung","Tainan"]},
+      {"q":"What is the capital of Morocco?","correct":"Rabat","wrong":["Casablanca","Marrakech","Fez"]},
+      {"q":"What is the capital of Algeria?","correct":"Algiers","wrong":["Oran","Tunis","Rabat"]},
+      {"q":"What is the capital of Tunisia?","correct":"Tunis","wrong":["Sfax","Algiers","Tripoli"]},
+      {"q":"What is the capital of Libya?","correct":"Tripoli","wrong":["Benghazi","Tunis","Cairo"]},
+      {"q":"What is the capital of Sudan?","correct":"Khartoum","wrong":["Omdurman","Juba","Port Sudan"]},
+      {"q":"What is the capital of Uganda?","correct":"Kampala","wrong":["Entebbe","Kigali","Nairobi"]},
+      {"q":"What is the capital of Tanzania, the official one?","correct":"Dodoma","wrong":["Dar es Salaam","Arusha","Zanzibar City"]},
+      {"q":"What is the capital of Rwanda?","correct":"Kigali","wrong":["Kampala","Bujumbura","Goma"]},
+      {"q":"What is the capital of Zimbabwe?","correct":"Harare","wrong":["Bulawayo","Lusaka","Maputo"]},
+      {"q":"What is the capital of Zambia?","correct":"Lusaka","wrong":["Harare","Lilongwe","Ndola"]},
+      {"q":"What is the capital of Senegal?","correct":"Dakar","wrong":["Bamako","Banjul","Saint-Louis"]},
+      {"q":"What is the capital of Mali?","correct":"Bamako","wrong":["Timbuktu","Dakar","Niamey"]},
+      {"q":"What is the capital of Cameroon?","correct":"Yaounde","wrong":["Douala","Abuja","Libreville"]},
+      {"q":"What is the capital of Angola?","correct":"Luanda","wrong":["Huambo","Maputo","Kinshasa"]},
+      {"q":"What is the capital of the Democratic Republic of the Congo?","correct":"Kinshasa","wrong":["Brazzaville","Lubumbashi","Goma"]},
+      {"q":"What is the capital of the Republic of the Congo?","correct":"Brazzaville","wrong":["Kinshasa","Pointe-Noire","Libreville"]},
+      {"q":"What is the capital of Madagascar?","correct":"Antananarivo","wrong":["Toamasina","Port Louis","Mahajanga"]},
+      {"q":"What is the capital of Venezuela?","correct":"Caracas","wrong":["Maracaibo","Bogota","Valencia"]},
+      {"q":"What is the capital of Ecuador?","correct":"Quito","wrong":["Guayaquil","Cuenca","Lima"]},
+      {"q":"What is the capital of Uruguay?","correct":"Montevideo","wrong":["Punta del Este","Buenos Aires","Asuncion"]},
+      {"q":"What is the capital of Paraguay?","correct":"Asuncion","wrong":["Ciudad del Este","Montevideo","La Paz"]},
+      {"q":"What is the official capital of Bolivia?","correct":"Sucre","wrong":["La Paz","Santa Cruz","Cochabamba"]},
+      {"q":"What is the capital of Costa Rica?","correct":"San Jose","wrong":["Limon","Managua","Panama City"]},
+      {"q":"What is the capital of Guatemala?","correct":"Guatemala City","wrong":["Antigua","San Salvador","Tegucigalpa"]},
+      {"q":"What is the capital of Honduras?","correct":"Tegucigalpa","wrong":["San Pedro Sula","Managua","San Salvador"]},
+      {"q":"What is the capital of Nicaragua?","correct":"Managua","wrong":["Leon","Granada","San Jose"]},
+      {"q":"What is the capital of El Salvador?","correct":"San Salvador","wrong":["Santa Ana","Tegucigalpa","Guatemala City"]},
+      {"q":"What is the capital of the Dominican Republic?","correct":"Santo Domingo","wrong":["Santiago","Port-au-Prince","San Juan"]},
+      {"q":"What is the capital of Haiti?","correct":"Port-au-Prince","wrong":["Cap-Haitien","Santo Domingo","Kingston"]},
+      {"q":"What is the capital of Trinidad and Tobago?","correct":"Port of Spain","wrong":["San Fernando","Scarborough","Bridgetown"]},
+      {"q":"What is the capital of Barbados?","correct":"Bridgetown","wrong":["Castries","Kingstown","Port of Spain"]},
+      {"q":"What is the capital of Fiji?","correct":"Suva","wrong":["Nadi","Apia","Port Vila"]},
+      {"q":"What is the capital of Papua New Guinea?","correct":"Port Moresby","wrong":["Lae","Honiara","Jayapura"]},
+      {"q":"What is the capital of the US state of California?","correct":"Sacramento","wrong":["Los Angeles","San Francisco","San Diego"]},
+      {"q":"What is the capital of the US state of New York?","correct":"Albany","wrong":["New York City","Buffalo","Syracuse"]},
+      {"q":"What is the capital of the US state of Texas?","correct":"Austin","wrong":["Houston","Dallas","San Antonio"]},
+      {"q":"What is the capital of the US state of Florida?","correct":"Tallahassee","wrong":["Miami","Orlando","Tampa"]},
+      {"q":"What is the capital of the US state of Illinois?","correct":"Springfield","wrong":["Chicago","Peoria","Rockford"]},
+      {"q":"What is the capital of the Canadian province of British Columbia?","correct":"Victoria","wrong":["Vancouver","Kelowna","Surrey"]},
+      {"q":"What is the capital of the Canadian province of Quebec?","correct":"Quebec City","wrong":["Montreal","Laval","Gatineau"]},
+      {"q":"What is the capital of the Australian state of Victoria?","correct":"Melbourne","wrong":["Geelong","Ballarat","Bendigo"]},
+      {"q":"What is the capital of the Australian state of Western Australia?","correct":"Perth","wrong":["Fremantle","Broome","Darwin"]},
+      {"q":"What is the capital of the Australian Northern Territory?","correct":"Darwin","wrong":["Alice Springs","Katherine","Perth"]},
+      {"q":"Which is the most populous city in the USA?","correct":"New York City","wrong":["Los Angeles","Chicago","Houston"]},
+      {"q":"Which city is the most populous in Japan?","correct":"Tokyo","wrong":["Osaka","Yokohama","Nagoya"]},
+      {"q":"Which country has the second-largest area in the world?","correct":"Canada","wrong":["China","The USA","Brazil"]},
+      {"q":"Which is the largest country in the Middle East by area?","correct":"Saudi Arabia","wrong":["Iran","Iraq","Egypt"]},
+      {"q":"Which country has the longest border with China?","correct":"Mongolia","wrong":["Russia","India","Kazakhstan"]},
+      {"q":"Which two countries share the longest international border in the world?","correct":"Canada and the USA","wrong":["Russia and Kazakhstan","Argentina and Chile","China and Mongolia"]},
+      {"q":"Which country is bordered by both the Atlantic and Indian Oceans?","correct":"South Africa","wrong":["Australia","Madagascar","Mozambique"]},
+      {"q":"Which country lies on both the Caribbean Sea and the Pacific Ocean, with the Darien Gap?","correct":"Panama","wrong":["Costa Rica","Honduras","Guatemala"]},
+      {"q":"Which capital city was formed by joining Buda and Pest, either side of the Danube?","correct":"Budapest","wrong":["Bucharest","Belgrade","Bratislava"]},
+      {"q":"Which two capital cities face each other across a river, the closest pair after Rome and Vatican City?","correct":"Kinshasa and Brazzaville","wrong":["Vienna and Bratislava","Buenos Aires and Montevideo","Tallinn and Helsinki"]},
+      {"q":"Which is the only capital city in the world that borders two other countries?","correct":"Bratislava","wrong":["Vienna","Luxembourg","Andorra la Vella"]},
+      {"q":"Which ocean is the saltiest?","correct":"The Atlantic","wrong":["The Pacific","The Indian","The Arctic"]},
+      {"q":"Which is the smallest of the world's five oceans?","correct":"The Arctic","wrong":["The Southern","The Indian","The Atlantic"]},
+      {"q":"Which ocean was officially recognised as the fifth ocean by the National Geographic Society in 2021?","correct":"The Southern Ocean","wrong":["The Arctic Ocean","The Indian Ocean","The Antarctic Sea"]},
+      {"q":"Which sea has no coastline at all, bounded by ocean currents?","correct":"The Sargasso Sea","wrong":["The Caspian Sea","The Dead Sea","The Aral Sea"]},
+      {"q":"Which sea is shrinking and lies between Kazakhstan and Uzbekistan?","correct":"The Aral Sea","wrong":["The Caspian Sea","The Black Sea","The Sea of Azov"]},
+      {"q":"Which is the shallowest sea in the world?","correct":"The Sea of Azov","wrong":["The North Sea","The Baltic","The Adriatic"]},
+      {"q":"Which desert covers most of Botswana?","correct":"The Kalahari","wrong":["The Namib","The Sahara","The Karoo"]},
+      {"q":"Which coastal desert in south-west Africa has some of the world's tallest dunes?","correct":"The Namib","wrong":["The Kalahari","The Karoo","The Atacama"]},
+      {"q":"Which desert covers most of the Arabian Peninsula's south, the 'Empty Quarter'?","correct":"The Rub' al Khali","wrong":["The Nafud","The Syrian Desert","The Dasht-e Lut"]},
+      {"q":"Which US desert contains Death Valley?","correct":"The Mojave","wrong":["The Sonoran","The Chihuahuan","The Great Basin"]},
+      {"q":"What is the lowest point in North America, in Death Valley?","correct":"Badwater Basin","wrong":["Salton Sea","The Grand Canyon floor","Lake Eyre"]},
+      {"q":"What is the lowest point on land on Earth?","correct":"The shore of the Dead Sea","wrong":["Death Valley","Lake Assal","The Qattara Depression"]},
+      {"q":"Which lake is the largest in Australia when it fills?","correct":"Lake Eyre","wrong":["Lake Torrens","Lake Gairdner","Lake Argyle"]},
+      {"q":"Which is the longest river in Australia?","correct":"The Murray","wrong":["The Darling","The Murrumbidgee","The Lachlan"]},
+      {"q":"Which is the longest river in the USA?","correct":"The Missouri","wrong":["The Mississippi","The Colorado","The Yukon"]},
+      {"q":"Which is the longest river in Canada?","correct":"The Mackenzie","wrong":["The St Lawrence","The Yukon","The Fraser"]},
+      {"q":"Which river forms the border between Canada and the USA at Niagara Falls?","correct":"The Niagara River","wrong":["The St Lawrence","The Hudson","The Ohio"]},
+      {"q":"Which three falls make up Niagara Falls?","correct":"Horseshoe, American and Bridal Veil","wrong":["Horseshoe, Angel and Bridal Veil","Canadian, American and Victoria","Rainbow, Horseshoe and Iguazu"]},
+      {"q":"Which spectacular waterfalls lie on the border of Argentina and Brazil?","correct":"Iguazu Falls","wrong":["Angel Falls","Kaieteur Falls","Victoria Falls"]},
+      {"q":"Which river rises in Germany's Black Forest?","correct":"The Danube","wrong":["The Rhine","The Elbe","The Main"]},
+      {"q":"Which river rises in the Swiss Alps and flows to the North Sea?","correct":"The Rhine","wrong":["The Rhone","The Danube","The Inn"]},
+      {"q":"Which river flows into the Mediterranean through Lyon and the Camargue?","correct":"The Rhone","wrong":["The Loire","The Garonne","The Seine"]},
+      {"q":"Which is the longest river entirely in France?","correct":"The Loire","wrong":["The Seine","The Rhone","The Garonne"]},
+      {"q":"Which river flows through Warsaw and Krakow?","correct":"The Vistula","wrong":["The Oder","The Bug","The Warta"]},
+      {"q":"Which river flows through Dresden and Hamburg?","correct":"The Elbe","wrong":["The Oder","The Weser","The Rhine"]},
+      {"q":"Which river is the longest in Italy?","correct":"The Po","wrong":["The Tiber","The Arno","The Adige"]},
+      {"q":"Which river flows through Madrid?","correct":"The Manzanares","wrong":["The Tagus","The Ebro","The Duero"]},
+      {"q":"Which is the longest river in Spain and Portugal combined, reaching the sea at Lisbon?","correct":"The Tagus","wrong":["The Douro","The Ebro","The Guadiana"]},
+      {"q":"Which river flows through Porto, famous for port wine?","correct":"The Douro","wrong":["The Tagus","The Minho","The Mondego"]},
+      {"q":"Which river flows through Belfast?","correct":"The Lagan","wrong":["The Foyle","The Bann","The Boyne"]},
+      {"q":"Which river flows through Derry~Londonderry?","correct":"The Foyle","wrong":["The Lagan","The Bann","The Erne"]},
+      {"q":"Which is the longest river in Ireland?","correct":"The Shannon","wrong":["The Liffey","The Boyne","The Barrow"]},
+      {"q":"Which river flows through Dublin?","correct":"The Liffey","wrong":["The Shannon","The Boyne","The Lee"]},
+      {"q":"Which river flows through Cork?","correct":"The Lee","wrong":["The Liffey","The Suir","The Blackwater"]},
+      {"q":"Which river is the longest in Scotland?","correct":"The Tay","wrong":["The Clyde","The Spey","The Tweed"]},
+      {"q":"Which river flows through Aberdeen, along with the Don?","correct":"The Dee","wrong":["The Tay","The Spey","The Esk"]},
+      {"q":"Which Scottish river is famous for its whisky distilleries and salmon?","correct":"The Spey","wrong":["The Clyde","The Forth","The Tweed"]},
+      {"q":"Which river is the longest entirely in England?","correct":"The Thames","wrong":["The Trent","The Great Ouse","The Severn"]},
+      {"q":"Which river flows through Shrewsbury and Worcester?","correct":"The Severn","wrong":["The Wye","The Avon","The Teme"]},
+      {"q":"Which river flows through Stratford-upon-Avon?","correct":"The Avon","wrong":["The Severn","The Cherwell","The Thames"]},
+      {"q":"Which river flows through Exeter?","correct":"The Exe","wrong":["The Dart","The Tamar","The Taw"]},
+      {"q":"Which river forms most of the border between Devon and Cornwall?","correct":"The Tamar","wrong":["The Exe","The Fowey","The Camel"]},
+      {"q":"Which river flows through Norwich?","correct":"The Wensum","wrong":["The Yare","The Bure","The Waveney"]},
+      {"q":"Which river flows through Cambridge?","correct":"The Cam","wrong":["The Ouse","The Nene","The Welland"]},
+      {"q":"Which is the most northerly point of mainland Great Britain?","correct":"Dunnet Head","wrong":["John o' Groats","Cape Wrath","Duncansby Head"]},
+      {"q":"Which is the most southerly point of mainland Great Britain?","correct":"Lizard Point","wrong":["Land's End","Start Point","Portland Bill"]},
+      {"q":"Which is the most easterly point of the UK mainland?","correct":"Lowestoft Ness","wrong":["Dover","Cromer","Spurn Head"]},
+      {"q":"Which is the most westerly point of mainland Great Britain?","correct":"Ardnamurchan Point","wrong":["Land's End","Cape Wrath","St Davids Head"]},
+      {"q":"Which Warwickshire village has long claimed to be the centre of England?","correct":"Meriden","wrong":["Coventry","Leicester","Lichfield"]},
+      {"q":"Which is the smallest city in the UK by population?","correct":"St Davids","wrong":["Wells","Ely","St Asaph"]},
+      {"q":"Which Somerset cathedral city is often called England's smallest city?","correct":"Wells","wrong":["Ely","Ripon","Truro"]},
+      {"q":"Which Scottish city is known as the Granite City?","correct":"Aberdeen","wrong":["Dundee","Inverness","Perth"]},
+      {"q":"Which Scottish city is known for jute, jam and journalism?","correct":"Dundee","wrong":["Aberdeen","Stirling","Perth"]},
+      {"q":"Which English city is known as the 'Steel City'?","correct":"Sheffield","wrong":["Middlesbrough","Rotherham","Scunthorpe"]},
+      {"q":"Which English city was famous for making cars at Cowley?","correct":"Oxford","wrong":["Coventry","Birmingham","Luton"]},
+      {"q":"Which English city was the centre of the pottery industry?","correct":"Stoke-on-Trent","wrong":["Derby","Worcester","Wolverhampton"]},
+      {"q":"Which English city is famous for lace and Robin Hood?","correct":"Nottingham","wrong":["Leicester","Derby","Lincoln"]},
+      {"q":"Which English city is famous for its walls, Rows and Roman amphitheatre?","correct":"Chester","wrong":["York","Bath","Lincoln"]},
+      {"q":"Which English city is famous for 'the Shambles', a medieval street?","correct":"York","wrong":["Chester","Canterbury","Salisbury"]},
+      {"q":"Which English city's cathedral is called the Minster?","correct":"York","wrong":["Lincoln","Durham","Ely"]},
+      {"q":"Which English city sits on a hill with a cathedral and castle facing each other across Palace Green?","correct":"Durham","wrong":["Lincoln","Ely","Canterbury"]},
+      {"q":"Which Welsh border town is famous for its second-hand bookshops and literary festival?","correct":"Hay-on-Wye","wrong":["Monmouth","Builth Wells","Abergavenny"]},
+      {"q":"Which Welsh village has a name of 58 letters?","correct":"Llanfairpwllgwyngyll","wrong":["Betws-y-Coed","Portmeirion","Aberystwyth"]},
+      {"q":"Which Italian-style village in Wales was built by Clough Williams-Ellis?","correct":"Portmeirion","wrong":["Tenby","Beddgelert","Llandudno"]},
+      {"q":"Which Welsh seaside resort has the Great Orme?","correct":"Llandudno","wrong":["Rhyl","Colwyn Bay","Aberystwyth"]},
+      {"q":"Which Scottish city is known as the capital of the Highlands?","correct":"Inverness","wrong":["Aberdeen","Elgin","Fort William"]},
+      {"q":"What is the capital of the Isle of Man?","correct":"Douglas","wrong":["Ramsey","Peel","Castletown"]},
+      {"q":"What is the capital of Jersey?","correct":"St Helier","wrong":["St Peter Port","St Aubin","Gorey"]},
+      {"q":"What is the capital of Guernsey?","correct":"St Peter Port","wrong":["St Helier","St Anne","St Sampson"]},
+      {"q":"What is the main town of Shetland?","correct":"Lerwick","wrong":["Kirkwall","Stornoway","Scalloway"]},
+      {"q":"What is the main town of Orkney?","correct":"Kirkwall","wrong":["Lerwick","Stromness","Stornoway"]},
+      {"q":"What is the main town of the Isle of Lewis?","correct":"Stornoway","wrong":["Lerwick","Tobermory","Portree"]},
+      {"q":"What is the main town of Skye?","correct":"Portree","wrong":["Broadford","Tobermory","Uig"]},
+      {"q":"Which town on Mull is famous for its brightly coloured harbour houses?","correct":"Tobermory","wrong":["Portree","Oban","Stornoway"]},
+      {"q":"Which group of islands lies off the south-west tip of Cornwall?","correct":"The Isles of Scilly","wrong":["The Channel Islands","Lundy","The Farnes"]},
+      {"q":"Which island in the Bristol Channel is famous for puffins?","correct":"Lundy","wrong":["Steep Holm","Caldey","Flat Holm"]},
+      {"q":"Which Channel Island has no cars allowed?","correct":"Sark","wrong":["Jersey","Guernsey","Alderney"]},
+      {"q":"Which is the most densely populated country in the world?","correct":"Monaco","wrong":["Singapore","Bangladesh","Malta"]},
+      {"q":"Which country has the most native speakers of Spanish?","correct":"Mexico","wrong":["Spain","Colombia","Argentina"]},
+      {"q":"Which country has the most native speakers of Portuguese?","correct":"Brazil","wrong":["Portugal","Angola","Mozambique"]},
+      {"q":"How many official languages does South Africa have?","correct":"12","wrong":["11","9","4"]},
+      {"q":"How many official national languages does Switzerland have?","correct":"Four","wrong":["Three","Two","Five"]},
+      {"q":"Which is the fourth national language of Switzerland, besides German, French and Italian?","correct":"Romansh","wrong":["Ladin","Swiss German","Walser"]},
+      {"q":"Which country has the longest coastline in Europe?","correct":"Norway","wrong":["Greece","The UK","Italy"]},
+      {"q":"Which country has the highest average elevation in the world?","correct":"Bhutan","wrong":["Nepal","Bolivia","Switzerland"]},
+      {"q":"Which country is the flattest in the world, with the lowest high point?","correct":"The Maldives","wrong":["The Netherlands","Qatar","Tuvalu"]},
+      {"q":"Which country is made up of 26 coral atolls in the Indian Ocean?","correct":"The Maldives","wrong":["The Seychelles","Mauritius","Sri Lanka"]},
+      {"q":"Which Indian Ocean island nation is famous for the extinct dodo?","correct":"Mauritius","wrong":["The Seychelles","Madagascar","Reunion"]},
+      {"q":"Which country in the Indian Ocean has Victoria as its capital?","correct":"The Seychelles","wrong":["Mauritius","The Maldives","Comoros"]},
+      {"q":"Which Gulf island country is linked to Saudi Arabia by the King Fahd Causeway?","correct":"Bahrain","wrong":["Qatar","Kuwait","The UAE"]},
+      {"q":"Which country is the only one to border both the Caspian Sea and the Persian Gulf?","correct":"Iran","wrong":["Iraq","Turkmenistan","Kazakhstan"]},
+      {"q":"Which mountain range runs between the Black and Caspian Seas?","correct":"The Caucasus","wrong":["The Zagros","The Elburz","The Taurus"]},
+      {"q":"What is the highest mountain in Europe, in the Caucasus?","correct":"Mount Elbrus","wrong":["Mont Blanc","Mount Kazbek","Dykh-Tau"]},
+      {"q":"What is the highest mountain in Japan?","correct":"Mount Fuji","wrong":["Mount Kita","Mount Ontake","Mount Aso"]},
+      {"q":"What is the highest mountain in Australia's mainland?","correct":"Mount Kosciuszko","wrong":["Mount Townsend","Uluru","Mount Bogong"]},
+      {"q":"What is the highest mountain in New Zealand?","correct":"Aoraki / Mount Cook","wrong":["Mount Ruapehu","Mount Taranaki","Mount Aspiring"]},
+      {"q":"What is the highest mountain in Canada?","correct":"Mount Logan","wrong":["Mount Robson","Mount Saint Elias","Denali"]},
+      {"q":"What is the highest mountain in Spain, counting its islands?","correct":"Mount Teide","wrong":["Mulhacen","Aneto","Torre de Cerredo"]},
+      {"q":"What is the highest mountain on the Spanish mainland?","correct":"Mulhacen","wrong":["Teide","Aneto","Veleta"]},
+      {"q":"What is the highest mountain in Greece?","correct":"Mount Olympus","wrong":["Mount Parnassus","Mount Athos","Mount Ida"]},
+      {"q":"What is the highest mountain in Turkey?","correct":"Mount Ararat","wrong":["Mount Erciyes","Mount Nemrut","Mount Ida"]},
+      {"q":"What is the highest mountain in Antarctica?","correct":"Mount Vinson","wrong":["Mount Erebus","Mount Kirkpatrick","Mount Markham"]},
+      {"q":"Which active volcano in Antarctica is the southernmost active volcano on Earth?","correct":"Mount Erebus","wrong":["Mount Terror","Mount Vinson","Deception Island"]},
+      {"q":"What are the 'Seven Summits'?","correct":"The highest peaks on each of the seven continents","wrong":["Seven peaks over 8,000 metres","The seven tallest Alps","Seven volcanoes of the Ring of Fire"]},
+      {"q":"How many mountains in the world are over 8,000 metres high?","correct":"14","wrong":["7","10","21"]},
+      {"q":"Which mountain is the second highest in the world?","correct":"K2","wrong":["Kangchenjunga","Lhotse","Makalu"]},
+      {"q":"Which mountain is the third highest in the world, on the Nepal-India border?","correct":"Kangchenjunga","wrong":["K2","Lhotse","Annapurna"]},
+      {"q":"Which Alpine peak is famous for its steep north face, the 'Nordwand'?","correct":"The Eiger","wrong":["The Matterhorn","Mont Blanc","The Jungfrau"]},
+      {"q":"Which pass is the most famous route between Switzerland and Italy, with a hospice and dogs?","correct":"The Great St Bernard Pass","wrong":["The Simplon Pass","The Brenner Pass","The Gotthard Pass"]},
+      {"q":"Which pass links Austria and Italy and is one of the lowest Alpine crossings?","correct":"The Brenner Pass","wrong":["The Simplon Pass","The St Gotthard Pass","The Stelvio Pass"]},
+      {"q":"Which mountain pass links Pakistan and Afghanistan?","correct":"The Khyber Pass","wrong":["The Bolan Pass","The Karakoram Pass","The Salang Pass"]}
+    ],
+    4:[
+      {"q":"What is the capital of Bhutan?","correct":"Thimphu","wrong":["Paro","Punakha","Kathmandu"]},
+      {"q":"What is the capital of Burkina Faso?","correct":"Ouagadougou","wrong":["Bamako","Niamey","Bobo-Dioulasso"]},
+      {"q":"What is the capital of Eritrea?","correct":"Asmara","wrong":["Djibouti","Massawa","Mogadishu"]},
+      {"q":"What is the capital of Kyrgyzstan?","correct":"Bishkek","wrong":["Almaty","Dushanbe","Tashkent"]},
+      {"q":"What is the capital of Tajikistan?","correct":"Dushanbe","wrong":["Bishkek","Ashgabat","Tashkent"]},
+      {"q":"What is the capital of Turkmenistan?","correct":"Ashgabat","wrong":["Dushanbe","Baku","Tashkent"]},
+      {"q":"What is the capital of Kosovo?","correct":"Pristina","wrong":["Skopje","Tirana","Prizren"]},
+      {"q":"What is the capital of Liechtenstein?","correct":"Vaduz","wrong":["Schaan","Bern","Feldkirch"]},
+      {"q":"What is the capital of Andorra?","correct":"Andorra la Vella","wrong":["Escaldes","La Seu d'Urgell","Encamp"]},
+      {"q":"What is the capital of San Marino?","correct":"San Marino City","wrong":["Serravalle","Borgo Maggiore","Rimini"]},
+      {"q":"What is the capital of Malta?","correct":"Valletta","wrong":["Mdina","Sliema","Birgu"]},
+      {"q":"What is the capital of Cyprus?","correct":"Nicosia","wrong":["Limassol","Larnaca","Paphos"]},
+      {"q":"What is the capital of Brunei?","correct":"Bandar Seri Begawan","wrong":["Kota Kinabalu","Kuching","Muara"]},
+      {"q":"What is the capital of Samoa?","correct":"Apia","wrong":["Pago Pago","Suva","Nuku'alofa"]},
+      {"q":"What is the capital of Tonga?","correct":"Nuku'alofa","wrong":["Apia","Suva","Port Vila"]},
+      {"q":"What is the capital of Vanuatu?","correct":"Port Vila","wrong":["Honiara","Suva","Noumea"]},
+      {"q":"What is the capital of the Solomon Islands?","correct":"Honiara","wrong":["Port Vila","Port Moresby","Tarawa"]},
+      {"q":"What is the capital of Malawi?","correct":"Lilongwe","wrong":["Blantyre","Lusaka","Zomba"]},
+      {"q":"What is the capital of Botswana?","correct":"Gaborone","wrong":["Francistown","Windhoek","Maseru"]},
+      {"q":"What is the capital of Namibia?","correct":"Windhoek","wrong":["Walvis Bay","Gaborone","Swakopmund"]},
+      {"q":"What is the capital of Lesotho?","correct":"Maseru","wrong":["Mbabane","Gaborone","Bloemfontein"]},
+      {"q":"What is the capital of Mozambique?","correct":"Maputo","wrong":["Beira","Harare","Lusaka"]},
+      {"q":"What is the capital of Niger?","correct":"Niamey","wrong":["Bamako","N'Djamena","Agadez"]},
+      {"q":"What is the capital of Chad?","correct":"N'Djamena","wrong":["Niamey","Bangui","Khartoum"]},
+      {"q":"What is the capital of The Gambia?","correct":"Banjul","wrong":["Dakar","Serekunda","Bissau"]},
+      {"q":"What is the capital of Sierra Leone?","correct":"Freetown","wrong":["Monrovia","Conakry","Bo"]},
+      {"q":"What is the capital of Liberia?","correct":"Monrovia","wrong":["Freetown","Abidjan","Conakry"]},
+      {"q":"What is the capital of Mauritania?","correct":"Nouakchott","wrong":["Nouadhibou","Dakar","Rabat"]},
+      {"q":"What is the capital of Suriname?","correct":"Paramaribo","wrong":["Georgetown","Cayenne","Nieuw Nickerie"]},
+      {"q":"What is the capital of Guyana?","correct":"Georgetown","wrong":["Paramaribo","Linden","Bridgetown"]},
+      {"q":"What is the capital of Belize?","correct":"Belmopan","wrong":["Belize City","San Ignacio","Orange Walk"]},
+      {"q":"Which landlocked South American country has a navy that patrols Lake Titicaca?","correct":"Bolivia","wrong":["Paraguay","Peru","Ecuador"]},
+      {"q":"Which country lost its coastline to Chile in the War of the Pacific of 1879 to 1884?","correct":"Bolivia","wrong":["Peru","Argentina","Paraguay"]},
+      {"q":"Which Russian exclave lies between Poland and Lithuania?","correct":"Kaliningrad","wrong":["Murmansk","Kursk","Pskov"]},
+      {"q":"Which Spanish exclave town lies inside France in the Pyrenees?","correct":"Llivia","wrong":["Andorra","Puigcerda","Jaca"]},
+      {"q":"Which two Spanish cities lie on the north coast of Africa?","correct":"Ceuta and Melilla","wrong":["Tangier and Tetouan","Oran and Algiers","Rabat and Fez"]},
+      {"q":"Which Belgian town is famous for its patchwork of Belgian and Dutch enclaves?","correct":"Baarle-Hertog","wrong":["Bruges","Maastricht","Eupen"]},
+      {"q":"Which Azerbaijani exclave is separated from the rest of the country by Armenia?","correct":"Nakhchivan","wrong":["Nagorno-Karabakh","Ganja","Lankaran"]},
+      {"q":"Which narrow strip of land links the Baltic states to Poland, between Belarus and Kaliningrad?","correct":"The Suwalki Gap","wrong":["The Danzig Corridor","The Narva Gap","The Memel Strip"]},
+      {"q":"Which strip of Namibian territory reaches east to the Zambezi?","correct":"The Caprivi Strip","wrong":["The Wakhan Corridor","The Ogaden","The Okavango Panhandle"]},
+      {"q":"Which narrow strip of Afghanistan reaches east to touch China?","correct":"The Wakhan Corridor","wrong":["The Caprivi Strip","The Khyber Strip","The Pamir Gap"]},
+      {"q":"Which country has the most land borders with other countries, tied with Russia?","correct":"China","wrong":["Brazil","Germany","India"]},
+      {"q":"How many countries border Germany?","correct":"Nine","wrong":["Seven","Eight","Ten"]},
+      {"q":"How many countries border France in mainland Europe?","correct":"Eight","wrong":["Six","Seven","Five"]},
+      {"q":"Which two countries share a land border with France in South America?","correct":"Brazil and Suriname","wrong":["Guyana and Venezuela","Colombia and Peru","Argentina and Chile"]},
+      {"q":"Which country shares the longest land border with France, through French Guiana?","correct":"Brazil","wrong":["Spain","Belgium","Switzerland"]},
+      {"q":"Which is the longest international border in the world?","correct":"Canada and the United States","wrong":["Russia and Kazakhstan","Argentina and Chile","China and Mongolia"]},
+      {"q":"Which island is divided between Indonesia, Malaysia and Brunei?","correct":"Borneo","wrong":["New Guinea","Sumatra","Timor"]},
+      {"q":"Which Caribbean island is shared between France and the Netherlands?","correct":"Saint Martin","wrong":["Aruba","Guadeloupe","Curacao"]},
+      {"q":"Which tiny uninhabited island in the river Bidasoa changes between French and Spanish control every six months?","correct":"Pheasant Island","wrong":["Isla Perejil","Ile de la Cite","Isla de Alboran"]},
+      {"q":"Which Arctic island chain, belonging to Norway, is governed by a 1920 treaty?","correct":"Svalbard","wrong":["Jan Mayen","Franz Josef Land","Novaya Zemlya"]},
+      {"q":"What is the main settlement on Svalbard?","correct":"Longyearbyen","wrong":["Barentsburg","Ny-Alesund","Tromso"]},
+      {"q":"Which country has three capital cities: Pretoria, Cape Town and Bloemfontein?","correct":"South Africa","wrong":["Namibia","Botswana","Lesotho"]},
+      {"q":"Which city is the official capital of the Netherlands, though the government sits in The Hague?","correct":"Amsterdam","wrong":["Rotterdam","Utrecht","Leiden"]},
+      {"q":"Which city replaced Abidjan as the official capital of Ivory Coast?","correct":"Yamoussoukro","wrong":["Bouake","San-Pedro","Korhogo"]},
+      {"q":"Which Swiss-French architect planned the Indian city of Chandigarh?","correct":"Le Corbusier","wrong":["Oscar Niemeyer","Edwin Lutyens","Louis Kahn"]},
+      {"q":"Which British architect designed much of New Delhi?","correct":"Edwin Lutyens","wrong":["Herbert Baker","Christopher Wren","Aston Webb"]},
+      {"q":"Which American architect designed the master plan for Canberra with his wife Marion?","correct":"Walter Burley Griffin","wrong":["Frank Lloyd Wright","Daniel Burnham","Louis Sullivan"]},
+      {"q":"What is the only country whose name in English begins with 'Q'?","correct":"Qatar","wrong":["Quebec","Qinghai","Queensland"]},
+      {"q":"Which country's name comes from the Latin for 'silver'?","correct":"Argentina","wrong":["Uruguay","Paraguay","Peru"]},
+      {"q":"Which country is named after an Italian explorer?","correct":"Colombia","wrong":["Venezuela","Bolivia","Ecuador"]},
+      {"q":"Which South American country's name means 'little Venice'?","correct":"Venezuela","wrong":["Bolivia","Colombia","Ecuador"]},
+      {"q":"Which country is named after the line of latitude it lies on?","correct":"Ecuador","wrong":["Equatorial Guinea","Kenya","Gabon"]},
+      {"q":"Which country is named after Simon Bolivar?","correct":"Bolivia","wrong":["Venezuela","Colombia","Peru"]},
+      {"q":"Which African country's name means 'land of the upright people'?","correct":"Burkina Faso","wrong":["Mali","Ghana","Niger"]},
+      {"q":"Which country's name means 'land of the Franks'?","correct":"France","wrong":["Germany","Belgium","Luxembourg"]},
+      {"q":"Which country was formerly known as Ceylon?","correct":"Sri Lanka","wrong":["Myanmar","Bangladesh","Maldives"]},
+      {"q":"Which country was formerly known as Siam?","correct":"Thailand","wrong":["Cambodia","Laos","Vietnam"]},
+      {"q":"Which country was formerly known as Persia?","correct":"Iran","wrong":["Iraq","Afghanistan","Turkey"]},
+      {"q":"Which country was formerly known as Abyssinia?","correct":"Ethiopia","wrong":["Eritrea","Somalia","Sudan"]},
+      {"q":"Which country was formerly known as the Gold Coast?","correct":"Ghana","wrong":["Ivory Coast","Nigeria","Togo"]},
+      {"q":"Which country was formerly known as Basutoland?","correct":"Lesotho","wrong":["Eswatini","Botswana","Zambia"]},
+      {"q":"Which country was formerly known as Southern Rhodesia?","correct":"Zimbabwe","wrong":["Zambia","Malawi","Mozambique"]},
+      {"q":"Which country was formerly known as Zaire?","correct":"The Democratic Republic of the Congo","wrong":["The Republic of the Congo","Angola","Gabon"]},
+      {"q":"Which country was formerly known as Burma?","correct":"Myanmar","wrong":["Thailand","Bangladesh","Laos"]},
+      {"q":"Which country was formerly known as British Guiana?","correct":"Guyana","wrong":["Suriname","Belize","Trinidad"]},
+      {"q":"Which country was formerly known as Swaziland?","correct":"Eswatini","wrong":["Lesotho","Botswana","Malawi"]},
+      {"q":"Which country was formerly called East Pakistan?","correct":"Bangladesh","wrong":["Pakistan","Myanmar","Nepal"]},
+      {"q":"Which Pacific country was formerly called the Gilbert Islands?","correct":"Kiribati","wrong":["Tuvalu","Nauru","The Marshall Islands"]},
+      {"q":"Which Pacific country was formerly called the Ellice Islands?","correct":"Tuvalu","wrong":["Kiribati","Tonga","Nauru"]},
+      {"q":"Which Pacific island country is the smallest republic in the world and has no official capital?","correct":"Nauru","wrong":["Tuvalu","Palau","Kiribati"]},
+      {"q":"Which Pacific nation is the first to see each new day, having moved the date line in 1995?","correct":"Kiribati","wrong":["Samoa","Tonga","Fiji"]},
+      {"q":"Which country skipped 30 December 2011 when it moved west of the date line?","correct":"Samoa","wrong":["Tonga","Fiji","Kiribati"]},
+      {"q":"Which is the longest river entirely within Spain?","correct":"The Ebro","wrong":["The Tagus","The Guadalquivir","The Duero"]},
+      {"q":"Which river flows through Lyon, joining the Rhone there?","correct":"The Saone","wrong":["The Loire","The Garonne","The Isere"]},
+      {"q":"Which river flows through Bordeaux?","correct":"The Garonne","wrong":["The Dordogne","The Loire","The Lot"]},
+      {"q":"Which river flows through Frankfurt?","correct":"The Main","wrong":["The Neckar","The Mosel","The Rhine"]},
+      {"q":"Which river flows through Bern?","correct":"The Aare","wrong":["The Rhine","The Rhone","The Limmat"]},
+      {"q":"Which river flows through Kyiv?","correct":"The Dnieper","wrong":["The Dniester","The Don","The Bug"]},
+      {"q":"Into which sea does the Volga flow?","correct":"The Caspian Sea","wrong":["The Black Sea","The Sea of Azov","The Baltic Sea"]},
+      {"q":"How many countries does the Danube flow through?","correct":"Ten","wrong":["Six","Eight","Twelve"]},
+      {"q":"Into which sea does the Danube flow?","correct":"The Black Sea","wrong":["The Adriatic Sea","The Aegean Sea","The Caspian Sea"]},
+      {"q":"Which river flows through Damascus?","correct":"The Barada","wrong":["The Orontes","The Jordan","The Litani"]},
+      {"q":"Which wide estuary lies between Buenos Aires and Montevideo?","correct":"The River Plate (Rio de la Plata)","wrong":["The Parana Delta","The Gulf of San Matias","Bahia Blanca"]},
+      {"q":"Which river is the second longest in South America?","correct":"The Parana","wrong":["The Orinoco","The Madeira","The Sao Francisco"]},
+      {"q":"Which is the longest river in China?","correct":"The Yangtze","wrong":["The Yellow River","The Mekong","The Pearl"]},
+      {"q":"Which river is known as 'China's Sorrow' because of its floods?","correct":"The Yellow River","wrong":["The Yangtze","The Pearl River","The Huai"]},
+      {"q":"Which river flows through Phnom Penh and forms a vast delta in Vietnam?","correct":"The Mekong","wrong":["The Red River","The Chao Phraya","The Irrawaddy"]},
+      {"q":"Which river flows through Bangkok?","correct":"The Chao Phraya","wrong":["The Mekong","The Salween","The Ping"]},
+      {"q":"Which is the main river of Myanmar?","correct":"The Irrawaddy","wrong":["The Salween","The Mekong","The Chindwin"]},
+      {"q":"Which river joins the Ganges to form the world's largest delta?","correct":"The Brahmaputra","wrong":["The Indus","The Yamuna","The Godavari"]},
+      {"q":"Which great river of Pakistan rises in Tibet?","correct":"The Indus","wrong":["The Sutlej","The Jhelum","The Chenab"]},
+      {"q":"Which is the second longest river in Africa?","correct":"The Congo","wrong":["The Niger","The Zambezi","The Orange"]},
+      {"q":"Which African river flows in a great arc through Mali, Niger and Nigeria?","correct":"The Niger","wrong":["The Congo","The Senegal","The Volta"]},
+      {"q":"Which river flows over Victoria Falls?","correct":"The Zambezi","wrong":["The Limpopo","The Orange","The Okavango"]},
+      {"q":"Which African river never reaches the sea, ending in a delta in the Kalahari?","correct":"The Okavango","wrong":["The Limpopo","The Cuando","The Orange"]},
+      {"q":"Which great man-made lake was formed by the Volta River dam?","correct":"Lake Volta","wrong":["Lake Kariba","Lake Nasser","Lake Kainji"]},
+      {"q":"Which lake was formed by the Aswan High Dam?","correct":"Lake Nasser","wrong":["Lake Victoria","Lake Tana","Lake Qarun"]},
+      {"q":"Which lake on the Zambezi was formed by the Kariba Dam?","correct":"Lake Kariba","wrong":["Lake Malawi","Lake Volta","Lake Cahora Bassa"]},
+      {"q":"Which lake is the source of the Blue Nile?","correct":"Lake Tana","wrong":["Lake Victoria","Lake Albert","Lake Turkana"]},
+      {"q":"Which is the deepest lake in Africa?","correct":"Lake Tanganyika","wrong":["Lake Victoria","Lake Malawi","Lake Chad"]},
+      {"q":"Which African lake has shrunk dramatically since the 1960s and is shared by four countries including Chad?","correct":"Lake Chad","wrong":["Lake Turkana","Lake Kivu","Lake Volta"]},
+      {"q":"Which is the largest lake in Western Europe by area?","correct":"Lake Geneva","wrong":["Lake Constance","Lake Garda","Lake Lucerne"]},
+      {"q":"Which is the largest lake in the European Union?","correct":"Lake Vanern","wrong":["Lake Geneva","Lake Balaton","Lake Saimaa"]},
+      {"q":"Which is the largest lake in Central Europe, in Hungary?","correct":"Lake Balaton","wrong":["Lake Neusiedl","Lake Bled","Lake Ohrid"]},
+      {"q":"Which lake is shared by Germany, Austria and Switzerland?","correct":"Lake Constance","wrong":["Lake Geneva","Lake Lucerne","Lake Zurich"]},
+      {"q":"Which is the largest lake in Italy?","correct":"Lake Garda","wrong":["Lake Como","Lake Maggiore","Lake Trasimeno"]},
+      {"q":"Which Slovenian lake has a tiny island with a church?","correct":"Lake Bled","wrong":["Lake Bohinj","Lake Ohrid","Lake Plitvice"]},
+      {"q":"Which is the largest lake in the British Isles?","correct":"Lough Neagh","wrong":["Loch Lomond","Loch Ness","Lough Erne"]},
+      {"q":"Which is the deepest lake in England?","correct":"Wastwater","wrong":["Windermere","Coniston Water","Ullswater"]},
+      {"q":"Which is the largest natural lake in Wales?","correct":"Llyn Tegid","wrong":["Llyn Padarn","Llyn Brianne","Llyn Ogwen"]},
+      {"q":"Which strait separates Sicily from mainland Italy?","correct":"The Strait of Messina","wrong":["The Strait of Otranto","The Strait of Bonifacio","The Strait of Sicily"]},
+      {"q":"Which strait separates Corsica from Sardinia?","correct":"The Strait of Bonifacio","wrong":["The Strait of Messina","The Ligurian Strait","The Strait of Otranto"]},
+      {"q":"Which strait links the Black Sea and the Sea of Marmara?","correct":"The Bosphorus","wrong":["The Dardanelles","The Kerch Strait","The Strait of Otranto"]},
+      {"q":"Which strait links the Sea of Marmara and the Aegean?","correct":"The Dardanelles","wrong":["The Bosphorus","The Kerch Strait","The Corinth Strait"]},
+      {"q":"Which strait links the Red Sea and the Gulf of Aden?","correct":"The Bab-el-Mandeb","wrong":["The Strait of Hormuz","The Strait of Tiran","The Suez Strait"]},
+      {"q":"Which strait links the Persian Gulf and the Gulf of Oman?","correct":"The Strait of Hormuz","wrong":["The Bab-el-Mandeb","The Strait of Tiran","The Strait of Malacca"]},
+      {"q":"Which strait between Malaysia and Sumatra is one of the busiest shipping lanes in the world?","correct":"The Strait of Malacca","wrong":["The Sunda Strait","The Lombok Strait","The Strait of Singapore"]},
+      {"q":"Which passage of sea separates South America from Antarctica?","correct":"The Drake Passage","wrong":["The Strait of Magellan","The Beagle Channel","The Weddell Passage"]},
+      {"q":"Which strait at the southern tip of mainland South America was named after a Portuguese explorer?","correct":"The Strait of Magellan","wrong":["The Drake Passage","The Beagle Channel","The Strait of Le Maire"]},
+      {"q":"Which sea lies between Italy's west coast, Corsica, Sardinia and Sicily?","correct":"The Tyrrhenian Sea","wrong":["The Adriatic Sea","The Ionian Sea","The Balearic Sea"]},
+      {"q":"Which sea lies between Korea and Japan?","correct":"The Sea of Japan (East Sea)","wrong":["The Yellow Sea","The East China Sea","The Sea of Okhotsk"]},
+      {"q":"Which sea lies between China and the Korean peninsula?","correct":"The Yellow Sea","wrong":["The Sea of Japan","The South China Sea","The Bohai Sea"]},
+      {"q":"Which sea lies between Australia and New Zealand?","correct":"The Tasman Sea","wrong":["The Coral Sea","The Arafura Sea","The Timor Sea"]},
+      {"q":"Which sea off north-east Australia contains the Great Barrier Reef?","correct":"The Coral Sea","wrong":["The Tasman Sea","The Arafura Sea","The Timor Sea"]},
+      {"q":"Which is the world's largest hot desert?","correct":"The Sahara","wrong":["The Arabian Desert","The Kalahari","The Gobi"]},
+      {"q":"Which is the driest non-polar desert in the world, in Chile?","correct":"The Atacama","wrong":["The Namib","The Sechura","The Patagonian"]},
+      {"q":"Which coastal desert in southern Africa is often called the oldest desert in the world?","correct":"The Namib","wrong":["The Kalahari","The Karoo","The Danakil"]},
+      {"q":"Which desert lies on the border of India and Pakistan?","correct":"The Thar","wrong":["The Gobi","The Lut","The Kyzylkum"]},
+      {"q":"Which Iranian desert has recorded some of the hottest land surface temperatures on Earth?","correct":"The Dasht-e Lut","wrong":["The Dasht-e Kavir","The Karakum","The Thar"]},
+      {"q":"Which is the largest desert in Australia?","correct":"The Great Victoria Desert","wrong":["The Simpson Desert","The Gibson Desert","The Tanami"]},
+      {"q":"Which is the lowest point on land in Africa, in Djibouti?","correct":"Lake Assal","wrong":["The Qattara Depression","The Danakil Depression","Lake Turkana"]},
+      {"q":"Which is the lowest point in Europe, on the Caspian shore?","correct":"The Caspian Depression","wrong":["The Zuidplaspolder","The Fens","The Danube Delta"]},
+      {"q":"Which is the lowest point in the United Kingdom?","correct":"Holme Fen","wrong":["Romney Marsh","The Somerset Levels","Lough Neagh"]},
+      {"q":"Which is the highest point in the Pennines?","correct":"Cross Fell","wrong":["Pen-y-ghent","Kinder Scout","Whernside"]},
+      {"q":"Which is the highest point in the Peak District?","correct":"Kinder Scout","wrong":["Mam Tor","Bleaklow","Win Hill"]},
+      {"q":"Which is the highest mountain in the Brecon Beacons (Bannau Brycheiniog)?","correct":"Pen y Fan","wrong":["Corn Du","Fan Brycheiniog","Sugar Loaf"]},
+      {"q":"Which is the highest point on Dartmoor?","correct":"High Willhays","wrong":["Yes Tor","Haytor","Brown Willy"]},
+      {"q":"Which is the highest point in Cornwall?","correct":"Brown Willy","wrong":["High Willhays","Rough Tor","Kit Hill"]},
+      {"q":"Which is the highest point in south-east England?","correct":"Walbury Hill","wrong":["Leith Hill","Box Hill","Ditchling Beacon"]},
+      {"q":"Which is the second highest mountain in Scotland?","correct":"Ben Macdui","wrong":["Ben Lawers","Braeriach","Cairn Gorm"]},
+      {"q":"What is the Scottish name for a mountain over 3,000 feet?","correct":"A Munro","wrong":["A Corbett","A Graham","A Marilyn"]},
+      {"q":"Which is the longest freshwater loch in Scotland?","correct":"Loch Awe","wrong":["Loch Ness","Loch Lomond","Loch Tay"]},
+      {"q":"Which canal links Inverness and Fort William through the Great Glen?","correct":"The Caledonian Canal","wrong":["The Crinan Canal","The Forth and Clyde Canal","The Union Canal"]},
+      {"q":"Which great tidal bore travels up the River Severn?","correct":"The Severn Bore","wrong":["The Trent Aegir","The Dee Wave","The Mersey Surge"]},
+      {"q":"What is the local name for the tidal bore on the River Trent?","correct":"The Aegir","wrong":["The Bore","The Eagre Wave","The Trent Tide"]},
+      {"q":"Which river in North Yorkshire flows over Aysgarth Falls?","correct":"The Ure","wrong":["The Swale","The Wharfe","The Nidd"]},
+      {"q":"Which is the highest single-drop waterfall in England, in the Pennines?","correct":"Hardraw Force","wrong":["High Force","Cauldron Snout","Aira Force"]},
+      {"q":"Which is the highest waterfall in the UK?","correct":"Eas a' Chual Aluinn","wrong":["Falls of Glomach","Steall Falls","Pistyll Rhaeadr"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_geography-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+<button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var b = document.getElementById('tbSnd');
+  var show = function(){ var m = !!window.tbMuted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); show(); }); show();
+  /* find a free corner: the button never sits on top of a game's own controls */
+  var spots = [{ left:'12px', right:'auto', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' }, { left:'auto', right:'12px', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' },
+               { left:'12px', right:'auto', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }, { left:'auto', right:'12px', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }];
+  var clash = function(){ var s = b.getBoundingClientRect();
+    return [].some.call(document.querySelectorAll('button, a, input, select, [role=button]'), function(e){ if(e === b || !e.offsetParent) return false; var r = e.getBoundingClientRect();
+      return r.width && !(r.right < s.left || r.left > s.right || r.bottom < s.top || r.top > s.bottom); }); };
+  var place = function(){ for(var i = 0; i < spots.length; i++){ var p = spots[i]; b.style.left = p.left; b.style.right = p.right; b.style.top = p.top; b.style.bottom = p.bottom; if(!clash()) return; }
+    var q = spots[0]; b.style.left = q.left; b.style.right = q.right; b.style.top = q.top; b.style.bottom = q.bottom; };
+  var later = 0; var replace = function(){ clearTimeout(later); later = setTimeout(place, 250); };
+  window.addEventListener('resize', replace); document.addEventListener('click', replace, true); setTimeout(place, 300); setInterval(place, 3000);
+  /* screen readers hear right and wrong the moment an answer is marked */
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  /* the answer's words only: leave out the A/B/C/D badge, and any closing full stop */
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/^[A-F]\s+(?=\S)/, '').replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return;
+      var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var gained = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(gained('good') || gained('correct') || gained('right')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); }
+      if(gained('bad') || gained('wrong') || gained('incorrect')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
+</body>
+</html>

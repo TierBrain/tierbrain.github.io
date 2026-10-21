@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A free Books &amp; Words quiz with 717 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/books-words-quiz.html">
+<meta property="og:title" content="Books &amp; Words Quiz: 717 questions, four tiers | TierBrain">
+<meta property="og:description" content="A free Books &amp; Words quiz with 717 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/books-words-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Books &amp; Words Quiz: 717 questions, four tiers | TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#130a0d; --bg1:#1c1013; --card:#26151a; --card2:#2e1c20;
+    --ink:#fbf1e2; --mut:#c2a99a; --line:#4a3238;
+    --l1:#86bf9d; --l2:#e0a458; --l3:#d9694f; --l4:#f2d27a;
+    --gold:#e6b655; --right:#86bf9d; --wrong:#e8765f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(170,130,230,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(230,120,170,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#1c1013;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#1c1013;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(19,10,13,.97),rgba(38,21,26,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#fbf1e2;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#fbf1e2;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#1c1013;
+    background:linear-gradient(180deg,var(--gold),#e6b655);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(230,182,85,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #8a5f0a;}
+  button.cta.blue{background:linear-gradient(180deg,#e0a458,#c98a3e);box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(224,164,88,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8a5f0a;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#f2d27a;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#fbf1e2;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#1c1013;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#1c1013;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#1c1013;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#1c1013;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#1c1013;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+<style>
+/* TierBrain standards */
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(19,10,13,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Books &amp; Words Quiz: 717 questions, four tiers | TierBrain">
+<meta name="twitter:description" content="A free Books &amp; Words quiz with 717 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Books &amp; Words Trivia</div>
+    <h1 class="big display">TierBrain</h1>
+    <p class="lead">20 questions from a big pool: authors, characters, poetry and the English language, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code (optional)</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"Who wrote the Harry Potter books?","correct":"J. K. Rowling","wrong":["Roald Dahl","Enid Blyton","C. S. Lewis"]},
+      {"q":"What is the name of Harry Potter's school?","correct":"Hogwarts","wrong":["Malory Towers","Narnia","St Trinian's"]},
+      {"q":"Who wrote 'Charlie and the Chocolate Factory'?","correct":"Roald Dahl","wrong":["David Walliams","J. K. Rowling","Michael Morpurgo"]},
+      {"q":"What is the name of the chocolate factory owner in Roald Dahl's story?","correct":"Willy Wonka","wrong":["Mr Twit","The BFG","Augustus Gloop"]},
+      {"q":"In 'The BFG', what do the letters BFG stand for?","correct":"Big Friendly Giant","wrong":["Big Funny Goblin","Brave Flying Giant","Best Friend Gerald"]},
+      {"q":"Which Roald Dahl girl loves reading and has magic powers?","correct":"Matilda","wrong":["Sophie","Charlie","Veruca"]},
+      {"q":"Which bear loves marmalade sandwiches and comes from Peru?","correct":"Paddington","wrong":["Winnie-the-Pooh","Rupert","Baloo"]},
+      {"q":"Which bear lives in the Hundred Acre Wood?","correct":"Winnie-the-Pooh","wrong":["Paddington","Rupert","Fozzie"]},
+      {"q":"What is the name of Winnie-the-Pooh's small pink friend?","correct":"Piglet","wrong":["Tigger","Eeyore","Roo"]},
+      {"q":"Which gloomy donkey is a friend of Winnie-the-Pooh?","correct":"Eeyore","wrong":["Piglet","Owl","Rabbit"]},
+      {"q":"Which bouncy friend of Pooh is a tiger?","correct":"Tigger","wrong":["Eeyore","Kanga","Piglet"]},
+      {"q":"Who wrote 'The Tale of Peter Rabbit'?","correct":"Beatrix Potter","wrong":["A. A. Milne","Enid Blyton","Lewis Carroll"]},
+      {"q":"In 'Alice's Adventures in Wonderland', what does Alice follow down a hole?","correct":"A White Rabbit","wrong":["A Cheshire Cat","A Mad Hatter","A Dormouse"]},
+      {"q":"Which cat in 'Alice in Wonderland' grins and disappears?","correct":"The Cheshire Cat","wrong":["The White Cat","Puss in Boots","The Cat in the Hat"]},
+      {"q":"Who wrote 'The Very Hungry Caterpillar'?","correct":"Eric Carle","wrong":["Julia Donaldson","Dr Seuss","Beatrix Potter"]},
+      {"q":"Which monster in a Julia Donaldson book has terrible tusks and a poisonous wart?","correct":"The Gruffalo","wrong":["The Highway Rat","Zog","The Smartest Giant"]},
+      {"q":"Who wrote 'The Gruffalo'?","correct":"Julia Donaldson","wrong":["Roald Dahl","Eric Carle","David Walliams"]},
+      {"q":"Which Dr Seuss character wears a tall striped hat?","correct":"The Cat in the Hat","wrong":["The Grinch","The Lorax","Horton"]},
+      {"q":"Which green character stole Christmas in a Dr Seuss book?","correct":"The Grinch","wrong":["The Lorax","Sam-I-Am","Horton"]},
+      {"q":"What does Sam-I-Am not like, in a Dr Seuss book?","correct":"Green eggs and ham","wrong":["Fish and chips","Red jelly","Cold pizza"]},
+      {"q":"Which pirate fights Peter Pan and has a hook for a hand?","correct":"Captain Hook","wrong":["Long John Silver","Blackbeard","Captain Jack"]},
+      {"q":"Which magical land is reached through a wardrobe?","correct":"Narnia","wrong":["Neverland","Wonderland","Oz"]},
+      {"q":"What is the name of the great lion in Narnia?","correct":"Aslan","wrong":["Simba","Mufasa","Leo"]},
+      {"q":"In 'The Wizard of Oz', what is the name of the girl from Kansas?","correct":"Dorothy","wrong":["Alice","Wendy","Lucy"]},
+      {"q":"What colour is the road Dorothy follows in 'The Wizard of Oz'?","correct":"Yellow","wrong":["Red","Gold","Green"]},
+      {"q":"Which wooden puppet's nose grows when he tells a lie?","correct":"Pinocchio","wrong":["Peter Pan","Noddy","Pooh"]},
+      {"q":"Which girl in a fairy tale wears a red hooded cape?","correct":"Little Red Riding Hood","wrong":["Goldilocks","Snow White","Rapunzel"]},
+      {"q":"Which girl ate the porridge of three bears?","correct":"Goldilocks","wrong":["Little Red Riding Hood","Cinderella","Snow White"]},
+      {"q":"Which fairy-tale girl lost a glass slipper at a ball?","correct":"Cinderella","wrong":["Snow White","Sleeping Beauty","Rapunzel"]},
+      {"q":"In 'Snow White', how many dwarfs are there?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"In which story do two children find a house made of sweets?","correct":"Hansel and Gretel","wrong":["Jack and the Beanstalk","Goldilocks","The Snow Queen"]},
+      {"q":"Which animal huffs and puffs in 'The Three Little Pigs'?","correct":"The big bad wolf","wrong":["The fox","The bear","The lion"]},
+      {"q":"In which Hans Christian Andersen story does a teased little bird grow into a beautiful swan?","correct":"The Ugly Duckling","wrong":["The Little Red Hen","Chicken Licken","The Snow Queen"]},
+      {"q":"Who wrote many famous fairy tales including 'The Little Mermaid'?","correct":"Hans Christian Andersen","wrong":["The Brothers Grimm","Charles Perrault","Aesop"]},
+      {"q":"Which brothers collected fairy tales like 'Hansel and Gretel' in Germany?","correct":"The Brothers Grimm","wrong":["The Wright brothers","The Marx brothers","The Andersen brothers"]},
+      {"q":"Which famous storyteller of ancient Greece told fables like 'The Tortoise and the Hare'?","correct":"Aesop","wrong":["Homer","Plato","Hans Andersen"]},
+      {"q":"In 'The Boy Who Cried Wolf', what lesson does the story teach?","correct":"Do not tell lies","wrong":["Always run fast","Be kind to animals","Share your food"]},
+      {"q":"Which Enid Blyton group of children had adventures with a dog called Timmy?","correct":"The Famous Five","wrong":["The Secret Seven","The Hardy Boys","The Railway Children"]},
+      {"q":"Which little wooden boy in Enid Blyton's books lives in Toyland?","correct":"Noddy","wrong":["Pinocchio","Big Ears","Mr Plod"]},
+      {"q":"Which wizard school headmaster has a long white beard in the Harry Potter books?","correct":"Albus Dumbledore","wrong":["Severus Snape","Rubeus Hagrid","Lord Voldemort"]},
+      {"q":"What is the name of Harry Potter's owl?","correct":"Hedwig","wrong":["Errol","Crookshanks","Fawkes"]},
+      {"q":"Which game played on broomsticks appears in Harry Potter?","correct":"Quidditch","wrong":["Croquet","Polo","Hoopla"]},
+      {"q":"Which character is Harry Potter's best friend with red hair?","correct":"Ron Weasley","wrong":["Draco Malfoy","Neville Longbottom","Dobby"]},
+      {"q":"What is a person who writes books called?","correct":"An author","wrong":["An illustrator","A publisher","A librarian"]},
+      {"q":"What is a place where you can borrow books for free?","correct":"A library","wrong":["A bookshop","A museum","A gallery"]},
+      {"q":"What is the name for the list of chapters at the front of a book?","correct":"The contents page","wrong":["The index","The blurb","The glossary"]},
+      {"q":"What is the short description on the back cover of a book called?","correct":"The blurb","wrong":["The index","The spine","The title page"]},
+      {"q":"What is the part of a book's cover you see on a shelf?","correct":"The spine","wrong":["The blurb","The page","The chapter"]},
+      {"q":"What is a book that lists words and their meanings?","correct":"A dictionary","wrong":["An atlas","A thesaurus","An encyclopedia"]},
+      {"q":"What book gives you words that mean the same as other words?","correct":"A thesaurus","wrong":["A dictionary","An atlas","A diary"]},
+      {"q":"What is a book where you write about your day called?","correct":"A diary","wrong":["An atlas","A dictionary","A manual"]},
+      {"q":"What is a story that is made up called?","correct":"Fiction","wrong":["Non-fiction","A biography","A report"]},
+      {"q":"What are books about real facts called?","correct":"Non-fiction","wrong":["Fiction","Fantasy","Fairy tales"]},
+      {"q":"What is a book about someone's life called?","correct":"A biography","wrong":["A novel","A fable","A comic"]},
+      {"q":"What is a book someone writes about their own life called?","correct":"An autobiography","wrong":["A biography","A novel","A diary only"]},
+      {"q":"How many letters are in the English alphabet?","correct":"26","wrong":["24","25","28"]},
+      {"q":"What is the first letter of the alphabet?","correct":"A","wrong":["B","Z","E"]},
+      {"q":"Which five letters are vowels in English?","correct":"A, E, I, O and U","wrong":["A, B, C, D and E","B, C, D, F and G","X, Y, Z, W and V"]},
+      {"q":"What do we call a word that means the opposite of another word?","correct":"An antonym","wrong":["A synonym","A noun","A verb"]},
+      {"q":"What type of word is a 'naming word', like 'cat' or 'London'?","correct":"A noun","wrong":["A verb","An adjective","An adverb"]},
+      {"q":"What type of word is a 'doing word', like 'run' or 'jump'?","correct":"A verb","wrong":["A noun","An adjective","A preposition"]},
+      {"q":"What type of word describes a noun, like 'big' or 'red'?","correct":"An adjective","wrong":["A verb","A noun","A conjunction"]},
+      {"q":"What punctuation mark ends a question?","correct":"A question mark","wrong":["A full stop","A comma","An exclamation mark"]},
+      {"q":"What punctuation mark ends most sentences?","correct":"A full stop","wrong":["A comma","A colon","A question mark"]},
+      {"q":"What is the opposite of 'hot'?","correct":"Cold","wrong":["Warm","Wet","Dry"]},
+      {"q":"What is the opposite of 'up'?","correct":"Down","wrong":["Over","Under","Off"]},
+      {"q":"What is the opposite of 'happy'?","correct":"Sad","wrong":["Glad","Merry","Jolly"]},
+      {"q":"How do you spell the number 8 as a word?","correct":"Eight","wrong":["Ate","Eigth","Aight"]},
+      {"q":"What is a group of lines in a poem, like a verse, called?","correct":"A stanza","wrong":["A chapter","A paragraph","A page"]},
+      {"q":"What is a funny five-line poem called?","correct":"A limerick","wrong":["A sonnet","A haiku","An ode"]},
+      {"q":"What is a short Japanese poem with three lines called?","correct":"A haiku","wrong":["A limerick","A sonnet","A ballad"]},
+      {"q":"What is the main character in a story often called?","correct":"The hero (protagonist)","wrong":["The villain","The narrator only","The author"]},
+      {"q":"What phrase do many fairy tales end with?","correct":"They all lived happily ever after","wrong":["Once upon a time","To be continued next week","Good morning, everybody"]},
+      {"q":"Who wrote 'Romeo and Juliet'?","correct":"William Shakespeare","wrong":["Charles Dickens","Jane Austen","Geoffrey Chaucer"]},
+      {"q":"In which English town was William Shakespeare born?","correct":"Stratford-upon-Avon","wrong":["London","Oxford","Bath"]},
+      {"q":"Which Charles Dickens story features Ebenezer Scrooge and three ghosts?","correct":"A Christmas Carol","wrong":["Oliver Twist","Great Expectations","Hard Times"]},
+      {"q":"What does Scrooge famously say about Christmas?","correct":"Bah! Humbug!","wrong":["Ho ho ho!","Merry Christmas!","Jingle bells!"]},
+      {"q":"Which Dickens orphan asks for more gruel?","correct":"Oliver Twist","wrong":["David Copperfield","Pip","Tiny Tim"]},
+      {"q":"Which Dickens character in 'A Christmas Carol' is a small, ill boy who says 'God bless us, every one'?","correct":"Tiny Tim","wrong":["Oliver Twist","The Artful Dodger","Pip"]},
+      {"q":"What is the name of Sherlock Holmes's friend and helper?","correct":"Dr Watson","wrong":["Captain Hastings","Inspector Lestrade","Mrs Hudson"]},
+      {"q":"Who wrote the Sherlock Holmes stories?","correct":"Arthur Conan Doyle","wrong":["Agatha Christie","Charles Dickens","Ian Fleming"]},
+      {"q":"Which spy has the code number 007?","correct":"James Bond","wrong":["Jason Bourne","George Smiley","Alex Rider"]},
+      {"q":"Who wrote the James Bond novels?","correct":"Ian Fleming","wrong":["John le Carre","Agatha Christie","Roald Dahl"]},
+      {"q":"Which hobbit carries the One Ring to Mordor?","correct":"Frodo Baggins","wrong":["Bilbo Baggins","Samwise Gamgee","Gandalf"]},
+      {"q":"Who wrote 'The Lord of the Rings'?","correct":"J. R. R. Tolkien","wrong":["C. S. Lewis","J. K. Rowling","Philip Pullman"]},
+      {"q":"Which wizard helps Frodo and Bilbo in Tolkien's books?","correct":"Gandalf","wrong":["Merlin","Dumbledore","Saruman"]},
+      {"q":"Which creature says 'my precious' about the Ring?","correct":"Gollum","wrong":["Smaug","Dobby","Treebeard"]},
+      {"q":"Which dragon guards treasure in 'The Hobbit'?","correct":"Smaug","wrong":["Norbert","Puff","Toothless"]},
+      {"q":"Who wrote 'The Lion, the Witch and the Wardrobe'?","correct":"C. S. Lewis","wrong":["J. R. R. Tolkien","Roald Dahl","Lewis Carroll"]},
+      {"q":"Who wrote 'Alice's Adventures in Wonderland'?","correct":"Lewis Carroll","wrong":["C. S. Lewis","Beatrix Potter","Kenneth Grahame"]},
+      {"q":"Who wrote 'Winnie-the-Pooh'?","correct":"A. A. Milne","wrong":["Beatrix Potter","Kenneth Grahame","Michael Bond"]},
+      {"q":"Who wrote the Paddington Bear books?","correct":"Michael Bond","wrong":["A. A. Milne","Beatrix Potter","Julia Donaldson"]},
+      {"q":"In 'The Wind in the Willows', which character loves driving motor cars?","correct":"Mr Toad","wrong":["Ratty","Mole","Badger"]},
+      {"q":"Which Rudyard Kipling book tells of Mowgli, raised by wolves?","correct":"The Jungle Book","wrong":["Just So Stories","Kim","Stalky and Co"]},
+      {"q":"What kind of animal is Baloo in 'The Jungle Book'?","correct":"A bear","wrong":["A panther","A tiger","A snake"]},
+      {"q":"What kind of animal is Shere Khan in 'The Jungle Book'?","correct":"A tiger","wrong":["A lion","A bear","A wolf"]},
+      {"q":"Which famous horse tells its own life story in a novel by Anna Sewell?","correct":"Black Beauty","wrong":["War Horse","Champion","Silver"]},
+      {"q":"Who wrote 'War Horse'?","correct":"Michael Morpurgo","wrong":["Anna Sewell","Roald Dahl","Jacqueline Wilson"]},
+      {"q":"Which pirate has one leg and a parrot in 'Treasure Island'?","correct":"Long John Silver","wrong":["Captain Hook","Blackbeard","Captain Flint"]},
+      {"q":"Who wrote 'Treasure Island'?","correct":"Robert Louis Stevenson","wrong":["Charles Dickens","Mark Twain","Jules Verne"]},
+      {"q":"Which boy tricks his friends into whitewashing a fence in a Mark Twain novel?","correct":"Tom Sawyer","wrong":["Oliver Twist","Peter Pan","Just William"]},
+      {"q":"What is the name of the scientist who creates a monster in Mary Shelley's novel?","correct":"Victor Frankenstein","wrong":["Dr Jekyll","Dr Moreau","Dr Faustus"]},
+      {"q":"Which vampire count comes from Transylvania in Bram Stoker's novel?","correct":"Dracula","wrong":["Frankenstein","Orlok","Lestat"]},
+      {"q":"Which doctor turns into the evil Mr Hyde?","correct":"Dr Jekyll","wrong":["Dr Frankenstein","Dr Watson","Dr Who"]},
+      {"q":"Which man is shipwrecked on an island and meets Friday?","correct":"Robinson Crusoe","wrong":["Gulliver","Sinbad","Long John Silver"]},
+      {"q":"Which traveller visits the land of tiny people called Lilliput?","correct":"Gulliver","wrong":["Robinson Crusoe","Sinbad","Phileas Fogg"]},
+      {"q":"In how many days does Phileas Fogg travel around the world in Jules Verne's novel?","correct":"80","wrong":["100","60","30"]},
+      {"q":"Which girl with red hair lives at Green Gables?","correct":"Anne Shirley","wrong":["Pippi Longstocking","Heidi","Matilda"]},
+      {"q":"Which Swiss girl lives with her grandfather in the Alps?","correct":"Heidi","wrong":["Anne","Pollyanna","Clara"]},
+      {"q":"Which strong girl with red plaits lives with a horse and a monkey?","correct":"Pippi Longstocking","wrong":["Anne of Green Gables","Heidi","Matilda"]},
+      {"q":"Which four sisters star in 'Little Women'?","correct":"Meg, Jo, Beth and Amy","wrong":["Jane, Lizzy, Mary and Kitty","Anne, Diana, Ruby and Josie","Mary, Martha, Sarah and Ruth"]},
+      {"q":"Which book by Frances Hodgson Burnett is about a hidden locked garden?","correct":"The Secret Garden","wrong":["The Railway Children","A Little Princess","Black Beauty"]},
+      {"q":"Which children's book features a spider called Charlotte and a pig called Wilbur?","correct":"Charlotte's Web","wrong":["Babe","The Sheep-Pig","Stuart Little"]},
+      {"q":"Which boy wizard's enemy is Lord Voldemort?","correct":"Harry Potter","wrong":["Percy Jackson","Merlin","Gandalf"]},
+      {"q":"Which series is about a boy who discovers he is the son of a Greek god?","correct":"Percy Jackson","wrong":["Harry Potter","Artemis Fowl","Alex Rider"]},
+      {"q":"Which diary-writing schoolboy is the 'Wimpy Kid'?","correct":"Greg Heffley","wrong":["Tom Gates","Horrid Henry","Adrian Mole"]},
+      {"q":"Which naughty boy appears in books by Francesca Simon?","correct":"Horrid Henry","wrong":["Dennis the Menace","Just William","Tom Gates"]},
+      {"q":"Which children's author wrote 'Gangsta Granny' and 'The Boy in the Dress'?","correct":"David Walliams","wrong":["Roald Dahl","Jacqueline Wilson","Michael Morpurgo"]},
+      {"q":"Which author wrote 'The Story of Tracy Beaker'?","correct":"Jacqueline Wilson","wrong":["Enid Blyton","Judy Blume","Malorie Blackman"]},
+      {"q":"What does a full stop look like?","correct":"A small dot","wrong":["A curly line","Two dots","A straight line"]},
+      {"q":"Which punctuation mark shows that letters are missing, as in 'don't'?","correct":"An apostrophe","wrong":["A comma","A hyphen","A colon"]},
+      {"q":"What are the marks around speech in a story called?","correct":"Speech marks","wrong":["Brackets","Commas","Dashes only"]},
+      {"q":"Which letter is silent in the word 'knee'?","correct":"K","wrong":["N","E","None"]},
+      {"q":"Which letter is silent in the word 'lamb'?","correct":"B","wrong":["L","M","A"]},
+      {"q":"Which letter is silent in the word 'write'?","correct":"W","wrong":["R","T","I"]},
+      {"q":"What is a word that sounds the same as another but is spelled differently, like 'sea' and 'see'?","correct":"A homophone","wrong":["An antonym","A synonym","An acronym"]},
+      {"q":"What do we call a word made from the first letters of other words, like NASA?","correct":"An acronym","wrong":["A homophone","A synonym","A rhyme"]},
+      {"q":"What is the word for a sound word like 'buzz' or 'pop'?","correct":"Onomatopoeia","wrong":["Alliteration","Rhyme","Simile"]},
+      {"q":"What is it called when you say something is 'like' or 'as' something else, like 'as brave as a lion'?","correct":"A simile","wrong":["A metaphor","An idiom","A rhyme"]},
+      {"q":"What is a tongue twister?","correct":"A phrase that is hard to say quickly","wrong":["A type of sweet","A dance","A riddle with no answer"]},
+      {"q":"What is a riddle?","correct":"A puzzling question with a clever answer","wrong":["A long story with chapters","A song sung in rounds","A poem that does not rhyme"]},
+      {"q":"What is a word that reads the same backwards, like 'level'?","correct":"A palindrome","wrong":["An anagram","An acronym","A synonym"]},
+      {"q":"What is an anagram?","correct":"A word made by rearranging the letters of another","wrong":["A word that rhymes with another","A word that means the opposite","A word that is spelled backwards"]},
+      {"q":"Which of these is an anagram of 'listen'?","correct":"Silent","wrong":["Lentil","Stolen","Tinker"]},
+      {"q":"What is the short form of 'do not'?","correct":"Don't","wrong":["Dont","Do'nt","Dnt"]},
+      {"q":"Which word is spelled correctly?","correct":"Because","wrong":["Becuase","Becos","Beacuse"]},
+      {"q":"Which is the longest word?","correct":"Elephant","wrong":["Cat","Dog","Ant"]},
+      {"q":"Which is the only vowel in the word 'shrimp'?","correct":"I","wrong":["U","E","A"]},
+      {"q":"What do we call the person who tells the story in a book?","correct":"The narrator","wrong":["The illustrator","The publisher","The reader"]},
+      {"q":"What is the name for a long story with chapters?","correct":"A novel","wrong":["A poem","A comic","A leaflet"]},
+      {"q":"What is a comic book with a long story and pictures sometimes called?","correct":"A graphic novel","wrong":["A thesaurus","An atlas","A manual"]},
+      {"q":"What is a 'bookworm'?","correct":"A person who loves reading","wrong":["A worm that eats paper","A type of bookmark","A library card"]},
+      {"q":"What do you use to keep your place in a book?","correct":"A bookmark","wrong":["A paperclip","A ruler","A rubber"]},
+      {"q":"What is the first page of a book with the title and author called?","correct":"The title page","wrong":["The blurb","The index","The glossary"]},
+      {"q":"What is the list at the back of a book that tells you where topics appear?","correct":"The index","wrong":["The contents","The blurb","The preface"]},
+      {"q":"What is a glossary?","correct":"A list of hard words and their meanings","wrong":["A list of chapters at the front","A shiny cover on a book","A short review of a book"]},
+      {"q":"On which day in Britain do children dress up as book characters each year?","correct":"World Book Day","wrong":["Pancake Day","Bonfire Night","Red Nose Day"]},
+      {"q":"Which Roald Dahl book features a boy who travels inside a giant fruit?","correct":"James and the Giant Peach","wrong":["Danny the Champion of the World","The Twits","Esio Trot"]},
+      {"q":"Which Roald Dahl book is about a nasty couple who play tricks on each other?","correct":"The Twits","wrong":["The Witches","George's Marvellous Medicine","Fantastic Mr Fox"]},
+      {"q":"Which clever fox outwits three farmers called Boggis, Bunce and Bean?","correct":"Fantastic Mr Fox","wrong":["Reynard","Basil Brush","Foxy Loxy"]},
+      {"q":"In Roald Dahl's 'The Witches', what do the witches want to turn children into?","correct":"Mice","wrong":["Frogs","Toads","Rats"]},
+      {"q":"What is the name of the headmistress who hates children in 'Matilda'?","correct":"Miss Trunchbull","wrong":["Miss Honey","Mrs Wormwood","Miss Spider"]},
+      {"q":"Which kind teacher helps Matilda?","correct":"Miss Honey","wrong":["Miss Trunchbull","Mrs Phelps","Miss Clavel"]},
+      {"q":"Which family of tiny people lives under the floorboards in Mary Norton's books?","correct":"The Borrowers","wrong":["The Wombles","The Clangers","The Smurfs"]},
+      {"q":"Which furry creatures pick up litter on Wimbledon Common?","correct":"The Wombles","wrong":["The Borrowers","The Moomins","The Clangers"]},
+      {"q":"Which nanny flies in with her umbrella to look after the Banks children?","correct":"Mary Poppins","wrong":["Nanny McPhee","Nanny Ogg","Miss Honey"]},
+      {"q":"Which boy and his dog Snowy go on adventures in a famous Belgian comic?","correct":"Tintin","wrong":["Asterix","Spirou","Lucky Luke"]},
+      {"q":"Which small Gaul gets super strength from a magic potion in comics?","correct":"Asterix","wrong":["Obelix","Tintin","Getafix"]},
+      {"q":"Which large Gaul fell into the magic potion as a baby and carries menhirs?","correct":"Obelix","wrong":["Asterix","Dogmatix","Vitalstatistix"]},
+      {"q":"Which boy with a red and black jumper and a dog called Gnasher appears in The Beano?","correct":"Dennis the Menace","wrong":["Minnie the Minx","Roger the Dodger","Desperate Dan"]},
+      {"q":"Which comic character from The Dandy eats huge cow pies?","correct":"Desperate Dan","wrong":["Dennis the Menace","Korky the Cat","Bananaman"]},
+      {"q":"Which Hogwarts house is Harry Potter in?","correct":"Gryffindor","wrong":["Slytherin","Hufflepuff","Ravenclaw"]},
+      {"q":"What is the name of the gamekeeper at Hogwarts who is half-giant?","correct":"Hagrid","wrong":["Filch","Dobby","Lupin"]},
+      {"q":"What is the name of the house-elf who helps Harry Potter?","correct":"Dobby","wrong":["Kreacher","Winky","Hedwig"]},
+      {"q":"What does Harry Potter have on his forehead?","correct":"A lightning-shaped scar","wrong":["A star","A birthmark shaped like a moon","A tattoo"]},
+      {"q":"Which platform at King's Cross do Hogwarts students use?","correct":"Nine and three-quarters","wrong":["Ten","Nine","Seven and a half"]},
+      {"q":"What do Hogwarts students call people with no magic?","correct":"Muggles","wrong":["Squibs","Wizards","Elves"]},
+      {"q":"Which talking train engines live on the Island of Sodor?","correct":"Thomas the Tank Engine and friends","wrong":["The Little Engine That Could","Ivor the Engine","Chuggington"]},
+      {"q":"Which little bear with a red jumper lives in Nutwood?","correct":"Rupert Bear","wrong":["Paddington","Pooh","Baloo"]},
+      {"q":"Which mouse does Julia Donaldson's Gruffalo meet in the deep dark wood?","correct":"A little brown mouse","wrong":["Mrs Tittlemouse","Jerry","Stuart Little"]},
+      {"q":"Which Beatrix Potter character is a hedgehog washerwoman?","correct":"Mrs Tiggy-Winkle","wrong":["Jemima Puddle-Duck","Squirrel Nutkin","Mr Jeremy Fisher"]},
+      {"q":"Which Beatrix Potter duck is tricked by a fox?","correct":"Jemima Puddle-Duck","wrong":["Mrs Tiggy-Winkle","Mrs Rabbit","Tom Kitten"]},
+      {"q":"Who is the farmer that chases Peter Rabbit out of his garden?","correct":"Mr McGregor","wrong":["Mr Fox","Farmer Giles","Mr Tod"]},
+      {"q":"What is the opposite of 'ancient'?","correct":"Modern","wrong":["Old","Antique","Historic"]},
+      {"q":"What is the opposite of 'brave'?","correct":"Cowardly","wrong":["Bold","Daring","Heroic"]},
+      {"q":"What is a synonym of 'big'?","correct":"Large","wrong":["Tiny","Thin","Short"]},
+      {"q":"What is a synonym of 'quick'?","correct":"Fast","wrong":["Slow","Lazy","Late"]},
+      {"q":"Which word is a noun: run, happy, table or quickly?","correct":"Table","wrong":["Run","Happy","Quickly"]},
+      {"q":"Which word is a verb: jump, blue, chair or softly?","correct":"Jump","wrong":["Blue","Chair","Softly"]}
+    ],
+    2:[
+      {"q":"Who wrote 'Pride and Prejudice'?","correct":"Jane Austen","wrong":["Charlotte Bronte","George Eliot","Mary Shelley"]},
+      {"q":"What is the name of the proud hero of 'Pride and Prejudice'?","correct":"Mr Darcy","wrong":["Mr Rochester","Mr Knightley","Heathcliff"]},
+      {"q":"What is the first name of the heroine of 'Pride and Prejudice', Miss Bennet?","correct":"Elizabeth","wrong":["Jane","Lydia","Emma"]},
+      {"q":"How many Bennet sisters are there in 'Pride and Prejudice'?","correct":"Five","wrong":["Three","Four","Six"]},
+      {"q":"Which Jane Austen novel features the Dashwood sisters?","correct":"Sense and Sensibility","wrong":["Pride and Prejudice","Persuasion","Northanger Abbey"]},
+      {"q":"In which city does much of Jane Austen's 'Persuasion' take place?","correct":"Bath","wrong":["London","Brighton","York"]},
+      {"q":"Who wrote 'Jane Eyre'?","correct":"Charlotte Bronte","wrong":["Emily Bronte","Anne Bronte","Jane Austen"]},
+      {"q":"Who wrote 'Wuthering Heights'?","correct":"Emily Bronte","wrong":["Charlotte Bronte","Anne Bronte","George Eliot"]},
+      {"q":"Which brooding hero loves Cathy in 'Wuthering Heights'?","correct":"Heathcliff","wrong":["Mr Rochester","Mr Darcy","Edgar Linton"]},
+      {"q":"Who is Jane Eyre's employer, with a secret in the attic?","correct":"Mr Rochester","wrong":["Mr Darcy","Heathcliff","St John Rivers"]},
+      {"q":"In which Yorkshire village did the Bronte sisters live?","correct":"Haworth","wrong":["Whitby","Hebden Bridge","Thirsk"]},
+      {"q":"Under what male pen names did the Bronte sisters first publish?","correct":"Currer, Ellis and Acton Bell","wrong":["George, Henry and Thomas Eliot","John, James and Jacob Grey","Charles, Edward and William Brown"]},
+      {"q":"What was the real name of the writer George Eliot?","correct":"Mary Ann Evans","wrong":["Charlotte Bronte","Elizabeth Gaskell","Harriet Martineau"]},
+      {"q":"Which George Eliot novel is set in a provincial town and is often called the greatest English novel?","correct":"Middlemarch","wrong":["Silas Marner","Adam Bede","The Mill on the Floss"]},
+      {"q":"Which Dickens novel begins 'It was the best of times, it was the worst of times'?","correct":"A Tale of Two Cities","wrong":["Great Expectations","Bleak House","Hard Times"]},
+      {"q":"Which two cities feature in 'A Tale of Two Cities'?","correct":"London and Paris","wrong":["London and Rome","Paris and Madrid","London and Edinburgh"]},
+      {"q":"Which Dickens novel features the orphan Pip and the jilted Miss Havisham?","correct":"Great Expectations","wrong":["Oliver Twist","David Copperfield","Little Dorrit"]},
+      {"q":"What does Miss Havisham still wear, decades after being jilted?","correct":"Her wedding dress","wrong":["A black veil","Her mother's ring","A soldier's coat"]},
+      {"q":"Which Dickens villain runs a gang of child pickpockets?","correct":"Fagin","wrong":["Bill Sikes","Uriah Heep","Mr Bumble"]},
+      {"q":"Which young pickpocket in 'Oliver Twist' is known as the Artful Dodger?","correct":"Jack Dawkins","wrong":["Noah Claypole","Charley Bates","Monks"]},
+      {"q":"Which 'umble' clerk is the villain of 'David Copperfield'?","correct":"Uriah Heep","wrong":["Wilkins Micawber","Mr Murdstone","Steerforth"]},
+      {"q":"Which optimistic Dickens character always believes 'something will turn up'?","correct":"Mr Micawber","wrong":["Mr Pickwick","Mr Bumble","Mr Gradgrind"]},
+      {"q":"What was Charles Dickens's first novel, about a gentleman's club?","correct":"The Pickwick Papers","wrong":["Oliver Twist","Nicholas Nickleby","Barnaby Rudge"]},
+      {"q":"Which Dickens novel was left unfinished when he died?","correct":"The Mystery of Edwin Drood","wrong":["Our Mutual Friend","Little Dorrit","Bleak House"]},
+      {"q":"Who wrote 'Tess of the d'Urbervilles'?","correct":"Thomas Hardy","wrong":["D. H. Lawrence","George Eliot","Henry James"]},
+      {"q":"What is the fictional county in which Thomas Hardy set his novels?","correct":"Wessex","wrong":["Barsetshire","Middlemarch","Loamshire"]},
+      {"q":"Which Thomas Hardy novel features Bathsheba Everdene and Gabriel Oak?","correct":"Far from the Madding Crowd","wrong":["The Mayor of Casterbridge","Jude the Obscure","The Return of the Native"]},
+      {"q":"Which Thomas Hardy character sells his wife and daughter at a fair?","correct":"Michael Henchard","wrong":["Gabriel Oak","Angel Clare","Jude Fawley"]},
+      {"q":"Who wrote 'Frankenstein', published in 1818?","correct":"Mary Shelley","wrong":["Percy Shelley","Lord Byron","Bram Stoker"]},
+      {"q":"In which Yorkshire town does Count Dracula first land in England?","correct":"Whitby","wrong":["Scarborough","Hull","York"]},
+      {"q":"Who wrote 'The Picture of Dorian Gray'?","correct":"Oscar Wilde","wrong":["Robert Louis Stevenson","H. G. Wells","Bram Stoker"]},
+      {"q":"What ages instead of Dorian Gray in Oscar Wilde's novel?","correct":"His portrait","wrong":["His twin","His mirror","His statue"]},
+      {"q":"Which Oscar Wilde play features Lady Bracknell and a handbag?","correct":"The Importance of Being Earnest","wrong":["An Ideal Husband","Lady Windermere's Fan","A Woman of No Importance"]},
+      {"q":"Who wrote 'The Time Machine' and 'The War of the Worlds'?","correct":"H. G. Wells","wrong":["Jules Verne","Arthur Conan Doyle","Aldous Huxley"]},
+      {"q":"Which alien invaders attack England in 'The War of the Worlds'?","correct":"Martians","wrong":["Venusians","Moon men","Daleks"]},
+      {"q":"Which Jules Verne novel features Captain Nemo and the Nautilus?","correct":"Twenty Thousand Leagues Under the Seas","wrong":["Journey to the Centre of the Earth","Around the World in Eighty Days","Five Weeks in a Balloon"]},
+      {"q":"Who wrote 'Nineteen Eighty-Four'?","correct":"George Orwell","wrong":["Aldous Huxley","H. G. Wells","Ray Bradbury"]},
+      {"q":"What is the all-seeing leader in 'Nineteen Eighty-Four' called?","correct":"Big Brother","wrong":["The Controller","The Chairman","Napoleon"]},
+      {"q":"What is the name of the room where Winston Smith faces his worst fear?","correct":"Room 101","wrong":["Room 404","The Red Room","Room 237"]},
+      {"q":"Which George Orwell book is a fable about farm animals who overthrow their farmer?","correct":"Animal Farm","wrong":["Watership Down","Charlotte's Web","The Wind in the Willows"]},
+      {"q":"What is the slogan that changes in 'Animal Farm' to say some animals are 'more equal than others'?","correct":"All animals are equal","wrong":["Four legs good, two legs bad","Long live Animal Farm","Napoleon is always right"]},
+      {"q":"Which pig leads the rebellion and becomes a tyrant in 'Animal Farm'?","correct":"Napoleon","wrong":["Snowball","Old Major","Squealer"]},
+      {"q":"Who wrote 'Brave New World'?","correct":"Aldous Huxley","wrong":["George Orwell","H. G. Wells","Anthony Burgess"]},
+      {"q":"Who wrote 'Lord of the Flies'?","correct":"William Golding","wrong":["J. G. Ballard","John Wyndham","Anthony Burgess"]},
+      {"q":"In 'Lord of the Flies', what object is used to call meetings?","correct":"A conch shell","wrong":["A drum","A whistle","A bell"]},
+      {"q":"Who wrote 'The Day of the Triffids'?","correct":"John Wyndham","wrong":["H. G. Wells","Arthur C. Clarke","John Christopher"]},
+      {"q":"Which American novel is narrated by Nick Carraway about a mysterious millionaire?","correct":"The Great Gatsby","wrong":["The Catcher in the Rye","Of Mice and Men","Tender Is the Night"]},
+      {"q":"Who wrote 'The Great Gatsby'?","correct":"F. Scott Fitzgerald","wrong":["Ernest Hemingway","John Steinbeck","William Faulkner"]},
+      {"q":"Who wrote 'To Kill a Mockingbird'?","correct":"Harper Lee","wrong":["Truman Capote","John Steinbeck","Maya Angelou"]},
+      {"q":"What is the name of the lawyer father in 'To Kill a Mockingbird'?","correct":"Atticus Finch","wrong":["Boo Radley","Tom Robinson","Jem Finch"]},
+      {"q":"What is the nickname of the girl who narrates 'To Kill a Mockingbird'?","correct":"Scout","wrong":["Jem","Dill","Calpurnia"]},
+      {"q":"Who wrote 'Of Mice and Men', about George and Lennie?","correct":"John Steinbeck","wrong":["Ernest Hemingway","Mark Twain","William Faulkner"]},
+      {"q":"Who wrote 'The Catcher in the Rye', narrated by Holden Caulfield?","correct":"J. D. Salinger","wrong":["Jack Kerouac","F. Scott Fitzgerald","Truman Capote"]},
+      {"q":"Which Ernest Hemingway novella is about an old Cuban fisherman and a giant marlin?","correct":"The Old Man and the Sea","wrong":["A Farewell to Arms","For Whom the Bell Tolls","The Sun Also Rises"]},
+      {"q":"Which Herman Melville novel is about Captain Ahab's hunt for a white whale?","correct":"Moby-Dick","wrong":["Billy Budd","Typee","Omoo"]},
+      {"q":"What are the famous first words of 'Moby-Dick'?","correct":"Call me Ishmael","wrong":["It was a dark and stormy night","Happy families are all alike","In the beginning"]},
+      {"q":"Which Russian novel by Leo Tolstoy follows families during Napoleon's invasion?","correct":"War and Peace","wrong":["Anna Karenina","Crime and Punishment","Doctor Zhivago"]},
+      {"q":"Which Tolstoy novel begins 'Happy families are all alike'?","correct":"Anna Karenina","wrong":["War and Peace","Resurrection","The Kreutzer Sonata"]},
+      {"q":"Who wrote 'Crime and Punishment'?","correct":"Fyodor Dostoevsky","wrong":["Leo Tolstoy","Anton Chekhov","Ivan Turgenev"]},
+      {"q":"Who wrote 'Les Miserables'?","correct":"Victor Hugo","wrong":["Alexandre Dumas","Gustave Flaubert","Emile Zola"]},
+      {"q":"What is the name of the ex-convict hero of 'Les Miserables'?","correct":"Jean Valjean","wrong":["Javert","Marius","Quasimodo"]},
+      {"q":"What did Jean Valjean steal that led to his imprisonment?","correct":"A loaf of bread","wrong":["A horse","A silver candlestick","A purse"]},
+      {"q":"Which Victor Hugo novel features the bell-ringer Quasimodo?","correct":"The Hunchback of Notre-Dame","wrong":["Les Miserables","Toilers of the Sea","Ninety-Three"]},
+      {"q":"Who wrote 'The Three Musketeers'?","correct":"Alexandre Dumas","wrong":["Victor Hugo","Jules Verne","Honore de Balzac"]},
+      {"q":"What are the names of the three musketeers?","correct":"Athos, Porthos and Aramis","wrong":["D'Artagnan, Athos and Porthos","Athos, Aramis and Richelieu","Porthos, Aramis and Planchet"]},
+      {"q":"Which young Gascon wants to join the three musketeers?","correct":"D'Artagnan","wrong":["Edmond Dantes","Cyrano","Planchet"]},
+      {"q":"Which Alexandre Dumas novel is about Edmond Dantes's revenge?","correct":"The Count of Monte Cristo","wrong":["The Three Musketeers","The Man in the Iron Mask","Twenty Years After"]},
+      {"q":"Which Spanish novel features a knight who attacks windmills thinking they are giants?","correct":"Don Quixote","wrong":["El Cid","Lazarillo de Tormes","La Celestina"]},
+      {"q":"What is the name of Don Quixote's loyal squire?","correct":"Sancho Panza","wrong":["Rocinante","Dulcinea","Samson Carrasco"]},
+      {"q":"Who wrote 'Don Quixote'?","correct":"Miguel de Cervantes","wrong":["Lope de Vega","Federico Garcia Lorca","Gabriel Garcia Marquez"]},
+      {"q":"Who wrote 'One Hundred Years of Solitude'?","correct":"Gabriel Garcia Marquez","wrong":["Isabel Allende","Jorge Luis Borges","Mario Vargas Llosa"]},
+      {"q":"Who wrote the epic poems 'The Iliad' and 'The Odyssey'?","correct":"Homer","wrong":["Virgil","Ovid","Sophocles"]},
+      {"q":"What is the name of Odysseus's faithful wife, who waits for him?","correct":"Penelope","wrong":["Helen","Andromache","Circe"]},
+      {"q":"Which Roman poet wrote 'The Aeneid'?","correct":"Virgil","wrong":["Homer","Ovid","Horace"]},
+      {"q":"Who wrote 'The Divine Comedy', a journey through Hell, Purgatory and Paradise?","correct":"Dante Alighieri","wrong":["Petrarch","Boccaccio","Machiavelli"]},
+      {"q":"Who wrote 'The Canterbury Tales'?","correct":"Geoffrey Chaucer","wrong":["William Langland","John Gower","Thomas Malory"]},
+      {"q":"Whose shrine are the pilgrims travelling to in 'The Canterbury Tales'?","correct":"Thomas Becket","wrong":["St Swithun","St Cuthbert","Edward the Confessor"]},
+      {"q":"Who wrote 'Le Morte d'Arthur', about King Arthur's knights?","correct":"Thomas Malory","wrong":["Geoffrey Chaucer","Geoffrey of Monmouth","Alfred, Lord Tennyson"]},
+      {"q":"Which epic poem by John Milton tells of the Fall of Man?","correct":"Paradise Lost","wrong":["The Faerie Queene","Paradise Regained","The Rape of the Lock"]},
+      {"q":"Who wrote 'The Pilgrim's Progress', partly while in prison?","correct":"John Bunyan","wrong":["John Milton","Daniel Defoe","Jonathan Swift"]},
+      {"q":"Who wrote 'Robinson Crusoe'?","correct":"Daniel Defoe","wrong":["Jonathan Swift","Samuel Richardson","Henry Fielding"]},
+      {"q":"Who wrote 'Gulliver's Travels'?","correct":"Jonathan Swift","wrong":["Daniel Defoe","Laurence Sterne","Henry Fielding"]},
+      {"q":"What are the tiny people in 'Gulliver's Travels' called?","correct":"Lilliputians","wrong":["Brobdingnagians","Yahoos","Houyhnhnms"]},
+      {"q":"Which Shakespeare play features three witches on a heath?","correct":"Macbeth","wrong":["Hamlet","The Tempest","A Midsummer Night's Dream"]},
+      {"q":"In which Shakespeare play does a character called Bottom get a donkey's head?","correct":"A Midsummer Night's Dream","wrong":["The Tempest","Twelfth Night","As You Like It"]},
+      {"q":"Which Shakespeare character is a jealous Moorish general?","correct":"Othello","wrong":["Shylock","Macbeth","Titus"]},
+      {"q":"Who is the scheming villain who deceives Othello?","correct":"Iago","wrong":["Edmund","Cassio","Claudius"]},
+      {"q":"Which Shakespeare king divides his kingdom among his daughters?","correct":"King Lear","wrong":["Richard II","Henry IV","King John"]},
+      {"q":"In 'The Merchant of Venice', what does Shylock demand as his bond?","correct":"A pound of flesh","wrong":["A bag of gold","His daughter's hand","A ship"]},
+      {"q":"Which Shakespeare play begins 'If music be the food of love, play on'?","correct":"Twelfth Night","wrong":["Romeo and Juliet","The Tempest","Much Ado About Nothing"]},
+      {"q":"In 'Romeo and Juliet', which two families are feuding?","correct":"The Montagues and the Capulets","wrong":["The Yorks and the Lancasters","The Medici and the Borgias","The Sharks and the Jets"]},
+      {"q":"What was the name of Shakespeare's wife?","correct":"Anne Hathaway","wrong":["Anne Boleyn","Mary Arden","Judith Quiney"]},
+      {"q":"Which Shakespeare play includes the speech 'Friends, Romans, countrymen, lend me your ears'?","correct":"Julius Caesar","wrong":["Antony and Cleopatra","Coriolanus","Titus Andronicus"]},
+      {"q":"How many plays is Shakespeare generally credited with, roughly?","correct":"About 37","wrong":["About 12","About 60","About 100"]},
+      {"q":"What type of poem has 14 lines, as Shakespeare wrote 154 of them?","correct":"A sonnet","wrong":["A haiku","A limerick","A villanelle"]},
+      {"q":"Which poet wrote 'Daffodils', beginning 'I wandered lonely as a cloud'?","correct":"William Wordsworth","wrong":["John Keats","Samuel Taylor Coleridge","Percy Shelley"]},
+      {"q":"Which poet wrote 'The Rime of the Ancient Mariner'?","correct":"Samuel Taylor Coleridge","wrong":["William Wordsworth","Lord Byron","John Keats"]},
+      {"q":"Which bird does the Ancient Mariner shoot, bringing bad luck?","correct":"An albatross","wrong":["A gull","A raven","A petrel"]},
+      {"q":"Which poet wrote 'Ode to a Nightingale'?","correct":"John Keats","wrong":["Percy Shelley","William Blake","Lord Tennyson"]},
+      {"q":"Which poet wrote 'The Tyger', asking 'what immortal hand or eye'?","correct":"William Blake","wrong":["William Wordsworth","Robert Burns","John Donne"]},
+      {"q":"Which Scottish poet wrote 'Auld Lang Syne' and 'To a Mouse'?","correct":"Robert Burns","wrong":["Walter Scott","Robert Louis Stevenson","James Hogg"]},
+      {"q":"Which poet wrote 'The Charge of the Light Brigade'?","correct":"Alfred, Lord Tennyson","wrong":["Rudyard Kipling","Robert Browning","Matthew Arnold"]},
+      {"q":"Which poet wrote 'If-', with advice to his son?","correct":"Rudyard Kipling","wrong":["Alfred Tennyson","A. E. Housman","John Masefield"]},
+      {"q":"Which First World War poet wrote 'Dulce et Decorum Est'?","correct":"Wilfred Owen","wrong":["Siegfried Sassoon","Rupert Brooke","Edward Thomas"]},
+      {"q":"Which poet wrote 'The Soldier', beginning 'If I should die, think only this of me'?","correct":"Rupert Brooke","wrong":["Wilfred Owen","Siegfried Sassoon","Isaac Rosenberg"]},
+      {"q":"Which Welsh poet wrote 'Do not go gentle into that good night'?","correct":"Dylan Thomas","wrong":["R. S. Thomas","Edward Thomas","Gillian Clarke"]},
+      {"q":"Which Dylan Thomas 'play for voices' is set in the Welsh town of Llareggub?","correct":"Under Milk Wood","wrong":["A Child's Christmas in Wales","Fern Hill","Portrait of the Artist as a Young Dog"]},
+      {"q":"Which American poet wrote 'The Road Not Taken'?","correct":"Robert Frost","wrong":["Walt Whitman","Emily Dickinson","Edgar Allan Poe"]},
+      {"q":"Which poem by Edgar Allan Poe features a bird saying 'Nevermore'?","correct":"The Raven","wrong":["The Bells","Annabel Lee","The Crow"]},
+      {"q":"Which poet wrote 'The Owl and the Pussy-cat'?","correct":"Edward Lear","wrong":["Lewis Carroll","Hilaire Belloc","Spike Milligan"]},
+      {"q":"Which Lewis Carroll poem features the 'frumious Bandersnatch' and nonsense words?","correct":"Jabberwocky","wrong":["The Walrus and the Carpenter","The Hunting of the Snark","You Are Old, Father William"]},
+      {"q":"What is the title of the official poet of the United Kingdom?","correct":"Poet Laureate","wrong":["Royal Bard","National Poet","Master of Verse"]},
+      {"q":"Who became the first woman to be the UK's Poet Laureate, in 2009?","correct":"Carol Ann Duffy","wrong":["Wendy Cope","Sylvia Plath","Simon Armitage"]},
+      {"q":"Who wrote 'The Hitchhiker's Guide to the Galaxy'?","correct":"Douglas Adams","wrong":["Terry Pratchett","Arthur C. Clarke","Isaac Asimov"]},
+      {"q":"In 'The Hitchhiker's Guide to the Galaxy', what is the answer to the ultimate question of life, the universe and everything?","correct":"42","wrong":["7","101","1,000"]},
+      {"q":"Which flat world sits on four elephants and a turtle in Terry Pratchett's novels?","correct":"The Discworld","wrong":["Middle-earth","Narnia","Earthsea"]},
+      {"q":"Who wrote 'His Dark Materials', starting with 'Northern Lights'?","correct":"Philip Pullman","wrong":["Neil Gaiman","C. S. Lewis","Terry Pratchett"]},
+      {"q":"What is a person's animal companion called in 'His Dark Materials'?","correct":"A daemon","wrong":["A familiar","A patronus","A spirit guide"]},
+      {"q":"Who wrote 'The Hunger Games' trilogy?","correct":"Suzanne Collins","wrong":["Veronica Roth","Stephenie Meyer","Cassandra Clare"]},
+      {"q":"Who wrote the 'Twilight' vampire novels?","correct":"Stephenie Meyer","wrong":["Suzanne Collins","Anne Rice","Charlaine Harris"]},
+      {"q":"Who wrote 'The Handmaid's Tale'?","correct":"Margaret Atwood","wrong":["Doris Lessing","Ursula K. Le Guin","Toni Morrison"]},
+      {"q":"Who wrote the novel 'Wolf Hall' about Thomas Cromwell?","correct":"Hilary Mantel","wrong":["Philippa Gregory","Sarah Waters","Rose Tremain"]},
+      {"q":"Who wrote 'The Curious Incident of the Dog in the Night-Time'?","correct":"Mark Haddon","wrong":["Ian McEwan","Nick Hornby","David Mitchell"]},
+      {"q":"Who wrote 'Atonement', partly set at Dunkirk?","correct":"Ian McEwan","wrong":["Julian Barnes","Kazuo Ishiguro","Martin Amis"]},
+      {"q":"Who wrote 'The Remains of the Day' and won the Nobel Prize in 2017?","correct":"Kazuo Ishiguro","wrong":["Ian McEwan","Salman Rushdie","Julian Barnes"]},
+      {"q":"Who wrote 'Midnight's Children', which won the Booker Prize in 1981?","correct":"Salman Rushdie","wrong":["V. S. Naipaul","Vikram Seth","Arundhati Roy"]},
+      {"q":"Which yearly prize is awarded to the best novel in English published in the UK and Ireland?","correct":"The Booker Prize","wrong":["The Pulitzer Prize","The Costa Award","The Carnegie Medal"]},
+      {"q":"Who wrote 'The Da Vinci Code'?","correct":"Dan Brown","wrong":["John Grisham","James Patterson","Lee Child"]},
+      {"q":"What is the name of Lee Child's tough wandering hero?","correct":"Jack Reacher","wrong":["Jason Bourne","Harry Bosch","Alex Cross"]},
+      {"q":"Who wrote 'The Girl with the Dragon Tattoo'?","correct":"Stieg Larsson","wrong":["Jo Nesbo","Henning Mankell","Camilla Lackberg"]},
+      {"q":"Who created the Edinburgh detective Inspector Rebus?","correct":"Ian Rankin","wrong":["Val McDermid","Peter Robinson","Alexander McCall Smith"]},
+      {"q":"Which Colin Dexter detective solved crimes in Oxford?","correct":"Inspector Morse","wrong":["Inspector Rebus","Inspector Wexford","Inspector Frost"]},
+      {"q":"Which Agatha Christie novel has a murder on a snowbound train?","correct":"Murder on the Orient Express","wrong":["Death on the Nile","The ABC Murders","And Then There Were None"]},
+      {"q":"What is the name of Agatha Christie's Belgian detective?","correct":"Hercule Poirot","wrong":["Jules Maigret","Inspector Clouseau","Auguste Dupin"]},
+      {"q":"Which Agatha Christie play opened in London in 1952 and became the world's longest-running play?","correct":"The Mousetrap","wrong":["Witness for the Prosecution","Black Coffee","The Hollow"]},
+      {"q":"Which Arthur Conan Doyle novel features a giant dog on Dartmoor?","correct":"The Hound of the Baskervilles","wrong":["A Study in Scarlet","The Sign of Four","The Valley of Fear"]},
+      {"q":"Who is Sherlock Holmes's arch-enemy?","correct":"Professor Moriarty","wrong":["Irene Adler","Mycroft Holmes","Colonel Moran"]},
+      {"q":"What does the word 'bibliophile' mean?","correct":"A lover of books","wrong":["A Bible scholar","A librarian","A bookseller"]},
+      {"q":"What is a 'pseudonym'?","correct":"A false name used by a writer","wrong":["A fact that is made up","A word that is very long","A poem with no title"]},
+      {"q":"What is a 'malapropism'?","correct":"Using a wrong word that sounds similar, often for comic effect","wrong":["A spelling mistake in a printed book","A sentence that runs on too long","A rhyme that does not quite work"]},
+      {"q":"Which Sheridan character gave her name to the malapropism?","correct":"Mrs Malaprop","wrong":["Mrs Bennet","Lady Bracknell","Mrs Hardcastle"]},
+      {"q":"What is a 'spoonerism'?","correct":"Swapping the first sounds of words, like 'tease my ears' for 'ease my tears'","wrong":["Using kitchen objects as metaphors","Rhyming the ends of two lines","Writing words with no vowels"]},
+      {"q":"What does the prefix 'anti-' mean?","correct":"Against","wrong":["Before","After","Many"]},
+      {"q":"What does the prefix 'pre-' mean?","correct":"Before","wrong":["After","Against","Under"]},
+      {"q":"What does the prefix 'sub-' mean?","correct":"Under","wrong":["Over","Many","Without"]},
+      {"q":"What does the prefix 'poly-' mean?","correct":"Many","wrong":["One","Half","Against"]},
+      {"q":"What does the suffix '-less' mean, as in 'hopeless'?","correct":"Without","wrong":["Full of","More","Able to"]},
+      {"q":"What is the longest word in the English language that appears in major dictionaries, a lung disease?","correct":"Pneumonoultramicroscopicsilicovolcanoconiosis","wrong":["Antidisestablishmentarianism","Floccinaucinihilipilification","Supercalifragilisticexpialidocious"]},
+      {"q":"What is a word that is spelled the same as another but has a different meaning, like 'bark'?","correct":"A homonym","wrong":["An antonym","A synonym","An acronym"]},
+      {"q":"What is an oxymoron?","correct":"A phrase combining opposite ideas, like 'deafening silence'","wrong":["A very long word of Greek origin","A pair of rhyming lines","A word that is often misspelled"]},
+      {"q":"What is a metaphor?","correct":"Saying something is something else, like 'time is money'","wrong":["A comparison using 'like'","A word that sounds like its meaning","A type of rhyme"]},
+      {"q":"What is personification?","correct":"Giving human qualities to non-human things","wrong":["Using real people's names in fiction","Writing the story of someone's life","Talking to yourself on stage"]},
+      {"q":"What is hyperbole?","correct":"Deliberate exaggeration","wrong":["An understatement","A rhyme","A question"]},
+      {"q":"What is a 'rhetorical question'?","correct":"A question asked for effect, not expecting an answer","wrong":["A very hard question in a quiz","A question set in an exam","A question with two right answers"]},
+      {"q":"What is the name for the 26 letters A to Z?","correct":"The Latin alphabet","wrong":["The Greek alphabet","The Cyrillic alphabet","The runic alphabet"]},
+      {"q":"Where does the word 'alphabet' come from?","correct":"The first two Greek letters, alpha and beta","wrong":["The name of a Roman god of writing","The name of an Egyptian king","A Latin word meaning letters"]},
+      {"q":"Which language does the word 'algebra' come from?","correct":"Arabic","wrong":["Greek","Latin","Persian"]},
+      {"q":"Which language does the word 'ketchup' probably come from?","correct":"Chinese (Hokkien)","wrong":["Portuguese","Hindi","Spanish"]},
+      {"q":"Which language does the word 'robot' come from?","correct":"Czech","wrong":["Russian","Polish","German"]},
+      {"q":"Which language does the word 'tsunami' come from?","correct":"Japanese","wrong":["Chinese","Korean","Indonesian"]},
+      {"q":"Which language does the word 'safari' come from?","correct":"Swahili","wrong":["Portuguese","Zulu","Hindi"]},
+      {"q":"Which Robert Louis Stevenson book is a collection of poems for children, including 'My Shadow'?","correct":"A Child's Garden of Verses","wrong":["Treasure Island","Kidnapped","Songs of Innocence"]},
+      {"q":"Which Kenneth Grahame book features Ratty, Mole, Badger and Toad?","correct":"The Wind in the Willows","wrong":["The Reluctant Dragon","The Golden Age","Dream Days"]},
+      {"q":"Which C. S. Lewis Narnia book was the first to be published, in 1950?","correct":"The Lion, the Witch and the Wardrobe","wrong":["The Magician's Nephew","Prince Caspian","The Horse and His Boy"]},
+      {"q":"Which four Pevensie children enter Narnia?","correct":"Peter, Susan, Edmund and Lucy","wrong":["Peter, Wendy, John and Michael","Jack, Jill, Eustace and Lucy","Harry, Ron, Hermione and Neville"]},
+      {"q":"What is the name of the faun Lucy meets in Narnia?","correct":"Mr Tumnus","wrong":["Mr Beaver","Reepicheep","Puddleglum"]},
+      {"q":"Which talking mouse is a brave knight in the Narnia books?","correct":"Reepicheep","wrong":["Mr Tumnus","Trumpkin","Shasta"]},
+      {"q":"Which Philippa Pearce novel features a garden that appears when the clock strikes thirteen?","correct":"Tom's Midnight Garden","wrong":["The Secret Garden","Moondial","Carrie's War"]},
+      {"q":"Which Nina Bawden novel follows evacuees in a Welsh mining town?","correct":"Carrie's War","wrong":["Goodnight Mister Tom","The Silver Sword","The Machine Gunners"]},
+      {"q":"Which Michelle Magorian novel features evacuee William Beech and Tom Oakley?","correct":"Goodnight Mister Tom","wrong":["Carrie's War","Back Home","The Machine Gunners"]},
+      {"q":"Which Anne Frank book records her life hiding from the Nazis in Amsterdam?","correct":"The Diary of a Young Girl","wrong":["Night","The Book Thief","Number the Stars"]},
+      {"q":"Which Markus Zusak novel is narrated by Death in Nazi Germany?","correct":"The Book Thief","wrong":["The Boy in the Striped Pyjamas","Once","War Horse"]},
+      {"q":"Which John Boyne novel follows Bruno, whose father commands a concentration camp?","correct":"The Boy in the Striped Pyjamas","wrong":["The Book Thief","Once","Friend or Foe"]},
+      {"q":"Which Louis Sachar novel follows Stanley Yelnats at a desert detention camp?","correct":"Holes","wrong":["Wayside School","Small Steps","Hatchet"]},
+      {"q":"Which author wrote the 'Noughts & Crosses' series?","correct":"Malorie Blackman","wrong":["Jacqueline Wilson","Patrick Ness","Philip Pullman"]},
+      {"q":"Which Anthony Horowitz teenage spy works for MI6?","correct":"Alex Rider","wrong":["Artemis Fowl","Cherub","Young Bond"]},
+      {"q":"Which Eoin Colfer character is a 12-year-old criminal mastermind?","correct":"Artemis Fowl","wrong":["Alex Rider","Holly Short","Butler"]},
+      {"q":"Which Cressida Cowell series features Hiccup and his dragon Toothless?","correct":"How to Train Your Dragon","wrong":["Eragon","Dragonkeeper","The Dragonet Prophecy"]},
+      {"q":"Which Lemony Snicket series follows the Baudelaire orphans?","correct":"A Series of Unfortunate Events","wrong":["The Spiderwick Chronicles","The Mysterious Benedict Society","Goosebumps"]},
+      {"q":"Which R. L. Stine series of horror books for children was hugely popular in the 1990s?","correct":"Goosebumps","wrong":["Point Horror","Fear Street","Animorphs"]},
+      {"q":"Which E. Nesbit novel follows three children who wave at trains?","correct":"The Railway Children","wrong":["Five Children and It","The Phoenix and the Carpet","The Story of the Treasure Seekers"]},
+      {"q":"What is the 'It' in E. Nesbit's 'Five Children and It'?","correct":"A sand fairy","wrong":["A dragon","A ghost","A phoenix"]},
+      {"q":"Which Jacqueline Wilson character lives in a children's home and dreams of her mother?","correct":"Tracy Beaker","wrong":["Hetty Feather","Lily Alone","Dolphin"]},
+      {"q":"Which T. H. White book tells of King Arthur's boyhood as 'Wart'?","correct":"The Sword in the Stone","wrong":["The Book of Merlyn","Le Morte d'Arthur","The Mists of Avalon"]},
+      {"q":"Which Ted Hughes children's story features a giant metal man who eats scrap?","correct":"The Iron Man","wrong":["The Iron Woman","The Iron Giant","The BFG"]},
+      {"q":"Which Raymond Briggs picture book has no words and features a boy who builds a snowman?","correct":"The Snowman","wrong":["Father Christmas","Fungus the Bogeyman","When the Wind Blows"]},
+      {"q":"Which Judith Kerr picture book features an unexpected guest who eats all the food in the house?","correct":"The Tiger Who Came to Tea","wrong":["Mog the Forgetful Cat","When Hitler Stole Pink Rabbit","Where the Wild Things Are"]},
+      {"q":"Which Maurice Sendak book features Max and the wild things?","correct":"Where the Wild Things Are","wrong":["In the Night Kitchen","Outside Over There","The Gruffalo"]},
+      {"q":"Which Antoine de Saint-Exupery book features a prince from a small asteroid?","correct":"The Little Prince","wrong":["Wind, Sand and Stars","Night Flight","Southern Mail"]},
+      {"q":"What does the Latin abbreviation 'e.g.' mean?","correct":"For example","wrong":["That is","And so on","Therefore"]},
+      {"q":"What does the Latin abbreviation 'i.e.' mean?","correct":"That is","wrong":["For example","And others","In the same place"]},
+      {"q":"What does the Latin phrase 'bona fide' mean?","correct":"In good faith","wrong":["Good food","Well done","Good day"]}
+    ],
+    3:[
+      {"q":"What are the opening words of 'Pride and Prejudice'?","correct":"It is a truth universally acknowledged","wrong":["It was a bright cold day in April","Call me Ishmael","Last night I dreamt I went to Manderley again"]},
+      {"q":"Which novel begins 'Last night I dreamt I went to Manderley again'?","correct":"Rebecca","wrong":["Jane Eyre","Jamaica Inn","Wuthering Heights"]},
+      {"q":"Who wrote 'Rebecca'?","correct":"Daphne du Maurier","wrong":["Agatha Christie","Mary Stewart","Dorothy L. Sayers"]},
+      {"q":"Which novel begins 'It was a bright cold day in April, and the clocks were striking thirteen'?","correct":"Nineteen Eighty-Four","wrong":["Brave New World","Fahrenheit 451","The Handmaid's Tale"]},
+      {"q":"Which novel begins 'The past is a foreign country: they do things differently there'?","correct":"The Go-Between","wrong":["Atonement","Brideshead Revisited","The Remains of the Day"]},
+      {"q":"Which novel begins 'Mr and Mrs Dursley, of number four, Privet Drive'?","correct":"Harry Potter and the Philosopher's Stone","wrong":["Matilda","James and the Giant Peach","Coraline"]},
+      {"q":"Which novel begins 'In a hole in the ground there lived a hobbit'?","correct":"The Hobbit","wrong":["The Fellowship of the Ring","The Silmarillion","Watership Down"]},
+      {"q":"Which novel begins 'All children, except one, grow up'?","correct":"Peter and Wendy (Peter Pan)","wrong":["Alice's Adventures in Wonderland","The Secret Garden","Mary Poppins"]},
+      {"q":"Which novel ends 'It is a far, far better thing that I do, than I have ever done'?","correct":"A Tale of Two Cities","wrong":["Great Expectations","Bleak House","Our Mutual Friend"]},
+      {"q":"Who sacrifices himself at the end of 'A Tale of Two Cities'?","correct":"Sydney Carton","wrong":["Charles Darnay","Dr Manette","Jerry Cruncher"]},
+      {"q":"What is the name of the fog-bound legal case at the heart of Dickens's 'Bleak House'?","correct":"Jarndyce and Jarndyce","wrong":["Dombey and Son","Bardell against Pickwick","Smith and Smith"]},
+      {"q":"Which Dickens novel features the Gradgrind family and the town of Coketown?","correct":"Hard Times","wrong":["Little Dorrit","Dombey and Son","Our Mutual Friend"]},
+      {"q":"Which debtors' prison features in Dickens's 'Little Dorrit', where his own father was held?","correct":"The Marshalsea","wrong":["Newgate","The Fleet","The Clink"]},
+      {"q":"Which Dickens novel features the cruel schoolmaster Wackford Squeers at Dotheboys Hall?","correct":"Nicholas Nickleby","wrong":["David Copperfield","Hard Times","Oliver Twist"]},
+      {"q":"Which Dickens novel features Little Nell?","correct":"The Old Curiosity Shop","wrong":["Bleak House","Dombey and Son","Little Dorrit"]},
+      {"q":"Which Thackeray novel features the scheming Becky Sharp?","correct":"Vanity Fair","wrong":["Barry Lyndon","Pendennis","Henry Esmond"]},
+      {"q":"Which Anthony Trollope series is set in a cathedral town?","correct":"The Barchester novels","wrong":["The Palliser novels","The Forsyte Saga","The Cazalet Chronicles"]},
+      {"q":"Which Elizabeth Gaskell novel contrasts the industrial north with the rural south of England?","correct":"North and South","wrong":["Cranford","Mary Barton","Wives and Daughters"]},
+      {"q":"Which Anne Bronte novel features a woman who flees her drunken husband?","correct":"The Tenant of Wildfell Hall","wrong":["Agnes Grey","Villette","Shirley"]},
+      {"q":"Which Wilkie Collins novel is often called the first English detective novel?","correct":"The Moonstone","wrong":["The Woman in White","Armadale","No Name"]},
+      {"q":"Which Robert Louis Stevenson novel follows David Balfour in Jacobite Scotland?","correct":"Kidnapped","wrong":["Treasure Island","The Master of Ballantrae","Catriona only"]},
+      {"q":"Which Walter Scott novel features the Saxon knight Wilfred and Rebecca the Jewess?","correct":"Ivanhoe","wrong":["Rob Roy","Waverley","The Heart of Midlothian"]},
+      {"q":"Which novel by Joseph Conrad follows Marlow up the Congo River to find Kurtz?","correct":"Heart of Darkness","wrong":["Lord Jim","Nostromo","The Secret Agent"]},
+      {"q":"What are Kurtz's last words in 'Heart of Darkness'?","correct":"The horror! The horror!","wrong":["Rosebud","Mother!","It is finished"]},
+      {"q":"Which E. M. Forster novel centres on a visit to the Marabar Caves?","correct":"A Passage to India","wrong":["Howards End","A Room with a View","Maurice"]},
+      {"q":"Which E. M. Forster novel uses the phrase 'Only connect'?","correct":"Howards End","wrong":["A Room with a View","A Passage to India","Where Angels Fear to Tread"]},
+      {"q":"Which Evelyn Waugh novel follows Charles Ryder and the Flyte family?","correct":"Brideshead Revisited","wrong":["A Handful of Dust","Scoop","Decline and Fall"]},
+      {"q":"What is the name of Sebastian Flyte's teddy bear in 'Brideshead Revisited'?","correct":"Aloysius","wrong":["Edward","Rupert","Bertram"]},
+      {"q":"Which P. G. Wodehouse valet looks after Bertie Wooster?","correct":"Jeeves","wrong":["Blandings","Psmith","Ukridge"]},
+      {"q":"Which Virginia Woolf novel takes place over a single day in June 1923 in London?","correct":"Mrs Dalloway","wrong":["To the Lighthouse","Orlando","The Waves"]},
+      {"q":"Which Virginia Woolf essay argues a woman needs money and a room of her own to write fiction?","correct":"A Room of One's Own","wrong":["Three Guineas","The Common Reader","Orlando"]},
+      {"q":"Which James Joyce novel takes place in Dublin on 16 June 1904?","correct":"Ulysses","wrong":["Dubliners","Finnegans Wake","A Portrait of the Artist as a Young Man"]},
+      {"q":"What is 16 June celebrated as in Dublin, after the hero of 'Ulysses'?","correct":"Bloomsday","wrong":["Joyce Day","Dedalus Day","Molly Day"]},
+      {"q":"Which D. H. Lawrence novel was the subject of a famous 1960 obscenity trial?","correct":"Lady Chatterley's Lover","wrong":["Sons and Lovers","Women in Love","The Rainbow"]},
+      {"q":"Which Graham Greene novel features the teenage gangster Pinkie Brown in Brighton?","correct":"Brighton Rock","wrong":["The Power and the Glory","The Third Man","The End of the Affair"]},
+      {"q":"Which Daphne du Maurier story became an Alfred Hitchcock film about attacking birds?","correct":"The Birds","wrong":["Rebecca","Jamaica Inn","Don't Look Now"]},
+      {"q":"Which Anthony Burgess novel features Alex and his 'droogs'?","correct":"A Clockwork Orange","wrong":["The Wanting Seed","Earthly Powers","Enderby"]},
+      {"q":"Which Muriel Spark novel features a teacher in her prime at an Edinburgh school?","correct":"The Prime of Miss Jean Brodie","wrong":["The Girls of Slender Means","Memento Mori","Loitering with Intent"]},
+      {"q":"Which Kingsley Amis novel features the hapless university lecturer Jim Dixon?","correct":"Lucky Jim","wrong":["The Old Devils","Take a Girl Like You","Money"]},
+      {"q":"Which novel by Jean Rhys imagines the life of Mr Rochester's first wife?","correct":"Wide Sargasso Sea","wrong":["Good Morning, Midnight","Voyage in the Dark","Quartet"]},
+      {"q":"Which Ian Fleming novel was the first James Bond book, in 1953?","correct":"Casino Royale","wrong":["Dr No","Live and Let Die","From Russia, with Love"]},
+      {"q":"Which John le Carre spy is the hero of 'Tinker Tailor Soldier Spy'?","correct":"George Smiley","wrong":["Peter Guillam","Karla","Bill Haydon"]},
+      {"q":"Which Richard Adams novel follows a group of rabbits seeking a new home?","correct":"Watership Down","wrong":["Tarka the Otter","The Plague Dogs","Shardik"]},
+      {"q":"Which Henry Williamson novel follows an otter in Devon?","correct":"Tarka the Otter","wrong":["Ring of Bright Water","Watership Down","The Wind in the Willows"]},
+      {"q":"Which Douglas Adams character is a depressed robot?","correct":"Marvin","wrong":["Zaphod","Slartibartfast","Deep Thought"]},
+      {"q":"Which Neil Gaiman and Terry Pratchett novel is about an angel and a demon trying to stop the apocalypse?","correct":"Good Omens","wrong":["American Gods","Neverwhere","Mort"]},
+      {"q":"Which Zadie Smith debut novel is set in north-west London?","correct":"White Teeth","wrong":["On Beauty","NW","Swing Time"]},
+      {"q":"Which Bernardine Evaristo novel jointly won the 2019 Booker Prize?","correct":"Girl, Woman, Other","wrong":["Mr Loverman","Blonde Roots","Lara"]},
+      {"q":"Which novel shared the 2019 Booker Prize with 'Girl, Woman, Other'?","correct":"The Testaments","wrong":["Milkman","Lincoln in the Bardo","Shuggie Bain"]},
+      {"q":"Which Hilary Mantel novels both won the Booker Prize?","correct":"Wolf Hall and Bring Up the Bodies","wrong":["Wolf Hall and The Mirror and the Light","Beyond Black and Wolf Hall","Bring Up the Bodies and The Giant, O'Brien"]},
+      {"q":"Which Yann Martel novel features a boy adrift with a tiger named Richard Parker?","correct":"Life of Pi","wrong":["The High Mountains of Portugal","Self","Beatrice and Virgil"]},
+      {"q":"Which Khaled Hosseini novel is set in Kabul and features kite flying?","correct":"The Kite Runner","wrong":["A Thousand Splendid Suns","And the Mountains Echoed","Sea Prayer"]},
+      {"q":"Which Chinua Achebe novel follows Okonkwo in a Nigerian village?","correct":"Things Fall Apart","wrong":["No Longer at Ease","Arrow of God","Half of a Yellow Sun"]},
+      {"q":"Which Chimamanda Ngozi Adichie novel is set during the Nigerian civil war?","correct":"Half of a Yellow Sun","wrong":["Americanah","Purple Hibiscus","Things Fall Apart"]},
+      {"q":"Which Toni Morrison novel won the Pulitzer Prize in 1988?","correct":"Beloved","wrong":["Song of Solomon","The Bluest Eye","Jazz"]},
+      {"q":"Which Alice Walker novel is told in letters and won the Pulitzer Prize?","correct":"The Color Purple","wrong":["Meridian","Possessing the Secret of Joy","The Temple of My Familiar"]},
+      {"q":"Which Jack Kerouac novel is the defining book of the Beat Generation?","correct":"On the Road","wrong":["Howl","Naked Lunch","The Dharma Bums"]},
+      {"q":"Who wrote the Beat poem 'Howl'?","correct":"Allen Ginsberg","wrong":["Jack Kerouac","William S. Burroughs","Lawrence Ferlinghetti"]},
+      {"q":"Which Joseph Heller novel's title has become a phrase for an impossible situation?","correct":"Catch-22","wrong":["Slaughterhouse-Five","The Naked and the Dead","Something Happened"]},
+      {"q":"Which Kurt Vonnegut novel features Billy Pilgrim 'unstuck in time' and the bombing of Dresden?","correct":"Slaughterhouse-Five","wrong":["Cat's Cradle","Breakfast of Champions","Catch-22"]},
+      {"q":"Which Ray Bradbury novel is named after the temperature at which paper burns?","correct":"Fahrenheit 451","wrong":["The Martian Chronicles","Something Wicked This Way Comes","Dandelion Wine"]},
+      {"q":"Which Cormac McCarthy novel follows a father and son across a ruined America?","correct":"The Road","wrong":["No Country for Old Men","Blood Meridian","All the Pretty Horses"]},
+      {"q":"Which Vladimir Nabokov novel was first published in Paris in 1955 and caused a scandal?","correct":"Lolita","wrong":["Pale Fire","Pnin","Ada"]},
+      {"q":"Which John Steinbeck novel follows the Joad family during the Dust Bowl?","correct":"The Grapes of Wrath","wrong":["East of Eden","Of Mice and Men","Cannery Row"]},
+      {"q":"Which Mark Twain novel features Huck and the escaped slave Jim on a raft?","correct":"Adventures of Huckleberry Finn","wrong":["The Adventures of Tom Sawyer","The Prince and the Pauper","Pudd'nhead Wilson"]},
+      {"q":"Which Nathaniel Hawthorne novel features Hester Prynne and a red letter A?","correct":"The Scarlet Letter","wrong":["The House of the Seven Gables","The Blithedale Romance","The Marble Faun"]},
+      {"q":"Which Henry James novella features a governess and two possibly haunted children?","correct":"The Turn of the Screw","wrong":["Daisy Miller","Washington Square","The Aspern Papers"]},
+      {"q":"Which Edith Wharton novel follows Newland Archer in 1870s New York society?","correct":"The Age of Innocence","wrong":["The House of Mirth","Ethan Frome","The Custom of the Country"]},
+      {"q":"Which Louisa May Alcott sister is the tomboy who wants to be a writer?","correct":"Jo March","wrong":["Meg March","Beth March","Amy March"]},
+      {"q":"Which Gustave Flaubert novel follows a bored doctor's wife in Normandy?","correct":"Madame Bovary","wrong":["Therese Raquin","Nana","A Sentimental Education"]},
+      {"q":"Which Marcel Proust work is in seven volumes and includes 'Swann's Way'?","correct":"In Search of Lost Time","wrong":["The Human Comedy","Les Rougon-Macquart","Germinal"]},
+      {"q":"Which Albert Camus novel features Meursault, who kills an Arab on a beach?","correct":"The Outsider","wrong":["The Plague","The Fall","Nausea"]},
+      {"q":"Which Franz Kafka story features Gregor Samsa waking up as a giant insect?","correct":"The Metamorphosis","wrong":["The Trial","The Castle","In the Penal Colony"]},
+      {"q":"What is the main character called in Kafka's 'The Trial'?","correct":"Josef K.","wrong":["Gregor Samsa","Joseph Grand","Karl Rossmann"]},
+      {"q":"Which Thomas Mann novel is set in a Swiss tuberculosis sanatorium?","correct":"The Magic Mountain","wrong":["Death in Venice","Buddenbrooks","Doctor Faustus"]},
+      {"q":"Which Goethe work features a scholar who makes a pact with the devil Mephistopheles?","correct":"Faust","wrong":["The Sorrows of Young Werther","Wilhelm Meister","Egmont"]},
+      {"q":"Which Russian novel features Raskolnikov, who murders a pawnbroker?","correct":"Crime and Punishment","wrong":["The Idiot","Demons","The Brothers Karamazov"]},
+      {"q":"Which Mikhail Bulgakov novel features the devil visiting Moscow with a giant talking cat?","correct":"The Master and Margarita","wrong":["Heart of a Dog","The White Guard","The Fatal Eggs"]},
+      {"q":"Which Boris Pasternak novel was banned in the Soviet Union and smuggled abroad in 1957?","correct":"Doctor Zhivago","wrong":["One Day in the Life of Ivan Denisovich","The Gulag Archipelago","Life and Fate"]},
+      {"q":"Which Alexander Solzhenitsyn book describes a single day in a Soviet labour camp?","correct":"One Day in the Life of Ivan Denisovich","wrong":["The Gulag Archipelago","Cancer Ward","The First Circle"]},
+      {"q":"Which Umberto Eco novel is a murder mystery set in a medieval monastery?","correct":"The Name of the Rose","wrong":["Foucault's Pendulum","Baudolino","The Island of the Day Before"]},
+      {"q":"Which Italian writer wrote 'The Leopard' about a Sicilian prince?","correct":"Giuseppe Tomasi di Lampedusa","wrong":["Italo Calvino","Alberto Moravia","Primo Levi"]},
+      {"q":"Which Elena Ferrante novels follow two friends from Naples?","correct":"The Neapolitan Novels","wrong":["The Florentine Quartet","The Roman Trilogy","The Sicilian Saga"]},
+      {"q":"Which Haruki Murakami novel is named after a Beatles song?","correct":"Norwegian Wood","wrong":["Kafka on the Shore","1Q84","Hear the Wind Sing"]},
+      {"q":"Which Japanese novel from around 1000 AD, by Murasaki Shikibu, is often called the first novel?","correct":"The Tale of Genji","wrong":["The Pillow Book","The Tale of the Heike","Kokoro"]},
+      {"q":"Which poet wrote 'Kubla Khan', interrupted by 'a person from Porlock'?","correct":"Samuel Taylor Coleridge","wrong":["William Wordsworth","Thomas De Quincey","Robert Southey"]},
+      {"q":"In which country is Xanadu, Kubla Khan's pleasure dome, said to be?","correct":"China","wrong":["India","Persia","Egypt"]},
+      {"q":"Which group of poets is named after the area of north-west England where Wordsworth lived?","correct":"The Lake Poets","wrong":["The Romantic Circle","The Fireside Poets","The Metaphysical Poets"]},
+      {"q":"Which Romantic poet drowned off the coast of Italy in 1822?","correct":"Percy Bysshe Shelley","wrong":["John Keats","Lord Byron","Samuel Taylor Coleridge"]},
+      {"q":"Which Romantic poet died of tuberculosis in Rome aged 25?","correct":"John Keats","wrong":["Percy Shelley","Lord Byron","Thomas Chatterton"]},
+      {"q":"Which Romantic poet died while supporting Greek independence in 1824?","correct":"Lord Byron","wrong":["Percy Shelley","John Keats","William Blake"]},
+      {"q":"Which Shelley sonnet describes a ruined statue in the desert with 'look on my works, ye Mighty, and despair'?","correct":"Ozymandias","wrong":["Mont Blanc","To a Skylark","Adonais"]},
+      {"q":"Which Keats poem begins 'Season of mists and mellow fruitfulness'?","correct":"To Autumn","wrong":["Ode on a Grecian Urn","Ode to a Nightingale","Endymion"]},
+      {"q":"Which Keats poem ends 'Beauty is truth, truth beauty'?","correct":"Ode on a Grecian Urn","wrong":["To Autumn","La Belle Dame sans Merci","Ode on Melancholy"]},
+      {"q":"Which group of 17th-century poets, including John Donne, used elaborate conceits?","correct":"The Metaphysical poets","wrong":["The Cavalier poets","The Romantic poets","The Augustan poets"]},
+      {"q":"In which prose work did John Donne write 'No man is an island'?","correct":"Devotions upon Emergent Occasions","wrong":["The Flea","Holy Sonnets","The Good-Morrow"]},
+      {"q":"Which Andrew Marvell poem begins 'Had we but world enough and time'?","correct":"To His Coy Mistress","wrong":["The Garden","An Horatian Ode","Upon Appleton House"]},
+      {"q":"Which Thomas Gray poem is set in a country churchyard?","correct":"Elegy Written in a Country Churchyard","wrong":["The Bard","Ode on the Death of a Favourite Cat","The Progress of Poesy"]},
+      {"q":"Which Alexander Pope poem is a mock-epic about a stolen lock of hair?","correct":"The Rape of the Lock","wrong":["The Dunciad","An Essay on Man","Eloisa to Abelard"]},
+      {"q":"Which Robert Browning poem features a duke talking about his late wife's portrait?","correct":"My Last Duchess","wrong":["Porphyria's Lover","The Pied Piper of Hamelin","Fra Lippo Lippi"]},
+      {"q":"Which Victorian poet wrote 'Sonnets from the Portuguese', including 'How do I love thee?'?","correct":"Elizabeth Barrett Browning","wrong":["Christina Rossetti","Emily Bronte","George Eliot"]},
+      {"q":"Which Christina Rossetti poem features two sisters and tempting fruit sellers?","correct":"Goblin Market","wrong":["In the Bleak Midwinter","Remember","The Convent Threshold"]},
+      {"q":"Which Tennyson poem features a cursed lady who sees the world through a mirror?","correct":"The Lady of Shalott","wrong":["Ulysses","Mariana","Tithonus"]},
+      {"q":"Which Tennyson poem ends 'To strive, to seek, to find, and not to yield'?","correct":"Ulysses","wrong":["In Memoriam","Crossing the Bar","Maud"]},
+      {"q":"Which Gerard Manley Hopkins poem begins 'I caught this morning morning's minion'?","correct":"The Windhover","wrong":["Pied Beauty","God's Grandeur","Spring and Fall"]},
+      {"q":"Which A. E. Housman collection describes 'blue remembered hills'?","correct":"A Shropshire Lad","wrong":["Last Poems","More Poems","The Name and Nature of Poetry"]},
+      {"q":"Which T. S. Eliot poem begins 'April is the cruellest month'?","correct":"The Waste Land","wrong":["The Love Song of J. Alfred Prufrock","Four Quartets","The Hollow Men"]},
+      {"q":"Which T. S. Eliot book of cat poems inspired a famous musical?","correct":"Old Possum's Book of Practical Cats","wrong":["The Waste Land","Prufrock and Other Observations","Ash Wednesday"]},
+      {"q":"Which Philip Larkin poem ends 'What will survive of us is love'?","correct":"An Arundel Tomb","wrong":["Church Going","The Whitsun Weddings","Aubade"]},
+      {"q":"Which Irish poet wrote 'The Lake Isle of Innisfree' and won the Nobel Prize in 1923?","correct":"W. B. Yeats","wrong":["Seamus Heaney","Oscar Wilde","Patrick Kavanagh"]},
+      {"q":"Which Seamus Heaney poem is about his father and grandfather working the land with a spade?","correct":"Digging","wrong":["Mid-Term Break","Death of a Naturalist","Blackberry-Picking"]},
+      {"q":"Which Ted Hughes collection is addressed to his late wife Sylvia Plath?","correct":"Birthday Letters","wrong":["Crow","The Hawk in the Rain","Lupercal"]},
+      {"q":"What is the title of Sylvia Plath's only novel?","correct":"The Bell Jar","wrong":["Ariel","The Colossus","Johnny Panic"]},
+      {"q":"Which American poet wrote 'Because I could not stop for Death'?","correct":"Emily Dickinson","wrong":["Sylvia Plath","Elizabeth Bishop","Marianne Moore"]},
+      {"q":"Which Walt Whitman collection includes 'Song of Myself'?","correct":"Leaves of Grass","wrong":["Drum-Taps","Specimen Days","O Captain! My Captain!"]},
+      {"q":"Which Walt Whitman poem mourns Abraham Lincoln as a ship's fallen captain?","correct":"O Captain! My Captain!","wrong":["Song of Myself","I Hear America Singing","Crossing Brooklyn Ferry"]},
+      {"q":"Which Maya Angelou autobiography takes its title from a Paul Laurence Dunbar poem?","correct":"I Know Why the Caged Bird Sings","wrong":["Still I Rise","Gather Together in My Name","Letter to My Daughter"]},
+      {"q":"Which Langston Hughes poem asks 'What happens to a dream deferred?'","correct":"Harlem","wrong":["The Negro Speaks of Rivers","I, Too","Mother to Son"]},
+      {"q":"What do the final two lines of a Shakespearean sonnet form?","correct":"A rhyming couplet","wrong":["A tercet","A quatrain","A refrain"]},
+      {"q":"What is 'iambic pentameter'?","correct":"A line of five pairs of unstressed and stressed syllables","wrong":["A line of six strongly stressed syllables","A poem made up of five verses","A line with no regular rhythm"]},
+      {"q":"What is 'blank verse'?","correct":"Unrhymed iambic pentameter","wrong":["Poetry with no words","Free verse with no rhythm","A poem with blank lines"]},
+      {"q":"What is a 'villanelle'?","correct":"A 19-line poem with two repeating refrains","wrong":["A three-line Japanese poem","A comic poem of five lines","A 14-line love poem"]},
+      {"q":"What is an 'elegy'?","correct":"A poem of mourning for the dead","wrong":["A comic verse for children","A love sonnet to a muse","A song about a battle"]},
+      {"q":"What is an 'epic'?","correct":"A long narrative poem about heroic deeds","wrong":["A short poem of four lines","A comic play in one act","A diary kept by a poet"]},
+      {"q":"What is 'enjambment' in poetry?","correct":"A sentence running over the end of a line without a pause","wrong":["A rhyme repeated at each line end","A pause in the middle of a line","A stanza of exactly four lines"]},
+      {"q":"What is a 'caesura' in poetry?","correct":"A pause in the middle of a line","wrong":["A line running onto the next","A rhyme at the end","A type of sonnet"]},
+      {"q":"What is 'assonance'?","correct":"The repetition of vowel sounds","wrong":["The repetition of consonant sounds","A rhyme at line ends","A type of metaphor"]},
+      {"q":"What is a 'kenning', as found in Old English poetry?","correct":"A compound metaphor like 'whale-road' for the sea","wrong":["A rhyme on the third syllable","A short riddle poem","A title given to a warrior"]},
+      {"q":"Which ancient Greek playwright wrote 'Oedipus Rex'?","correct":"Sophocles","wrong":["Aeschylus","Euripides","Aristophanes"]},
+      {"q":"Which Greek playwright wrote comedies such as 'The Frogs' and 'The Birds'?","correct":"Aristophanes","wrong":["Sophocles","Euripides","Menander"]},
+      {"q":"Which Greek playwright wrote 'Medea'?","correct":"Euripides","wrong":["Sophocles","Aeschylus","Aristophanes"]},
+      {"q":"Which Greek playwright wrote the 'Oresteia' trilogy?","correct":"Aeschylus","wrong":["Sophocles","Euripides","Aristophanes"]},
+      {"q":"Which Elizabethan playwright wrote 'Doctor Faustus' and was killed in a tavern brawl in 1593?","correct":"Christopher Marlowe","wrong":["Ben Jonson","Thomas Kyd","John Webster"]},
+      {"q":"Which Jacobean playwright wrote 'The Duchess of Malfi'?","correct":"John Webster","wrong":["Ben Jonson","Thomas Middleton","John Ford"]},
+      {"q":"Which playwright wrote 'Volpone' and 'The Alchemist'?","correct":"Ben Jonson","wrong":["Christopher Marlowe","John Webster","Thomas Dekker"]},
+      {"q":"Which comedy by Richard Brinsley Sheridan features Lady Teazle?","correct":"The School for Scandal","wrong":["The Rivals","She Stoops to Conquer","The Way of the World"]},
+      {"q":"Who wrote 'She Stoops to Conquer'?","correct":"Oliver Goldsmith","wrong":["Richard Brinsley Sheridan","William Congreve","Henry Fielding"]},
+      {"q":"Which Henrik Ibsen play ends with Nora slamming the door on her husband?","correct":"A Doll's House","wrong":["Hedda Gabler","Ghosts","The Wild Duck"]},
+      {"q":"Which Anton Chekhov play ends with the sound of an axe on trees?","correct":"The Cherry Orchard","wrong":["The Seagull","Uncle Vanya","Three Sisters"]},
+      {"q":"Which George Bernard Shaw play features Henry Higgins and Eliza Doolittle?","correct":"Pygmalion","wrong":["Man and Superman","Major Barbara","Saint Joan"]},
+      {"q":"Which Samuel Beckett play features two tramps waiting for someone who never comes?","correct":"Waiting for Godot","wrong":["Endgame","Krapp's Last Tape","Happy Days"]},
+      {"q":"Which Arthur Miller play is set during the Salem witch trials?","correct":"The Crucible","wrong":["Death of a Salesman","All My Sons","A View from the Bridge"]},
+      {"q":"Which Arthur Miller play centres on the salesman Willy Loman?","correct":"Death of a Salesman","wrong":["The Crucible","All My Sons","The Price"]},
+      {"q":"Which Tennessee Williams play features Blanche DuBois and Stanley Kowalski?","correct":"A Streetcar Named Desire","wrong":["The Glass Menagerie","Cat on a Hot Tin Roof","Sweet Bird of Youth"]},
+      {"q":"Which J. B. Priestley play features a mysterious police inspector visiting the Birling family?","correct":"An Inspector Calls","wrong":["Time and the Conways","Dangerous Corner","When We Are Married"]},
+      {"q":"Which John Osborne play gave rise to the phrase 'angry young men'?","correct":"Look Back in Anger","wrong":["The Entertainer","Inadmissible Evidence","Luther"]},
+      {"q":"Which Tom Stoppard play follows two minor characters from 'Hamlet'?","correct":"Rosencrantz and Guildenstern Are Dead","wrong":["Arcadia","The Real Thing","Jumpers"]},
+      {"q":"Which Willy Russell play features a hairdresser who enrols in an Open University course?","correct":"Educating Rita","wrong":["Shirley Valentine","Blood Brothers","Our Day Out"]},
+      {"q":"Which Willy Russell musical is about twins separated at birth in Liverpool?","correct":"Blood Brothers","wrong":["Educating Rita","Our Day Out","Shirley Valentine"]},
+      {"q":"Who compiled 'A Dictionary of the English Language' in 1755?","correct":"Samuel Johnson","wrong":["James Boswell","Noah Webster","James Murray"]},
+      {"q":"Who wrote the famous biography of Samuel Johnson?","correct":"James Boswell","wrong":["Oliver Goldsmith","Joshua Reynolds","Edmund Burke"]},
+      {"q":"Which American lexicographer's 1828 dictionary established spellings like 'color'?","correct":"Noah Webster","wrong":["Samuel Johnson","Benjamin Franklin","Thomas Jefferson"]},
+      {"q":"Which Scottish editor led work on the Oxford English Dictionary from 1879?","correct":"James Murray","wrong":["Samuel Johnson","Henry Fowler","Peter Mark Roget"]},
+      {"q":"Who compiled the famous thesaurus first published in 1852?","correct":"Peter Mark Roget","wrong":["Samuel Johnson","Noah Webster","Henry Fowler"]},
+      {"q":"Which language did the Anglo-Saxons speak?","correct":"Old English","wrong":["Old Norse","Latin","Middle English"]},
+      {"q":"After which event did huge numbers of French words enter English?","correct":"The Norman Conquest of 1066","wrong":["The Hundred Years War","The French Revolution","The Reformation"]},
+      {"q":"What is the name for the change in English vowel pronunciation between about 1400 and 1700?","correct":"The Great Vowel Shift","wrong":["The Norman Shift","The Chaucer Change","The Tudor Turn"]},
+      {"q":"Which language gave English words like 'sky', 'egg', 'knife' and 'they'?","correct":"Old Norse","wrong":["Latin","French","Dutch"]},
+      {"q":"What does the word 'salary' come from, according to a popular story?","correct":"The Latin for salt","wrong":["The Greek for silver","The French for work","The Arabic for gold"]},
+      {"q":"What does the word 'disaster' originally mean?","correct":"Bad star","wrong":["Great flood","Broken ship","Lost battle"]},
+      {"q":"What does the word 'sabotage' supposedly come from?","correct":"French wooden shoes","wrong":["A Spanish general","A German verb","A Latin curse"]},
+      {"q":"Which word for an overly patriotic person comes from a possibly legendary French soldier?","correct":"Chauvinist","wrong":["Jingoist","Martinet","Philistine"]},
+      {"q":"Which word for a strict disciplinarian comes from a French army officer of Louis XIV?","correct":"Martinet","wrong":["Chauvinist","Draconian","Spartan"]},
+      {"q":"Which word for harsh laws comes from an ancient Athenian lawmaker?","correct":"Draconian","wrong":["Spartan","Stoic","Laconic"]},
+      {"q":"Which word meaning 'using few words' comes from the region around Sparta?","correct":"Laconic","wrong":["Spartan","Draconian","Stoic"]},
+      {"q":"Which word for a reckless driver or rider comes from a man in the Bible?","correct":"Jehu","wrong":["Nimrod","Jezebel","Goliath"]},
+      {"q":"What is a 'portmanteau' word?","correct":"A word formed by blending two words, like 'brunch'","wrong":["A word borrowed from French","An unusually long word","A word that is its own opposite"]},
+      {"q":"Which author coined the term 'portmanteau' for blended words, in 'Through the Looking-Glass'?","correct":"Lewis Carroll","wrong":["Edward Lear","Charles Dickens","Samuel Johnson"]},
+      {"q":"What is a 'contronym' (or auto-antonym)?","correct":"A word with two opposite meanings, like 'sanction'","wrong":["A word that is spelled backwards","A word with no vowels at all","A word made by blending two others"]},
+      {"q":"What is an 'eponym'?","correct":"A word derived from a person's name","wrong":["A poem about a hero","A false name","A word with many meanings"]},
+      {"q":"What is a 'neologism'?","correct":"A newly coined word or expression","wrong":["An old word no longer used","A word borrowed from Greek","A common spelling mistake"]},
+      {"q":"What is 'etymology'?","correct":"The study of the origin of words","wrong":["The study of insects","The study of handwriting","The study of grammar"]}
+    ],
+    4:[
+      {"q":"Which novel by Laurence Sterne famously includes a completely black page?","correct":"Tristram Shandy","wrong":["A Sentimental Journey","Tom Jones","Clarissa"]},
+      {"q":"Which Samuel Richardson novel, told in letters, is one of the longest novels in English?","correct":"Clarissa","wrong":["Pamela","Sir Charles Grandison","Evelina"]},
+      {"q":"Which Henry Fielding novel follows a foundling raised by Squire Allworthy?","correct":"Tom Jones","wrong":["Joseph Andrews","Amelia","Jonathan Wild"]},
+      {"q":"Which Daniel Defoe novel follows a woman who becomes a thief and is transported to Virginia?","correct":"Moll Flanders","wrong":["Roxana","Captain Singleton","A Journal of the Plague Year"]},
+      {"q":"Which Fanny Burney novel tells of a young woman's entrance into society, in letters?","correct":"Evelina","wrong":["Cecilia","Camilla","The Wanderer"]},
+      {"q":"Which Gothic novel by Horace Walpole, from 1764, is often called the first Gothic novel?","correct":"The Castle of Otranto","wrong":["The Mysteries of Udolpho","Vathek","The Monk"]},
+      {"q":"Which Ann Radcliffe Gothic novel does Jane Austen parody in 'Northanger Abbey'?","correct":"The Mysteries of Udolpho","wrong":["The Castle of Otranto","The Italian","The Romance of the Forest"]},
+      {"q":"Which Jane Austen novel was published posthumously together with 'Persuasion'?","correct":"Northanger Abbey","wrong":["Sanditon","Mansfield Park","Lady Susan"]},
+      {"q":"Which Jane Austen novel features Fanny Price and the Bertram family?","correct":"Mansfield Park","wrong":["Emma","Persuasion","Sense and Sensibility"]},
+      {"q":"Which Jane Austen heroine is the daughter of the vain Sir Walter Elliot?","correct":"Anne Elliot","wrong":["Elinor Dashwood","Catherine Morland","Fanny Price"]},
+      {"q":"What was the title of Jane Austen's unfinished last novel, set in a seaside resort?","correct":"Sanditon","wrong":["The Watsons","Lady Susan","Love and Freindship"]},
+      {"q":"Which Charlotte Bronte novel, set in a fictional Belgian town, drew on her time teaching in Brussels?","correct":"Villette","wrong":["Shirley","Jane Eyre","Agnes Grey"]},
+      {"q":"What is the name of Mr Rochester's first wife in 'Jane Eyre'?","correct":"Bertha Mason","wrong":["Blanche Ingram","Grace Poole","Adele Varens"]},
+      {"q":"Who narrates most of 'Wuthering Heights' to Mr Lockwood?","correct":"Nelly Dean","wrong":["Catherine Earnshaw","Isabella Linton","Joseph"]},
+      {"q":"What is the name of the Linton family home in 'Wuthering Heights'?","correct":"Thrushcross Grange","wrong":["Thornfield Hall","Wildfell Hall","Lowood"]},
+      {"q":"What is the name of the charity school Jane Eyre attends?","correct":"Lowood","wrong":["Thornfield","Gateshead","Moor House"]},
+      {"q":"Which George Eliot novel features a weaver who finds a golden-haired child?","correct":"Silas Marner","wrong":["Adam Bede","Romola","Felix Holt"]},
+      {"q":"Which Middlemarch heroine marries the dry scholar Mr Casaubon?","correct":"Dorothea Brooke","wrong":["Rosamond Vincy","Mary Garth","Celia Brooke"]},
+      {"q":"What was the unfinished scholarly work of Mr Casaubon in 'Middlemarch'?","correct":"The Key to All Mythologies","wrong":["The Origin of Religions","A History of the Church","The Universal Grammar"]},
+      {"q":"Which Thomas Hardy novel ends with the 'President of the Immortals' having 'ended his sport' with its heroine?","correct":"Tess of the d'Urbervilles","wrong":["Jude the Obscure","The Woodlanders","The Return of the Native"]},
+      {"q":"Which Hardy novel was so badly received that he gave up novels for poetry?","correct":"Jude the Obscure","wrong":["Tess of the d'Urbervilles","The Mayor of Casterbridge","Two on a Tower"]},
+      {"q":"What is the fictional name of Dorchester in Thomas Hardy's novels?","correct":"Casterbridge","wrong":["Christminster","Melchester","Wintoncester"]},
+      {"q":"What is the fictional name of Oxford in 'Jude the Obscure'?","correct":"Christminster","wrong":["Casterbridge","Melchester","Budmouth"]},
+      {"q":"In which Dickens novel does Esther Summerson narrate part of the story?","correct":"Bleak House","wrong":["Little Dorrit","Our Mutual Friend","Dombey and Son"]},
+      {"q":"Which Dickens character dies of 'spontaneous combustion' in 'Bleak House'?","correct":"Krook","wrong":["Tulkinghorn","Jo","Smallweed"]},
+      {"q":"Which Dickens novel opens with Gaffer Hexam fishing a body from the Thames?","correct":"Our Mutual Friend","wrong":["Bleak House","Little Dorrit","Great Expectations"]},
+      {"q":"What is the name of Pip's convict benefactor in 'Great Expectations'?","correct":"Abel Magwitch","wrong":["Compeyson","Jaggers","Wemmick"]},
+      {"q":"What is the name of the girl Pip loves, raised by Miss Havisham?","correct":"Estella","wrong":["Biddy","Clara","Dora"]},
+      {"q":"What is the name of David Copperfield's harsh stepfather?","correct":"Mr Murdstone","wrong":["Mr Creakle","Uriah Heep","Mr Spenlow"]},
+      {"q":"Under what pen name did Dickens write his early sketches?","correct":"Boz","wrong":["Phiz","Cruikshank","Pickwick"]},
+      {"q":"Which illustrator, known as 'Phiz', illustrated many Dickens novels?","correct":"Hablot Knight Browne","wrong":["George Cruikshank","John Leech","Robert Seymour"]},
+      {"q":"Which Wilkie Collins novel features the villainous Count Fosco?","correct":"The Woman in White","wrong":["The Moonstone","Armadale","No Name"]},
+      {"q":"In 'The Moonstone', which detective investigates the theft of the diamond?","correct":"Sergeant Cuff","wrong":["Inspector Bucket","Inspector Field","Sergeant Ray"]},
+      {"q":"Which detective in 'Bleak House' is one of the first in English fiction?","correct":"Inspector Bucket","wrong":["Sergeant Cuff","Inspector Lestrade","Mr Tulkinghorn"]},
+      {"q":"Which Edgar Allan Poe story is often called the first modern detective story?","correct":"The Murders in the Rue Morgue","wrong":["The Purloined Letter","The Gold-Bug","The Mystery of Marie Roget"]},
+      {"q":"Who is Poe's detective in 'The Murders in the Rue Morgue'?","correct":"C. Auguste Dupin","wrong":["Monsieur Lecoq","Inspector Bucket","Sergeant Cuff"]},
+      {"q":"What turns out to be the killer in 'The Murders in the Rue Morgue'?","correct":"An orangutan","wrong":["A sailor","A ghost","A dog"]},
+      {"q":"In which Sherlock Holmes story does Holmes first appear, in 1887?","correct":"A Study in Scarlet","wrong":["The Sign of Four","A Scandal in Bohemia","The Hound of the Baskervilles"]},
+      {"q":"At which Swiss waterfall does Holmes apparently die fighting Moriarty?","correct":"The Reichenbach Falls","wrong":["The Rhine Falls","The Staubbach Falls","The Giessbach Falls"]},
+      {"q":"Which woman does Sherlock Holmes always refer to as 'the woman'?","correct":"Irene Adler","wrong":["Mary Morstan","Mrs Hudson","Violet Hunter"]},
+      {"q":"What is the name of Sherlock Holmes's older brother?","correct":"Mycroft","wrong":["Sherrinford","Sigerson","Moriarty"]},
+      {"q":"What is the name of the gang of street children who help Sherlock Holmes?","correct":"The Baker Street Irregulars","wrong":["The Baker Street Boys","The Holmes Gang","The Diogenes Club"]},
+      {"q":"What is the name of Mycroft Holmes's club, where talking is forbidden?","correct":"The Diogenes Club","wrong":["The Reform Club","The Athenaeum","The Drones Club"]},
+      {"q":"What is the name of Bertie Wooster's club in Wodehouse's stories?","correct":"The Drones Club","wrong":["The Diogenes Club","The Junior Ganymede","The Pelican Club"]},
+      {"q":"What is the name of Lord Emsworth's prize pig in Wodehouse's Blandings stories?","correct":"The Empress of Blandings","wrong":["The Duchess of Blandings","The Queen of Shropshire","Lady Emsworth"]},
+      {"q":"Which of Bertie Wooster's aunts is the formidable one he fears most?","correct":"Aunt Agatha","wrong":["Aunt Dahlia","Aunt Julia","Aunt Georgiana"]},
+      {"q":"Which Agatha Christie novel's twist is that the narrator is the murderer?","correct":"The Murder of Roger Ackroyd","wrong":["Murder on the Orient Express","And Then There Were None","Peril at End House"]},
+      {"q":"Which Agatha Christie novel is her best-selling, with ten people on an island?","correct":"And Then There Were None","wrong":["Murder on the Orient Express","The Murder of Roger Ackroyd","Evil Under the Sun"]},
+      {"q":"What was Agatha Christie's first published novel, in 1920?","correct":"The Mysterious Affair at Styles","wrong":["The Secret Adversary","The Murder on the Links","The Man in the Brown Suit"]},
+      {"q":"Which was the last Poirot novel published, in which he dies?","correct":"Curtain","wrong":["Elephants Can Remember","Hallowe'en Party","Sleeping Murder"]},
+      {"q":"In which village does Miss Marple live?","correct":"St Mary Mead","wrong":["Chipping Cleghorn","Market Basing","King's Abbot"]},
+      {"q":"Which aristocratic detective did Dorothy L. Sayers create?","correct":"Lord Peter Wimsey","wrong":["Albert Campion","Roderick Alleyn","Lord Emsworth"]},
+      {"q":"Which priest-detective did G. K. Chesterton create?","correct":"Father Brown","wrong":["Brother Cadfael","Father Dowling","Canon Chasuble"]},
+      {"q":"Which medieval monk-detective did Ellis Peters create?","correct":"Brother Cadfael","wrong":["Father Brown","Brother William","Friar Tuck"]},
+      {"q":"Which Georges Simenon detective works in Paris and smokes a pipe?","correct":"Jules Maigret","wrong":["Hercule Poirot","Auguste Dupin","Arsene Lupin"]},
+      {"q":"Which gentleman thief did Maurice Leblanc create?","correct":"Arsene Lupin","wrong":["Raffles","Fantomas","The Saint"]},
+      {"q":"Which gentleman thief and cricketer did E. W. Hornung create?","correct":"A. J. Raffles","wrong":["Arsene Lupin","Simon Templar","Bulldog Drummond"]},
+      {"q":"Which Ruth Rendell detective works in the fictional town of Kingsmarkham?","correct":"Inspector Wexford","wrong":["Inspector Morse","Inspector Dalgliesh","Inspector Banks"]},
+      {"q":"Which P. D. James detective is also a poet?","correct":"Adam Dalgliesh","wrong":["Inspector Wexford","Roderick Alleyn","Inspector Morse"]},
+      {"q":"What is Inspector Morse's first name, finally revealed in 'Death Is Now My Neighbour'?","correct":"Endeavour","wrong":["Edmund","Ernest","Eustace"]},
+      {"q":"In which Scottish city are Alexander McCall Smith's 'Sunday Philosophy Club' novels set?","correct":"Edinburgh","wrong":["Glasgow","Aberdeen","Dundee"]},
+      {"q":"In which country is 'The No. 1 Ladies' Detective Agency' set?","correct":"Botswana","wrong":["Zimbabwe","South Africa","Zambia"]},
+      {"q":"Which John Buchan novel features Richard Hannay on the run in Scotland?","correct":"The Thirty-Nine Steps","wrong":["Greenmantle","Mr Standfast","Huntingtower"]},
+      {"q":"Which Erskine Childers novel of 1903 is an early spy thriller about German invasion plans?","correct":"The Riddle of the Sands","wrong":["The Thirty-Nine Steps","The Secret Agent","Ashenden"]},
+      {"q":"Which W. Somerset Maugham collection drew on his own spying in the First World War?","correct":"Ashenden","wrong":["Of Human Bondage","The Moon and Sixpence","Cakes and Ale"]},
+      {"q":"Which Graham Greene novel features a vacuum cleaner salesman recruited as a spy in Havana?","correct":"Our Man in Havana","wrong":["The Quiet American","The Human Factor","The Comedians"]},
+      {"q":"Which Graham Greene novel is set in Saigon during the French Indochina war?","correct":"The Quiet American","wrong":["The Heart of the Matter","The Comedians","A Burnt-Out Case"]},
+      {"q":"Which le Carre novel was his breakthrough, about Alec Leamas in Berlin?","correct":"The Spy Who Came in from the Cold","wrong":["Call for the Dead","The Looking Glass War","Smiley's People"]},
+      {"q":"Which mole is unmasked in 'Tinker Tailor Soldier Spy'?","correct":"Bill Haydon","wrong":["Percy Alleline","Toby Esterhase","Roy Bland"]},
+      {"q":"Which Len Deighton novel introduced an unnamed spy played by Michael Caine as Harry Palmer?","correct":"The IPCRESS File","wrong":["Funeral in Berlin","Billion-Dollar Brain","Horse Under Water"]},
+      {"q":"What is the real name of 'M' in Ian Fleming's later Bond novels?","correct":"Admiral Sir Miles Messervy","wrong":["Sir Robert Mansfield","Admiral Sir Hugh Montague","Sir Mark Mallory"]},
+      {"q":"Which American ornithologist's name did Ian Fleming borrow for 007?","correct":"James Bond","wrong":["John Audubon","Roger Tory Peterson","Alexander Wilson"]},
+      {"q":"What was the name of Ian Fleming's Jamaican home where he wrote the Bond books?","correct":"Goldeneye","wrong":["Firefly","Shamelady","Strawberry Hill"]},
+      {"q":"Which Bond novel features a villain who plots to raid Fort Knox?","correct":"Goldfinger","wrong":["Moonraker","Thunderball","Diamonds Are Forever"]},
+      {"q":"In which Bond novel does Bond marry Tracy di Vicenzo?","correct":"On Her Majesty's Secret Service","wrong":["You Only Live Twice","The Man with the Golden Gun","Thunderball"]},
+      {"q":"Which author continued James Bond in 'Colonel Sun' under the pen name Robert Markham?","correct":"Kingsley Amis","wrong":["John Gardner","Sebastian Faulks","Anthony Horowitz"]},
+      {"q":"Which Tolkien work, edited by his son Christopher and published in 1977, tells the earlier history of Middle-earth?","correct":"The Silmarillion","wrong":["Unfinished Tales","The Book of Lost Tales","The Children of Hurin"]},
+      {"q":"Which Tolkien language did he base partly on Finnish?","correct":"Quenya","wrong":["Sindarin","Khuzdul","Black Speech"]},
+      {"q":"What was the name of the literary group in Oxford that included Tolkien and C. S. Lewis?","correct":"The Inklings","wrong":["The Bloomsbury Group","The Apostles","The Souls"]},
+      {"q":"Which Oxford pub did the Inklings famously meet in?","correct":"The Eagle and Child","wrong":["The Turf Tavern","The Lamb and Flag","The King's Arms"]},
+      {"q":"Which group of writers and artists included Virginia Woolf and E. M. Forster in London?","correct":"The Bloomsbury Group","wrong":["The Inklings","The Lake Poets","The Pre-Raphaelites"]},
+      {"q":"What is the name of the Woolf novel whose hero changes sex and lives for centuries?","correct":"Orlando","wrong":["The Waves","Jacob's Room","Between the Acts"]},
+      {"q":"Which Woolf novel features Mrs Ramsay and a trip that is postponed for ten years?","correct":"To the Lighthouse","wrong":["Mrs Dalloway","The Years","Night and Day"]},
+      {"q":"Which James Joyce character is the hero of 'Ulysses', an advertising canvasser?","correct":"Leopold Bloom","wrong":["Stephen Dedalus","Buck Mulligan","Blazes Boylan"]},
+      {"q":"What is the last word of 'Ulysses'?","correct":"Yes","wrong":["No","Love","Dublin"]},
+      {"q":"Which Joyce book is a collection of 15 short stories ending with 'The Dead'?","correct":"Dubliners","wrong":["Ulysses","Chamber Music","Exiles"]},
+      {"q":"Which novel won the first Booker Prize, in 1969?","correct":"Something to Answer For by P. H. Newby","wrong":["The French Lieutenant's Woman","The Sea, the Sea","Midnight's Children"]},
+      {"q":"Which Iris Murdoch novel won the 1978 Booker Prize?","correct":"The Sea, the Sea","wrong":["The Bell","Under the Net","The Black Prince"]},
+      {"q":"Which Booker-winning novel by J. M. Coetzee follows a disgraced professor in post-apartheid South Africa?","correct":"Disgrace","wrong":["Life and Times of Michael K","Waiting for the Barbarians","Foe"]},
+      {"q":"Which Australian author has won the Booker Prize twice?","correct":"Peter Carey","wrong":["Patrick White","Richard Flanagan","Thomas Keneally"]},
+      {"q":"Which Peter Carey novel about the outlaw Ned Kelly won the 2001 Booker?","correct":"True History of the Kelly Gang","wrong":["Oscar and Lucinda","Jack Maggs","Theft"]},
+      {"q":"Which novel won the 'Booker of Bookers' in 1993 and the 'Best of the Booker' in 2008?","correct":"Midnight's Children","wrong":["Wolf Hall","The Remains of the Day","Disgrace"]},
+      {"q":"Which Arundhati Roy novel won the 1997 Booker Prize?","correct":"The God of Small Things","wrong":["The Ministry of Utmost Happiness","A Suitable Boy","The White Tiger"]},
+      {"q":"Which Aravind Adiga novel won the 2008 Booker, narrated by a chauffeur?","correct":"The White Tiger","wrong":["The Inheritance of Loss","Sea of Poppies","Q and A"]},
+      {"q":"Which Douglas Stuart novel set in Glasgow won the 2020 Booker Prize?","correct":"Shuggie Bain","wrong":["Young Mungo","Lanny","The Testaments"]},
+      {"q":"Which Scottish novelist won the 1994 Booker with 'How Late It Was, How Late'?","correct":"James Kelman","wrong":["Irvine Welsh","Alasdair Gray","Ali Smith"]},
+      {"q":"Which Alasdair Gray novel, set in Glasgow and the city of Unthank, is a Scottish landmark?","correct":"Lanark","wrong":["Poor Things","1982, Janine","Something Leather"]},
+      {"q":"Which Irvine Welsh novel is about heroin users in Edinburgh?","correct":"Trainspotting","wrong":["Porno","Filth","Marabou Stork Nightmares"]},
+      {"q":"Which children's book prize, named after a Scottish-American philanthropist, is the oldest in Britain?","correct":"The Carnegie Medal","wrong":["The Kate Greenaway Medal","The Costa Children's Award","The Blue Peter Book Award"]},
+      {"q":"Which prize is awarded for illustration in children's books, alongside the Carnegie?","correct":"The Kate Greenaway Medal","wrong":["The Caldecott Medal","The Newbery Medal","The Smarties Prize"]},
+      {"q":"Which American prize for children's literature is the counterpart of the Carnegie?","correct":"The Newbery Medal","wrong":["The Caldecott Medal","The Pulitzer","The Hugo Award"]},
+      {"q":"Which award is given for the best science fiction novel of the year, voted by fans?","correct":"The Hugo Award","wrong":["The Nebula Award","The Arthur C. Clarke Award","The Locus Award"]},
+      {"q":"Which was the first novel to win the Hugo, Nebula and Philip K. Dick awards, featuring 'cyberspace'?","correct":"Neuromancer","wrong":["Dune","Foundation","Do Androids Dream of Electric Sheep?"]},
+      {"q":"Which Frank Herbert novel is set on the desert planet Arrakis?","correct":"Dune","wrong":["Foundation","Hyperion","The Left Hand of Darkness"]},
+      {"q":"Which Isaac Asimov series is based on 'psychohistory'?","correct":"Foundation","wrong":["I, Robot","The Robots of Dawn","The Gods Themselves"]},
+      {"q":"What are Isaac Asimov's Three Laws about?","correct":"Robots","wrong":["Space travel","Time travel","Psychohistory"]},
+      {"q":"Which Philip K. Dick novel was adapted as 'Blade Runner'?","correct":"Do Androids Dream of Electric Sheep?","wrong":["Ubik","The Man in the High Castle","A Scanner Darkly"]},
+      {"q":"Which Ursula K. Le Guin novel is set on the planet Gethen, whose people have no fixed sex?","correct":"The Left Hand of Darkness","wrong":["The Dispossessed","A Wizard of Earthsea","The Lathe of Heaven"]},
+      {"q":"Which Arthur C. Clarke novel was developed alongside Stanley Kubrick's film?","correct":"2001: A Space Odyssey","wrong":["Rendezvous with Rama","Childhood's End","The City and the Stars"]},
+      {"q":"Which Mary Shelley novel of 1826 describes the end of humanity through plague?","correct":"The Last Man","wrong":["Valperga","Lodore","Mathilda"]},
+      {"q":"Which dystopian novel by Yevgeny Zamyatin influenced George Orwell's 'Nineteen Eighty-Four'?","correct":"We","wrong":["The Islanders","The Flood","Mamai"]},
+      {"q":"What is the drug that keeps citizens happy in 'Brave New World'?","correct":"Soma","wrong":["Nectar","Joy","Ambrosia"]},
+      {"q":"What is the name of the invented language in 'Nineteen Eighty-Four'?","correct":"Newspeak","wrong":["Nadsat","Doublethink","Oldspeak"]},
+      {"q":"What is the slang language of Alex and his droogs in 'A Clockwork Orange' called?","correct":"Nadsat","wrong":["Newspeak","Polari","Gobbledygook"]},
+      {"q":"Which secret slang was used by gay men in Britain in the 20th century, popularised by 'Round the Horne'?","correct":"Polari","wrong":["Nadsat","Cockney rhyming slang","Shelta"]},
+      {"q":"In Cockney rhyming slang, what does 'apples and pears' mean?","correct":"Stairs","wrong":["Pears","Bears","Chairs"]},
+      {"q":"In Cockney rhyming slang, what does 'dog and bone' mean?","correct":"Telephone","wrong":["Home","Alone","Bone"]},
+      {"q":"In Cockney rhyming slang, what does 'Adam and Eve' mean?","correct":"Believe","wrong":["Leave","Grieve","Sleeve"]},
+      {"q":"In Cockney rhyming slang, what are 'plates of meat'?","correct":"Feet","wrong":["Sweets","Seats","Streets"]},
+      {"q":"What is the term for the 'n' in 'an apple' that moved from words like 'a napron' to 'an apron'?","correct":"Rebracketing","wrong":["Assimilation","Elision","Metathesis"]},
+      {"q":"What did the word 'nice' originally mean in Middle English?","correct":"Foolish or silly","wrong":["Kind or gentle","Pretty or neat","Clever or wise"]},
+      {"q":"What did the word 'silly' originally mean in Old English?","correct":"Blessed or happy","wrong":["Foolish or simple","Small or weak","Quiet or shy"]},
+      {"q":"What did 'girl' originally mean in Middle English?","correct":"A young person of either sex","wrong":["A young servant woman","The daughter of a king","An unmarried daughter"]},
+      {"q":"What is a 'pangram'?","correct":"A sentence containing every letter of the alphabet","wrong":["A word reading the same backwards","A blended word","A poem with no rhymes"]},
+      {"q":"Which pangram is famous for testing typewriters?","correct":"The quick brown fox jumps over the lazy dog","wrong":["Pack my box with five dozen liquor jugs","Sphinx of black quartz, judge my vow","How vexingly quick daft zebras jump"]},
+      {"q":"What is a 'lipogram'?","correct":"A text that deliberately leaves out a particular letter","wrong":["A text written in lip-reading code","A short poem about kissing","A sentence with no full stop"]},
+      {"q":"Which French novel by Georges Perec is written without the letter 'e'?","correct":"La Disparition (A Void)","wrong":["Life: A User's Manual","W, or the Memory of Childhood","Things"]},
+      {"q":"Which French experimental writing group did Georges Perec belong to?","correct":"Oulipo","wrong":["The Surrealists","Dada","The Nouveau Roman"]},
+      {"q":"What is the 'Oxford comma'?","correct":"A comma before 'and' at the end of a list","wrong":["A comma after 'however'","A comma in dates","A comma before a quotation"]},
+      {"q":"What is an 'em dash' named after?","correct":"The width of the letter M","wrong":["A printer named Emily","The Greek letter mu","An editor called Emmett"]},
+      {"q":"What is the name of the symbol '&'?","correct":"Ampersand","wrong":["Asterisk","Octothorpe","Pilcrow"]},
+      {"q":"What is the name of the paragraph symbol ¶?","correct":"Pilcrow","wrong":["Ampersand","Section mark","Dagger"]},
+      {"q":"What is the name for the symbol #?","correct":"Octothorpe","wrong":["Pilcrow","Ampersand","Asterisk"]},
+      {"q":"What is an 'interrobang'?","correct":"A combined question mark and exclamation mark","wrong":["A bracket with a curly end","A double forward slash","A row of three dots"]},
+      {"q":"What is 'the subjunctive mood', as in 'If I were you'?","correct":"A verb form for wishes or hypotheticals","wrong":["A verb form for completed past actions","A form where the subject receives the action","A form for plain future facts"]},
+      {"q":"What is a 'split infinitive'?","correct":"Putting a word between 'to' and a verb, as in 'to boldly go'","wrong":["A verb that has two subjects","A sentence with no main verb","A sentence broken by a dash"]},
+      {"q":"What is a 'dangling modifier'?","correct":"A phrase that seems to describe the wrong thing","wrong":["A sentence missing its full stop","A verb left at the end","A word placed in brackets"]},
+      {"q":"Which language has the most native speakers in the world?","correct":"Mandarin Chinese","wrong":["English","Spanish","Hindi"]},
+      {"q":"Which language is the official language of the most countries?","correct":"English","wrong":["French","Spanish","Arabic"]},
+      {"q":"Which language is called 'the language of Cervantes'?","correct":"Spanish","wrong":["Portuguese","Italian","Catalan"]},
+      {"q":"Which language is called 'the language of Moliere'?","correct":"French","wrong":["Italian","Spanish","Occitan"]},
+      {"q":"Which language is known as 'the language of Goethe'?","correct":"German","wrong":["Dutch","Swedish","Austrian"]},
+      {"q":"Which ancient script was deciphered by Jean-Francois Champollion using the Rosetta Stone?","correct":"Egyptian hieroglyphs","wrong":["Linear B","Cuneiform","Mayan glyphs"]},
+      {"q":"Which Bronze Age script was deciphered by Michael Ventris in 1952, revealing early Greek?","correct":"Linear B","wrong":["Linear A","Cuneiform","Hieroglyphs"]},
+      {"q":"Which Bronze Age script from Crete remains undeciphered?","correct":"Linear A","wrong":["Linear B","Cuneiform","Ogham"]},
+      {"q":"Which early Irish alphabet uses notches and lines carved on the edges of stones?","correct":"Ogham","wrong":["Runes","Linear A","Futhark"]},
+      {"q":"Which alphabet, developed by followers of Saints Cyril and Methodius, is used for Russian?","correct":"Cyrillic","wrong":["Georgian","Greek","Latin"]},
+      {"q":"Which constructed language did L. L. Zamenhof create in 1887?","correct":"Esperanto","wrong":["Volapuk","Ido","Interlingua"]},
+      {"q":"Which epic poem of Mesopotamia is one of the oldest surviving works of literature?","correct":"The Epic of Gilgamesh","wrong":["The Mahabharata","Beowulf","The Iliad"]},
+      {"q":"Which Indian epic is the longest poem ever written, including the Bhagavad Gita?","correct":"The Mahabharata","wrong":["The Ramayana","The Rigveda","The Gita Govinda"]},
+      {"q":"Which Finnish national epic, compiled by Elias Lonnrot, influenced Tolkien?","correct":"The Kalevala","wrong":["The Edda","The Nibelungenlied","The Heimskringla"]},
+      {"q":"Which Icelandic collections of Norse myths are called the Poetic and the Prose?","correct":"The Eddas","wrong":["The Sagas","The Kalevala","The Annals"]},
+      {"q":"Which medieval German epic tells of the hero Siegfried and the Burgundian princess Kriemhild?","correct":"The Nibelungenlied","wrong":["The Kalevala","Parzival","The Song of Roland"]},
+      {"q":"Which Old French epic tells of a knight's death at Roncevaux Pass?","correct":"The Song of Roland","wrong":["The Song of the Cid","The Romance of the Rose","Tristan and Iseult"]},
+      {"q":"Which Middle English poem features a giant green knight who invites a beheading game?","correct":"Sir Gawain and the Green Knight","wrong":["Pearl","Piers Plowman","The Owl and the Nightingale"]},
+      {"q":"Which 14th-century poem by William Langland is a dream vision of a ploughman?","correct":"Piers Plowman","wrong":["Pearl","The Book of the Duchess","Confessio Amantis"]},
+      {"q":"Which Persian epic, the 'Book of Kings', was written by Ferdowsi?","correct":"The Shahnameh","wrong":["The Rubaiyat","The Masnavi","The Divan"]},
+      {"q":"Which collection of stories features Scheherazade telling tales to save her life?","correct":"One Thousand and One Nights","wrong":["The Decameron","The Canterbury Tales","The Panchatantra"]},
+      {"q":"Which Boccaccio work features ten young people telling stories while escaping the plague?","correct":"The Decameron","wrong":["The Heptameron","The Canterbury Tales","The Facetiae"]},
+      {"q":"Which Italian poet wrote sonnets to his beloved Laura?","correct":"Petrarch","wrong":["Dante","Boccaccio","Tasso"]},
+      {"q":"Who was Dante's guide through Hell and Purgatory in 'The Divine Comedy'?","correct":"Virgil","wrong":["Beatrice","Homer","Ovid"]},
+      {"q":"What words are written over the gate of Hell in Dante's 'Inferno'?","correct":"Abandon all hope, ye who enter here","wrong":["Here lies the end of all things","Turn back, ye mortals","Hell has no fury"]},
+      {"q":"How many circles of Hell are there in Dante's 'Inferno'?","correct":"Nine","wrong":["Seven","Ten","Twelve"]},
+      {"q":"Which Russian poet, killed in a duel in 1837, wrote 'Eugene Onegin'?","correct":"Alexander Pushkin","wrong":["Mikhail Lermontov","Fyodor Tyutchev","Nikolai Gogol"]},
+      {"q":"Which Gogol novel features Chichikov buying up dead serfs?","correct":"Dead Souls","wrong":["The Overcoat","The Government Inspector","Taras Bulba"]},
+      {"q":"Which Turgenev novel introduced the word 'nihilist' to wide use?","correct":"Fathers and Sons","wrong":["A Month in the Country","Smoke","First Love"]},
+      {"q":"Which Dostoevsky novel features the trial of Dmitri for his father's murder?","correct":"The Brothers Karamazov","wrong":["Crime and Punishment","The Idiot","Demons"]},
+      {"q":"Which famous chapter of 'The Brothers Karamazov' is a story told by Ivan?","correct":"The Grand Inquisitor","wrong":["The Pro and Contra","The Underground Man","The Dream of a Ridiculous Man"]},
+      {"q":"Which Leo Tolstoy novella follows a judge confronting his death?","correct":"The Death of Ivan Ilyich","wrong":["Hadji Murat","The Kreutzer Sonata","Master and Man"]},
+      {"q":"Which Swedish author created Pippi Longstocking?","correct":"Astrid Lindgren","wrong":["Selma Lagerlof","Tove Jansson","Maria Gripe"]},
+      {"q":"Which Finnish author created the Moomins?","correct":"Tove Jansson","wrong":["Astrid Lindgren","Selma Lagerlof","Mika Waltari"]},
+      {"q":"Which Swedish author was the first woman to win the Nobel Prize in Literature, in 1909?","correct":"Selma Lagerlof","wrong":["Astrid Lindgren","Sigrid Undset","Grazia Deledda"]},
+      {"q":"Which Norwegian novelist won the Nobel Prize in 2023?","correct":"Jon Fosse","wrong":["Karl Ove Knausgaard","Jo Nesbo","Knut Hamsun"]},
+      {"q":"Which Norwegian writer's six-volume autobiographical novel is 'My Struggle'?","correct":"Karl Ove Knausgaard","wrong":["Jon Fosse","Knut Hamsun","Per Petterson"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_books-words-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+<button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var b = document.getElementById('tbSnd');
+  var show = function(){ var m = !!window.tbMuted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); show(); }); show();
+  /* find a free corner: the button never sits on top of a game's own controls */
+  var spots = [{ left:'12px', right:'auto', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' }, { left:'auto', right:'12px', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' },
+               { left:'12px', right:'auto', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }, { left:'auto', right:'12px', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }];
+  var clash = function(){ var s = b.getBoundingClientRect();
+    return [].some.call(document.querySelectorAll('button, a, input, select, [role=button]'), function(e){ if(e === b || !e.offsetParent) return false; var r = e.getBoundingClientRect();
+      return r.width && !(r.right < s.left || r.left > s.right || r.bottom < s.top || r.top > s.bottom); }); };
+  var place = function(){ for(var i = 0; i < spots.length; i++){ var p = spots[i]; b.style.left = p.left; b.style.right = p.right; b.style.top = p.top; b.style.bottom = p.bottom; if(!clash()) return; }
+    var q = spots[0]; b.style.left = q.left; b.style.right = q.right; b.style.top = q.top; b.style.bottom = q.bottom; };
+  var later = 0; var replace = function(){ clearTimeout(later); later = setTimeout(place, 250); };
+  window.addEventListener('resize', replace); document.addEventListener('click', replace, true); setTimeout(place, 300); setInterval(place, 3000);
+  /* screen readers hear right and wrong the moment an answer is marked */
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  /* the answer's words only: leave out the A/B/C/D badge, and any closing full stop */
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/^[A-F]\s+(?=\S)/, '').replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return;
+      var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var gained = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(gained('good') || gained('correct') || gained('right')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); }
+      if(gained('bad') || gained('wrong') || gained('incorrect')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
+</body>
+</html>

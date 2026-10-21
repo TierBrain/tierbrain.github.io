@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A free Food &amp; Drink quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/food-drink-quiz.html">
+<meta property="og:title" content="Food &amp; Drink Quiz: 731 questions, four tiers | TierBrain">
+<meta property="og:description" content="A free Food &amp; Drink quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/food-drink-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Food &amp; Drink Quiz: 731 questions, four tiers | TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#130a0d; --bg1:#1c1013; --card:#26151a; --card2:#2e1c20;
+    --ink:#fbf1e2; --mut:#c2a99a; --line:#4a3238;
+    --l1:#86bf9d; --l2:#e0a458; --l3:#d9694f; --l4:#f2d27a;
+    --gold:#e6b655; --right:#86bf9d; --wrong:#e8765f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(240,150,70,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(200,80,90,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#1c1013;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#1c1013;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(19,10,13,.97),rgba(38,21,26,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#fbf1e2;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#fbf1e2;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#1c1013;
+    background:linear-gradient(180deg,var(--gold),#e6b655);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(230,182,85,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #8a5f0a;}
+  button.cta.blue{background:linear-gradient(180deg,#e0a458,#c98a3e);box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(224,164,88,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8a5f0a;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#f2d27a;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#fbf1e2;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#1c1013;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#1c1013;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#1c1013;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#1c1013;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#1c1013;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+<style>
+/* TierBrain standards */
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(19,10,13,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Food &amp; Drink Quiz: 731 questions, four tiers | TierBrain">
+<meta name="twitter:description" content="A free Food &amp; Drink quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Food &amp; Drink Trivia</div>
+    <h1 class="big display">TierBrain</h1>
+    <p class="lead">20 questions from a big pool: dishes, ingredients, drinks and kitchen know-how, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code (optional)</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"Which fruit is yellow and curved, and monkeys are said to love it?","correct":"The banana","wrong":["The lemon","The pear","The mango"]},
+      {"q":"Which fruit keeps the doctor away, according to the saying, if you eat one a day?","correct":"An apple","wrong":["A banana","An orange","A grape"]},
+      {"q":"Which small red fruit has its seeds on the outside?","correct":"The strawberry","wrong":["The cherry","The raspberry","The tomato"]},
+      {"q":"Which fruit is used to make raisins and sultanas?","correct":"Grapes","wrong":["Plums","Cherries","Figs"]},
+      {"q":"What are dried plums called?","correct":"Prunes","wrong":["Raisins","Dates","Currants"]},
+      {"q":"Which citrus fruit is sour and yellow?","correct":"The lemon","wrong":["The lime","The orange","The grapefruit"]},
+      {"q":"Which citrus fruit is small and green?","correct":"The lime","wrong":["The lemon","The kiwi","The satsuma"]},
+      {"q":"Which fruit has a hairy brown skin and green flesh with black seeds?","correct":"The kiwi fruit","wrong":["The avocado","The melon","The fig"]},
+      {"q":"Which large fruit is green outside and red inside with black seeds?","correct":"The watermelon","wrong":["The pumpkin","The cucumber","The papaya"]},
+      {"q":"Which fruit has a spiky skin and a leafy top?","correct":"The pineapple","wrong":["The coconut","The mango","The melon"]},
+      {"q":"Which tropical fruit has a hard hairy shell and milk inside?","correct":"The coconut","wrong":["The pineapple","The mango","The papaya"]},
+      {"q":"Which orange vegetable are rabbits said to love?","correct":"The carrot","wrong":["The parsnip","The swede","The pumpkin"]},
+      {"q":"Which vegetable makes you cry when you chop it?","correct":"The onion","wrong":["The potato","The carrot","The cabbage"]},
+      {"q":"Which vegetable is used to make chips?","correct":"The potato","wrong":["The parsnip","The carrot","The turnip"]},
+      {"q":"Which green vegetable looks like a little tree?","correct":"Broccoli","wrong":["Cabbage","Lettuce","Spinach"]},
+      {"q":"Which vegetable did Popeye eat to become strong?","correct":"Spinach","wrong":["Broccoli","Cabbage","Peas"]},
+      {"q":"Which small round green vegetables grow in pods?","correct":"Peas","wrong":["Beans","Sprouts","Grapes"]},
+      {"q":"Which small green vegetable, like a tiny cabbage, is often eaten at Christmas?","correct":"The Brussels sprout","wrong":["The pea","The broad bean","The leek"]},
+      {"q":"Which big orange vegetable is carved at Halloween?","correct":"The pumpkin","wrong":["The swede","The melon","The squash"]},
+      {"q":"Which vegetable is a symbol of Wales, along with the daffodil?","correct":"The leek","wrong":["The onion","The cabbage","The carrot"]},
+      {"q":"Which red fruit is often used in salads and to make ketchup?","correct":"The tomato","wrong":["The strawberry","The red pepper","The cherry"]},
+      {"q":"Which long green vegetable is used in salads and is mostly water?","correct":"The cucumber","wrong":["The courgette","The leek","The celery"]},
+      {"q":"Which yellow food grows on cobs?","correct":"Sweetcorn","wrong":["Rice","Wheat","Peas"]},
+      {"q":"What are chips called in the United States?","correct":"Fries","wrong":["Crisps","Wedges","Hash browns"]},
+      {"q":"What are crisps called in the United States?","correct":"Chips","wrong":["Fries","Crackers","Wafers"]},
+      {"q":"What is the main ingredient in bread?","correct":"Flour","wrong":["Sugar","Rice","Potato"]},
+      {"q":"What do bees make that we spread on toast?","correct":"Honey","wrong":["Jam","Butter","Marmalade"]},
+      {"q":"Which spread is made from oranges?","correct":"Marmalade","wrong":["Jam","Honey","Lemon curd"]},
+      {"q":"What is butter made from?","correct":"Cream","wrong":["Cheese","Eggs","Flour"]},
+      {"q":"What is cheese made from?","correct":"Milk","wrong":["Eggs","Flour","Butter only"]},
+      {"q":"Which animal gives us most of the milk we drink in Britain?","correct":"The cow","wrong":["The goat","The sheep","The buffalo"]},
+      {"q":"Which bird lays the eggs we eat most often?","correct":"The chicken","wrong":["The duck","The goose","The quail"]},
+      {"q":"What type of food is a cheddar?","correct":"Cheese","wrong":["Bread","Sausage","Apple"]},
+      {"q":"Which English cheese is made in a Somerset village with a famous gorge?","correct":"Cheddar","wrong":["Stilton","Wensleydale","Cheshire"]},
+      {"q":"What do we call meat from a pig?","correct":"Pork","wrong":["Beef","Lamb","Venison"]},
+      {"q":"What do we call meat from a cow?","correct":"Beef","wrong":["Pork","Mutton","Venison"]},
+      {"q":"What do we call meat from a young sheep?","correct":"Lamb","wrong":["Pork","Beef","Venison"]},
+      {"q":"What is the meat from a deer called?","correct":"Venison","wrong":["Veal","Mutton","Game pie"]},
+      {"q":"What are bacon and ham made from?","correct":"Pork","wrong":["Beef","Lamb","Chicken"]},
+      {"q":"Which famous British dish is fried fish served with chips?","correct":"Fish and chips","wrong":["Bangers and mash","Shepherd's pie","Toad in the hole"]},
+      {"q":"What are 'bangers' in 'bangers and mash'?","correct":"Sausages","wrong":["Fireworks","Burgers","Meatballs"]},
+      {"q":"What is 'mash' in 'bangers and mash'?","correct":"Mashed potato","wrong":["Mashed peas","Mashed carrots","Gravy"]},
+      {"q":"Which dish is sausages cooked in Yorkshire pudding batter?","correct":"Toad in the hole","wrong":["Bubble and squeak","Cottage pie","Spotted dick"]},
+      {"q":"Which pie is made with lamb mince and topped with mashed potato?","correct":"Shepherd's pie","wrong":["Cottage pie","Pork pie","Fish pie"]},
+      {"q":"Which pie is made with beef mince and topped with mashed potato?","correct":"Cottage pie","wrong":["Shepherd's pie","Pork pie","Steak pie"]},
+      {"q":"What is usually served with a Sunday roast beef in England?","correct":"Yorkshire puddings","wrong":["Pancakes","Doughnuts","Scones"]},
+      {"q":"What brown sauce do we pour over roast dinners?","correct":"Gravy","wrong":["Custard","Ketchup","Mayonnaise"]},
+      {"q":"What yellow sauce is often poured over puddings?","correct":"Custard","wrong":["Gravy","Mustard","Mayonnaise"]},
+      {"q":"What do we usually eat on Shrove Tuesday?","correct":"Pancakes","wrong":["Hot cross buns","Mince pies","Easter eggs"]},
+      {"q":"What sweet treat do we usually eat at Easter?","correct":"Chocolate eggs","wrong":["Mince pies","Pancakes","Candy floss"]},
+      {"q":"Which buns with a cross on top are eaten at Easter?","correct":"Hot cross buns","wrong":["Chelsea buns","Iced buns","Bath buns"]},
+      {"q":"Which small pies filled with dried fruit are eaten at Christmas?","correct":"Mince pies","wrong":["Pork pies","Apple pies","Cherry pies"]},
+      {"q":"Which bird is most often eaten for Christmas dinner in Britain?","correct":"Turkey","wrong":["Chicken","Duck","Goose"]},
+      {"q":"Which pudding is set alight and eaten at Christmas?","correct":"Christmas pudding","wrong":["Trifle","Jelly","Sticky toffee pudding"]},
+      {"q":"Which cake is traditional for a birthday, with candles on top?","correct":"A birthday cake","wrong":["A fruit scone","A crumpet","A teacake"]},
+      {"q":"What are scones usually served with in a cream tea?","correct":"Jam and clotted cream","wrong":["Ketchup and mustard","Butter and cheese","Gravy and peas"]},
+      {"q":"Which drink is made from roasted beans and keeps you awake?","correct":"Coffee","wrong":["Tea","Milk","Lemonade"]},
+      {"q":"Which hot drink is made from cocoa and milk?","correct":"Hot chocolate","wrong":["Black coffee","Peppermint tea","Tomato soup"]},
+      {"q":"Which fizzy drink is made with lemons, sugar and water?","correct":"Lemonade","wrong":["Cola","Milkshake","Squash"]},
+      {"q":"Which cold drink is made by blending milk with ice cream?","correct":"A milkshake","wrong":["A smoothie","A slush","Lemonade"]},
+      {"q":"Which juice is made from oranges?","correct":"Orange juice","wrong":["Apple juice","Lemon juice","Grape juice"]},
+      {"q":"What is ice cream usually served in at the seaside?","correct":"A cone","wrong":["A bowl of soup","A teapot","A sandwich"]},
+      {"q":"Which sweet is pink and fluffy and sold at fairs?","correct":"Candy floss","wrong":["Fudge","Toffee","Liquorice"]},
+      {"q":"Which long stick of hard sweet is sold at the seaside with the town's name inside?","correct":"Rock","wrong":["Toffee","Fudge","Liquorice"]},
+      {"q":"What is chocolate made from?","correct":"Cocoa beans","wrong":["Coffee beans","Peanuts","Carrots"]},
+      {"q":"What do we call a food made from minced meat in a bun?","correct":"A burger","wrong":["A pasty","A sausage roll","A sandwich"]},
+      {"q":"Which food has a crust, tomato sauce and cheese, and came from Italy?","correct":"Pizza","wrong":["Lasagne","Spaghetti","Risotto"]},
+      {"q":"Which long thin pasta is often eaten with meatballs?","correct":"Spaghetti","wrong":["Penne","Macaroni","Ravioli"]},
+      {"q":"Which country is famous for pasta and pizza?","correct":"Italy","wrong":["France","Spain","Greece"]},
+      {"q":"Which country is famous for croissants and baguettes?","correct":"France","wrong":["Italy","Germany","Spain"]},
+      {"q":"Which country is famous for curry, such as tikka masala and biryani?","correct":"India","wrong":["China","Italy","Mexico"]},
+      {"q":"Which white grain is eaten with curry and Chinese food?","correct":"Rice","wrong":["Pasta","Oats","Couscous"]},
+      {"q":"What do we call long thin strips of dough often eaten in Chinese food?","correct":"Noodles","wrong":["Chips","Crisps","Wafers"]},
+      {"q":"What do people in China often use to eat instead of a knife and fork?","correct":"Chopsticks","wrong":["Spoons only","Skewers","Their fingers only"]},
+      {"q":"Which tea is named after a British prime minister and flavoured with bergamot?","correct":"Earl Grey","wrong":["English Breakfast","Darjeeling","Assam"]},
+      {"q":"What do we call cooking bread slices until brown and crispy?","correct":"Toasting","wrong":["Boiling","Steaming","Freezing"]},
+      {"q":"What is the main ingredient of guacamole?","correct":"Avocado","wrong":["Peas","Cucumber","Spinach"]},
+      {"q":"What is the main ingredient of hummus?","correct":"Chickpeas","wrong":["Lentils","Peas","Potatoes"]},
+      {"q":"What is the main ingredient of an omelette?","correct":"Eggs","wrong":["Flour","Rice","Potato"]},
+      {"q":"What is the main ingredient of porridge?","correct":"Oats","wrong":["Rice","Wheat","Corn"]},
+      {"q":"What is the main ingredient of baked beans?","correct":"Haricot beans","wrong":["Peas","Kidney beans","Broad beans"]},
+      {"q":"Where should you keep milk to stop it going off?","correct":"In the fridge","wrong":["In the oven","In the cupboard","On the windowsill"]},
+      {"q":"Which kitchen machine keeps food very cold and frozen?","correct":"A freezer","wrong":["A toaster","A microwave","A kettle"]},
+      {"q":"What do we use to cut food at the table?","correct":"A knife","wrong":["A spoon","A whisk","A ladle"]},
+      {"q":"Which food group are apples and carrots part of?","correct":"Fruit and vegetables","wrong":["Dairy foods","Meat and fish","Bread and grains"]},
+      {"q":"How many portions of fruit and vegetables are we told to eat each day in the UK?","correct":"At least five","wrong":["At least two","At least ten","Exactly one"]},
+      {"q":"Which cake is made with layers of sponge, jam and cream and named after a queen?","correct":"Victoria sponge","wrong":["Battenberg","Swiss roll","Black Forest gateau"]},
+      {"q":"Which pink and yellow chequered cake is wrapped in marzipan?","correct":"Battenberg","wrong":["Victoria sponge","Swiss roll","Madeira cake"]},
+      {"q":"Which rolled-up sponge cake has jam spiralling through it?","correct":"A Swiss roll","wrong":["A Battenberg","A muffin","An eclair"]},
+      {"q":"Which long pastry is filled with cream and topped with chocolate?","correct":"An eclair","wrong":["A croissant","A doughnut","A scone"]},
+      {"q":"Which ring-shaped fried cake often has a hole in the middle?","correct":"A doughnut","wrong":["A muffin","A bagel","A cupcake"]},
+      {"q":"Which small cake is baked in a paper case and often iced on top?","correct":"A cupcake","wrong":["A scone","A crumpet","A flapjack"]},
+      {"q":"Which oaty bar is made with golden syrup and butter?","correct":"A flapjack","wrong":["A shortbread","A brownie","A biscotti"]},
+      {"q":"Which buttery biscuit is traditional in Scotland?","correct":"Shortbread","wrong":["The digestive","The custard cream","The bourbon"]},
+      {"q":"Which chocolate biscuit is a favourite for dunking in tea?","correct":"The chocolate digestive","wrong":["The cream cracker","The oatcake","The water biscuit"]},
+      {"q":"Which chocolatey square cake is gooey in the middle?","correct":"A brownie","wrong":["A flapjack","A scone","A crumpet"]},
+      {"q":"Which round, spongy bread with holes is toasted and buttered?","correct":"A crumpet","wrong":["A bagel","A croissant","A pitta"]},
+      {"q":"Which ring-shaped bread is boiled before baking?","correct":"A bagel","wrong":["A doughnut","A crumpet","A pretzel"]},
+      {"q":"Which flat bread opens up into a pocket?","correct":"Pitta","wrong":["Naan","Baguette","Brioche"]},
+      {"q":"Which bread is often eaten with curry and baked in a tandoor oven?","correct":"Naan","wrong":["Pitta","Bagel","Focaccia"]},
+      {"q":"Which long, thin French loaf has a crisp crust?","correct":"A baguette","wrong":["A bloomer","A cob","A bap"]},
+      {"q":"Which crescent-shaped French pastry is eaten for breakfast?","correct":"A croissant","wrong":["A doughnut","A crumpet","A muffin"]},
+      {"q":"Which Mexican dish is a folded tortilla with a filling?","correct":"A taco","wrong":["A pizza","A samosa","A spring roll"]},
+      {"q":"Which triangle-shaped Indian pastry is filled with spiced vegetables or meat?","correct":"A samosa","wrong":["A spring roll","A pasty","A dumpling"]},
+      {"q":"Which Chinese dish is a crispy roll filled with vegetables?","correct":"A spring roll","wrong":["A samosa","A taco","A wrap"]},
+      {"q":"Which Cornish food is a pastry case filled with meat and vegetables?","correct":"A pasty","wrong":["A pie","A samosa","A quiche"]},
+      {"q":"Which savoury tart is made with eggs, cream and often bacon?","correct":"A quiche","wrong":["A crumble","A trifle","A pavlova"]},
+      {"q":"Which pudding has layers of sponge, fruit, custard and cream?","correct":"Trifle","wrong":["Crumble","Cheesecake","Jelly"]},
+      {"q":"Which pudding has a fruit base covered with a crumbly topping?","correct":"Crumble","wrong":["Trifle","Jelly","Mousse"]},
+      {"q":"Which wobbly pudding is made with gelatine?","correct":"Jelly","wrong":["Custard","Trifle","Mousse"]},
+      {"q":"Which dessert made with meringue is named after a Russian ballerina?","correct":"The pavlova","wrong":["The eclair","The trifle","The tiramisu"]},
+      {"q":"Which white crunchy dessert is made from whipped egg whites and sugar?","correct":"Meringue","wrong":["Mousse","Marzipan","Fudge"]},
+      {"q":"Which sweet almond paste is used to cover Christmas cakes?","correct":"Marzipan","wrong":["Fondant","Toffee","Fudge"]},
+      {"q":"Which sweet, chewy, brown sweet is made by heating sugar and butter?","correct":"Toffee","wrong":["Liquorice","Marshmallow","Nougat"]},
+      {"q":"Which soft, squashy sweet is often toasted over a campfire?","correct":"A marshmallow","wrong":["A toffee","A jelly bean","A gobstopper"]},
+      {"q":"Which black chewy sweet is made from a root?","correct":"Liquorice","wrong":["Toffee","Fudge","Wine gums"]},
+      {"q":"Which nut is used to make peanut butter?","correct":"The peanut","wrong":["The almond","The walnut","The cashew"]},
+      {"q":"Which nut grows on oak trees but is not usually eaten by people?","correct":"The acorn","wrong":["The hazelnut","The chestnut","The walnut"]},
+      {"q":"Which nuts are roasted at Christmas and sold hot on the street?","correct":"Chestnuts","wrong":["Peanuts","Almonds","Walnuts"]},
+      {"q":"Which green fruit is pressed to make olive oil?","correct":"The olive","wrong":["The grape","The avocado","The lime"]},
+      {"q":"Which white crystals are sprinkled on chips with vinegar?","correct":"Salt","wrong":["Sugar","Pepper","Flour"]},
+      {"q":"Which sauce is red and made from tomatoes?","correct":"Ketchup","wrong":["Mayonnaise","Mustard","Brown sauce"]},
+      {"q":"Which yellow sauce is hot and often served with hot dogs?","correct":"Mustard","wrong":["Ketchup","Mayonnaise","Custard"]},
+      {"q":"Which creamy white sauce is made with eggs and oil and used in sandwiches?","correct":"Mayonnaise","wrong":["Custard","Gravy","Yoghurt"]},
+      {"q":"Which brown spread made from yeast extract do people either love or hate?","correct":"Marmite","wrong":["Nutella","Honey","Peanut butter"]},
+      {"q":"Which chocolate spread is made with hazelnuts?","correct":"Nutella","wrong":["Marmite","Lemon curd","Jam"]},
+      {"q":"What is a smoothie usually made from?","correct":"Blended fruit","wrong":["Coffee","Hot water","Gravy"]},
+      {"q":"Which drink is made from apples and is often alcoholic?","correct":"Cider","wrong":["Beer","Wine","Whisky"]},
+      {"q":"Which drink is made from grapes?","correct":"Wine","wrong":["Beer","Cider","Whisky"]},
+      {"q":"What is the name for water with bubbles in it?","correct":"Sparkling water","wrong":["Still water","Tap water","Spring water only"]},
+      {"q":"What is the meal often eaten in the afternoon with tea and cakes?","correct":"Afternoon tea","wrong":["Breakfast","Brunch","Supper"]},
+      {"q":"What do some people call a mid-morning snack in Britain?","correct":"Elevenses","wrong":["High tea","Supper","Brunch"]},
+      {"q":"Which fast food is a long sausage in a bun?","correct":"A hot dog","wrong":["A burger","A kebab","A wrap"]},
+      {"q":"Which meat dish is cooked on a rotating spit and served in a pitta?","correct":"A doner kebab","wrong":["A hot dog","A burger","A pasty"]},
+      {"q":"Which Italian dish has layers of pasta, meat sauce and cheese?","correct":"Lasagne","wrong":["Risotto","Spaghetti","Pizza"]},
+      {"q":"Which Italian rice dish is creamy and stirred slowly?","correct":"Risotto","wrong":["Paella","Pilau","Biryani"]},
+      {"q":"Which Spanish rice dish is cooked with seafood in a big pan?","correct":"Paella","wrong":["Risotto","Pilau","Jambalaya"]},
+      {"q":"Which cold Spanish soup is made from tomatoes?","correct":"Gazpacho","wrong":["Minestrone","Borscht","Chowder"]},
+      {"q":"Which Italian soup is full of vegetables and pasta?","correct":"Minestrone","wrong":["Gazpacho","Borscht","Bisque"]},
+      {"q":"Which Greek dish has layers of aubergine, mince and white sauce?","correct":"Moussaka","wrong":["Lasagne","Shepherd's pie","Souvlaki"]},
+      {"q":"Which salty white Greek cheese is used in Greek salad?","correct":"Feta","wrong":["Cheddar","Brie","Gouda"]},
+      {"q":"Which Italian cheese is stretchy and used on pizza?","correct":"Mozzarella","wrong":["Cheddar","Stilton","Feta"]},
+      {"q":"Which Dutch cheese has a red wax coating?","correct":"Edam","wrong":["Cheddar","Brie","Stilton"]},
+      {"q":"Which French cheese is soft and creamy with a white rind?","correct":"Brie","wrong":["Cheddar","Edam","Parmesan"]},
+      {"q":"Which hard Italian cheese is grated over pasta?","correct":"Parmesan","wrong":["Mozzarella","Brie","Feta"]},
+      {"q":"Which blue cheese is made in the English Midlands?","correct":"Stilton","wrong":["Cheddar","Brie","Edam"]},
+      {"q":"What are fish fingers usually made of?","correct":"White fish in breadcrumbs","wrong":["Chicken in batter","Mashed potato","Grated cheese"]},
+      {"q":"What is the name for a breakfast of cereal, nuts and dried fruit?","correct":"Muesli","wrong":["Porridge","Granola bar","Toast"]},
+      {"q":"What are cornflakes made from?","correct":"Corn (maize)","wrong":["Rice","Wheat","Oats"]},
+      {"q":"What colour is a ripe banana?","correct":"Yellow","wrong":["Green","Red","Purple"]},
+      {"q":"What colour is the inside of a ripe avocado?","correct":"Green","wrong":["Orange","Red","White"]},
+      {"q":"What colour are blueberries?","correct":"Dark blue-purple","wrong":["Bright red","Lemon yellow","Pale green"]},
+      {"q":"Which fruit is purple or green and grows in bunches?","correct":"Grapes","wrong":["Cherries","Plums","Blueberries"]},
+      {"q":"Which red fruit grows on trees in pairs, with a stone inside?","correct":"The cherry","wrong":["The strawberry","The raspberry","The tomato"]},
+      {"q":"Which fuzzy fruit has a large stone and orange-yellow flesh?","correct":"The peach","wrong":["The plum","The apple","The pear"]},
+      {"q":"Which orange fruit is small, easy to peel and popular at Christmas?","correct":"The satsuma","wrong":["The grapefruit","The lemon","The lime"]},
+      {"q":"Which large citrus fruit is often eaten for breakfast, cut in half?","correct":"The grapefruit","wrong":["The orange","The lime","The lemon"]},
+      {"q":"Which red berries are used to make a sauce for turkey at Christmas?","correct":"Cranberries","wrong":["Raspberries","Strawberries","Blackberries"]},
+      {"q":"Which berries grow wild on brambles in late summer?","correct":"Blackberries","wrong":["Blueberries","Strawberries","Cranberries"]},
+      {"q":"Which vegetable is purple-red and stains your hands?","correct":"Beetroot","wrong":["Carrot","Parsnip","Turnip"]},
+      {"q":"Which long white vegetable looks like a pale carrot?","correct":"The parsnip","wrong":["The leek","The celery","The radish"]},
+      {"q":"Which vegetable grows in a head with crunchy leaves and is used in salads?","correct":"Lettuce","wrong":["Potato","Onion","Carrot"]},
+      {"q":"Which vegetable is called a zucchini in America?","correct":"The courgette","wrong":["The aubergine","The cucumber","The marrow"]},
+      {"q":"Which purple vegetable is called an eggplant in America?","correct":"The aubergine","wrong":["The beetroot","The plum","The courgette"]},
+      {"q":"Which hot root is grated and served with roast beef?","correct":"Horseradish","wrong":["Ginger","Wasabi","Garlic"]},
+      {"q":"Which strong-smelling bulb is said to keep vampires away?","correct":"Garlic","wrong":["Onion","Ginger","Leek"]},
+      {"q":"Which mushroom grows wild and is often fried for breakfast?","correct":"The field mushroom","wrong":["The fly agaric","The truffle","The puffball"]},
+      {"q":"What is a burger made from usually?","correct":"Minced beef","wrong":["Chicken breast","Fish","Cheese"]},
+      {"q":"Which part of a cooker do you use to bake a cake?","correct":"The oven","wrong":["The hob","The grill","The kettle"]},
+      {"q":"What is it called when you cook food in hot oil in a pan?","correct":"Frying","wrong":["Boiling","Steaming","Roasting"]},
+      {"q":"What do you use to whip cream or beat eggs?","correct":"A whisk","wrong":["A ladle","A grater","A sieve"]},
+      {"q":"What do you use to grate cheese?","correct":"A grater","wrong":["A whisk","A sieve","A rolling pin"]},
+      {"q":"What do you use to roll out pastry?","correct":"A rolling pin","wrong":["A whisk","A ladle","A grater"]},
+      {"q":"What do you use to serve soup?","correct":"A ladle","wrong":["A whisk","A spatula","A peeler"]}
+    ],
+    2:[
+      {"q":"Which Scottish dish is made from sheep's heart, liver and lungs with oats, cooked in a casing?","correct":"Haggis","wrong":["Black pudding","Cullen skink","Scotch broth"]},
+      {"q":"What is traditionally served with haggis on Burns Night?","correct":"Neeps and tatties","wrong":["Mushy peas","Chips and gravy","Bubble and squeak"]},
+      {"q":"What are 'neeps' in Scotland?","correct":"Swede","wrong":["Potatoes","Onions","Leeks"]},
+      {"q":"Which Scottish soup is made with smoked haddock, potatoes and onions?","correct":"Cullen skink","wrong":["Cock-a-leekie","Scotch broth","Partan bree"]},
+      {"q":"Which Scottish soup is made with chicken and leeks?","correct":"Cock-a-leekie","wrong":["Cullen skink","Scotch broth","Mulligatawny"]},
+      {"q":"What is a Scotch egg?","correct":"A boiled egg wrapped in sausage meat and breadcrumbs","wrong":["A fried egg served on toast","An egg poached in whisky sauce","A pickled egg in malt vinegar"]},
+      {"q":"What is black pudding mainly made from?","correct":"Pig's blood, fat and oats","wrong":["Black beans and rice","Liquorice and treacle","Burnt sugar and flour"]},
+      {"q":"Which Welsh dish is cheese sauce on toast, sometimes made with beer?","correct":"Welsh rarebit","wrong":["Glamorgan sausage","Cawl","Laverbread"]},
+      {"q":"What is 'cawl'?","correct":"A Welsh lamb and vegetable stew","wrong":["A Scottish oatcake","An Irish soda bread","A Cornish fish pie"]},
+      {"q":"What is laverbread made from?","correct":"Seaweed","wrong":["Oats","Potatoes","Leeks"]},
+      {"q":"What is 'bara brith'?","correct":"A Welsh fruit loaf","wrong":["A Welsh cheese","A Welsh stew","A Welsh soup"]},
+      {"q":"Which Irish dish is mashed potato mixed with spring onions?","correct":"Champ","wrong":["Colcannon","Boxty","Coddle"]},
+      {"q":"Which Irish dish is mashed potato mixed with cabbage or kale?","correct":"Colcannon","wrong":["Champ","Boxty","Coddle"]},
+      {"q":"Which Irish bread is made with bicarbonate of soda instead of yeast?","correct":"Soda bread","wrong":["Barmbrack","Boxty","Farl"]},
+      {"q":"Which Northern Irish breakfast includes soda farls and potato bread fried together?","correct":"The Ulster fry","wrong":["The full English","The Scottish breakfast","The Welsh breakfast"]},
+      {"q":"Which dish of slow-cooked lamb topped with sliced potatoes is named after a north-west English county?","correct":"Lancashire hotpot","wrong":["Scouse","Pan haggerty","Panackelty"]},
+      {"q":"Which stew gave Liverpool people their nickname?","correct":"Scouse","wrong":["Hotpot","Cawl","Lobby"]},
+      {"q":"Which Derbyshire town gives its name to a pudding and tart with almond and jam?","correct":"Bakewell","wrong":["Matlock","Buxton","Ashbourne"]},
+      {"q":"Which Lancashire town gives its name to a round cake of flaky pastry filled with currants?","correct":"Eccles","wrong":["Chorley","Bury","Wigan"]},
+      {"q":"Which Lancashire town is famous for black pudding?","correct":"Bury","wrong":["Eccles","Wigan","Bolton"]},
+      {"q":"Which Cumbrian sausage is sold in a long coil?","correct":"The Cumberland sausage","wrong":["The Lincolnshire sausage","The Glamorgan sausage","The Toulouse sausage"]},
+      {"q":"Which Leicestershire town is famous for pork pies?","correct":"Melton Mowbray","wrong":["Market Harborough","Loughborough","Hinckley"]},
+      {"q":"Which cheese can only be made in Derbyshire, Leicestershire and Nottinghamshire?","correct":"Stilton","wrong":["Red Leicester","Wensleydale","Cheshire"]},
+      {"q":"Which cheese, a favourite of Wallace and Gromit, comes from a Yorkshire dale?","correct":"Wensleydale","wrong":["Swaledale","Cheddar","Stilton"]},
+      {"q":"Which Gloucestershire cheese is chased down a steep hill in a famous race?","correct":"Double Gloucester","wrong":["Single Gloucester","Stinking Bishop","Cheddar"]},
+      {"q":"Which Cornish cheese is wrapped in nettle leaves?","correct":"Cornish Yarg","wrong":["Cornish Blue","Stinking Bishop","Cornish Brie"]},
+      {"q":"Which pungent Gloucestershire cheese is washed in perry?","correct":"Stinking Bishop","wrong":["Cornish Yarg","Shropshire Blue","Lincolnshire Poacher"]},
+      {"q":"What is perry made from?","correct":"Pears","wrong":["Apples","Plums","Honey"]},
+      {"q":"What is mead made from?","correct":"Honey","wrong":["Apples","Barley","Grapes"]},
+      {"q":"What is the main grain used to make whisky in Scotland?","correct":"Barley","wrong":["Wheat","Rye","Oats"]},
+      {"q":"Which grain is used to make most beer?","correct":"Barley","wrong":["Rice","Oats","Corn"]},
+      {"q":"Which plant gives beer its bitter flavour?","correct":"Hops","wrong":["Barley","Malt","Yeast"]},
+      {"q":"What is the main ingredient of vodka, traditionally?","correct":"Grain or potatoes","wrong":["Grapes or raisins","Apples or pears","Sugar cane or honey"]},
+      {"q":"What is rum made from?","correct":"Sugar cane or molasses","wrong":["Potatoes or rye","Barley or oats","Grapes or plums"]},
+      {"q":"What is tequila made from?","correct":"The blue agave plant","wrong":["The fruit of a cactus","Fermented corn","Sugar cane juice"]},
+      {"q":"Which berry gives gin its main flavour?","correct":"Juniper","wrong":["Sloe","Elderberry","Blackcurrant"]},
+      {"q":"Which fortified wine comes from Portugal's Douro valley?","correct":"Port","wrong":["Sherry","Madeira","Marsala"]},
+      {"q":"Which fortified wine comes from the Jerez area of Spain?","correct":"Sherry","wrong":["Port","Madeira","Cava"]},
+      {"q":"Which sparkling wine comes from a region in north-east France?","correct":"Champagne","wrong":["Prosecco","Cava","Asti"]},
+      {"q":"Which sparkling wine comes from north-east Italy?","correct":"Prosecco","wrong":["Champagne","Cava","Lambrusco"]},
+      {"q":"Which Spanish sparkling wine is made mainly in Catalonia?","correct":"Cava","wrong":["Prosecco","Champagne","Sekt"]},
+      {"q":"Which French brandy is named after a town in western France?","correct":"Cognac","wrong":["Armagnac","Calvados","Chartreuse"]},
+      {"q":"Which apple brandy comes from Normandy?","correct":"Calvados","wrong":["Cognac","Armagnac","Kirsch"]},
+      {"q":"Which Japanese alcoholic drink is made from rice?","correct":"Sake","wrong":["Soju","Baijiu","Umeshu"]},
+      {"q":"Which Greek spirit flavoured with aniseed turns cloudy with water?","correct":"Ouzo","wrong":["Metaxa","Grappa","Limoncello"]},
+      {"q":"Which Italian spirit is made from grape skins left over from winemaking?","correct":"Grappa","wrong":["Limoncello","Amaretto","Sambuca"]},
+      {"q":"Which Italian liqueur is made from lemon zest?","correct":"Limoncello","wrong":["Amaretto","Sambuca","Frangelico"]},
+      {"q":"Which coffee is a shot of espresso topped with frothy milk and foam?","correct":"A cappuccino","wrong":["An americano","A macchiato","An espresso"]},
+      {"q":"Which coffee is espresso diluted with hot water?","correct":"An americano","wrong":["A latte","A cappuccino","A flat white"]},
+      {"q":"Which coffee is espresso with a lot of steamed milk?","correct":"A latte","wrong":["An americano","A ristretto","A cortado"]},
+      {"q":"Which coffee drink is espresso 'stained' with a small dash of milk foam?","correct":"A macchiato","wrong":["A latte","A mocha","A flat white"]},
+      {"q":"Which coffee contains chocolate?","correct":"A mocha","wrong":["A latte","An americano","A cortado"]},
+      {"q":"Which coffee drink originated in Australia or New Zealand?","correct":"The flat white","wrong":["The cappuccino","The latte","The mocha"]},
+      {"q":"Which Italian dessert is made with coffee-soaked sponge fingers and mascarpone?","correct":"Tiramisu","wrong":["Panna cotta","Zabaglione","Cannoli"]},
+      {"q":"Which Italian dessert means 'cooked cream'?","correct":"Panna cotta","wrong":["Tiramisu","Gelato","Semifreddo"]},
+      {"q":"Which French dessert has a hard caramelised sugar top?","correct":"Creme brulee","wrong":["Creme caramel","Mousse au chocolat","Clafoutis"]},
+      {"q":"Which French upside-down apple tart is named after two sisters?","correct":"Tarte Tatin","wrong":["Clafoutis","Galette","Mille-feuille"]},
+      {"q":"Which French dessert is a light baked egg dish that rises in the oven?","correct":"A souffle","wrong":["A clafoutis","A meringue","A crepe"]},
+      {"q":"Which French pastry has many thin layers with cream, and its name means 'a thousand leaves'?","correct":"Mille-feuille","wrong":["Croissant","Eclair","Profiterole"]},
+      {"q":"What are profiteroles made from?","correct":"Choux pastry","wrong":["Puff pastry","Filo pastry","Shortcrust pastry"]},
+      {"q":"Which thin pastry is used to make baklava?","correct":"Filo","wrong":["Choux","Puff","Shortcrust"]},
+      {"q":"Which tall cone of profiteroles is a French wedding cake?","correct":"A croquembouche","wrong":["A gateau","A Paris-Brest","A Saint-Honore"]},
+      {"q":"Which French dish is a stew of beef cooked in red wine from Burgundy?","correct":"Boeuf bourguignon","wrong":["Coq au vin","Cassoulet","Ratatouille"]},
+      {"q":"Which French dish is chicken cooked in wine?","correct":"Coq au vin","wrong":["Boeuf bourguignon","Bouillabaisse","Cassoulet"]},
+      {"q":"Which Provencal fish stew comes from Marseille?","correct":"Bouillabaisse","wrong":["Cassoulet","Ratatouille","Pot-au-feu"]},
+      {"q":"Which French vegetable stew includes aubergine, courgette and peppers?","correct":"Ratatouille","wrong":["Cassoulet","Bouillabaisse","Pot-au-feu"]},
+      {"q":"Which French dish is a slow-cooked casserole of beans, sausage and duck?","correct":"Cassoulet","wrong":["Ratatouille","Coq au vin","Bouillabaisse"]},
+      {"q":"Which French snails dish is served with garlic butter?","correct":"Escargots","wrong":["Cuisses de grenouille","Foie gras","Moules"]},
+      {"q":"What are 'moules frites'?","correct":"Mussels and chips","wrong":["Snails and bread","Frogs' legs and chips","Fish and chips"]},
+      {"q":"Which Swiss dish involves dipping bread into melted cheese in a pot?","correct":"Fondue","wrong":["Raclette","Rosti","Croque monsieur"]},
+      {"q":"Which Swiss potato dish is like a large hash brown?","correct":"Rosti","wrong":["Raclette","Fondue","Spaetzle"]},
+      {"q":"Which German dish is fermented cabbage?","correct":"Sauerkraut","wrong":["Bratwurst","Schnitzel","Strudel"]},
+      {"q":"Which Austrian dish is a breaded and fried veal cutlet?","correct":"Wiener schnitzel","wrong":["Goulash","Sachertorte","Strudel"]},
+      {"q":"Which Viennese chocolate cake has apricot jam inside?","correct":"Sachertorte","wrong":["Black Forest gateau","Linzer torte","Dobos torte"]},
+      {"q":"Which German cake has chocolate sponge, cherries and cream?","correct":"Black Forest gateau","wrong":["Sachertorte","Stollen","Strudel"]},
+      {"q":"Which German fruit bread is eaten at Christmas?","correct":"Stollen","wrong":["Panettone","Lebkuchen","Pumpernickel"]},
+      {"q":"Which Italian sweet bread is eaten at Christmas?","correct":"Panettone","wrong":["Stollen","Focaccia","Ciabatta"]},
+      {"q":"Which Hungarian stew is flavoured with paprika?","correct":"Goulash","wrong":["Borscht","Pierogi","Stroganoff"]},
+      {"q":"Which Eastern European soup is made from beetroot?","correct":"Borscht","wrong":["Goulash","Gazpacho","Solyanka"]},
+      {"q":"Which Polish dumplings are filled with potato, cheese or meat?","correct":"Pierogi","wrong":["Blini","Gnocchi","Momos"]},
+      {"q":"Which Russian dish is beef in a sour cream sauce?","correct":"Beef Stroganoff","wrong":["Goulash","Chicken Kiev","Borscht"]},
+      {"q":"Which dish is chicken breast stuffed with garlic butter and breaded?","correct":"Chicken Kiev","wrong":["Chicken parmo","Chicken cordon bleu","Coronation chicken"]},
+      {"q":"Which cold chicken dish in a curry mayonnaise was created for the 1953 coronation?","correct":"Coronation chicken","wrong":["Chicken tikka masala","Chicken Kiev","Chicken a la King"]},
+      {"q":"Which dish was voted Britain's favourite and may have been created in Glasgow?","correct":"Chicken tikka masala","wrong":["Chicken korma","Lamb rogan josh","Chicken balti"]},
+      {"q":"Which Birmingham curry is named after the steel bowl it is cooked in?","correct":"Balti","wrong":["Korma","Madras","Jalfrezi"]},
+      {"q":"Which is usually the mildest of these curries?","correct":"Korma","wrong":["Vindaloo","Phaal","Madras"]},
+      {"q":"Which is usually the hottest of these curries?","correct":"Phaal","wrong":["Korma","Pasanda","Dhansak"]},
+      {"q":"Which curry comes from a Portuguese dish of meat in wine and garlic?","correct":"Vindaloo","wrong":["Korma","Balti","Bhuna"]},
+      {"q":"Which Indian dish is made from lentils?","correct":"Dal","wrong":["Paneer","Raita","Kulfi"]},
+      {"q":"What is paneer?","correct":"An Indian cheese","wrong":["An Indian bread","A spice mix","A rice dish"]},
+      {"q":"What is raita?","correct":"A yoghurt dip with cucumber","wrong":["A spicy mango pickle","A type of flatbread","A thick lentil soup"]},
+      {"q":"What is a bhaji, as in onion bhaji?","correct":"A spiced fried fritter","wrong":["A soft flatbread","A thick curry sauce","A syrupy sweet"]},
+      {"q":"What is garam masala?","correct":"A blend of spices","wrong":["A type of rice","A cheese","A bread"]},
+      {"q":"Which Indian ice cream is denser and often flavoured with pistachio or cardamom?","correct":"Kulfi","wrong":["Lassi","Halwa","Jalebi"]},
+      {"q":"What is lassi?","correct":"A yoghurt drink","wrong":["A spiced tea","A rice pudding","A pickle"]},
+      {"q":"What is chai in India?","correct":"Spiced milky tea","wrong":["Strong coffee","A milk sweet","A flatbread"]},
+      {"q":"Which Japanese dish is raw fish served without rice?","correct":"Sashimi","wrong":["Sushi","Tempura","Teriyaki"]},
+      {"q":"What is tempura?","correct":"Seafood or vegetables fried in a light batter","wrong":["Raw fish served on rice","Chicken grilled on skewers","A clear noodle soup"]},
+      {"q":"Which Japanese noodle soup has become hugely popular worldwide?","correct":"Ramen","wrong":["Pho","Laksa","Udon only"]},
+      {"q":"Which thick Japanese noodles are made from wheat flour?","correct":"Udon","wrong":["Soba","Ramen","Somen"]},
+      {"q":"Which Japanese noodles are made from buckwheat?","correct":"Soba","wrong":["Udon","Ramen","Rice noodles"]},
+      {"q":"What is the green paste served with sushi?","correct":"Wasabi","wrong":["Pesto","Matcha","Mint sauce"]},
+      {"q":"What is pickled ginger served with sushi called?","correct":"Gari","wrong":["Nori","Miso","Wasabi"]},
+      {"q":"What is nori?","correct":"Dried seaweed used to wrap sushi","wrong":["A dark soy dipping sauce","A sweet rice wine","A clear fish soup"]},
+      {"q":"What is miso made from?","correct":"Fermented soybeans","wrong":["Dried seaweed","Rice flour","Fermented fish"]},
+      {"q":"What is tofu made from?","correct":"Soya bean curd","wrong":["Rice","Coconut","Wheat gluten"]},
+      {"q":"What is matcha?","correct":"Powdered green tea","wrong":["A rice wine","A fish sauce","A type of noodle"]},
+      {"q":"Which Japanese dish is chicken grilled on skewers?","correct":"Yakitori","wrong":["Teriyaki","Tonkatsu","Gyoza"]},
+      {"q":"What is a Japanese dumpling, often pan-fried, called?","correct":"Gyoza","wrong":["Dim sum","Wonton","Bao"]},
+      {"q":"What is the Korean dish of spicy fermented cabbage?","correct":"Kimchi","wrong":["Bulgogi","Bibimbap","Japchae"]},
+      {"q":"Which Korean dish is a bowl of rice topped with vegetables, meat and an egg?","correct":"Bibimbap","wrong":["Bulgogi","Kimchi","Tteokbokki"]},
+      {"q":"Which Korean dish is marinated grilled beef?","correct":"Bulgogi","wrong":["Bibimbap","Galbi-jjim","Kimchi"]},
+      {"q":"Which Chinese tradition involves small dishes like dumplings served with tea?","correct":"Dim sum","wrong":["Hot pot","Peking duck","Chop suey"]},
+      {"q":"Which Chinese dish is crispy roasted duck served with pancakes and hoisin sauce?","correct":"Peking duck","wrong":["Kung pao chicken","Char siu","Sweet and sour pork"]},
+      {"q":"Which Chinese dish is spicy chicken stir-fried with peanuts and chillies?","correct":"Kung pao chicken","wrong":["Sweet and sour chicken","Chow mein","Lemon chicken"]},
+      {"q":"What does 'chow mein' mean?","correct":"Fried noodles","wrong":["Fried rice","Spicy pork","Sweet sauce"]},
+      {"q":"Which Chinese pork is red-glazed and barbecued?","correct":"Char siu","wrong":["Kung pao","Mapo tofu","Chop suey"]},
+      {"q":"Which spicy tofu dish comes from Sichuan?","correct":"Mapo tofu","wrong":["Char siu","Egg foo young","Chow mein"]},
+      {"q":"Which spice from Sichuan causes a tingling, numbing feeling?","correct":"Sichuan pepper","wrong":["Star anise","Cinnamon","Cloves"]},
+      {"q":"Which star-shaped spice is used in Chinese five-spice?","correct":"Star anise","wrong":["Clove","Cardamom","Nutmeg"]},
+      {"q":"Which Thai soup is hot and sour, often with prawns?","correct":"Tom yum","wrong":["Tom kha","Pho","Laksa"]},
+      {"q":"Which Thai stir-fried noodle dish is a national favourite?","correct":"Pad Thai","wrong":["Pho","Laksa","Nasi goreng"]},
+      {"q":"Which Thai curry is the hottest of the main three colours, usually?","correct":"Green curry","wrong":["Red curry","Yellow curry","Massaman"]},
+      {"q":"Which Vietnamese noodle soup is usually made with beef or chicken?","correct":"Pho","wrong":["Ramen","Laksa","Tom yum"]},
+      {"q":"What is a banh mi?","correct":"A Vietnamese baguette sandwich","wrong":["A Thai papaya salad","A sticky rice cake","A beef noodle soup"]},
+      {"q":"Which spicy coconut noodle soup comes from Malaysia and Singapore?","correct":"Laksa","wrong":["Pho","Ramen","Tom kha"]},
+      {"q":"What does 'nasi goreng' mean in Indonesian and Malay?","correct":"Fried rice","wrong":["Fried noodles","Chicken satay","Coconut soup"]},
+      {"q":"What is satay?","correct":"Grilled meat skewers with peanut sauce","wrong":["A coconut noodle soup","A fried rice dish","A sweet coconut drink"]},
+      {"q":"Which Filipino dish is meat stewed in vinegar, soy sauce and garlic?","correct":"Adobo","wrong":["Sinigang","Lechon","Lumpia"]},
+      {"q":"Which Mexican sauce is made from chillies, chocolate and spices?","correct":"Mole","wrong":["Salsa","Guacamole","Pico de gallo"]},
+      {"q":"What are tortillas usually made from?","correct":"Maize or wheat flour","wrong":["Rice flour","Mashed potato","Rolled oats"]},
+      {"q":"Which Mexican dish is a tortilla filled with cheese and folded, then grilled?","correct":"A quesadilla","wrong":["An enchilada","A tostada","A burrito"]},
+      {"q":"Which Mexican dish is a tortilla rolled around a filling and covered in sauce?","correct":"An enchilada","wrong":["A taco","A quesadilla","A tostada"]},
+      {"q":"Which Mexican dish is masa dough steamed in a corn husk?","correct":"A tamale","wrong":["A tostada","A chimichanga","A fajita"]},
+      {"q":"Which South American dish is raw fish 'cooked' in lime juice?","correct":"Ceviche","wrong":["Empanada","Feijoada","Arepa"]},
+      {"q":"Which country is famous for ceviche as its national dish?","correct":"Peru","wrong":["Mexico","Brazil","Spain"]},
+      {"q":"Which Brazilian dish is a black bean stew with pork?","correct":"Feijoada","wrong":["Moqueca","Churrasco","Empanada"]},
+      {"q":"What is churrasco in Brazil?","correct":"Barbecued meat","wrong":["A cocktail","A bean stew","A sweet pastry"]},
+      {"q":"Which Brazilian cocktail is made with cachaca, lime and sugar?","correct":"Caipirinha","wrong":["Mojito","Pisco sour","Margarita"]},
+      {"q":"Which Cuban cocktail is made with rum, mint, lime and soda?","correct":"Mojito","wrong":["Caipirinha","Daiquiri","Pina colada"]},
+      {"q":"Which cocktail is made with tequila, lime and orange liqueur?","correct":"Margarita","wrong":["Mojito","Cosmopolitan","Daiquiri"]},
+      {"q":"Which cocktail is made with rum, coconut cream and pineapple juice?","correct":"Pina colada","wrong":["Mai tai","Mojito","Daiquiri"]},
+      {"q":"Which cocktail is made with vodka, tomato juice and spices?","correct":"Bloody Mary","wrong":["Screwdriver","Cosmopolitan","Moscow mule"]},
+      {"q":"Which cocktail is vodka and orange juice?","correct":"Screwdriver","wrong":["Bloody Mary","Harvey Wallbanger","Moscow mule"]},
+      {"q":"Which drink is traditionally served in a copper mug, with vodka and ginger beer?","correct":"Moscow mule","wrong":["Mojito","Dark and stormy","Cuba libre"]},
+      {"q":"Which cocktail is gin and vermouth, often with an olive?","correct":"Martini","wrong":["Negroni","Manhattan","Gimlet"]},
+      {"q":"Which Italian cocktail is gin, vermouth and Campari?","correct":"Negroni","wrong":["Martini","Aperol spritz","Bellini"]},
+      {"q":"Which cocktail from Venice is Prosecco and peach puree?","correct":"Bellini","wrong":["Mimosa","Spritz","Rossini"]},
+      {"q":"Which drink is Champagne and orange juice?","correct":"Mimosa","wrong":["Bellini","Kir royale","Sangria"]},
+      {"q":"Which Spanish drink is red wine with chopped fruit?","correct":"Sangria","wrong":["Sherry","Tinto de verano","Kalimotxo"]},
+      {"q":"Which dish of slow-cooked shredded pork is a Southern US barbecue favourite?","correct":"Pulled pork","wrong":["Chili con carne","Gumbo","Meatloaf"]},
+      {"q":"Which Louisiana stew is thickened with okra or a dark roux?","correct":"Gumbo","wrong":["Jambalaya","Chowder","Chili"]},
+      {"q":"Which Louisiana rice dish is similar to paella?","correct":"Jambalaya","wrong":["Gumbo","Etouffee","Grits"]},
+      {"q":"Which thick soup from New England is made with clams?","correct":"Clam chowder","wrong":["Gumbo","Bisque","Vichyssoise"]},
+      {"q":"Which American pie is made with pumpkin and eaten at Thanksgiving?","correct":"Pumpkin pie","wrong":["Pecan pie","Key lime pie","Apple pie"]},
+      {"q":"Which Florida pie is made with small limes?","correct":"Key lime pie","wrong":["Pumpkin pie","Pecan pie","Lemon meringue pie"]},
+      {"q":"What is the Canadian dish of chips with cheese curds and gravy?","correct":"Poutine","wrong":["Tourtiere","Nanaimo bars","Bannock"]},
+      {"q":"What is hummus traditionally flavoured with besides chickpeas?","correct":"Tahini, lemon and garlic","wrong":["Cream and cheese","Tomato and basil","Mint and yoghurt"]},
+      {"q":"What is tahini made from?","correct":"Sesame seeds","wrong":["Chickpeas","Peanuts","Olives"]},
+      {"q":"What is falafel made from?","correct":"Chickpeas or broad beans","wrong":["Minced lamb","Rice and egg","Potato and onion"]},
+      {"q":"What is tabbouleh?","correct":"A salad of bulgur wheat, parsley and tomato","wrong":["A slow-cooked lamb stew","A dip of chickpeas and tahini","A dip of smoked aubergine"]},
+      {"q":"What is baba ganoush made from?","correct":"Smoked aubergine","wrong":["Chickpeas and tahini","Yoghurt and cucumber","Courgette and mint"]},
+      {"q":"What is a tagine?","correct":"A North African stew and the pot it is cooked in","wrong":["A flat Moroccan bread","A blend of hot spices","A sweet mint tea"]},
+      {"q":"What is couscous made from?","correct":"Semolina","wrong":["Rice","Corn","Lentils"]},
+      {"q":"What is harissa?","correct":"A hot chilli paste from North Africa","wrong":["A sweet honey pastry","A cool yoghurt dip","A flat semolina bread"]},
+      {"q":"What is shakshuka?","correct":"Eggs poached in a spicy tomato sauce","wrong":["A grilled lamb kebab","A sweet rice pudding","A thick lentil soup"]},
+      {"q":"What is halloumi?","correct":"A firm cheese from Cyprus that can be grilled","wrong":["A Greek honey dessert","A Turkish sesame bread","A dip of yoghurt and garlic"]},
+      {"q":"What is tzatziki made from?","correct":"Yoghurt, cucumber and garlic","wrong":["Chickpeas and tahini","Aubergine","Tomato and onion"]},
+      {"q":"What is the Greek dish of grilled meat on skewers called?","correct":"Souvlaki","wrong":["Moussaka","Spanakopita","Dolmades"]},
+      {"q":"What are dolmades?","correct":"Vine leaves stuffed with rice","wrong":["Lamb meatballs in sauce","Fried slices of cheese","Spinach and feta pies"]},
+      {"q":"What is Turkish delight called in Turkey?","correct":"Lokum","wrong":["Baklava","Halva","Kunefe"]},
+      {"q":"What does 'al dente' mean when cooking pasta?","correct":"Firm to the bite","wrong":["Very soft","With garlic","In tomato sauce"]},
+      {"q":"What does it mean to 'blanch' vegetables?","correct":"Briefly boil then cool them in cold water","wrong":["Fry them until they are brown","Roast them slowly in the oven","Freeze them while still raw"]},
+      {"q":"What does it mean to 'saute' food?","correct":"Fry it quickly in a little fat","wrong":["Boil it in plenty of water","Bake it slowly in a low oven","Steam it over a pan"]},
+      {"q":"What does it mean to 'marinate' food?","correct":"Soak it in a flavoured liquid before cooking","wrong":["Boil it in salted water","Fry it quickly in butter","Smoke it over wood chips"]},
+      {"q":"What does it mean to 'fold' an ingredient into a mixture?","correct":"Gently mix it in to keep air in","wrong":["Beat it in hard and fast","Freeze it before adding","Melt it in a pan first"]},
+      {"q":"What is a 'roux'?","correct":"Flour cooked in fat, used to thicken sauces","wrong":["A clear soup made from bones","A light French pastry","A blend of dried spices"]},
+      {"q":"Which French mother sauce is made from milk thickened with a roux?","correct":"Bechamel","wrong":["Hollandaise","Veloute","Espagnole"]},
+      {"q":"Which sauce is made from egg yolks, butter and lemon, and served on eggs Benedict?","correct":"Hollandaise","wrong":["Bechamel","Bearnaise","Aioli"]},
+      {"q":"Which garlic mayonnaise comes from Provence?","correct":"Aioli","wrong":["Remoulade","Tartare sauce","Bearnaise"]},
+      {"q":"What is pesto traditionally made from?","correct":"Basil, pine nuts, garlic, Parmesan and olive oil","wrong":["Tomatoes, chilli and garlic","Spinach, cream and nutmeg","Mint, vinegar and sugar"]},
+      {"q":"Which Italian city is pesto from?","correct":"Genoa","wrong":["Naples","Rome","Bologna"]},
+      {"q":"Which Italian city gives its name to a meat sauce for pasta?","correct":"Bologna","wrong":["Naples","Milan","Florence"]},
+      {"q":"Which pasta is shaped like little ears?","correct":"Orecchiette","wrong":["Farfalle","Fusilli","Penne"]},
+      {"q":"Which pasta is shaped like bow ties or butterflies?","correct":"Farfalle","wrong":["Orecchiette","Rigatoni","Conchiglie"]},
+      {"q":"Which pasta is shaped like corkscrews?","correct":"Fusilli","wrong":["Penne","Farfalle","Linguine"]},
+      {"q":"Which pasta is shaped like tubes cut at an angle, like quills?","correct":"Penne","wrong":["Rigatoni","Fusilli","Macaroni"]},
+      {"q":"Which pasta dish is made with eggs, cheese, black pepper and cured pork?","correct":"Carbonara","wrong":["Bolognese","Arrabbiata","Puttanesca"]},
+      {"q":"What does 'arrabbiata' sauce mean, describing its chilli heat?","correct":"Angry","wrong":["Happy","Spicy cook","Burnt"]},
+      {"q":"Which nutrient is the body's main source of energy, found in bread and pasta?","correct":"Carbohydrate","wrong":["Protein","Fibre","Vitamin C"]},
+      {"q":"Which nutrient is needed for growth and repair, found in meat, fish and beans?","correct":"Protein","wrong":["Carbohydrate","Fat","Fibre"]},
+      {"q":"Which vitamin do we get from sunlight on our skin?","correct":"Vitamin D","wrong":["Vitamin C","Vitamin A","Vitamin B12"]},
+      {"q":"Which disease of sailors was caused by a lack of vitamin C?","correct":"Scurvy","wrong":["Rickets","Beriberi","Pellagra"]},
+      {"q":"Which mineral in milk helps build strong bones and teeth?","correct":"Calcium","wrong":["Iron","Zinc","Sodium"]},
+      {"q":"Which mineral, found in red meat and spinach, helps carry oxygen in the blood?","correct":"Iron","wrong":["Calcium","Potassium","Magnesium"]}
+    ],
+    3:[
+      {"q":"Where did the potato originally come from?","correct":"The Andes of South America","wrong":["The west of Ireland","The Great Plains of North America","The river valleys of China"]},
+      {"q":"Who is popularly credited with bringing the potato to England in the 1580s, though it is disputed?","correct":"Walter Raleigh","wrong":["Francis Drake","John Hawkins","Christopher Columbus"]},
+      {"q":"What caused the Irish Great Famine of the 1840s?","correct":"Potato blight","wrong":["A drought","A locust plague","Wheat rust"]},
+      {"q":"Which continent did tomatoes, chillies, chocolate and maize all come from?","correct":"The Americas","wrong":["Asia","Africa","Europe"]},
+      {"q":"Where did tea drinking originate?","correct":"China","wrong":["India","Japan","Britain"]},
+      {"q":"Which Portuguese queen of Charles II helped make tea fashionable in England?","correct":"Catherine of Braganza","wrong":["Henrietta Maria","Mary of Modena","Anne of Denmark"]},
+      {"q":"Which duchess is credited with inventing afternoon tea in the 1840s?","correct":"Anna, Duchess of Bedford","wrong":["Georgiana, Duchess of Devonshire","The Duchess of Kent","The Duchess of Sutherland"]},
+      {"q":"In which country is coffee thought to have been discovered, according to legend by a goatherd named Kaldi?","correct":"Ethiopia","wrong":["Yemen","Brazil","Turkey"]},
+      {"q":"Which Yemeni port gave its name to a type of coffee and chocolate drink?","correct":"Mocha","wrong":["Aden","Sana'a","Hodeidah"]},
+      {"q":"Which ancient people drank chocolate as a bitter spiced drink?","correct":"The Aztecs and Maya","wrong":["The Romans","The Vikings","The Egyptians"]},
+      {"q":"What did the Aztecs use cocoa beans as, besides food?","correct":"Money","wrong":["Medicine only","Building material","Paint only"]},
+      {"q":"Which company made the first solid chocolate bar in 1847?","correct":"J. S. Fry & Sons","wrong":["Cadbury","Rowntree's","Nestle"]},
+      {"q":"Which Swiss chocolatier invented milk chocolate with Henri Nestle in 1875?","correct":"Daniel Peter","wrong":["Rodolphe Lindt","Philippe Suchard","Jean Tobler"]},
+      {"q":"Which Swiss chocolatier invented conching, making chocolate smooth?","correct":"Rodolphe Lindt","wrong":["Daniel Peter","Henri Nestle","Theodor Tobler"]},
+      {"q":"In which city was the Cadbury company founded?","correct":"Birmingham","wrong":["York","Bristol","Bournville only"]},
+      {"q":"Which York company made KitKat and Fruit Pastilles originally?","correct":"Rowntree's","wrong":["Terry's","Cadbury","Mackintosh's"]},
+      {"q":"Which York company was famous for its Chocolate Orange?","correct":"Terry's","wrong":["Rowntree's","Cadbury","Thorntons"]},
+      {"q":"Which chocolate bar was originally called 'Rowntree's Chocolate Crisp'?","correct":"KitKat","wrong":["Twix","Wispa","Crunchie"]},
+      {"q":"What was the Snickers bar called in the UK until 1990?","correct":"Marathon","wrong":["Opal Fruits","Treets","Spangles"]},
+      {"q":"What were Starburst sweets called in the UK until 1998?","correct":"Opal Fruits","wrong":["Spangles","Marathon","Treets"]},
+      {"q":"Which country produces the most cocoa beans?","correct":"Ivory Coast","wrong":["Ghana","Brazil","Indonesia"]},
+      {"q":"Which country produces the most coffee?","correct":"Brazil","wrong":["Colombia","Vietnam","Ethiopia"]},
+      {"q":"Which country produces the most tea?","correct":"China","wrong":["India","Kenya","Sri Lanka"]},
+      {"q":"Which Indian region in the Himalayan foothills gives its name to a fine tea, the 'champagne of teas'?","correct":"Darjeeling","wrong":["Assam","Nilgiri","Kerala"]},
+      {"q":"Which tea is smoked over pine fires?","correct":"Lapsang souchong","wrong":["Oolong","Darjeeling","Assam"]},
+      {"q":"Which tea is partially oxidised, between green and black tea?","correct":"Oolong","wrong":["Lapsang souchong","Rooibos","Sencha"]},
+      {"q":"Which 'tea' from South Africa is not true tea but a red bush?","correct":"Rooibos","wrong":["Oolong","Chai","Mate"]},
+      {"q":"Which South American drink is sipped from a gourd through a metal straw?","correct":"Yerba mate","wrong":["Rooibos","Chai","Horchata"]},
+      {"q":"What is the world's most expensive spice by weight?","correct":"Saffron","wrong":["Vanilla","Cardamom","Black pepper"]},
+      {"q":"Which spice is the second most expensive in the world, from an orchid?","correct":"Vanilla","wrong":["Saffron","Cardamom","Cinnamon"]},
+      {"q":"Which country produces most of the world's vanilla?","correct":"Madagascar","wrong":["Mexico","Indonesia","Tahiti"]},
+      {"q":"Which spice was once so valuable it was called 'black gold'?","correct":"Black pepper","wrong":["Saffron","Nutmeg","Cloves"]},
+      {"q":"Which Indonesian islands were known as the Spice Islands?","correct":"The Moluccas (Maluku)","wrong":["Java and Bali","Sumatra","The Philippines"]},
+      {"q":"Which island did the Dutch keep in exchange for giving Manhattan to the English, for its nutmeg?","correct":"Run","wrong":["Ternate","Banda Neira","Ambon"]},
+      {"q":"Which spice gives curry its yellow colour?","correct":"Turmeric","wrong":["Saffron","Cumin","Paprika"]},
+      {"q":"What is the active compound that makes chillies hot?","correct":"Capsaicin","wrong":["Piperine","Caffeine","Tannin"]},
+      {"q":"What compound in black pepper makes it spicy?","correct":"Piperine","wrong":["Capsaicin","Allicin","Menthol"]},
+      {"q":"What compound gives garlic its smell when crushed?","correct":"Allicin","wrong":["Capsaicin","Menthol","Gingerol"]},
+      {"q":"What type of compound released by chopped onions makes your eyes water?","correct":"A sulphur compound","wrong":["A sugar","Capsaicin","Caffeine"]},
+      {"q":"What is the fifth basic taste, alongside sweet, sour, salty and bitter?","correct":"Umami","wrong":["Spicy","Fatty","Metallic"]},
+      {"q":"Which Japanese scientist identified umami in 1908?","correct":"Kikunae Ikeda","wrong":["Hideki Yukawa","Shibasaburo Kitasato","Jokichi Takamine"]},
+      {"q":"Which flavour enhancer is the sodium salt of glutamic acid?","correct":"MSG","wrong":["Aspartame","Sucralose","Baking soda"]},
+      {"q":"What is the name for the browning reaction between sugars and proteins when food is cooked?","correct":"The Maillard reaction","wrong":["Caramelisation","Oxidation","Fermentation"]},
+      {"q":"What is the name for the browning of sugar when heated on its own?","correct":"Caramelisation","wrong":["The Maillard reaction","Crystallisation","Emulsification"]},
+      {"q":"What is a mixture of two liquids that do not normally mix, like mayonnaise?","correct":"An emulsion","wrong":["A suspension","A solution","A colloid gel"]},
+      {"q":"What does yeast produce that makes bread rise?","correct":"Carbon dioxide","wrong":["Oxygen","Nitrogen","Steam only"]},
+      {"q":"What is the protein in wheat flour that gives bread dough its stretch?","correct":"Gluten","wrong":["Casein","Albumen","Collagen"]},
+      {"q":"What is the main protein in milk?","correct":"Casein","wrong":["Gluten","Keratin","Albumen"]},
+      {"q":"What is the sugar found naturally in milk?","correct":"Lactose","wrong":["Fructose","Sucrose","Glucose"]},
+      {"q":"What is the sugar found naturally in fruit?","correct":"Fructose","wrong":["Lactose","Maltose","Galactose"]},
+      {"q":"What is ordinary table sugar called chemically?","correct":"Sucrose","wrong":["Glucose","Fructose","Lactose"]},
+      {"q":"What is the bacteria-killing heat treatment of milk named after a French scientist?","correct":"Pasteurisation","wrong":["Homogenisation","Sterilisation","Fermentation"]},
+      {"q":"What process breaks up the fat in milk so cream does not rise to the top?","correct":"Homogenisation","wrong":["Pasteurisation","Separation","Churning"]},
+      {"q":"What is the curdled part of milk used to make cheese, as opposed to the liquid whey?","correct":"Curds","wrong":["Rennet","Casein","Kefir"]},
+      {"q":"What substance, traditionally from calves' stomachs, is used to curdle milk for cheese?","correct":"Rennet","wrong":["Whey","Gelatine","Pectin"]},
+      {"q":"What substance in fruit makes jam set?","correct":"Pectin","wrong":["Gelatine","Agar","Rennet"]},
+      {"q":"What seaweed-based ingredient is a vegetarian alternative to gelatine?","correct":"Agar","wrong":["Pectin","Carrageenan","Xanthan"]},
+      {"q":"What is gelatine usually made from?","correct":"Animal collagen from skin and bones","wrong":["Seaweed","Fruit peel","Soured milk"]},
+      {"q":"Which French scientist invented a method of preserving food in sealed jars for Napoleon's army?","correct":"Nicolas Appert","wrong":["Louis Pasteur","Antoine Lavoisier","Marie-Antoine Careme"]},
+      {"q":"In which country was the tin can for food patented, in 1810?","correct":"England","wrong":["France","The United States","Germany"]},
+      {"q":"Which American invented a method of quick-freezing food after seeing it done in the Arctic?","correct":"Clarence Birdseye","wrong":["Henry Heinz","John Kellogg","Charles Post"]},
+      {"q":"Which brothers invented cornflakes at a sanatorium in Michigan?","correct":"The Kellogg brothers","wrong":["The Post brothers","The Heinz brothers","The Mars brothers"]},
+      {"q":"What number was used in Heinz's famous slogan, though the company had more products?","correct":"57","wrong":["42","99","101"]},
+      {"q":"Which yeast extract spread was invented in Burton upon Trent from brewing leftovers?","correct":"Marmite","wrong":["Bovril","Vegemite","Oxo"]},
+      {"q":"Which beef extract drink was first made for Napoleon III's army?","correct":"Bovril","wrong":["Oxo","Marmite","Horlicks"]},
+      {"q":"In which decade did fish and chips become popular in Britain?","correct":"The 1860s","wrong":["The 1700s","The 1920s","The 1950s"]},
+      {"q":"Which group of immigrants is thought to have brought fried fish to Britain?","correct":"Sephardic Jews from Portugal","wrong":["Italians","Belgians","Huguenots"]},
+      {"q":"Which Indian restaurant opened in London in 1810 as Britain's first?","correct":"The Hindoostane Coffee House","wrong":["Veeraswamy","The Taj","The Bombay Brasserie"]},
+      {"q":"Which is the oldest surviving Indian restaurant in Britain, opened in 1926 on Regent Street?","correct":"Veeraswamy","wrong":["The Hindoostane Coffee House","Dishoom","Tamarind"]},
+      {"q":"Which London restaurant, opened in 1798, is the oldest in the city?","correct":"Rules","wrong":["Simpson's in the Strand","The Ivy","Wiltons"]},
+      {"q":"Which famous chef wrote 'Le Guide Culinaire' in 1903?","correct":"Auguste Escoffier","wrong":["Marie-Antoine Careme","Paul Bocuse","Fernand Point"]},
+      {"q":"Which chef was called 'the king of chefs and the chef of kings' and worked at the Savoy and the Ritz?","correct":"Auguste Escoffier","wrong":["Paul Bocuse","Alexis Soyer","Fernand Point"]},
+      {"q":"Which dessert did Escoffier create for the Australian singer Nellie Melba?","correct":"Peach Melba","wrong":["Baked Alaska","Pavlova","Crepes Suzette"]},
+      {"q":"Which country claims the pavlova, alongside Australia?","correct":"New Zealand","wrong":["Russia","England","South Africa"]},
+      {"q":"Which cookery writer's 1861 'Book of Household Management' became a Victorian classic?","correct":"Isabella Beeton","wrong":["Eliza Acton","Hannah Glasse","Elizabeth David"]},
+      {"q":"Which writer brought Mediterranean cooking to post-war British kitchens in the 1950s?","correct":"Elizabeth David","wrong":["Jane Grigson","Delia Smith","Fanny Cradock"]},
+      {"q":"Which TV cook's 'How to Cook' series in the late 1990s was famous for boosting sales of ingredients?","correct":"Delia Smith","wrong":["Nigella Lawson","Mary Berry","Prue Leith"]},
+      {"q":"Which chef's 'Feed Me Better' campaign aimed to improve school dinners?","correct":"Jamie Oliver","wrong":["Gordon Ramsay","Heston Blumenthal","Hugh Fearnley-Whittingstall"]},
+      {"q":"Which chef is famous for 'molecular gastronomy' at The Fat Duck in Bray?","correct":"Heston Blumenthal","wrong":["Gordon Ramsay","Marco Pierre White","Raymond Blanc"]},
+      {"q":"Who was the first British chef to win three Michelin stars, and the youngest at the time?","correct":"Marco Pierre White","wrong":["Gordon Ramsay","Heston Blumenthal","Michel Roux Jr"]},
+      {"q":"Which brothers ran Le Gavroche, the first UK restaurant to win three Michelin stars?","correct":"Albert and Michel Roux","wrong":["The Galvin brothers","The Hairy Bikers","The Troisgros brothers"]},
+      {"q":"What is the highest number of Michelin stars a restaurant can receive?","correct":"Three","wrong":["Five","Four","Ten"]},
+      {"q":"Which French tyre company publishes the famous restaurant guide?","correct":"Michelin","wrong":["Peugeot","Renault","Citroen"]},
+      {"q":"What is a sommelier?","correct":"A wine waiter","wrong":["A head chef","A pastry chef","A butcher"]},
+      {"q":"What is the head chef of a kitchen called in French?","correct":"Chef de cuisine","wrong":["Sous chef","Commis chef","Chef de partie"]},
+      {"q":"What is the second-in-command in a professional kitchen called?","correct":"The sous chef","wrong":["The chef de partie","The commis","The garde manger"]},
+      {"q":"Which kitchen system of ranks did Escoffier develop?","correct":"The brigade de cuisine","wrong":["The mise en place","The haute cuisine","The service a la russe"]},
+      {"q":"What does 'mise en place' mean in a kitchen?","correct":"Everything prepared in its place before cooking","wrong":["A fixed set menu","The final plating of a dish","The front of the dining room"]},
+      {"q":"What is 'sous vide' cooking?","correct":"Cooking food sealed in a bag in a precisely heated water bath","wrong":["Cooking food under a very hot grill","Cooking food slowly over charcoal","Cooking food in a pressure cooker"]},
+      {"q":"What is a 'bain-marie'?","correct":"A pan of warm water for gentle cooking","wrong":["A type of wood-fired oven","A heavy copper frying pan","A rich butter sauce"]},
+      {"q":"What is 'confit' of duck?","correct":"Duck cooked slowly in its own fat","wrong":["Duck roasted with honey","Duck in orange sauce","Smoked duck"]},
+      {"q":"What is 'foie gras'?","correct":"The fattened liver of a duck or goose","wrong":["Pickled duck eggs","A soft goose cheese","Black truffle paste"]},
+      {"q":"Which fungus is the world's most expensive, sometimes sold for thousands of pounds a kilo?","correct":"The white truffle","wrong":["The morel","The porcini","The black trumpet"]},
+      {"q":"Which Italian region is famous for white truffles?","correct":"Piedmont","wrong":["Tuscany","Sicily","Lombardy"]},
+      {"q":"Which grape is the main variety in red Bordeaux from the Medoc?","correct":"Cabernet Sauvignon","wrong":["Pinot Noir","Syrah","Gamay"]},
+      {"q":"Which grape is used to make red Burgundy?","correct":"Pinot Noir","wrong":["Merlot","Cabernet Sauvignon","Grenache"]},
+      {"q":"Which grape is used to make Beaujolais?","correct":"Gamay","wrong":["Pinot Noir","Merlot","Malbec"]},
+      {"q":"Which grape is used to make white Burgundy, such as Chablis?","correct":"Chardonnay","wrong":["Sauvignon Blanc","Riesling","Chenin Blanc"]},
+      {"q":"Which grape is used to make Sancerre?","correct":"Sauvignon Blanc","wrong":["Chardonnay","Pinot Gris","Viognier"]},
+      {"q":"Which red grape is Argentina most famous for?","correct":"Malbec","wrong":["Carmenere","Tannat","Pinotage"]},
+      {"q":"Which red grape is a South African cross of Pinot Noir and Cinsault?","correct":"Pinotage","wrong":["Malbec","Carmenere","Zinfandel"]},
+      {"q":"Which red grape, thought lost in France, became Chile's signature variety?","correct":"Carmenere","wrong":["Malbec","Tannat","Pinotage"]},
+      {"q":"Which grape is known as Shiraz in Australia?","correct":"Syrah","wrong":["Grenache","Mourvedre","Merlot"]},
+      {"q":"Which grape is the main variety in Chianti?","correct":"Sangiovese","wrong":["Nebbiolo","Barbera","Montepulciano"]},
+      {"q":"Which grape is used to make Barolo and Barbaresco?","correct":"Nebbiolo","wrong":["Sangiovese","Barbera","Dolcetto"]},
+      {"q":"Which grape is the main variety in Rioja?","correct":"Tempranillo","wrong":["Garnacha","Monastrell","Albarino"]},
+      {"q":"Which white grape is New Zealand most famous for, especially from Marlborough?","correct":"Sauvignon Blanc","wrong":["Chardonnay","Riesling","Pinot Gris"]},
+      {"q":"Which three grapes are mainly used in Champagne?","correct":"Chardonnay, Pinot Noir and Pinot Meunier","wrong":["Merlot, Cabernet and Malbec","Riesling, Pinot Gris and Muscat","Syrah, Grenache and Mourvedre"]},
+      {"q":"What does 'blanc de blancs' Champagne mean?","correct":"Made only from white grapes","wrong":["Made only from black grapes","A sweet Champagne","A pink Champagne"]},
+      {"q":"What is the driest common style of Champagne on a label, among these?","correct":"Brut nature","wrong":["Brut","Extra dry","Demi-sec"]},
+      {"q":"Which monk is often, though wrongly, credited with inventing Champagne?","correct":"Dom Perignon","wrong":["Dom Ruinart","Friar Tuck","Brother Cadfael"]},
+      {"q":"What is the study of wine called?","correct":"Oenology","wrong":["Viticulture","Zymurgy","Pomology"]},
+      {"q":"What is the growing of grapes called?","correct":"Viticulture","wrong":["Oenology","Horticulture","Arboriculture"]},
+      {"q":"What is the French term for the combination of soil, climate and site that shapes a wine?","correct":"Terroir","wrong":["Cuvee","Vintage","Appellation"]},
+      {"q":"What does the 'vintage' of a wine refer to?","correct":"The year the grapes were harvested","wrong":["The age of the vineyard","The bottle shape","The grape variety"]},
+      {"q":"Which tiny insect devastated European vineyards in the late 1800s?","correct":"Phylloxera","wrong":["The boll weevil","The Colorado beetle","The locust"]},
+      {"q":"Which noble rot fungus helps make sweet Sauternes?","correct":"Botrytis cinerea","wrong":["Penicillium roqueforti","Saccharomyces","Aspergillus"]},
+      {"q":"Which sweet wine from Hungary is made from grapes affected by noble rot?","correct":"Tokaji","wrong":["Sauternes","Retsina","Marsala"]},
+      {"q":"Which Greek wine is flavoured with pine resin?","correct":"Retsina","wrong":["Tokaji","Ouzo","Vinsanto"]},
+      {"q":"Which wine is made from grapes frozen on the vine, especially in Canada and Germany?","correct":"Ice wine","wrong":["Retsina","Fino","Vin jaune"]},
+      {"q":"Which Portuguese island gives its name to a fortified wine that is deliberately heated?","correct":"Madeira","wrong":["The Azores","Porto Santo","Sao Miguel"]},
+      {"q":"Which Sicilian fortified wine is used in tiramisu and zabaglione?","correct":"Marsala","wrong":["Madeira","Vin Santo","Port"]},
+      {"q":"Which pale, dry style of sherry is served chilled?","correct":"Fino","wrong":["Oloroso","Cream","Pedro Ximenez"]},
+      {"q":"What is the yeast layer that protects fino sherry as it ages called?","correct":"Flor","wrong":["Lees","Must","Solera"]},
+      {"q":"What is the system of fractional blending used to age sherry called?","correct":"The solera","wrong":["The flor","The bodega","The criadera only"]},
+      {"q":"Which beer style originated in Pilsen in the Czech Republic?","correct":"Pilsner","wrong":["Stout","India pale ale","Porter"]},
+      {"q":"Which beer style was originally brewed strong and hoppy to survive the voyage to British India?","correct":"India pale ale","wrong":["Stout","Porter","Mild"]},
+      {"q":"Which dark beer from Dublin is the most famous stout?","correct":"Guinness","wrong":["Murphy's","Beamish","Porter"]},
+      {"q":"Which gas is added to Guinness to give it a creamy head?","correct":"Nitrogen","wrong":["Carbon dioxide only","Oxygen","Helium"]},
+      {"q":"What are Belgian beers brewed by monks in monasteries called?","correct":"Trappist beers","wrong":["Lambics","Saisons","Dubbels only"]},
+      {"q":"Which Belgian beer is spontaneously fermented with wild yeasts?","correct":"Lambic","wrong":["Pilsner","Stout","Lager"]},
+      {"q":"Which Belgian beer is flavoured with cherries?","correct":"Kriek","wrong":["Gueuze","Framboise","Witbier"]},
+      {"q":"What does the German word 'lager' mean?","correct":"To store","wrong":["To brew","Golden","Cold"]},
+      {"q":"What is the German beer purity law of 1516 called?","correct":"The Reinheitsgebot","wrong":["The Oktoberfest","The Weissbier","The Biergarten"]},
+      {"q":"Which three ingredients only were allowed in the original 1516 German purity law?","correct":"Water, barley and hops","wrong":["Water, wheat and yeast","Barley, hops and sugar","Water, malt and honey"]},
+      {"q":"What is the name for a beer served at cellar temperature without added gas in British pubs?","correct":"Real ale","wrong":["Lager","Keg bitter","Shandy"]},
+      {"q":"What is a 'shandy'?","correct":"Beer mixed with lemonade","wrong":["Beer mixed with cider","Gin and tonic","Cider and blackcurrant"]},
+      {"q":"What is a 'snakebite'?","correct":"Lager mixed with cider","wrong":["Gin and lime","Beer and lemonade","Whisky and ginger"]},
+      {"q":"How many millilitres of pure alcohol make one UK unit of alcohol?","correct":"10","wrong":["25","5","20"]},
+      {"q":"How much is a British pint in millilitres, approximately?","correct":"568","wrong":["500","473","600"]},
+      {"q":"What is a 'dram' in Scotland?","correct":"A small measure of whisky","wrong":["A pint of beer","A large glass of wine","A slice of fruit cake"]},
+      {"q":"What is the difference between Scotch 'whisky' and Irish 'whiskey' in spelling?","correct":"Irish and American usually add an 'e'","wrong":["Scotch adds an 'e'","There is no difference","Only Japanese adds an 'e'"]},
+      {"q":"How long must Scotch whisky be aged by law, at least?","correct":"Three years","wrong":["One year","Five years","Ten years"]},
+      {"q":"What is a 'single malt' Scotch?","correct":"Malt whisky from a single distillery","wrong":["Whisky from one cask","Whisky from one year","Whisky with no water added"]},
+      {"q":"Which Scottish island is famous for peaty, smoky whiskies such as Laphroaig and Lagavulin?","correct":"Islay","wrong":["Skye","Arran","Orkney"]},
+      {"q":"Which Scottish region on the River Spey has the most whisky distilleries?","correct":"Speyside","wrong":["Islay","The Highlands west coast","The Lowlands"]},
+      {"q":"What gives peated whisky its smoky flavour?","correct":"Malted barley dried over burning peat","wrong":["Charred oak barrels only","Smoked water","Added smoke flavouring"]},
+      {"q":"What is American bourbon mainly made from?","correct":"Corn (maize)","wrong":["Rye","Barley","Wheat"]},
+      {"q":"Which US state is the home of bourbon?","correct":"Kentucky","wrong":["Tennessee","Texas","Virginia"]},
+      {"q":"Which Caribbean island gave its name to a style of rum, and its capital is Kingston?","correct":"Jamaica","wrong":["Barbados","Cuba","Trinidad"]},
+      {"q":"Which Peruvian and Chilean brandy is used in a sour cocktail?","correct":"Pisco","wrong":["Cachaca","Mezcal","Aguardiente"]},
+      {"q":"Which Mexican spirit, related to tequila, often has a smoky flavour?","correct":"Mezcal","wrong":["Pisco","Cachaca","Pulque"]},
+      {"q":"Which herb gives absinthe its famous name?","correct":"Wormwood","wrong":["Aniseed","Fennel","Hyssop"]},
+      {"q":"Which bitter Italian aperitif is bright red?","correct":"Campari","wrong":["Aperol","Fernet-Branca","Cynar"]},
+      {"q":"Which liqueur is made by Carthusian monks to a secret recipe?","correct":"Chartreuse","wrong":["Benedictine","Drambuie","Frangelico"]},
+      {"q":"Which Scotch whisky liqueur is flavoured with honey and herbs?","correct":"Drambuie","wrong":["Glayva","Baileys","Cointreau"]},
+      {"q":"Which Irish cream liqueur was launched in 1974?","correct":"Baileys","wrong":["Kahlua","Tia Maria","Amarula"]},
+      {"q":"Which Mexican coffee liqueur is famous in a White Russian?","correct":"Kahlua","wrong":["Tia Maria","Baileys","Amaretto"]},
+      {"q":"What is the 'angel's share'?","correct":"Spirit lost by evaporation from barrels as it ages","wrong":["The first glass poured from a cask","A tip left for the barman","The foam on top of a beer"]},
+      {"q":"What is a 'Protected Designation of Origin' (PDO)?","correct":"A legal guarantee that a food is made in a specific place in the traditional way","wrong":["A health rating given to restaurants","A label for organic farming only","A legal limit on food prices"]},
+      {"q":"Which Italian city gives its name to a famous cured ham and a hard cheese?","correct":"Parma","wrong":["Bologna","Modena","Milan"]},
+      {"q":"Which Spanish ham comes from black Iberian pigs fed on acorns?","correct":"Jamon iberico de bellota","wrong":["Jamon serrano","Chorizo","Lomo"]},
+      {"q":"Which Spanish sausage is flavoured with smoked paprika?","correct":"Chorizo","wrong":["Salami","Morcilla","Fuet"]},
+      {"q":"Which Spanish cheese is made from sheep's milk in La Mancha?","correct":"Manchego","wrong":["Cabrales","Mahon","Tetilla"]},
+      {"q":"Which French blue cheese is aged in caves in Aveyron?","correct":"Roquefort","wrong":["Brie de Meaux","Comte","Reblochon"]},
+      {"q":"Which French cheese from Normandy was supposedly perfected by Marie Harel?","correct":"Camembert","wrong":["Brie","Pont-l'Eveque","Livarot"]},
+      {"q":"Which Italian blue cheese comes from near Milan?","correct":"Gorgonzola","wrong":["Dolcelatte","Taleggio","Pecorino"]},
+      {"q":"Which Italian cheese is made from sheep's milk?","correct":"Pecorino","wrong":["Parmigiano Reggiano","Mozzarella","Gorgonzola"]},
+      {"q":"Which Italian cheese is the creamy filling of burrata?","correct":"Stracciatella","wrong":["Ricotta","Mascarpone","Provolone"]},
+      {"q":"Which Swiss cheese is famous for its holes?","correct":"Emmental","wrong":["Gruyere","Appenzeller","Raclette"]},
+      {"q":"What causes the holes in Swiss cheese?","correct":"Carbon dioxide from bacteria","wrong":["Mice nibbling the young cheese","Air pumped in during making","Steam escaping as it cooks"]},
+      {"q":"Which Greek cheese is traditionally made from sheep's and goat's milk and stored in brine?","correct":"Feta","wrong":["Halloumi","Kefalotyri","Graviera"]},
+      {"q":"What is ghee?","correct":"Clarified butter","wrong":["Spiced oil","A type of cheese","Cream"]},
+      {"q":"What is creme fraiche?","correct":"A soured cream","wrong":["A French custard","A whipped butter","A sweet sauce"]},
+      {"q":"What is clotted cream made by?","correct":"Gently heating cream and letting it cool slowly","wrong":["Whipping cream with icing sugar","Adding lemon juice to milk","Freezing cream and thawing it"]},
+      {"q":"In a Devon cream tea, what goes on the scone first?","correct":"Cream","wrong":["Jam","Butter","Honey"]},
+      {"q":"In a Cornish cream tea, what goes on the scone first?","correct":"Jam","wrong":["Cream","Butter","Lemon curd"]},
+      {"q":"Which Kent town is famous for its oysters?","correct":"Whitstable","wrong":["Margate","Dover","Deal"]},
+      {"q":"Which Essex river island is famous for its oysters?","correct":"Mersea Island","wrong":["Canvey Island","Foulness","Osea Island"]},
+      {"q":"Which area of West Yorkshire is famous for forced rhubarb grown in dark sheds?","correct":"The Rhubarb Triangle","wrong":["The Golden Triangle","The Fens","The Vale of Evesham"]},
+      {"q":"Which English county's traditional sausage is flavoured mainly with sage?","correct":"Lincolnshire","wrong":["Cumberland","Oxfordshire","Suffolk"]},
+      {"q":"Which Scottish smoked fish is a herring split and cold-smoked?","correct":"The kipper","wrong":["The Arbroath smokie","Finnan haddie","Cullen skink"]},
+      {"q":"Which Angus town gives its name to a hot-smoked haddock?","correct":"Arbroath","wrong":["Montrose","Forfar","Carnoustie"]},
+      {"q":"Which Isle of Man town is famous for its kippers?","correct":"Peel","wrong":["Douglas","Ramsey","Castletown"]},
+      {"q":"Which seafood dish is Morecambe Bay famous for?","correct":"Potted shrimps","wrong":["Jellied eels","Cockles","Whelks"]},
+      {"q":"What is the green parsley sauce served with London pie and mash called?","correct":"Liquor","wrong":["Gravy","Relish","Salsa verde"]}
+    ],
+    4:[
+      {"q":"What is the French term for a clear, rich soup made from stock clarified with egg whites?","correct":"Consomme","wrong":["Veloute","Bisque","Potage"]},
+      {"q":"What is a mirepoix?","correct":"Diced onion, carrot and celery used as a flavour base","wrong":["A paste of flour and butter","A soft garlic butter","A tied bundle of herbs"]},
+      {"q":"What is the Cajun and Creole version of mirepoix, using peppers instead of carrot, called?","correct":"The holy trinity","wrong":["The soffritto","The sofrito","The battuto"]},
+      {"q":"What is the Italian equivalent of mirepoix, gently fried as a base?","correct":"Soffritto","wrong":["Gremolata","Battuto only","Pesto"]},
+      {"q":"What is a 'bouquet garni'?","correct":"A bundle of herbs tied together for flavouring","wrong":["A decorative side salad","A garnish of fresh flowers","A thick herb sauce"]},
+      {"q":"What is 'gremolata'?","correct":"Chopped parsley, lemon zest and garlic","wrong":["A soft cornmeal porridge","A frozen fruit dessert","A slow tomato sauce"]},
+      {"q":"Which Milanese dish of braised veal shanks is traditionally served with gremolata?","correct":"Osso buco","wrong":["Vitello tonnato","Saltimbocca","Risotto alla milanese"]},
+      {"q":"What gives risotto alla milanese its yellow colour?","correct":"Saffron","wrong":["Turmeric","Egg yolk","Butter"]},
+      {"q":"What is the Italian cornmeal dish that can be served soft or set and grilled?","correct":"Polenta","wrong":["Gnocchi","Semolina","Farinata"]},
+      {"q":"What is the Venetian dish of liver and onions called?","correct":"Fegato alla veneziana","wrong":["Osso buco","Saltimbocca","Vitello tonnato"]},
+      {"q":"What does 'saltimbocca' mean, a veal dish with sage and prosciutto?","correct":"Jump in the mouth","wrong":["Melt in the mouth","Little saltiness","Cooked quickly"]},
+      {"q":"What is the Italian name for a crisp, twice-baked almond biscuit?","correct":"Cantucci","wrong":["Amaretti","Savoiardi","Pizzelle"]},
+      {"q":"What are 'savoiardi' biscuits used for, famously?","correct":"Making tiramisu","wrong":["Dipping in soup","Topping pizza","Making panettone"]},
+      {"q":"Which Italian region does 'nduja', a spicy spreadable salami, come from?","correct":"Calabria","wrong":["Sicily","Tuscany","Liguria"]},
+      {"q":"Which Sicilian fried rice balls are stuffed with ragu or cheese?","correct":"Arancini","wrong":["Suppli","Crocchette","Polpette"]},
+      {"q":"Which Neapolitan pizza is topped with tomato, mozzarella and basil to show the Italian flag's colours?","correct":"Margherita","wrong":["Marinara","Quattro stagioni","Capricciosa"]},
+      {"q":"Which classic Neapolitan pizza has no cheese, only tomato, garlic, oregano and oil?","correct":"Marinara","wrong":["Margherita","Diavola","Napoletana with anchovy"]},
+      {"q":"What is the name for the airy, charred rim of a Neapolitan pizza?","correct":"The cornicione","wrong":["The crosta","The bordo","The cornetto"]},
+      {"q":"What is a 'calzone'?","correct":"A folded, sealed pizza","wrong":["A deep-dish pizza","A pizza with no sauce","A rolled pizza bread"]},
+      {"q":"What are 'trofie' and 'trenette', traditionally eaten with pesto?","correct":"Ligurian pasta shapes","wrong":["Sicilian cakes","Venetian biscuits","Roman cheeses"]},
+      {"q":"What does the name of the pasta 'strozzapreti' mean?","correct":"Priest stranglers","wrong":["Little tongues","Angel hair","Little worms"]},
+      {"q":"What does the name of the pasta 'vermicelli' mean?","correct":"Little worms","wrong":["Little strings","Little tongues","Little ears"]},
+      {"q":"What does the name of the pasta 'linguine' mean?","correct":"Little tongues","wrong":["Little worms","Little ribbons","Little strings"]},
+      {"q":"Which Roman pasta dish is made only with Pecorino Romano and black pepper?","correct":"Cacio e pepe","wrong":["Carbonara","Amatriciana","Gricia"]},
+      {"q":"Which cured pork cheek is used in authentic carbonara?","correct":"Guanciale","wrong":["Pancetta","Lardo","Speck"]},
+      {"q":"Which Roman pasta sauce is made with guanciale, tomato and Pecorino, named after a town?","correct":"Amatriciana","wrong":["Carbonara","Puttanesca","Arrabbiata"]},
+      {"q":"What is the French name for a puff pastry case filled with a savoury mixture?","correct":"Vol-au-vent","wrong":["Bouchee","Feuillete","Croustade"]},
+      {"q":"What does 'vol-au-vent' mean?","correct":"Flight in the wind","wrong":["Flaky shell","Light as air","Puff of cream"]},
+      {"q":"What is 'pate a choux' used to make?","correct":"Eclairs, profiteroles and gougeres","wrong":["Croissants and brioche","Shortcrust tarts and pies","Pain au chocolat"]},
+      {"q":"What is 'creme patissiere'?","correct":"A thick pastry custard","wrong":["A whipped cream","A butter icing","A caramel sauce"]},
+      {"q":"What is 'creme anglaise'?","correct":"A light pouring custard","wrong":["A whipped cream","An English cream cheese","A clotted cream"]},
+      {"q":"What is a 'ganache'?","correct":"Chocolate melted with cream","wrong":["A sweet almond paste","A sugar syrup","A baked meringue"]},
+      {"q":"What is 'praline' in French cooking?","correct":"Nuts in caramelised sugar, often ground","wrong":["A rich chocolate truffle","A chewy honey nougat","A thick pastry cream"]},
+      {"q":"What is 'tempering' chocolate?","correct":"Heating and cooling it to set glossy and snappy","wrong":["Adding milk to make it creamier","Mixing it with soft butter","Freezing it to stop it melting"]},
+      {"q":"What is 'nougat' traditionally made from?","correct":"Honey, sugar, nuts and egg white","wrong":["Chocolate and cream","Butter, flour and sugar","Marzipan and dried fruit"]},
+      {"q":"Which French town is famous for its nougat?","correct":"Montelimar","wrong":["Dijon","Lyon","Grasse"]},
+      {"q":"Which French city is famous for its mustard?","correct":"Dijon","wrong":["Lyon","Reims","Bordeaux"]},
+      {"q":"Which French city is regarded as the gastronomic capital of France, famous for bouchons?","correct":"Lyon","wrong":["Paris","Marseille","Bordeaux"]},
+      {"q":"What is a 'bouchon' in Lyon?","correct":"A traditional bistro","wrong":["A cork for a wine bottle","A coarse pork sausage","A crusty bread roll"]},
+      {"q":"What is 'andouillette'?","correct":"A coarse sausage made from pig intestines","wrong":["A smooth duck pate","A buckwheat pancake","A puff pastry tart"]},
+      {"q":"What is 'boudin noir'?","correct":"A French blood sausage","wrong":["A chocolate cake","A black truffle","A dark beer"]},
+      {"q":"What is the French dish of beef tartare?","correct":"Raw minced beef with egg yolk and seasonings","wrong":["A steak grilled over charcoal","Beef stewed in red wine","Roast beef baked in pastry"]},
+      {"q":"What is 'beef Wellington'?","correct":"Beef fillet coated in pate and duxelles, baked in puff pastry","wrong":["Roast beef with Yorkshire pudding","Beef stew with suet dumplings","Corned beef hash with a fried egg"]},
+      {"q":"What is 'duxelles'?","correct":"Finely chopped mushrooms and shallots cooked in butter","wrong":["A smooth potato puree","A green herb sauce","A sweet onion jam"]},
+      {"q":"What is 'pommes Anna'?","correct":"Thinly sliced potatoes layered and baked in butter","wrong":["Chips fried twice in fat","Mashed potato with cheese","Fried potato croquettes"]},
+      {"q":"What is 'pommes dauphinoise' (gratin dauphinois)?","correct":"Sliced potatoes baked in cream and garlic","wrong":["Fried balls of mashed potato","Potatoes boiled in stock","Grated potato pancakes"]},
+      {"q":"What is 'aligot'?","correct":"Mashed potato beaten with cheese until stretchy","wrong":["A garlic fish soup","A chicken and wine stew","A coarse pork sausage"]},
+      {"q":"What are 'cuisses de grenouille'?","correct":"Frogs' legs","wrong":["Snails","Chicken thighs","Duck legs"]},
+      {"q":"What is 'tarte flambee' (flammekueche) from Alsace?","correct":"A thin flatbread with cream, onions and bacon","wrong":["A dessert set alight with brandy","An open tart of glazed fruit","A deep pie of cheese and ham"]},
+      {"q":"What is 'choucroute garnie'?","correct":"Sauerkraut with sausages and pork","wrong":["A thin cabbage soup","A puff pastry dish","A cream-filled cake"]},
+      {"q":"What is 'kouign-amann' from Brittany?","correct":"A buttery, caramelised layered cake","wrong":["A thin buckwheat pancake","A fish and cider stew","A dry Breton cider"]},
+      {"q":"What are Breton buckwheat pancakes called?","correct":"Galettes","wrong":["Crepes Suzette","Blinis","Gaufres"]},
+      {"q":"What is 'crepes Suzette' flambeed with?","correct":"Orange liqueur","wrong":["Brandy and cream","Rum and banana","Calvados and apple"]},
+      {"q":"What is a 'canele' from Bordeaux?","correct":"A small cake with a caramelised crust and custardy inside","wrong":["A spiced pork sausage","A soft washed-rind cheese","A light red wine"]},
+      {"q":"What is a 'Paris-Brest'?","correct":"A choux ring filled with praline cream","wrong":["A croissant filled with almonds","A long loaf of country bread","A soft cheese from Brittany"]},
+      {"q":"What was the Paris-Brest created to celebrate?","correct":"A cycle race between Paris and Brest","wrong":["The opening of a railway line","A royal wedding in Paris","The launch of a great ship"]},
+      {"q":"What is a 'madeleine'?","correct":"A small shell-shaped sponge cake","wrong":["A small meringue nest","A flaky pastry twist","A crisp butter biscuit"]},
+      {"q":"Which French author's memories were famously triggered by a madeleine dipped in tea?","correct":"Marcel Proust","wrong":["Victor Hugo","Gustave Flaubert","Emile Zola"]},
+      {"q":"What are 'macarons' made from?","correct":"Almond flour, egg whites and sugar","wrong":["Coconut, sugar and butter","Wheat flour and butter","Oats, honey and syrup"]},
+      {"q":"Which Parisian patisserie is famous for its macarons and was founded in 1862?","correct":"Laduree","wrong":["Fauchon","Pierre Herme","Angelina"]},
+      {"q":"What is the British dessert of sponge pudding with currants called, often eaten with custard?","correct":"Spotted dick","wrong":["Jam roly-poly","Eton mess","Treacle tart"]},
+      {"q":"What is 'Eton mess'?","correct":"Crushed meringue, strawberries and cream","wrong":["A rich chocolate pudding","A sponge served with custard","A baked rice pudding"]},
+      {"q":"What is 'syllabub'?","correct":"A sweet whipped cream dessert with wine","wrong":["A light sponge cake","A set fruit jelly","A savoury raised pie"]},
+      {"q":"What is 'cranachan'?","correct":"A Scottish dessert of cream, raspberries, honey, whisky and oats","wrong":["A Welsh fruit bread","An Irish mutton stew","A Cornish saffron cake"]},
+      {"q":"What is 'clootie dumpling'?","correct":"A Scottish pudding boiled in a cloth","wrong":["A Welsh leek soup","An English raised pie","An Irish potato bread"]},
+      {"q":"What is 'tablet' in Scotland?","correct":"A hard, crumbly fudge-like sweet","wrong":["A soft marshmallow sweet","A thin oat biscuit","A flat griddle bread"]},
+      {"q":"What is 'Selkirk bannock'?","correct":"A rich fruit bread","wrong":["A fish dish","A soup","A shortbread"]},
+      {"q":"What is a 'Dundee cake'?","correct":"A fruit cake topped with almonds","wrong":["A sponge filled with jam","A dark chocolate cake","A sticky ginger cake"]},
+      {"q":"What is a 'Pontefract cake'?","correct":"A liquorice sweet","wrong":["A fruit cake","A biscuit","A pie"]},
+      {"q":"What is 'parkin'?","correct":"A sticky ginger cake made with oatmeal and treacle","wrong":["A raised pork pie","A crumbly white cheese","A spiced fruit loaf"]},
+      {"q":"On which night is parkin traditionally eaten?","correct":"Bonfire Night","wrong":["Burns Night","Christmas Eve","Halloween"]},
+      {"q":"What is a 'singin' hinny'?","correct":"A griddle cake from the North East","wrong":["A fishermen's song","A spiced pork sausage","A pigeon and game pie"]},
+      {"q":"What is a 'stottie' cake?","correct":"A flat, round bread from the North East","wrong":["A rich fruit cake","A cream-filled cake","A light sponge"]},
+      {"q":"What is a 'Staffordshire oatcake'?","correct":"A large, soft oatmeal pancake","wrong":["A crisp oat biscuit","A spiced fruit cake","A sweet muffin"]},
+      {"q":"What is a 'Bedfordshire clanger'?","correct":"A suet pastry with savoury filling at one end and sweet at the other","wrong":["A bell-shaped iced cake","A raised pork pie","A pasty filled with fish"]},
+      {"q":"What is a 'stargazy pie'?","correct":"A Cornish pie with fish heads poking out of the crust","wrong":["A star-shaped iced cake","A deep apple and berry pie","A spiced mince pie"]},
+      {"q":"Which Cornish village's legend of Tom Bawcock is linked with stargazy pie?","correct":"Mousehole","wrong":["Padstow","St Ives","Polperro"]},
+      {"q":"What is 'Sussex pond pudding'?","correct":"A suet pudding with a whole lemon inside","wrong":["A fish pie with a potato top","A set fruit jelly","A light sponge with jam"]},
+      {"q":"What is 'Bakewell pudding', as distinct from Bakewell tart?","correct":"A puff pastry base with jam and an egg and almond filling","wrong":["A sponge cake with water icing","A baked bread and butter pudding","A fruit crumble with oats"]},
+      {"q":"What is a 'Banbury cake'?","correct":"A spiced currant pastry, oval in shape","wrong":["A light sponge cake","A crumbly white cheese","A thin ginger biscuit"]},
+      {"q":"What is a 'Chorley cake'?","correct":"A flat pastry filled with currants, less sugary than an Eccles cake","wrong":["A rich fruit loaf","A thin oat biscuit","A light sponge"]},
+      {"q":"What is a 'Grasmere gingerbread'?","correct":"A chewy-crisp gingerbread from the Lake District","wrong":["A soft, sticky ginger cake","A fizzy ginger beer","A gingerbread man"]},
+      {"q":"What is 'Kendal mint cake'?","correct":"A glucose-based mint sweet used by mountaineers","wrong":["A sponge cake with mint icing","A sharp mint sauce","A cup of mint tea"]},
+      {"q":"Which expedition famously took Kendal mint cake to the summit of Everest?","correct":"The 1953 British expedition","wrong":["The 1924 Mallory expedition","The 1975 expedition","The 1922 expedition"]},
+      {"q":"What is 'faggots' in British cooking?","correct":"Meatballs of offal and herbs","wrong":["Bundles of firewood only","Sausages","Pies"]},
+      {"q":"What is 'brawn'?","correct":"Meat from a pig's head set in jelly","wrong":["A strong crumbly cheese","A dark brown bread","A beef and ale stew"]},
+      {"q":"What is 'black bun'?","correct":"A Scottish fruit cake in pastry eaten at Hogmanay","wrong":["A burnt bread roll","A liquorice sweet","A blood sausage"]},
+      {"q":"What is 'scrapple'?","correct":"An American pork and cornmeal loaf","wrong":["A British apple dessert","A Scottish soup","A Welsh cake"]},
+      {"q":"What is 'haggis' traditionally cooked in?","correct":"A sheep's stomach","wrong":["A pig's intestine","A cloth","A pastry case"]},
+      {"q":"What is 'cullen skink' named after?","correct":"A town in Moray","wrong":["A fisherman","A type of fish","A river"]},
+      {"q":"Which Japanese multi-course meal is the most refined form of traditional dining?","correct":"Kaiseki","wrong":["Bento","Omakase","Izakaya"]},
+      {"q":"What does 'omakase' mean when ordering sushi?","correct":"I leave it up to you","wrong":["Fresh from the sea","Raw and cooked","Chef's special sauce"]},
+      {"q":"What is the Japanese term for a casual pub serving small dishes?","correct":"Izakaya","wrong":["Ryokan","Kaiseki","Teppanyaki"]},
+      {"q":"What is 'dashi', the base of much Japanese cooking?","correct":"A stock usually made from kombu and bonito flakes","wrong":["A thick soy dipping sauce","A sweet rice vinegar","A salty fermented paste"]},
+      {"q":"What are 'katsuobushi'?","correct":"Dried, smoked and fermented bonito flakes","wrong":["Salted and pickled plums","Thin sheets of dried seaweed","Puffed rice crackers"]},
+      {"q":"What is 'umeboshi'?","correct":"Pickled Japanese plums","wrong":["Fermented soybeans","Dried squid","Sweet bean paste"]},
+      {"q":"What is 'natto'?","correct":"Fermented soybeans with a sticky texture","wrong":["Sweet red bean paste","Grilled rice cakes","Pickled white radish"]},
+      {"q":"What is 'mochi'?","correct":"A sticky cake made from pounded glutinous rice","wrong":["A clear miso soup","A thick wheat noodle","A steamed fish cake"]},
+      {"q":"What is the sweet red bean paste used in Japanese and Chinese sweets called?","correct":"Anko","wrong":["Mochi","Miso","Kinako"]},
+      {"q":"Which fish, served in licensed Japanese restaurants, can be deadly if prepared wrongly?","correct":"Fugu","wrong":["Tuna","Eel","Mackerel"]},
+      {"q":"What is the poison in fugu?","correct":"Tetrodotoxin","wrong":["Cyanide","Ricin","Strychnine"]},
+      {"q":"Which Japanese beef is famous for intense marbling, the best known from Kobe?","correct":"Wagyu","wrong":["Angus","Hereford","Charolais"]},
+      {"q":"Which grade is the top grade of Japanese wagyu beef?","correct":"A5","wrong":["A1","AAA","Prime"]},
+      {"q":"What is 'kombucha'?","correct":"A fermented sweetened tea","wrong":["A seaweed salad","A Japanese whisky","A rice wine"]},
+      {"q":"Which Chinese cooking style uses a very hot wok to give a smoky 'breath of the wok'?","correct":"Wok hei","wrong":["Dim sum","Hot pot","Red cooking"]},
+      {"q":"Which Chinese cuisine is famous for dim sum and is from Guangdong?","correct":"Cantonese","wrong":["Sichuan","Hunan","Shandong"]},
+      {"q":"What are 'xiaolongbao'?","correct":"Soup dumplings from Shanghai","wrong":["Fluffy steamed pork buns","Crispy fried noodles","Soft rolled rice sheets"]},
+      {"q":"What is 'congee'?","correct":"A rice porridge","wrong":["A sweet bun","A fried dumpling","A soy sauce"]},
+      {"q":"What is the 'century egg'?","correct":"A duck egg preserved for weeks or months in clay, ash and lime","wrong":["An egg kept for a hundred years","An egg dish covered in gold leaf","An egg boiled slowly in tea"]},
+      {"q":"What is 'bird's nest soup' made from?","correct":"The saliva nests of swiftlets","wrong":["Twigs and leaves","Chicken and noodles","Seaweed"]},
+      {"q":"Which Indian region is famous for its dum biryani?","correct":"Hyderabad","wrong":["Kerala","Punjab","Bengal"]},
+      {"q":"Which Indian state is famous for vindaloo and xacuti, with Portuguese influence?","correct":"Goa","wrong":["Kerala","Gujarat","Rajasthan"]},
+      {"q":"Which South Indian pancake is made from fermented rice and lentil batter?","correct":"Dosa","wrong":["Paratha","Chapati","Puri"]},
+      {"q":"Which South Indian steamed rice cakes are eaten for breakfast with sambar?","correct":"Idli","wrong":["Dosa","Vada","Uttapam"]},
+      {"q":"What is 'sambar'?","correct":"A lentil and vegetable stew with tamarind","wrong":["A spiced rice dish","A salty yoghurt drink","A flaky flatbread"]},
+      {"q":"Which spice mix is used in Bengali cooking, with five whole spices?","correct":"Panch phoron","wrong":["Garam masala","Chaat masala","Ras el hanout"]},
+      {"q":"Which North African spice blend's name means 'head of the shop'?","correct":"Ras el hanout","wrong":["Za'atar","Baharat","Dukkah"]},
+      {"q":"Which Middle Eastern herb and spice blend includes thyme, sumac and sesame?","correct":"Za'atar","wrong":["Ras el hanout","Dukkah","Harissa"]},
+      {"q":"Which tart, red spice is made from dried berries and used in fattoush?","correct":"Sumac","wrong":["Paprika","Saffron","Cayenne"]},
+      {"q":"Which Egyptian dish of rice, lentils, pasta and tomato sauce is a national favourite?","correct":"Koshari","wrong":["Ful medames","Molokhia","Fattah"]},
+      {"q":"What is 'ful medames'?","correct":"Stewed fava beans","wrong":["Fried chickpea balls","Lamb stew","Rice pudding"]},
+      {"q":"Which Ethiopian spongy sourdough flatbread is made from teff?","correct":"Injera","wrong":["Naan","Lavash","Pita"]},
+      {"q":"Which Ethiopian spicy stew is eaten with injera?","correct":"Wat (wot)","wrong":["Tagine","Bobotie","Jollof"]},
+      {"q":"Which West African rice dish is the subject of friendly rivalry between Nigeria and Ghana?","correct":"Jollof rice","wrong":["Fufu","Egusi","Waakye"]},
+      {"q":"What is 'fufu'?","correct":"A dough made from pounded cassava, yam or plantain","wrong":["A spiced rice dish","A thin peanut soup","A hot spice blend"]},
+      {"q":"Which South African dish is spiced minced meat baked with an egg topping?","correct":"Bobotie","wrong":["Bunny chow","Sosaties","Potjiekos"]},
+      {"q":"What is a South African 'bunny chow'?","correct":"Curry served in a hollowed-out loaf","wrong":["A stew of rabbit and beans","A spiced carrot cake","A grilled coiled sausage"]},
+      {"q":"What is South African 'biltong'?","correct":"Air-dried cured meat","wrong":["A coiled pork sausage","A flat maize bread","A soft goat cheese"]},
+      {"q":"What is 'boerewors'?","correct":"A South African coiled sausage","wrong":["A strip of dried meat","A slow meat stew","A sorghum beer"]},
+      {"q":"What is the national dish of Hungary, often said to be?","correct":"Goulash (gulyas)","wrong":["Chicken paprikash","Langos","Dobos torte"]},
+      {"q":"What is 'langos' in Hungary?","correct":"A deep-fried flatbread","wrong":["A paprika sausage","A beef stew","A layered cake"]},
+      {"q":"Which Turkish breakfast spread mixes eggs, tomatoes and peppers?","correct":"Menemen","wrong":["Simit","Borek","Kumpir"]},
+      {"q":"What is 'simit'?","correct":"A sesame-crusted bread ring","wrong":["A honey pastry","A lamb kebab","A milk pudding"]},
+      {"q":"What is a 'borek'?","correct":"A filled filo pastry","wrong":["A meatball","A rice dish","A yoghurt drink"]},
+      {"q":"Which Turkish yoghurt drink is salty?","correct":"Ayran","wrong":["Lassi","Kefir","Doogh"]},
+      {"q":"What is 'kefir'?","correct":"A fermented milk drink","wrong":["A flat rye bread","A soft white cheese","A blend of spices"]},
+      {"q":"What is the Georgian cheese bread shaped like a boat with an egg in the middle?","correct":"Adjarian khachapuri","wrong":["Khinkali","Lobiani","Churchkhela"]},
+      {"q":"What are 'khinkali' in Georgia?","correct":"Large soup dumplings","wrong":["Cheese breads","Walnut sweets","Wine jugs"]},
+      {"q":"Which country is believed to be the oldest wine-making region, with 8,000-year-old evidence?","correct":"Georgia","wrong":["France","Italy","Greece"]},
+      {"q":"What is a 'qvevri' used for in Georgia?","correct":"Fermenting wine in a buried clay jar","wrong":["Baking bread in a stone oven","Making cheese in caves","Storing grain through winter"]},
+      {"q":"What is Swedish 'surstromming'?","correct":"Fermented Baltic herring","wrong":["Smoked salmon","Pickled cucumbers","Lingonberry jam"]},
+      {"q":"What is Icelandic 'hakarl'?","correct":"Fermented shark","wrong":["Smoked lamb","Dried fish","Puffin pie"]},
+      {"q":"What is the Swedish smorgasbord?","correct":"A buffet of many hot and cold dishes","wrong":["A large open sandwich","A sweet cardamom bun","A thick fish stew"]},
+      {"q":"What is 'gravlax'?","correct":"Salmon cured with salt, sugar and dill","wrong":["Herring smoked over beech","Cod pickled in vinegar","Reindeer meat dried in the wind"]},
+      {"q":"What is Norwegian 'lutefisk'?","correct":"Dried fish treated with lye","wrong":["Salmon smoked over juniper","A creamy fish soup","Cod fried in batter"]},
+      {"q":"What is the Swedish custom of 'fika'?","correct":"A coffee and cake break","wrong":["A midsummer feast","A crayfish party","A breakfast buffet"]},
+      {"q":"What is the Danish open sandwich called?","correct":"Smorrebrod","wrong":["Smorgasbord","Frikadeller","Aebleskiver"]},
+      {"q":"What are 'pastel de nata'?","correct":"Portuguese custard tarts","wrong":["Spanish churros","Italian cannoli","French flan"]},
+      {"q":"Which Lisbon district is famous for the original custard tarts, made by monks?","correct":"Belem","wrong":["Alfama","Chiado","Baixa"]},
+      {"q":"What is 'bacalhau'?","correct":"Dried salted cod","wrong":["Grilled sardines","Pork stew","Custard tart"]},
+      {"q":"What is 'churros con chocolate'?","correct":"Fried dough sticks with thick hot chocolate","wrong":["A rich chocolate layer cake","Chocolate ice cream with nuts","A cold chocolate milkshake"]},
+      {"q":"What is 'pintxos' in the Basque Country?","correct":"Small snacks, often on bread with a cocktail stick","wrong":["A cloudy Basque cider","A slow fish and pepper stew","A smoked sheep cheese"]},
+      {"q":"Which Basque city has one of the highest numbers of Michelin stars per person in the world?","correct":"San Sebastian","wrong":["Bilbao","Vitoria","Pamplona"]},
+      {"q":"Which Catalan chef's restaurant elBulli was famed for molecular gastronomy?","correct":"Ferran Adria","wrong":["Joan Roca","Jose Andres","Martin Berasategui"]},
+      {"q":"Which Copenhagen restaurant was named the world's best several times and helped launch New Nordic cuisine?","correct":"Noma","wrong":["Geranium","Alchemist","Fat Duck"]},
+      {"q":"Which chef founded Noma?","correct":"Rene Redzepi","wrong":["Ferran Adria","Massimo Bottura","Heston Blumenthal"]},
+      {"q":"Which Italian chef's restaurant Osteria Francescana is in Modena?","correct":"Massimo Bottura","wrong":["Carlo Cracco","Antonino Cannavacciuolo","Gualtiero Marchesi"]},
+      {"q":"What is 'aceto balsamico tradizionale' made from?","correct":"Cooked grape must aged in wooden barrels","wrong":["Wine vinegar mixed with sugar","Apple cider left to sour","Rice wine aged in clay"]},
+      {"q":"How long must traditional balsamic vinegar of Modena be aged, at least?","correct":"12 years","wrong":["1 year","3 years","50 years"]},
+      {"q":"Which Italian hard cheese can only be made in parts of Emilia-Romagna and Lombardy?","correct":"Parmigiano Reggiano","wrong":["Grana Padano","Pecorino Romano","Asiago"]},
+      {"q":"What is 'garum'?","correct":"An ancient Roman fermented fish sauce","wrong":["A flat Roman bread","A sweet Greek wine","A Roman blend of spices"]},
+      {"q":"Which Roman cookbook is one of the oldest surviving?","correct":"Apicius","wrong":["Pliny's Natural History","The Satyricon","The Georgics"]},
+      {"q":"What is the oldest known recipe in English, from the 1390s, written by Richard II's cooks?","correct":"The Forme of Cury","wrong":["The Boke of Kervynge","The Art of Cookery","The Compleat Housewife"]},
+      {"q":"Who wrote 'The Art of Cookery Made Plain and Easy' in 1747?","correct":"Hannah Glasse","wrong":["Eliza Acton","Isabella Beeton","Elizabeth Raffald"]},
+      {"q":"Which Victorian cookery writer was the first to list ingredients separately from the method?","correct":"Eliza Acton","wrong":["Isabella Beeton","Hannah Glasse","Agnes Marshall"]},
+      {"q":"Which Victorian 'Queen of Ices' patented an ice cream maker and suggested using liquid gas for freezing?","correct":"Agnes Marshall","wrong":["Eliza Acton","Isabella Beeton","Fanny Cradock"]},
+      {"q":"Which French chef ran the Reform Club kitchens and set up soup kitchens during the Irish famine?","correct":"Alexis Soyer","wrong":["Auguste Escoffier","Marie-Antoine Careme","Charles Elme Francatelli"]},
+      {"q":"Which French chef is often called the first celebrity chef, creating pieces montees for Napoleon and the Prince Regent?","correct":"Marie-Antoine Careme","wrong":["Auguste Escoffier","Alexis Soyer","Paul Bocuse"]},
+      {"q":"Which French chef was a leading figure of nouvelle cuisine and has a cooking competition named after him?","correct":"Paul Bocuse","wrong":["Fernand Point","Joel Robuchon","Alain Ducasse"]},
+      {"q":"Which French chef held the record for the most Michelin stars, over 30?","correct":"Joel Robuchon","wrong":["Alain Ducasse","Paul Bocuse","Pierre Gagnaire"]},
+      {"q":"What is the 'Bocuse d'Or'?","correct":"A world cookery competition","wrong":["A Michelin award","A wine-tasting prize","A cheese-making contest"]},
+      {"q":"Which famous food critic created the 'Gault Millau' guide alongside Henri Gault?","correct":"Christian Millau","wrong":["Pierre Michelin","Jean Bocuse","Paul Millau"]},
+      {"q":"Which British food writer wrote 'English Food' in 1974 and championed traditional recipes?","correct":"Jane Grigson","wrong":["Elizabeth David","Delia Smith","Claudia Roden"]},
+      {"q":"Which writer's 'A Book of Middle Eastern Food' of 1968 introduced the cuisine to Britain?","correct":"Claudia Roden","wrong":["Madhur Jaffrey","Elizabeth David","Yotam Ottolenghi"]},
+      {"q":"Which actress and writer introduced many Britons to Indian cooking through a 1982 BBC series?","correct":"Madhur Jaffrey","wrong":["Meera Sodha","Anjum Anand","Claudia Roden"]},
+      {"q":"Which Israeli-British chef wrote 'Plenty' and 'Jerusalem'?","correct":"Yotam Ottolenghi","wrong":["Sami Tamimi only","Claudia Roden","Nigel Slater"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_food-drink-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+<button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var b = document.getElementById('tbSnd');
+  var show = function(){ var m = !!window.tbMuted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); show(); }); show();
+  /* find a free corner: the button never sits on top of a game's own controls */
+  var spots = [{ left:'12px', right:'auto', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' }, { left:'auto', right:'12px', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' },
+               { left:'12px', right:'auto', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }, { left:'auto', right:'12px', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }];
+  var clash = function(){ var s = b.getBoundingClientRect();
+    return [].some.call(document.querySelectorAll('button, a, input, select, [role=button]'), function(e){ if(e === b || !e.offsetParent) return false; var r = e.getBoundingClientRect();
+      return r.width && !(r.right < s.left || r.left > s.right || r.bottom < s.top || r.top > s.bottom); }); };
+  var place = function(){ for(var i = 0; i < spots.length; i++){ var p = spots[i]; b.style.left = p.left; b.style.right = p.right; b.style.top = p.top; b.style.bottom = p.bottom; if(!clash()) return; }
+    var q = spots[0]; b.style.left = q.left; b.style.right = q.right; b.style.top = q.top; b.style.bottom = q.bottom; };
+  var later = 0; var replace = function(){ clearTimeout(later); later = setTimeout(place, 250); };
+  window.addEventListener('resize', replace); document.addEventListener('click', replace, true); setTimeout(place, 300); setInterval(place, 3000);
+  /* screen readers hear right and wrong the moment an answer is marked */
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  /* the answer's words only: leave out the A/B/C/D badge, and any closing full stop */
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/^[A-F]\s+(?=\S)/, '').replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return;
+      var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var gained = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(gained('good') || gained('correct') || gained('right')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); }
+      if(gained('bad') || gained('wrong') || gained('incorrect')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
+</body>
+</html>

@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A free Nature &amp; Animals quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tierbrain.co/nature-quiz.html">
+<meta property="og:title" content="Nature &amp; Animals Quiz: 731 questions, four tiers | TierBrain">
+<meta property="og:description" content="A free Nature &amp; Animals quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/nature-quiz.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Nature &amp; Animals Quiz: 731 questions, four tiers | TierBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#130a0d; --bg1:#1c1013; --card:#26151a; --card2:#2e1c20;
+    --ink:#fbf1e2; --mut:#c2a99a; --line:#4a3238;
+    --l1:#86bf9d; --l2:#e0a458; --l3:#d9694f; --l4:#f2d27a;
+    --gold:#e6b655; --right:#86bf9d; --wrong:#e8765f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 82% -10%, rgba(134,191,110,.16), transparent 55%),
+      radial-gradient(100% 80% at 0% 110%, rgba(60,150,120,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    display:flex;align-items:center;justify-content:center;min-height:100%;
+    overflow:hidden;user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:760px;
+    display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden;}
+  .display{font-family:'Baloo 2',cursive;}
+
+  /* ---------- HUD ---------- */
+  #hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lvlpill{font-family:'Baloo 2';font-weight:700;font-size:14px;letter-spacing:.5px;
+    padding:6px 14px;border-radius:30px;color:#1c1013;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .timer{margin-left:auto;font-family:'Baloo 2';font-weight:700;font-size:20px;color:var(--gold);
+    display:flex;align-items:center;gap:6px;}
+  .timer svg{width:17px;height:17px;opacity:.85}
+  .strikes{display:flex;gap:5px;align-items:center;}
+  .strike{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);
+    transition:all .25s;position:relative;}
+  .strike.used{background:var(--wrong);border-color:var(--wrong);box-shadow:0 0 10px rgba(255,93,122,.6);}
+  .progwrap{height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;}
+  .progbar{height:100%;width:0;background:linear-gradient(90deg,var(--l1),var(--gold));
+    border-radius:10px;transition:width .4s cubic-bezier(.4,1.3,.5,1);}
+  .qcount{font-weight:800;color:var(--mut);font-size:13px;letter-spacing:.5px;}
+
+  /* ---------- question ---------- */
+  #qcard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0;}
+  .qbox{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+  .qtext{font-family:'Baloo 2';font-weight:700;font-size:clamp(20px,5.4vw,28px);line-height:1.25;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{font-family:'Nunito';font-weight:700;font-size:clamp(16px,4.4vw,19px);color:var(--ink);
+    background:var(--card2);border:2px solid var(--line);border-radius:15px;padding:15px 18px;
+    text-align:left;cursor:pointer;display:flex;align-items:center;gap:13px;
+    transition:transform .08s,background .15s,border-color .15s;}
+  .opt:active{transform:scale(.985);}
+  .opt .key{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-weight:700;
+    font-size:15px;color:var(--mut);}
+  .opt .txt{flex:1;}
+  .opt .mark{flex:none;width:24px;height:24px;opacity:0;transition:opacity .2s;}
+  .opt.correct{background:rgba(51,201,138,.18);border-color:var(--right);}
+  .opt.correct .key{background:var(--right);color:#08221a;}
+  .opt.correct .mark{opacity:1;}
+  .opt.wrong{background:rgba(255,93,122,.16);border-color:var(--wrong);}
+  .opt.wrong .key{background:var(--wrong);color:#2a0a12;}
+  .opt.wrong .mark{opacity:1;}
+  .opt.dim{opacity:.45;}
+  .opts.locked .opt{cursor:default;}
+
+  /* ---------- toast ---------- */
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-12px);
+    font-family:'Baloo 2';font-weight:800;font-size:17px;padding:9px 20px;border-radius:30px;
+    color:#1c1013;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:8;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- overlays ---------- */
+  .screen{position:absolute;inset:0;background:linear-gradient(160deg,rgba(19,10,13,.97),rgba(38,21,26,.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:26px;gap:16px;z-index:10;overflow-y:auto;}
+  .screen.hidden{display:none;}
+  .big{font-family:'Baloo 2';font-weight:800;font-size:clamp(34px,9vw,56px);line-height:.95;
+    background:linear-gradient(120deg,var(--gold),#ff9e6b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--mut);font-weight:600;letter-spacing:3px;font-size:13px;text-transform:uppercase;}
+  .lead{font-size:clamp(15px,3.8vw,18px);color:#fbf1e2;font-weight:600;max-width:430px;line-height:1.5;}
+  .rules{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;max-width:430px;display:flex;flex-direction:column;gap:9px;}
+  .rule{display:flex;gap:11px;align-items:flex-start;font-size:14.5px;color:#fbf1e2;font-weight:600;line-height:1.35;}
+  .rule .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;}
+  button.cta{font-family:'Baloo 2';font-weight:700;font-size:clamp(19px,5vw,23px);color:#1c1013;
+    background:linear-gradient(180deg,var(--gold),#e6b655);border:none;cursor:pointer;
+    padding:14px 44px;border-radius:50px;box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(230,182,85,.4);
+    transition:transform .08s,box-shadow .08s;}
+  button.cta:active{transform:translateY(4px);box-shadow:0 3px 0 #8a5f0a;}
+  button.cta.blue{background:linear-gradient(180deg,#e0a458,#c98a3e);box-shadow:0 7px 0 #8a5f0a,0 12px 26px rgba(224,164,88,.4);color:#fff;}
+  button.cta.blue:active{box-shadow:0 3px 0 #8a5f0a;}
+  button.ghost{background:none;border:none;font-family:'Nunito';font-weight:800;color:#f2d27a;
+    font-size:15px;cursor:pointer;text-decoration:underline;padding:6px;}
+  .statline{font-size:clamp(16px,4vw,20px);color:#fbf1e2;font-weight:700;}
+  .statline b{color:var(--gold);font-size:1.3em;font-family:'Baloo 2';}
+  .timeBig{font-family:'Baloo 2';font-weight:800;font-size:clamp(46px,13vw,76px);color:var(--gold);line-height:1;}
+
+  /* ---------- scoreboard ---------- */
+  .board{width:100%;max-width:440px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:16px;padding:8px;max-height:46vh;overflow-y:auto;}
+  .board h3{font-family:'Baloo 2';font-size:14px;color:var(--gold);letter-spacing:2px;margin:6px 0 8px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;font-weight:700;font-size:15px;}
+  .brow:nth-child(even){background:rgba(255,255,255,.04);}
+  .brow.me{background:rgba(255,215,94,.14);box-shadow:inset 0 0 0 2px rgba(255,215,94,.5);}
+  .brk{width:26px;text-align:center;font-family:'Baloo 2';color:var(--gold);font-weight:800;}
+  .bwho{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bcorr{color:var(--mut);font-size:12.5px;font-weight:700;}
+  .btime{font-family:'Baloo 2';font-weight:800;color:#bfe9d6;}
+  .empty,.loading{color:var(--mut);font-weight:600;padding:16px;font-size:14px;}
+  .namebox{display:flex;gap:9px;width:100%;max-width:380px;}
+  .namebox input{flex:1;font-family:'Nunito';font-weight:700;font-size:17px;color:var(--ink);
+    background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:14px;padding:12px 15px;
+    text-align:center;outline:none;}
+  .namebox input:focus{border-color:var(--gold);}
+  button.save{font-family:'Baloo 2';font-weight:700;font-size:16px;color:#1c1013;border:none;cursor:pointer;
+    padding:12px 20px;border-radius:14px;background:linear-gradient(180deg,#5fe0a8,#33c98a);
+    box-shadow:0 4px 0 #1f8a5e;white-space:nowrap;}
+  button.save:active{transform:translateY(3px);box-shadow:0 1px 0 #1f8a5e;}
+  .savedok{color:var(--right);font-weight:800;}
+  .hidden{display:none!important;}
+  .timelabel{font-weight:700;color:var(--mut);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:-4px;}
+  .timerow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .timeopt{font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut);background:rgba(255,255,255,.05);
+    border:2px solid var(--line);border-radius:30px;padding:8px 16px;cursor:pointer;transition:all .12s;}
+  .timeopt.sel{color:#1c1013;background:var(--gold);border-color:var(--gold);}
+  .timeopt:active{transform:scale(.95);}
+  .timer.low{color:var(--wrong);animation:pulse .8s ease-in-out infinite;}
+  .timer.low svg{color:var(--wrong);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .homelink{display:inline-block;margin-top:6px;font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--mut);text-decoration:none;opacity:.85;transition:opacity .15s;}
+  .homelink:hover{opacity:1;text-decoration:underline;}
+  .scorebtn{display:inline-block;margin-top:8px;font-family:inherit;font-weight:700;font-size:14px;color:var(--mut);background:none;border:none;cursor:pointer;opacity:.85;}
+  .scorebtn:hover{opacity:1;text-decoration:underline;}
+  .board{list-style:none;padding:0;margin:14px auto;width:100%;max-width:440px;}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:6px;font-weight:700;text-align:left;}
+  .brow.me{background:var(--gold);color:#1c1013;}
+  .brk{width:22px;text-align:center;color:var(--mut);flex:none;}
+  .brow.me .brk{color:#1c1013;}
+  .bnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bsc{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;flex:none;}
+  .bmeta{color:var(--mut);font-size:11px;font-weight:600;}
+  .brow.me .bmeta{color:#1c1013;}
+  .saverow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+  .saverow input{font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:160px;text-align:center;}
+  .bempty{color:var(--mut);font-weight:600;margin:14px 0;}
+  .gcode{font-family:inherit;font-weight:700;font-size:15px;padding:11px 16px;border-radius:30px;border:2px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);max-width:240px;width:100%;text-align:center;letter-spacing:1px;text-transform:uppercase;}
+  .gcode:focus{outline:none;border-color:var(--gold);}
+  .ghint{color:var(--mut);font-weight:600;font-size:11.5px;margin-top:-4px;}
+  .bmode{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:1px;margin:-4px 0 2px;}
+  .bload{color:var(--mut);font-weight:600;text-align:center;padding:14px;list-style:none;}
+</style>
+<style>
+/* TierBrain standards */
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
+.tb-snd{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(19,10,13,.72);color:#fff;font-size:19px;cursor:pointer;}
+.tb-snd:focus-visible{outline:3px solid #f0b63f;outline-offset:2px;}
+.tb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style id="tb-screen-fix">/* centre start screens without cutting off their top on short phones */.screen{justify-content:flex-start!important;}.screen>:first-child{margin-top:auto!important;}.screen>:last-child{margin-bottom:auto!important;}</style>
+<meta property="og:site_name" content="TierBrain">
+<meta name="twitter:title" content="Nature &amp; Animals Quiz: 731 questions, four tiers | TierBrain">
+<meta name="twitter:description" content="A free Nature &amp; Animals quiz with 731 questions across four tiers, from Easy to Legends. Play in your browser, no app or sign-up.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+</head>
+<body>
+<div id="app">
+  <!-- live HUD -->
+  <div id="hud">
+    <span class="lvlpill display" id="lvlPill">LEVEL 1</span>
+    <span class="strikes" id="strikes"></span>
+    <span class="timer display"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0:00</span></span>
+  </div>
+  <div class="progwrap"><div class="progbar" id="progbar"></div></div>
+  <div class="qcount" id="qcount">QUESTION 1 OF 20</div>
+
+  <!-- question -->
+  <div id="qcard">
+    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="toast" class="display"></div>
+
+  <!-- START -->
+  <div class="screen" id="startScreen">
+    <div class="sub">Nature Trivia</div>
+    <h1 class="big display">TierBrain</h1>
+    <p class="lead">20 questions from a big pool: animals, birds, plants and the wild world, across four tiers up to Legends. The better you do, the harder it gets!</p>
+    <div class="rules">
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to answer all 20 questions.</span></div>
+    </div>
+    <div class="timelabel">Choose your clock</div>
+    <div class="timerow" id="timeRow"></div>
+    <div class="timelabel">Group code (optional)</div>
+    <input id="groupInput" class="gcode" type="text" maxlength="24" placeholder="e.g. SMITH-FAMILY" autocomplete="off">
+    <div class="ghint">Friends who enter the same code share a leaderboard. Leave blank to keep scores on this device.</div>
+    <button class="cta" id="startBtn">Start Quiz</button>
+    <button type="button" class="scorebtn" id="startBoard">Best Scores</button>
+    <a class="homelink" href="index.html">‹ All games</a>
+  </div>
+
+  <!-- KNOCKED OUT -->
+  <div class="screen hidden" id="outScreen">
+    <div class="sub" style="color:var(--wrong)">Knocked Out</div>
+    <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
+    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
+    <button class="cta" id="outRetry">Try Again</button>
+    <button class="ghost" id="outMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen hidden" id="doneScreen">
+    <div class="sub">All 20 Complete!</div>
+    <div class="timeBig display" id="doneTime">0:00</div>
+    <p class="statline" style="margin-top:-6px;">left on the clock</p>
+    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="doneAgain">Play Again</button>
+      <button class="cta blue" id="doneMenu">Menu</button>
+    </div>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- TIME'S UP -->
+  <div class="screen hidden" id="timeupScreen">
+    <div class="sub" style="color:var(--gold)">Time's Up!</div>
+    <h1 class="big display">Final whistle!</h1>
+    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="statline">You answered <b id="tuAns">0</b> questions<br>and got <b id="tuCorr">0</b> right</p>
+    <button class="cta" id="tuRetry">Try Again</button>
+    <button class="ghost" id="tuMenu">Back to Menu</button>
+    <button type="button" class="scorebtn endboard">Best Scores</button>
+  </div>
+
+  <!-- BEST SCORES -->
+  <div class="screen hidden" id="boardScreen">
+    <div class="sub">Best Scores</div>
+    <h1 class="big display">Leaderboard</h1>
+    <p class="bmode" id="boardTitle"></p>
+    <div id="saveArea" class="hidden">
+      <p class="statline">Save your run: <b id="saveSummary"></b></p>
+      <div class="saverow">
+        <input id="boardName" type="text" maxlength="14" placeholder="Your name" autocomplete="off">
+        <button class="cta" id="boardSave">Save</button>
+      </div>
+    </div>
+    <ul class="board" id="boardList"></ul>
+    <p class="bempty hidden" id="boardEmpty">No scores yet. Be the first!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="cta" id="boardPlay">Play</button>
+      <button class="cta blue" id="boardBack">Menu</button>
+    </div>
+</div>
+
+<script>
+(function(){
+  // ============ QUESTION BANK (stable, settled facts) ============
+  const BANK={
+    1:[
+      {"q":"What is a baby dog called?","correct":"A puppy","wrong":["A kitten","A calf","A kid"]},
+      {"q":"What is a baby horse called?","correct":"A foal","wrong":["A calf","A lamb","A kid"]},
+      {"q":"What is a baby sheep called?","correct":"A lamb","wrong":["A kid","A calf","A foal"]},
+      {"q":"What is a baby cow called?","correct":"A calf","wrong":["A foal","A lamb","A piglet"]},
+      {"q":"What is a baby goat called?","correct":"A kid","wrong":["A lamb","A calf","A cub"]},
+      {"q":"What is a baby pig called?","correct":"A piglet","wrong":["A calf","A kid","A cub"]},
+      {"q":"What is a baby duck called?","correct":"A duckling","wrong":["A gosling","A cygnet","A chick"]},
+      {"q":"What is a baby goose called?","correct":"A gosling","wrong":["A cygnet","A duckling","A chick"]},
+      {"q":"What is a baby frog called before it grows legs?","correct":"A tadpole","wrong":["A froglet","A minnow","A larva"]},
+      {"q":"What is a baby kangaroo called?","correct":"A joey","wrong":["A cub","A kit","A pup"]},
+      {"q":"What is a baby bear called?","correct":"A cub","wrong":["A kit","A pup","A calf"]},
+      {"q":"What is a baby lion called?","correct":"A cub","wrong":["A kitten","A pup","A calf"]},
+      {"q":"What is a baby elephant called?","correct":"A calf","wrong":["A cub","A foal","A pup"]},
+      {"q":"What is a baby deer called?","correct":"A fawn","wrong":["A foal","A kid","A calf"]},
+      {"q":"What is a baby rabbit called?","correct":"A kit","wrong":["A cub","A piglet","A foal"]},
+      {"q":"What is a baby owl called?","correct":"An owlet","wrong":["A chick","A cygnet","A gosling"]},
+      {"q":"What do caterpillars turn into?","correct":"Butterflies or moths","wrong":["Bees or wasps","Beetles or ants","Spiders or flies"]},
+      {"q":"What do tadpoles turn into?","correct":"Frogs or toads","wrong":["Fish","Newts only","Snails"]},
+      {"q":"Which animal is known as the 'king of the jungle'?","correct":"The lion","wrong":["The tiger","The elephant","The gorilla"]},
+      {"q":"Which is the tallest animal in the world?","correct":"The giraffe","wrong":["The elephant","The camel","The ostrich"]},
+      {"q":"Which is the largest land animal?","correct":"The African elephant","wrong":["The hippopotamus","The rhinoceros","The giraffe"]},
+      {"q":"Which is the largest animal that has ever lived?","correct":"The blue whale","wrong":["The African elephant","The great white shark","Tyrannosaurus rex"]},
+      {"q":"Which is the fastest land animal?","correct":"The cheetah","wrong":["The lion","The horse","The gazelle"]},
+      {"q":"Which big cat has black stripes on orange fur?","correct":"The tiger","wrong":["The lion","The leopard","The cheetah"]},
+      {"q":"Which animal carries its home on its back?","correct":"The snail","wrong":["The frog","The worm","The beetle"]},
+      {"q":"Which bird cannot fly but is the largest bird in the world?","correct":"The ostrich","wrong":["The emu","The penguin","The kiwi"]},
+      {"q":"Which bird lives in the Antarctic and cannot fly?","correct":"The emperor penguin","wrong":["The puffin","The albatross","The seagull"]},
+      {"q":"Which bird is a symbol of peace?","correct":"The dove","wrong":["The crow","The eagle","The owl"]},
+      {"q":"Which bird can talk and copy human words?","correct":"The parrot","wrong":["The swan","The owl","The pigeon"]},
+      {"q":"Which bird has a large pouch under its beak for catching fish?","correct":"The pelican","wrong":["The puffin","The heron","The cormorant"]},
+      {"q":"How many legs does an insect have?","correct":"Six","wrong":["Eight","Four","Ten"]},
+      {"q":"How many legs does a spider have?","correct":"Eight","wrong":["Six","Ten","Twelve"]},
+      {"q":"What does a spider spin to catch its food?","correct":"A web","wrong":["A nest","A cocoon","A burrow"]},
+      {"q":"Which insect lives in big groups in an anthill?","correct":"The ant","wrong":["The bee","The beetle","The fly"]},
+      {"q":"Which animal eats mostly bamboo?","correct":"The giant panda","wrong":["The koala","The gorilla","The red squirrel"]},
+      {"q":"Which animal eats mostly eucalyptus leaves?","correct":"The koala","wrong":["The panda","The kangaroo","The wombat"]},
+      {"q":"Which Australian animal hops and has a pouch?","correct":"The kangaroo","wrong":["The koala","The wombat","The platypus"]},
+      {"q":"Which animal lives in a burrow called a warren?","correct":"The rabbit","wrong":["The fox","The badger","The mole"]},
+      {"q":"Which orange animal with a bushy tail is often seen in British towns at night?","correct":"The fox","wrong":["The squirrel","The badger","The deer"]},
+      {"q":"Which flying mammal uses echoes to find its way in the dark?","correct":"The bat","wrong":["The owl","The moth","The swift"]},
+      {"q":"Which animal changes colour to blend in?","correct":"The chameleon","wrong":["The frog","The iguana","The gecko"]},
+      {"q":"Which animal is the largest of all cats?","correct":"The tiger","wrong":["The lion","The jaguar","The leopard"]},
+      {"q":"Which African animal is known for its laughing call?","correct":"The hyena","wrong":["The lion","The baboon","The zebra"]},
+      {"q":"Which sea animal has eight arms?","correct":"The octopus","wrong":["The squid","The starfish","The jellyfish"]},
+      {"q":"Which sea creature has five arms and a star shape?","correct":"The starfish","wrong":["The crab","The jellyfish","The sea urchin"]},
+      {"q":"Which sea animal walks sideways?","correct":"The crab","wrong":["The lobster","The shrimp","The prawn"]},
+      {"q":"Which sea animal can sting and is mostly made of jelly?","correct":"The jellyfish","wrong":["The octopus","The seahorse","The sea anemone"]},
+      {"q":"In which fish species does the father carry the babies?","correct":"The seahorse","wrong":["The goldfish","The clownfish","The salmon"]},
+      {"q":"Which orange and white fish lives among sea anemones?","correct":"The clownfish","wrong":["The goldfish","The angelfish","The pufferfish"]},
+      {"q":"Which large fish has a fin that often sticks out of the water?","correct":"The shark","wrong":["The tuna","The cod","The salmon"]},
+      {"q":"Which sea mammal is famous for being clever and playful, and clicks and whistles?","correct":"The dolphin","wrong":["The shark","The seal","The walrus"]},
+      {"q":"Which sea animal has long tusks and lives in the Arctic?","correct":"The walrus","wrong":["The seal","The sea lion","The narwhal"]},
+      {"q":"Which animal has the longest neck?","correct":"The giraffe","wrong":["The camel","The ostrich","The swan"]},
+      {"q":"Which animal is famous for its black and white colouring and lives in China?","correct":"The giant panda","wrong":["The zebra","The skunk","The badger"]},
+      {"q":"What do we call animals that eat only plants?","correct":"Herbivores","wrong":["Carnivores","Omnivores","Insectivores"]},
+      {"q":"What do we call animals that eat only meat?","correct":"Carnivores","wrong":["Herbivores","Omnivores","Frugivores"]},
+      {"q":"What do we call animals that eat both plants and meat?","correct":"Omnivores","wrong":["Herbivores","Carnivores","Scavengers"]},
+      {"q":"What do we call animals that sleep through the winter?","correct":"Hibernating animals","wrong":["Migrating animals","Nocturnal animals","Moulting animals"]},
+      {"q":"What do we call animals that are awake at night?","correct":"Nocturnal","wrong":["Diurnal","Hibernating","Migrating"]},
+      {"q":"What is it called when birds fly to warmer places for the winter?","correct":"Migration","wrong":["Hibernation","Nesting","Moulting"]},
+      {"q":"Which animal is called 'man's best friend'?","correct":"The dog","wrong":["The cat","The horse","The parrot"]},
+      {"q":"What sound does a cow make?","correct":"Moo","wrong":["Baa","Neigh","Oink"]},
+      {"q":"What sound does a horse make?","correct":"Neigh","wrong":["Moo","Baa","Quack"]},
+      {"q":"What sound does a sheep make?","correct":"Baa","wrong":["Moo","Oink","Woof"]},
+      {"q":"What sound does a duck make?","correct":"Quack","wrong":["Honk","Tweet","Hoot"]},
+      {"q":"Which farm animal gives us wool?","correct":"The sheep","wrong":["The cow","The pig","The horse"]},
+      {"q":"Which farm animal lays eggs that we eat most often?","correct":"The hen","wrong":["The goose","The duck","The turkey"]},
+      {"q":"Which farm bird gobbles?","correct":"The turkey","wrong":["The goose","The hen","The duck"]},
+      {"q":"What is a female fox called?","correct":"A vixen","wrong":["A doe","A ewe","A jenny"]},
+      {"q":"What is a male cow called?","correct":"A bull","wrong":["A ram","A stallion","A boar"]},
+      {"q":"What is a male sheep called?","correct":"A ram","wrong":["A bull","A buck","A boar"]},
+      {"q":"What is a group of fish swimming together called?","correct":"A school","wrong":["A herd","A flock","A pack"]},
+      {"q":"What is a group of wolves called?","correct":"A pack","wrong":["A herd","A flock","A school"]},
+      {"q":"What is a group of lions called?","correct":"A pride","wrong":["A pack","A herd","A troop"]},
+      {"q":"What is a group of cows called?","correct":"A herd","wrong":["A flock","A pride","A pack"]},
+      {"q":"What is a group of birds called?","correct":"A flock","wrong":["A herd","A pack","A pride"]},
+      {"q":"Where does a bird lay its eggs?","correct":"In a nest","wrong":["In a burrow","In a web","In a hive"]},
+      {"q":"Where do bees live?","correct":"In a hive","wrong":["In a nest of twigs","In a burrow","In a sett"]},
+      {"q":"Where does a fox live?","correct":"In a den or earth","wrong":["In a hive or comb","In a stable or barn","In a drey or treetop"]},
+      {"q":"What is a horse's home in a stable called?","correct":"A stall","wrong":["A sty","A kennel","A hutch"]},
+      {"q":"What is a pig's home called?","correct":"A sty","wrong":["A stable","A kennel","A coop"]},
+      {"q":"What is a dog's outdoor house called?","correct":"A kennel","wrong":["A hutch","A sty","A coop"]},
+      {"q":"What is a hen's house called?","correct":"A coop","wrong":["A kennel","A stable","A sty"]},
+      {"q":"What do plants need from the Sun to grow?","correct":"Light","wrong":["Sound","Wind","Darkness"]},
+      {"q":"Which part of a plant takes in water from the soil?","correct":"The roots","wrong":["The petals","The pollen","The flowers"]},
+      {"q":"What do bees collect from flowers?","correct":"Nectar and pollen","wrong":["Water and mud","Seeds and leaves","Bark and twigs"]},
+      {"q":"What does an acorn grow into?","correct":"An oak tree","wrong":["A pine tree","A beech tree","An apple tree"]},
+      {"q":"What does a conker come from?","correct":"A horse chestnut tree","wrong":["An oak tree","An ash tree","A sycamore"]},
+      {"q":"Which prickly evergreen has red berries at Christmas?","correct":"Holly","wrong":["Ivy","Mistletoe","Fir"]},
+      {"q":"Which plant do people kiss under at Christmas?","correct":"Mistletoe","wrong":["Holly","Ivy","Poinsettia"]},
+      {"q":"Which tall yellow flower turns its head towards the Sun?","correct":"The sunflower","wrong":["The daffodil","The tulip","The buttercup"]},
+      {"q":"Which red flower is worn to remember soldiers in November?","correct":"The poppy","wrong":["The rose","The tulip","The carnation"]},
+      {"q":"Which flower is the national flower of England?","correct":"The rose","wrong":["The thistle","The daffodil","The shamrock"]},
+      {"q":"Which prickly purple flower is the emblem of Scotland?","correct":"The thistle","wrong":["The heather","The bluebell","The rose"]},
+      {"q":"Which flower has white petals and a yellow middle and grows on lawns?","correct":"The daisy","wrong":["The rose","The poppy","The bluebell"]},
+      {"q":"Which yellow weed turns into a fluffy 'clock' you can blow?","correct":"The dandelion","wrong":["The daisy","The buttercup","The thistle"]},
+      {"q":"Which plant stings you if you touch it?","correct":"The stinging nettle","wrong":["The dock","The daisy","The clover"]},
+      {"q":"Which leaf is said to soothe a nettle sting?","correct":"A dock leaf","wrong":["An oak leaf","A clover leaf","A holly leaf"]},
+      {"q":"Which flowers carpet British woods with blue in spring?","correct":"Bluebells","wrong":["Daffodils","Poppies","Daisies"]},
+      {"q":"Which spring flower is famously grown in huge fields in the Netherlands?","correct":"The tulip","wrong":["The rose","The lily","The orchid"]},
+      {"q":"Which climbing plant clings to walls and trees and stays green all year?","correct":"Ivy","wrong":["Mistletoe","Holly","Fern"]},
+      {"q":"Which green plant grows in damp shady places and has no flowers, only fronds?","correct":"The fern","wrong":["The moss","The cactus","The ivy"]},
+      {"q":"Which plant grows in deserts and stores water in its spiky stem?","correct":"The cactus","wrong":["The fern","The palm","The moss"]},
+      {"q":"Which tree is famous for losing its leaves in autumn and turning red, especially in Canada?","correct":"The maple","wrong":["The pine","The palm","The yew"]},
+      {"q":"What do we call trees that lose their leaves in autumn?","correct":"Deciduous","wrong":["Evergreen","Coniferous","Tropical"]},
+      {"q":"What do we call trees that keep their leaves all year?","correct":"Evergreen","wrong":["Deciduous","Seasonal","Perennial"]},
+      {"q":"What do pine trees grow instead of flowers?","correct":"Cones","wrong":["Conkers","Acorns","Berries"]},
+      {"q":"Which tree's fruit do we use to make cider?","correct":"The apple","wrong":["The cherry","The pear","The plum"]},
+      {"q":"Which tropical tree gives us coconuts?","correct":"The coconut palm","wrong":["The banana tree","The rubber tree","The mango tree"]},
+      {"q":"Which season comes after winter?","correct":"Spring","wrong":["Summer","Autumn","Winter again"]},
+      {"q":"In which season do leaves fall from many trees?","correct":"Autumn","wrong":["Spring","Summer","Winter"]},
+      {"q":"In which season are the days longest in Britain?","correct":"Summer","wrong":["Winter","Spring","Autumn"]},
+      {"q":"In which season do many birds build nests and lambs are born?","correct":"Spring","wrong":["Autumn","Winter","Summer"]},
+      {"q":"What is frozen rain that falls as little balls of ice called?","correct":"Hail","wrong":["Snow","Sleet","Fog"]},
+      {"q":"What do we call the colourful arc in the sky after rain?","correct":"A rainbow","wrong":["A halo","An eclipse","A comet"]},
+      {"q":"How many colours are usually listed in a rainbow?","correct":"Seven","wrong":["Five","Six","Eight"]},
+      {"q":"What do we call a very strong spinning wind shaped like a funnel?","correct":"A tornado","wrong":["A breeze","A drizzle","A mist"]},
+      {"q":"What is the loud noise that follows lightning?","correct":"Thunder","wrong":["Hail","An echo","A gale"]},
+      {"q":"What are clouds made of?","correct":"Tiny drops of water or ice","wrong":["Smoke","Cotton","Steam from kettles"]},
+      {"q":"What is a thick cloud near the ground called?","correct":"Fog","wrong":["Hail","Frost","Dew"]},
+      {"q":"What are the tiny drops of water on grass on a cool morning called?","correct":"Dew","wrong":["Frost","Rain","Sleet"]},
+      {"q":"What do we call a hill that erupts with lava?","correct":"A volcano","wrong":["A glacier","A canyon","A geyser"]},
+      {"q":"What does a weather vane show?","correct":"Which way the wind blows","wrong":["How hot it is","How much it has rained","What time it is"]},
+      {"q":"Which garden creature helps the soil by eating dead leaves and wriggling underground?","correct":"The earthworm","wrong":["The slug","The beetle","The ant"]},
+      {"q":"Which slimy garden creature has no shell and eats lettuce?","correct":"The slug","wrong":["The snail","The worm","The beetle"]},
+      {"q":"Which garden bird is black with a bright orange-yellow beak?","correct":"The blackbird","wrong":["The robin","The crow","The starling"]},
+      {"q":"Which garden bird is small, with a blue cap and yellow breast?","correct":"The blue tit","wrong":["The robin","The sparrow","The wren"]},
+      {"q":"Which black and white bird is said to steal shiny things?","correct":"The magpie","wrong":["The crow","The pigeon","The penguin"]},
+      {"q":"Which bird is common in city squares and can carry messages?","correct":"The pigeon","wrong":["The robin","The parrot","The swan"]},
+      {"q":"What covers a bird's body?","correct":"Feathers","wrong":["Fur","Scales","Hair"]},
+      {"q":"What covers a fish's body?","correct":"Scales","wrong":["Feathers","Fur","Shells"]},
+      {"q":"What do fish use to breathe underwater?","correct":"Gills","wrong":["Lungs","Fins","Scales"]},
+      {"q":"What do birds use to fly?","correct":"Wings","wrong":["Fins","Tails only","Beaks"]},
+      {"q":"What does a snake shed as it grows?","correct":"Its skin","wrong":["Its teeth","Its eyes","Its tail"]},
+      {"q":"Which animal has a shell and can live for more than 100 years?","correct":"The tortoise","wrong":["The snail","The crab","The hedgehog"]},
+      {"q":"What is a camel's hump used to store?","correct":"Fat","wrong":["Water","Milk","Air"]},
+      {"q":"What does a giraffe use its long neck for?","correct":"Reaching leaves high in trees","wrong":["Swimming across deep rivers","Digging burrows in the ground","Keeping warm on cold nights"]},
+      {"q":"What does a polar bear's white fur help it do?","correct":"Blend in with the snow","wrong":["Swim faster","See in the dark","Stay cool"]},
+      {"q":"Which animal has black skin under its white fur?","correct":"The polar bear","wrong":["The arctic fox","The snowy owl","The white rabbit"]},
+      {"q":"Which animal sleeps hanging upside down?","correct":"The bat","wrong":["The sloth","The owl","The squirrel"]},
+      {"q":"What is a horse's hair along its neck called?","correct":"A mane","wrong":["A tail","A fringe","A crest"]},
+      {"q":"What are an elephant's two long white teeth called?","correct":"Tusks","wrong":["Horns","Antlers","Fangs"]},
+      {"q":"What are the branching bony things on a male deer's head called?","correct":"Antlers","wrong":["Horns","Tusks","Spikes"]},
+      {"q":"What does a rhinoceros have on its nose?","correct":"A horn","wrong":["A tusk","A trunk","An antler"]},
+      {"q":"What is a baby butterfly called?","correct":"A caterpillar","wrong":["A tadpole","A grub","A pupa"]},
+      {"q":"Which animal is known for being very stubborn and says 'hee-haw'?","correct":"The donkey","wrong":["The horse","The goat","The cow"]},
+      {"q":"Which animal appears on the Welsh flag?","correct":"A red dragon","wrong":["A lion","A unicorn","A griffin"]},
+      {"q":"Which bird is a symbol of the United States?","correct":"The bald eagle","wrong":["The turkey","The hawk","The condor"]},
+      {"q":"Which animal is on the Australian coat of arms with the emu?","correct":"The kangaroo","wrong":["The koala","The wombat","The dingo"]},
+      {"q":"Which Arctic animal has a long spiral tusk, like a unicorn?","correct":"The narwhal","wrong":["The walrus","The beluga","The orca"]},
+      {"q":"Which black and white whale is also called the killer whale?","correct":"The orca","wrong":["The humpback","The beluga","The minke"]},
+      {"q":"Which whale is famous for its songs?","correct":"The humpback whale","wrong":["The sperm whale","The blue whale","The orca"]},
+      {"q":"What does a whale breathe out of?","correct":"A blowhole","wrong":["Gills","Its mouth","Its tail"]},
+      {"q":"Which seabird with a colourful beak nests on British cliffs?","correct":"The puffin","wrong":["The penguin","The pelican","The flamingo"]},
+      {"q":"Which big bird circles high looking for dead animals to eat?","correct":"The vulture","wrong":["The robin","The swan","The duck"]},
+      {"q":"Which bird of prey hunts at night and can turn its head a long way round?","correct":"The owl","wrong":["The eagle","The kestrel","The falcon"]},
+      {"q":"Which animal is known for its long ears and twitchy nose, and loves carrots in cartoons?","correct":"The rabbit","wrong":["The mouse","The donkey","The fox"]},
+      {"q":"Which small animal do cats love to chase?","correct":"The mouse","wrong":["The dog","The horse","The cow"]},
+      {"q":"Which animal is famous for liking honey in stories?","correct":"The bear","wrong":["The fox","The wolf","The badger"]},
+      {"q":"Which reptile has a long body and no legs?","correct":"The snake","wrong":["The lizard","The crocodile","The tortoise"]},
+      {"q":"Which large reptile lives in rivers and has powerful jaws?","correct":"The crocodile","wrong":["The iguana","The tortoise","The gecko"]},
+      {"q":"Which green amphibian croaks and jumps?","correct":"The frog","wrong":["The newt","The lizard","The snake"]},
+      {"q":"Which animal is a type of amphibian with a tail that lives in ponds?","correct":"The newt","wrong":["The frog","The lizard","The toad"]}
+    ],
+    2:[
+      {"q":"What is the largest species of shark?","correct":"The whale shark","wrong":["The great white shark","The basking shark","The hammerhead"]},
+      {"q":"What is the second largest fish in the world, often seen off British coasts?","correct":"The basking shark","wrong":["The whale shark","The great white shark","The sunfish"]},
+      {"q":"Which whale has the largest brain of any animal?","correct":"The sperm whale","wrong":["The blue whale","The humpback whale","The orca"]},
+      {"q":"Which is the largest species of dolphin?","correct":"The orca","wrong":["The bottlenose dolphin","The Risso's dolphin","The pilot whale"]},
+      {"q":"What do baleen whales use to filter food from the water?","correct":"Baleen plates","wrong":["Teeth","Gills","Tentacles"]},
+      {"q":"What tiny shrimp-like creatures do blue whales mainly eat?","correct":"Krill","wrong":["Plankton crabs","Sardines","Squid"]},
+      {"q":"Which ancient sea creature's blue blood is used to test medicines for bacteria?","correct":"The horseshoe crab","wrong":["The octopus","The lobster","The squid"]},
+      {"q":"How many hearts does an octopus have?","correct":"Three","wrong":["One","Two","Four"]},
+      {"q":"Which sea creature squirts ink to escape predators?","correct":"The squid","wrong":["The jellyfish","The starfish","The crab"]},
+      {"q":"Which fish inflates itself into a spiky ball when threatened?","correct":"The pufferfish","wrong":["The lionfish","The stonefish","The anglerfish"]},
+      {"q":"Which deep-sea fish uses a glowing lure on its head to attract prey?","correct":"The anglerfish","wrong":["The viperfish","The lanternfish","The gulper eel"]},
+      {"q":"Which fish has a long sword-like bill?","correct":"The swordfish","wrong":["The sailfish","The marlin","The garfish"]},
+      {"q":"Which is the most venomous fish in the world?","correct":"The stonefish","wrong":["The lionfish","The pufferfish","The scorpionfish"]},
+      {"q":"What is the name for a group of starlings in flight?","correct":"A murmuration","wrong":["A charm","A gaggle","A skein"]},
+      {"q":"What is the name for a colony of nesting rooks?","correct":"A rookery","wrong":["A murder","A parliament","A gaggle"]},
+      {"q":"What is the name for a group of meerkats?","correct":"A mob","wrong":["A pride","A troop","A business"]},
+      {"q":"What is the name for a group of gorillas?","correct":"A troop or band","wrong":["A pride or pack","A herd or drove","A flock or gaggle"]},
+      {"q":"What is the name for a group of kangaroos?","correct":"A mob","wrong":["A pride","A troop","A pack"]},
+      {"q":"What is the name for a group of hyenas?","correct":"A cackle","wrong":["A crash","A pride","A sloth"]},
+      {"q":"What is the name for a group of rhinos?","correct":"A crash","wrong":["A tower","A bloat","A dazzle"]},
+      {"q":"What is the name for a group of giraffes?","correct":"A tower","wrong":["A crash","A bloat","A dazzle"]},
+      {"q":"What is the name for a group of zebras?","correct":"A dazzle","wrong":["A tower","A crash","A bloat"]},
+      {"q":"What is the name for a group of hippos?","correct":"A bloat","wrong":["A crash","A tower","A dazzle"]},
+      {"q":"What is the name for a group of ferrets?","correct":"A business","wrong":["A mob","A cackle","A parliament"]},
+      {"q":"What is the name for a group of jellyfish?","correct":"A smack","wrong":["A shoal","A pod","A bloom"]},
+      {"q":"What is a baby hare called?","correct":"A leveret","wrong":["A kit","A kid","A fawn"]},
+      {"q":"What is a baby eel called?","correct":"An elver","wrong":["A fry","A spat","A smolt"]},
+      {"q":"What is a baby badger called?","correct":"A cub","wrong":["A kit","A pup","A leveret"]},
+      {"q":"What is a baby seal called?","correct":"A pup","wrong":["A cub","A calf","A kit"]},
+      {"q":"What is a baby hedgehog called?","correct":"A hoglet","wrong":["A piglet","A kit","A pup"]},
+      {"q":"What is a baby platypus called?","correct":"A puggle","wrong":["A joey","A kit","A hatchling"]},
+      {"q":"What is a baby pigeon called?","correct":"A squab","wrong":["A cygnet","A poult","An eyas"]},
+      {"q":"What is a baby turkey called?","correct":"A poult","wrong":["A squab","A gosling","A cygnet"]},
+      {"q":"What is a male fox called?","correct":"A dog or tod","wrong":["A buck","A boar","A stag"]},
+      {"q":"What is a female donkey called?","correct":"A jenny","wrong":["A mare","A vixen","A doe"]},
+      {"q":"What is a male donkey called?","correct":"A jack","wrong":["A stallion","A buck","A billy"]},
+      {"q":"What is a male horse used for breeding called?","correct":"A stallion","wrong":["A gelding","A colt","A mare"]},
+      {"q":"What is a young male horse called?","correct":"A colt","wrong":["A filly","A foal","A gelding"]},
+      {"q":"What is a young female horse called?","correct":"A filly","wrong":["A colt","A mare","A foal"]},
+      {"q":"What is a female cat called?","correct":"A queen","wrong":["A jill","A dam","A doe"]},
+      {"q":"What is a male cat called?","correct":"A tom","wrong":["A jack","A buck","A boar"]},
+      {"q":"What is the cross between a male donkey and a female horse called?","correct":"A mule","wrong":["A hinny","A zonkey","A pony"]},
+      {"q":"What is the cross between a male lion and a female tiger called?","correct":"A liger","wrong":["A tigon","A leopon","A jaglion"]},
+      {"q":"Which mammal lays eggs and has a duck-like bill?","correct":"The platypus","wrong":["The echidna","The otter","The beaver"]},
+      {"q":"Apart from the platypus, which is the other egg-laying mammal?","correct":"The echidna","wrong":["The armadillo","The pangolin","The aardvark"]},
+      {"q":"What are mammals with pouches, like kangaroos, called?","correct":"Marsupials","wrong":["Monotremes","Rodents","Primates"]},
+      {"q":"Which marsupial has a backward-facing pouch and cube-shaped droppings?","correct":"The wombat","wrong":["The koala","The wallaby","The bandicoot"]},
+      {"q":"Which marsupial from Tasmania is famous for its screeching and powerful bite?","correct":"The Tasmanian devil","wrong":["The quokka","The numbat","The quoll"]},
+      {"q":"Which small Australian marsupial is famous for appearing to smile in selfies?","correct":"The quokka","wrong":["The wombat","The numbat","The bilby"]},
+      {"q":"Which animal is the only mammal covered in scales?","correct":"The pangolin","wrong":["The armadillo","The anteater","The echidna"]},
+      {"q":"Which South American animal rolls into a ball inside its bony armour?","correct":"The three-banded armadillo","wrong":["The anteater","The capybara","The tapir"]},
+      {"q":"Which animal is the closest living relative of humans?","correct":"The chimpanzee","wrong":["The gorilla","The orangutan","The gibbon"]},
+      {"q":"Which great ape lives in the rainforests of Borneo and Sumatra?","correct":"The orangutan","wrong":["The gorilla","The chimpanzee","The bonobo"]},
+      {"q":"What does the name 'orangutan' mean in Malay?","correct":"Person of the forest","wrong":["Red monkey","Tree climber","Old man of the hills"]},
+      {"q":"Which is the largest primate?","correct":"The gorilla","wrong":["The orangutan","The chimpanzee","The baboon"]},
+      {"q":"Which monkey has a famously red and blue face?","correct":"The mandrill","wrong":["The baboon","The howler monkey","The macaque"]},
+      {"q":"Which monkey is the loudest land animal, heard up to 3 miles away?","correct":"The howler monkey","wrong":["The spider monkey","The capuchin","The baboon"]},
+      {"q":"Which island is the only natural home of lemurs?","correct":"Madagascar","wrong":["Borneo","Sri Lanka","Mauritius"]},
+      {"q":"Which big cat is the only one that lives in groups?","correct":"The lion","wrong":["The tiger","The leopard","The jaguar"]},
+      {"q":"Which big cat cannot fully retract its claws?","correct":"The cheetah","wrong":["The leopard","The lion","The puma"]},
+      {"q":"Which is the largest big cat in the Americas?","correct":"The jaguar","wrong":["The puma","The ocelot","The lynx"]},
+      {"q":"What is a black panther usually?","correct":"A black leopard or jaguar","wrong":["A separate species","A black lion","A black cheetah"]},
+      {"q":"Puma, cougar and mountain lion are names for how many species?","correct":"One","wrong":["Two","Three","Four"]},
+      {"q":"Which wild cat lives in the Scottish Highlands?","correct":"The Scottish wildcat","wrong":["The lynx","The ocelot","The caracal"]},
+      {"q":"Which wild dog is native to Australia?","correct":"The dingo","wrong":["The jackal","The coyote","The dhole"]},
+      {"q":"Which animal is the largest member of the deer family?","correct":"The moose (elk)","wrong":["The red deer","The reindeer","The sambar"]},
+      {"q":"Which is the largest wild land animal in Britain?","correct":"The red deer","wrong":["The wild boar","The fallow deer","The badger"]},
+      {"q":"Which deer is the only species where both males and females grow antlers?","correct":"The reindeer","wrong":["The red deer","The roe deer","The moose"]},
+      {"q":"Which British mammal is the only one with a prehensile tail?","correct":"The harvest mouse","wrong":["The red squirrel","The dormouse","The pine marten"]},
+      {"q":"Which British mammal sleeps for up to six months of the year?","correct":"The hazel dormouse","wrong":["The hedgehog","The badger","The bat"]},
+      {"q":"Which native British squirrel has been pushed out by the grey squirrel?","correct":"The red squirrel","wrong":["The black squirrel","The flying squirrel","The ground squirrel"]},
+      {"q":"Where did grey squirrels in Britain originally come from?","correct":"North America","wrong":["China","Russia","Australia"]},
+      {"q":"Which animal was reintroduced to Britain to build dams after centuries of absence?","correct":"The beaver","wrong":["The otter","The lynx","The wolf"]},
+      {"q":"Which bird is the fastest animal on Earth in a dive?","correct":"The peregrine falcon","wrong":["The golden eagle","The swift","The kestrel"]},
+      {"q":"Which bird lays the largest egg?","correct":"The ostrich","wrong":["The emu","The albatross","The cassowary"]},
+      {"q":"Which is the smallest bird in the world?","correct":"The bee hummingbird","wrong":["The goldcrest","The wren","The sunbird"]},
+      {"q":"Which is the smallest bird in Britain?","correct":"The goldcrest","wrong":["The wren","The blue tit","The long-tailed tit"]},
+      {"q":"Which bird's call gives it its name and is heard in British spring woodlands?","correct":"The cuckoo","wrong":["The robin","The blackcap","The nightingale"]},
+      {"q":"Which bird is famous for singing beautifully at night?","correct":"The nightingale","wrong":["The skylark","The thrush","The wren"]},
+      {"q":"Which bird sings while hovering high over fields?","correct":"The skylark","wrong":["The swallow","The nightingale","The kestrel"]},
+      {"q":"Which bird of prey hovers over road verges looking for voles?","correct":"The kestrel","wrong":["The buzzard","The red kite","The sparrowhawk"]},
+      {"q":"Which bird of prey with a forked tail was reintroduced to the Chilterns?","correct":"The red kite","wrong":["The osprey","The buzzard","The hen harrier"]},
+      {"q":"Which bird of prey dives feet first into water to catch fish?","correct":"The osprey","wrong":["The buzzard","The kestrel","The red kite"]},
+      {"q":"Which large British bird was reintroduced to the Isle of Wight, having been extinct in England for over 200 years?","correct":"The white-tailed eagle","wrong":["The golden eagle","The osprey","The red kite"]},
+      {"q":"Which bird is famous for keeping the Tower of London from falling, legend says?","correct":"The raven","wrong":["The crow","The jackdaw","The magpie"]},
+      {"q":"Which small crow has a grey nape and pale eyes, and often nests in chimneys?","correct":"The jackdaw","wrong":["The rook","The raven","The carrion crow"]},
+      {"q":"Which bird is the largest of the crow family?","correct":"The raven","wrong":["The rook","The crow","The magpie"]},
+      {"q":"Which wading bird stands still in rivers waiting to spear fish?","correct":"The grey heron","wrong":["The curlew","The oystercatcher","The lapwing"]},
+      {"q":"Which black and white wading bird has a long orange beak and lives on coasts?","correct":"The oystercatcher","wrong":["The avocet","The puffin","The lapwing"]},
+      {"q":"Which elegant wading bird with an upturned beak is the RSPB's emblem?","correct":"The avocet","wrong":["The heron","The curlew","The stork"]},
+      {"q":"Which bird is the national bird of Britain, in a 2015 public vote?","correct":"The robin","wrong":["The barn owl","The blackbird","The wren"]},
+      {"q":"Which bird is linked with bringing babies in folklore?","correct":"The stork","wrong":["The heron","The swan","The crane"]},
+      {"q":"Which owl is white and gold and hunts over farmland at dusk?","correct":"The barn owl","wrong":["The tawny owl","The little owl","The snowy owl"]},
+      {"q":"Which owl makes the famous 'twit-twoo' call, which is really a pair calling?","correct":"The tawny owl","wrong":["The barn owl","The little owl","The long-eared owl"]},
+      {"q":"Which bird is known for drumming on trees with its beak?","correct":"The woodpecker","wrong":["The nuthatch","The treecreeper","The jay"]},
+      {"q":"Which is the only British bird that regularly walks down trees head first?","correct":"The nuthatch","wrong":["The woodpecker","The treecreeper","The wren"]},
+      {"q":"Which large flightless bird lives in Australia and is the second tallest bird?","correct":"The emu","wrong":["The cassowary","The rhea","The ostrich"]},
+      {"q":"Which flightless parrot from New Zealand is nocturnal and very rare?","correct":"The kakapo","wrong":["The kea","The kiwi","The takahe"]},
+      {"q":"Which bird mimics sounds such as chainsaws and camera shutters?","correct":"The lyrebird","wrong":["The mockingbird","The parrot","The starling"]},
+      {"q":"Which penguin is the largest?","correct":"The emperor penguin","wrong":["The king penguin","The gentoo penguin","The Adelie penguin"]},
+      {"q":"In emperor penguins, which parent keeps the egg warm through the winter?","correct":"The father","wrong":["The mother","Both in turns","Neither, it is buried"]},
+      {"q":"What are the three main parts of an insect's body?","correct":"Head, thorax and abdomen","wrong":["Head, neck and tail","Head, chest and legs","Head, wings and abdomen"]},
+      {"q":"Which orange butterfly famously migrates thousands of miles from Canada to Mexico?","correct":"The monarch","wrong":["The painted lady","The red admiral","The swallowtail"]},
+      {"q":"Which bright yellow butterfly is often the first seen in a British spring?","correct":"The brimstone","wrong":["The cabbage white","The red admiral","The peacock"]},
+      {"q":"Which insect is an expert at hovering and has large compound eyes, catching prey in flight?","correct":"The dragonfly","wrong":["The hoverfly","The mayfly","The lacewing"]},
+      {"q":"Which insect lives for only a day or so as an adult?","correct":"The mayfly","wrong":["The dragonfly","The housefly","The cranefly"]},
+      {"q":"What is the common name for the cranefly in Britain?","correct":"Daddy-long-legs","wrong":["Mosquito","Gnat","Midge"]},
+      {"q":"Which insect sings by rubbing its legs against its wings?","correct":"The grasshopper","wrong":["The cricket","The cicada","The beetle"]},
+      {"q":"Which insect is famous for its loud summer buzz and spends years underground as a nymph?","correct":"The cicada","wrong":["The cricket","The bumblebee","The hornet"]},
+      {"q":"Which insect is the largest beetle in Britain?","correct":"The stag beetle","wrong":["The dung beetle","The ladybird","The cockchafer"]},
+      {"q":"Which beetle did the ancient Egyptians hold sacred?","correct":"The scarab (dung beetle)","wrong":["The stag beetle","The ladybird","The weevil"]},
+      {"q":"Which insect is the female known to sometimes eat the male after mating?","correct":"The praying mantis","wrong":["The ladybird","The honeybee","The ant"]},
+      {"q":"What is the only bee in a hive that lays eggs?","correct":"The queen","wrong":["The drone","The worker","The scout"]},
+      {"q":"What is a male honeybee called?","correct":"A drone","wrong":["A worker","A soldier","A king"]},
+      {"q":"How do honeybees tell each other where flowers are?","correct":"With a waggle dance","wrong":["By buzzing louder","By leaving scent trails only","By changing colour"]},
+      {"q":"What is the name of the substance bees use to build their combs?","correct":"Beeswax","wrong":["Propolis","Royal jelly","Nectar"]},
+      {"q":"What special food do bee larvae fed to become queens receive?","correct":"Royal jelly","wrong":["Honey","Pollen bread","Propolis"]},
+      {"q":"Which stinging insect builds paper nests from chewed wood?","correct":"The wasp","wrong":["The honeybee","The bumblebee","The ant"]},
+      {"q":"Which is the largest wasp in Britain?","correct":"The hornet","wrong":["The common wasp","The German wasp","The sand wasp"]},
+      {"q":"Which insects make mounds of mud that can be taller than a person?","correct":"Termites","wrong":["Ants","Bees","Beetles"]},
+      {"q":"Which insect spread the Black Death through rats?","correct":"The flea","wrong":["The mosquito","The louse","The tick"]},
+      {"q":"Which creature is not an insect but an arachnid?","correct":"The scorpion","wrong":["The ant","The beetle","The moth"]},
+      {"q":"Which creature has the most legs of any animal, sometimes over 1,000?","correct":"The millipede","wrong":["The centipede","The woodlouse","The earthworm"]},
+      {"q":"Which garden creature is actually a crustacean, related to crabs?","correct":"The woodlouse","wrong":["The millipede","The slug","The earwig"]},
+      {"q":"Which is the largest spider in the world by mass?","correct":"The Goliath birdeater","wrong":["The huntsman spider","The black widow","The wolf spider"]},
+      {"q":"Which Australian spider is one of the most dangerous in the world?","correct":"The Sydney funnel-web","wrong":["The redback","The huntsman","The daddy-long-legs spider"]},
+      {"q":"On which country's islands does the Komodo dragon live?","correct":"Indonesia","wrong":["Australia","The Philippines","Malaysia"]},
+      {"q":"Which is the largest reptile alive today?","correct":"The saltwater crocodile","wrong":["The Komodo dragon","The leatherback turtle","The anaconda"]},
+      {"q":"How can you usually tell a crocodile from an alligator?","correct":"A crocodile's lower teeth show when its mouth is shut","wrong":["An alligator is always larger","A crocodile has no tail","An alligator lives only in salt water"]},
+      {"q":"Which is the longest snake in the world?","correct":"The reticulated python","wrong":["The green anaconda","The king cobra","The black mamba"]},
+      {"q":"Which is the heaviest snake in the world?","correct":"The green anaconda","wrong":["The reticulated python","The king cobra","The boa constrictor"]},
+      {"q":"Which is the longest venomous snake?","correct":"The king cobra","wrong":["The black mamba","The taipan","The rattlesnake"]},
+      {"q":"Which British reptile looks like a snake but is actually a legless lizard?","correct":"The slow worm","wrong":["The adder","The grass snake","The smooth snake"]},
+      {"q":"How do snakes smell?","correct":"With their forked tongues","wrong":["With their nostrils only","Through their skin","With their tails"]},
+      {"q":"Which snake makes a warning sound with its tail?","correct":"The rattlesnake","wrong":["The cobra","The python","The mamba"]},
+      {"q":"Which lizard can run on water?","correct":"The basilisk lizard","wrong":["The gecko","The iguana","The chameleon"]},
+      {"q":"How do geckos climb walls?","correct":"Millions of tiny hairs on their feet","wrong":["Sticky glue made in their skin","Suction cups on their toes","Long hooked claws only"]},
+      {"q":"Which is the largest turtle in the world?","correct":"The leatherback turtle","wrong":["The loggerhead turtle","The green turtle","The Galapagos tortoise"]},
+      {"q":"Which islands are famous for giant tortoises studied by Charles Darwin?","correct":"The Galapagos Islands","wrong":["The Seychelles","Madagascar","The Canary Islands"]},
+      {"q":"What is the difference between a tortoise and a turtle?","correct":"Tortoises live on land, turtles mostly in water","wrong":["Tortoises have no shell","Turtles are mammals","There is no difference"]},
+      {"q":"What do we call animals that are cold-blooded, such as lizards?","correct":"Ectotherms","wrong":["Endotherms","Mammals","Monotremes"]},
+      {"q":"Which amphibian is a large salamander from Mexico that keeps its baby gills for life?","correct":"The axolotl","wrong":["The newt","The olm","The mudpuppy"]},
+      {"q":"Which brightly coloured frogs from South America have toxic skin?","correct":"Poison dart frogs","wrong":["Tree frogs","Bullfrogs","Glass frogs"]},
+      {"q":"Which is the largest frog in the world?","correct":"The Goliath frog","wrong":["The bullfrog","The cane toad","The horned frog"]},
+      {"q":"Which toad was introduced to Australia to eat beetles and became a pest?","correct":"The cane toad","wrong":["The natterjack toad","The common toad","The fire-bellied toad"]},
+      {"q":"Which rare British toad has a yellow stripe down its back?","correct":"The natterjack toad","wrong":["The common toad","The midwife toad","The cane toad"]},
+      {"q":"Which British newt is the largest and is protected by law?","correct":"The great crested newt","wrong":["The smooth newt","The palmate newt","The alpine newt"]},
+      {"q":"What gas do plants take in from the air to make food?","correct":"Carbon dioxide","wrong":["Oxygen","Nitrogen","Hydrogen"]},
+      {"q":"What gas do plants give off during photosynthesis?","correct":"Oxygen","wrong":["Carbon dioxide","Nitrogen","Methane"]},
+      {"q":"What is the green substance in leaves that captures sunlight?","correct":"Chlorophyll","wrong":["Chloroform","Cellulose","Keratin"]},
+      {"q":"What is the name of the process by which plants make food from sunlight?","correct":"Photosynthesis","wrong":["Respiration","Pollination","Germination"]},
+      {"q":"What is it called when pollen is carried from one flower to another?","correct":"Pollination","wrong":["Germination","Fertilisation","Photosynthesis"]},
+      {"q":"What is it called when a seed starts to grow?","correct":"Germination","wrong":["Pollination","Transpiration","Fermentation"]},
+      {"q":"What is the loss of water from a plant's leaves called?","correct":"Transpiration","wrong":["Respiration","Evaporation","Condensation"]},
+      {"q":"What do we call a plant that lives for many years?","correct":"A perennial","wrong":["An annual","A biennial","A deciduous"]},
+      {"q":"Which is the largest tree in the world by volume?","correct":"The giant sequoia","wrong":["The coast redwood","The baobab","The kauri"]},
+      {"q":"Which African tree with a huge trunk is sometimes called the 'upside-down tree'?","correct":"The baobab","wrong":["The acacia","The marula","The jacaranda"]},
+      {"q":"Which tree's bark gives us cork?","correct":"The cork oak","wrong":["The silver birch","The beech","The plane tree"]},
+      {"q":"Which tree's bark gave us the first form of aspirin?","correct":"The willow","wrong":["The oak","The ash","The elm"]},
+      {"q":"Which tree has white papery bark and is common in British woods?","correct":"The silver birch","wrong":["The beech","The ash","The rowan"]},
+      {"q":"Which tree, sacred in churchyards, is one of the longest-living in Britain?","correct":"The yew","wrong":["The oak","The holly","The beech"]},
+      {"q":"Which tree is suffering from 'dieback', a disease affecting many British woods?","correct":"The ash","wrong":["The oak","The beech","The yew"]},
+      {"q":"Which disease killed millions of British elm trees from the 1960s?","correct":"Dutch elm disease","wrong":["Ash dieback","Oak wilt","Sudden oak death"]},
+      {"q":"Which tree has red berries loved by birds and is also called mountain ash?","correct":"The rowan","wrong":["The hawthorn","The elder","The holly"]},
+      {"q":"Which hedgerow tree blossoms in May and is also called the May tree?","correct":"The hawthorn","wrong":["The blackthorn","The elder","The rowan"]},
+      {"q":"Which hedgerow shrub gives us sloes?","correct":"The blackthorn","wrong":["The hawthorn","The elder","The dog rose"]},
+      {"q":"Which tree gives us the berries for real gin's flavour?","correct":"The juniper","wrong":["The blackthorn","The rowan","The elder"]},
+      {"q":"Which plant is used to make linen?","correct":"Flax","wrong":["Cotton","Hemp","Jute"]},
+      {"q":"Which tall grass can grow up to 90 centimetres in a single day?","correct":"Bamboo","wrong":["Sugar cane","Pampas grass","Wheat"]},
+      {"q":"What is the scientific study of plants called?","correct":"Botany","wrong":["Zoology","Ecology","Mycology"]},
+      {"q":"What is the scientific study of fungi called?","correct":"Mycology","wrong":["Botany","Entomology","Ornithology"]},
+      {"q":"What is the scientific study of insects called?","correct":"Entomology","wrong":["Etymology","Ornithology","Herpetology"]},
+      {"q":"What is the scientific study of birds called?","correct":"Ornithology","wrong":["Entomology","Ichthyology","Zoology"]},
+      {"q":"Which bright red toadstool with white spots is poisonous?","correct":"The fly agaric","wrong":["The chanterelle","The puffball","The field mushroom"]},
+      {"q":"Which deadly mushroom causes most fatal mushroom poisonings worldwide?","correct":"The death cap","wrong":["The fly agaric","The ink cap","The puffball"]},
+      {"q":"What is the name for a living partnership between a fungus and an alga?","correct":"A lichen","wrong":["A moss","A liverwort","A fern"]},
+      {"q":"Which underground fungus is hunted by pigs and dogs in France and Italy?","correct":"The truffle","wrong":["The morel","The chanterelle","The porcini"]},
+      {"q":"What is the name of the network of threads that makes up most of a fungus?","correct":"Mycelium","wrong":["Spores","Hyphae roots","Gills"]},
+      {"q":"What do fungi release to reproduce?","correct":"Spores","wrong":["Seeds","Pollen","Bulbs"]},
+      {"q":"What is the name of a large area of wet, spongy land where peat forms?","correct":"A bog","wrong":["A desert","A savanna","A steppe"]},
+      {"q":"What is the name for the vast grassland of East Africa?","correct":"The savanna","wrong":["The tundra","The steppe","The pampas"]},
+      {"q":"What is the name for the cold treeless region of the Arctic?","correct":"The tundra","wrong":["The taiga","The steppe","The savanna"]},
+      {"q":"What is the name of the vast coniferous forest across Russia and Canada?","correct":"The taiga","wrong":["The tundra","The steppe","The rainforest"]},
+      {"q":"What are the grasslands of Argentina called?","correct":"The pampas","wrong":["The prairie","The steppe","The veld"]},
+      {"q":"What are the grasslands of North America called?","correct":"The prairies","wrong":["The pampas","The steppes","The savanna"]},
+      {"q":"Which is the largest rainforest in the world?","correct":"The Amazon","wrong":["The Congo","The Daintree","The Borneo rainforest"]},
+      {"q":"What is the dense upper layer of leaves in a rainforest, below the tallest emergent trees, called?","correct":"The canopy","wrong":["The understorey","The forest floor","The shrub layer"]},
+      {"q":"What is a food chain?","correct":"A series showing which living things eat which","wrong":["A row of shops that all sell food","A list of recipes in a cookbook","A type of climbing plant"]},
+      {"q":"What do we call an animal that is hunted by another?","correct":"Prey","wrong":["A predator","A parasite","A host"]},
+      {"q":"What do we call an animal that feeds on dead animals?","correct":"A scavenger","wrong":["A predator","A herbivore","A parasite"]},
+      {"q":"What is a species called when there are none left alive?","correct":"Extinct","wrong":["Endangered","Vulnerable","Threatened"]},
+      {"q":"Which organisation publishes the 'Red List' of threatened species?","correct":"The IUCN","wrong":["The WWF","The RSPCA","Greenpeace"]},
+      {"q":"Which charity's logo is a giant panda?","correct":"The WWF","wrong":["The RSPB","Greenpeace","The National Trust"]}
+    ],
+    3:[
+      {"q":"Which animal has the longest pregnancy of any mammal, about 22 months?","correct":"The African elephant","wrong":["The blue whale","The giraffe","The rhinoceros"]},
+      {"q":"Which mammal has the shortest known pregnancy, about 12 days?","correct":"The Virginia opossum","wrong":["The house mouse","The hamster","The rabbit"]},
+      {"q":"Which animal has the strongest bite force ever measured in a living animal?","correct":"The saltwater crocodile","wrong":["The great white shark","The hippopotamus","The jaguar"]},
+      {"q":"Which big cat has the strongest bite relative to its size?","correct":"The jaguar","wrong":["The lion","The tiger","The leopard"]},
+      {"q":"Which animal is thought to be the longest-living vertebrate, possibly over 400 years?","correct":"The Greenland shark","wrong":["The bowhead whale","The Galapagos tortoise","The koi carp"]},
+      {"q":"Which mammal is thought to live the longest, possibly over 200 years?","correct":"The bowhead whale","wrong":["The African elephant","The blue whale","The human"]},
+      {"q":"Which tiny jellyfish is called 'immortal' because it can revert to an earlier life stage?","correct":"Turritopsis dohrnii","wrong":["The box jellyfish","The moon jellyfish","The lion's mane jellyfish"]},
+      {"q":"Which microscopic animals can survive boiling, freezing and the vacuum of space?","correct":"Tardigrades","wrong":["Rotifers","Nematodes","Amoebas"]},
+      {"q":"Which jellyfish is the most venomous marine animal?","correct":"The box jellyfish","wrong":["The Portuguese man o' war","The lion's mane jellyfish","The moon jellyfish"]},
+      {"q":"What is the Portuguese man o' war, often mistaken for a jellyfish?","correct":"A colony of many tiny animals","wrong":["A single giant jellyfish","A type of floating squid","A mass of seaweed"]},
+      {"q":"Which is the largest invertebrate known?","correct":"The colossal squid","wrong":["The giant Pacific octopus","The Japanese spider crab","The lion's mane jellyfish"]},
+      {"q":"Which crab has the largest leg span of any arthropod?","correct":"The Japanese spider crab","wrong":["The coconut crab","The king crab","The Tasmanian giant crab"]},
+      {"q":"Which is the largest land invertebrate?","correct":"The coconut crab","wrong":["The goliath beetle","The giant African land snail","The Goliath birdeater"]},
+      {"q":"Which shrimp can punch with the speed of a bullet and break aquarium glass?","correct":"The mantis shrimp","wrong":["The pistol shrimp","The cleaner shrimp","The tiger prawn"]},
+      {"q":"Which shrimp snaps its claw so fast it creates a bubble hotter than the Sun's surface?","correct":"The pistol shrimp","wrong":["The mantis shrimp","The krill","The ghost shrimp"]},
+      {"q":"Which air-breathing fish can wriggle across land and has invaded waterways in the USA?","correct":"The snakehead","wrong":["The lungfish","The mudskipper","The eel"]},
+      {"q":"Which fish lives in the mud of mangrove swamps and skips across land?","correct":"The mudskipper","wrong":["The lungfish","The walking catfish","The goby"]},
+      {"q":"Which fish can survive years buried in dried mud by breathing air?","correct":"The African lungfish","wrong":["The coelacanth","The mudskipper","The carp"]},
+      {"q":"Which 'living fossil' fish was thought extinct until one was caught off South Africa in 1938?","correct":"The coelacanth","wrong":["The lungfish","The sturgeon","The hagfish"]},
+      {"q":"Which fish produces the most expensive caviar?","correct":"The beluga sturgeon","wrong":["The salmon","The paddlefish","The lumpfish"]},
+      {"q":"Which fish is the fastest in the sea?","correct":"The sailfish","wrong":["The swordfish","The bluefin tuna","The mako shark"]},
+      {"q":"Which reef fish changes from male to female when the dominant female of its group dies?","correct":"The clownfish","wrong":["The cod","The trout","The goldfish"]},
+      {"q":"Which fish has its eyes on one side of its head when adult?","correct":"The flounder","wrong":["The pufferfish","The monkfish","The gurnard"]},
+      {"q":"Which eel can produce an electric shock of up to about 860 volts?","correct":"The electric eel","wrong":["The moray eel","The conger eel","The torpedo ray"]},
+      {"q":"Where do European eels travel to spawn?","correct":"The Sargasso Sea","wrong":["The Baltic Sea","The Mediterranean","The North Sea"]},
+      {"q":"Which shark is famous for its strange flat, wide head?","correct":"The hammerhead","wrong":["The thresher","The tiger shark","The goblin shark"]},
+      {"q":"Which shark uses its long tail like a whip to stun fish?","correct":"The thresher shark","wrong":["The hammerhead","The nurse shark","The mako shark"]},
+      {"q":"Which shark can swim from the sea up rivers into fresh water?","correct":"The bull shark","wrong":["The great white shark","The tiger shark","The blue shark"]},
+      {"q":"What is the main sense sharks use to detect the electrical fields of prey?","correct":"The ampullae of Lorenzini","wrong":["The lateral line only","Their eyesight","Their teeth"]},
+      {"q":"What sensory organ running along a fish's side detects movement in water?","correct":"The lateral line","wrong":["The swim bladder","The gill raker","The operculum"]},
+      {"q":"What organ lets many bony fish control their buoyancy?","correct":"The swim bladder","wrong":["The lateral line","The liver","The gills"]},
+      {"q":"What do we call animals with a backbone?","correct":"Vertebrates","wrong":["Invertebrates","Arthropods","Molluscs"]},
+      {"q":"Which group of animals includes snails, slugs, octopuses and squid?","correct":"Molluscs","wrong":["Crustaceans","Arachnids","Annelids"]},
+      {"q":"Which group of animals includes crabs, lobsters, shrimp and woodlice?","correct":"Crustaceans","wrong":["Molluscs","Arachnids","Echinoderms"]},
+      {"q":"Which group of animals includes starfish and sea urchins?","correct":"Echinoderms","wrong":["Cnidarians","Molluscs","Crustaceans"]},
+      {"q":"Which group of animals includes jellyfish, corals and sea anemones?","correct":"Cnidarians","wrong":["Echinoderms","Sponges","Molluscs"]},
+      {"q":"Which group of animals includes earthworms and leeches?","correct":"Annelids","wrong":["Nematodes","Molluscs","Arthropods"]},
+      {"q":"What is the largest group of animals on Earth by number of species?","correct":"Insects","wrong":["Fish","Birds","Mammals"]},
+      {"q":"What is the largest order of mammals by number of species?","correct":"Rodents","wrong":["Bats","Primates","Carnivores"]},
+      {"q":"What is the second largest order of mammals by number of species?","correct":"Bats","wrong":["Rodents","Primates","Shrews"]},
+      {"q":"What is the hard outer covering of insects and crabs called?","correct":"An exoskeleton","wrong":["An endoskeleton","A carapace only","A cuticle bone"]},
+      {"q":"What is the name for a snake's process of shedding its skin?","correct":"Ecdysis (moulting)","wrong":["Metamorphosis","Mitosis","Torpor"]},
+      {"q":"What is the name for the dramatic change of form from larva to adult, as in a butterfly?","correct":"Complete metamorphosis","wrong":["Ecdysis","Mitosis","Parthenogenesis"]},
+      {"q":"What is the name for a short period of reduced body activity, like a mini hibernation?","correct":"Torpor","wrong":["Aestivation","Brumation","Dormancy"]},
+      {"q":"What is the name for summer dormancy, used by some animals to survive heat and drought?","correct":"Aestivation","wrong":["Hibernation","Brumation","Torpor"]},
+      {"q":"What is the name for the winter dormancy of reptiles?","correct":"Brumation","wrong":["Hibernation","Aestivation","Torpor"]},
+      {"q":"What is the name for colouring that warns predators an animal is dangerous?","correct":"Aposematism","wrong":["Camouflage","Mimicry","Countershading"]},
+      {"q":"What is it called when a harmless animal copies the warning colours of a dangerous one?","correct":"Batesian mimicry","wrong":["Mullerian mimicry","Aposematism","Crypsis"]},
+      {"q":"What is countershading, as seen in sharks and penguins?","correct":"Being dark on top and pale underneath","wrong":["Changing colour at night","Having stripes","Glowing in the dark"]},
+      {"q":"What is the name for light produced by living things, such as fireflies?","correct":"Bioluminescence","wrong":["Fluorescence","Phosphorescence","Incandescence"]},
+      {"q":"Which part of the electromagnetic spectrum can bees see that humans cannot?","correct":"Ultraviolet","wrong":["Infrared","Microwaves","X-rays"]},
+      {"q":"Which snakes can sense infrared heat from warm-blooded prey with special pits?","correct":"Pit vipers, boas and pythons","wrong":["Cobras and mambas","Grass snakes","Sea snakes"]},
+      {"q":"Which animal has the largest eyes of any animal?","correct":"The colossal squid","wrong":["The blue whale","The ostrich","The giant Pacific octopus"]},
+      {"q":"Which land animal has the largest eyes?","correct":"The ostrich","wrong":["The elephant","The horse","The giraffe"]},
+      {"q":"Where are a kiwi's nostrils?","correct":"At the tip of its beak","wrong":["At the base of its beak","On its forehead","Under its wings"]},
+      {"q":"Which bird's egg is the largest relative to its body?","correct":"The kiwi","wrong":["The ostrich","The emu","The hummingbird"]},
+      {"q":"Which bird has the longest beak relative to its body?","correct":"The sword-billed hummingbird","wrong":["The toucan","The pelican","The curlew"]},
+      {"q":"Which bird has the longest beak in absolute terms?","correct":"The Australian pelican","wrong":["The toucan","The sword-billed hummingbird","The curlew"]},
+      {"q":"Which bird has the most feathers?","correct":"The tundra swan","wrong":["The ostrich","The emperor penguin","The peacock"]},
+      {"q":"Which wading bird holds the record for the longest non-stop flight, over 8,000 miles?","correct":"The bar-tailed godwit","wrong":["The Arctic tern","The curlew","The knot"]},
+      {"q":"Which bird can sleep with half its brain at a time while flying?","correct":"The frigatebird","wrong":["The swallow","The pigeon","The kestrel"]},
+      {"q":"Which New Guinea bird was the first found to have poisonous feathers and skin?","correct":"The hooded pitohui","wrong":["The cassowary","The bird of paradise","The kookaburra"]},
+      {"q":"Which bird is considered the most dangerous to humans, with a dagger-like claw?","correct":"The cassowary","wrong":["The ostrich","The emu","The harpy eagle"]},
+      {"q":"Which is the most powerful eagle in the world, hunting sloths and monkeys?","correct":"The harpy eagle","wrong":["The golden eagle","The bald eagle","The martial eagle"]},
+      {"q":"Which is the heaviest flying bird?","correct":"The great bustard (or kori bustard)","wrong":["The Andean condor","The mute swan","The wandering albatross"]},
+      {"q":"Which bird built the largest tree nest ever recorded, nearly 3 metres wide?","correct":"The bald eagle","wrong":["The golden eagle","The white stork","The osprey"]},
+      {"q":"Which bird is famous for building intricate hanging nests by knotting grass?","correct":"The weaver bird","wrong":["The bowerbird","The tailorbird","The oriole"]},
+      {"q":"Which bird decorates its display ground with blue objects to attract a mate?","correct":"The satin bowerbird","wrong":["The weaver bird","The magpie","The peacock"]},
+      {"q":"Which bird is famous for its 'dancing' courtship display in New Guinea, with spectacular plumes?","correct":"The bird of paradise","wrong":["The lyrebird","The peacock","The quetzal"]},
+      {"q":"Which brightly coloured bird is the national bird of Guatemala and gives its name to the currency?","correct":"The quetzal","wrong":["The toucan","The macaw","The hummingbird"]},
+      {"q":"Which bird is the national bird of India?","correct":"The Indian peafowl","wrong":["The Indian roller","The sarus crane","The Bengal kite"]},
+      {"q":"Which is the national bird of Australia?","correct":"The emu","wrong":["The kookaburra","The cockatoo","The lyrebird"]},
+      {"q":"What is a bird's 'crop'?","correct":"A pouch in the throat for storing food","wrong":["A long feather in the tail","Material used to line a nest","The hooked tip of the beak"]},
+      {"q":"What is a gizzard used for in birds?","correct":"Grinding food, often with swallowed grit","wrong":["Storing water for long flights","Making calls and songs","Producing the shells of eggs"]},
+      {"q":"What is the voice box of a bird called?","correct":"The syrinx","wrong":["The larynx","The pharynx","The crop"]},
+      {"q":"What is the name for birds that are born helpless, naked and blind?","correct":"Altricial","wrong":["Precocial","Passerine","Raptorial"]},
+      {"q":"What is the name for birds that are born active and able to feed themselves soon after hatching, like ducks?","correct":"Precocial","wrong":["Altricial","Passerine","Corvid"]},
+      {"q":"What is the name for the large order of perching birds, including sparrows and robins?","correct":"Passerines","wrong":["Raptors","Corvids","Waders"]},
+      {"q":"Which family of birds includes crows, ravens, jays and magpies?","correct":"Corvids","wrong":["Passerines only","Raptors","Galliformes"]},
+      {"q":"Which bird is known to use tools, such as bending wire into hooks?","correct":"The New Caledonian crow","wrong":["The raven","The kea","The magpie"]},
+      {"q":"Which parrot from New Zealand is famous for its intelligence and for damaging cars?","correct":"The kea","wrong":["The kakapo","The kaka","The kakariki"]},
+      {"q":"What is the name for the act of a bird replacing its feathers?","correct":"Moulting","wrong":["Preening","Nesting","Brooding"]},
+      {"q":"What do we call a bird's habit of spreading ants on its feathers?","correct":"Anting","wrong":["Preening","Dust bathing","Sunning"]},
+      {"q":"How fast can a hummingbird beat its wings, in some species?","correct":"Up to about 80 times a second","wrong":["About 10 times a second","About 200 times a second","About 5 times a second"]},
+      {"q":"What is a bird's 'clutch'?","correct":"A set of eggs laid at one time","wrong":["A large group of birds flying","A nest built in a hedge","The grip of a bird's claws"]},
+      {"q":"Which British bird can be identified by its 'little bit of bread and no cheese' song?","correct":"The yellowhammer","wrong":["The chaffinch","The great tit","The song thrush"]},
+      {"q":"Which British bird's song is often described as 'teacher, teacher'?","correct":"The great tit","wrong":["The blue tit","The chiffchaff","The wren"]},
+      {"q":"Which British bird repeats each phrase of its song two or three times?","correct":"The song thrush","wrong":["The blackbird","The mistle thrush","The robin"]},
+      {"q":"Which British bird often sings in storms and is called the 'stormcock'?","correct":"The mistle thrush","wrong":["The song thrush","The blackbird","The starling"]},
+      {"q":"Which British bird of prey hunts other birds in fast ambushes in gardens?","correct":"The sparrowhawk","wrong":["The kestrel","The buzzard","The merlin"]},
+      {"q":"Which is the most common bird of prey in Britain?","correct":"The buzzard","wrong":["The kestrel","The sparrowhawk","The red kite"]},
+      {"q":"Which is the smallest British bird of prey?","correct":"The merlin","wrong":["The kestrel","The hobby","The sparrowhawk"]},
+      {"q":"Which British owl is often seen hunting by day and was introduced in the 1800s?","correct":"The little owl","wrong":["The barn owl","The tawny owl","The short-eared owl"]},
+      {"q":"Which is the only bear species that is mainly a meat-eater?","correct":"The polar bear","wrong":["The brown bear","The sun bear","The sloth bear"]},
+      {"q":"Which is the smallest bear species?","correct":"The sun bear","wrong":["The sloth bear","The spectacled bear","The Asiatic black bear"]},
+      {"q":"Which is the only bear native to South America?","correct":"The spectacled bear","wrong":["The sun bear","The sloth bear","The black bear"]},
+      {"q":"Which bear has a cream patch on its chest and lives in South-East Asian forests?","correct":"The sun bear","wrong":["The sloth bear","The moon bear","The panda"]},
+      {"q":"Which family does the red panda belong to?","correct":"Its own family, the Ailuridae","wrong":["The bear family","The raccoon family","The cat family"]},
+      {"q":"Which hoofed animal is the closest living relative of whales?","correct":"The hippopotamus","wrong":["The cow","The pig","The camel"]},
+      {"q":"Which small furry animal is one of the closest living relatives of the elephant?","correct":"The rock hyrax","wrong":["The aardvark","The tapir","The pika"]},
+      {"q":"What is the name for a group of animals including manatees and dugongs?","correct":"Sirenians","wrong":["Pinnipeds","Cetaceans","Mustelids"]},
+      {"q":"What is the name for the group of animals that includes seals, sea lions and walruses?","correct":"Pinnipeds","wrong":["Sirenians","Cetaceans","Mustelids"]},
+      {"q":"What is the name for the group including whales, dolphins and porpoises?","correct":"Cetaceans","wrong":["Pinnipeds","Sirenians","Ungulates"]},
+      {"q":"Which family includes weasels, otters, badgers and wolverines?","correct":"Mustelids","wrong":["Canids","Felids","Viverrids"]},
+      {"q":"Which marine mammal has external ear flaps and can 'walk' on its flippers?","correct":"The sea lion","wrong":["The harbour seal","The grey seal","The manatee"]},
+      {"q":"Which two species of seal breed around British coasts?","correct":"The grey seal and the harbour (common) seal","wrong":["The harp seal and the leopard seal","The elephant seal and the monk seal","The ringed seal and the bearded seal"]},
+      {"q":"Which mammal has the densest fur of any animal?","correct":"The sea otter","wrong":["The beaver","The chinchilla","The polar bear"]},
+      {"q":"Which animal holds hands with others while sleeping so they do not drift apart?","correct":"The sea otter","wrong":["The beaver","The river otter","The seal"]},
+      {"q":"Which mammal uses stones as tools to crack open shellfish on its chest?","correct":"The sea otter","wrong":["The macaque","The walrus","The raccoon"]},
+      {"q":"Which mammal has the most powerful kick, able to kill a lion?","correct":"The giraffe","wrong":["The zebra","The kangaroo","The ostrich"]},
+      {"q":"What are the bony knobs on a giraffe's head called?","correct":"Ossicones","wrong":["Antlers","Horns","Tines"]},
+      {"q":"What colour is a giraffe's tongue?","correct":"Dark blue-black","wrong":["Bright pink","Pale yellow","Pure white"]},
+      {"q":"How many neck bones does a giraffe have, the same as humans?","correct":"Seven","wrong":["Twelve","Twenty","Five"]},
+      {"q":"What is a rhino's horn made of?","correct":"Keratin","wrong":["Bone","Ivory","Enamel"]},
+      {"q":"What is ivory mostly made of?","correct":"Dentine","wrong":["Keratin","Enamel only","Chitin"]},
+      {"q":"Which big cat lives highest in the mountains of Central Asia?","correct":"The snow leopard","wrong":["The clouded leopard","The lynx","The caracal"]},
+      {"q":"Which wild cat has black ear tufts and was native to Britain until about 1,300 years ago?","correct":"The Eurasian lynx","wrong":["The caracal","The serval","The ocelot"]},
+      {"q":"Which critically endangered big cat lives in the Russian Far East and north-east China?","correct":"The Amur leopard","wrong":["The Sumatran tiger","The Asiatic lion","The clouded leopard"]},
+      {"q":"Where do the only wild Asiatic lions live?","correct":"The Gir Forest in India","wrong":["The Sundarbans","Sri Lanka","Iran"]},
+      {"q":"Which is the largest tiger subspecies?","correct":"The Siberian (Amur) tiger","wrong":["The Bengal tiger","The Sumatran tiger","The Malayan tiger"]},
+      {"q":"Which is the most widespread of the big cats?","correct":"The leopard","wrong":["The lion","The tiger","The jaguar"]},
+      {"q":"Which is the largest member of the dog family?","correct":"The grey wolf","wrong":["The African wild dog","The maned wolf","The dhole"]},
+      {"q":"Which wild dog from Africa has large round ears and a patchwork coat?","correct":"The African wild dog","wrong":["The jackal","The fennec fox","The hyena"]},
+      {"q":"Which fox has the largest ears relative to its body and lives in the Sahara?","correct":"The fennec fox","wrong":["The arctic fox","The red fox","The bat-eared fox"]},
+      {"q":"Is a hyena more closely related to cats or dogs?","correct":"Cats","wrong":["Dogs","Neither, it is a marsupial","Bears"]},
+      {"q":"Which is the largest antelope?","correct":"The giant eland","wrong":["The kudu","The oryx","The wildebeest"]},
+      {"q":"Which African antelope is famous for its huge annual migration with zebras across the Serengeti?","correct":"The wildebeest","wrong":["The impala","The springbok","The gazelle"]},
+      {"q":"Which antelope is the national animal of South Africa and leaps into the air when alarmed?","correct":"The springbok","wrong":["The impala","The kudu","The gemsbok"]},
+      {"q":"Which is the largest land mammal in Europe?","correct":"The European bison","wrong":["The moose","The brown bear","The red deer"]},
+      {"q":"Which is the largest land mammal native to South America?","correct":"The South American tapir","wrong":["The llama","The capybara","The jaguar"]},
+      {"q":"Which wild ancestor of domestic cattle became extinct in 1627?","correct":"The aurochs","wrong":["The bison","The yak","The zebu"]},
+      {"q":"Which bird, once the most numerous in North America, became extinct in 1914?","correct":"The passenger pigeon","wrong":["The dodo","The great auk","The Carolina parakeet"]},
+      {"q":"What was the name of the last known passenger pigeon, which died in Cincinnati Zoo?","correct":"Martha","wrong":["Lonesome George","Benjamin","Toughie"]},
+      {"q":"What was the name of the last known thylacine, the Tasmanian tiger, which died in 1936?","correct":"Benjamin","wrong":["Martha","Toughie","Lonesome George"]},
+      {"q":"What was the name of the last Pinta Island tortoise, which died in 2012?","correct":"Lonesome George","wrong":["Martha","Benjamin","Toughie"]},
+      {"q":"Which flightless seabird of the North Atlantic was hunted to extinction in 1844?","correct":"The great auk","wrong":["The dodo","The moa","The elephant bird"]},
+      {"q":"Which naturalist wrote 'On the Origin of Species' in 1859?","correct":"Charles Darwin","wrong":["Alfred Russel Wallace","Thomas Huxley","Gregor Mendel"]},
+      {"q":"Which naturalist came up with the theory of evolution by natural selection at the same time as Darwin?","correct":"Alfred Russel Wallace","wrong":["Thomas Huxley","Joseph Hooker","Charles Lyell"]},
+      {"q":"On which ship did Darwin sail around the world?","correct":"HMS Beagle","wrong":["HMS Endeavour","HMS Bounty","HMS Discovery"]},
+      {"q":"Which birds of the Galapagos helped Darwin develop his ideas, though he did not see it at first?","correct":"Finches","wrong":["Penguins","Albatrosses","Mockingbirds only"]},
+      {"q":"Who first used the phrase 'survival of the fittest'?","correct":"Herbert Spencer","wrong":["Charles Darwin","Thomas Huxley","Francis Galton"]},
+      {"q":"What is the correct order of classification, from largest group to smallest?","correct":"Kingdom, phylum, class, order, family, genus, species","wrong":["Kingdom, class, phylum, family, order, genus, species","Phylum, kingdom, order, class, genus, family, species","Kingdom, order, phylum, class, family, species, genus"]},
+      {"q":"What is the scientific name of the domestic dog?","correct":"Canis familiaris","wrong":["Felis catus","Canis aureus","Vulpes vulpes"]},
+      {"q":"What is the scientific name of the red fox?","correct":"Vulpes vulpes","wrong":["Canis lupus","Meles meles","Felis silvestris"]},
+      {"q":"What is the scientific name of the European badger?","correct":"Meles meles","wrong":["Vulpes vulpes","Lutra lutra","Martes martes"]},
+      {"q":"Which animal has the scientific name 'Gorilla gorilla gorilla'?","correct":"The western lowland gorilla","wrong":["The mountain gorilla","The chimpanzee","The orangutan"]},
+      {"q":"What is the scientific name of the tiger?","correct":"Panthera tigris","wrong":["Panthera leo","Panthera pardus","Felis tigris"]},
+      {"q":"What is the scientific name of the domestic cat?","correct":"Felis catus","wrong":["Canis familiaris","Panthera catus","Lynx lynx"]},
+      {"q":"Which plant family includes grasses, wheat, rice and bamboo?","correct":"Poaceae","wrong":["Rosaceae","Fabaceae","Asteraceae"]},
+      {"q":"Which plant family includes apples, pears, plums, strawberries and roses?","correct":"Rosaceae","wrong":["Poaceae","Solanaceae","Brassicaceae"]},
+      {"q":"Which plant family includes potatoes, tomatoes, aubergines and deadly nightshade?","correct":"Solanaceae","wrong":["Rosaceae","Brassicaceae","Apiaceae"]},
+      {"q":"Which plant family includes cabbages, broccoli, mustard and turnips?","correct":"Brassicaceae","wrong":["Solanaceae","Apiaceae","Fabaceae"]},
+      {"q":"Which plant family includes peas, beans, peanuts and clover?","correct":"Fabaceae (legumes)","wrong":["Poaceae","Rosaceae","Brassicaceae"]},
+      {"q":"Which plant family includes daisies, sunflowers and dandelions?","correct":"Asteraceae","wrong":["Rosaceae","Liliaceae","Poaceae"]},
+      {"q":"Which plant family includes carrots, parsley, fennel and hemlock?","correct":"Apiaceae","wrong":["Solanaceae","Brassicaceae","Fabaceae"]},
+      {"q":"Why are legumes such as clover good for soil?","correct":"Bacteria in their roots fix nitrogen","wrong":["They release oxygen into the soil","They kill weeds","They store water"]},
+      {"q":"Which plant has the world's largest unbranched flower structure, which smells of rotting flesh?","correct":"The titan arum","wrong":["Rafflesia","The stinking hellebore","The stinking iris"]},
+      {"q":"Which plant produces the largest seed in the world?","correct":"The coco de mer palm","wrong":["The coconut palm","The avocado","The baobab"]},
+      {"q":"Which plant is the fastest-growing in the world?","correct":"Bamboo","wrong":["Oak","Sunflower","Ivy"]},
+      {"q":"Which tree is thought to be one of the oldest in Britain, in a churchyard in Perthshire?","correct":"The Fortingall Yew","wrong":["The Major Oak","The Ankerwycke Yew","The Bowthorpe Oak"]},
+      {"q":"Which famous oak in Sherwood Forest is linked with Robin Hood?","correct":"The Major Oak","wrong":["The Royal Oak","The Bowthorpe Oak","The Queen's Oak"]},
+      {"q":"Which tree did Charles II hide in after the Battle of Worcester?","correct":"The Royal Oak at Boscobel","wrong":["The Major Oak","The Fortingall Yew","The Tolpuddle Sycamore"]},
+      {"q":"Which tree species is the 'living fossil' that survived almost unchanged since the dinosaurs, and has fan-shaped leaves?","correct":"The ginkgo","wrong":["The monkey puzzle","The yew","The magnolia"]},
+      {"q":"Which conifer was thought extinct until it was found growing in a gorge in Australia in 1994?","correct":"The Wollemi pine","wrong":["The monkey puzzle","The dawn redwood","The kauri"]},
+      {"q":"Which South American tree with spiky branches is the national tree of Chile?","correct":"The monkey puzzle","wrong":["The jacaranda","The ceibo","The quebracho"]},
+      {"q":"Which tree's sap is boiled to make a syrup, especially in Canada?","correct":"The sugar maple","wrong":["The birch","The sycamore","The pine"]},
+      {"q":"Which tree gives us latex for natural rubber?","correct":"The Para rubber tree","wrong":["The gum tree","The rubber plant (ficus)","The balsa tree"]},
+      {"q":"Which tree's very light wood is used to make model aircraft?","correct":"Balsa","wrong":["Teak","Ebony","Mahogany"]},
+      {"q":"Which tree's very hard, dark wood is used for piano keys and chess pieces?","correct":"Ebony","wrong":["Balsa","Pine","Birch"]},
+      {"q":"Which spice comes from the dried stigmas of a crocus flower?","correct":"Saffron","wrong":["Turmeric","Paprika","Cardamom"]},
+      {"q":"Which spice is the dried flower bud of a tree?","correct":"Clove","wrong":["Nutmeg","Cinnamon","Allspice"]},
+      {"q":"Which spice and its outer covering, mace, come from the same fruit?","correct":"Nutmeg","wrong":["Clove","Cardamom","Star anise"]},
+      {"q":"Which drink is made from the leaves of Camellia sinensis?","correct":"Tea","wrong":["Coffee","Cocoa","Mate"]},
+      {"q":"What is a flower's female part, which receives pollen, called?","correct":"The stigma","wrong":["The stamen","The anther","The sepal"]},
+      {"q":"What are the green leaf-like parts that protect a flower bud called?","correct":"Sepals","wrong":["Petals","Stamens","Bracts"]},
+      {"q":"What are the colourful 'petals' of a poinsettia actually?","correct":"Bracts","wrong":["Real petals","Sepals","Stamens"]},
+      {"q":"What is the name for a plant that grows on another plant without harming it, like many orchids?","correct":"An epiphyte","wrong":["A parasite","A saprophyte","A succulent"]}
+    ],
+    4:[
+      {"q":"What is the collective noun for a group of larks?","correct":"An exaltation","wrong":["A charm","A murmuration","A parliament"]},
+      {"q":"What is the collective noun for a group of lapwings?","correct":"A deceit","wrong":["A murder","A charm","An unkindness"]},
+      {"q":"What is the collective noun for a group of magpies?","correct":"A tiding","wrong":["An unkindness","A murder","A deceit"]},
+      {"q":"What is the collective noun for a group of rooks?","correct":"A building","wrong":["A tiding","A murder","An exaltation"]},
+      {"q":"What is the collective noun for a group of herons?","correct":"A siege","wrong":["A deceit","A charm","A herd"]},
+      {"q":"What is the collective noun for a group of jays?","correct":"A party","wrong":["A tiding","A building","A murder"]},
+      {"q":"What is the collective noun for a group of leopards?","correct":"A leap","wrong":["A pride","A crash","A sleuth"]},
+      {"q":"What is the collective noun for a group of bears?","correct":"A sleuth","wrong":["A leap","A crash","A cackle"]},
+      {"q":"What is the collective noun for a group of badgers?","correct":"A cete","wrong":["A sett","A sleuth","A clowder"]},
+      {"q":"What is the collective noun for a group of cats?","correct":"A clowder","wrong":["A cete","A skulk","A leap"]},
+      {"q":"What is the collective noun for a group of foxes?","correct":"A skulk","wrong":["A clowder","A cete","A drift"]},
+      {"q":"What is the collective noun for a group of hares?","correct":"A drove","wrong":["A skulk","A cete","A warren"]},
+      {"q":"What is the collective noun for a group of moles?","correct":"A labour","wrong":["A business","A skulk","A drove"]},
+      {"q":"What is the collective noun for a group of otters on land?","correct":"A romp","wrong":["A raft","A bevy","A labour"]},
+      {"q":"What is the collective noun for a group of otters in water?","correct":"A raft","wrong":["A romp","A smack","A pod"]},
+      {"q":"What is the collective noun for a group of porcupines?","correct":"A prickle","wrong":["A business","A cete","A crash"]},
+      {"q":"What is the collective noun for hawks circling together in flight?","correct":"A kettle","wrong":["A charm","A siege","A wake"]},
+      {"q":"What is the collective noun for vultures feeding on a carcass?","correct":"A wake","wrong":["A kettle","A committee","A venue"]},
+      {"q":"What is a baby kangaroo's mother's pouch also called by scientists?","correct":"The marsupium","wrong":["The cloaca","The patagium","The plastron"]},
+      {"q":"What is the flap of skin a flying squirrel or sugar glider uses to glide called?","correct":"The patagium","wrong":["The marsupium","The dewlap","The wattle"]},
+      {"q":"What is the lower shell of a turtle called?","correct":"The plastron","wrong":["The carapace","The scute","The patagium"]},
+      {"q":"What are the individual plates on a turtle's shell called?","correct":"Scutes","wrong":["Scales","Plastrons","Osteoderms only"]},
+      {"q":"What is the single opening for waste and reproduction in birds and reptiles called?","correct":"The cloaca","wrong":["The syrinx","The crop","The gizzard"]},
+      {"q":"What is the loose skin hanging from a turkey's neck called?","correct":"The wattle","wrong":["The snood","The comb","The dewlap"]},
+      {"q":"What is the fleshy flap that hangs over a turkey's beak called?","correct":"The snood","wrong":["The wattle","The caruncle","The crest"]},
+      {"q":"What is the name for the soft skin covering a growing deer antler?","correct":"Velvet","wrong":["Felt","Bark","Down"]},
+      {"q":"What is the name for each point on a deer's antler?","correct":"A tine","wrong":["A spur","A prong","A burr"]},
+      {"q":"What is the name for a stag with twelve points on its antlers, in British deer stalking?","correct":"A royal","wrong":["An imperial","A monarch","A switch"]},
+      {"q":"What is the name for the annual breeding season of deer, with roaring and fighting?","correct":"The rut","wrong":["The moult","The lek","The brood"]},
+      {"q":"What is the name for a gathering of male birds displaying to attract females, as in black grouse?","correct":"A lek","wrong":["A rut","A rookery","A roost"]},
+      {"q":"What is the name of a hare's shallow resting place in a field?","correct":"A form","wrong":["A drey","A holt","A lodge"]},
+      {"q":"What is the name of an otter's den?","correct":"A holt","wrong":["A form","A lodge","A sett"]},
+      {"q":"What is the name of a beaver's home?","correct":"A lodge","wrong":["A holt","A form","A drey"]},
+      {"q":"What is the name of a young hawk or falcon taken from the nest for training?","correct":"An eyas","wrong":["A squab","A poult","A cygnet"]},
+      {"q":"In falconry, what is a female peregrine called?","correct":"A falcon","wrong":["A tiercel","A haggard","A musket"]},
+      {"q":"In falconry, what is a male hawk or falcon, a third smaller than the female, called?","correct":"A tiercel","wrong":["A falcon","An eyas","A jess"]},
+      {"q":"What are the leather straps on a falcon's legs called?","correct":"Jesses","wrong":["Bells","Hoods","Lures"]},
+      {"q":"What is a male ferret called?","correct":"A hob","wrong":["A jill","A kit","A buck"]},
+      {"q":"What is a female ferret called?","correct":"A jill","wrong":["A hob","A doe","A jenny"]},
+      {"q":"What is a male hare called?","correct":"A jack","wrong":["A hob","A tod","A billy"]},
+      {"q":"What is a female hare called?","correct":"A jill","wrong":["A queen","A vixen","A sow"]},
+      {"q":"What is a castrated male pig called?","correct":"A barrow","wrong":["A boar","A hog","A gilt"]},
+      {"q":"What is a young female pig that has not had piglets called?","correct":"A gilt","wrong":["A sow","A barrow","A shoat"]},
+      {"q":"What is a castrated male sheep called?","correct":"A wether","wrong":["A tup","A ram","A hogg"]},
+      {"q":"What is a castrated male horse called?","correct":"A gelding","wrong":["A colt","A stallion","A jack"]},
+      {"q":"What is the term for a young female cow that has not had a calf?","correct":"A heifer","wrong":["A steer","A bullock","A yearling"]},
+      {"q":"What is a castrated bull raised for beef called?","correct":"A steer","wrong":["A heifer","A calf","A yearling"]},
+      {"q":"What is a young salmon that is ready to migrate to the sea called?","correct":"A smolt","wrong":["A parr","A grilse","A kelt"]},
+      {"q":"What is a salmon that returns from the sea after just one winter called?","correct":"A grilse","wrong":["A smolt","A parr","A kelt"]},
+      {"q":"What is a salmon that has spawned and is weak called?","correct":"A kelt","wrong":["A grilse","A smolt","A fry"]},
+      {"q":"What is a baby oyster called?","correct":"A spat","wrong":["A fry","A smolt","A pup"]},
+      {"q":"What is the term for the eggs of fish?","correct":"Roe (spawn)","wrong":["Milt","Fry","Spat"]},
+      {"q":"Which fish lay the egg cases known as 'mermaid's purses'?","correct":"Skates, rays and some sharks","wrong":["Cod and haddock","Eels and lampreys","Flounders and plaice"]},
+      {"q":"Which mammal has the slowest metabolism of any non-hibernating mammal?","correct":"The three-toed sloth","wrong":["The koala","The panda","The armadillo"]},
+      {"q":"How often does a sloth come down from its tree?","correct":"About once a week, to go to the toilet","wrong":["Several times an hour, to feed","Never, it spends its whole life aloft","Every morning, to drink at a river"]},
+      {"q":"Which of these mammals is venomous?","correct":"The platypus","wrong":["The echidna","The otter","The wombat"]},
+      {"q":"Where is the venomous spur on a male platypus?","correct":"On its back legs","wrong":["On its tail","In its bill","On its front feet"]},
+      {"q":"Which bat is the only mammal that feeds entirely on blood?","correct":"The vampire bat","wrong":["The fruit bat","The horseshoe bat","The pipistrelle"]},
+      {"q":"Which is the smallest mammal in the world by mass?","correct":"The Etruscan shrew","wrong":["The bumblebee bat","The pygmy jerboa","The harvest mouse"]},
+      {"q":"Which is the smallest mammal by skull length?","correct":"The bumblebee bat","wrong":["The Etruscan shrew","The pygmy marmoset","The harvest mouse"]},
+      {"q":"Which is the smallest British mammal?","correct":"The pygmy shrew","wrong":["The harvest mouse","The common shrew","The pipistrelle bat"]},
+      {"q":"Which is the most common bat in Britain?","correct":"The common pipistrelle","wrong":["The noctule","The brown long-eared bat","The greater horseshoe bat"]},
+      {"q":"Which is the largest bat in Britain?","correct":"The noctule","wrong":["The pipistrelle","The greater horseshoe bat","The serotine"]},
+      {"q":"What is the largest bat in the world by wingspan?","correct":"The giant golden-crowned flying fox","wrong":["The vampire bat","The noctule","The ghost bat"]},
+      {"q":"Which large predator was the last to be wiped out in Britain, in Scotland in the 1600s or 1700s?","correct":"The wolf","wrong":["The brown bear","The lynx","The elk"]},
+      {"q":"Which mustelid was nearly wiped out in Britain but is spreading again, partly by eating grey squirrels?","correct":"The pine marten","wrong":["The polecat","The stoat","The weasel"]},
+      {"q":"How can you tell a stoat from a weasel?","correct":"A stoat has a black tip to its tail","wrong":["A weasel is bigger","A stoat is always white","A weasel has a long bushy tail"]},
+      {"q":"What is a stoat called when it turns white in winter?","correct":"An ermine","wrong":["A sable","A mink","A marten"]},
+      {"q":"Which American mustelid escaped from fur farms and now threatens British water voles?","correct":"The American mink","wrong":["The raccoon","The skunk","The fisher"]},
+      {"q":"Which British mammal suffered the fastest decline of the 20th century, partly due to the mink?","correct":"The water vole","wrong":["The red squirrel","The hedgehog","The otter"]},
+      {"q":"Which British rodent is the only one that hibernates?","correct":"The dormouse","wrong":["The bank vole","The field vole","The wood mouse"]},
+      {"q":"What is the name for the 'cleaning' fish that remove parasites from larger fish at reef stations?","correct":"Cleaner wrasse","wrong":["Remoras","Pilot fish","Gobies only"]},
+      {"q":"Which fish attaches itself to sharks with a sucker on its head?","correct":"The remora","wrong":["The lamprey","The pilot fish","The cleaner wrasse"]},
+      {"q":"Which jawless fish has a round sucking mouth and feeds on the blood of other fish?","correct":"The lamprey","wrong":["The hagfish","The remora","The eel"]},
+      {"q":"Which jawless fish produces huge amounts of slime when attacked?","correct":"The hagfish","wrong":["The lamprey","The eel","The sea cucumber"]},
+      {"q":"Which sea creature can expel its internal organs to escape predators and then regrow them?","correct":"The sea cucumber","wrong":["The starfish","The sea urchin","The octopus"]},
+      {"q":"What do corals have living in their tissues that gives them colour and food?","correct":"Algae called zooxanthellae","wrong":["Bacteria called rhizobia","Fungi called mycorrhizae","Plankton called diatoms"]},
+      {"q":"What is 'coral bleaching'?","correct":"Corals expelling their algae due to stress such as heat","wrong":["Corals turning white as they age","Sunlight drying out exposed reefs","Corals releasing their eggs at night"]},
+      {"q":"Which is the largest coral reef system in the world?","correct":"The Great Barrier Reef","wrong":["The Belize Barrier Reef","The Red Sea Reef","The Florida Reef"]},
+      {"q":"Which snake is the most venomous land snake in the world?","correct":"The inland taipan","wrong":["The black mamba","The king cobra","The eastern brown snake"]},
+      {"q":"Which African snake is the fastest-moving snake?","correct":"The black mamba","wrong":["The puff adder","The boomslang","The Gaboon viper"]},
+      {"q":"Which snake has the longest fangs in the world?","correct":"The Gaboon viper","wrong":["The king cobra","The black mamba","The rattlesnake"]},
+      {"q":"What colour is the inside of a black mamba's mouth, which gives it its name?","correct":"Black","wrong":["Blue","Red","White"]},
+      {"q":"Which snake can spit venom into the eyes of an attacker?","correct":"The spitting cobra","wrong":["The python","The adder","The boa"]},
+      {"q":"Which snake can 'fly' by flattening its body and gliding from trees?","correct":"The paradise tree snake","wrong":["The green mamba","The boomslang","The vine snake"]},
+      {"q":"Which reptile has a third 'eye' on top of its head and is the only survivor of an ancient order?","correct":"The tuatara","wrong":["The Komodo dragon","The gharial","The chameleon"]},
+      {"q":"Which country is the only home of the tuatara?","correct":"New Zealand","wrong":["Australia","Madagascar","The Galapagos"]},
+      {"q":"Which crocodilian has a very long, thin snout and lives in Indian rivers?","correct":"The gharial","wrong":["The caiman","The mugger crocodile","The alligator"]},
+      {"q":"Which lizard can squirt blood from its eyes to deter predators?","correct":"The horned lizard","wrong":["The frilled lizard","The basilisk","The thorny devil"]},
+      {"q":"Which Australian lizard opens a large ruff around its neck when threatened?","correct":"The frilled lizard","wrong":["The thorny devil","The bearded dragon","The goanna"]},
+      {"q":"Which Australian lizard drinks water through grooves in its skin, channelling it to its mouth?","correct":"The thorny devil","wrong":["The frilled lizard","The skink","The goanna"]},
+      {"q":"Which salamander from caves in Slovenia was once thought to be a baby dragon?","correct":"The olm","wrong":["The axolotl","The fire salamander","The hellbender"]},
+      {"q":"Which is the largest amphibian in the world?","correct":"The South China giant salamander","wrong":["The Goliath frog","The hellbender","The cane toad"]},
+      {"q":"Which British butterfly is the largest?","correct":"The swallowtail","wrong":["The purple emperor","The peacock","The red admiral"]},
+      {"q":"Where in Britain is the native swallowtail butterfly found?","correct":"The Norfolk Broads","wrong":["The Scottish Highlands","Dartmoor","The Lake District"]},
+      {"q":"Which British butterfly lives in treetops and is attracted to rotting meat and dung?","correct":"The purple emperor","wrong":["The white admiral","The comma","The brimstone"]},
+      {"q":"Which British butterfly has a white 'C' mark on the underside of its ragged wings?","correct":"The comma","wrong":["The peacock","The small tortoiseshell","The painted lady"]},
+      {"q":"Which British butterfly became extinct in 1979 and was reintroduced from Sweden?","correct":"The large blue","wrong":["The large copper","The chequered skipper","The black-veined white"]},
+      {"q":"What is unusual about the caterpillar of the large blue butterfly?","correct":"It is carried into ant nests and eats ant grubs","wrong":["It lives underwater","It spins a silk web like a spider","It can glow"]},
+      {"q":"Which British moth is named for the skull-like marking on its back?","correct":"The death's-head hawkmoth","wrong":["The elephant hawkmoth","The tiger moth","The puss moth"]},
+      {"q":"Which pink and olive moth is named after the trunk-like shape of its caterpillar?","correct":"The elephant hawkmoth","wrong":["The privet hawkmoth","The cinnabar moth","The emperor moth"]},
+      {"q":"Which moth caterpillar with yellow and black stripes feeds on ragwort?","correct":"The cinnabar moth","wrong":["The garden tiger moth","The puss moth","The lackey moth"]},
+      {"q":"Which moth is famous for evolving darker colours during the Industrial Revolution?","correct":"The peppered moth","wrong":["The tiger moth","The hawkmoth","The clothes moth"]},
+      {"q":"What was the evolution of dark peppered moths in polluted areas called?","correct":"Industrial melanism","wrong":["Industrial camouflage","Soot adaptation","Urban mimicry"]},
+      {"q":"What insect produces silk for the silk industry?","correct":"The caterpillar of the silk moth","wrong":["A spider spinning webs on farms","The silverfish, a tiny wingless insect","The lacewing, a delicate green fly"]},
+      {"q":"What do you call the young of a dragonfly that lives underwater?","correct":"A nymph","wrong":["A grub","A maggot","A pupa"]},
+      {"q":"Which insect group has hard front wings called elytra?","correct":"Beetles","wrong":["Flies","Wasps","Moths"]},
+      {"q":"Which insect group has only one pair of wings?","correct":"True flies","wrong":["Beetles","Bees","Dragonflies"]},
+      {"q":"What are the tiny balancing organs that replaced the hind wings of flies called?","correct":"Halteres","wrong":["Elytra","Antennae","Palps"]},
+      {"q":"Which order of insects includes bees, wasps and ants?","correct":"Hymenoptera","wrong":["Lepidoptera","Coleoptera","Diptera"]},
+      {"q":"Which order of insects includes butterflies and moths?","correct":"Lepidoptera","wrong":["Hymenoptera","Coleoptera","Orthoptera"]},
+      {"q":"Which order of insects includes beetles?","correct":"Coleoptera","wrong":["Diptera","Hemiptera","Odonata"]},
+      {"q":"Which order of insects includes grasshoppers and crickets?","correct":"Orthoptera","wrong":["Odonata","Coleoptera","Hymenoptera"]},
+      {"q":"Which order of insects includes dragonflies and damselflies?","correct":"Odonata","wrong":["Orthoptera","Diptera","Lepidoptera"]},
+      {"q":"How can you tell a damselfly from a dragonfly at rest?","correct":"A damselfly folds its wings along its body","wrong":["A damselfly is always bigger","A dragonfly has no wings","A damselfly has six wings"]},
+      {"q":"Which bug is famous for producing 'cuckoo spit' on plants?","correct":"The froghopper","wrong":["The aphid","The shield bug","The leafhopper"]},
+      {"q":"Which insect is farmed by ants for its sweet honeydew?","correct":"The aphid","wrong":["The ladybird","The whitefly","The thrips"]},
+      {"q":"Which tiny insects are also called thunderflies?","correct":"Thrips","wrong":["Midges","Gnats","Fruit flies"]},
+      {"q":"Which insect is the world's heaviest, a New Zealand cricket-like creature?","correct":"The giant weta","wrong":["The goliath beetle","The titan beetle","The rhinoceros beetle"]},
+      {"q":"Which is the longest insect in the world?","correct":"A Chinese giant stick insect","wrong":["The New Zealand giant weta","The Asian atlas moth","The African goliath beetle"]},
+      {"q":"Which moth has one of the largest wing areas of any insect?","correct":"The atlas moth","wrong":["The death's-head hawkmoth","The luna moth","The emperor moth"]},
+      {"q":"Which insect has the most complex social structure, with castes of soldiers and a king and queen that can live for decades?","correct":"Termites","wrong":["Honeybees","Wasps","Aphids"]},
+      {"q":"What is the name for a solitary bee that lays its eggs in other bees' nests?","correct":"A cuckoo bee","wrong":["A mason bee","A leafcutter bee","A carpenter bee"]},
+      {"q":"Which bee cuts neat circles from leaves to line its nest?","correct":"The leafcutter bee","wrong":["The mason bee","The mining bee","The carder bee"]},
+      {"q":"What does a bumblebee do when it 'buzz pollinates' a tomato flower?","correct":"Vibrates its flight muscles to shake out pollen","wrong":["Hums a note to open the petals","Bites holes in the base of the flower","Pushes its whole body inside the flower"]},
+      {"q":"Which invasive hornet, first found in England in 2016, preys on honeybees?","correct":"The Asian hornet","wrong":["The European hornet","The giant hornet","The German wasp"]},
+      {"q":"Which tick-borne disease is a growing risk for walkers in the British countryside?","correct":"Lyme disease","wrong":["Malaria","Dengue fever","Sleeping sickness"]},
+      {"q":"Which fly carries sleeping sickness in Africa?","correct":"The tsetse fly","wrong":["The sandfly","The blackfly","The botfly"]},
+      {"q":"Which spider is the most common large house spider in Britain?","correct":"The giant house spider","wrong":["The false widow","The cardinal spider","The orb weaver"]},
+      {"q":"Which spider in Britain has a venomous bite and has spread widely in recent decades?","correct":"The noble false widow","wrong":["The black widow","The brown recluse","The funnel-web"]},
+      {"q":"Which British spider lives underwater in a bubble of air?","correct":"The diving bell spider","wrong":["The raft spider","The garden spider","The wolf spider"]},
+      {"q":"Which large British spider hunts on the surface of ponds and fens?","correct":"The fen raft spider","wrong":["The diving bell spider","The wolf spider","The zebra spider"]},
+      {"q":"What are the spinning organs at the end of a spider's abdomen called?","correct":"Spinnerets","wrong":["Chelicerae","Pedipalps","Setae"]},
+      {"q":"What are a spider's fang-bearing mouthparts called?","correct":"Chelicerae","wrong":["Spinnerets","Pedipalps","Mandibles"]},
+      {"q":"Which British bird has the longest bill?","correct":"The curlew","wrong":["The snipe","The heron","The avocet"]},
+      {"q":"Which bird makes a 'drumming' sound with its tail feathers during display flights?","correct":"The snipe","wrong":["The woodcock","The lapwing","The curlew"]},
+      {"q":"Which wading bird's evening display flight at dusk is called 'roding'?","correct":"The woodcock","wrong":["The snipe","The curlew","The golden plover"]},
+      {"q":"Which farmland bird is also called the peewit after its call?","correct":"The lapwing","wrong":["The skylark","The corn bunting","The grey partridge"]},
+      {"q":"Which bird's plumes, prized for hats, helped spark the founding of the RSPB?","correct":"The great crested grebe","wrong":["The avocet","The osprey","The red kite"]},
+      {"q":"Which grebe performs a famous 'weed dance' courtship on British lakes?","correct":"The great crested grebe","wrong":["The little grebe","The Slavonian grebe","The black-necked grebe"]},
+      {"q":"Which British member of the crow family has a pink-brown body and a bright blue wing patch?","correct":"The jay","wrong":["The chough","The magpie","The jackdaw"]},
+      {"q":"Which red-billed crow lives on Cornish and Welsh sea cliffs and appears on the Cornish coat of arms?","correct":"The chough","wrong":["The jackdaw","The rook","The raven"]},
+      {"q":"Which bird hunts by impaling prey on thorns, earning the name 'butcher bird'?","correct":"The shrike","wrong":["The sparrowhawk","The kestrel","The magpie"]},
+      {"q":"Which tiny British bird builds a domed nest and has a surprisingly loud song?","correct":"The wren","wrong":["The goldcrest","The chiffchaff","The treecreeper"]},
+      {"q":"Which British bird is the only one to sing all year round, including in winter, alongside the wren?","correct":"The robin","wrong":["The blackbird","The song thrush","The chaffinch"]},
+      {"q":"Which small warbler is named for its two-note song?","correct":"The chiffchaff","wrong":["The willow warbler","The blackcap","The whitethroat"]},
+      {"q":"Which bird looks almost identical to the chiffchaff but has a different, descending song?","correct":"The willow warbler","wrong":["The wood warbler","The garden warbler","The goldcrest"]},
+      {"q":"Which bird with a black cap (in males) has become a winter visitor to Britain from Germany?","correct":"The blackcap","wrong":["The great tit","The marsh tit","The coal tit"]},
+      {"q":"Which tit is very hard to tell apart from the marsh tit, except by its call?","correct":"The willow tit","wrong":["The coal tit","The blue tit","The crested tit"]},
+      {"q":"Which tit is found in Britain only in the Scottish Highlands' pine forests?","correct":"The crested tit","wrong":["The willow tit","The bearded tit","The long-tailed tit"]},
+      {"q":"Which large grouse of Scottish pine forests is famous for its courtship display and is critically rare in Britain?","correct":"The capercaillie","wrong":["The black grouse","The red grouse","The ptarmigan"]},
+      {"q":"Which grouse turns white in winter and lives on high Scottish mountains?","correct":"The ptarmigan","wrong":["The red grouse","The black grouse","The capercaillie"]},
+      {"q":"What date marks the start of the grouse shooting season in Britain, the 'Glorious Twelfth'?","correct":"12 August","wrong":["12 July","12 September","12 October"]},
+      {"q":"Which is the largest seabird in the North Atlantic?","correct":"The northern gannet","wrong":["The great skua","The fulmar","The cormorant"]},
+      {"q":"What is the name of the Scottish island rock that hosts the world's largest northern gannet colony?","correct":"Bass Rock","wrong":["Ailsa Craig","St Kilda's Stac Lee","Sula Sgeir"]},
+      {"q":"Which seabird defends itself by spitting a foul-smelling oil?","correct":"The fulmar","wrong":["The gannet","The kittiwake","The guillemot"]},
+      {"q":"Which gull is named after its call and nests on sheer cliffs?","correct":"The kittiwake","wrong":["The herring gull","The black-headed gull","The common gull"]},
+      {"q":"What colour is a black-headed gull's head in summer?","correct":"Chocolate brown","wrong":["Black","Grey","White"]},
+      {"q":"Which seabird's eggs are pear-shaped so they roll in a circle on cliff ledges?","correct":"The guillemot","wrong":["The puffin","The razorbill","The fulmar"]},
+      {"q":"Which seabird is known as the 'bonxie' in Shetland?","correct":"The great skua","wrong":["The arctic skua","The gannet","The fulmar"]},
+      {"q":"Which saint is the petrel said to be named after, because it seems to walk on water?","correct":"Saint Peter","wrong":["Saint Paul","Saint Andrew","Saint Patrick"]},
+      {"q":"Which seabird has a large share of its world breeding population on Skomer and Rum?","correct":"The Manx shearwater","wrong":["The storm petrel","The puffin","The gannet"]},
+      {"q":"What is the Latin genus name for wrens, meaning 'cave dweller'?","correct":"Troglodytes","wrong":["Turdus","Corvus","Parus"]},
+      {"q":"What is the genus name shared by blackbirds and thrushes?","correct":"Turdus","wrong":["Corvus","Passer","Sturnus"]},
+      {"q":"What is the genus name of the house sparrow?","correct":"Passer","wrong":["Turdus","Sturnus","Fringilla"]},
+      {"q":"What does the word 'ornithology' come from in Greek?","correct":"Bird and study","wrong":["Egg and science","Wing and knowledge","Feather and writing"]},
+      {"q":"What is a 'twitcher'?","correct":"A birdwatcher who travels to see rare birds","wrong":["A bird with a nervous twitch","A small warbler of reed beds","Someone who rings birds for science"]},
+      {"q":"What is the name for a bird that has wandered far outside its normal range?","correct":"A vagrant","wrong":["A migrant","A resident","A passage bird"]},
+      {"q":"Which flower is the county flower of Lancashire, also its emblem?","correct":"The red rose","wrong":["The white rose","The primrose","The bluebell"]},
+      {"q":"Which wild flower was chosen as the UK's favourite in a 2002 Plantlife poll?","correct":"The bluebell","wrong":["The primrose","The poppy","The daisy"]},
+      {"q":"Which rare British wild flower, a slipper orchid, was down to a single wild plant in Yorkshire?","correct":"The lady's slipper orchid","wrong":["The bee orchid","The ghost orchid","The pyramidal orchid"]},
+      {"q":"Which British orchid looks like an insect to attract pollinators?","correct":"The bee orchid","wrong":["The early purple orchid","The common spotted orchid","The lady's slipper"]},
+      {"q":"Which invasive plant from Japan can grow through concrete and affects house sales in Britain?","correct":"Japanese knotweed","wrong":["Himalayan balsam","Giant hogweed","Rhododendron ponticum"]},
+      {"q":"Which invasive plant has sap that causes severe burns in sunlight?","correct":"Giant hogweed","wrong":["Japanese knotweed","Himalayan balsam","Ragwort"]},
+      {"q":"Which pink-flowered invasive plant spreads along British riverbanks by exploding seed pods?","correct":"Himalayan balsam","wrong":["Japanese knotweed","Rosebay willowherb","Purple loosestrife"]},
+      {"q":"Which plant is called 'fireweed' because it rapidly colonises burnt ground?","correct":"Rosebay willowherb","wrong":["Ragwort","Foxglove","Purple loosestrife"]},
+      {"q":"Which British woodland plant gives us the heart drug digitalis?","correct":"The foxglove","wrong":["The bluebell","Deadly nightshade","Lily of the valley"]},
+      {"q":"Which plant gives us the drug atropine and was used by Renaissance women to widen their pupils?","correct":"Deadly nightshade","wrong":["Foxglove","Hemlock","Henbane"]},
+      {"q":"Which plant was used to execute the philosopher Socrates?","correct":"Hemlock","wrong":["Deadly nightshade","Monkshood","Yew"]},
+      {"q":"Which garden plant, also called wolfsbane, is one of the most poisonous plants in Britain?","correct":"Monkshood","wrong":["Foxglove","Lupin","Delphinium"]},
+      {"q":"Which British tree is so poisonous that almost every part except the red flesh of its berry is toxic?","correct":"The yew","wrong":["The holly","The laburnum","The rowan"]},
+      {"q":"Which plant gives us the cancer drug vincristine?","correct":"The Madagascar periwinkle","wrong":["The Pacific yew","The foxglove","The opium poppy"]},
+      {"q":"Which tree's bark gave the cancer drug paclitaxel (Taxol)?","correct":"The Pacific yew","wrong":["The willow","The cinchona","The silver birch"]},
+      {"q":"Which tree's bark gives quinine, used against malaria?","correct":"The cinchona","wrong":["The willow","The Pacific yew","The neem"]},
+      {"q":"What is the name for the underground fungal network that links tree roots, sometimes called the 'wood wide web'?","correct":"Mycorrhizal networks","wrong":["Rhizomes","Root nodules","Taproots"]},
+      {"q":"What is a rhizome?","correct":"An underground horizontal stem","wrong":["A thread-like part of a fungus","A hard case that holds seeds","A climbing tendril on a vine"]},
+      {"q":"What is the name for a plant's food-storage organ, such as a potato?","correct":"A tuber","wrong":["A bulb","A corm","A rhizome only"]},
+      {"q":"Which type of plant is a 'halophyte'?","correct":"One that tolerates salty conditions","wrong":["One that lives in deserts","One that eats insects","One that grows on other plants"]},
+      {"q":"What is the name for a plant that grows in very dry places, like a cactus?","correct":"A xerophyte","wrong":["A hydrophyte","A halophyte","An epiphyte"]},
+      {"q":"What is the name for a plant that grows in water, like a water lily?","correct":"A hydrophyte","wrong":["A xerophyte","A halophyte","A lithophyte"]},
+      {"q":"What is the term for the natural sequence of change in plant communities over time, from bare rock to forest?","correct":"Succession","wrong":["Evolution","Rotation","Erosion"]},
+      {"q":"What is the final stable stage of an ecological succession called?","correct":"The climax community","wrong":["The pioneer stage","The sere","The keystone"]},
+      {"q":"What is a 'keystone species'?","correct":"One whose effect on its ecosystem is far larger than its numbers suggest","wrong":["The most numerous species in a habitat","A species found only on islands","A species that lives among rocks"]},
+      {"q":"What is the term for the variety of life in a habitat or the world?","correct":"Biodiversity","wrong":["Biomass","Biosphere","Biome"]},
+      {"q":"What is the term for a large natural community, such as tundra or desert, defined by climate and vegetation?","correct":"A biome","wrong":["A niche","A habitat","A population"]},
+      {"q":"What is the term for the role a species plays in its ecosystem?","correct":"Its niche","wrong":["Its biome","Its habitat","Its trophic level"]},
+      {"q":"What is the term for a species found naturally in only one place on Earth?","correct":"Endemic","wrong":["Native","Invasive","Indigenous"]},
+      {"q":"What was the name of the 2019 world report warning that around a million species face extinction?","correct":"The IPBES Global Assessment","wrong":["The Brundtland Report","The Stern Review","The Living Planet Index"]}
+    ]
+  };
+  const LVL_NAMES={1:"LEVEL 1 · EASY",2:"LEVEL 2 · MEDIUM",3:"LEVEL 3 · HARD",4:"LEVEL 4 · LEGENDS"};
+  const LVL_COLOR={1:getCSS('--l1'),2:getCSS('--l2'),3:getCSS('--l3'),4:getCSS('--l4')};
+  function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  const KEYS=['A','B','C','D'];
+  const CHECK='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#33c98a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CROSS='<svg class="mark" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff5d7a" stroke-width="3" stroke-linecap="round"/></svg>';
+
+  // ============ audio ============
+  let actx=null;
+  function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+  function beep(f,d=0.12,type='sine',vol=0.16){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.start(t);o.stop(t+d+0.02);}
+  const sRight=()=>{beep(660,0.09,'sine',0.16);setTimeout(()=>beep(990,0.11,'sine',0.14),80);};
+  const sWrong=()=>{beep(200,0.22,'sawtooth',0.15);};
+  const sUp=()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.15),i*70));};
+  const sDown=()=>{[523,415,330].forEach((f,i)=>setTimeout(()=>beep(f,0.13,'triangle',0.14),i*80));};
+  const sDone=()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.16),i*90));};
+  const sOut=()=>{[330,262,196].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'triangle',0.15),i*130));};
+
+  // ============ state ============
+  let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
+  let startT=0,timerId=null;
+
+  const $=id=>document.getElementById(id);
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  let queues,ptr;
+
+  function startGame(){
+    level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
+    queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
+    hideAllScreens();
+    playing=true; startT=performance.now(); runTimer();
+    renderStrikes(); nextQuestion();
+  }
+
+  let TIME_LIMIT=120000;   // countdown length, set by the clock selector
+  let playing=false;
+  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  function tickTimer(){
+    const rem=remainingMs();
+    const el=$('timer'); el.textContent=fmt(rem);
+    const w=el.parentElement;
+    if(rem<=15000) w.classList.add('low'); else w.classList.remove('low');
+    if(rem<=0 && playing){ stopTimer(); endTimeUp(); }
+  }
+  function runTimer(){ clearInterval(timerId); tickTimer(); timerId=setInterval(tickTimer,150); }
+  function stopTimer(){ clearInterval(timerId); }
+  function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+  function drawQuestion(){
+    const pool=queues[level];
+    if(ptr[level]>=pool.length){ queues[level]=shuffle(BANK[level]); ptr[level]=0; }
+    return queues[level][ptr[level]++];
+  }
+
+  function nextQuestion(){
+    current=drawQuestion();
+    opts=shuffle([current.correct,...current.wrong]);
+    // HUD
+    $('lvlPill').textContent=LVL_NAMES[level];
+    $('lvlPill').style.background=LVL_COLOR[level];
+    $('qcount').textContent='QUESTION '+(answered+1)+' OF 20';
+    $('progbar').style.width=(answered/20*100)+'%';
+    $('qtext').textContent=current.q;
+    const box=$('opts'); box.className='opts'; box.innerHTML='';
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="key">'+KEYS[i]+'</span><span class="txt">'+o+'</span><span style="width:24px;flex:none"></span>';
+      b.addEventListener('click',()=>answer(o,b));
+      box.appendChild(b);
+    });
+    locked=false;
+  }
+
+  function renderStrikes(){
+    const el=$('strikes'); el.innerHTML='';
+    for(let i=0;i<4;i++){const s=document.createElement('span');s.className='strike'+(i<totalWrong?' used':'');el.appendChild(s);}
+  }
+
+  function toast(msg,color){
+    const t=$('toast'); t.textContent=msg; t.style.background=color; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1100);
+  }
+
+  function answer(choice,btn){
+    if(locked) return; locked=true;
+    const right=(choice===current.correct);
+    answered++;
+    const box=$('opts'); box.classList.add('locked');
+    // reveal
+    [...box.children].forEach(c=>{
+      const label=c.querySelector('.txt').textContent;
+      const mark=c.lastElementChild;
+      if(label===current.correct){ c.classList.add('correct'); mark.outerHTML=CHECK; }
+      else if(c===btn){ c.classList.add('wrong'); mark.outerHTML=CROSS; }
+      else c.classList.add('dim');
+    });
+
+    if(right){
+      correct++; sRight(); streakW=0; streakC++;
+      if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; }
+    } else {
+      totalWrong++; sWrong(); streakC=0; streakW++;
+      renderStrikes();
+      if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
+    }
+    $('progbar').style.width=(answered/20*100)+'%';
+
+    setTimeout(()=>{
+      if(!playing) return;
+      if(totalWrong>=4){ endOut(); return; }
+      if(answered>=20){ endDone(); return; }
+      if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
+      else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
+      pendingMove=null;
+      nextQuestion();
+    }, right?780:1050);
+  }
+
+  function endOut(){
+    playing=false; stopTimer(); sOut();
+    $('outAns').textContent=answered; $('outCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('outScreen');
+  }
+  function endDone(){
+    playing=false; stopTimer(); sDone();
+    $('doneTime').textContent=fmt(remainingMs());
+    $('doneCorr').textContent=correct;
+    $('doneLvl').textContent='LEVEL '+level;
+    $('doneAns').textContent=answered;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('doneScreen');
+  }
+  function endTimeUp(){
+    playing=false; stopTimer(); sOut();
+    $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
+    lastRun={correct:correct,level:level,timeLeft:remainingMs()};
+    show('timeupScreen');
+  }
+
+  // ============ screen helpers ============
+  const SCREENS=['startScreen','outScreen','doneScreen','timeupScreen','boardScreen'];
+  function hideAllScreens(){SCREENS.forEach(s=>$(s).classList.add('hidden'));}
+  function show(id){hideAllScreens();$(id).classList.remove('hidden');}
+
+  // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('tuRetry').addEventListener('click',()=>{ensureAudio();startGame();});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
+  $('tuMenu').addEventListener('click',toMenu);
+  // keyboard 1-4 to answer
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(playing){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
+    }
+  });
+
+  // start on menu
+  renderStrikes();
+  // ---- clock selector ----
+  const TIME_OPTS=[{n:'Chill',ms:180000,l:'3:00'},{n:'Classic',ms:120000,l:'2:00'},{n:'Hard',ms:90000,l:'1:30'}];
+  (function(){ const row=$('timeRow'); if(!row) return;
+    TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
+      b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
+        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+      row.appendChild(b); });
+  })();
+  // ===================== LEADERBOARD =====================
+  // Local by default (private to this device). If you fill in the shared-board
+  // CONFIG below AND a player types a group code on the start screen, that group
+  // competes on one shared board. See the setup guide for the 5-minute setup.
+  //
+  // ----------------------- SHARED BOARD CONFIG ----------------------
+  const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
+  const SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';   // Supabase publishable key
+  // ------------------------------------------------------------------
+  const QUIZ_ID='qc_nature-quiz';   // identifies this quiz on the shared board
+  const NAME_KEY='qc_name', GROUP_KEY='qc_group';
+  let lastRun=null, BOARD=[], boardBusy=false;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function groupCode(){ return ((lsGet(GROUP_KEY)||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')).slice(0,24); }
+  function shared(){ return !!(SB_URL && SB_KEY && groupCode()); }
+  function cmpRun(a,b){ return (b.correct-a.correct)||(b.level-a.level)||(b.timeLeft-a.timeLeft)||(a.t-b.t); }
+  function fmtScore(r){ return r.correct+'/20 \u00b7 L'+r.level+' \u00b7 '+fmt(r.timeLeft)+' left'; }
+
+  // ---- local store ----
+  function loadLocal(){ try{ BOARD=JSON.parse(lsGet(QUIZ_ID))||[]; }catch(e){ BOARD=[]; } if(!Array.isArray(BOARD)) BOARD=[]; }
+  loadLocal();
+
+  // ---- shared store (Supabase REST) ----
+  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
+  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
+  async function sbLoad(){
+    const url=sbBase()
+      +'?select=name,correct,level,time_left'
+      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)
+      +'&group_code=eq.'+encodeURIComponent(groupCode())
+      +'&order=correct.desc,level.desc,time_left.desc&limit=10';
+    const res=await fetch(url,{headers:sbHeaders()});
+    if(!res.ok) throw new Error('load '+res.status);
+    const rows=await res.json();
+    return rows.map(function(r){ return {name:r.name,correct:r.correct,level:r.level,timeLeft:r.time_left}; });
+  }
+  async function sbSave(e){
+    const body=[{quiz_id:QUIZ_ID, group_code:groupCode(), name:e.name, correct:e.correct, level:e.level, time_left:e.timeLeft}];
+    const res=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('save '+res.status);
+  }
+
+  // ---- render ----
+  function renderRows(rows,hi){
+    const list=$('boardList'); list.innerHTML='';
+    rows.slice(0,10).forEach(function(r,i){
+      const li=document.createElement('li');
+      li.className='brow'+(hi&&r.t===hi?' me':'');
+      li.innerHTML='<span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(r.name)+'</span>'+
+        '<span class="bsc">'+r.correct+'/20<br><span class="bmeta">L'+r.level+' \u00b7 '+fmt(r.timeLeft)+'</span></span>';
+      list.appendChild(li);
+    });
+  }
+  function setMode(){ const t=$('boardTitle'); if(t) t.textContent = shared()? ('Group \u00b7 '+groupCode()) : 'This device'; }
+  function renderBoard(hi){ renderRows(BOARD,hi); $('boardEmpty').textContent='No scores yet. Be the first!'; $('boardEmpty').classList.toggle('hidden', BOARD.length>0); setMode(); }
+  async function refreshShared(hi){
+    setMode();
+    const list=$('boardList'); $('boardEmpty').classList.add('hidden');
+    list.innerHTML='<li class="bload">Loading\u2026</li>';
+    try{
+      BOARD=await sbLoad(); renderRows(BOARD,hi);
+      $('boardEmpty').textContent='No scores in this group yet, be the first!';
+      $('boardEmpty').classList.toggle('hidden', BOARD.length>0);
+    }catch(err){
+      list.innerHTML='';
+      $('boardEmpty').textContent='Couldn\u2019t reach the shared board, check your connection and try again.';
+      $('boardEmpty').classList.remove('hidden');
+    }
+  }
+
+  async function openBoard(showSave){
+    ensureAudio();
+    const sa=$('saveArea');
+    if(showSave && lastRun){
+      sa.classList.remove('hidden');
+      $('saveSummary').textContent=fmtScore(lastRun);
+      const nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm;
+    } else { sa.classList.add('hidden'); }
+    show('boardScreen');
+    if(shared()){ await refreshShared(); } else { loadLocal(); renderBoard(); }
+  }
+
+  async function saveScore(){
+    if(!lastRun || boardBusy) return;
+    let name=($('boardName').value||'').trim().slice(0,14); if(!name) name='Player';
+    lsSet(NAME_KEY,name);
+    const entry={name:name,correct:lastRun.correct,level:lastRun.level,timeLeft:Math.round(lastRun.timeLeft),t:Date.now()};
+    if(shared()){
+      const btn=$('boardSave'); boardBusy=true; btn.disabled=true; const old=btn.textContent; btn.textContent='Saving\u2026';
+      try{ await sbSave(entry); lastRun=null; $('saveArea').classList.add('hidden'); beep(660,0.08,'sine',0.12); await refreshShared(); }
+      catch(err){ btn.textContent='Try again'; }
+      finally{ boardBusy=false; btn.disabled=false; if(btn.textContent==='Saving\u2026') btn.textContent=old; }
+    } else {
+      BOARD.push(entry); BOARD.sort(cmpRun); BOARD=BOARD.slice(0,10);
+      lsSet(QUIZ_ID, JSON.stringify(BOARD));
+      lastRun=null; $('saveArea').classList.add('hidden');
+      beep(660,0.08,'sine',0.12); renderBoard(entry.t);
+    }
+  }
+
+  // group-code field on the start screen (remembered between visits)
+  (function(){ const gi=$('groupInput'); if(!gi) return; gi.value=lsGet(GROUP_KEY)||'';
+    gi.addEventListener('input',function(){ const v=gi.value.toUpperCase(); if(v!==gi.value) gi.value=v; lsSet(GROUP_KEY,v); }); })();
+
+  $('startBoard').addEventListener('click',function(){openBoard(false);});
+  document.querySelectorAll('.endboard').forEach(function(b){b.addEventListener('click',function(){openBoard(true);});});
+  $('boardSave').addEventListener('click',saveScore);
+  $('boardBack').addEventListener('click',toMenu);
+  $('boardPlay').addEventListener('click',function(){ensureAudio();startGame();});
+  $('boardName').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();saveScore();} });
+
+})();
+</script>
+<button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var b = document.getElementById('tbSnd');
+  var show = function(){ var m = !!window.tbMuted; b.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; b.setAttribute('aria-pressed', String(!m)); b.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); };
+  b.addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); show(); }); show();
+  /* find a free corner: the button never sits on top of a game's own controls */
+  var spots = [{ left:'12px', right:'auto', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' }, { left:'auto', right:'12px', top:'auto', bottom:'calc(12px + env(safe-area-inset-bottom,0px))' },
+               { left:'12px', right:'auto', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }, { left:'auto', right:'12px', top:'calc(12px + env(safe-area-inset-top,0px))', bottom:'auto' }];
+  var clash = function(){ var s = b.getBoundingClientRect();
+    return [].some.call(document.querySelectorAll('button, a, input, select, [role=button]'), function(e){ if(e === b || !e.offsetParent) return false; var r = e.getBoundingClientRect();
+      return r.width && !(r.right < s.left || r.left > s.right || r.bottom < s.top || r.top > s.bottom); }); };
+  var place = function(){ for(var i = 0; i < spots.length; i++){ var p = spots[i]; b.style.left = p.left; b.style.right = p.right; b.style.top = p.top; b.style.bottom = p.bottom; if(!clash()) return; }
+    var q = spots[0]; b.style.left = q.left; b.style.right = q.right; b.style.top = q.top; b.style.bottom = q.bottom; };
+  var later = 0; var replace = function(){ clearTimeout(later); later = setTimeout(place, 250); };
+  window.addEventListener('resize', replace); document.addEventListener('click', replace, true); setTimeout(place, 300); setInterval(place, 3000);
+  /* screen readers hear right and wrong the moment an answer is marked */
+  var say = document.getElementById('tbSay'), good = null, bad = false, t = 0;
+  /* the answer's words only: leave out the A/B/C/D badge, and any closing full stop */
+  var txt = function(el){ var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('*'), function(x){ if(/^[A-F]$/.test((x.textContent || '').trim())) x.remove(); });
+    return (c.textContent || '').replace(/\s+/g, ' ').trim().replace(/^[A-F]\s+(?=\S)/, '').replace(/[.!?]+$/, '').slice(0, 70); };
+  new MutationObserver(function(ms){ ms.forEach(function(m){ var el = m.target; if(!el.classList) return;
+      var was = ' ' + (m.oldValue || '') + ' ', now = ' ' + el.className + ' ';
+      var gained = function(c){ return now.indexOf(' ' + c + ' ') >= 0 && was.indexOf(' ' + c + ' ') < 0; };
+      if(gained('good') || gained('correct') || gained('right')){ good = el; clearTimeout(t); t = setTimeout(flush, 140); }
+      if(gained('bad') || gained('wrong') || gained('incorrect')){ bad = true; clearTimeout(t); t = setTimeout(flush, 140); } }); })
+    .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true });
+  function flush(){ var a = good ? txt(good) : ''; say.textContent = bad ? ('Not quite.' + (a ? ' The answer was ' + a + '.' : '')) : ('Correct!' + (a ? ' ' + a + '.' : '')); good = null; bad = false; }
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-target="#startScreen" data-notice="quiz" defer></script>
+</body>
+</html>
