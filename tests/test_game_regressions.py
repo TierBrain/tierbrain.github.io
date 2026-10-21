@@ -58,6 +58,28 @@ class StaticGameGuards(unittest.TestCase):
         source = read("creak-multi-play.html")
         self.assertIn("const sig='live|'+st.turnSeq+'|'+myTurn+'|'+(st.pendingQ?st.pendingQ.qId:'');", source)
 
+    def test_shared_climb_shows_why_a_piece_moves(self):
+        """Bug: pieces jumped up or down with no Roc, rocks, debris or snake slide on screen."""
+        source = read("creak-multi.html")
+        checks = {
+            "rocEvent": "await flyRoc(playerId, to);",
+            "rockfallEvent": "spawnRocks(",
+            "fallIntoCrater": "spawnDebris(",
+        }
+        for fn, needle in checks.items():
+            with self.subTest(event=fn):
+                body = re.search(r"async function " + fn + r"\(.*?\n\}", source, re.S)
+                self.assertIsNotNone(body, f"creak-multi.html: {fn}() not found")
+                self.assertIn(needle, body.group(0))
+        self.assertIn("await slideAlongSnake(playerId, hit.obj);", source, "a woken snake must carry the piece down its body")
+        self.assertIn("drawRoc();", source, "the Roc must be drawn on the board")
+
+    def test_shared_climb_outcomes_stay_on_screen(self):
+        """Bug: a right answer on a snake or storm was replaced by 'Waiting for...' instantly, so the TV never showed it."""
+        source = read("creak-multi.html")
+        self.assertIn("async function holdOutcome()", source)
+        self.assertEqual(source.count("await holdOutcome();"), 2, "both end-of-turn paths must hold the outcome")
+
     def test_hosted_games_load_the_host_and_cutscene_engines(self):
         """Bug guard: an older upload of a hosted game drops its animated host and cutscenes."""
         for name in ("tb-hosts.js", "tb-scenes.js"):
