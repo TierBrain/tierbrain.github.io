@@ -376,8 +376,8 @@ function pickQuestion(){ let cand=POOL.filter(function(o){ return !usedTags.has(
   const it=cand[Math.floor(Math.random()*cand.length)]; usedTags.add(it.tag||slug(it.correct)); return it; }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
 
-async function collapse(l){ setStatus('A ladder crumbles to pieces! \ud83e\ude9c'); l.alive=false; draw(); await sleep(260); }
-async function jolt(l){ await sleep(160); }
+async function collapse(l){ setStatus('A ladder crumbles to pieces! \ud83e\ude9c'); const a=squareCenter(l.from), b=squareCenter(l.to); spawnDebris((a.x+b.x)/2,(a.y+b.y)/2); shake(CELL*0.14,540); punch(1.05); l.alive=false; draw(); await sleep(420); }
+async function jolt(l){ const m=squareCenter(l.from); shake(CELL*0.07,340); spawnDust(m.x,m.y,7); await sleep(160); }
 async function ageLadders(){ const dying=[]; G.board.ladders.forEach(function(l){ if(l.alive){ l.health--; if(l.health<=0) dying.push(l); } }); for(const l of dying) await collapse(l); }
 // ---------- third-force events (ported from solo, attributed to the active player) ----------
 const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.10;
@@ -386,7 +386,7 @@ async function rocEvent(playerId){
   const from=G.positions[playerId]||1;
   const to=Math.min(TOP-1, from+rint(5,16));
   setStatus('A great Roc sweeps down and carries '+nameOf(playerId)+' upward! \ud83e\udd85');
-  await animateTokenTo(playerId, to, 900);
+  await flyRoc(playerId, to);
   G.positions[playerId]=to; settleStationaryTokens(null); draw();
   return to;
 }
@@ -394,18 +394,20 @@ async function rockfallEvent(playerId){
   const from=G.positions[playerId]||1;
   setStatus('Rocks come loose above '+nameOf(playerId)+'! \ud83e\udea8');
   const ok=await askQuestionFor(playerId, 'rock', from);
-  if(ok){ setStatus(nameOf(playerId)+' scrambles clear of the rockfall!'); return from; }
+  if(ok){ setStatus(nameOf(playerId)+' scrambles clear of the rockfall!'); await braceHop(playerId); return from; }
   const to=Math.max(1, from-rint(5,16));
   setStatus(nameOf(playerId)+' is caught in the rockfall. Down they tumble!');
+  shake(CELL*0.16,600); punch(1.06); spawnRocks(G.tokenPix[playerId]||squareCenter(from));
+  await sleep(380);
   await animateTokenTo(playerId, to, 640);
   G.positions[playerId]=to; settleStationaryTokens(null); draw();
   return to;
 }
 async function stormEvent(playerId){
-  setStatus('A gale sweeps across the board! \ud83c\udf29\ufe0f');
+  setStatus('A gale sweeps across the board! \ud83c\udf29\ufe0f'); spawnWind();
   const ok=await askQuestionFor(playerId, 'storm', G.positions[playerId]||1);
-  if(ok){ setStatus(nameOf(playerId)+' shelters the ladders, they hold!'); return; }
-  setStatus('The storm batters every ladder!');
+  if(ok){ setStatus(nameOf(playerId)+' shelters the ladders, they hold!'); shake(CELL*0.06,400); return; }
+  setStatus('The storm batters every ladder!'); shake(CELL*0.18,720); punch(1.05); spawnWind();
   const alive=G.board.ladders.filter(function(l){ return l.alive; });
   alive.forEach(function(l){ l.health-=4; });
   draw(); await sleep(440);
@@ -415,6 +417,9 @@ async function stormEvent(playerId){
 async function fallIntoCrater(playerId, from){
   const to=fallTo(from, G.board);
   setStatus(nameOf(playerId)+' falls through a hole in the board!');
+  shake(CELL*0.18,640); punch(1.07);
+  const c0=G.tokenPix[playerId]||squareCenter(from); spawnDebris(c0.x,c0.y); spawnDust(c0.x,c0.y,12);
+  await sleep(300);
   await animateTokenTo(playerId, to, 620);
   G.positions[playerId]=to; settleStationaryTokens(null); draw();
   return to;
@@ -440,6 +445,7 @@ async function tearTiles(n){
   if(!torn.length) return;
   setStatus('The gale tears tiles from the board!');
   G.board.craters=Array.from(holes);
+  torn.forEach(function(sq){ const c=squareCenter(sq); spawnDebris(c.x,c.y); }); shake(CELL*0.14,560);
   draw(); await sleep(420);
 }
 async function maybeEvent(playerId){
@@ -456,7 +462,7 @@ async function snakeActs(s){
   const doShake = targets.length>0 && Math.random()<0.55;
   if(doShake){ targets.sort(function(a,b){ return Math.abs(a.from-s.from)-Math.abs(b.from-s.from); }); const l=targets[0];
     setStatus('The snake lashes out and shakes a ladder! \ud83d\udc0d'); await jolt(l); l.health-=3; s.stir=0; if(l.health<=0) await collapse(l);
-  } else { setStatus('The snake slithers away, the path clears. \ud83d\udc0d'); s.alive=false; draw(); await sleep(260); }
+  } else { setStatus('The snake slithers away, the path clears. \ud83d\udc0d'); const h=squareCenter(s.from); spawnDust(h.x,h.y,8); s.alive=false; draw(); await sleep(420); }
 }
 function confetti(){ const c=$('confetti'); if(!c) return; c.innerHTML=''; const em=['\ud83c\udf89','\u2b50','\ud83c\udfd4\ufe0f','\ud83e\ude9c','\u2728'];
   for(let i=0;i<26;i++){ const sp=document.createElement('span'); sp.textContent=em[i%em.length]; sp.style.left=(Math.random()*100)+'%';
@@ -571,9 +577,42 @@ function resize(){
   draw();
 }
 let T=0, tweens=[];
+
+/* tb-fx-v1: the solo game's effects, shared by every player's token */
+let particles=[], shakeAmt=0, shakeDur=1, shakeUntil=0, cam={scale:1}, roc={show:false,x:0,y:0};
+function lerp(a,b,t){ return a+(b-a)*t; }
+function ease(t){ return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
+function shake(amt,dur){ shakeAmt=amt; shakeDur=Math.max(1,dur); shakeUntil=T+dur; }
+function punch(peak){ addTween(420,function(t){ cam.scale=1+(peak-1)*Math.sin(t*Math.PI); },function(){ cam.scale=1; }); }
+function spawnDust(x,y,n){ for(let i=0;i<(n||8);i++){ const a=Math.random()*6.283, sp=CELL*(0.02+Math.random()*0.05); particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-CELL*0.02,g:CELL*0.004,life:0,max:500+Math.random()*300,r:CELL*(0.05+Math.random()*0.07),col:'rgba(205,185,155,0.5)',kind:'dust'}); } }
+function spawnDebris(x,y){ for(let i=0;i<14;i++){ const a=Math.random()*6.283, sp=CELL*(0.04+Math.random()*0.10); particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:-Math.abs(Math.sin(a))*sp-CELL*0.05,g:CELL*0.013,life:0,max:600+Math.random()*400,rot:Math.random()*6,vr:(Math.random()-0.5)*0.4,w:CELL*(0.06+Math.random()*0.09),h:CELL*(0.02+Math.random()*0.04),col:Math.random()<0.5?'#c9924e':'#8a5a2b',kind:'wood'}); } spawnDust(x,y,10); }
+function spawnRocks(c){ for(let i=0;i<9;i++){ particles.push({x:c.x+(Math.random()-0.5)*CELL*1.2, y:c.y-CELL*(0.8+Math.random()*2.2), vx:(Math.random()-0.5)*CELL*0.06, vy:CELL*(0.05+Math.random()*0.08), g:CELL*0.015, life:0, max:700+Math.random()*300, r:CELL*(0.08+Math.random()*0.12), col:Math.random()<0.5?'#8a8f99':'#6b6f78', kind:'rock'}); } spawnDust(c.x,c.y,10); }
+function spawnWind(){ for(let i=0;i<26;i++){ particles.push({x:-CELL, y:Math.random()*H, vx:CELL*(0.28+Math.random()*0.45), vy:(Math.random()-0.5)*CELL*0.02, g:0, life:0, max:700+Math.random()*300, len:CELL*(0.6+Math.random()*1.3), col:'rgba(200,220,255,0.4)', kind:'wind'}); } }
+function updateParticles(dt){ for(const p of particles){ p.life+=dt; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; if(p.kind==='wood') p.rot+=p.vr; } if(particles.length) particles=particles.filter(p=>p.life<p.max); }
+function drawParticles(){ for(const p of particles){ const k=1-p.life/p.max; if(k<=0) continue; if(p.kind==='wood'){ ctx.save(); ctx.globalAlpha=k; ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); } else if(p.kind==='rock'){ ctx.save(); ctx.globalAlpha=k; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); ctx.restore(); } else if(p.kind==='wind'){ ctx.save(); ctx.globalAlpha=k*0.5; ctx.strokeStyle=p.col; ctx.lineWidth=Math.max(1,CELL*0.03); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.len,p.y); ctx.stroke(); ctx.restore(); } else { ctx.save(); ctx.globalAlpha=k*0.6; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(0.6+0.6*(1-k)),0,7); ctx.fill(); ctx.restore(); } } }
+function drawRoc(){ if(!roc.show) return; const flap=Math.sin(T*0.02); ctx.save(); ctx.translate(roc.x,roc.y);
+  ctx.fillStyle='#8f6ab0';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-CELL*0.42,-CELL*0.28-flap*CELL*0.28,-CELL*0.58,CELL*0.06); ctx.quadraticCurveTo(-CELL*0.34,CELL*0.06,0,0); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(CELL*0.42,-CELL*0.28-flap*CELL*0.28,CELL*0.58,CELL*0.06); ctx.quadraticCurveTo(CELL*0.34,CELL*0.06,0,0); ctx.fill();
+  ctx.fillStyle='#6b4a8a'; ctx.beginPath(); ctx.ellipse(0,0,CELL*0.2,CELL*0.13,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(CELL*0.19,-CELL*0.03,CELL*0.08,0,7); ctx.fill();
+  ctx.fillStyle='#e6b655'; ctx.beginPath(); ctx.moveTo(CELL*0.26,-CELL*0.03); ctx.lineTo(CELL*0.37,0); ctx.lineTo(CELL*0.26,CELL*0.03); ctx.fill();
+  ctx.restore(); }
+// the same curve drawSnake() paints, so a falling token rides down the snake's body
+function snakePathAt(s,u){ const head=squareCenter(s.from), tail=squareCenter(s.to); const dx=tail.x-head.x, dy=tail.y-head.y, len=Math.hypot(dx,dy)||1;
+  const nx=-dy/len, ny=dx/len, amp=CELL*0.32, wob=Math.sin(u*Math.PI*3)*amp*(1-u*0.15); return {x:head.x+dx*u+nx*wob, y:head.y+dy*u+ny*wob}; }
+async function slideAlongSnake(pid, sn){ shake(CELL*0.10,520);
+  await addTween(820,function(t){ G.tokenPix[pid]=snakePathAt(sn, ease(t)); },function(){ G.tokenPix[pid]=squareCenter(sn.to); }); }
+async function flyRoc(pid, toN){ const s0=G.tokenPix[pid]||squareCenter(G.positions[pid]||1), dest=squareCenter(toN); roc={show:true,x:-CELL,y:s0.y-CELL*2};
+  await addTween(500,function(t){ const e=ease(t); roc.x=lerp(-CELL,s0.x,e); roc.y=lerp(s0.y-CELL*2,s0.y-CELL*0.55,e); });
+  await addTween(1000,function(t){ const e=ease(t); roc.x=lerp(s0.x,dest.x,e); roc.y=lerp(s0.y-CELL*0.55,dest.y-CELL*0.55,e)-Math.sin(t*Math.PI)*CELL*1.1; G.tokenPix[pid]={x:roc.x,y:roc.y+CELL*0.5}; });
+  G.tokenPix[pid]=dest;
+  await addTween(450,function(t){ const e=ease(t); roc.x=lerp(dest.x,W+CELL,e); roc.y=lerp(dest.y-CELL*0.55,dest.y-CELL*2.2,e); },function(){ roc.show=false; }); }
+async function braceHop(pid){ const c=G.tokenPix[pid]||squareCenter(G.positions[pid]||1); await addTween(320,function(t){ G.tokenPix[pid]={x:c.x,y:c.y-Math.sin(t*Math.PI)*CELL*0.4}; },function(){ G.tokenPix[pid]=c; }); }
 function addTween(dur, update, done){ return new Promise(function(res){ tweens.push({start:T,dur:Math.max(1,dur),update:update,done:function(){ if(done)done(); res(); }}); }); }
 function animLoop(now){ const dt=Math.min(50, now-(animLoop._last||now)); animLoop._last=now; T=now;
   for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); tw.update(t); if(t>=1){ tweens.splice(i,1); tw.done(); } }
+  updateParticles(dt);
   if(G.phase==='live'||G.phase==='gameover') draw();
   requestAnimationFrame(animLoop);
 }
@@ -651,11 +690,17 @@ function drawTokens(){
   });
 }
 function draw(){
+  ctx.save();
   ctx.clearRect(0,0,W,H);
+  let sx=0,sy=0; if(T<shakeUntil){ const amt=shakeAmt*((shakeUntil-T)/shakeDur); sx=(Math.random()*2-1)*amt; sy=(Math.random()*2-1)*amt; }
+  const cx=W/2, cy=H/2; ctx.translate(cx+sx,cy+sy); ctx.scale(cam.scale,cam.scale); ctx.translate(-cx,-cy);
   drawCells();
   (G.board.ladders||[]).forEach(drawLadder);
   (G.board.snakes||[]).forEach(drawSnake);
+  drawParticles();
   drawTokens();
+  drawRoc();
+  ctx.restore();
 }
 
 // ---------- game state (host-authoritative) ----------
@@ -772,7 +817,12 @@ async function startGame(){
   writeState();
 }
 function nameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?esc(p.name):'Player'; }
-function setStatus(html){ $('status').innerHTML=html; }
+// Outcome lines (right, wrong, Roc, rockfall, storm...) stay up long enough to be read on the TV,
+// and for the host and sound effects that react to them, before the next player is called.
+const OUTCOME_RE=/answered right|rung snaps|slips past|woke the snake|scrambles clear|caught in the rockfall|shelters the ladders|storm batters|falls through|Roc sweeps|crumbles|slithers away|lashes out|tears tiles/;
+let statusOutcomeAt=0;
+function setStatus(html){ $('status').innerHTML=html; if(OUTCOME_RE.test(String(html))) statusOutcomeAt=Date.now(); }
+async function holdOutcome(){ const left=1500-(Date.now()-statusOutcomeAt); if(left>0) await sleep(left); }
 
 // ---------- authoritative move processing ----------
 async function pollMoves(){
@@ -821,6 +871,7 @@ async function resolveTurn(playerId){
     G.positions[playerId]=pos;
     settleStationaryTokens(null);
     await ageLadders();
+    await holdOutcome();
     G.turnIdx=(G.turnIdx+1)%G.order.length;
     G.turnSeq++; G.turnStartedAt=Date.now();
     draw(); renderTurnbar();
@@ -838,7 +889,7 @@ async function resolveTurn(playerId){
     } else {
       hit.obj.stir += ok?1:2;
       if(ok){ setStatus(nameOf(playerId)+' slips past the sleeping snake. \ud83d\udc0d'); }
-      else { setStatus(nameOf(playerId)+' woke the snake, down it goes! \ud83d\udc0d'); await animateTokenTo(playerId, hit.to, 480); pos=hit.to;
+      else { setStatus(nameOf(playerId)+' woke the snake, down it goes! \ud83d\udc0d'); await slideAlongSnake(playerId, hit.obj); pos=hit.to;
         if(isCrater(pos, G.board)){ pos = await fallIntoCrater(playerId, pos); }
       }
       if(hit.obj.alive && hit.obj.stir>=hit.obj.threshold) await snakeActs(hit.obj);
@@ -855,6 +906,7 @@ async function resolveTurn(playerId){
   G.positions[playerId]=pos;
   settleStationaryTokens(null);
   await ageLadders();
+  await holdOutcome();
   G.turnIdx=(G.turnIdx+1)%G.order.length;
   G.turnSeq++;
   G.turnStartedAt=Date.now();
