@@ -11,7 +11,8 @@ from urllib.parse import quote
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / 'dist'
 ASSET_EXTENSIONS = {'.html', '.js', '.css', '.png', '.webp', '.jpg', '.jpeg', '.svg', '.ico', '.gif', '.woff', '.woff2', '.ttf', '.mp3', '.ogg', '.wav', '.mp4', '.webmanifest', '.xml'}
-ASSET_DIRECTORIES = {'q', 'answers', 'assets', 'fonts', 'images', 'audio'}
+ASSET_DIRECTORIES = {'q', 'answers', 'assets', 'fonts', 'images', 'audio', 'js', 'vendor'}
+PUBLIC_VENDOR_FILES = {Path('vendor/supabase.LICENSE')}
 PUBLIC_TEXT_FILES = {'robots.txt', 'ads.txt', 'humans.txt'}
 PREVIEW_NOTICE = (
     '<aside data-tierbrain-preview role="note" '
@@ -83,7 +84,7 @@ def main(argv=None):
         relative = path.relative_to(ROOT)
         if len(relative.parts) > 1 and relative.parts[0] not in ASSET_DIRECTORIES:
             continue
-        if path.suffix.lower() in ASSET_EXTENSIONS or (len(relative.parts) == 1 and path.name in PUBLIC_TEXT_FILES):
+        if path.suffix.lower() in ASSET_EXTENSIONS or relative in PUBLIC_VENDOR_FILES or (len(relative.parts) == 1 and path.name in PUBLIC_TEXT_FILES):
             if path.stat().st_size > 25 * 1024 * 1024:
                 raise ValueError('Asset exceeds Cloudflare 25 MiB limit: ' + str(relative))
             files.append(relative)

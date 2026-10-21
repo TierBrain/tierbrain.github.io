@@ -23,7 +23,9 @@ Production catalog checks confirmed exactly the intended EXECUTE revocation,
 the unchanged definition and cron configuration, and preserved maintenance-role
 access. Security advisors returned no lints after this change. The 22:00 UTC
 scheduled run succeeded before deployment; a later naturally scheduled run is
-checked separately. No live cleanup invocation was used for validation.
+checked separately. On 21 October the 03:00, 04:00 and 05:00 UTC scheduled runs
+all succeeded with the restricted app privileges still in place. No live cleanup
+invocation was used for validation.
 
 All 24 isolated acceptance checks passed, including successful synthetic
 maintenance calls, denied app calls, rollback and drift-guard failures.

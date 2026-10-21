@@ -43,6 +43,8 @@ jobs:
           python tests/check_score_policy.py
       - name: Verify cleanup permissions and rollback in disposable PostgreSQL
         run: python tests/check_cleanup_permissions.py
+      - name: Verify Show ownership and rollback in disposable PostgreSQL
+        run: python tests/check_show_access.py
       - name: Build and validate preview and production hosting assets
         run: |
           python build-site.py --preview
