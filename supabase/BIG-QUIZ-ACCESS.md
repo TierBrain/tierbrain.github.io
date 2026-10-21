@@ -119,7 +119,7 @@ recover its canonical server identity rather than trust cached display data.
 ## Migration and verification
 
 The migration scaffold was created with Supabase CLI 2.81.3 `migration new`:
-`supabase/migrations/20261021070507_secure_big_quiz_rooms.sql`.
+`supabase/migrations/20261021160821_secure_big_quiz_rooms.sql`.
 Its SHA-256 before deployment is
 `77b01ae49416dcec19eb6e97aca3c3b08e473ca3292755e174f20ae7866e9d7a`.
 The production migration version may be recorded by the deployment tool; align
@@ -143,7 +143,7 @@ legacy and Bible Show rows, definitions, owners, ACLs, policies and existing
 default privileges. The fixture's driver-set `auth.uid()` is not JWT validation.
 
 The final isolated SQL harness passed 149 checks, including the pre-migration
-default-ACL audit. Local verification also passed 38 unit/contract groups and
+default-ACL audit. Local verification also passed 48 unit/contract groups and
 nine browser groups with all external requests intercepted. A disposable real
 GoTrue/PostgREST stack passed five JWT/identity boundary groups, eight actual
 SDK/adapter groups, and six gameplay groups covering all four modes. These are
