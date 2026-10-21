@@ -1215,25 +1215,26 @@ function versionedRefs(){
      {th:'easter',q:'What was rolled away from the tomb?',correct:'The stone',wrong:['The curtain','The gate','The door']},
      {th:'easter',q:'Which disciple doubted until he saw the risen Jesus?',correct:'Thomas',wrong:['Philip','James','Nathanael']}
     ],
+    /* themed verses carry both versions; themedBlanks()/themedRefs() pick the host's choice */
     vblank:[
-     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a {b}, who is Christ the Lord.',answer:'Savior',wrong:['shepherd','teacher','prophet']},
-     {th:'christmas',vref:'Isaiah 9:6',text:'His name will be called {b}, Mighty God, Everlasting Father, Prince of Peace.',answer:'Wonderful Counselor',wrong:['Faithful Servant','Holy One','Good Shepherd']},
-     {th:'christmas',vref:'Luke 2:7',text:'She laid him in a manger, because there was no room for them in the {b}.',answer:'inn',wrong:['stable','town','house']},
-     {th:'christmas',vref:'Matthew 2:2',text:'Where is he who is born King of the {b}? For we saw his star in the east.',answer:'Jews',wrong:['world','Gentiles','nations']},
-     {th:'easter',vref:'Mark 16:6',text:'He has {b}! He is not here. Behold, the place where they laid him!',answer:'risen',wrong:['gone','departed','vanished']},
-     {th:'easter',vref:'John 11:25',text:'I am the {b} and the life. He who believes in me will still live, even if he dies.',answer:'resurrection',wrong:['way','truth','light']},
-     {th:'easter',vref:'Luke 23:34',text:'Father, {b} them, for they don\u2019t know what they are doing.',answer:'forgive',wrong:['free','save','help']},
-     {th:'easter',vref:'Matthew 27:46',text:'My God, my God, why have you {b} me?',answer:'forsaken',wrong:['forgotten','abandoned','left']}
+     {th:"christmas",vref:"Luke 2:11",wrong:["shepherd", "teacher", "prophet"],KJV:{"text": "For unto you is born this day in the city of David a {b}, which is Christ the Lord.", "answer": "Saviour"},NIV:{"text": "Today in the town of David a {b} has been born to you; he is the Messiah, the Lord.", "answer": "Savior"}},
+     {th:"christmas",vref:"Isaiah 9:6",KJV:{"text": "And his name shall be called Wonderful, {b}, The mighty God, The everlasting Father, The Prince of Peace.", "answer": "Counsellor", "wrong": ["Comforter", "Redeemer", "Shepherd"]},NIV:{"text": "And he will be called {b}, Mighty God, Everlasting Father, Prince of Peace.", "answer": "Wonderful Counselor", "wrong": ["Faithful Servant", "Holy One", "Good Shepherd"]}},
+     {th:"christmas",vref:"Luke 2:7",KJV:{"text": "And laid him in a manger; because there was no room for them in the {b}.", "answer": "inn", "wrong": ["stable", "town", "house"]},NIV:{"text": "She wrapped him in cloths and placed him in a manger, because there was no {b} available for them.", "answer": "guest room", "wrong": ["stable", "spare bed", "shelter"]}},
+     {th:"christmas",vref:"Matthew 2:2",wrong:["world", "Gentiles", "nations"],KJV:{"text": "Where is he that is born King of the {b}? for we have seen his star in the east, and are come to worship him.", "answer": "Jews"},NIV:{"text": "Where is the one who has been born king of the {b}? We saw his star when it rose and have come to worship him.", "answer": "Jews"}},
+     {th:"easter",vref:"Mark 16:6",wrong:["gone", "departed", "vanished"],KJV:{"text": "He is {b}; he is not here: behold the place where they laid him.", "answer": "risen"},NIV:{"text": "He has {b}! He is not here. See the place where they laid him.", "answer": "risen"}},
+     {th:"easter",vref:"John 11:25",wrong:["way", "truth", "light"],KJV:{"text": "I am the {b}, and the life: he that believeth in me, though he were dead, yet shall he live.", "answer": "resurrection"},NIV:{"text": "I am the {b} and the life. The one who believes in me will live, even though they die.", "answer": "resurrection"}},
+     {th:"easter",vref:"Luke 23:34",wrong:["free", "save", "help"],KJV:{"text": "Father, {b} them; for they know not what they do.", "answer": "forgive"},NIV:{"text": "Father, {b} them, for they do not know what they are doing.", "answer": "forgive"}},
+     {th:"easter",vref:"Matthew 27:46",wrong:["forgotten", "abandoned", "left"],KJV:{"text": "My God, my God, why hast thou {b} me?", "answer": "forsaken"},NIV:{"text": "My God, my God, why have you {b} me?", "answer": "forsaken"}}
     ],
     vref:[
-     {th:'christmas',vref:'Luke 2:11',text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.',wrong:['Matthew 2:11','Luke 1:11','John 2:11']},
-     {th:'christmas',vref:'Isaiah 9:6',text:'For to us a child is born, to us a son is given; and the government will be on his shoulders.',wrong:['Micah 5:2','Luke 2:11','Isaiah 7:14']},
-     {th:'christmas',vref:'Micah 5:2',text:'But you, Bethlehem Ephrathah, out of you one will come who is to be ruler in Israel.',wrong:['Isaiah 9:6','Matthew 2:6','Luke 2:4']},
-     {th:'christmas',vref:'Matthew 1:23',text:'Behold, the virgin shall be with child, and shall give birth to a son. They shall call his name Immanuel.',wrong:['Isaiah 7:14','Luke 1:31','Matthew 2:2']},
-     {th:'easter',vref:'Mark 16:6',text:'He has risen! He is not here. Behold, the place where they laid him!',wrong:['Matthew 27:54','John 20:9','Luke 24:6']},
-     {th:'easter',vref:'John 11:25',text:'I am the resurrection and the life.',wrong:['John 14:6','John 1:4','Romans 6:5']},
-     {th:'easter',vref:'Luke 23:34',text:'Father, forgive them, for they don\u2019t know what they are doing.',wrong:['Matthew 26:39','John 19:30','Luke 22:42']},
-     {th:'easter',vref:'John 19:30',text:'When Jesus therefore had received the vinegar, he said, \u201cIt is finished.\u201d',wrong:['Luke 23:46','Matthew 27:50','Mark 15:34']}
+     {th:"christmas",vref:"Luke 2:11",wrong:["Matthew 2:11", "Luke 1:11", "John 2:11"],KJV:"For unto you is born this day in the city of David a Saviour, which is Christ the Lord.",NIV:"Today in the town of David a Savior has been born to you; he is the Messiah, the Lord."},
+     {th:"christmas",vref:"Isaiah 9:6",wrong:["Micah 5:2", "Luke 2:11", "Isaiah 7:14"],KJV:"For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder.",NIV:"For to us a child is born, to us a son is given, and the government will be on his shoulders."},
+     {th:"christmas",vref:"Micah 5:2",wrong:["Isaiah 9:6", "Matthew 2:6", "Luke 2:4"],KJV:"But thou, Beth-lehem Ephratah, though thou be little among the thousands of Judah, yet out of thee shall he come forth unto me that is to be ruler in Israel.",NIV:"But you, Bethlehem Ephrathah, though you are small among the clans of Judah, out of you will come for me one who will be ruler over Israel."},
+     {th:"christmas",vref:"Matthew 1:23",wrong:["Isaiah 7:14", "Luke 1:31", "Matthew 2:2"],KJV:"Behold, a virgin shall be with child, and shall bring forth a son, and they shall call his name Emmanuel.",NIV:"The virgin will conceive and give birth to a son, and they will call him Immanuel."},
+     {th:"easter",vref:"Mark 16:6",wrong:["Matthew 27:54", "John 20:9", "Luke 24:6"],KJV:"He is risen; he is not here: behold the place where they laid him.",NIV:"He has risen! He is not here. See the place where they laid him."},
+     {th:"easter",vref:"John 11:25",wrong:["John 14:6", "John 1:4", "Romans 6:5"],KJV:"I am the resurrection, and the life.",NIV:"I am the resurrection and the life."},
+     {th:"easter",vref:"Luke 23:34",wrong:["Matthew 26:39", "John 19:30", "Luke 22:42"],KJV:"Father, forgive them; for they know not what they do.",NIV:"Father, forgive them, for they do not know what they are doing."},
+     {th:"easter",vref:"John 19:30",wrong:["Luke 23:46", "Matthew 27:50", "Mark 15:34"],KJV:"When Jesus therefore had received the vinegar, he said, It is finished.",NIV:"When he had received the drink, Jesus said, “It is finished.”"}
     ],
     buzz:[
      {th:'christmas',q:'In which town was Jesus born?',correct:'Bethlehem',wrong:['Nazareth','Jerusalem','Bethany']},
@@ -1436,11 +1437,13 @@ function applyTeamNames(){
   function buildRapid(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=o=>o.tag||slug(o.correct);
     const list=(theme&&theme!=='all')? shuf(THEMED.rapid.filter(x=>x.th===theme),r).concat(shuf(RAPID_GEN.slice(),r)) : interleave([BANK_RAPID['1'],BANK_RAPID['2'],BANK_RAPID['3'],BANK_RAPID['4']], r);
     return pickDistinct(list, used, n, tf).map(o=>{ const opts=shuf([o.correct].concat(o.wrong), r); return {kind:'mc', q:o.q, opts, correct:opts.indexOf(o.correct), tag:tf(o)}; }); }
+  function themedBlanks(){ const v=BIBLE_VERSION; return THEMED.vblank.map(e=>{ const d=e[v]||e.KJV; return {th:e.th, vref:e.vref, text:d.text, answer:d.answer, wrong:(d.wrong||e.wrong).slice()}; }); }
+  function themedRefs(){ const v=BIBLE_VERSION; return THEMED.vref.map(e=>({th:e.th, vref:e.vref, text:e[v]||e.KJV, wrong:e.wrong.slice()})); }
   function buildVerse(seed,n,theme,used){ n=n||8; const r=rng(seed); used=used||new Set(); const tf=x=>x.tag||slug(x.vref); const taken=new Set(used); const nb=Math.ceil(n/2);
-    const blankList=(theme&&theme!=='all')? shuf(THEMED.vblank.filter(x=>x.th===theme),r).concat(shuf(VB_BLANK.slice(),r)) : shuf(VB_BLANK.slice(),r);
+    const blankList=(theme&&theme!=='all')? shuf(themedBlanks().filter(x=>x.th===theme),r).concat(shuf(VB_BLANK.slice(),r)) : shuf(VB_BLANK.slice(),r);
     const blanks=pickDistinct(blankList, taken, nb, tf); blanks.forEach(b=>taken.add(tf(b)));
     const nr=n-blanks.length;
-    const refList=(theme&&theme!=='all')? shuf(THEMED.vref.filter(x=>x.th===theme),r).concat(shuf(VB_REF.slice(),r)) : shuf(VB_REF.slice(),r);
+    const refList=(theme&&theme!=='all')? shuf(themedRefs().filter(x=>x.th===theme),r).concat(shuf(VB_REF.slice(),r)) : shuf(VB_REF.slice(),r);
     const refs=pickDistinct(refList, taken, nr, tf); refs.forEach(v=>taken.add(tf(v)));
     const items=[];
     blanks.forEach(b=>{ const opts=shuf([b.answer].concat(b.wrong),r); items.push({kind:'verse-blank', ref:b.vref, text:b.text, opts, correct:opts.indexOf(b.answer), tag:tf(b)}); });
@@ -1499,7 +1502,7 @@ function applyTeamNames(){
   async function startShow(){ if(!room){ alert('Connect to a room before starting the show.'); return; }if(G.starting||access.busy())return;G.starting=true;
     try{await access.beginRun();room=access.currentRoom();}catch(e){G.starting=false;showBanner('Could not start the show. Reload this page and try again.');return;}G.starting=false;
     lockTeamEditor(); lockBibleVersion(); setBibleCredit();
-    G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder(G.gameSeed); G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
+    G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder((room.seed|0)||1); /* the order the lobby announced */ G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
     G.label='Round '+(G.ptr+1)+' \u00b7 '+meta.title; G.phase='round_intro'; G.introUntil=Date.now()+INTRO; if(G.ptr>0){ SFX.sting(); hostSay(pick(QUIPS.round),'huh'); if(window.CVStudy) CVStudy.roundBreak(meta.title, G.ptr); }
@@ -1534,23 +1537,23 @@ function applyTeamNames(){
     $('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';
     const nb=$('nextRoundBtn'); nb.textContent='Next: Round '+(G.ptr+2)+': '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8'; nb.classList.remove('hide');
     setRoom({phase:'round_scores', q_id:'', state:{round:G.label+' complete'}}); poll(); }
-  const CLOSERS={
+  const CLOSERS={   /* each closing verse in both versions; showClosing() uses the host's choice */
     all:[
-      {ref:'Numbers 6:24-26', text:'The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace.'},
-      {ref:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.'}
+      {ref:"Numbers 6:24-26", KJV:"The LORD bless thee, and keep thee: The LORD make his face shine upon thee, and be gracious unto thee: The LORD lift up his countenance upon thee, and give thee peace.", NIV:"The LORD bless you and keep you; the LORD make his face shine on you and be gracious to you; the LORD turn his face toward you and give you peace."},
+      {ref:"John 3:16", KJV:"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.", NIV:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."}
     ],
     christmas:[
-      {ref:'Luke 2:11', text:'For there is born to you today, in David\u2019s city, a Savior, who is Christ the Lord.'},
-      {ref:'Isaiah 9:6', text:'For to us a child is born, to us a son is given; and his name will be called Wonderful Counselor, Prince of Peace.'}
+      {ref:"Luke 2:11", KJV:"For unto you is born this day in the city of David a Saviour, which is Christ the Lord.", NIV:"Today in the town of David a Savior has been born to you; he is the Messiah, the Lord."},
+      {ref:"Isaiah 9:6", KJV:"For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.", NIV:"For to us a child is born, to us a son is given, and the government will be on his shoulders. And he will be called Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace."}
     ],
     easter:[
-      {ref:'Mark 16:6', text:'He has risen! He is not here. Do not be afraid.'},
-      {ref:'1 Corinthians 15:57', text:'But thanks be to God, who gives us the victory through our Lord Jesus Christ.'}
+      {ref:"Mark 16:6", KJV:"Be not affrighted: Ye seek Jesus of Nazareth, which was crucified: he is risen; he is not here.", NIV:"Don’t be alarmed. You are looking for Jesus the Nazarene, who was crucified. He has risen! He is not here."},
+      {ref:"1 Corinthians 15:57", KJV:"But thanks be to God, which giveth us the victory through our Lord Jesus Christ.", NIV:"But thanks be to God! He gives us the victory through our Lord Jesus Christ."}
     ]
   };
   const CLOSE_LINES=['Thank you for playing, go in peace.','Until next time, God bless you all!','Well played, everyone, see you soon!'];
   function showClosing(){ if(G.starting||G.finalizing||access.busy())return;G.phase='closing'; showPanel('closing');
-    const pool=CLOSERS[THEME]||CLOSERS.all; const v=pool[Math.floor(Math.random()*pool.length)];
+    const pool=CLOSERS[THEME]||CLOSERS.all; const c=pool[Math.floor(Math.random()*pool.length)]; const v={ref:c.ref, text:c[BIBLE_VERSION]||c.KJV};
     if($('closeText')) $('closeText').textContent='\u201c'+v.text+'\u201d';
     if($('closeRef')) $('closeRef').textContent=v.ref;
     if(window.HOST) window.HOST.set('calm'); hostSay(pick(CLOSE_LINES),'affirm');
