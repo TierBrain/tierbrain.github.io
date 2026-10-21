@@ -134,6 +134,38 @@ class StaticGameGuards(unittest.TestCase):
             self.assertIn("KJV:", line, line[:80]); self.assertIn("NIV:", line, line[:80])
         self.assertIn("c[BIBLE_VERSION]", source)
 
+    def test_smudged_bible_edition_matches_the_general_game(self):
+        """Bug: the Bible copy fell behind wheel.html, so it could repeat a message within one game."""
+        def body(name):
+            text = read(name)
+            text = re.sub(r'<title>[^<]*</title>|<meta (name|property)="(description|og:url|og:title|og:description|twitter:title|twitter:description)" content="[^"]*">|<link rel="canonical" href="[^"]*">', "", text)
+            return re.sub(r"^var ED = .*$", "", text, flags=re.M)
+        self.assertEqual(body("smudged-bible.html"), body("wheel.html"),
+                         "Rebuild smudged-bible.html from wheel.html (only the titles and ED line should differ)")
+
+    def test_smudged_has_plenty_of_messages_and_no_repeats_across_levels(self):
+        wheel, extra = read("wheel.html"), read("smudged-bank.js")
+        def norm(text):
+            return re.sub(r"^(THE|A|AN) ", "", re.sub(r"[^A-Z ]", "", text.upper())).replace(" ", "")
+        def gather(base_var, key, minimum):
+            base = json.loads(re.search(r"^var %s = (\{.*?\});\s*$" % base_var, wheel, re.M).group(1))
+            section = extra.split("\n%s: {" % key, 1)[1]
+            seen, counts = {}, {}
+            for level in "1234":
+                block = re.search(r'"%s": \[\n(.*?)\n\]' % level, section, re.S).group(1)
+                texts = [p["text"] for p in base[level]] + [r.split("|")[1] for r in re.findall(r'"([^"]+)"', block)]
+                for text in texts:
+                    key_ = norm(text)
+                    if key_ in seen:
+                        self.assertEqual(seen[key_], level, f"{text} appears at two levels")
+                        continue
+                    seen[key_] = level
+                    counts[level] = counts.get(level, 0) + 1
+            for level in "1234":
+                self.assertGreaterEqual(counts.get(level, 0), minimum, f"{key} level {level}")
+        gather("PHRASES", "phrases", 100)
+        gather("BIBLE_PHRASES", "bible", 75)
+
     def test_gradient_titles_keep_their_text(self):
         """Bug: an !important 'background' shorthand reset background-clip, so titles showed as a plain gold bar."""
         bad = re.compile(r"background:[^;{}]*gradient\([^;{}]*\)\s*!important;\s*-webkit-background-clip:\s*text\s*;")
