@@ -778,7 +778,16 @@ function dequeue(){ while(G.queue.length){ const p=G.queue.shift(); if(isLive(p.
 
 async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,last_seen&order=joined_at.asc'); if(r) G.players=r; }catch(e){} }
 
+/* One poll at a time. The 300ms timer used to start a new poll while the last was still waiting on
+   the network, so a slow connection graded the same answer several times (inflated streaks,
+   one-question finales, skipped questions). */
+let tickBusy=false;
 async function tick(){
+  if(tickBusy) return;
+  tickBusy=true;
+  try{ await tickOnce(); } finally { tickBusy=false; }
+}
+async function tickOnce(){
   if(!G.code) return;
   await pollPlayers();
   if(G.phase==='lobby'){ renderLobby(); return; }
