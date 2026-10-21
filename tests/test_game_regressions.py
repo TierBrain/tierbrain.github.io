@@ -110,6 +110,36 @@ class StaticGameGuards(unittest.TestCase):
         new = sorted(copies - KNOWN_DUPLICATE_COPIES)
         self.assertEqual(new, [], "Rename these to the real page name (or delete them): " + ", ".join(new))
 
+    def test_show_plays_the_round_order_the_lobby_announced(self):
+        """Bug: the lobby previewed the rounds from the room's seed, but the show shuffled them with a new random seed."""
+        for page in ("show.html", "show-gen.html"):
+            with self.subTest(page=page):
+                source = read(page)
+                self.assertIn("buildShowOrder((room.seed|0)||1)", source.split("function refreshLineup", 1)[1][:400])
+                self.assertIn("SHOW_ORDER=buildShowOrder((room.seed|0)||1)", source)
+                self.assertNotIn("SHOW_ORDER=buildShowOrder(G.gameSeed)", source)
+
+    def test_chapter_and_verse_scripture_follows_the_chosen_bible(self):
+        """Bug: themed and closing verses had one modern wording, even with the King James Version chosen."""
+        source = read("show.html")
+        themed = source.split("const THEMED={", 1)[1].split("\n  };", 1)[0]
+        for block in ("vblank:[", "vref:["):
+            entries = [line for line in themed.split(block, 1)[1].split("\n    ]", 1)[0].splitlines() if "{th:" in line]
+            self.assertGreater(len(entries), 0, block)
+            for line in entries:
+                self.assertIn("KJV:", line, line[:80]); self.assertIn("NIV:", line, line[:80])
+        closers = [line for line in source.split("const CLOSERS={", 1)[1].split("const CLOSE_LINES", 1)[0].splitlines() if "{ref:" in line]
+        self.assertGreater(len(closers), 0)
+        for line in closers:
+            self.assertIn("KJV:", line, line[:80]); self.assertIn("NIV:", line, line[:80])
+        self.assertIn("c[BIBLE_VERSION]", source)
+
+    def test_gradient_titles_keep_their_text(self):
+        """Bug: an !important 'background' shorthand reset background-clip, so titles showed as a plain gold bar."""
+        bad = re.compile(r"background:[^;{}]*gradient\([^;{}]*\)\s*!important;\s*-webkit-background-clip:\s*text\s*;")
+        found = sorted(path.name for path in ROOT.glob("*.html") if bad.search(path.read_text(encoding="utf-8", errors="ignore")))
+        self.assertEqual(found, [], "Add !important to background-clip:text in: " + ", ".join(found))
+
 
 class FakeBackend:
     """Stateful in-memory stand-in for the database REST calls the party games make."""
