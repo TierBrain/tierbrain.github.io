@@ -8,11 +8,13 @@ updates. No request is forwarded to a live backend, analytics or asset server.
 
 from __future__ import annotations
 
+import base64
 import json
 import mimetypes
 import os
 from pathlib import Path
 import sys
+import time
 import unittest
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -108,12 +110,24 @@ class OfflineBrowserChecks(unittest.TestCase):
         self.guard_errors = []
         self.allow_scores_post = False
         self.allow_host_updates = False
+        self.allow_show_phone = False
+        self.show_joined = False
+        self.show_member = {"id": "44444444-4444-4444-8444-444444444444", "code": "SYNTH",
+                            "name": "PHONE_PLAYER", "tag": "youth", "score": 0,
+                            "joined_at": "2026-01-01T00:00:00Z", "last_seen": "2026-01-01T00:00:00Z"}
+        self.show_events = {}
+        self.show_ack_mode = "confirm"
+        self.show_held_acks = []
+        self.show_room = {"id": "11111111-1111-4111-8111-111111111111", "code": "SYNTH",
+                          "phase": "lobby", "seed": 12345, "run_id": None, "version": 0,
+                          "q_id": "", "state": {"teams": {"youth": "Team A", "adult": "Team B"}, "bible": "KJV"}}
         self.context.route("**/*", self.route_request)
         # Never call connect_to_server: even newly introduced socket code is blocked.
         self.context.route_web_socket("**/*", self.block_websocket)
         self.context.add_init_script("""if (location.hostname === 'tierbrain.test') {
           localStorage.setItem('cv_stage_room', 'SYNTH');
           localStorage.setItem('cv_stage_room_gen', 'SYNTH');
+          localStorage.setItem('tb_show_host_room_v1', 'SYNTH');
         }""")
 
     def tearDown(self):
@@ -153,6 +167,121 @@ class OfflineBrowserChecks(unittest.TestCase):
         if request.method == "OPTIONS":
             route.fulfill(status=204, headers=headers)
             return
+        if parsed.path.startswith('/auth/v1/'):
+            # The real vendored SDK runs here; all Auth responses are synthetic.
+            # This fixture tests browser integration, not JWT verification.
+            allowed = (self.allow_host_updates or self.allow_show_phone) and (
+                (parsed.path == '/auth/v1/signup' and request.method == 'POST')
+                or (parsed.path == '/auth/v1/user' and request.method == 'GET'))
+            if not allowed:
+                self.guard_errors.append(f"Blocked unexpected synthetic Auth request: {request.method} {parsed.path}")
+                route.abort()
+                return
+            user = {"id": "22222222-2222-4222-8222-222222222222", "aud": "authenticated",
+                    "role": "authenticated", "is_anonymous": True, "app_metadata": {},
+                    "user_metadata": {}, "identities": [], "created_at": "2026-01-01T00:00:00Z"}
+            data = user
+            if parsed.path.endswith('/signup'):
+                expires = int(time.time()) + 3600
+                def encode(value):
+                    return base64.urlsafe_b64encode(json.dumps(value).encode()).decode().rstrip('=')
+                token = encode({"alg": "HS256", "typ": "JWT"}) + '.' + encode(
+                    {"sub": user['id'], "aud": "authenticated", "role": "authenticated",
+                     "is_anonymous": True, "exp": expires, "iat": expires-3600}) + '.c3ludGhldGlj'
+                data = {"access_token": token, "token_type": "bearer", "expires_in": 3600,
+                        "expires_at": expires, "refresh_token": "offline-synthetic-refresh", "user": user}
+                self.totals['synthetic_mutations'] += 1
+            route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(data))
+            return
+        if table.startswith('rpc/show_'):
+            host_rpcs = {'show_create_room', 'show_host_resume', 'show_begin_run', 'show_host_publish',
+                         'show_host_members', 'show_host_answers', 'show_host_buzzes'}
+            phone_params = {'show_preview': {'p_code'}, 'show_join': {'p_code', 'p_name', 'p_tag'},
+                            'show_my_membership': {'p_code'}, 'show_heartbeat': {'p_code'},
+                            'show_leave': {'p_code'}, 'show_player_state': {'p_code'},
+                            'show_answer': {'p_code', 'p_question_key', 'p_choice'},
+                            'show_buzz': {'p_code', 'p_question_key'}}
+            name = table.removeprefix('rpc/')
+            allowed = ((self.allow_host_updates and name in host_rpcs)
+                       or (self.allow_show_phone and name in phone_params))
+            if not allowed or request.method != 'POST':
+                self.guard_errors.append(f"Blocked unexpected synthetic Show RPC: {request.method} {name}")
+                route.abort()
+                return
+            args = json.loads(request.post_data or '{}')
+            if self.allow_show_phone and name in phone_params:
+                self.assertEqual(set(args), phone_params[name], "Phone must send only the RPC contract fields")
+                self.assertEqual(args['p_code'], 'SYNTH')
+                if name == 'show_preview':
+                    data = {'code': self.show_room['code'], 'phase': self.show_room['phase'],
+                            'state': {key: self.show_room['state'][key] for key in ('teams', 'bible')}}
+                elif name == 'show_join':
+                    self.show_joined = True
+                    self.show_member.update(name=args['p_name'], tag=args['p_tag'])
+                    data = self.show_member
+                elif name in {'show_my_membership', 'show_heartbeat'}:
+                    data = self.show_member if self.show_joined else None
+                elif name == 'show_leave':
+                    self.show_joined = False
+                    data = {'left': True}
+                elif name == 'show_player_state':
+                    self.assertTrue(self.show_joined)
+                    data = self.show_room
+                else:
+                    self.assertTrue(self.show_joined)
+                    question = args['p_question_key']
+                    event_key = (name, question)
+                    data = self.show_events.get(event_key)
+                    if self.show_ack_mode == 'deny':
+                        route.fulfill(status=403, headers=headers, content_type='application/json',
+                                      body=json.dumps({'code': '42501', 'message': 'Question is closed'}))
+                        return
+                    if data is None:
+                        self.assertEqual(question, self.show_room['q_id'])
+                        data = {'q_id': question, 'player_id': self.show_member['id'],
+                                'tag': self.show_member['tag'], 'created_at': '2026-01-01T00:00:01Z'}
+                        if name == 'show_answer':
+                            self.assertIn(args['p_choice'], range(4))
+                            data['choice'] = args['p_choice']
+                            if self.show_room['phase'] == 'buzzer':
+                                lane = self.show_room['state']['bz']['lanes'][self.show_member['tag']]
+                                self.assertEqual(lane['bid'], self.show_member['id'])
+                                self.assertEqual(lane['st'], 'answering')
+                        else:
+                            data['name'] = self.show_member['name']
+                            self.assertEqual(self.show_room['state']['bz']['phase'], 'open')
+                        self.show_events[event_key] = data
+                        self.totals['synthetic_mutations'] += 1
+                    elif name == 'show_answer':
+                        self.assertEqual(data['choice'], args['p_choice'], "Retry must preserve the original choice")
+                    if self.show_ack_mode == 'hold':
+                        self.show_held_acks.append((route, headers, data))
+                        return
+                    if self.show_ack_mode == 'unknown':
+                        # The synthetic commit succeeded; only its acknowledgement failed.
+                        route.fulfill(status=503, headers=headers, content_type='application/json',
+                                      body=json.dumps({'message': 'Synthetic lost acknowledgement'}))
+                        return
+                route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(data))
+                return
+            if name in {'show_host_members', 'show_host_answers', 'show_host_buzzes'}:
+                data = []
+            else:
+                if name == 'show_begin_run':
+                    self.show_room['run_id'] = '33333333-3333-4333-8333-333333333333'
+                    self.show_room['version'] += 1
+                elif name == 'show_host_publish':
+                    self.assertEqual(args['p_expected_version'], self.show_room['version'])
+                    self.show_room.update(args['p_patch'])
+                    self.show_room['version'] += 1
+                data = self.show_room
+                self.totals['synthetic_mutations'] += 1
+            route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(data))
+            return
+        if self.allow_show_phone:
+            self.guard_errors.append(f"Blocked legacy phone data request: {request.method} {table}")
+            route.abort()
+            return
         if request.method not in {"GET", "HEAD"}:
             allowed = ((table == "scores" and request.method == "POST" and self.allow_scores_post)
                        or (table == "rooms" and request.method in {"POST", "PATCH"} and self.allow_host_updates))
@@ -184,6 +313,12 @@ class OfflineBrowserChecks(unittest.TestCase):
         page.on("pageerror", lambda error: self.errors.append(f"{path}: {error}"))
         page.goto(ORIGIN + "/" + path, wait_until="domcontentloaded")
         return page
+
+    def release_show_acks(self):
+        held, self.show_held_acks = self.show_held_acks, []
+        self.assertTrue(held, "The phone must have a genuinely pending request")
+        for route, headers, data in held:
+            route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(data))
 
     def test_homepage_and_solo_games(self):
         page = self.open_page("index.html")
@@ -319,9 +454,139 @@ class OfflineBrowserChecks(unittest.TestCase):
                 self.assertTrue(page.locator("#rLabel").inner_text().startswith("Round 1"))
                 writes = [json.loads(call["body"]) for call in self.calls
                           if call["table"] == "rooms" and call["method"] == "PATCH"]
+                if name == 'show':
+                    writes = [json.loads(call['body'])['p_patch'] for call in self.calls
+                              if call['table'] == 'rpc/show_host_publish']
+                    self.assertFalse(any(call['table'] in {'rooms', 'players', 'answers', 'buzzes'}
+                                         for call in self.calls))
                 self.assertTrue(any(write.get("phase") == "round_intro" for write in writes))
                 self.assertFalse(page.evaluate("'__E' in window"))
                 page.close()
+
+    def test_show_phone_mobile_join_normal_buzzer_and_clue_acknowledgements(self):
+        self.allow_show_phone = True
+        self.context.set_default_timeout(8000)
+        run = '33333333-3333-4333-8333-333333333333'
+        options = ['Synthetic A', 'Synthetic B', 'Synthetic C', 'Synthetic D']
+        common = {'teams': {'youth': 'Team A', 'adult': 'Team B'}, 'bible': 'KJV',
+                  'round': 'Synthetic round', 'qnum': 1, 'qtotal': 4}
+
+        def question(index, phase, state):
+            self.show_room.update(phase=phase, run_id=run, q_id=run + ':p0q' + str(index),
+                                  version=self.show_room['version'] + 1,
+                                  state={**common, **state})
+
+        def poll_phone():
+            # Invoke the normal polling function; all reads still traverse the
+            # real vendored SDK and the strictly intercepted RPC fixture.
+            page.evaluate('pollState()')
+
+        def wait_submission(state):
+            page.wait_for_function("value => { const node=document.querySelector('#submissionStatus'); return node && node.dataset.state===value; }",
+                                   arg=state)
+
+        question(0, 'question', {'opts': options, 'live': True, 'qkind': 'mc', 'qtext': 'Synthetic normal question'})
+        page = self.open_page('play.html?c=SYNTH')
+        page.set_viewport_size({'width': 375, 'height': 667})
+        self.assertTrue(page.locator('#joinScreen').is_visible())
+        self.assertEqual(page.locator('#code').input_value(), 'SYNTH')
+        page.locator('#name').fill('PHONE_PLAYER')
+        page.locator('#teamBtnYouth').click()
+        page.locator('#playArea').get_by_text('Synthetic normal question', exact=True).wait_for()
+        self.assertEqual(page.locator('#whoName').inner_text(), 'PHONE_PLAYER')
+        self.assertTrue(page.locator('#waitScreen').is_visible())
+        self.assertFalse(page.evaluate('document.documentElement.scrollWidth > innerWidth'))
+
+        # A delayed response must not turn the local click into a confirmed save.
+        self.show_ack_mode = 'hold'
+        page.locator('#playArea button.pbtn').nth(1).click()
+        wait_submission('pending')
+        self.assertIn('Sending your answer', page.locator('#submissionStatus').inner_text())
+        self.assertNotIn('Locked in', page.locator('#playArea').inner_text())
+        self.release_show_acks()
+        wait_submission('confirmed')
+        self.assertIn('Locked in', page.locator('#submissionStatus').inner_text())
+
+        # Buzzer arming/open/selected-answer phases use their own canonical acks.
+        lanes = {'youth': {'st': 'open', 'bid': None, 'out': [], 'win': None},
+                 'adult': {'st': 'open', 'bid': None, 'out': [], 'win': None}}
+        buzzer = {'phase': 'arm', 'opts': options, 'correct': None, 'live': True,
+                  'qtext': 'Synthetic buzzer question', 'lanes': lanes}
+        question(1, 'buzzer', {'bz': buzzer})
+        poll_phone()
+        page.locator('#playArea').get_by_text('Buzzers arming!', exact=True).wait_for()
+        self.assertEqual(page.locator('#playArea button.buzzbtn').count(), 0)
+        buzzer['phase'] = 'open'
+        question(1, 'buzzer', {'bz': buzzer})
+        poll_phone()
+        page.locator('#playArea button.buzzbtn').click()
+        wait_submission('pending')
+        self.assertIn('Sending your buzz', page.locator('#submissionStatus').inner_text())
+        self.assertNotIn('Buzz recorded!', page.locator('#playArea').inner_text())
+        self.release_show_acks()
+        wait_submission('confirmed')
+        self.assertIn('Buzz recorded!', page.locator('#submissionStatus').inner_text())
+        lanes['youth'].update(st='answering', bid=self.show_member['id'], bname=self.show_member['name'],
+                              adl=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() + 10)))
+        question(1, 'buzzer', {'bz': buzzer})
+        self.show_ack_mode = 'confirm'
+        poll_phone()
+        page.locator('#playArea').get_by_text('You buzzed first, answer!', exact=True).wait_for()
+        page.locator('#playArea button.pbtn').nth(2).click()
+        wait_submission('confirmed')
+        lanes['youth'].update(st='done', win=self.show_member['name'])
+        buzzer.update(phase='reveal', correct=2)
+        question(1, 'buzzer', {'bz': buzzer})
+        poll_phone()
+        page.locator('#playArea').get_by_text('✓ You got it!', exact=True).wait_for()
+
+        # Simulate a committed clue answer whose acknowledgement was lost.
+        clues = {'phase': 'clue', 'opts': options, 'clueIdx': 0, 'pointsNow': 5,
+                 'correct': None, 'live': True, 'cat': 'Person', 'clues': ['Synthetic clue']}
+        question(2, 'fiveclues', {'fc': clues})
+        poll_phone()
+        page.locator('#playArea').get_by_text('Answer now for 5 points!', exact=True).wait_for()
+        self.show_ack_mode = 'unknown'
+        page.locator('#playArea button.pbtn').nth(0).click()
+        wait_submission('unknown')
+        self.assertNotIn('Locked in', page.locator('#playArea').inner_text())
+        self.show_ack_mode = 'confirm'
+        page.locator('#submissionRetry').click()
+        wait_submission('confirmed')
+        clues.update(phase='reveal', correct=0)
+        self.show_member['score'] = 10
+        question(2, 'fiveclues', {'fc': clues})
+        poll_phone()
+        page.locator('#playArea').get_by_text('✓ Correct!', exact=True).wait_for()
+        self.assertNotIn('+5', page.locator('#playArea').inner_text(), 'Phone must not invent awarded points')
+        self.assertEqual(page.locator('#myScore').inner_text(), '10')
+
+        # A definite closed-question denial stays honest and offers no new choice.
+        question(3, 'question', {'opts': options, 'live': True, 'qkind': 'mc', 'qtext': 'Synthetic closed question'})
+        poll_phone()
+        page.locator('#playArea').get_by_text('Synthetic closed question', exact=True).wait_for()
+        self.show_ack_mode = 'deny'
+        page.locator('#playArea button.pbtn').nth(3).click()
+        wait_submission('failed')
+        denial = page.locator('#submissionStatus').inner_text()
+        self.assertIn('was not recorded', denial)
+        self.assertIn('question has closed', denial)
+        self.assertNotIn('Locked in', page.locator('#playArea').inner_text())
+        self.assertEqual(page.locator('#submissionRetry').count(), 0)
+
+        writes = [call for call in self.calls if call['table'] in {'rpc/show_answer', 'rpc/show_buzz'}]
+        self.assertEqual(len(writes), 6)
+        clue_writes = [json.loads(call['body']) for call in writes if json.loads(call['body'])['p_question_key'].endswith(':p0q2')]
+        self.assertEqual(len(clue_writes), 2)
+        self.assertEqual(clue_writes[0], clue_writes[1], 'An uncertain outcome must retry exactly the same answer')
+        for call in writes:
+            args = json.loads(call['body'])
+            self.assertNotIn('player_id', args)
+            self.assertNotIn('p_member_id', args)
+            self.assertNotIn('name', args)
+            self.assertNotIn('tag', args)
+            self.assertEqual(call['method'], 'POST')
+        self.assertFalse(any(call['table'] in {'rooms', 'players', 'answers', 'buzzes'} for call in self.calls))
 
 
 if __name__ == "__main__":

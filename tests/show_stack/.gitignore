@@ -1,0 +1,7 @@
+.env
+show-migration.sql
+prepared-input.json
+results*.json
+*.log
+*-result.txt
+__pycache__/

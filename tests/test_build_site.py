@@ -28,6 +28,10 @@ class BuildSiteTests(unittest.TestCase):
                         "frame-ancestors 'self'; connect-src 'self'; form-action https://tierbrain.co\n",
             'robots.txt': 'User-agent: *\n',
             'site.js': 'const answer = 42;\n',
+            'js/show-access.js': 'window.ShowAccess = {};\n',
+            'vendor/supabase.js': 'window.supabase = {};\n',
+            'vendor/supabase.LICENSE': 'MIT license fixture\n',
+            'vendor/supabase.provenance.json': '{"version":"synthetic"}\n',
             'docs/private.html': '<html><body>Internal documentation</body></html>\n',
             'CNAME': 'tierbrain.co\n',
             'sync-catalogue.py': 'import sys\nassert sys.argv[1:] == ["--check"]\n',
@@ -53,9 +57,11 @@ class BuildSiteTests(unittest.TestCase):
 
     def test_production_is_unmodified_and_internal_files_are_excluded(self):
         dist = self.build()
-        for relative in ('index.html', '404.html', 'site.js', '_headers', 'robots.txt'):
+        for relative in ('index.html', '404.html', 'site.js', '_headers', 'robots.txt',
+                         'js/show-access.js', 'vendor/supabase.js', 'vendor/supabase.LICENSE'):
             self.assertEqual((dist / relative).read_bytes(), (self.root / relative).read_bytes())
-        for relative in ('build-site.py', 'sync-catalogue.py', 'docs/private.html', 'CNAME'):
+        for relative in ('build-site.py', 'sync-catalogue.py', 'docs/private.html', 'CNAME',
+                         'vendor/supabase.provenance.json'):
             self.assertFalse((dist / relative).exists(), relative)
         self.assert_sources_unchanged()
 
