@@ -159,6 +159,19 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("if(left.length===1){ board.matched[left[0]]=true;", matchup)
         self.assertIn("function edits(a,b)", clues)
 
+    def test_map_games_draw_their_worlds(self):
+        """Guard: Escape the Keep, Out of the Labyrinth and Reach the Core draw their illustrated worlds,
+        name every stop for screen readers, and never call a winning run "Out"."""
+        self.assertTrue((ROOT / "tb-worlds.js").is_file(), "tb-worlds.js is missing")
+        for page, world in (("castle.html", "keep"), ("labyrinth.html", "maze"), ("core.html", "space")):
+            with self.subTest(page=page):
+                source = read(page)
+                self.assertIn('src="tb-worlds.js', source)
+                self.assertIn('data-world="%s"' % world, source)
+                for hook in ("TBWorld.build(", "TBWorld.update(", "TBWorld.obstacle(", "TBWorld.answer(", "TBWorld.result(", "el.setAttribute('aria-label',"):
+                    self.assertIn(hook, source)
+                self.assertNotIn("return 'Out \\u00b7 '", source)
+
     def test_throne_host_never_runs_two_polls_at_once(self):
         """Bug: on a slow connection the 300ms poll overlapped itself and graded one answer several times
         (a first win showed 'A streak of 2', and a one-question Grand Finale ended 2-0)."""
@@ -489,6 +502,16 @@ class BrowserGameGuards(unittest.TestCase):
                 game.locator("#startBtn").click()
                 game.wait_for_function("document.querySelectorAll('#strikes .strike').length === 4 && document.querySelectorAll('.tbq-tier i').length === 4")
                 game.wait_for_timeout(400)
+
+    def test_map_game_opens_an_illustrated_obstacle(self):
+        """Tapping the next stop on the map opens its obstacle, drawn, with a question to answer."""
+        game = self.open(self.context(390, 844), "castle.html")
+        game.wait_for_function("window.TBWorld && document.getElementById('menuArt')")
+        game.locator("#startBtn").click()
+        game.wait_for_function("document.getElementById('mapArt') && document.querySelectorAll('.node.reachable').length > 0")
+        self.assertTrue(game.evaluate("() => [...document.querySelectorAll('.node')].every(n => n.getAttribute('aria-label'))"))
+        game.locator(".node.reachable").first.click()
+        game.wait_for_function("!document.getElementById('obWrap').classList.contains('hidden') && document.getElementById('obArt') && document.querySelectorAll('#obOpts .opt').length === 4")
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
