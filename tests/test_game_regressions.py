@@ -264,6 +264,30 @@ class StaticGameGuards(unittest.TestCase):
         found = sorted(path.name for path in ROOT.glob("*.html") if bad.search(path.read_text(encoding="utf-8", errors="ignore")))
         self.assertEqual(found, [], "Add !important to background-clip:text in: " + ", ".join(found))
 
+    def test_live_races_use_the_race_art_and_tidy_rules(self):
+        """The live races draw a real scene, and their rules read as sentences, not comma splices."""
+        for name, kind in (("tug-of-war.html", "tug"), ("finish-line.html", "race")):
+            with self.subTest(page=name):
+                source = read(name)
+                self.assertIn('<script src="tb-races.js?v=1" data-race="%s"></script>' % kind, source)
+                self.assertNotIn("then every right answer hauls", source)
+                self.assertNotIn("as fast as they can, every right answer", source)
+        self.assertTrue((ROOT / "tb-races.js").is_file())
+
+    def test_live_races_only_count_this_rounds_rows(self):
+        """Bug: Rematch replayed the old start signal at once, and Finish Line cars began on the finish line."""
+        for name in ("tug-of-war.html", "finish-line.html"):
+            with self.subTest(page=name):
+                source = read(name)
+                self.assertIn("if(fresh){ goUsed=goAt; if(nowSrv-goAt<8000 && !started) beginCountdown(); }", source)
+                self.assertIn("if(racing ? goUsed-at>12000 : top-at>12000) return;", source)
+
+    def test_tug_of_war_ends_the_same_tug_on_every_phone(self):
+        """Bug: one phone saw the rope cross and stopped while the others kept tugging for minutes."""
+        source = read("tug-of-war.html")
+        self.assertIn("ping(END,winner||3,0,0); finish(winner);", source)
+        self.assertIn("else if(phase==='tug' && endW){ finish(endW===3?0:endW, true); }", source)
+
 
 class FakeBackend:
     """Stateful in-memory stand-in for the database REST calls the party games make."""
@@ -512,6 +536,58 @@ class BrowserGameGuards(unittest.TestCase):
         self.assertTrue(game.evaluate("() => [...document.querySelectorAll('.node')].every(n => n.getAttribute('aria-label'))"))
         game.locator(".node.reachable").first.click()
         game.wait_for_function("!document.getElementById('obWrap').classList.contains('hidden') && document.getElementById('obArt') && document.querySelectorAll('#obOpts .opt').length === 4")
+
+    def race_room(self, page_name, names, sides=None):
+        phones = []
+        for i, name in enumerate(names):
+            phone = self.open(self.context(390, 844), page_name)
+            phone.wait_for_function("window.TBRace && document.querySelector('.tbr-scene')")
+            phone.locator("#nameIn").fill(name)
+            phone.locator("#codeIn").fill("RACE7")
+            phone.locator("#joinBtn").click()
+            phone.wait_for_function("!document.getElementById('lobbyScreen').classList.contains('hidden')")
+            if sides:
+                phone.locator("#joinBlue" if sides[i] == 1 else "#joinRed").click()
+            phones.append(phone)
+        return phones
+
+    def test_live_race_ignores_an_old_start_and_rematches_from_the_grid(self):
+        """Bugs: an old start signal launched a lone countdown, and rematch cars began on the finish line."""
+        self.backend.tables.setdefault("scores", []).append(
+            {"quiz_id": "qc_race", "group_code": "RACE7", "name": "__GO__", "correct": 0, "level": 0, "time_left": 0,
+             "created_at": "%.6f" % (time.time() - 90)})
+        maya, leo = self.race_room("finish-line.html", ["Maya", "Leo"])
+        maya.wait_for_timeout(2500)
+        self.assertTrue(maya.locator("#lobbyScreen").is_visible(), "An old start signal began a race")
+        maya.locator("#goBtn").click()
+        for phone in (maya, leo):
+            phone.wait_for_function("!document.getElementById('raceScreen').classList.contains('hidden')", timeout=8000)
+        maya.wait_for_function("""() => { const p = parseInt(document.getElementById('raceProg').textContent, 10); if (p >= 12) return true;
+            const b = document.querySelector('#opts .opt[data-a="1"]'); if (b && !document.getElementById('opts').classList.contains('locked')) b.click(); return false; }""",
+            polling=250, timeout=40000)
+        maya.wait_for_function("!document.getElementById('resultScreen').classList.contains('hidden')", timeout=8000)
+        leo.wait_for_function("document.querySelectorAll('#track .lane.done').length === 1", timeout=8000)
+        maya.locator("#againBtn").click()
+        maya.wait_for_timeout(3000)
+        self.assertTrue(maya.locator("#lobbyScreen").is_visible(), "Rematch restarted the old race")
+        maya.locator("#goBtn").click()
+        maya.wait_for_function("!document.getElementById('raceScreen').classList.contains('hidden')", timeout=8000)
+        maya.wait_for_timeout(2000)
+        self.assertEqual(maya.locator("#raceProg").inner_text().strip(), "0 / 12")
+        self.assertEqual(maya.evaluate("() => document.querySelectorAll('#track .lane.done').length"), 0)
+
+    def test_tug_of_war_ends_on_every_phone_when_one_calls_it(self):
+        """Bug: each phone judged the finish alone, so one stopped while the rest tugged on."""
+        maya, leo = self.race_room("tug-of-war.html", ["Maya", "Leo"], sides=[1, 2])
+        maya.wait_for_function("!document.getElementById('goBtn').disabled", timeout=8000)
+        maya.locator("#goBtn").click()
+        for phone in (maya, leo):
+            phone.wait_for_function("!document.getElementById('tugScreen').classList.contains('hidden') && document.querySelector('#tugScreen #tugArt')", timeout=8000)
+        self.backend.tables["scores"].append({"quiz_id": "qc_tug", "group_code": "RACE7", "name": "__END__", "correct": 0,
+                                              "level": 2, "time_left": 0, "created_at": "%.6f" % time.time()})
+        for phone in (maya, leo):
+            phone.wait_for_function("!document.getElementById('resultScreen').classList.contains('hidden')", timeout=10000)
+            self.assertIn("Red wins", phone.locator("#winBanner").inner_text())
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
