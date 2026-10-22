@@ -386,9 +386,11 @@
     if(flagU > 0){ var py = top - H*.1*flagU; X.strokeStyle = '#2a1a14'; X.lineWidth = Math.max(2, H*.005); X.beginPath(); X.moveTo(cx, top + 2); X.lineTo(cx, py); X.stroke();
       var wv = RM ? 0 : Math.sin(t*8)*H*.008; X.fillStyle = '#e6b655'; X.beginPath(); X.moveTo(cx, py); X.lineTo(cx + H*.075, py + H*.018 + wv); X.lineTo(cx, py + H*.04); X.closePath(); X.fill(); }
   }
-  function ccClimber(X, x, y, size, col, initial, t){
-    if(window.CreakArt && CreakArt.climber){ CreakArt.climber(X, x, y, { CELL:size, T:t*1000 }, { col:col, initial:initial || '', skin:CreakArt.SKIN[0] }); return; }
-    X.fillStyle = col; X.beginPath(); X.arc(x, y, size*.3, 0, 7); X.fill();
+  /* look: a colour, or a chosen climber { col, skin, hat } */
+  function ccClimber(X, x, y, size, look, initial, t){
+    var lk = look && typeof look === 'object' ? look : { col:look };
+    if(window.CreakArt && CreakArt.climber){ CreakArt.climber(X, x, y, { CELL:size, T:t*1000 }, { col:lk.col || '#e6b655', initial:initial || '', skin:lk.skin || CreakArt.SKIN[0], hat:lk.hat }); return; }
+    X.fillStyle = lk.col || '#e6b655'; X.beginPath(); X.arc(x, y, size*.3, 0, 7); X.fill();
   }
   function ccRoc(X, x, y, s, flap, col){
     X.save(); X.translate(x, y); X.fillStyle = col || '#2a1730';
@@ -434,7 +436,7 @@
       X.fillStyle = 'rgba(28,16,19,.75)'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.font = '800 ' + Math.round(h*.32) + "px Fraunces, Georgia, serif"; X.fillText(String(sp[2] + 1), x, y + h*.45);
       X.restore();
       var drop = bounce(seg(t, sp[3], sp[3] + .6)); if(drop <= 0) return;
-      var cy = top - H*.052 - (1 - drop)*H*.5; ccClimber(X, x, cy, H*.19, who.col || CC_COLS[sp[2]], (who.name || '').charAt(0).toUpperCase(), t);
+      var cy = top - H*.052 - (1 - drop)*H*.5; ccClimber(X, x, cy, H*.19, who.look || who.col || CC_COLS[sp[2]], (who.name || '').charAt(0).toUpperCase(), t);
     });
     X.fillStyle = '#1d1216'; X.fillRect(0, base, W, H - base);
     X.fillStyle = '#fbf1e2'; X.textAlign = 'center'; X.textBaseline = 'middle';
@@ -478,7 +480,7 @@
       { dur: 4.2, cues: [ [.2, 'chime'], [.9, 'thump'], [1.2, 'fanfare'], [1.3, 'applause', 1.9] ],
         host: [ [0, 'show'], [.3, 'point'], [1.2, 'celebrate'] ],
         back: function(X, W, H, t, o){ ccSky(X, W, H, t, .05*ease(seg(t, 0, 3))); X.fillStyle = 'rgba(10,6,16,' + (.5*(1 - ease(seg(t, 0, 1.4)))) + ')'; X.fillRect(0, 0, W, H);
-          ccPeak(X, W, H, W*.34, H*.3, W*.32, easeOut(seg(t, .5, 1.2)), t); ccClimber(X, W*.34 - H*.08, H*.3 - H*.045, H*.16, o.col || '#e6b655', (o.name || '').charAt(0).toUpperCase(), t); },
+          ccPeak(X, W, H, W*.34, H*.3, W*.32, easeOut(seg(t, .5, 1.2)), t); ccClimber(X, W*.34 - H*.08, H*.3 - H*.045, H*.16, o.look || o.col || '#e6b655', (o.name || '').charAt(0).toUpperCase(), t); },
         front: function(X, W, H, t, o){ ccTitle(X, W, H, ease(seg(t, 1.2, 1.7)) - ease(seg(t, 3.6, 4.1)), o.name || 'Summit!', o.round || '', H*.62); } }
     ],
     basecamp: { dur: 3.8, cues: [ [.15, 'flame'], [.5, 'chime'] ], host: [ [0, 'show'], [.3, 'celebrate', 'Halfway there!'] ],
@@ -513,7 +515,7 @@
       back: function(X, W, H, t, o){ ccSky(X, W, H, t, o.prog == null ? .5 : o.prog); var x = W*.32, u = easeOut(seg(t, .1, 1.4)), y = lerp(H*1.05, H*.32, u);
         X.strokeStyle = '#d9c3a0'; X.lineWidth = 3; X.beginPath(); X.moveTo(x, 0); X.lineTo(x, H); X.stroke();
         X.strokeStyle = 'rgba(255,240,210,.5)'; X.lineWidth = 2; for(var i = 0; i < 10; i++){ var lx = x + (i % 2 ? 1 : -1)*(H*.05 + rnd(i)*H*.05), ly = y + H*.05 + rnd(i*3)*H*.3; if(u < 1){ X.beginPath(); X.moveTo(lx, ly); X.lineTo(lx, ly + H*.12); X.stroke(); } }
-        ccClimber(X, x, y, H*.24, o.col || '#86bf9d', (o.name || '').charAt(0).toUpperCase(), t);
+        ccClimber(X, x, y, H*.24, o.look || o.col || '#86bf9d', (o.name || '').charAt(0).toUpperCase(), t);
         if(t > 1.4){ for(i = 0; i < 3; i++) ccBurst(X, x + (i - 1)*H*.16, H*.24, seg(t, 1.4 + i*.15, 2.4 + i*.15), ['#f2d27a', '#e8765f', '#86bf9d'][i], 12); } },
       front: function(X, W, H, t, o){ ccTitle(X, W, H, ease(seg(t, 1.2, 1.7)) - ease(seg(t, 2.7, 3.2)), 'What a comeback!', o.name ? o.name + ' takes the lead' : '', H*.66); } },
     podium: { dur: 4.8, cues: [ [.1, 'drumroll', 1.5], [1.6, 'cymbal'], [1.65, 'applause', 2.4] ], host: [ [0, 'show'], [.3, 'present'], [1.8, 'celebrate', 'Well climbed, everyone!'] ],

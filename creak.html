@@ -76,6 +76,12 @@
   .qopt.right{border-color:var(--good);background:rgba(87,211,138,.16);}
   .qopt.wrong{border-color:var(--bad);opacity:.6;}
   @media(max-width:380px){ .qopts{grid-template-columns:1fr;} }
+  .soloopts{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+  .soloopts .cuts{margin-top:0;}
+  .btn.small{width:auto;max-width:none;margin-top:0;padding:9px 16px;font-size:14px;}
+  .clcard{max-width:420px;}
+  .clcard h2{font-family:'Fraunces',serif;font-weight:700;font-size:26px;color:var(--gold-hi);text-align:center;margin-bottom:14px;}
+  .clcard .btn{display:block;margin:16px auto 0;}
   .cuts{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:6px 12px;border-radius:999px;background:rgba(22,11,15,.6);font-weight:800;font-size:13px;color:var(--dim);cursor:pointer;}
   .coffee{display:inline-block;margin-top:16px;color:var(--dim);font-weight:800;font-size:13px;letter-spacing:.02em;text-decoration:none;opacity:.8;}
   .coffee:hover{opacity:1;color:var(--gold-hi);}
@@ -107,7 +113,7 @@
     </div>
     <button class="btn" id="roll">Roll</button>
     <button class="btn ghost" id="newgame" style="margin-top:10px">New board</button>
-    <label class="cuts"><input type="checkbox" id="cutsToggle"> Cutscenes</label>
+    <div class="soloopts"><button class="btn ghost small" id="climberBtn" type="button">🧗 Your climber</button><label class="cuts"><input type="checkbox" id="cutsToggle"> Cutscenes</label></div>
   </div>
   <div class="foot">Ladders rot, snakes strike, and watch for the Roc that lifts you, the rockfalls, and storms that batter the ladders. 🔊 top-right.<br>
     <a href="creak-multi.html" style="color:var(--teal-hi);font-weight:800;text-decoration:none;display:inline-block;margin-top:8px;">Play with friends: the shared climb &rsaquo;</a></div>
@@ -119,6 +125,10 @@
       <div class="qtext" id="qtext"></div>
       <div class="qopts" id="qopts"></div>
     </div>
+  </div>
+
+  <div class="overlay hide" id="climberOv" role="dialog" aria-modal="true" aria-labelledby="clTitle">
+    <div class="qcard clcard"><h2 id="clTitle">Your climber</h2><div id="climberPick"></div><button class="btn" id="climberDone" type="button">Done</button></div>
   </div>
 
   <div class="overlay hide" id="overlay">
@@ -257,7 +267,7 @@
 
 </script>
 <script src="questions.js?v=7" onerror="window.__noBank=1"></script>
-<script src="creak-art.js?v=1"></script>
+<script src="creak-art.js?v=2"></script>
 <script src="tb-hosts.js"></script>
 <script src="tb-scenes.js"></script>
 <script>
@@ -465,7 +475,8 @@ function drawSnake(s){
 function drawToken(){
   if(!tokenPix) return;
   const bob=tokenMoving?0:Math.sin(T*0.004)*CELL*0.03;
-  CreakArt.climber(ctx, tokenPix.x, tokenPix.y+bob, artB(), {col:'#e6b655', skin:CreakArt.SKIN[0], active:!busy});
+  const lk=CreakArt.lookStyle(myLook);
+  CreakArt.climber(ctx, tokenPix.x, tokenPix.y+bob, artB(), {col:lk.col, skin:lk.skin, hat:lk.hat, active:!busy});
 }
 
 function draw(){
@@ -709,7 +720,7 @@ function win(){
   try{ SFX.summit(); }catch(e){}
   confetti();
   $('overlay').classList.remove('hide');
-  playScene('break', {round:turns+' turns', col:'#e6b655'});
+  playScene('break', {round:turns+' turns', look:CreakArt.lookStyle(myLook)});
   const shareLines=['Answered '+correct+' of '+total+' correctly, with '+left+' of '+tot+' ladders left standing.'];
   $('ovShare').onclick=function(){ TBShare.open({ game:'creak', kicker:'Creak & Coil', big:turns+' turns',
     lines:shareLines, footer: isBest?'A new best. Can you beat it?':'Can you beat me?', accent:'#e6b655',
@@ -731,6 +742,16 @@ function newGame(){
 const KEY_CUTS='tb-cutscenes-guide';
 function cutsOn(){ try{ return localStorage.getItem(KEY_CUTS)!=='0'; }catch(e){ return true; } }
 let lastCut=-99, seenCut={}, openedOnce=false;
+// ---------- your climber: colour, skin and hat, remembered on this device ----------
+let myLook=CreakArt.savedLook(), lookPicker=null, lookReturn=null;
+function openClimber(){ const ov=$('climberOv'); lookReturn=document.activeElement;
+  if(!lookPicker) lookPicker=CreakArt.picker($('climberPick'), myLook, function(l){ myLook=l; CreakArt.saveLook(l); draw(); });
+  ov.classList.remove('hide'); $('climberDone').focus(); }
+function closeClimber(){ $('climberOv').classList.add('hide'); if(lookReturn && lookReturn.focus) lookReturn.focus(); }
+$('climberBtn').addEventListener('click', openClimber);
+$('climberDone').addEventListener('click', closeClimber);
+$('climberOv').addEventListener('click', function(e){ if(e.target===$('climberOv')) closeClimber(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !$('climberOv').classList.contains('hide')) closeClimber(); });
 function playScene(kind, opts){ return new Promise(function(res){
   if(!window.TBScenes || !window.TBHost || !cutsOn()) return res(false);
   try{ TBScenes.mute(!!window.ccMuted); }catch(e){}
@@ -746,7 +767,7 @@ async function soloMoments(startPos){
 { const ct=$('cutsToggle'); if(ct){ ct.checked=cutsOn(); ct.addEventListener('change', function(){ try{ localStorage.setItem(KEY_CUTS, ct.checked?'1':'0'); }catch(e){} }); } }
 $('roll').addEventListener('click', async function(){
   if(busy) return;
-  if(!openedOnce && turns===0 && cutsOn()){ openedOnce=true; busy=true; $('roll').disabled=true; await playScene('opening', {sub:'The long climb', cols:['#e6b655']}); busy=false; $('roll').disabled=false; }
+  if(!openedOnce && turns===0 && cutsOn()){ openedOnce=true; busy=true; $('roll').disabled=true; await playScene('opening', {sub:'The long climb', cols:[CreakArt.lookStyle(myLook)]}); busy=false; $('roll').disabled=false; }
   rollTurn();
 });
 $('newgame').addEventListener('click', newGame);

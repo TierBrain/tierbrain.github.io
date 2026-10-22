@@ -50,6 +50,7 @@
   .roster{margin-top:18px;text-align:left;}
   .roster .row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;}
   .roster .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+  .roster canvas.mini{width:44px;height:50px;flex:0 0 auto;display:block;background:none;border:0;border-radius:0;box-shadow:none;}
   .btn{border:0;border-radius:14px;padding:15px 26px;font-weight:900;font-size:17px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);color:#241a12;box-shadow:0 6px 0 #8a5f0a;margin-top:18px;width:100%;max-width:280px;}
   .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
   .btn:disabled{opacity:.45;box-shadow:0 6px 0 #8a5f0a;transform:none;}
@@ -335,7 +336,7 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
 
 
 </script>
-<script src="creak-art.js?v=1"></script>
+<script src="creak-art.js?v=2"></script>
 <script>
 "use strict";
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
@@ -353,7 +354,24 @@ const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 const COLS=10, ROWS=10, TOP=COLS*ROWS;
-const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6'];
+const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
+/* Each phone chooses a climber (colour, skin, hat) and stores it in its player tag. Two players never share a
+   colour: whoever joined first keeps it and a later clash gets the first free colour. Phones that chose
+   nothing get a colour in joining order. */
+function assignLooks(){
+  const taken=new Set(), out={};
+  G.players.forEach(function(p,i){
+    const want=window.CreakArt?CreakArt.parseLook(p.tag):null;
+    let c=(want && !taken.has(want.c))?want.c:-1;
+    if(c<0){ c=0; while(taken.has(c) && c<PALETTE.length-1) c++; if(taken.has(c)) c=i%PALETTE.length; }
+    taken.add(c);
+    const skins=window.CreakArt?CreakArt.SKIN:['#f3cfae'];
+    out[p.id]={col:PALETTE[c], skin:want?skins[want.s]:skins[i%skins.length], hat:want?want.h:'bobble'};
+  });
+  return out;
+}
+function lookOf(pid){ if(G.looks && G.looks[pid]) return G.looks[pid]; const i=Math.max(0,G.order.indexOf(pid)); return {col:PALETTE[i%PALETTE.length], skin:window.CreakArt?CreakArt.SKIN[i%5]:'#f3cfae', hat:'bobble'}; }
+function colOf(pid){ return lookOf(pid).col; }
 const SFX=(function(){ let ac=null,master=null,on=true;
   function ctx(){ if(window.tbMuted) return null; if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=0.85; master.connect(ac.destination);}catch(e){} } if(ac&&ac.state==='suspended')ac.resume(); return ac; }
   function tone(f,t,d,type,v){ const a=ctx(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v||0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g);g.connect(master);o.start(t);o.stop(t+d+0.03); }
@@ -680,7 +698,8 @@ function drawTokens(){
   const list=G.order.map(function(pid,i){ return {pid:pid, i:i, p:G.tokenPix[pid]}; }).filter(function(o){ return o.p; }).sort(function(a,b){ return a.p.y-b.p.y; });
   list.forEach(function(o){
     const pl=G.players.find(function(x){ return x.id===o.pid; }); const nm=pl&&pl.name?String(pl.name).trim():'';
-    CreakArt.climber(ctx, o.p.x, o.p.y, B, {col:PALETTE[o.i%PALETTE.length], skin:CreakArt.SKIN[o.i%CreakArt.SKIN.length], initial:nm?nm.charAt(0).toUpperCase():'', active:G.phase==='live' && o.pid===active});
+    const lk=lookOf(o.pid);
+    CreakArt.climber(ctx, o.p.x, o.p.y, B, {col:lk.col, skin:lk.skin, hat:lk.hat, initial:nm?nm.charAt(0).toUpperCase():'', active:G.phase==='live' && o.pid===active});
   });
 }
 function draw(){
@@ -755,10 +774,11 @@ async function createRoom(){
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
 function writeState(){ setRoom({state:{
   game:'creak-multi', phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx,
-  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null
+  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null, looks:G.looks||null
 }}); }
 
-async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
+async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,tag&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
+  if(G.phase==='lobby') G.looks=assignLooks();
   if(G.phase==='live') reconcileDropouts(); }
 
 // If someone leaves mid-race, drop them from the rotation so the table doesn't
@@ -794,9 +814,12 @@ function reconcileDropouts(){
 function renderLobby(){
   const el=$('roster'); if(!G.players.length){ el.innerHTML='<div class="hint">Waiting for players to join…</div>'; }
   else{
+    const looks=assignLooks();
     el.innerHTML=G.players.map(function(p,i){
-      return '<div class="row"><span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+esc(p.name)+'</div>';
+      return '<div class="row"><canvas class="mini" width="88" height="100" data-i="'+i+'" aria-hidden="true"></canvas>'+esc(p.name)+'</div>';
     }).join('');
+    [].forEach.call(el.querySelectorAll('canvas.mini'), function(cv){ const p=G.players[+cv.dataset.i], lk=looks[p.id]; if(!window.CreakArt||!lk) return;
+      const X=cv.getContext('2d'); X.clearRect(0,0,88,100); CreakArt.climber(X, 44, 68, {CELL:100, T:0}, {col:lk.col, skin:lk.skin, hat:lk.hat}); });
   }
   $('startBtn').disabled = G.players.length<2;
   $('startBtn').textContent = G.players.length<2 ? 'Start (need 2+ players)' : 'Start game ('+G.players.length+' players)';
@@ -808,13 +831,13 @@ function renderTurnbar(){
     const p=G.players.find(function(x){return x.id===pid;});
     const name=p?p.name:'Player';
     const active=(i===G.turnIdx);
-    return '<div class="chip'+(active?' active':'')+'"><span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+esc(name)+' &middot; '+(G.positions[pid]||1)+'</div>';
+    return '<div class="chip'+(active?' active':'')+'"><span class="dot" style="background:'+colOf(pid)+'"></span>'+esc(name)+' &middot; '+(G.positions[pid]||1)+'</div>';
   }).join('');
 }
 
 async function startGame(){
   G.board=genBoard();
-  G.order=G.players.map(function(p){ return p.id; });
+  G.order=G.players.map(function(p){ return p.id; }); G.looks=assignLooks();
   G.turnIdx=0; G.turnSeq=0; G.winner=null; G.phase='live';
   G.positions={}; G.order.forEach(function(pid){ G.positions[pid]=1; });
   $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block'; renderDie(6);
@@ -935,7 +958,7 @@ function showWin(){
   $('ovStand').innerHTML = ranked.map(function(pid,i){
     const idx=G.order.indexOf(pid);
     return '<div class="row'+(pid===G.winner.id?' win':'')+'"><span class="rank">'+(i+1)+'.</span>'+
-      '<span class="dot" style="background:'+PALETTE[idx%PALETTE.length]+'"></span>'+
+      '<span class="dot" style="background:'+colOf(pid)+'"></span>'+
       '<span style="flex:1">'+nameOf(pid)+(pid===G.winner.id?' \ud83d\udc51':'')+'</span>'+
       '<span>'+(G.positions[pid]||1)+'</span></div>';
   }).join('');
@@ -1055,10 +1078,10 @@ createRoom().then(function(){ loop(); });
   function rawName(pid){ var p = G.players.find(function(x){ return x.id === pid; }); return p && p.name ? String(p.name) : 'Player'; }
   window.ccAfterTurn = async function(pid, fromPos){
     var pos = G.positions[pid] || 1, others = G.order.filter(function(x){ return x !== pid; }).map(function(x){ return G.positions[x] || 1; });
-    var name = rawName(pid), col = PALETTE[G.order.indexOf(pid) % PALETTE.length], lead = Math.max.apply(null, others.concat([pos]));
+    var name = rawName(pid), col = lookOf(pid), lead = Math.max.apply(null, others.concat([pos]));
     if(!seen.sight && pos >= 90 && fromPos < 90){ seen.sight = 1; seen.basecamp = 1; await moment('sight', { name:name }, .9); return; }
     if(!seen.basecamp && pos >= 50 && fromPos < 50){ seen.basecamp = 1; await moment('basecamp', { name:name }, .9); return; }
-    if(others.length && fromPos < Math.min.apply(null, others) && pos > Math.max.apply(null, others) && pos - fromPos >= 8) await moment('comeback', { name:name, col:col, prog:lead/TOP }, .8);
+    if(others.length && fromPos < Math.min.apply(null, others) && pos > Math.max.apply(null, others) && pos - fromPos >= 8) await moment('comeback', { name:name, look:col, prog:lead/TOP }, .8);
   };
   function playScene(kind, opts, done){
     if(!window.TBScenes || !cutsOn()){ if(done) done(); return; }
@@ -1074,9 +1097,9 @@ createRoom().then(function(){ loop(); });
   var _win = window.showWin;
   window.showWin = function(){ var r = _win.apply(this, arguments); var w = G.winner ? rawName(G.winner.id) : '';
     var ranked = G.order.slice().sort(function(a, b){ return (b === (G.winner && G.winner.id)) - (a === (G.winner && G.winner.id)) || (G.positions[b] || 1) - (G.positions[a] || 1); });
-    var podium = ranked.slice(0, 3).map(function(pid){ return { name:rawName(pid), col:PALETTE[G.order.indexOf(pid) % PALETTE.length] }; });
+    var podium = ranked.slice(0, 3).map(function(pid){ return { name:rawName(pid), look:lookOf(pid) }; });
     host.set('celebrate');
-    playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns', col:podium[0] ? podium[0].col : '#e6b655' }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
+    playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
     return r; };
   var _again = window.playAgain;
   window.playAgain = function(){ document.body.classList.remove('cc-playing'); try{ CreakArt.sky.progress(0); }catch(e){} host.set('calm'); return _again.apply(this, arguments); };
@@ -1095,7 +1118,7 @@ createRoom().then(function(){ loop(); });
     e.stopImmediatePropagation(); e.preventDefault();
     if(opened || start.disabled || G.players.length < 2) return;
     if(!cutsOn()){ startGame(); return; }
-    opened = true; playScene('opening', { cols:G.players.map(function(p, i){ return PALETTE[i % PALETTE.length]; }) }, function(){ startGame(); opened = false; });
+    opened = true; playScene('opening', { cols:(function(l){ return G.players.map(function(p){ return l[p.id]; }); })(assignLooks()) }, function(){ startGame(); opened = false; });
   }, true);
 })();
 
