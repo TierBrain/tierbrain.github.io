@@ -105,6 +105,7 @@
   .opt.good{border-color:var(--right);background:rgba(45,212,167,.16);}
   .opt.bad{border-color:var(--wrong);background:rgba(230,57,70,.16);}
   .opt:disabled{opacity:.85;}
+  .opts.tbr-wait{opacity:.45;pointer-events:none;transition:opacity .2s;}
 
   .placard{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px;}
   .winbanner{font-family:'Baloo 2',cursive;font-size:30px;}
@@ -135,12 +136,13 @@
   <div class="screen" id="menuScreen">
     <div class="sub">TierBrain</div>
     <h1 class="display">Tug of War</h1>
-    <p class="lead">A live tug for two sides. Everyone enters the same room code and picks a team, then every right answer hauls the rope your way, and a wrong one lets it slip back. First side to drag the rope past their line wins.</p>
+    <p class="lead">Two teams, one rope and a mud pit in the middle. Everyone enters the same room code and picks a side. Every right answer hauls the rope your way; every wrong one lets it slip. Drag the ribbon over your own line and the other lot end up in the mud.</p>
+    <p class="note">Watch your footing: now and then a puller slips, trips or sneezes, and the rope gives a little.</p>
     <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
     <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Enter room</button>
-    <p class="note">Pick any code and tell your friends, same code = same match.</p>
+    <p class="note">Pick any code and tell your friends: same code, same match.</p>
   </div>
 
   <div class="screen hidden" id="lobbyScreen">
@@ -190,6 +192,7 @@
   </div>
 </div>
 
+<script src="tb-races.js?v=1" data-race="tug"></script>
 <script>
 (function(){
   "use strict";
@@ -201,6 +204,8 @@
   var SLIP=0.4;      // how far a wrong answer slips toward the opponent
   var CAP=120;       // seconds fallback
   var POLL_MS=1500, HB_MS=2600, GO='__GO__';
+  var TUMBLE=1;          // how far the rope gives when a puller slips, trips or sneezes
+  var MISHAP_EVERY=30;   // on average, one mishap somewhere every this many seconds
 
   var POOL=[
    ["What is the capital of France?","Paris",["London","Rome","Berlin"]],
@@ -253,6 +258,7 @@
   var me='', code='', side=0, phase='menu', started=false, ended=false;
   var myCorrect=0, myWrong=0, lastPlayers={}, queue=[], qi=0, current=null, locked=false;
   var startTime=0, pollT=null, hbT=null, capT=null, actx=null;
+  var goUsed=0, goAt=0, nowSrv=0, pendingGo=false, myMis=0, lastMisAt=0, seenMis={}, prevT={blue:0,red:0}, endW=0, END='__END__';
 
   function beep(f,d,t,g){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); var o=actx.createOscillator(),v=actx.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(v); v.connect(actx.destination); var n=actx.currentTime; v.gain.setValueAtTime(g||0.12,n); v.gain.exponentialRampToValueAtTime(0.0001,n+(d||0.1)); o.start(n); o.stop(n+(d||0.1)); }catch(e){} }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -264,7 +270,7 @@
   function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
   function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
   function ping(nm, sd, corr, wr){
-    var body=[{quiz_id:QUIZ_ID, group_code:code, name:nm, correct:corr|0, level:sd|0, time_left:wr|0}];
+    var body=[{quiz_id:QUIZ_ID, group_code:code, name:nm, correct:corr|0, level:sd|0, time_left:(wr|0)+(nm===me?100*myMis:0)}];
     return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).catch(function(){});
   }
   function sbRead(){
@@ -274,99 +280,130 @@
     return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; });
   }
 
+  function ts(r){ var c=String(r&&r.created_at||''); if(/^\d+(\.\d+)?$/.test(c)) return parseFloat(c)*1000; var x=Date.parse(c); return isNaN(x)?0:x; }
+  /* rows from this round only: a rematch never inherits the last tug's pulls, and an old start signal never restarts it */
   function processRows(rows){
-    var goSeen=false, p={};
+    var p={}, go=0, top=0, racing=(phase!=='lobby'&&phase!=='menu');
+    rows.forEach(function(r){ var at=ts(r); if(at>top) top=at; if(r.name===GO && at>go) go=at; });
+    nowSrv=top; goAt=go;
+    if(pendingGo && goAt>goUsed){ goUsed=goAt; pendingGo=false; }
+    endW=0; var endT=0;
     rows.forEach(function(r){
-      if(r.name===GO){ goSeen=true; return; }
-      if(!p[r.name]) p[r.name]={side:r.level, correct:r.correct, wrong:r.time_left}; // first = latest (desc)
+      var at=ts(r);
+      if(r.name===END){ if(racing && at>=goUsed && (!endT || at<endT)){ endT=at; endW=r.level; } return; }
+      if(r.name===GO || p[r.name]) return; // first = latest (desc)
+      if(racing ? goUsed-at>12000 : top-at>12000) return;   // still here when the tug began, or still in the lobby
+      var tl=r.time_left|0, now=racing && at>=goUsed;
+      p[r.name]={side:r.level, correct:now?r.correct:0, wrong:now?tl%100:0, mis:now?Math.floor(tl/100):0};
     });
-    if(me && side){ p[me]={side:side, correct:myCorrect, wrong:myWrong}; }
-    lastPlayers=p; return goSeen;
+    if(me && (side || p[me])){ p[me]={side:side, correct:myCorrect, wrong:myWrong, mis:myMis}; }
+    if(phase==='tug'){ for(var nm in p){ if(nm===me) continue; var m=p[nm].mis||0;
+      if(seenMis[nm]==null) seenMis[nm]=m; else if(m>seenMis[nm]){ seenMis[nm]=m; if(window.TBRace) TBRace.slip(nm,p[nm].side,m,false); } } }
+    lastPlayers=p; return goAt>goUsed;
   }
   function ropeOf(p){
     var R=0;
     for(var nm in p){ var e=p[nm];
-      if(e.side===2){ R+=e.correct - SLIP*e.wrong; }
-      else if(e.side===1){ R+= -e.correct + SLIP*e.wrong; }
+      if(e.side===2){ R+=e.correct - SLIP*e.wrong - TUMBLE*(e.mis||0); }
+      else if(e.side===1){ R+= -e.correct + SLIP*e.wrong + TUMBLE*(e.mis||0); }
     }
     return R;
   }
+  function teamOf(sd){ return Object.keys(lastPlayers).filter(function(nm){ return lastPlayers[nm].side===sd; }).sort().map(function(nm){ return {name:nm, me:nm===me}; }); }
   function sideCounts(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b++; else if(p[nm].side===2)r++; } return {blue:b,red:r}; }
   function tallies(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b+=p[nm].correct; else if(p[nm].side===2)r+=p[nm].correct; } return {blue:b,red:r}; }
 
   function poll(){
     return sbRead().then(function(rows){
-      var goSeen=processRows(rows);
-      if(phase==='lobby'){ renderLobby(); if(goSeen && !started){ beginCountdown(); } }
-      else if(phase==='tug'){ renderTug(); checkEnd(); }
+      var fresh=processRows(rows);
+      if(phase==='lobby'){ renderLobby(); if(fresh){ goUsed=goAt; if(nowSrv-goAt<8000 && !started) beginCountdown(); } }
+      else if(phase==='tug' && endW){ finish(endW===3?0:endW, true); }
+      else if(phase==='tug'){ var tt=tallies(lastPlayers); if(window.TBRace){ if(tt.blue>prevT.blue) TBRace.heave(1); if(tt.red>prevT.red) TBRace.heave(2); } prevT=tt; renderTug(); checkEnd(); }
     });
   }
   function startPoll(){ if(pollT) clearInterval(pollT); pollT=setInterval(poll,POLL_MS); poll(); }
-  function startHB(){ if(hbT) clearInterval(hbT); hbT=setInterval(function(){ if((phase==='lobby'||phase==='tug')&&side){ ping(me,side,myCorrect,myWrong); } },HB_MS); }
+  function startHB(){ if(hbT) clearInterval(hbT); hbT=setInterval(function(){ if(phase==='lobby'||(phase==='tug'&&side)){ ping(me,side,myCorrect,myWrong); } },HB_MS); }
   function stopHB(){ if(hbT){ clearInterval(hbT); hbT=null; } }
 
   function enterRoom(){
     var n=($('nameIn').value||'').trim(); var c=($('codeIn').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if(n.length<1){ $('menuErr').textContent='Enter your name.'; return; }
     if(c.length<2){ $('menuErr').textContent='Enter a room code (2+ letters/numbers).'; return; }
-    me=n; code=c; side=0; started=false; ended=false; myCorrect=0; myWrong=0; lastPlayers={};
+    me=n; code=c; side=0; started=false; ended=false; myCorrect=0; myWrong=0; myMis=0; lastPlayers={}; goUsed=0; pendingGo=false;
     try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-    $('lobbyCode').textContent=code; phase='lobby'; show('lobbyScreen');
-    startPoll();
+    $('lobbyCode').textContent=code; phase='lobby'; show('lobbyScreen'); renderLobby();
+    ping(me,0,0,0).then(startPoll); startHB();
   }
   function pickSide(s){ side=s; ping(me,side,myCorrect,myWrong); startHB(); renderLobby(); }
-  function leave(){ phase='menu'; started=false; if(pollT)clearInterval(pollT); stopHB(); if(capT)clearInterval(capT); show('menuScreen'); }
+  function leave(){ phase='menu'; started=false; if(pollT)clearInterval(pollT); stopHB(); if(capT)clearInterval(capT); show('menuScreen'); if(window.TBRace) TBRace.tugMenu(); }
 
   function renderLobby(){
-    var rb=$('rosterBlue'), rr=$('rosterRed'); rb.innerHTML=''; rr.innerHTML='';
-    for(var nm in lastPlayers){
+    var rb=$('rosterBlue'), rr=$('rosterRed'), wait=[]; rb.innerHTML=''; rr.innerHTML='';
+    Object.keys(lastPlayers).sort().forEach(function(nm){
+      var sd=lastPlayers[nm].side; if(sd!==1 && sd!==2){ wait.push(nm===me?'you':nm); return; }
       var d=document.createElement('div'); d.textContent=nm+(nm===me?' (you)':'');
-      (lastPlayers[nm].side===1?rb:lastPlayers[nm].side===2?rr:rb).appendChild(d);
-    }
+      (sd===1?rb:rr).appendChild(d);
+    });
     $('colBlue').classList.toggle('mine', side===1);
     $('colRed').classList.toggle('mine', side===2);
     var c=sideCounts(lastPlayers); var ready=(c.blue>=1 && c.red>=1 && side!==0);
     $('goBtn').disabled=!ready;
-    $('lobbyNote').textContent = ready ? 'Ready! Anyone can start.' : 'Both sides need at least one puller.';
+    $('lobbyNote').textContent = (ready ? 'Ready! Anyone can start.' : side===0 ? 'Pick a side to join the tug.' : 'Both sides need at least one puller.')
+      + (wait.length ? ' Still choosing: '+wait.join(', ')+'.' : '') + (ready && Math.max(c.blue,c.red)>Math.min(c.blue,c.red)+1 ? ' The teams are uneven: someone could swap sides.' : '');
   }
 
-  function pressGo(){ if(started) return; ping(GO,0,0,0); beginCountdown(); }
+  function pressGo(){ if(started) return; ping(GO,0,0,0); goUsed=Math.max(goUsed,nowSrv); pendingGo=true; beginCountdown(); }
   function beginCountdown(){
     if(started) return; started=true; phase='countdown'; show('countScreen');
-    var n=3; $('countNum').textContent=n; beep(440,0.12,'square',0.13);
+    var n=3; $('countNum').textContent=n; beep(440,0.12,'square',0.13); if(window.TBRace) TBRace.countdown(3, {blue:teamOf(1), red:teamOf(2)});
     var iv=setInterval(function(){
       n--;
-      if(n>0){ $('countNum').textContent=n; beep(440,0.12,'square',0.13); }
-      else if(n===0){ $('countNum').textContent='PULL!'; beep(880,0.25,'square',0.16); }
+      if(n>0){ $('countNum').textContent=n; beep(440,0.12,'square',0.13); if(window.TBRace) TBRace.countdown(n); }
+      else if(n===0){ $('countNum').textContent='PULL!'; beep(880,0.25,'square',0.16); if(window.TBRace) TBRace.countdown(0); }
       else { clearInterval(iv); startTug(); }
     },1000);
   }
 
   function startTug(){
-    phase='tug'; startTime=Date.now(); queue=shuffle(POOL); qi=0;
+    phase='tug'; startTime=Date.now(); queue=shuffle(POOL); qi=0; seenMis={}; lastMisAt=Date.now(); prevT=tallies(lastPlayers);
     show('tugScreen'); renderTug(); renderQuestion();
     if(capT) clearInterval(capT);
     capT=setInterval(function(){
       if(phase!=='tug') return;
       var left=CAP-(Date.now()-startTime)/1000;
-      $('capClock').textContent=fmtT(left);
-      if(left<=0){ checkEnd(true); }
+      $('capClock').textContent=fmtT(left); $('capClock').classList.toggle('low', left<20);
+      if(left<=0){ checkEnd(true); return; }
+      maybeSlip();
     },500);
+  }
+  /* a spanner in the works: now and then your own puller slips, trips or sneezes, and everyone sees it.
+     Bigger teams have more pullers to come a cropper, which evens things up a little. */
+  function maybeSlip(){
+    if(phase!=='tug' || ended || !side || locked || myMis>=2) return;
+    if(Date.now()-startTime<8000 || Date.now()-lastMisAt<14000) return;
+    var n=Object.keys(lastPlayers).filter(function(k){ return lastPlayers[k].side; }).length||1;
+    if(Math.random() >= 0.5/MISHAP_EVERY/n) return;
+    myMis++; lastMisAt=Date.now(); lastPlayers[me]={side:side, correct:myCorrect, wrong:myWrong, mis:myMis};
+    ping(me,side,myCorrect,myWrong); if(window.TBRace) TBRace.slip(me,side,myMis,true);
+    locked=true; $('opts').classList.add('locked','tbr-wait');
+    renderTug(); checkEnd(); if(ended) return;
+    setTimeout(function(){ if(phase==='tug' && !ended){ locked=false; $('opts').classList.remove('locked','tbr-wait'); } }, 1700);
   }
   function renderTug(){
     var R=ropeOf(lastPlayers), t=tallies(lastPlayers);
     $('blueTally').textContent='Blue '+t.blue; $('redTally').textContent='Red '+t.red;
     var f=Math.max(-1,Math.min(1,R/THRESH));
     $('knot').style.left=(50 + f*32)+'%';
+    if(window.TBRace) TBRace.tug({f:R/THRESH, blue:teamOf(1), red:teamOf(2), me:me, mySide:side});
   }
   var KEYS=['A','B','C','D'];
   function renderQuestion(){
     current=queue[qi%queue.length]; qi++;
     $('qtext').textContent=current[0];
     var opts=shuffle([current[1]].concat(current[2]));
-    var box=$('opts'); box.innerHTML=''; locked=false;
+    var box=$('opts'); box.innerHTML=''; box.classList.remove('locked','tbr-wait'); locked=false;
     opts.forEach(function(o,i){
-      var b=document.createElement('button'); b.className='opt';
+      var b=document.createElement('button'); b.className='opt'; if(o===current[1]) b.dataset.a='1';
       b.innerHTML='<span class="k">'+KEYS[i]+'</span><span>'+esc(o)+'</span>';
       b.addEventListener('click',function(){ answer(o,b); });
       box.appendChild(b);
@@ -375,13 +412,14 @@
   function answer(o,btn){
     if(locked||phase!=='tug') return; locked=true;
     var ok=(o===current[1]);
-    if(ok){ btn.classList.add('good'); beep(720,0.07,'sine',0.13); myCorrect++; }
-    else { btn.classList.add('bad'); beep(200,0.13,'sawtooth',0.12); myWrong++; toast('Slip! the rope gives'); }
-    if(side){ lastPlayers[me]={side:side,correct:myCorrect,wrong:myWrong}; }
+    $('opts').classList.add('locked');
+    if(ok){ btn.classList.add('good'); beep(720,0.07,'sine',0.13); myCorrect++; if(window.TBRace) TBRace.heave(side,true); }
+    else { btn.classList.add('bad'); beep(200,0.13,'sawtooth',0.12); myWrong++; if(window.TBRace) TBRace.say('Wrong! The rope slips back a little.','bad'); else toast('Wrong! The rope slips back a little.'); var right=$('opts').querySelector('[data-a="1"]'); if(right) right.classList.add('good'); }
+    if(side){ lastPlayers[me]={side:side,correct:myCorrect,wrong:myWrong,mis:myMis}; }
     ping(me,side,myCorrect,myWrong);
     renderTug(); checkEnd();
     if(ended) return;
-    setTimeout(function(){ if(phase==='tug') renderQuestion(); }, ok?360:640);
+    setTimeout(function(){ if(phase==='tug') renderQuestion(); }, ok?360:1100);
   }
   function checkEnd(timeup){
     if(ended || phase!=='tug') return;
@@ -390,11 +428,16 @@
     if(R>=THRESH) winner=2;
     else if(R<=-THRESH) winner=1;
     else if(timeup){ winner = R>0?2 : R<0?1 : 0; }
-    if(winner!==0 || timeup){ finish(winner); }
+    if(winner!==0 || timeup){ ping(END,winner||3,0,0); finish(winner); }
   }
+  /* the first phone to see the rope cross the line (or the clock run out) tells everyone, so every phone ends the same tug */
   function finish(winner){
     ended=true; phase='results'; stopHB(); if(capT) clearInterval(capT);
-    show('resultScreen');
+    if(window.TBRace){ TBRace.tugEnd(winner, function(){ if(phase==='results') finishShow(winner); }); return; }
+    finishShow(winner);
+  }
+  function finishShow(winner){
+    show('resultScreen'); if(window.TBRace) TBRace.tugResult();
     var nameOf={0:'Draw',1:'Blue',2:'Red'};
     var wb=$('winBanner');
     if(winner===0){ wb.textContent='Stalemate!'; wb.style.color='var(--mut)'; }
@@ -419,8 +462,8 @@
   $('leaveBtn').addEventListener('click',leave);
   $('menuBtn').addEventListener('click',leave);
   $('againBtn').addEventListener('click',function(){
-    started=false; ended=false; myCorrect=0; myWrong=0; phase='lobby'; show('lobbyScreen');
-    if(side) ping(me,side,0,0); startHB(); poll();
+    started=false; ended=false; myCorrect=0; myWrong=0; myMis=0; pendingGo=false; phase='lobby'; show('lobbyScreen'); if(window.TBRace) TBRace.tugMenu();
+    ping(me,side,0,0).then(poll); startHB();
   });
   document.addEventListener('keydown',function(e){
     if(phase!=='tug') return; var n=parseInt(e.key,10);

@@ -268,14 +268,15 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">Guess in as few clues as you can</div>
-    <h1 class="big display">TierBrain</h1>
-    <p class="lead">Guess the hidden answer in as few clues as you can. Solve early for more points, across four tiers, up to Legends. Each clue runs on its own short timer.</p>
+    <div class="sub">TierBrain</div>
+    <h1 class="big display">Five Clues</h1>
+    <p class="lead">Name the hidden answer from as few clues as you can. Solve on the first clue for 5 points, down to 1 point on the fifth.</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Fewer clues, more points:</b> solve on clue 1 for 5 points, down to 1 point on clue 5.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> solve 2 rounds in a row to move up a difficulty level.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>Slip down:</b> miss 2 rounds in a row to drop back a level.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> failing 4 rounds in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>How to play:</b> type a guess at any time. A wrong guess brings the next clue, and small spelling slips are fine.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Next clue:</b> ask for one whenever you like. Each clue also has its own short timer.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> two right in a row takes you up a level: Easy, Medium, Hard, then Legends.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> miss two rounds in a row and you drop back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. Each round you miss costs one, and losing all four ends your run.</span></div>
     </div>
     <div class="timelabel">Time per clue</div>
     <div class="timerow" id="timeRow"></div>
@@ -291,7 +292,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You played <b id="outAns">0</b> rounds<br>and scored <b id="outCorr">0</b> points</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -438,7 +439,14 @@
   }
   function clueMsg(t,c){ const m=$('clueMsg'); m.textContent=t||''; m.style.color=c||'var(--mut)'; }
   function norm(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(the|a|an)\b/g,' ').replace(/\s+/g,' ').trim(); }
-  function isRight(g){ const ng=norm(g); if(!ng) return false; return (current.accept||[]).concat([current.answer]).some(function(a){return norm(a)===ng;}); }
+  /* small spelling slips are fine: one wrong letter in a long answer, two in a very long one */
+  function edits(a,b){ if(Math.abs(a.length-b.length)>2) return 9; const d=[];   /* letters added, missed, changed or swapped */
+    for(let i=0;i<=a.length;i++){ d[i]=[i]; } for(let j=0;j<=b.length;j++) d[0][j]=j;
+    for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++){ const c=a[i-1]===b[j-1]?0:1; d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);
+      if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1); }
+    return d[a.length][b.length]; }
+  function isRight(g){ const ng=norm(g); if(!ng) return false; return (current.accept||[]).concat([current.answer]).some(function(a){ const na=norm(a); if(na===ng) return true;
+    const slack=na.length>=9?2:(na.length>=5?1:0); return slack>0 && edits(na,ng)<=slack; }); }
   function revealNext(){ if(cluesShown<5){ cluesShown++; clueStartT=performance.now(); renderClues(); } }
   function submitGuess(){
     if(locked||!playing) return;
@@ -733,6 +741,7 @@ window.FC = (function(){
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-quiz.js?v=1" data-theme="clues" data-stars="0" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>

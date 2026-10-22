@@ -76,9 +76,15 @@
       <div class="err" id="err"></div>
     </div>
     <div class="card" id="playCard" style="display:none"></div>
+    <div class="card" id="climberCard" style="display:none;margin-top:12px">
+      <label>Your climber</label>
+      <div id="climberPick"></div>
+      <div class="pa-hint" id="climberHint" style="margin-top:10px">It shows on the big screen. Colours with a line through are taken.</div>
+    </div>
   </div>
   <div class="foot" id="foot"></div>
 
+<script src="creak-art.js?v=2"></script>
 <script>
 "use strict";
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
@@ -92,8 +98,20 @@ async function sb(path, opts){ opts=opts||{}; try{
 }catch(e){ return opts.method?null:[]; } }
 
 const $=id=>document.getElementById(id);
-const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#86bf9d','#5aa9e6'];
+const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
 let myId=(crypto.randomUUID?crypto.randomUUID():('id'+Math.random().toString(36).slice(2)+Date.now()));
+/* your climber: chosen here before the game starts, kept in this phone for next time, and sent to the TV in the player tag */
+let myLook=window.CreakArt?CreakArt.savedLook():{c:0,s:0,h:'bobble'}, lookPicker=null, lookTimer=0;
+function pushLook(){ clearTimeout(lookTimer); lookTimer=setTimeout(function(){ if(!window.CreakArt) return; sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({tag:'creak-multi:'+CreakArt.encodeLook(myLook)})}); }, 250); }
+function showClimber(on, players){
+  const card=$('climberCard'); if(!card || !window.CreakArt) return; card.style.display=on?'block':'none'; if(!on) return;
+  if(!lookPicker) lookPicker=CreakArt.picker($('climberPick'), myLook, function(l){ myLook=l; CreakArt.saveLook(l); pushLook(); });
+  /* colours chosen by the others; if someone who joined before me already has mine, I move to a free one */
+  const me=players.findIndex(function(p){ return p.id===myId; }), takenAll=[], takenBefore=[];
+  players.forEach(function(p,i){ if(p.id===myId) return; const l=CreakArt.parseLook(p.tag); if(!l) return; takenAll.push(l.c); if(me<0 || i<me) takenBefore.push(l.c); });
+  if(takenBefore.indexOf(myLook.c)>=0){ let c=0; while(c<PALETTE.length && takenAll.indexOf(c)>=0) c++; if(c<PALETTE.length){ myLook.c=c; lookPicker.set(myLook); CreakArt.saveLook(myLook); pushLook(); } }
+  lookPicker.taken(takenAll);
+}
 let code='', myName='', joined=false, lastBeat=0, lastSig='', myRolledSeq=-1, myQId=null, qTimerHandle=null;
 
 const params=new URLSearchParams(location.search);
@@ -110,6 +128,7 @@ async function join(){
   const now=new Date().toISOString();
   await sb('players',{method:'POST',body:JSON.stringify({id:myId, code, name:myName, tag:'creak-multi', score:0, joined_at:now, last_seen:now})});
   try{ localStorage.setItem('creak_multi_session', JSON.stringify({code:code, playerId:myId, name:myName})); }catch(e){}
+  pushLook();
   enterGame();
 }
 function enterGame(){
@@ -124,6 +143,7 @@ function tryResume(){
   // if the URL points at a different room, don't auto-resume the old one
   const urlCode=params.get('c'); if(urlCode && urlCode.toUpperCase()!==saved.code) return false;
   code=saved.code; myId=saved.playerId; myName=saved.name||'Player';
+  pushLook();
   enterGame();
   return true;
 }
@@ -174,7 +194,7 @@ function renderRows(st, highlightTurn){
     const p=(st.players||[]).find(function(x){return x.id===pid;}) || {name:'Player'};
     const active = highlightTurn && i===st.turnIdx;
     const mine = pid===myId;
-    return '<div class="row'+(active?' active':'')+(mine?' me':'')+'"><span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span><span class="nm">'+esc(p.name)+(mine?' (you)':'')+'</span><span>'+(st.positions?(st.positions[pid]||1):1)+'</span></div>';
+    return '<div class="row'+(active?' active':'')+(mine?' me':'')+'"><span class="dot" style="background:'+((st.looks&&st.looks[pid])?st.looks[pid].col:PALETTE[i%PALETTE.length])+'"></span><span class="nm">'+esc(p.name)+(mine?' (you)':'')+'</span><span>'+(st.positions?(st.positions[pid]||1):1)+'</span></div>';
   }).join('');
   return '<div class="rows">'+rows+'</div>';
 }
@@ -185,10 +205,11 @@ async function poll(){
   let rooms=[]; try{ rooms=await sb('rooms?code=eq.'+code+'&select=state'); }catch(e){}
   if(!rooms||!rooms.length) return;
   const st=rooms[0].state||{};
-  let players=[]; try{ players=await sb('players?code=eq.'+code+'&select=id,name&order=joined_at.asc')||[]; }catch(e){}
+  let players=[]; try{ players=await sb('players?code=eq.'+code+'&select=id,name,tag&order=joined_at.asc')||[]; }catch(e){}
   st.players=players;
   window.__lastState=st;
 
+  showClimber(st.phase==='lobby' || !st.phase, players);
   if(st.phase==='lobby' || !st.phase){
     myRolledSeq=-1;
     const sig='lobby|'+players.length;
@@ -196,6 +217,13 @@ async function poll(){
       setHTML('<div class="pa-title">Waiting for the host to start&hellip;</div>'+
         '<div class="pa-hint">'+players.length+' player'+(players.length===1?'':'s')+' joined</div>'+renderRows(st,false));
     }
+    return;
+  }
+
+  if(st.phase==='live' && st.scene){
+    const sig='scene|'+st.scene+'|'+st.turnSeq;
+    if(sig!==lastSig){ lastSig=sig;
+      setHTML('<div class="pa-title">🎬 Watch the big screen!</div><div class="pa-hint">Something is happening on the mountain&hellip;</div>'+renderRows(st,true)); }
     return;
   }
 

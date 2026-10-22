@@ -386,21 +386,27 @@ function askTurn(){
 }
 function alive(){ return G.order.filter(function(p){ return !G.outOf[p]; }); }
 
-var pollTimer=null;
+/* pollGen + busy: only one check runs at a time, and a reply is acted on once, even when the
+   network is slower than the poll interval. */
+var pollTimer=null, pollGen=0;
 function waitForAnswer(who){
   clearInterval(pollTimer);
-  var started=Date.now();
+  var started=Date.now(), gen=++pollGen, busy=false;
   pollTimer=setInterval(async function(){
-    var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+G.qId+'&select=choice');
-    if(rows && rows.length){
-      clearInterval(pollTimer);
-      resolveAnswer(who, rows[0].choice);
-      return;
-    }
-    if(Date.now()-started>45000){   /* nobody there: move them badly and carry on */
-      clearInterval(pollTimer);
-      resolveAnswer(who, '__timeout__');
-    }
+    if(busy || gen!==pollGen) return; busy=true;
+    try{
+      var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+G.qId+'&select=choice');
+      if(gen!==pollGen) return;
+      if(rows && rows.length){
+        clearInterval(pollTimer); pollGen++;
+        resolveAnswer(who, rows[0].choice);
+        return;
+      }
+      if(Date.now()-started>45000){   /* nobody there: move them badly and carry on */
+        clearInterval(pollTimer); pollGen++;
+        resolveAnswer(who, '__timeout__');
+      }
+    } finally { busy=false; }
   },900);
 }
 
@@ -437,17 +443,21 @@ function resolveAnswer(who, choice){
 
 function waitForStep(who,opts){
   clearInterval(pollTimer);
-  var started=Date.now();
+  var started=Date.now(), gen=++pollGen, busy=false;
   pollTimer=setInterval(async function(){
-    var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=choice');
-    if(rows && rows.length){
-      var t=parseInt(rows[0].choice,10);
-      if(opts.indexOf(t)>=0){ clearInterval(pollTimer); stepTo(who,t); return; }
-    }
-    if(Date.now()-started>30000){
-      clearInterval(pollTimer);
-      stepTo(who,opts[(Math.random()*opts.length)|0]);
-    }
+    if(busy || gen!==pollGen) return; busy=true;
+    try{
+      var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=choice');
+      if(gen!==pollGen) return;
+      if(rows && rows.length){
+        var t=parseInt(rows[0].choice,10);
+        if(opts.indexOf(t)>=0){ clearInterval(pollTimer); pollGen++; stepTo(who,t); return; }
+      }
+      if(Date.now()-started>30000){
+        clearInterval(pollTimer); pollGen++;
+        stepTo(who,opts[(Math.random()*opts.length)|0]);
+      }
+    } finally { busy=false; }
   },800);
 }
 
@@ -466,7 +476,7 @@ function nextTurn(){
 }
 
 function finish(){
-  clearInterval(pollTimer);
+  clearInterval(pollTimer); pollGen++;
   G.phase='over';
   var left=alive();
   $('stage').classList.remove('on');

@@ -216,14 +216,14 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">Recall</div>
-    <h1 class="big display">TierBrain</h1>
-    <p class="lead">A pattern lights up across four pads, watch, then tap it back in the same order. Each round adds one more step. No trivia, just nerve: how long a chain can you hold?</p>
+    <div class="sub">TierBrain</div>
+    <h1 class="big display">Recall</h1>
+    <p class="lead">Four pads light up in a pattern. Watch, then tap it back in the same order. Every round adds a step: how long a chain can you hold?</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Watch &amp; repeat:</b> the pattern lights up, tap it back in order.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>It grows:</b> each round adds one step. Clear 20 rounds to win.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 slips in total ends your run.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> 2 minutes, and it speeds up as you climb.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>How to play:</b> watch the pattern, then tap it back in order.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>It grows:</b> each round adds a step, and it speeds up as you climb. Clear 20 rounds to win.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. A slip costs one and the pattern plays again. Losing all four ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Clock:</b> it only runs while it’s your turn to tap, so watching is free.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
@@ -239,7 +239,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You cleared <b id="outAns">0</b> rounds<b id="outCorr" hidden></b></p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -264,7 +264,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="lead">Your clock has run out. Here’s how far you climbed.</p>
     <p class="statline">You cleared <b id="tuAns">0</b> rounds<b id="tuCorr" hidden></b></p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -328,13 +328,16 @@
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;
     sequence=[];inputPos=0;accepting=false;
     hideAllScreens();
-    playing=true; startT=performance.now(); runTimer();
+    playing=true; startT=performance.now(); pausedMs=0; pauseAt=0; runTimer();
     renderStrikes(); startRound();
   }
 
   let TIME_LIMIT=120000;   // countdown length, set by the clock selector
   let playing=false;
-  function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
+  let pausedMs=0, pauseAt=0;
+  function pauseClock(){ if(!pauseAt) pauseAt=performance.now(); }
+  function resumeClock(){ if(pauseAt){ pausedMs+=performance.now()-pauseAt; pauseAt=0; } }
+  function remainingMs(){ const now=pauseAt||performance.now(); return Math.max(0, TIME_LIMIT-(now-startT-pausedMs)); }
   function tickTimer(){
     const rem=remainingMs();
     const el=$('timer'); el.textContent=fmt(rem);
@@ -357,7 +360,7 @@
     $('lvlPill').style.background=LVL_COLOR[level];
     $('qcount').textContent='ROUND '+r+' OF 20';
     $('progbar').style.width=((r-1)/20*100)+'%';
-    inputPos=0; accepting=false;
+    inputPos=0; accepting=false; pauseClock();
     $('padStatus').textContent='Watch the pattern\u2026';
     $('padgrid').classList.add('playing');
     setTimeout(playSeq, 550);
@@ -366,7 +369,7 @@
     let i=0; const sp=SPEED[level];
     (function step(){
       if(!playing) return;
-      if(i>=sequence.length){ accepting=true; $('padgrid').classList.remove('playing'); $('padStatus').textContent='Your turn, repeat it'; return; }
+      if(i>=sequence.length){ accepting=true; resumeClock(); $('padgrid').classList.remove('playing'); $('padStatus').textContent='Your turn, repeat it'; return; }
       lightPad(sequence[i]); i++; setTimeout(step, sp);
     })();
   }
@@ -391,7 +394,7 @@
     if(n===sequence[inputPos]){
       inputPos++;
       if(inputPos>=sequence.length){
-        accepting=false; correct=sequence.length; answered=sequence.length; streakW=0; sRight();
+        accepting=false; pauseClock(); correct=sequence.length; answered=sequence.length; streakW=0; sRight();
         $('progbar').style.width=(correct/20*100)+'%';
         if(correct>=20){ setTimeout(()=>{ if(playing) endDone(); }, 520); return; }
         $('padStatus').textContent='Nice, next round\u2026';
@@ -402,7 +405,7 @@
       const g=$('padgrid'); g.classList.add('shake'); setTimeout(()=>g.classList.remove('shake'),420);
       if(totalWrong>=4){ setTimeout(()=>{ if(playing) endOut(); }, 520); return; }
       $('padStatus').textContent='Missed, watch again\u2026';
-      setTimeout(()=>{ if(playing){ inputPos=0; $('padStatus').textContent='Watch the pattern\u2026'; $('padgrid').classList.add('playing'); playSeq(); } }, 950);
+      setTimeout(()=>{ if(playing){ inputPos=0; pauseClock(); $('padStatus').textContent='Watch the pattern\u2026'; $('padgrid').classList.add('playing'); playSeq(); } }, 950);
     }
   }
 
@@ -576,6 +579,8 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script>window.tbqStars=function(){ var m=document.querySelectorAll('#strikes .strike.used').length; return m===0?3:m===1?2:1; };</script>
+<script src="tb-quiz.js?v=1" data-theme="recall" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>

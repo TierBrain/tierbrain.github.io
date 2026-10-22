@@ -13,11 +13,11 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Same question for everyone. First correct answer takes the point; a wrong buzz locks you out. Free to play in your browser.">
+<meta name="description" content="A quick-draw quiz: the answers come first and the question arrives a word at a time. Draw early for big points. Play solo or with friends. Free in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tierbrain.co/first-finger.html">
 <meta property="og:title" content="First Finger | Free party game | TierBrain">
-<meta property="og:description" content="Same question for everyone. First correct answer takes the point; a wrong buzz locks you out. Free to play in your browser.">
+<meta property="og:description" content="A quick-draw quiz: the answers come first and the question arrives a word at a time. Draw early for big points. Play solo or with friends. Free in your browser.">
 <meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/first-finger.html">
@@ -33,71 +33,8 @@
 <title>First Finger | Free party game | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg0:#0e1016; --bg1:#171a22; --card:#151821; --card2:#1e222c; --line:#333a48;
-    --ink:#eef1f7; --mut:#9aa3b2; --gold:#ffd23f; --right:#3ad29f; --wrong:#ef5d6e; --accent:#7c5cff;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
-  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
-    background:
-      radial-gradient(120% 90% at 82% -10%, rgba(124,92,255,.16), transparent 55%),
-      radial-gradient(100% 80% at 0% 110%, rgba(255,210,63,.12), transparent 55%),
-      linear-gradient(160deg,var(--bg0),var(--bg1));
-    display:flex;align-items:center;justify-content:center;min-height:100%;}
-  .display{font-family:'Baloo 2',cursive;}
-  #app{position:relative;width:100%;max-width:560px;height:100dvh;max-height:780px;min-height:600px;
-    display:flex;flex-direction:column;padding:18px;gap:14px;overflow:hidden;}
-  .screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;overflow-y:auto;}
-  .screen.hidden{display:none;}
-  .sub{font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:12px;color:var(--gold);}
-  h1{font-size:36px;line-height:1.05;}
-  .lead{color:var(--mut);font-size:14.5px;line-height:1.5;max-width:430px;font-weight:600;}
-  .field{width:100%;max-width:340px;text-align:left;}
-  .field label{font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:1px;display:block;margin:0 0 5px 3px;}
-  input{width:100%;font-family:inherit;font-weight:800;font-size:17px;padding:13px 16px;border-radius:14px;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);}
-  input:focus{outline:none;border-color:var(--gold);}
-  input.code{text-transform:uppercase;letter-spacing:3px;text-align:center;}
-  .cta{font-family:inherit;font-weight:800;font-size:17px;padding:14px 26px;border-radius:30px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--accent));color:#1a1206;box-shadow:0 8px 22px rgba(0,0,0,.3);}
-  .cta:disabled{opacity:.45;box-shadow:none;cursor:default;}
-  .cta.go{font-size:19px;padding:15px 38px;}
-  .err{color:var(--wrong);font-weight:800;font-size:13px;min-height:1em;}
-  .note{color:var(--mut);font-size:12.5px;font-weight:700;}
-  .codepill{font-family:'Baloo 2',cursive;font-size:28px;letter-spacing:5px;background:var(--card2);border:1px dashed var(--line);border-radius:14px;padding:7px 20px;color:var(--gold);}
-  .players{width:100%;max-width:340px;display:flex;flex-direction:column;gap:7px;}
-  .prow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:800;text-align:left;}
-  .prow.me{border-color:var(--gold);}
-  #countNum{font-family:'Baloo 2',cursive;font-size:118px;color:var(--gold);line-height:1;}
-
-  /* play */
-  #playScreen{justify-content:flex-start;gap:12px;}
-  .scoreRow{width:100%;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
-  .chip{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12.5px;display:flex;gap:6px;align-items:center;}
-  .chip.me{border-color:var(--gold);} .chip b{color:var(--gold);}
-  .qmeta{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:12px;color:var(--mut);}
-  .timebar{width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;}
-  .timebar > i{display:block;height:100%;width:100%;background:var(--gold);transition:width .2s linear;}
-  .qbox{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;}
-  .qtext{font-size:19px;font-weight:800;line-height:1.3;text-align:center;}
-  .opts{display:flex;flex-direction:column;gap:9px;width:100%;}
-  .opt{display:flex;align-items:center;gap:10px;font-family:inherit;font-weight:800;font-size:15px;padding:14px 15px;border-radius:13px;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;text-align:left;}
-  .opt .k{flex:none;width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:12px;}
-  .opt.good{border-color:var(--right);background:rgba(58,210,159,.16);}
-  .opt.bad{border-color:var(--wrong);background:rgba(239,93,110,.16);}
-  .opt:disabled{cursor:default;}
-  .reveal{min-height:1.4em;font-weight:800;font-size:14px;text-align:center;color:var(--mut);}
-
-  .placard{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px;}
-  .winbanner{font-family:'Baloo 2',cursive;font-size:30px;color:var(--gold);}
-  .place{display:flex;align-items:center;gap:12px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-weight:800;text-align:left;}
-  .place.p1{border-color:var(--gold);background:rgba(255,210,63,.10);}
-  .place .pos{font-family:'Baloo 2',cursive;font-size:22px;width:30px;color:var(--gold);}
-  .toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-weight:800;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;}
-  .toast.show{opacity:1;}
-  .home{color:var(--mut);font-size:12px;font-weight:700;text-decoration:none;}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Bitter:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="first-finger.css?v=1">
 <style>
 /* TierBrain standards */
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;} }
@@ -110,245 +47,92 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:site_name" content="TierBrain">
 <meta name="twitter:title" content="First Finger | Free party game | TierBrain">
-<meta name="twitter:description" content="Same question for everyone. First correct answer takes the point; a wrong buzz locks you out. Free to play in your browser.">
+<meta name="twitter:description" content="A quick-draw quiz: the answers come first and the question arrives a word at a time. Draw early for big points. Play solo or with friends. Free in your browser.">
 <meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
 </head>
 <body>
 <div id="app">
-  <div class="toast" id="toast"></div>
+  <section class="screen" id="menuScreen">
+    <canvas id="street0" style="width:100%;height:104px;border-radius:12px;display:block;flex:none" aria-hidden="true"></canvas>
+    <h1 class="title">First Finger</h1>
+    <p class="tag">Answers first. Question last. Draw when you dare.</p>
+    <div class="rules">
+      <h2>HOW IT PLAYS</h2>
+      <ol>
+      <li><b>1</b><span>Four answers go up first. Study them.</span></li>
+      <li><b>2</b><span>The question arrives a word at a time.</span></li>
+      <li><b>3</b><span>Draw whenever you like. The earlier you draw, the more a right answer is worth.</span></li>
+      <li><b>4</b><span>Finish the question as well as answering it, before the giveaway word, and you've called it: double points.</span></li>
+      <li><b>5</b><span>A wrong answer means you shot yourself in the foot. The last round is High Noon: double stakes, and you must draw before the question ends.</span></li>
+      </ol>
+    </div>
+    <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. Calamity" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
+    <p class="lab2">Speed</p>
+    <div class="speeds" role="group" aria-label="Speed">
+      <button class="opt spd" data-ms="900" aria-pressed="false">Mosey<small>Slow words</small></button>
+      <button class="opt spd" data-ms="650" aria-pressed="true">Trot<small>Standard</small></button>
+      <button class="opt spd" data-ms="450" aria-pressed="false">Gallop<small>Fast words</small></button>
+    </div>
+    <button class="go" id="soloBtn">Play on your own</button>
+    <div class="field"><label for="codeIn">Or play with friends: room code</label><input id="codeIn" class="code" maxlength="8" placeholder="SALOON" autocomplete="off"></div>
+    <div class="err" id="menuErr" role="alert"></div>
+    <button class="go alt" id="joinBtn">Enter the saloon</button>
+    <p class="note">Everyone enters the same code on their own phone. <span id="bestNote"></span></p>
+    <a class="linkish" href="index.html">More games on TierBrain</a>
+  </section>
 
-  <div class="screen" id="menuScreen">
-    <div class="sub">TierBrain</div>
-    <h1 class="display">First Finger</h1>
-    <p class="lead">Everyone sees the same question at once, first correct answer takes the point. A wrong buzz locks you out of that one, so be quick but be sure. Most points after 12 rounds wins.</p>
-    <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
-    <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="BUZZ1" autocomplete="off"></div>
-    <div class="err" id="menuErr"></div>
-    <button class="cta" id="joinBtn">Enter room</button>
-    <p class="note">Same code = same buzzer room. Needs at least 2 players.</p>
-  </div>
-
-  <div class="screen hidden" id="lobbyScreen">
-    <div class="sub">Buzzer room</div>
+  <section class="screen hidden" id="lobbyScreen">
+    <canvas id="street1" style="width:100%;height:96px;border-radius:12px;display:block;flex:none" aria-hidden="true"></canvas>
+    <p class="lab2">The saloon</p>
     <div class="codepill" id="lobbyCode">----</div>
-    <p class="note" id="lobbyCount">Waiting for players…</p>
+    <p class="note" id="lobbyCount">Waiting for gunslingers…</p>
     <div class="players" id="players"></div>
-    <button class="cta go" id="goBtn" disabled>Start</button>
-    <p class="note">Anyone can start once 2+ are in.</p>
-    <a class="home" id="leaveBtn">← leave</a>
-  </div>
+    <p class="lab2">Speed</p>
+    <div class="speeds" role="group" aria-label="Speed">
+      <button class="opt spd" data-ms="900" aria-pressed="false">Mosey<small>Slow words</small></button>
+      <button class="opt spd" data-ms="650" aria-pressed="true">Trot<small>Standard</small></button>
+      <button class="opt spd" data-ms="450" aria-pressed="false">Gallop<small>Fast words</small></button>
+    </div>
+    <button class="go" id="goBtn" disabled>Start the showdown</button>
+    <p class="note" id="lobbyNote">Waiting for at least one more player. Share the room code.</p>
+    <button class="linkish" id="leaveBtn">Leave the saloon</button>
+  </section>
 
-  <div class="screen hidden" id="countScreen">
-    <div class="sub">Fingers ready…</div>
+  <section class="screen hidden" id="countScreen" style="justify-content:center">
+    <p class="lab2">Hands over holsters…</p>
     <div id="countNum">3</div>
-  </div>
+    <p class="note" id="countSpeed"></p>
+  </section>
 
-  <div class="screen hidden" id="playScreen">
-    <div class="scoreRow" id="scoreRow"></div>
-    <div class="qmeta"><span id="roundLbl">Question 1 of 12</span><span id="liveLbl"></span></div>
-    <div class="timebar"><i id="timebar"></i></div>
-    <div class="qbox"><div class="qtext" id="qtext">…</div></div>
-    <div class="opts" id="opts"></div>
-    <div class="reveal" id="reveal"></div>
-  </div>
+  <section class="screen hidden" id="gameScreen" style="gap:9px">
+    <div class="bar"><span class="round" id="roundLab">ROUND 1</span><span>SCORE <b id="scoreLab">0</b></span></div>
+    <canvas id="street" aria-hidden="true"></canvas>
+    <div class="rivals hidden" id="rivals"></div>
+    <div class="ticker" id="ticker" aria-live="polite"></div>
+    <div class="poster" id="poster">
+      <div class="lab" id="posterLab">THE QUESTION</div>
+      <div id="posterBody"></div>
+    </div>
+    <div class="answers" id="answers"></div>
+    <div class="timer hidden" id="timer"><i id="timerBar"></i></div>
+    <div class="wait hidden" id="waitNote"></div>
+    <div class="verdict hidden" id="verdict"></div>
+    <div class="board hidden" id="board"></div>
+    <button class="draw" id="drawBtn" disabled><span>DRAW</span><span class="v" id="drawVal">400</span></button>
+    <button class="next hidden" id="nextBtn">Next round</button>
+  </section>
 
-  <div class="screen hidden" id="resultScreen">
-    <div class="sub">Final buzzer</div>
-    <div class="winbanner" id="winBanner">Finish!</div>
-    <div class="placard" id="placard"></div>
-    <a class="home" id="menuBtn">← back to menu</a>
-  </div>
+  <section class="screen hidden" id="endScreen">
+    <canvas id="street2" style="width:100%;height:120px;border-radius:12px;display:block;flex:none" aria-hidden="true"></canvas>
+    <h2 class="title" id="endTitle" style="font-size:34px">Sundown</h2>
+    <div class="verdict" id="endVerdict"></div>
+    <div class="board" id="endBoard"></div>
+    <button class="go" id="againBtn">Ride again</button>
+    <button class="linkish" id="homeBtn">Back to the start</button>
+  </section>
 </div>
-
-<script>
-(function(){
-  "use strict";
-  var $=function(id){return document.getElementById(id);};
-  var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
-  var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-  var QUIZ_ID='qc_firstfinger';
-  var ROUNDS=12, QTIME=12, REVEAL_MS=2000, POLL_MS=1400, HB_MS=2600, GO='__GO__', SKIP='__SKIP__';
-  var BANK=[["What is the capital of France?", "Paris", ["London", "Rome", "Berlin"]], ["What is the largest planet in the solar system?", "Jupiter", ["Saturn", "Mars", "Neptune"]], ["What is the chemical symbol for gold?", "Au", ["Ag", "Gd", "Go"]], ["How many legs does a spider have?", "Eight", ["Six", "Ten", "Four"]], ["Who painted the Mona Lisa?", "Leonardo da Vinci", ["Michelangelo", "Raphael", "Rembrandt"]], ["What is the capital of Japan?", "Tokyo", ["Beijing", "Seoul", "Bangkok"]], ["What is the largest ocean on Earth?", "The Pacific", ["The Atlantic", "The Indian", "The Arctic"]], ["Who wrote 'Romeo and Juliet'?", "William Shakespeare", ["Charles Dickens", "Jane Austen", "Mark Twain"]], ["Which is the fastest land animal?", "The cheetah", ["The lion", "The horse", "The leopard"]], ["Which planet is known as the Red Planet?", "Mars", ["Venus", "Mercury", "Saturn"]], ["Which country gifted the Statue of Liberty to the USA?", "France", ["Britain", "Spain", "Italy"]], ["What is the hardest natural substance?", "Diamond", ["Gold", "Iron", "Quartz"]], ["In which year did World War II end?", "1945", ["1944", "1939", "1918"]], ["What is the smallest country in the world?", "Vatican City", ["Monaco", "Malta", "Nauru"]], ["Which is the largest land animal?", "The African elephant", ["The giraffe", "The rhino", "The hippo"]], ["What is the capital of Canada?", "Ottawa", ["Toronto", "Vancouver", "Montreal"]], ["How many continents are there?", "Seven", ["Five", "Six", "Eight"]], ["Which metal is liquid at room temperature?", "Mercury", ["Lead", "Iron", "Aluminium"]], ["What is the tallest mountain on Earth?", "Mount Everest", ["K2", "Kilimanjaro", "Denali"]], ["Who was the first person to walk on the Moon?", "Neil Armstrong", ["Buzz Aldrin", "Yuri Gagarin", "John Glenn"]], ["What currency is used in Japan?", "The yen", ["The won", "The yuan", "The ringgit"]], ["Which painter cut off part of his own ear?", "Vincent van Gogh", ["Claude Monet", "Pablo Picasso", "Salvador Dali"]], ["What is the capital of Egypt?", "Cairo", ["Alexandria", "Giza", "Luxor"]], ["Who wrote the novel '1984'?", "George Orwell", ["Aldous Huxley", "Ray Bradbury", "H.G. Wells"]], ["Which planet rotates on its side?", "Uranus", ["Neptune", "Saturn", "Venus"]], ["What is the largest island in the world?", "Greenland", ["Borneo", "Madagascar", "New Guinea"]], ["In Greek mythology, who is king of the gods?", "Zeus", ["Poseidon", "Apollo", "Hades"]], ["In which year did the Titanic sink?", "1912", ["1905", "1918", "1920"]], ["What is the chemical symbol for sodium?", "Na", ["So", "Sd", "Sn"]], ["What is the longest river in Africa?", "The Nile", ["The Congo", "The Niger", "The Zambezi"]], ["Which language has the most native speakers?", "Mandarin Chinese", ["English", "Spanish", "Hindi"]], ["What is the capital of Australia?", "Canberra", ["Sydney", "Melbourne", "Perth"]], ["What is the largest moon of Saturn?", "Titan", ["Europa", "Io", "Ganymede"]], ["Which planet is the hottest in the solar system?", "Venus", ["Mercury", "Mars", "Jupiter"]], ["Who is credited with discovering penicillin?", "Alexander Fleming", ["Louis Pasteur", "Joseph Lister", "Robert Koch"]], ["Which Italian city is famous for its canals?", "Venice", ["Florence", "Rome", "Pisa"]], ["Which civilisation built the pyramids at Giza?", "The Egyptians", ["The Romans", "The Greeks", "The Aztecs"]], ["What is the largest internal organ in the human body?", "The liver", ["The brain", "The lungs", "The heart"]], ["What is the capital of Russia?", "Moscow", ["St Petersburg", "Kazan", "Sochi"]], ["What is the chemical symbol for iron?", "Fe", ["Ir", "In", "Fr"]], ["Who is regarded as the first Roman emperor?", "Augustus", ["Julius Caesar", "Nero", "Caligula"]], ["What is the boiling point of water in Celsius?", "100 degrees", ["0 degrees", "50 degrees", "90 degrees"]], ["What gas makes up most of Earth's atmosphere?", "Nitrogen", ["Oxygen", "Carbon dioxide", "Hydrogen"]], ["Who developed the theory of general relativity?", "Albert Einstein", ["Isaac Newton", "Niels Bohr", "Galileo"]], ["Which element has the atomic number 1?", "Hydrogen", ["Helium", "Oxygen", "Carbon"]], ["Who wrote 'War and Peace'?", "Leo Tolstoy", ["Fyodor Dostoevsky", "Anton Chekhov", "Boris Pasternak"]], ["In which year did the Berlin Wall fall?", "1989", ["1991", "1987", "1985"]], ["What is the longest bone in the human body?", "The femur", ["The tibia", "The humerus", "The fibula"]], ["Who composed 'The Four Seasons'?", "Antonio Vivaldi", ["Johann Sebastian Bach", "Mozart", "Beethoven"]], ["What is the capital of New Zealand?", "Wellington", ["Auckland", "Christchurch", "Dunedin"]], ["Which country was formerly known as Siam?", "Thailand", ["Vietnam", "Cambodia", "Myanmar"]], ["What is the study of fungi called?", "Mycology", ["Botany", "Zoology", "Ecology"]], ["Who painted the ceiling of the Sistine Chapel?", "Michelangelo", ["Leonardo da Vinci", "Raphael", "Caravaggio"]], ["What is the most abundant element in the universe?", "Hydrogen", ["Helium", "Oxygen", "Carbon"]], ["Who wrote 'The Divine Comedy'?", "Dante Alighieri", ["Petrarch", "Boccaccio", "Virgil"]], ["Which sea is the saltiest, famous for easy floating?", "The Dead Sea", ["The Red Sea", "The Black Sea", "The Caspian Sea"]], ["What is the capital of Greece?", "Athens", ["Thessaloniki", "Sparta", "Corinth"]], ["Which blood type is the universal donor?", "O negative", ["AB positive", "A positive", "O positive"]], ["Who was the Egyptian queen allied with Mark Antony?", "Cleopatra", ["Nefertiti", "Hatshepsut", "Helen"]], ["What is the SI unit of electrical resistance?", "The ohm", ["The volt", "The watt", "The ampere"]], ["Which mountain range divides Europe and Asia?", "The Urals", ["The Alps", "The Caucasus", "The Carpathians"]], ["What is the term for a word that reads the same backwards?", "A palindrome", ["An anagram", "A homonym", "An acronym"]], ["How many strings does a standard guitar have?", "Six", ["Four", "Five", "Seven"]]];
-
-  function hstr(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
-  function mb32(a){ return function(){ a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-  function sshuffle(arr,seed){ var r=mb32(seed>>>0),a=arr.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
-
-  var me='',code='',phase='menu',started=false,ended=false;
-  var order=[], dispQ=0, mode='ask', answeredQ=-1, qStart=0, lastRes=null, revealT=null, localSkip={};
-  var pollT=null, hbT=null, tickT=null, actx=null;
-
-  function beep(f,d,t,g){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); var o=actx.createOscillator(),v=actx.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(v); v.connect(actx.destination); var n=actx.currentTime; v.gain.setValueAtTime(g||0.12,n); v.gain.exponentialRampToValueAtTime(0.0001,n+(d||0.1)); o.start(n); o.stop(n+(d||0.1)); }catch(e){} }
-  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function show(id){ ['menuScreen','lobbyScreen','countScreen','playScreen','resultScreen'].forEach(function(s){ $(s).classList.add('hidden'); }); $(id).classList.remove('hidden'); }
-  function toast(t){ var el=$('toast'); el.textContent=t; el.classList.add('show'); setTimeout(function(){ el.classList.remove('show'); },1400); }
-
-  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
-  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
-  function ping(nm,q,lvl){
-    var body=[{quiz_id:QUIZ_ID, group_code:code, name:nm, correct:q|0, level:lvl|0, time_left:0}];
-    return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).catch(function(){});
-  }
-  function sbRead(){
-    var url=sbBase()+'?select=name,correct,level,time_left,created_at'
-      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)+'&group_code=eq.'+encodeURIComponent(code)
-      +'&order=created_at.desc&limit=600';
-    return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; });
-  }
-
-  function buildOrder(){ var idx=[]; for(var i=0;i<BANK.length;i++) idx.push(i); order=sshuffle(idx,hstr(code)).slice(0,ROUNDS); }
-  function qOf(r){ return BANK[order[r]]; }
-  function optsOf(r){ var b=qOf(r); return sshuffle([b[1]].concat(b[2]), (hstr(code)^((r+1)*2654435761))>>>0); }
-
-  function process(rows){
-    var goSeen=false, winners={}, skips={}, present={};
-    rows.forEach(function(rw){
-      if(rw.name===GO){ goSeen=true; return; }
-      if(rw.name===SKIP){ skips[rw.correct]=true; return; }
-      if(present[rw.name]===undefined) present[rw.name]=0;
-      if(rw.level===1){ var q=rw.correct; if(!winners[q] || rw.created_at < winners[q].ts){ winners[q]={name:rw.name, ts:rw.created_at}; } }
-    });
-    for(var q in winners){ present[winners[q].name]=(present[winners[q].name]||0)+1; }
-    var cur=0; while(cur<ROUNDS && (winners[cur]||skips[cur])) cur++;
-    return {goSeen:goSeen, winners:winners, skips:skips, present:present, currentQ:cur};
-  }
-
-  function poll(){
-    return sbRead().then(function(rows){
-      var res=process(rows); lastRes=res;
-      if(phase==='lobby'){ renderLobby(res); if(res.goSeen && !started){ beginCountdown(); } }
-      else if(phase==='play'){ drive(res); }
-    });
-  }
-  function startPoll(){ if(pollT) clearInterval(pollT); pollT=setInterval(poll,POLL_MS); poll(); }
-  function startHB(){ if(hbT) clearInterval(hbT); hbT=setInterval(function(){ if(phase==='lobby'){ ping(me,0,0); } },HB_MS); }
-  function stopHB(){ if(hbT){ clearInterval(hbT); hbT=null; } }
-
-  function enterRoom(){
-    var n=($('nameIn').value||'').trim(); var c=($('codeIn').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(n.length<1){ $('menuErr').textContent='Enter your name.'; return; }
-    if(c.length<2){ $('menuErr').textContent='Enter a room code (2+ letters/numbers).'; return; }
-    me=n; code=c; started=false; ended=false; localSkip={};
-    try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-    $('lobbyCode').textContent=code; phase='lobby'; show('lobbyScreen');
-    ping(me,0,0); startHB(); startPoll();
-  }
-  function leave(){ phase='menu'; started=false; if(pollT)clearInterval(pollT); stopHB(); if(tickT)clearInterval(tickT); if(revealT)clearTimeout(revealT); show('menuScreen'); }
-
-  function renderLobby(res){
-    var names=Object.keys(res.present); var box=$('players'); box.innerHTML='';
-    names.sort().forEach(function(nm){ var d=document.createElement('div'); d.className='prow'+(nm===me?' me':''); d.textContent=nm+(nm===me?' (you)':''); box.appendChild(d); });
-    $('lobbyCount').textContent=names.length+(names.length===1?' player ready':' players ready');
-    $('goBtn').disabled = !(names.length>=2);
-  }
-
-  function pressGo(){ if(started) return; ping(GO,0,0); beginCountdown(); }
-  function beginCountdown(){
-    if(started) return; started=true; phase='countdown'; show('countScreen'); stopHB();
-    var n=3; $('countNum').textContent=n; beep(440,0.12,'square',0.13);
-    var iv=setInterval(function(){ n--;
-      if(n>0){ $('countNum').textContent=n; beep(440,0.12,'square',0.13); }
-      else if(n===0){ $('countNum').textContent='GO!'; beep(880,0.25,'square',0.16); }
-      else { clearInterval(iv); startGame(); }
-    },1000);
-  }
-
-  function startGame(){
-    buildOrder(); phase='play'; dispQ=0; answeredQ=-1; ended=false; localSkip={};
-    show('playScreen'); startAsk();
-    if(tickT) clearInterval(tickT);
-    tickT=setInterval(playTick,200);
-  }
-  function startAsk(){
-    mode='ask'; qStart=Date.now();
-    $('reveal').textContent='';
-    $('roundLbl').textContent='Question '+(dispQ+1)+' of '+ROUNDS;
-    var b=qOf(dispQ); $('qtext').textContent=b[0];
-    var opts=optsOf(dispQ); var box=$('opts'); box.innerHTML='';
-    var KEYS=['A','B','C','D'];
-    opts.forEach(function(o,i){
-      var btn=document.createElement('button'); btn.className='opt';
-      btn.innerHTML='<span class="k">'+KEYS[i]+'</span><span>'+esc(o)+'</span>';
-      btn.addEventListener('click',function(){ answer(o,btn); });
-      box.appendChild(btn);
-    });
-  }
-  function answer(o,btn){
-    if(mode!=='ask'||phase!=='play'||answeredQ===dispQ) return;
-    answeredQ=dispQ;
-    var ok=(o===qOf(dispQ)[1]);
-    if(ok){ btn.classList.add('good'); beep(760,0.07,'sine',0.13); ping(me,dispQ,1); $('liveLbl').textContent='Buzzed!'; }
-    else { btn.classList.add('bad'); beep(200,0.13,'sawtooth',0.12); $('liveLbl').textContent='Locked out'; }
-    [].forEach.call($('opts').children,function(c){ c.disabled=true; });
-  }
-  function playTick(){
-    if(phase!=='play') return;
-    if(mode==='ask'){
-      var el=(Date.now()-qStart)/1000, rem=Math.max(0,QTIME-el);
-      $('timebar').style.width=(rem/QTIME*100)+'%';
-      var resolved = lastRes && (lastRes.winners[dispQ]||lastRes.skips[dispQ]);
-      if(resolved){ enterReveal(); return; }
-      if(el>QTIME && !localSkip[dispQ]){ localSkip[dispQ]=true; ping(SKIP,dispQ,2); }
-    }
-  }
-  function drive(res){
-    renderScore(res);
-    if(res.currentQ>=ROUNDS){ finish(res); return; }
-    if(mode==='ask'){
-      if(res.winners[dispQ]||res.skips[dispQ]){ enterReveal(); }
-      else if(res.currentQ>dispQ){ dispQ=res.currentQ; startAsk(); }
-    }
-  }
-  function enterReveal(){
-    if(mode==='reveal') return;
-    mode='reveal'; $('liveLbl').textContent='';
-    var w=lastRes&&lastRes.winners[dispQ];
-    var ans=qOf(dispQ)[1];
-    if(w){ $('reveal').innerHTML='<b style="color:var(--right)">'+esc(w.name)+(w.name===me?' (you)':'')+'</b> got it, '+esc(ans); }
-    else { $('reveal').innerHTML='<span style="color:var(--wrong)">Nobody buzzed</span>, it was '+esc(ans); }
-    // highlight correct option
-    [].forEach.call($('opts').children,function(c){ var t=c.textContent.replace(/^[A-D]/,''); if(t===ans) c.classList.add('good'); c.disabled=true; });
-    if(revealT) clearTimeout(revealT);
-    revealT=setTimeout(advance,REVEAL_MS);
-  }
-  function advance(){
-    var nx = lastRes && lastRes.currentQ>dispQ ? lastRes.currentQ : dispQ+1;
-    dispQ=nx;
-    if(dispQ>=ROUNDS){ if(lastRes) finish(lastRes); return; }
-    startAsk();
-  }
-  function renderScore(res){
-    var arr=Object.keys(res.present).map(function(n){ return [n,res.present[n]]; });
-    arr.sort(function(a,b){ return b[1]-a[1]; });
-    var row=$('scoreRow'); row.innerHTML='';
-    arr.slice(0,6).forEach(function(p){ var c=document.createElement('span'); c.className='chip'+(p[0]===me?' me':''); c.innerHTML=esc(p[0])+' <b>'+p[1]+'</b>'; row.appendChild(c); });
-  }
-  function finish(res){
-    if(ended) return; ended=true; phase='over'; if(tickT)clearInterval(tickT); if(revealT)clearTimeout(revealT);
-    show('resultScreen');
-    var arr=Object.keys(res.present).map(function(n){ return [n,res.present[n]]; });
-    arr.sort(function(a,b){ return b[1]-a[1]; });
-    var top=arr.length?arr[0][1]:0;
-    var winners=arr.filter(function(p){ return p[1]===top && top>0; }).map(function(p){ return p[0]; });
-    var wb=$('winBanner');
-    if(winners.length===0){ wb.textContent='No points scored!'; }
-    else if(winners.length===1){ wb.textContent=(winners[0]===me?'You win! \uD83C\uDFC6':winners[0]+' wins! \uD83C\uDFC6'); }
-    else { wb.textContent='Tie: '+winners.join(' & '); }
-    beep(990,0.3,'square',0.15);
-    var pl=$('placard'); pl.innerHTML='';
-    arr.forEach(function(p,i){ var d=document.createElement('div'); d.className='place'+(i===0&&top>0?' p1':'');
-      d.innerHTML='<span class="pos">'+(i+1)+'</span><span style="flex:1">'+esc(p[0])+(p[0]===me?' (you)':'')+'</span><span>'+p[1]+' pts</span>'; pl.appendChild(d); });
-  }
-
-  $('joinBtn').addEventListener('click',enterRoom);
-  $('codeIn').addEventListener('keydown',function(e){ if(e.key==='Enter') enterRoom(); });
-  $('goBtn').addEventListener('click',pressGo);
-  $('leaveBtn').addEventListener('click',leave);
-  $('menuBtn').addEventListener('click',leave);
-  document.addEventListener('keydown',function(e){ if(phase!=='play'||mode!=='ask') return; var n=parseInt(e.key,10); if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); } });
-
-})();
-</script>
+<script src="ff-sets.js?v=1"></script>
+<script src="first-finger.js?v=1" data-edition="gen"></script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
 <script>
 (function(){

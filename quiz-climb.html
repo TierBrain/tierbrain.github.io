@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Quiz Climb — 20 Questions</title>
+<title>Quiz Climb | Free online game | TierBrain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -151,14 +151,15 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">General Knowledge</div>
+    <div class="sub">TierBrain</div>
     <h1 class="big display">Quiz Climb</h1>
-    <p class="lead">Answer 20 questions as fast as you can. The better you do, the harder it gets!</p>
+    <p class="lead">20 general knowledge questions. Answer well and they get harder. Finish as fast as you can.</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right answers in a row bumps you up a difficulty level (1 → 2 → 3).</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Goal:</b> finish all 20 — your fastest times are saved as your personal best.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>How to play:</b> tap the right answer out of four.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> two right in a row takes you up a level: Easy, Medium, then Hard.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> two wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. Each wrong answer costs one, and losing all four ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Fastest time:</b> finish all 20 to set a time. Your best times are saved on this device.</span></div>
     </div>
     <button class="cta" id="startBtn">Start Quiz</button>
     <button class="ghost" id="boardBtn">See the Scoreboard</button>
@@ -175,7 +176,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You answered <b id="outAns">0</b> questions<br>and got <b id="outCorr">0</b> right</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -242,7 +243,7 @@
       {q:"What is the largest mammal in the world?",correct:"Blue whale",wrong:["Elephant","Giraffe","Hippopotamus"]},
       {q:"In which country is the Eiffel Tower located?",correct:"France",wrong:["Italy","Spain","Germany"]},
       {q:"H₂O is the chemical formula for what?",correct:"Water",wrong:["Salt","Hydrogen gas","Air"]},
-      {q:"How many players from one team are on the field in soccer?",correct:"11",wrong:["9","10","12"]},
+      {q:"How many players from one team are on the pitch in a football match?",correct:"11",wrong:["9","10","12"]},
       {q:"What is the smallest planet in our solar system?",correct:"Mercury",wrong:["Mars","Venus","Earth"]},
       {q:"Which metal is liquid at room temperature?",correct:"Mercury",wrong:["Iron","Gold","Copper"]},
       {q:"What is the capital city of Japan?",correct:"Tokyo",wrong:["Beijing","Seoul","Bangkok"]},
@@ -438,7 +439,7 @@
     return top;
   }
   function renderBoard(el,b){
-    if(!b||!b.length){el.innerHTML='<div class="empty">No times yet — finish a round to set your first best time!</div>';return;}
+    if(!b||!b.length){el.innerHTML='<div class="empty">No times yet. Finish a climb to set your first best time!</div>';return;}
     let h='<h3>YOUR BEST TIMES · THIS DEVICE</h3>';
     b.slice(0,10).forEach((s,i)=>{
       const me=(s.eid!=null&&s.eid===myEntryId)?' me':'';
@@ -494,6 +495,7 @@
   renderStrikes();
 })();
 </script>
+<script src="tb-quiz.js?v=1" data-theme="climb" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>

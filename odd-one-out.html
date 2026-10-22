@@ -223,14 +223,15 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">Odd One Out</div>
-    <h1 class="big display">TierBrain</h1>
-    <p class="lead">20 puzzles: three of the four belong together, spot the one that doesn’t. The link is revealed after each pick, and the higher you climb, the trickier the connections. Watch for red herrings!</p>
+    <div class="sub">TierBrain</div>
+    <h1 class="big display">Odd One Out</h1>
+    <p class="lead">Four things, and three of them belong together. Spot the one that doesn’t. The connections get trickier as you climb.</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 right in a row bumps you up a difficulty level (1 → 2 → 3 → Legends).</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> 2 wrong in a row drops you back a level.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> you have 2 minutes to solve all 20 puzzles.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>How to play:</b> tap the odd one out. The link between the other three appears straight after.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> two right in a row takes you up a level: Easy, Medium, Hard, then Legends.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> two wrong in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. Each wrong answer costs one, and losing all four ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Clock:</b> finish all 20 puzzles before the clock you choose runs out.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
@@ -246,7 +247,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You solved <b id="outAns">0</b> puzzles<br>and got <b id="outCorr">0</b> right</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -271,7 +272,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="lead">Your clock has run out. Here’s how far you climbed.</p>
     <p class="statline">You solved <b id="tuAns">0</b> puzzles<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -756,6 +757,7 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-quiz.js?v=1" data-theme="odd" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>

@@ -50,6 +50,7 @@
   .roster{margin-top:18px;text-align:left;}
   .roster .row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;}
   .roster .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+  .roster canvas.mini{width:44px;height:50px;flex:0 0 auto;display:block;background:none;border:0;border-radius:0;box-shadow:none;}
   .btn{border:0;border-radius:14px;padding:15px 26px;font-weight:900;font-size:17px;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,var(--gold),#e0a458);color:#241a12;box-shadow:0 6px 0 #8a5f0a;margin-top:18px;width:100%;max-width:280px;}
   .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
   .btn:disabled{opacity:.45;box-shadow:0 6px 0 #8a5f0a;transform:none;}
@@ -123,6 +124,26 @@ body.cc-playing #tb-shell, body.cc-playing .foot{display:none;}
 @keyframes ccq{from{opacity:0;transform:translate(-50%,-44%) scale(.94);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
 @media (prefers-reduced-motion:reduce){ body.cc-playing .qview{animation:none;} }
 body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
+.ccside{width:100%;display:flex;flex-direction:column;align-items:center;}
+.wrap{position:relative;z-index:1;}
+/* On a TV the board fills the height of the screen: players and dice on the left, the guide on the right */
+@media (min-width:1180px){
+  body.cc-playing{--bw:min(calc(100vh - 44px), calc(100vw - 2*max(310px, 23vw)));--side:calc((100vw - var(--bw))/2);}
+  body.cc-playing header{position:fixed;left:0;top:3.2vh;width:var(--side);padding:0 16px;z-index:2;}
+  body.cc-playing h1{font-size:clamp(30px,2.6vw,46px);}
+  body.cc-playing .wrap{max-width:none;width:var(--bw);padding:22px 0;min-height:100vh;justify-content:center;}
+  body.cc-playing .boardwrap{margin-top:0;}
+  body.cc-playing .ccside{position:fixed;left:0;top:0;bottom:0;width:var(--side);justify-content:center;gap:1.6vh;padding:12vh 2vw 4vh;z-index:2;}
+  body.cc-playing .turnbar{flex-direction:column;flex-wrap:nowrap;align-items:stretch;width:100%;max-width:320px;margin-top:0;gap:1vh;}
+  body.cc-playing .chip{font-size:clamp(15px,1.15vw,21px);padding:.55em 1em .55em .8em;background:rgba(22,11,15,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  body.cc-playing .chip .dot{width:.7em;height:.7em;}
+  body.cc-playing .chip.active{background:rgba(70,48,18,.82);}
+  body.cc-playing .die{width:clamp(60px,5.2vw,92px);height:clamp(60px,5.2vw,92px);border-radius:18%;margin:0 0 1vh;}
+  body.cc-playing .die .pip{width:18%;height:18%;}
+  body.cc-playing .status{max-width:320px;margin-top:.6vh;padding:.7em 1em;border-radius:14px;background:rgba(22,11,15,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:clamp(14px,1.1vw,20px);}
+  body.cc-playing .status:empty{display:none;}
+  body.cc-playing .cchost{right:calc((var(--side) - min(22vw,300px))/2);}
+}
 </style>
   <script src="questions.js?v=7"></script>
 <style>
@@ -164,15 +185,17 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
     <div class="boardwrap" id="boardwrap" style="display:none">
       <canvas id="board"></canvas>
     </div>
-    <div class="die" id="die"></div>
     <div class="qview" id="qview" style="display:none">
       <div class="qkind" id="qkind"></div>
       <div class="qtimerbar"><i id="qtimerfill"></i></div>
       <div class="qtext" id="qtext"></div>
       <div class="qopts" id="qopts"></div>
     </div>
-    <div class="turnbar" id="turnbar"></div>
-    <div class="status" id="status" aria-live="polite" role="status"></div>
+    <div class="ccside" id="ccside">
+      <div class="die" id="die"></div>
+      <div class="turnbar" id="turnbar"></div>
+      <div class="status" id="status" aria-live="polite" role="status"></div>
+    </div>
   </div>
   <div class="foot">The board is shared and it rots for everyone. Answer well, climb fast.</div>
 
@@ -313,6 +336,7 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
 
 
 </script>
+<script src="creak-art.js?v=2"></script>
 <script>
 "use strict";
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
@@ -330,7 +354,24 @@ const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
 const COLS=10, ROWS=10, TOP=COLS*ROWS;
-const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#86bf9d','#5aa9e6'];
+const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
+/* Each phone chooses a climber (colour, skin, hat) and stores it in its player tag. Two players never share a
+   colour: whoever joined first keeps it and a later clash gets the first free colour. Phones that chose
+   nothing get a colour in joining order. */
+function assignLooks(){
+  const taken=new Set(), out={};
+  G.players.forEach(function(p,i){
+    const want=window.CreakArt?CreakArt.parseLook(p.tag):null;
+    let c=(want && !taken.has(want.c))?want.c:-1;
+    if(c<0){ c=0; while(taken.has(c) && c<PALETTE.length-1) c++; if(taken.has(c)) c=i%PALETTE.length; }
+    taken.add(c);
+    const skins=window.CreakArt?CreakArt.SKIN:['#f3cfae'];
+    out[p.id]={col:PALETTE[c], skin:want?skins[want.s]:skins[i%skins.length], hat:want?want.h:'bobble'};
+  });
+  return out;
+}
+function lookOf(pid){ if(G.looks && G.looks[pid]) return G.looks[pid]; const i=Math.max(0,G.order.indexOf(pid)); return {col:PALETTE[i%PALETTE.length], skin:window.CreakArt?CreakArt.SKIN[i%5]:'#f3cfae', hat:'bobble'}; }
+function colOf(pid){ return lookOf(pid).col; }
 const SFX=(function(){ let ac=null,master=null,on=true;
   function ctx(){ if(window.tbMuted) return null; if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=0.85; master.connect(ac.destination);}catch(e){} } if(ac&&ac.state==='suspended')ac.resume(); return ac; }
   function tone(f,t,d,type,v){ const a=ctx(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v||0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g);g.connect(master);o.start(t);o.stop(t+d+0.03); }
@@ -376,14 +417,16 @@ function pickQuestion(){ let cand=POOL.filter(function(o){ return !usedTags.has(
   const it=cand[Math.floor(Math.random()*cand.length)]; usedTags.add(it.tag||slug(it.correct)); return it; }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
 
-async function collapse(l){ setStatus('A ladder crumbles to pieces! \ud83e\ude9c'); const a=squareCenter(l.from), b=squareCenter(l.to); spawnDebris((a.x+b.x)/2,(a.y+b.y)/2); shake(CELL*0.14,540); punch(1.05); l.alive=false; draw(); await sleep(420); }
-async function jolt(l){ const m=squareCenter(l.from); shake(CELL*0.07,340); spawnDust(m.x,m.y,7); await sleep(160); }
+async function collapse(l){ setStatus('A ladder crumbles to pieces! \ud83e\ude9c'); const a=squareCenter(l.from), b=squareCenter(l.to); spawnDebris((a.x+b.x)/2,(a.y+b.y)/2); shake(CELL*0.14,540); punch(1.05); l.alive=false;
+  await addTween(520,function(t){ l._shake=Math.sin(t*44)*(1-t)*CELL*0.14; l._alpha=1-t; },function(){ l._alpha=null; l._shake=0; }); }
+async function jolt(l){ const m=squareCenter(l.from); shake(CELL*0.07,340); spawnDust(m.x,m.y,7); await addTween(380,function(t){ l._shake=Math.sin(t*50)*(1-t)*CELL*0.15; },function(){ l._shake=0; }); }
 async function ageLadders(){ const dying=[]; G.board.ladders.forEach(function(l){ if(l.alive){ l.health--; if(l.health<=0) dying.push(l); } }); for(const l of dying) await collapse(l); }
 // ---------- third-force events (ported from solo, attributed to the active player) ----------
 const P_ROC=0.08, P_ROCK=0.07, P_STORM=0.10;
 
 async function rocEvent(playerId){
   const from=G.positions[playerId]||1;
+  if(window.ccMoment) await ccMoment('roc', {prog:from/TOP}, 0.55);
   const to=Math.min(TOP-1, from+rint(5,16));
   setStatus('A great Roc sweeps down and carries '+nameOf(playerId)+' upward! \ud83e\udd85');
   await flyRoc(playerId, to);
@@ -392,18 +435,25 @@ async function rocEvent(playerId){
 }
 async function rockfallEvent(playerId){
   const from=G.positions[playerId]||1;
+  if(window.ccMoment) await ccMoment('rumble', {}, 0.55);
   setStatus('Rocks come loose above '+nameOf(playerId)+'! \ud83e\udea8');
   const ok=await askQuestionFor(playerId, 'rock', from);
   if(ok){ setStatus(nameOf(playerId)+' scrambles clear of the rockfall!'); await braceHop(playerId); return from; }
   const to=Math.max(1, from-rint(5,16));
   setStatus(nameOf(playerId)+' is caught in the rockfall. Down they tumble!');
   shake(CELL*0.16,600); punch(1.06); spawnRocks(G.tokenPix[playerId]||squareCenter(from));
+  zoomIn(1.35,function(){ return G.tokenPix[playerId]; },260);
   await sleep(380);
   await animateTokenTo(playerId, to, 640);
+  await sleep(200); zoomOut(600);
   G.positions[playerId]=to; settleStationaryTokens(null); draw();
   return to;
 }
 async function stormEvent(playerId){
+  CreakArt.sky.storm(true);
+  try{ await stormBody(playerId); } finally { setTimeout(function(){ CreakArt.sky.storm(false); }, 2600); }
+}
+async function stormBody(playerId){
   setStatus('A gale sweeps across the board! \ud83c\udf29\ufe0f'); spawnWind();
   const ok=await askQuestionFor(playerId, 'storm', G.positions[playerId]||1);
   if(ok){ setStatus(nameOf(playerId)+' shelters the ladders, they hold!'); shake(CELL*0.06,400); return; }
@@ -419,8 +469,10 @@ async function fallIntoCrater(playerId, from){
   setStatus(nameOf(playerId)+' falls through a hole in the board!');
   shake(CELL*0.18,640); punch(1.07);
   const c0=G.tokenPix[playerId]||squareCenter(from); spawnDebris(c0.x,c0.y); spawnDust(c0.x,c0.y,12);
+  zoomIn(1.5,function(){ return G.tokenPix[playerId]; },240);
   await sleep(300);
   await animateTokenTo(playerId, to, 620);
+  await sleep(200); zoomOut(600);
   G.positions[playerId]=to; settleStationaryTokens(null); draw();
   return to;
 }
@@ -462,7 +514,7 @@ async function snakeActs(s){
   const doShake = targets.length>0 && Math.random()<0.55;
   if(doShake){ targets.sort(function(a,b){ return Math.abs(a.from-s.from)-Math.abs(b.from-s.from); }); const l=targets[0];
     setStatus('The snake lashes out and shakes a ladder! \ud83d\udc0d'); await jolt(l); l.health-=3; s.stir=0; if(l.health<=0) await collapse(l);
-  } else { setStatus('The snake slithers away, the path clears. \ud83d\udc0d'); const h=squareCenter(s.from); spawnDust(h.x,h.y,8); s.alive=false; draw(); await sleep(420); }
+  } else { setStatus('The snake slithers away, the path clears. \ud83d\udc0d'); const h=squareCenter(s.from); spawnDust(h.x,h.y,8); s.alive=false; await addTween(640,function(t){ s._alpha=1-t; s._writhe=0.5*(1-t)+0.15; },function(){ s._alpha=null; s._writhe=0; }); }
 }
 function confetti(){ const c=$('confetti'); if(!c) return; c.innerHTML=''; const em=['\ud83c\udf89','\u2b50','\ud83c\udfd4\ufe0f','\ud83e\ude9c','\u2728'];
   for(let i=0;i<26;i++){ const sp=document.createElement('span'); sp.textContent=em[i%em.length]; sp.style.left=(Math.random()*100)+'%';
@@ -568,7 +620,8 @@ function squareCenter(n){
 }
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function resize(){
-  const wrapW=Math.min(cv.parentElement?cv.parentElement.clientWidth:360, 560);
+  const tv=document.body.classList.contains('cc-playing') && window.innerWidth>=1180;
+  const wrapW=Math.min(cv.parentElement?cv.parentElement.clientWidth:360, tv?4000:560);
   CELL=Math.floor(wrapW/COLS); W=CELL*COLS; H=CELL*ROWS;
   cv.style.width=W+'px'; cv.style.height=H+'px';
   cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR);
@@ -579,7 +632,7 @@ function resize(){
 let T=0, tweens=[];
 
 /* tb-fx-v1: the solo game's effects, shared by every player's token */
-let particles=[], shakeAmt=0, shakeDur=1, shakeUntil=0, cam={scale:1}, roc={show:false,x:0,y:0};
+let particles=[], shakeAmt=0, shakeDur=1, shakeUntil=0, cam={scale:1, z:1, k:0, fx:0, fy:0, follow:null}, roc={show:false,x:0,y:0};
 function lerp(a,b,t){ return a+(b-a)*t; }
 function ease(t){ return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
 function shake(amt,dur){ shakeAmt=amt; shakeDur=Math.max(1,dur); shakeUntil=T+dur; }
@@ -599,15 +652,16 @@ function drawRoc(){ if(!roc.show) return; const flap=Math.sin(T*0.02); ctx.save(
   ctx.fillStyle='#e6b655'; ctx.beginPath(); ctx.moveTo(CELL*0.26,-CELL*0.03); ctx.lineTo(CELL*0.37,0); ctx.lineTo(CELL*0.26,CELL*0.03); ctx.fill();
   ctx.restore(); }
 // the same curve drawSnake() paints, so a falling token rides down the snake's body
-function snakePathAt(s,u){ const head=squareCenter(s.from), tail=squareCenter(s.to); const dx=tail.x-head.x, dy=tail.y-head.y, len=Math.hypot(dx,dy)||1;
-  const nx=-dy/len, ny=dx/len, amp=CELL*0.32, wob=Math.sin(u*Math.PI*3)*amp*(1-u*0.15); return {x:head.x+dx*u+nx*wob, y:head.y+dy*u+ny*wob}; }
-async function slideAlongSnake(pid, sn){ shake(CELL*0.10,520);
-  await addTween(820,function(t){ G.tokenPix[pid]=snakePathAt(sn, ease(t)); },function(){ G.tokenPix[pid]=squareCenter(sn.to); }); }
-async function flyRoc(pid, toN){ const s0=G.tokenPix[pid]||squareCenter(G.positions[pid]||1), dest=squareCenter(toN); roc={show:true,x:-CELL,y:s0.y-CELL*2};
+function snakePathAt(s,u){ return CreakArt.snakePoint(s,u,artB()); }
+async function slideAlongSnake(pid, sn){ zoomIn(1.45,function(){ return G.tokenPix[pid]; },320);
+  await addTween(240,function(t){ sn._writhe=t*0.9; }); shake(CELL*0.10,520);
+  await addTween(820,function(t){ G.tokenPix[pid]=snakePathAt(sn, ease(t)); sn._writhe=0.9*(1-t*0.35); },function(){ G.tokenPix[pid]=squareCenter(sn.to); });
+  await addTween(300,function(t){ sn._writhe=0.55*(1-t); },function(){ sn._writhe=0; }); zoomOut(650); }
+async function flyRoc(pid, toN){ const s0=G.tokenPix[pid]||squareCenter(G.positions[pid]||1), dest=squareCenter(toN); roc={show:true,x:-CELL,y:s0.y-CELL*2}; zoomIn(1.3,function(){ return roc.show?{x:roc.x,y:roc.y+CELL*0.4}:G.tokenPix[pid]; },520);
   await addTween(500,function(t){ const e=ease(t); roc.x=lerp(-CELL,s0.x,e); roc.y=lerp(s0.y-CELL*2,s0.y-CELL*0.55,e); });
   await addTween(1000,function(t){ const e=ease(t); roc.x=lerp(s0.x,dest.x,e); roc.y=lerp(s0.y-CELL*0.55,dest.y-CELL*0.55,e)-Math.sin(t*Math.PI)*CELL*1.1; G.tokenPix[pid]={x:roc.x,y:roc.y+CELL*0.5}; });
   G.tokenPix[pid]=dest;
-  await addTween(450,function(t){ const e=ease(t); roc.x=lerp(dest.x,W+CELL,e); roc.y=lerp(dest.y-CELL*0.55,dest.y-CELL*2.2,e); },function(){ roc.show=false; }); }
+  await addTween(450,function(t){ const e=ease(t); roc.x=lerp(dest.x,W+CELL,e); roc.y=lerp(dest.y-CELL*0.55,dest.y-CELL*2.2,e); },function(){ roc.show=false; }); zoomOut(600); }
 async function braceHop(pid){ const c=G.tokenPix[pid]||squareCenter(G.positions[pid]||1); await addTween(320,function(t){ G.tokenPix[pid]={x:c.x,y:c.y-Math.sin(t*Math.PI)*CELL*0.4}; },function(){ G.tokenPix[pid]=c; }); }
 function addTween(dur, update, done){ return new Promise(function(res){ tweens.push({start:T,dur:Math.max(1,dur),update:update,done:function(){ if(done)done(); res(); }}); }); }
 function animLoop(now){ const dt=Math.min(50, now-(animLoop._last||now)); animLoop._last=now; T=now;
@@ -617,83 +671,42 @@ function animLoop(now){ const dt=Math.min(50, now-(animLoop._last||now)); animLo
   requestAnimationFrame(animLoop);
 }
 requestAnimationFrame(animLoop);
+function artB(){ return {X:ctx, CELL:CELL, COLS:COLS, ROWS:ROWS, TOP:TOP, W:W, H:H, sq:squareCenter, T:T, isCrater:function(n){ return isCrater(n, G.board); }, craters:G.board.craters||[], age:G.turnSeq||0}; }
 function drawCells(){
-  for(let n=1;n<=TOP;n++){
-    const c=squareCenter(n); const x=c.x-CELL/2, y=c.y-CELL/2;
-    const dark=((Math.floor((n-1)/COLS)+((n-1)%COLS))%2===0);
-    if(G.board && isCrater(n, G.board)){
-      const g=ctx.createRadialGradient(c.x,c.y,CELL*0.05,c.x,c.y,CELL*0.52);
-      g.addColorStop(0,'rgba(0,0,0,.92)'); g.addColorStop(0.65,'rgba(6,5,12,.85)'); g.addColorStop(1,'rgba(20,14,10,.25)');
-      ctx.fillStyle=g; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
-      ctx.strokeStyle='rgba(150,110,70,.5)'; ctx.lineWidth=Math.max(1,CELL*0.03);
-      ctx.beginPath();
-      for(let k=0;k<=10;k++){
-        const a=(k/10)*Math.PI*2, rr=CELL*(0.30+0.06*Math.sin(k*2.7+n));
-        const px=c.x+Math.cos(a)*rr, py=c.y+Math.sin(a)*rr*0.82;
-        if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
-      }
-      ctx.closePath(); ctx.stroke();
-      continue;
-    }
-    ctx.fillStyle = dark? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.015)';
-    roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill();
-    if(n===TOP){ ctx.fillStyle='rgba(230,182,85,.16)'; roundRect(x+1.5,y+1.5,CELL-3,CELL-3,7); ctx.fill(); }
-    ctx.fillStyle='rgba(183,176,162,.55)'; ctx.font='700 '+Math.max(8,CELL*0.22)+'px Nunito, sans-serif';
-    ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText(n, x+5, y+4);
-  }
-  const t=squareCenter(TOP);
-  ctx.font=Math.floor(CELL*0.4)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🏔️', t.x, t.y+CELL*0.06);
+  const B=artB();
+  ctx.drawImage(CreakArt.boardLayer(B, DPR), 0, 0, W, H);
+  CreakArt.summit(ctx, B);
 }
 function drawLadder(l){
-  if(!l.alive) return;
-  const h=(l.health==null)?9:l.health;
+  if(!l.alive && l._alpha==null) return;
   const a=squareCenter(l.from), b=squareCenter(l.to);
-  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy); const nx=-dy/len, ny=dx/len;
-  const wRail=Math.max(4, CELL*0.15); ctx.lineCap='round';
-  ctx.strokeStyle = h>=4?'#c9924e':(h>=2?'#a9793f':'#916a4c'); ctx.lineWidth=Math.max(3,CELL*0.05*(h>=2?1:0.85));
-  for(const s of [-1,1]){ ctx.beginPath(); ctx.moveTo(a.x+nx*wRail*s,a.y+ny*wRail*s); ctx.lineTo(b.x+nx*wRail*s,b.y+ny*wRail*s); ctx.stroke(); }
-  ctx.strokeStyle = h>=4?'#8a5a2b':(h>=2?'#79532c':'#6b4a3a'); ctx.lineWidth=Math.max(2,CELL*0.035);
-  const rungs=Math.max(2,Math.floor(len/(CELL*0.5)));
-  for(let i=1;i<rungs;i++){
-    if(h<=1 && i%2===0) continue;
-    if(h<=3 && h>1 && i===2) continue;
-    const t=i/rungs, px=a.x+dx*t, py=a.y+dy*t; ctx.beginPath(); ctx.moveTo(px+nx*wRail,py+ny*wRail); ctx.lineTo(px-nx*wRail,py-ny*wRail); ctx.stroke();
-  }
+  const idle=(l.health!=null && l.health<=1 && l.alive)?Math.sin(T*0.02 + l.from)*CELL*0.03:0; const sh=(l._shake||0)+idle; a.x+=sh; b.x+=sh*0.6;
+  ctx.save(); if(l._alpha!=null) ctx.globalAlpha=Math.max(0,l._alpha);
+  CreakArt.ladder(ctx, a, b, l, artB());
+  ctx.restore();
 }
 function drawSnake(s){
-  if(!s.alive) return;
-  const head=squareCenter(s.from), tail=squareCenter(s.to);
-  const dx=tail.x-head.x, dy=tail.y-head.y, len=Math.hypot(dx,dy); const nx=-dy/len, ny=dx/len; const amp=CELL*0.32;
-  ctx.strokeStyle='#57b26a'; ctx.lineWidth=Math.max(6,CELL*0.19); ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.beginPath();
-  for(let i=0;i<=24;i++){ const t=i/24, bx=head.x+dx*t, by=head.y+dy*t, wob=Math.sin(t*Math.PI*3)*amp*(1-t*0.15);
-    const px=bx+nx*wob, py=by+ny*wob; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py); }
-  ctx.stroke();
-  ctx.fillStyle='#57b26a'; ctx.beginPath(); ctx.arc(head.x,head.y,CELL*0.19,0,7); ctx.fill();
-  const eo=CELL*0.06, ey=head.y-eo*0.4;
-  if((s.stir||0)===0){
-    ctx.strokeStyle='#2e1c20'; ctx.lineWidth=Math.max(1.3,CELL*0.02); ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(head.x-eo-CELL*0.025,ey); ctx.lineTo(head.x-eo+CELL*0.025,ey); ctx.moveTo(head.x+eo-CELL*0.025,ey); ctx.lineTo(head.x+eo+CELL*0.025,ey); ctx.stroke();
-  } else {
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.045,0,7); ctx.arc(head.x+eo,ey,CELL*0.045,0,7); ctx.fill();
-    ctx.fillStyle='#2e1c20'; ctx.beginPath(); ctx.arc(head.x-eo,ey,CELL*0.02,0,7); ctx.arc(head.x+eo,ey,CELL*0.02,0,7); ctx.fill();
-  }
+  if(!s.alive && s._alpha==null) return;
+  ctx.save(); if(s._alpha!=null) ctx.globalAlpha=Math.max(0,s._alpha);
+  CreakArt.snake(ctx, s, artB());
+  ctx.restore();
 }
 function drawTokens(){
   if(!G.order || !G.order.length) return;
-  G.order.forEach(function(pid,i){
-    const p=G.tokenPix[pid]; if(!p) return;
-    ctx.save(); ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=7; ctx.shadowOffsetY=2;
-    ctx.fillStyle=PALETTE[i%PALETTE.length]; ctx.beginPath(); ctx.arc(p.x,p.y,CELL*0.22,0,7); ctx.fill();
-    ctx.restore();
-    ctx.fillStyle='#20141a'; ctx.beginPath(); ctx.arc(p.x,p.y,CELL*0.09,0,7); ctx.fill();
+  const B=artB(), active=G.order[G.turnIdx];
+  /* lower climbers first, so a climber standing higher up the screen is never hidden behind one below */
+  const list=G.order.map(function(pid,i){ return {pid:pid, i:i, p:G.tokenPix[pid]}; }).filter(function(o){ return o.p; }).sort(function(a,b){ return a.p.y-b.p.y; });
+  list.forEach(function(o){
+    const pl=G.players.find(function(x){ return x.id===o.pid; }); const nm=pl&&pl.name?String(pl.name).trim():'';
+    const lk=lookOf(o.pid);
+    CreakArt.climber(ctx, o.p.x, o.p.y, B, {col:lk.col, skin:lk.skin, hat:lk.hat, initial:nm?nm.charAt(0).toUpperCase():'', active:G.phase==='live' && o.pid===active});
   });
 }
 function draw(){
   ctx.save();
   ctx.clearRect(0,0,W,H);
   let sx=0,sy=0; if(T<shakeUntil){ const amt=shakeAmt*((shakeUntil-T)/shakeDur); sx=(Math.random()*2-1)*amt; sy=(Math.random()*2-1)*amt; }
-  const cx=W/2, cy=H/2; ctx.translate(cx+sx,cy+sy); ctx.scale(cam.scale,cam.scale); ctx.translate(-cx,-cy);
+  camApply(sx, sy);
   drawCells();
   (G.board.ladders||[]).forEach(drawLadder);
   (G.board.snakes||[]).forEach(drawSnake);
@@ -701,7 +714,20 @@ function draw(){
   drawTokens();
   drawRoc();
   ctx.restore();
+  if(G.order && G.order.length){ let lead=1; G.order.forEach(function(pid){ lead=Math.max(lead, G.positions[pid]||1); }); CreakArt.sky.progress(lead/TOP); }
 }
+
+/* camera: zoom in on the action, then ease back out to the whole board */
+function camApply(sx, sy){
+  let fx=W/2, fy=H/2, s=cam.scale;
+  if(cam.k>0){ let tx=cam.fx, ty=cam.fy; if(cam.follow){ const p=cam.follow(); if(p){ tx=p.x; ty=p.y; } }
+    const z=1+(cam.z-1)*cam.k; s*=z; const hw=W/(2*z), hh=H/(2*z);
+    tx=Math.max(hw,Math.min(W-hw,tx)); ty=Math.max(hh,Math.min(H-hh,ty)); fx=lerp(W/2,tx,cam.k); fy=lerp(H/2,ty,cam.k); }
+  ctx.translate(W/2+sx, H/2+sy); ctx.scale(s,s); ctx.translate(-fx,-fy);
+}
+function zoomIn(z, follow, dur){ if(window.CreakArt && CreakArt.RM) return Promise.resolve(); cam.z=z; if(typeof follow==='function'){ cam.follow=follow; } else { cam.follow=null; cam.fx=follow.x; cam.fy=follow.y; }
+  const k0=cam.k; return addTween(dur||420,function(t){ cam.k=lerp(k0,1,ease(t)); }); }
+function zoomOut(dur){ if(!cam.k) return Promise.resolve(); const k0=cam.k; return addTween(dur||560,function(t){ cam.k=lerp(k0,0,ease(t)); },function(){ cam.k=0; cam.follow=null; }); }
 
 // ---------- game state (host-authoritative) ----------
 let G={ code:null, phase:'lobby', players:[], board:{ladders:[],snakes:[]}, order:[], turnIdx:0, positions:{}, turnSeq:0, winner:null, lastProcessedMoveId:0, tokenPix:{}, qCounter:0, pendingQ:null, pendingQCorrect:null, turnStartedAt:0 };
@@ -748,10 +774,11 @@ async function createRoom(){
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
 function writeState(){ setRoom({state:{
   game:'creak-multi', phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx,
-  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ
+  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null, looks:G.looks||null
 }}); }
 
-async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
+async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,tag&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
+  if(G.phase==='lobby') G.looks=assignLooks();
   if(G.phase==='live') reconcileDropouts(); }
 
 // If someone leaves mid-race, drop them from the rotation so the table doesn't
@@ -787,9 +814,12 @@ function reconcileDropouts(){
 function renderLobby(){
   const el=$('roster'); if(!G.players.length){ el.innerHTML='<div class="hint">Waiting for players to join…</div>'; }
   else{
+    const looks=assignLooks();
     el.innerHTML=G.players.map(function(p,i){
-      return '<div class="row"><span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+esc(p.name)+'</div>';
+      return '<div class="row"><canvas class="mini" width="88" height="100" data-i="'+i+'" aria-hidden="true"></canvas>'+esc(p.name)+'</div>';
     }).join('');
+    [].forEach.call(el.querySelectorAll('canvas.mini'), function(cv){ const p=G.players[+cv.dataset.i], lk=looks[p.id]; if(!window.CreakArt||!lk) return;
+      const X=cv.getContext('2d'); X.clearRect(0,0,88,100); CreakArt.climber(X, 44, 68, {CELL:100, T:0}, {col:lk.col, skin:lk.skin, hat:lk.hat}); });
   }
   $('startBtn').disabled = G.players.length<2;
   $('startBtn').textContent = G.players.length<2 ? 'Start (need 2+ players)' : 'Start game ('+G.players.length+' players)';
@@ -801,16 +831,16 @@ function renderTurnbar(){
     const p=G.players.find(function(x){return x.id===pid;});
     const name=p?p.name:'Player';
     const active=(i===G.turnIdx);
-    return '<div class="chip'+(active?' active':'')+'"><span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+esc(name)+' &middot; '+(G.positions[pid]||1)+'</div>';
+    return '<div class="chip'+(active?' active':'')+'"><span class="dot" style="background:'+colOf(pid)+'"></span>'+esc(name)+' &middot; '+(G.positions[pid]||1)+'</div>';
   }).join('');
 }
 
 async function startGame(){
   G.board=genBoard();
-  G.order=G.players.map(function(p){ return p.id; });
+  G.order=G.players.map(function(p){ return p.id; }); G.looks=assignLooks();
   G.turnIdx=0; G.turnSeq=0; G.winner=null; G.phase='live';
   G.positions={}; G.order.forEach(function(pid){ G.positions[pid]=1; });
-  $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block';
+  $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block'; renderDie(6);
   G.turnStartedAt=Date.now();
   resize(); renderTurnbar();
   setStatus('Waiting for <b>'+nameOf(G.order[0])+'</b> to roll…');
@@ -872,6 +902,7 @@ async function resolveTurn(playerId){
     settleStationaryTokens(null);
     await ageLadders();
     await holdOutcome();
+    if(window.ccAfterTurn) await ccAfterTurn(playerId, fromPos);
     G.turnIdx=(G.turnIdx+1)%G.order.length;
     G.turnSeq++; G.turnStartedAt=Date.now();
     draw(); renderTurnbar();
@@ -907,6 +938,7 @@ async function resolveTurn(playerId){
   settleStationaryTokens(null);
   await ageLadders();
   await holdOutcome();
+  if(window.ccAfterTurn) await ccAfterTurn(playerId, fromPos);
   G.turnIdx=(G.turnIdx+1)%G.order.length;
   G.turnSeq++;
   G.turnStartedAt=Date.now();
@@ -926,7 +958,7 @@ function showWin(){
   $('ovStand').innerHTML = ranked.map(function(pid,i){
     const idx=G.order.indexOf(pid);
     return '<div class="row'+(pid===G.winner.id?' win':'')+'"><span class="rank">'+(i+1)+'.</span>'+
-      '<span class="dot" style="background:'+PALETTE[idx%PALETTE.length]+'"></span>'+
+      '<span class="dot" style="background:'+colOf(pid)+'"></span>'+
       '<span style="flex:1">'+nameOf(pid)+(pid===G.winner.id?' \ud83d\udc51':'')+'</span>'+
       '<span>'+(G.positions[pid]||1)+'</span></div>';
   }).join('');
@@ -963,6 +995,7 @@ async function loop(){
 $('startBtn').addEventListener('click', function(){ if(G.players.length>=2) startGame(); });
 $('ovAgain').addEventListener('click', playAgain);
 window.addEventListener('resize', resize);
+CreakArt.sky.mount(); CreakArt.onThunder=function(){ try{ SFX.rumble(); }catch(e){} };
 createRoom().then(function(){ loop(); });
 
 </script>
@@ -1030,21 +1063,46 @@ createRoom().then(function(){ loop(); });
     if(rem < 3000 && rem > 0){ var sec = Math.ceil(rem / 1000); if(sec !== lastSec){ lastSec = sec; sfx(['tick']); } } else if(rem >= 3000) lastSec = -1; return r; };
 
   function cutsOn(){ return lsGet(KEY_CUTS, '1') === '1'; }
+  /* moments on the climb: a short scene now and then, never during a question and never two within three turns.
+     The turn is held while it plays, so the phones simply wait, and they are told to watch the big screen. */
+  var lastCut = -99, seen = {};
+  function moment(kind, opts, chance, force){
+    return new Promise(function(res){
+      if(!window.TBScenes || !cutsOn()) return res(false);
+      if(!force && (G.phase !== 'live' || G.turnSeq - lastCut < 3 || Math.random() > chance)) return res(false);
+      lastCut = G.turnSeq; G.scene = kind; try{ writeState(); }catch(e){}
+      playScene(kind, opts, function(){ G.scene = null; try{ writeState(); }catch(e){} res(true); });
+    });
+  }
+  window.ccMoment = moment;
+  function rawName(pid){ var p = G.players.find(function(x){ return x.id === pid; }); return p && p.name ? String(p.name) : 'Player'; }
+  window.ccAfterTurn = async function(pid, fromPos){
+    var pos = G.positions[pid] || 1, others = G.order.filter(function(x){ return x !== pid; }).map(function(x){ return G.positions[x] || 1; });
+    var name = rawName(pid), col = lookOf(pid), lead = Math.max.apply(null, others.concat([pos]));
+    if(!seen.sight && pos >= 90 && fromPos < 90){ seen.sight = 1; seen.basecamp = 1; await moment('sight', { name:name }, .9); return; }
+    if(!seen.basecamp && pos >= 50 && fromPos < 50){ seen.basecamp = 1; await moment('basecamp', { name:name }, .9); return; }
+    if(others.length && fromPos < Math.min.apply(null, others) && pos > Math.max.apply(null, others) && pos - fromPos >= 8) await moment('comeback', { name:name, look:col, prog:lead/TOP }, .8);
+  };
   function playScene(kind, opts, done){
     if(!window.TBScenes || !cutsOn()){ if(done) done(); return; }
     try{ TBScenes.mute(!!window.tbMuted); }catch(e){}
     var st = document.createElement('div'); st.style.cssText = 'position:fixed;inset:0;z-index:1200;'; document.body.appendChild(st);
-    TBScenes.play(st, 'guide', kind, Object.assign({ person:host.person(), onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
+    var played = TBScenes.play(st, 'guide', kind, Object.assign({ person:host.person(), onEnd:function(){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); } }, opts || {}));
+    if(!played){ if(st.parentNode) st.parentNode.removeChild(st); if(done) done(); }   /* an older cached scene file without this scene: carry on */
   }
 
   /* playing: show the guide; summit: a short scene, then the results */
   var _start = window.startGame;
-  window.startGame = function(){ var r = _start.apply(this, arguments); document.body.classList.add('cc-playing'); say('Rope up, everyone!', 'welcome'); return r; };
+  window.startGame = function(){ lastCut = -99; seen = {}; var r = _start.apply(this, arguments); document.body.classList.add('cc-playing'); try{ resize(); }catch(e){} say('Rope up, everyone!', 'welcome'); return r; };
   var _win = window.showWin;
-  window.showWin = function(){ var r = _win.apply(this, arguments); var w = G.winner ? G.winner.name : '';
-    host.set('celebrate'); playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns' }); return r; };
+  window.showWin = function(){ var r = _win.apply(this, arguments); var w = G.winner ? rawName(G.winner.id) : '';
+    var ranked = G.order.slice().sort(function(a, b){ return (b === (G.winner && G.winner.id)) - (a === (G.winner && G.winner.id)) || (G.positions[b] || 1) - (G.positions[a] || 1); });
+    var podium = ranked.slice(0, 3).map(function(pid){ return { name:rawName(pid), look:lookOf(pid) }; });
+    host.set('celebrate');
+    playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
+    return r; };
   var _again = window.playAgain;
-  window.playAgain = function(){ document.body.classList.remove('cc-playing'); host.set('calm'); return _again.apply(this, arguments); };
+  window.playAgain = function(){ document.body.classList.remove('cc-playing'); try{ CreakArt.sky.progress(0); }catch(e){} host.set('calm'); return _again.apply(this, arguments); };
 
   /* lobby: cutscenes and host */
   var pre = document.getElementById('lobbyPre');
@@ -1060,7 +1118,7 @@ createRoom().then(function(){ loop(); });
     e.stopImmediatePropagation(); e.preventDefault();
     if(opened || start.disabled || G.players.length < 2) return;
     if(!cutsOn()){ startGame(); return; }
-    opened = true; playScene('opening', {}, function(){ startGame(); opened = false; });
+    opened = true; playScene('opening', { cols:(function(l){ return G.players.map(function(p){ return l[p.id]; }); })(assignLooks()) }, function(){ startGame(); opened = false; });
   }, true);
 })();
 
