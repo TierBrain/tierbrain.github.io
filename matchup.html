@@ -237,14 +237,15 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">Match Up</div>
-    <h1 class="big display">TierBrain</h1>
-    <p class="lead">Match each item on the left to its partner on the right, capitals, authors, elements and more. Clear the board, climb the tiers and beat the clock across 20 matches.</p>
+    <div class="sub">TierBrain</div>
+    <h1 class="big display">Match Up</h1>
+    <p class="lead">Match each item on the left to its partner on the right: capitals, authors, elements and more.</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Match up:</b> tap a tile on the left, then its correct partner on the right.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Climb up:</b> each correct match counts, two in a row bumps you up a tier (1 → 2 → 3 → Legends).</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Knocked out:</b> four wrong matches in total ends your run.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Beat the clock:</b> get through all 20 matches before time runs out.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>How to play:</b> tap a tile on the left, then its partner on the right. When one pair is left, it matches itself.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> two matches in a row takes you up a level: Easy, Medium, Hard, then Legends.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Slip down:</b> two misses in a row drops you back a level.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. Each wrong match costs one, and losing all four ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Clock:</b> finish 20 matches before the clock you choose runs out.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
@@ -260,7 +261,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You answered <b id="outAns">0</b> matches<br>and got <b id="outCorr">0</b> right</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -272,7 +273,7 @@
     <div class="sub">All 20 Complete!</div>
     <div class="timeBig display" id="doneTime">0:00</div>
     <p class="statline" style="margin-top:-6px;">left on the clock</p>
-    <p class="statline"><b id="doneCorr">0</b> correct · <b id="doneAns">20</b>/20 answered</p>
+    <p class="statline"><b id="doneCorr">0</b> matches · <b id="doneAns">0</b> misses</p>
     <p class="statline">reached <b id="doneLvl">LEVEL 1</b></p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="cta" id="doneAgain">Play Again</button>
@@ -285,7 +286,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up. Here's how far you climbed.</p>
+    <p class="lead">Your clock has run out. Here’s how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> matches<br>and got <b id="tuCorr">0</b> right</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -392,8 +393,8 @@
   function renderMatch(){
     $('lvlPill').textContent=LVL_NAMES[level];
     $('lvlPill').style.background=LVL_COLOR[level];
-    $('qcount').textContent='MATCH '+Math.min(answered+1,20)+' OF 20';
-    $('progbar').style.width=(answered/20*100)+'%';
+    $('qcount').textContent='MATCH '+Math.min(correct+1,20)+' OF 20';
+    $('progbar').style.width=(correct/20*100)+'%';
     const L=$('muLeft'), R=$('muRight'); if(!L||!R) return;
     L.innerHTML=''; R.innerHTML='';
     board.leftOrder.forEach(function(pid,k){
@@ -444,17 +445,19 @@
       if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; }
       setPrompt('Not a match, try again.');
     }
-    $('progbar').style.width=(answered/20*100)+'%';
+    $('progbar').style.width=(correct/20*100)+'%';
     renderMatch();
     setTimeout(function(){
       board.flash=null;
       if(!playing) return;
       if(totalWrong>=4){ endOut(); return; }
-      if(answered>=20){ endDone(); return; }
+      if(correct>=20){ endDone(); return; }
       if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
       else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
       pendingMove=null; busy=false;
-      if(boardCleared()){ newBoard(); } else { renderMatch(); }
+      const left=board.pairs.map(function(_,i){ return i; }).filter(function(i){ return !board.matched[i]; });
+      if(left.length===1){ board.matched[left[0]]=true; setPrompt('Last pair matches itself, here\u2019s a new board.'); renderMatch(); setTimeout(function(){ if(playing) newBoard(); }, 520); }
+      else if(boardCleared()){ newBoard(); } else { renderMatch(); }
     }, right?460:760);
   }
 
@@ -469,7 +472,7 @@
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
-    $('doneAns').textContent=answered;
+    $('doneAns').textContent=totalWrong;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('doneScreen');
   }
@@ -657,6 +660,8 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script>window.tbqStars=function(){ var m=parseInt(document.getElementById('doneAns').textContent,10)||0; return m===0?3:m===1?2:1; };</script>
+<script src="tb-quiz.js?v=1" data-theme="match" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>

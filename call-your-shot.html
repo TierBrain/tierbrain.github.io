@@ -266,14 +266,17 @@
 
   <!-- START -->
   <div class="screen" id="startScreen">
-    <div class="sub">Back yourself: bet on what you know</div>
-    <h1 class="big display">TierBrain</h1>
-    <p class="lead">Answer the question, then back yourself: throw a dart at the bullseye to stake how sure you are. The bolder the ring, the bigger the reward, and the bigger the fall. Four tiers, up to Legends.</p>
+    <div class="sub">TierBrain</div>
+    <h1 class="big display">Call Your Shot</h1>
+    <p class="lead">Answer the question, then throw a dart to show how sure you are. The closer to the bullseye, the bigger the reward and the bigger the fall.</p>
     <div class="rules">
-      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Two beats:</b> pick your answer, then call your shot on the bullseye.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Bullseye is bold:</b> +3 if right but −3 if wrong; the outer ring is safe (+1, no penalty).</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Climb up:</b> 2 correct in a row moves you up a tier: the dart only moves your score.</span></div>
-      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>Knocked out:</b> 4 wrong answers in total ends your run.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>Two steps:</b> pick your answer, then throw your dart.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Outer ring, a hunch:</b> +1 if you’re right, nothing lost if you’re wrong.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l2)"></span><span><b>Middle ring, fairly sure:</b> +2 if right, −1 if wrong.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l3)"></span><span><b>Bullseye, certain:</b> +3 if right, −3 if wrong.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--l1)"></span><span><b>Levels:</b> two right in a row takes you up a level, two wrong drops you back.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--wrong)"></span><span><b>Hearts:</b> you have four. Every wrong answer costs one, whichever ring you choose.</span></div>
+      <div class="rule"><span class="dot" style="background:var(--gold)"></span><span><b>Clock:</b> finish all 20 questions before the clock you choose runs out.</span></div>
     </div>
     <div class="timelabel">Choose your clock</div>
     <div class="timerow" id="timeRow"></div>
@@ -289,7 +292,7 @@
   <div class="screen hidden" id="outScreen">
     <div class="sub" style="color:var(--wrong)">Knocked Out</div>
     <h1 class="big display" style="background:linear-gradient(120deg,#ff6b8a,#ff9e6b);-webkit-background-clip:text;background-clip:text;">So close!</h1>
-    <p class="lead">You ran out of lives, but you can jump straight back in.</p>
+    <p class="lead">You ran out of hearts, but you can jump straight back in.</p>
     <p class="statline">You answered <b id="outAns">0</b> questions<br>and scored <b id="outCorr">0</b> points</p>
     <button class="cta" id="outRetry">Try Again</button>
     <button class="ghost" id="outMenu">Back to Menu</button>
@@ -314,7 +317,7 @@
   <div class="screen hidden" id="timeupScreen">
     <div class="sub" style="color:var(--gold)">Time's Up!</div>
     <h1 class="big display">Final whistle!</h1>
-    <p class="lead">Your 2 minutes are up: here's how far you climbed.</p>
+    <p class="lead">Your clock has run out. Here’s how far you climbed.</p>
     <p class="statline">You answered <b id="tuAns">0</b> questions<br>and scored <b id="tuCorr">0</b> points</p>
     <button class="cta" id="tuRetry">Try Again</button>
     <button class="ghost" id="tuMenu">Back to Menu</button>
@@ -688,6 +691,7 @@
   }, true);
 })();
 </script>
+<script src="tb-quiz.js?v=1" data-theme="shot" data-stars="0" defer></script>
 <script src="tb-shell.js" data-tone="dark" data-target="#startScreen" defer></script>
 </body>
 </html>
