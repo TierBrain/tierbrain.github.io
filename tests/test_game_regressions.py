@@ -131,6 +131,34 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("select=id,name,tag", host)
         self.assertIn("looks:G.looks||null", re.search(r"function writeState\(\)\{(.*?)\}\}\); \}", host, re.S).group(1))
 
+    QUIZ_FAMILY = {"quiz-climb": ("Quiz Climb", "climb"), "higher-lower": ("Higher or Lower", "higher"), "odd-one-out": ("Odd One Out", "odd"),
+                   "spot-the-lie": ("Spot the Lie", "lie"), "fact-fiction": ("Fact or Fiction", "fact"), "matchup": ("Match Up", "match"),
+                   "unscramble": ("Unscramble", "scramble"), "recall": ("Recall", "recall"), "call-your-shot": ("Call Your Shot", "shot"),
+                   "five-clues": ("Five Clues", "clues")}
+
+    def test_quiz_family_has_its_look_and_clear_start_screens(self):
+        """Guard: each quiz-family game loads its themed look, is named on its start screen, and its rules match the clock you pick."""
+        self.assertTrue((ROOT / "tb-quiz.js").is_file(), "tb-quiz.js is missing")
+        for page, (name, theme) in self.QUIZ_FAMILY.items():
+            with self.subTest(page=page):
+                source = read(page + ".html")
+                self.assertIn('src="tb-quiz.js', source)
+                self.assertIn('data-theme="%s"' % theme, source)
+                start = source[source.index('id="startScreen"'):]
+                self.assertIn('<h1 class="big display">%s</h1>' % name, start[:600])
+                self.assertNotIn("Your 2 minutes are up", source)
+                self.assertNotIn("you have 2 minutes", source)
+
+    def test_quiz_family_playability_fixes(self):
+        """Recall's clock waits while the pattern plays, Match Up counts matches not attempts,
+        and Five Clues forgives a small spelling slip."""
+        recall, matchup, clues = read("recall.html"), read("matchup.html"), read("five-clues.html")
+        self.assertIn("inputPos=0; accepting=false; pauseClock();", recall)
+        self.assertIn("accepting=true; resumeClock();", recall)
+        self.assertIn("if(correct>=20){ endDone(); return; }", matchup)
+        self.assertIn("if(left.length===1){ board.matched[left[0]]=true;", matchup)
+        self.assertIn("function edits(a,b)", clues)
+
     def test_throne_host_never_runs_two_polls_at_once(self):
         """Bug: on a slow connection the 300ms poll overlapped itself and graded one answer several times
         (a first win showed 'A streak of 2', and a one-question Grand Finale ended 2-0)."""
@@ -451,6 +479,16 @@ class BrowserGameGuards(unittest.TestCase):
         looks = host.evaluate("() => G.order.map(id => G.looks[id])")
         self.assertEqual((looks[0]["col"], looks[0]["hat"]), ("#8f7be6", "helmet"))
         self.assertNotEqual(looks[0]["col"], looks[1]["col"])
+
+    def test_quiz_family_games_start_with_their_look(self):
+        """Each quiz-family game starts cleanly with its backdrop, hearts and tier steps in place."""
+        for page in StaticGameGuards.QUIZ_FAMILY:
+            with self.subTest(page=page):
+                game = self.open(self.context(390, 844), page + ".html")
+                game.wait_for_function("document.body.classList.contains('tbq') && document.getElementById('tbqSky')")
+                game.locator("#startBtn").click()
+                game.wait_for_function("document.querySelectorAll('#strikes .strike').length === 4 && document.querySelectorAll('.tbq-tier i').length === 4")
+                game.wait_for_timeout(400)
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
