@@ -199,6 +199,13 @@ async function poll(){
     return;
   }
 
+  if(st.phase==='live' && st.scene){
+    const sig='scene|'+st.scene+'|'+st.turnSeq;
+    if(sig!==lastSig){ lastSig=sig;
+      setHTML('<div class="pa-title">🎬 Watch the big screen!</div><div class="pa-hint">Something is happening on the mountain&hellip;</div>'+renderRows(st,true)); }
+    return;
+  }
+
   if(st.phase==='live'){
     const myTurn = st.order && st.order[st.turnIdx]===myId;
     const sig='live|'+st.turnSeq+'|'+myTurn+'|'+(st.pendingQ?st.pendingQ.qId:'');
