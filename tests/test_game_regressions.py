@@ -288,6 +288,33 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("ping(END,winner||3,0,0); finish(winner);", source)
         self.assertIn("else if(phase==='tug' && endW){ finish(endW===3?0:endW, true); }", source)
 
+    def test_first_finger_question_banks_hold_together(self):
+        """Every set has four different answers, every question's answer is one of them, and no question repeats."""
+        for name in ("ff-sets.js", "ff-sets-bible.js"):
+            with self.subTest(bank=name):
+                text = read(name)
+                sets = json.loads(text[text.index("window.FF_SETS = ") + len("window.FF_SETS = "):text.rindex("]") + 1])
+                self.assertEqual(len(sets), 100)
+                seen = set()
+                for item in sets:
+                    self.assertEqual(len(set(item["a"])), 4, item["a"])
+                    self.assertGreaterEqual(len(item["q"]), 4, item["a"])
+                    for question, answer in item["q"]:
+                        self.assertIn(answer, item["a"], question)
+                        self.assertNotIn(question.lower(), seen, question)
+                        seen.add(question.lower())
+
+    def test_first_finger_pages_use_the_quick_draw_game(self):
+        """Both editions load their own question bank and the shared quick-draw engine."""
+        for name, bank, edition in (("first-finger.html", "ff-sets.js", "gen"), ("first-finger-bible.html", "ff-sets-bible.js", "bib")):
+            with self.subTest(page=name):
+                source = read(name)
+                self.assertIn('<script src="%s?v=1"></script>' % bank, source)
+                self.assertIn('<script src="first-finger.js?v=1" data-edition="%s"></script>' % edition, source)
+                self.assertNotIn("__GO__", source, "The old buzzer game is gone from the page")
+        engine = read("first-finger.js")
+        self.assertIn("if(serverNow() - gat < 8000 || R.pendingGo)", engine, "An old start signal must never launch a lone game")
+
 
 class FakeBackend:
     """Stateful in-memory stand-in for the database REST calls the party games make."""
@@ -588,6 +615,46 @@ class BrowserGameGuards(unittest.TestCase):
         for phone in (maya, leo):
             phone.wait_for_function("!document.getElementById('resultScreen').classList.contains('hidden')", timeout=10000)
             self.assertIn("Red wins", phone.locator("#winBanner").inner_text())
+
+    def test_first_finger_solo_round_plays_through(self):
+        """On your own: answers first, the question word by word, draw, answer, then the verdict."""
+        game = self.open(self.context(390, 844), "first-finger.html")
+        game.wait_for_function("document.querySelectorAll('#menuScreen .spd').length === 3")
+        game.locator("#menuScreen .spd[data-ms='450']").click()
+        game.locator("#soloBtn").click()
+        game.wait_for_function("document.querySelectorAll('#answers .ans').length === 4", timeout=15000)
+        game.wait_for_function("document.querySelectorAll('#posterBody .q .w').length >= 2 && !document.getElementById('drawBtn').disabled", timeout=15000)
+        game.locator("#drawBtn").click()
+        game.wait_for_function("document.querySelector('#posterBody .skip') || !document.getElementById('answers').classList.contains('hidden')")
+        if game.locator("#posterBody .skip").count():
+            game.locator("#posterBody .skip").click()
+        game.locator("#answers .ans").first.click()
+        game.wait_for_function("!document.getElementById('verdict').classList.contains('hidden')", timeout=15000)
+        self.assertEqual(game.locator("#answers .ans.right").count(), 1)
+        self.assertEqual(game.locator("#posterBody .w.key").count(), 1, "The giveaway word is underlined")
+
+    def test_first_finger_room_ignores_an_old_start_and_plays_in_step(self):
+        """Bug: an old start signal in a reused room launched a lone countdown. Two phones must also get the same questions."""
+        self.backend.tables.setdefault("scores", []).append(
+            {"quiz_id": "qc_ff2", "group_code": "DODGE", "name": "__GO__", "correct": 12345, "level": 650, "time_left": 0,
+             "created_at": "%.6f" % (time.time() - 90)})
+        phones = []
+        for name in ("Maya", "Leo"):
+            phone = self.open(self.context(390, 844), "first-finger.html")
+            phone.wait_for_function("document.querySelectorAll('#menuScreen .spd').length === 3")
+            phone.locator("#nameIn").fill(name)
+            phone.locator("#codeIn").fill("DODGE")
+            phone.locator("#joinBtn").click()
+            phone.wait_for_function("!document.getElementById('lobbyScreen').classList.contains('hidden')")
+            phones.append(phone)
+        maya, leo = phones
+        maya.wait_for_function("!document.getElementById('goBtn').disabled", timeout=10000)
+        self.assertTrue(leo.locator("#lobbyScreen").is_visible(), "An old start signal began a game")
+        maya.locator("#goBtn").click()
+        for phone in phones:
+            phone.wait_for_function("document.querySelectorAll('#answers .ans').length === 4", timeout=15000)
+        self.assertEqual(maya.evaluate("() => [...document.querySelectorAll('#answers .ans')].map(b => b.dataset.a)"),
+                         leo.evaluate("() => [...document.querySelectorAll('#answers .ans')].map(b => b.dataset.a)"))
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
