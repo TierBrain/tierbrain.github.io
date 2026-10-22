@@ -80,6 +80,47 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("async function holdOutcome()", source)
         self.assertEqual(source.count("await holdOutcome();"), 2, "both end-of-turn paths must hold the outcome")
 
+    def test_creak_pages_draw_with_the_shared_artwork(self):
+        """Guard: an older upload of either Creak & Coil page drops the new board, sky, zooms and cutscenes."""
+        self.assertTrue((ROOT / "creak-art.js").is_file(), "creak-art.js is missing")
+        for page in ("creak.html", "creak-multi.html"):
+            source = read(page)
+            for needle in ('src="creak-art.js', 'src="tb-hosts.js"', 'src="tb-scenes.js"', "CreakArt.sky.mount()",
+                           "CreakArt.climber(", "CreakArt.snake(", "CreakArt.ladder(", "zoomIn(", "CreakArt.sky.storm(true)"):
+                with self.subTest(page=page, needle=needle):
+                    self.assertIn(needle, source)
+
+    def test_shared_climb_players_have_different_colours(self):
+        """Bug: the second and fifth players were given the same green, so their pieces looked identical."""
+        palette = re.search(r"const PALETTE=\[(.*?)\];", read("creak-multi.html")).group(1)
+        colours = [c.lower() for c in re.findall(r"'(#[0-9a-fA-F]{6})'", palette)]
+        self.assertEqual(len(colours), len(set(colours)), "two players share a colour")
+
+    def test_climb_cutscenes_hold_the_turn_and_never_interrupt_a_question(self):
+        """Cutscenes: the phones are told to watch the TV, nothing plays mid-question, and never two within three turns."""
+        host, phone, solo = read("creak-multi.html"), read("creak-multi-play.html"), read("creak.html")
+        body = re.search(r"function writeState\(\)\{(.*?)\}\}\); \}", host, re.S).group(1)
+        self.assertIn("scene:G.scene||null", body)
+        self.assertIn("if(st.phase==='live' && st.scene){", phone)
+        for page, source, call, question in (("creak-multi.html", host, "ccMoment('rumble'", "askQuestionFor("),
+                                             ("creak.html", solo, "moment('rumble'", "askQuestion(")):
+            with self.subTest(page=page):
+                start = source.index("async function rockfallEvent(")
+                rock = source[start:start + 500]
+                self.assertIn(call, rock)
+                self.assertLess(rock.index(call), rock.index(question), "the scene must finish before the question")
+        self.assertIn("G.turnSeq - lastCut < 3", host)
+        self.assertIn("turns-lastCut<3", solo)
+        self.assertIn('id="cutsToggle"', solo)
+
+    def test_climb_has_its_moments_and_variants(self):
+        """Guard: the Creak & Coil scenes (and random variants of the opening and summit) are in the cutscene engine."""
+        scenes = read("tb-scenes.js")
+        for kind in ("basecamp:", "sight:", "roc:", "rumble:", "comeback:", "podium:"):
+            with self.subTest(kind=kind):
+                self.assertIn(kind, scenes)
+        self.assertIn("'[object Array]'", scenes)
+
     def test_throne_host_never_runs_two_polls_at_once(self):
         """Bug: on a slow connection the 300ms poll overlapped itself and graded one answer several times
         (a first win showed 'A streak of 2', and a one-question Grand Finale ended 2-0)."""
@@ -361,6 +402,22 @@ class BrowserGameGuards(unittest.TestCase):
         host.wait_for_timeout(700)
         self.assertEqual(host.evaluate("window.__sounds"), 0, "A sound played while muted")
         host.evaluate("() => tbSetMuted(false)")
+
+    def test_shared_climb_moment_holds_the_turn_and_tells_the_phones(self):
+        """A moment on the mountain plays on the TV while every phone says to watch the big screen; a tap skips it."""
+        host, phones = self.shared_climb()
+        host.evaluate("() => { localStorage.setItem('tb-cutscenes-guide', '1'); window.__m = ccMoment('basecamp', {name: 'Maya'}, 1, true); }")
+        host.wait_for_selector(".tb-scene")
+        phones["Leo"].wait_for_function("document.body.innerText.includes('Watch the big screen!')", timeout=8000)
+        host.locator(".tb-scene").click()
+        host.wait_for_function("G.scene === null && !document.querySelector('.tb-scene')")
+        phones["Leo"].wait_for_function("!document.body.innerText.includes('Watch the big screen!')", timeout=8000)
+
+    def test_solo_climb_draws_the_new_board(self):
+        """The solo climb draws its board, sky and climber without errors on a phone."""
+        page = self.open(self.context(390, 844), "creak.html")
+        page.wait_for_function("window.CreakArt && document.getElementById('ccSky') && document.getElementById('board').width > 300")
+        page.wait_for_timeout(600)
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
