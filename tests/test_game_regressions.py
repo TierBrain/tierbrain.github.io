@@ -121,6 +121,16 @@ class StaticGameGuards(unittest.TestCase):
                 self.assertIn(kind, scenes)
         self.assertIn("'[object Array]'", scenes)
 
+    def test_climbers_can_be_chosen_in_both_creak_games(self):
+        """Players choose their climber: the solo game remembers it, and Shared Climb phones send it to the TV."""
+        solo, host, phone = read("creak.html"), read("creak-multi.html"), read("creak-multi-play.html")
+        self.assertIn('id="climberBtn"', solo)
+        self.assertIn("CreakArt.lookStyle(myLook)", solo)
+        self.assertIn('src="creak-art.js', phone)
+        self.assertIn('id="climberCard"', phone)
+        self.assertIn("select=id,name,tag", host)
+        self.assertIn("looks:G.looks||null", re.search(r"function writeState\(\)\{(.*?)\}\}\); \}", host, re.S).group(1))
+
     def test_throne_host_never_runs_two_polls_at_once(self):
         """Bug: on a slow connection the 300ms poll overlapped itself and graded one answer several times
         (a first win showed 'A streak of 2', and a one-question Grand Finale ended 2-0)."""
@@ -418,6 +428,29 @@ class BrowserGameGuards(unittest.TestCase):
         page = self.open(self.context(390, 844), "creak.html")
         page.wait_for_function("window.CreakArt && document.getElementById('ccSky') && document.getElementById('board').width > 300")
         page.wait_for_timeout(600)
+
+    def test_shared_climb_climbers_never_share_a_colour(self):
+        """Each phone picks a climber; a colour someone already chose is crossed out, and the TV keeps everyone distinct."""
+        host = self.open(self.context(1280, 720, {"tb-cutscenes-guide": "0"}), "creak-multi.html")
+        host.wait_for_function("/^[A-Z]{5}$/.test(document.getElementById('code').textContent.trim())")
+        code = host.locator("#code").inner_text().strip()
+        phones = []
+        for name in ("Maya", "Leo"):
+            phone = self.open(self.context(390, 844), "creak-multi-play.html?c=" + code)
+            phone.locator("#codeIn").fill(code)
+            phone.locator("#nameIn").fill(name)
+            phone.locator("#joinBtn").click()
+            phone.wait_for_selector("#climberPick [data-k='c'] button")
+            phones.append(phone)
+        phones[0].locator("#climberPick [data-k='c'] button[data-v='3']").click()
+        phones[0].locator("#climberPick [data-k='h'] button[data-v='helmet']").click()
+        phones[1].wait_for_function("document.querySelector(`#climberPick [data-k='c'] button[data-v='3']`).disabled", timeout=8000)
+        host.wait_for_function("G.players.length === 2 && G.players.some(p => /c3[.]s[0-9][.]hhelmet/.test(p.tag || ''))", timeout=8000)
+        host.locator("#startBtn").click()
+        host.wait_for_function("G.phase === 'live'")
+        looks = host.evaluate("() => G.order.map(id => G.looks[id])")
+        self.assertEqual((looks[0]["col"], looks[0]["hat"]), ("#8f7be6", "helmet"))
+        self.assertNotEqual(looks[0]["col"], looks[1]["col"])
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
