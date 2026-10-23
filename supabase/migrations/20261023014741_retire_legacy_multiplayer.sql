@@ -95,15 +95,27 @@ BEGIN
   END IF;
 
   -- Views are separate entry points, including security-definer owner views.
+  -- Follow transitive dependencies: an inaccessible inner view can still be
+  -- read through an accessible outer owner view. UNION deduplicates the graph
+  -- (including a view's self-dependencies) rather than recursing indefinitely.
   -- Do not silently change an unexpected view's access contract.
   IF EXISTS (
-    SELECT 1 FROM pg_catalog.pg_depend d
-    JOIN pg_catalog.pg_rewrite rw ON rw.oid=d.objid AND d.classid='pg_rewrite'::regclass
-    JOIN pg_catalog.pg_class v ON v.oid=rw.ev_class
-    JOIN pg_catalog.pg_class t ON t.oid=d.refobjid AND d.refclassid='pg_class'::regclass
-    JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
-    WHERE n.nspname='public' AND t.relname=ANY(tables) AND v.relkind IN ('v','m')
-      AND (has_table_privilege('anon',v.oid,'SELECT') OR has_table_privilege('authenticated',v.oid,'SELECT'))
+    WITH RECURSIVE legacy_dependents(oid) AS (
+      SELECT c.oid FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+        WHERE n.nspname='public' AND c.relname=ANY(tables)
+      UNION
+      SELECT rw.ev_class FROM legacy_dependents parent
+        JOIN pg_catalog.pg_depend d ON d.refobjid=parent.oid AND d.refclassid='pg_class'::regclass
+        JOIN pg_catalog.pg_rewrite rw ON rw.oid=d.objid AND d.classid='pg_rewrite'::regclass
+        JOIN pg_catalog.pg_class v ON v.oid=rw.ev_class
+        WHERE v.relkind IN ('v','m')
+    )
+    SELECT 1 FROM legacy_dependents dependent
+      JOIN pg_catalog.pg_class v ON v.oid=dependent.oid
+      WHERE v.relkind IN ('v','m')
+        AND (has_table_privilege('anon',v.oid,'SELECT') OR has_table_privilege('authenticated',v.oid,'SELECT')
+             OR has_any_column_privilege('anon',v.oid,'SELECT') OR has_any_column_privilege('authenticated',v.oid,'SELECT'))
   ) THEN
     RAISE EXCEPTION 'Unexpected accessible view over legacy data: review before cutover';
   END IF;
