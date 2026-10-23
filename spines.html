@@ -103,6 +103,7 @@ button{font:inherit;color:inherit;}
 .dust{position:absolute;width:10px;height:10px;border-radius:50%;background:rgba(230,215,185,.45);pointer-events:none;z-index:39;filter:blur(2px);}
 
 /* ===== party mode ===== */
+.picked{outline:3px solid var(--gold-hi);outline-offset:3px;}
 body.host .app{max-width:1100px;} body.host .study{min-height:52vh;} body.host .book,body.host .opt{pointer-events:none;}
 .lobby{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(10,18,14,.94);}
 .lobby[hidden]{display:none;} .lobby .box{max-width:760px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;}
@@ -206,6 +207,8 @@ body.host .pile{left:44%;}
   </div>
 </section>
 
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script src="spines-bank.js?v=1" onerror="window.__noBank=1"></script>
 <script src="bible-bank.js?v=1" onerror="window.__noBible=1"></script>
 <script>
@@ -295,7 +298,7 @@ function render(){
     b.el.style.transform = 'translate(' + (-b.w / 2 + b.jx + shift).toFixed(1) + 'px,' + (-y).toFixed(1) + 'px) rotate(' + (G.lean * .35).toFixed(2) + 'deg)';
     b.el.style.zIndex = String(i + 1); y += b.h;
     var t = tierOf(i, n), top = i === n - 1;
-    b.el.disabled = top || G.busy || G.over;
+    b.el.disabled = top || G.busy || G.over || MODE === 'host';
     b.el.setAttribute('aria-label', top ? b.subj + ', the top book' : b.subj + ', ' + depthName(t) + ', ' + t + (t === '1' ? ' point' : ' points'));
   });
   var pct = Math.min(100, Math.abs(G.lean) / LIMIT * 100); $('leanBar').style.width = pct + '%'; $('pts').textContent = G.pts + ' pts';
@@ -303,6 +306,7 @@ function render(){
 function hint(t){ $('hint').textContent = t; }
 
 function choose(i){
+  if(MODE === 'host' && (!P || !P.resolvingPick)) return;
   if(!G || G.busy || G.over || i < 0 || i >= G.books.length - 1) return; actx();
   if(G.sel >= 0) G.books[G.sel].el.classList.remove('pick');
   noise(0, .05, .3, 1300, 'bandpass');
@@ -316,6 +320,7 @@ function choose(i){
   render(); b.el.classList.add('pick');   /* the study is smaller with the card open, so the pile re-fits */
 }
 function answer(o, btn){
+  if(MODE === 'host' && (!P || !P.resolvingAnswer)) return;
   if(G.busy) return; G.busy = true;
   var i = G.sel, b = G.books[i], n = G.books.length, t = tierOf(i, n), risk = 1 - i / (n - 1), right = o === G.q.correct;
   [].forEach.call(document.querySelectorAll('.opt'), function(x){ x.disabled = true; if(x.textContent === G.q.correct) x.classList.add('right'); });
@@ -399,107 +404,403 @@ if(ED === 'bible'){ document.title = 'Spines: Bible Edition | TierBrain';
   document.querySelector('#lobby h1').textContent = 'Spines: Bible party'; }
 /* ---------- controls ---------- */
 $('goBtn').addEventListener('click', function(){ $('start').hidden = true; actx(); newGame(); });
-$('againBtn').addEventListener('click', function(){ newGame(); });
+$('againBtn').addEventListener('click', function(){ if(MODE === 'host') return partyRestart(); newGame(); });
 $('snd').addEventListener('click', function(){ if(window.tbSetMuted) window.tbSetMuted(!window.tbMuted); var m = !!window.tbMuted;
   this.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; this.setAttribute('aria-pressed', String(!m)); this.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); });
 (function(){ var m = !!window.tbMuted, s = $('snd'); s.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A'; s.setAttribute('aria-label', m ? 'Sound off' : 'Sound on'); })();
 window.addEventListener('resize', function(){ if(G) render(); });
 
 /* ==================== PARTY MODE ====================
-   spines.html?host is the big screen; phones join with spines.html?party=CODE.
-   Same rooms, players and moves tables as Full Circuit. The host runs the pile;
-   phones choose books and answer. Whoever topples the pile is out. */
-var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';   // your Project URL
-  var SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+   Edition-bound authenticated rooms. Solo mode never creates an Auth client. */
+var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co';
+var SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
 var MODE = /[?&]host\b/.test(location.search) ? 'host' : (/[?&]party=[A-Za-z0-9]{4,6}/.test(location.search) ? 'phone' : 'solo');
-function sb(path, opts){ opts = opts || {}; return fetch(SB_URL + '/rest/v1/' + path, Object.assign({}, opts, { headers:Object.assign({ apikey:SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' }, opts.headers || {}) }))
-  .then(function(r){ return opts.method ? r.ok : r.json(); }).catch(function(){ return opts.method ? false : []; }); }
-var P = null;
-function partyState(extra){ var n = G ? G.books.length : 0;
-  var st = Object.assign({ game:'spines', phase:P.phase, turn:P.turn, turnName:nameOf(P.turn), seq:P.seq, alive:P.alive.map(nameOf), out:P.out.map(nameOf), lean:G ? Math.round(Math.min(100, Math.abs(G.lean) / LIMIT * 100)) : 0,
-    books:G ? G.books.map(function(b, i){ return { i:i, subj:b.subj, t:tierOf(i, n), top:i === n - 1, col:b.col }; }) : [], q:P.q || null, msg:P.msg || '', winner:P.winner || null }, extra || {});
-  return sb('rooms?code=eq.' + P.code, { method:'PATCH', body:JSON.stringify({ phase:st.phase, state:st }) }); }
+var PARTY_EDITION = ED === 'bible' ? 'bible' : 'general';
+var partyAccess = MODE === 'solo' ? null : PartyAccess.create(SB_URL, SB_KEY, { family:'spines', edition:PARTY_EDITION });
+var P = null, partyTail = Promise.resolve(), partyHostEpoch = 0, partyReadRetry = null;
+if(ED === 'bible') $('partyBtn').href = '?host&ed=bible';
+function partyConnection(text, retry, newRoom){
+  var box = $('partyConnection');
+  if(!box){ box = document.createElement('div'); box.id = 'partyConnection'; box.setAttribute('role','status');
+    box.style.cssText = 'position:fixed;top:12px;left:5%;right:5%;z-index:100;background:#f3ead6;color:#14211b;padding:12px;border-radius:12px;box-shadow:0 4px 22px #0008'; document.body.appendChild(box); }
+  box.textContent = text || ''; box.hidden = !text;
+  if(retry){ var b = document.createElement('button'); b.className = 'go'; b.type = 'button'; b.textContent = 'Try again'; b.onclick = function(){ b.disabled = true; retry(); }; box.appendChild(b); }
+  if(text){ var reload = document.createElement('button'); reload.type = 'button'; reload.className = 'go'; reload.textContent = 'Reload'; reload.onclick = function(){ location.reload(); }; box.appendChild(reload); }
+  if(newRoom){ var fresh = document.createElement('button'); fresh.type = 'button'; fresh.className = 'go'; fresh.textContent = 'New room'; fresh.onclick = function(){ fresh.disabled = true; openPartyRoom(true); }; box.appendChild(fresh); }
+}
+if(partyAccess) partyAccess.onIssue(function(issue){
+  if(issue.recovered){ partyConnection(''); return; }
+  partyConnection(issue.message + ' The game is paused until the connection returns.', issue.canRetry ? function(){ partyAccess.retry(); } : null);
+});
+function partyHostTask(work){
+  if(!P) return Promise.resolve();
+  var owner = P, epoch = P.epoch; owner.queued++;
+  $('skipBtn').disabled = true;
+  var task = partyTail.then(async function(){
+    if(P !== owner || P.epoch !== epoch) return;
+    try{ return await work(); }
+    catch(e){ partyConnection(partyAccess.message(e) + ' Retry the connection or reload this page.'); }
+  });
+  partyTail = task.catch(function(){});
+  return task.finally(function(){ owner.queued--; if(P === owner) updatePartySkip(); });
+}
+async function partyCriticalRead(read){
+  while(true){
+    try{ var value = await read(); partyConnection(''); return value; }
+    catch(e){ await new Promise(function(resolve){ partyReadRetry = resolve; partyConnection(partyAccess.message(e) + ' The game is paused.', function(){ var next = partyReadRetry; partyReadRetry = null; next(); }); }); }
+  }
+}
+function hostMark(){ return P && { owner:P, epoch:P.epoch, run:P.room && P.room.run_id, seq:P.seq }; }
+function sameHost(mark){ return !!(mark && P === mark.owner && P.epoch === mark.epoch && P.room && P.room.run_id === mark.run && P.seq === mark.seq); }
+function partyState(extra){
+  var n = G ? G.books.length : 0;
+  return Object.assign({ game:'spines', phase:P.phase, turn:P.turn, turnName:nameOf(P.turn), seq:P.seq,
+    aliveIds:P.alive.slice(), outIds:P.out.slice(), winnerId:P.winnerId || null,
+    lean:G ? Math.round(Math.min(100, Math.abs(G.lean) / LIMIT * 100)) : 0,
+    books:G ? G.books.map(function(b, i){ return { i:i, subj:b.subj, t:tierOf(i,n), top:i === n - 1, col:b.col }; }) : [],
+    q:P.q || null, msg:P.msg || '' }, extra || {});
+}
+async function publishParty(){
+  var room = await partyAccess.publish({ phase:P.phase, state:partyState() });
+  P.room = partyAccess.currentRoom();
+  return room;
+}
+async function closePartyAction(){
+  var action = P.room && P.room.action;
+  if(!action) return { room:P.room, actions:[] };
+  var result = await partyAccess.close(action.id);
+  P.room = partyAccess.currentRoom(); return result;
+}
 function nameOf(id){ var p = P && P.players.filter(function(x){ return x.id === id; })[0]; return p ? p.name : ''; }
-function paintPlayers(){ var ul = $('lplayers'); ul.innerHTML = '';
-  P.players.forEach(function(p){ var li = document.createElement('li'); li.textContent = p.name; if(P.out.indexOf(p.id) >= 0) li.className = 'out'; else if(p.id === P.turn) li.className = 'now'; ul.appendChild(li); }); }
+function paintPlayers(){
+  var ul = $('lplayers'); ul.innerHTML = '';
+  P.players.filter(function(p){ return P.phase !== 'lobby' || P.activeIds.indexOf(p.id) >= 0; }).forEach(function(p){
+    var li = document.createElement('li'); li.textContent = p.name;
+    if(P.out.indexOf(p.id) >= 0) li.className = 'out'; else if(p.id === P.turn) li.className = 'now'; ul.appendChild(li);
+  });
+}
+function updatePartySkip(){
+  if(!P) return;
+  $('skipBtn').hidden = !G || G.busy || G.over || ['choose','question'].indexOf(P.phase) < 0;
+  $('skipBtn').disabled = !!(P.queued || partyAccess.busy());
+  $('skipBtn').textContent = 'Skip ' + nameOf(P.turn) + '\u2019s turn';
+  $('lstart').disabled = !P.connected || P.queued > 0 || P.activeIds.length < 2;
+  $('lneed').hidden = P.activeIds.length >= 2;
+}
+function mergePartyMembers(members){
+  P.activeIds = members.map(function(m){ return m.id; });
+  if(P.phase === 'lobby') P.players = members.slice();
+  else members.forEach(function(m){ var i = P.players.findIndex(function(p){ return p.id === m.id; }); if(i < 0) P.players.push(m); else P.players[i] = m; });
+  paintPlayers(); updatePartySkip();
+}
+function partyJoinLink(code){ return location.href.split('?')[0] + '?party=' + code + (ED === 'bible' ? '&ed=bible' : ''); }
+async function openPartyRoom(fresh){
+  if(!P || P.queued || partyAccess.busy()) return;
+  P.connected = false; updatePartySkip(); partyConnection('');
+  try{
+    if(fresh) partyAccess.forgetHost();
+    var saved = partyAccess.savedHostCode();
+    P.room = saved ? await partyAccess.resumeHost(saved) : await partyAccess.createRoom();
+    P.code = P.room.code;
+    // The old host only kept its pile in memory. An owned reload recovers the
+    // roster, then resets to a fresh authenticated lobby/run rather than claiming
+    // to continue a question whose physics and timers were lost.
+    P.room = await partyAccess.beginRun();
+    P.epoch = ++partyHostEpoch; P.phase = 'lobby'; P.turn = null; P.seq = 0; P.alive = []; P.out = []; P.q = null; P.msg = ''; P.winnerId = null;
+    G = null; $('pile').innerHTML = ''; $('card').hidden = true; $('end').hidden = true; $('skipBtn').hidden = true;
+    $('study').classList.remove('tight'); P.connected = true;
+    await publishParty();
+    var link = partyJoinLink(P.code);
+    $('lcode').textContent = P.code; $('llink').textContent = link.replace(/^https?:\/\//,'');
+    $('lqr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(link);
+    $('lobby').hidden = false;
+    mergePartyMembers(await partyAccess.members(P.code));
+  }catch(e){ P.connected = false; partyConnection(partyAccess.message(e) + ' Reload to reconnect, or open a new room.', null, true); }
+  updatePartySkip();
+}
 function hostStart(){
-  document.body.classList.add('host'); $('start').hidden = true;
-  var A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; P = { code:'', players:[], alive:[], out:[], idx:0, seq:0, turn:null, phase:'lobby', q:null };
-  for(var i = 0; i < 5; i++) P.code += A[Math.floor(Math.random() * A.length)];
-  var base = location.href.split('?')[0], link = base + '?party=' + P.code;
-  $('lcode').textContent = P.code; $('llink').textContent = link.replace(/^https?:\/\//, ''); $('lqr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(link);
-  $('lobby').hidden = false;
-  sb('rooms', { method:'POST', body:JSON.stringify({ code:P.code, phase:'lobby', state:{ game:'spines', phase:'lobby' } }) });
-  P.lobbyPoll = setInterval(async function(){ var r = await sb('players?code=eq.' + P.code + '&select=id,name&order=joined_at.asc'); if(Array.isArray(r)) P.players = r.slice(0, 8);
-    paintPlayers(); $('lstart').disabled = P.players.length < 2; $('lneed').hidden = P.players.length >= 2; }, 1500);
-  $('lstart').addEventListener('click', function(){ clearInterval(P.lobbyPoll); $('lobby').hidden = true; P.alive = P.players.map(function(p){ return p.id; }); P.idx = 0; newGame(); nextTurn(false); });
+  document.body.classList.add('host'); $('start').hidden = true; $('lobby').hidden = false;
+  P = { epoch:++partyHostEpoch, room:null, code:'', connected:false, players:[], activeIds:[], alive:[], out:[], idx:0, seq:0, turn:null, phase:'lobby', q:null, queued:0, polling:false, msg:'', winnerId:null };
+  $('lstart').addEventListener('click', function(){ partyHostTask(startPartyRun); });
+  openPartyRoom(false);
+  P.poll = setInterval(pollPartyHost, 900);
 }
-function nextTurn(advance){
+async function startPartyRun(){
+  var members = await partyCriticalRead(function(){ return partyAccess.members(P.code); });
+  mergePartyMembers(members); if(members.length < 2) return;
+  P.room = await partyAccess.beginRun(); P.epoch = ++partyHostEpoch;
+  P.alive = members.map(function(p){ return p.id; }); P.out = []; P.idx = 0; P.seq = 0; P.turn = null; P.q = null; P.msg = ''; P.winnerId = null;
+  $('lobby').hidden = true; $('end').hidden = true; actx(); newGame(); await nextTurn(false);
+}
+function partyRestart(){
+  if(!P || P.queued || partyAccess.busy()) return;
+  return partyHostTask(async function(){
+    var members = await partyCriticalRead(function(){ return partyAccess.members(P.code); });
+    mergePartyMembers(members);
+    if(members.length >= 2) return startPartyRun();
+    P.room = await partyAccess.beginRun(); P.epoch = ++partyHostEpoch;
+    P.phase = 'lobby'; P.alive = []; P.out = []; P.turn = null; P.seq = 0; P.q = null; P.winnerId = null; P.msg = '';
+    G = null; $('pile').innerHTML = ''; $('end').hidden = true; $('card').hidden = true; $('lobby').hidden = false;
+    await publishParty(); updatePartySkip();
+  });
+}
+async function finishParty(message){
+  P.phase = 'over'; P.q = null; P.turn = null; P.winnerId = P.alive[0] || null; P.winner = nameOf(P.winnerId);
+  P.msg = message || (P.winner ? P.winner + ' is the last one standing!' : 'Everyone left the room. Start a new party when players return.');
+  if(G){ G.over = true; G.busy = true; render(); }
+  await publishParty(); $('skipBtn').hidden = true;
+  $('end').querySelector('h1').textContent = P.winner ? P.winner + ' wins' : 'Party finished';
+  $('endText').textContent = P.msg; $('endPts').textContent = ''; $('endBest').textContent = '';
+  $('againBtn').textContent = 'New party'; $('end').hidden = false;
+}
+async function reconcilePartyMembers(members){
+  mergePartyMembers(members);
+  if(P.phase === 'lobby' || P.phase === 'over') return false;
+  var departed = P.alive.filter(function(id){ return P.activeIds.indexOf(id) < 0; });
+  if(!departed.length) return false;
+  var currentLeft = departed.indexOf(P.turn) >= 0, oldIndex = P.idx, who = nameOf(P.turn);
+  departed.forEach(function(id){ if(P.out.indexOf(id) < 0) P.out.push(id); });
+  P.alive = P.alive.filter(function(id){ return departed.indexOf(id) < 0; });
+  // outIds is a run roster: at most the original eight people. Late joiners
+  // watch this round and enter the next New party; they do not replace a leaver.
+  if(currentLeft) await closePartyAction();
+  if(P.alive.length <= 1){ await closePartyAction(); await finishParty(currentLeft ? who + ' left the room. ' + (P.alive.length ? nameOf(P.alive[0]) + ' is the last one standing!' : 'No players remain.') : undefined); return true; }
+  if(currentLeft){
+    if(G && G.sel >= 0){ G.books[G.sel].el.classList.remove('pick'); G.sel = -1; }
+    $('card').hidden = true; $('study').classList.remove('tight'); if(G){ G.busy = false; render(); }
+    P.idx = oldIndex % P.alive.length; P.msg = who + ' left. Their turn was skipped.';
+    P.phase = 'result'; P.q = null; await publishParty(); await nextTurn(false); return true;
+  }
+  P.idx = P.alive.indexOf(P.turn); await publishParty(); return false;
+}
+async function nextTurn(advance){
+  var members = await partyCriticalRead(function(){ return partyAccess.members(P.code); });
+  if(await reconcilePartyMembers(members)) return;
+  if(P.alive.length <= 1) return finishParty();
   if(advance) P.idx = (P.idx + 1) % P.alive.length;
-  P.turn = P.alive[P.idx]; P.seq++; P.phase = 'choose'; P.q = null; P.msg = '';
-  hint(nameOf(P.turn) + ' is choosing a book.'); say(nameOf(P.turn) + '\u2019s turn.'); partyState(); watch();
-  $('skipBtn').textContent = 'Skip ' + nameOf(P.turn) + '\u2019s turn'; $('skipBtn').hidden = false;
+  P.turn = P.alive[P.idx]; P.seq++; P.phase = 'choose'; P.q = null; P.msg = ''; P.winnerId = null;
+  await publishParty();
+  hint(nameOf(P.turn) + ' is choosing a book.'); say(nameOf(P.turn) + '\u2019s turn.'); updatePartySkip(); paintPlayers();
 }
-function watch(){ clearInterval(P.movePoll); var seq = P.seq;
-  P.movePoll = setInterval(async function(){ if(seq !== P.seq) return clearInterval(P.movePoll);
-    var rows = await sb('moves?code=eq.' + P.code + '&player_id=eq.' + P.turn + '&turn_seq=eq.' + seq + '&select=q_id,choice&order=q_id.asc'); if(!Array.isArray(rows)) return;
-    var pick = rows.filter(function(r){ return r.q_id === 'pick'; })[0], ans = rows.filter(function(r){ return r.q_id === 'zans'; })[0];
-    if(P.phase === 'choose' && pick){ var i = parseInt(pick.choice, 10); if(i >= 0 && i < G.books.length - 1){ choose(i);
-        P.q = { q:G.q.q, opts:[].map.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent; }), subj:G.books[i].subj, t:tierOf(i, G.books.length) }; P.phase = 'question'; partyState(); } }
-    else if(P.phase === 'question' && ans){ clearInterval(P.movePoll); P.phase = 'result'; $('skipBtn').hidden = true;
-      var btn = [].filter.call(document.querySelectorAll('#opts .opt'), function(x){ return x.textContent === ans.choice; })[0];
-      P.msg = ans.choice === G.q.correct ? nameOf(P.turn) + ' got it right.' : nameOf(P.turn) + ' got it wrong. It was ' + G.q.correct + '.';
-      partyState(); answer(ans.choice, btn || document.createElement('button')); }
-  }, 800); }
-/* after each move: keep going, or knock out whoever toppled the pile */
-$('skipBtn').addEventListener('click', function(){ if(!P || G.busy || G.over) return; clearInterval(P.movePoll);
-  if(G.sel >= 0){ G.books[G.sel].el.classList.remove('pick'); G.sel = -1; } $('card').hidden = true; $('study').classList.remove('tight'); render();
-  P.msg = nameOf(P.turn) + '\u2019s turn was skipped.'; say(P.msg); nextTurn(true); });
-function partyAfterSettle(){ if(MODE === 'host' && P && !G.over) setTimeout(function(){ nextTurn(true); }, 900); }
+async function pollPartyHost(){
+  if(!P || !P.connected || P.polling || P.queued || partyAccess.busy() || (G && G.busy)) return;
+  P.polling = true; var mark = hostMark();
+  try{
+    var members = await partyAccess.members(P.code); if(!sameHost(mark)) return;
+    if(P.phase === 'lobby'){ mergePartyMembers(members); return; }
+    await partyHostTask(async function(){
+      if(!sameHost(mark)) return;
+      if(await reconcilePartyMembers(members)) return;
+      var action = P.room.action; if(!action || ['choose','question'].indexOf(P.phase) < 0) return;
+      var rows = await partyAccess.actions(P.code,P.room.run_id,action.id,0);
+      if(!sameHost(mark) || P.room.action.id !== action.id || !rows.length) return;
+      var closed = await closePartyAction();
+      if(!sameHost(mark)) return;
+      var receipt = (closed.actions || []).filter(function(a){ return a.player_id === P.turn && a.window_id === action.id; })[0];
+      if(!receipt) return;
+      if(P.phase === 'choose' && action.kind === 'pick'){
+        var i = Number(receipt.choice); if(!Number.isInteger(i) || i < 0 || i >= G.books.length - 1) throw new Error('The book choice could not be confirmed.');
+        P.resolvingPick = true; try{ choose(i); }finally{ P.resolvingPick = false; }
+        P.q = { q:G.q.q, opts:[].map.call(document.querySelectorAll('#opts .opt'),function(x){ return x.textContent; }), subj:G.books[i].subj, t:tierOf(i,G.books.length) };
+        P.phase = 'question'; await publishParty(); updatePartySkip();
+      }else if(P.phase === 'question' && action.kind === 'answer'){
+        var btn = [].filter.call(document.querySelectorAll('#opts .opt'),function(x){ return x.textContent === receipt.choice; })[0];
+        if(!btn) throw new Error('The answer choice could not be confirmed.');
+        P.phase = 'result'; P.msg = receipt.choice === G.q.correct ? nameOf(P.turn) + ' got it right.' : nameOf(P.turn) + ' got it wrong. It was ' + G.q.correct + '.';
+        await publishParty(); $('skipBtn').hidden = true;
+        P.resolvingAnswer = true; try{ answer(receipt.choice,btn); }finally{ P.resolvingAnswer = false; }
+      }
+    });
+  }catch(e){ if(sameHost(mark)) partyConnection(partyAccess.message(e)); }
+  finally{ if(P === mark.owner) P.polling = false; }
+}
+$('skipBtn').addEventListener('click',function(){
+  if(!P || P.queued || partyAccess.busy() || !G || G.busy || G.over || ['choose','question'].indexOf(P.phase) < 0) return;
+  partyHostTask(async function(){
+    await closePartyAction();
+    if(G.sel >= 0){ G.books[G.sel].el.classList.remove('pick'); G.sel = -1; }
+    $('card').hidden = true; $('study').classList.remove('tight'); render();
+    P.msg = nameOf(P.turn) + '\u2019s turn was skipped.'; say(P.msg); P.phase = 'result'; P.q = null;
+    await publishParty(); await nextTurn(true);
+  });
+});
+function partyAfterSettle(){
+  if(MODE !== 'host' || !P || G.over) return;
+  var mark = hostMark();
+  setTimeout(function(){ if(sameHost(mark) && P.phase === 'result') partyHostTask(function(){ return nextTurn(true); }); },900);
+}
 function partyKnockout(){
-  $('skipBtn').hidden = true;
-  var who = P.turn; P.out.push(who); P.alive.splice(P.idx, 1); paintPlayers();
-  if(P.alive.length <= 1){ P.winner = nameOf(P.alive[0]); P.phase = 'over'; P.msg = nameOf(who) + ' toppled the pile. ' + P.winner + ' is the last one standing!';
-    partyState(); $('end').querySelector('h1').textContent = P.winner + ' wins'; $('endText').textContent = P.msg; $('endPts').textContent = ''; $('endBest').textContent = '';
-    $('againBtn').textContent = 'New party'; $('againBtn').onclick = function(){ location.reload(); }; $('end').hidden = false; return; }
-  P.phase = 'result'; P.msg = nameOf(who) + ' toppled the pile and is out!'; partyState(); hint(P.msg);
-  if(P.idx >= P.alive.length) P.idx = 0;
-  setTimeout(function(){ newGame(); nextTurn(false); }, 3200);
+  return partyHostTask(async function(){
+    $('skipBtn').hidden = true; var who = P.turn;
+    if(P.out.indexOf(who) < 0) P.out.push(who);
+    P.alive = P.alive.filter(function(id){ return id !== who; }); paintPlayers();
+    if(P.alive.length <= 1) return finishParty(nameOf(who) + ' toppled the pile. ' + (P.alive.length ? nameOf(P.alive[0]) + ' is the last one standing!' : 'No players remain.'));
+    P.phase = 'result'; P.q = null; P.msg = nameOf(who) + ' toppled the pile and is out!'; await publishParty(); hint(P.msg);
+    if(P.idx >= P.alive.length) P.idx = 0;
+    var mark = hostMark();
+    setTimeout(function(){ if(sameHost(mark)) partyHostTask(async function(){ newGame(); await nextTurn(false); }); },3200);
+  });
 }
+
 /* ---------- the phone ---------- */
 function phoneStart(){
-  var code = (location.search.match(/[?&]party=([A-Za-z0-9]{4,6})/) || [])[1].toUpperCase(), key = 'spines_party_' + code, me = null;
-  try{ me = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+  var code = (location.search.match(/[?&]party=([A-Za-z0-9]{4,6})/) || [])[1].toUpperCase();
+  var ctx = { code:code, me:null, room:null, generation:0, polling:null, timer:null, heartbeat:null, joining:false, leaving:false, records:new Map(), connection:'' };
+  var storageKey = 'tb_party_spines_' + PARTY_EDITION + '_submissions_v1';
   $('start').hidden = true; document.querySelector('.app').hidden = true; $('phone').hidden = false;
-  var area = $('parea'), msg = function(t){ $('pmsg').textContent = t; }, last = '';
-  var join = function(){ msg('Room ' + code + '. What should we call you?'); area.innerHTML = '<input id="pname" maxlength="14" placeholder="Your name" aria-label="Your name"><button class="go" id="pjoin" type="button">Join</button>';
-    $('pjoin').onclick = async function(){ var name = ($('pname').value || '').trim().slice(0, 14); if(!name) return; this.disabled = true;
-      var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'p' + Math.random().toString(36).slice(2), now = new Date().toISOString();
-      if(await sb('players', { method:'POST', body:JSON.stringify({ id:id, code:code, name:name, tag:'spines', score:0, joined_at:now, last_seen:now }) })){ me = { id:id, name:name }; try{ localStorage.setItem(key, JSON.stringify(me)); }catch(e){} poll(); }
-      else { this.disabled = false; msg('Could not join. Check the room code and your connection.'); } }; };
-  var send = function(seq, qid, choice){ return sb('moves', { method:'POST', body:JSON.stringify({ code:code, player_id:me.id, turn_seq:seq, q_id:qid, choice:String(choice) }) }); };
-  var draw = function(st){
-    var mine = st.turn === me.id, sig = [st.phase, st.seq, mine, st.msg, (st.out || []).length].join('|'); if(sig === last) return; last = sig;
-    if((st.out || []).indexOf(me.name) >= 0 && st.phase !== 'over'){ msg('You toppled the pile, so you\u2019re out. Stay and watch who wins!'); area.innerHTML = ''; return; }
-    if(st.phase === 'lobby' || !st.phase){ msg('You\u2019re in, ' + me.name + '. Waiting for the host to start.'); area.innerHTML = ''; }
-    else if(st.phase === 'choose'){
-      if(!mine){ msg(st.turnName + ' is choosing a book. Watch the big screen.'); area.innerHTML = ''; return; }
-      msg('Your turn! Choose a book. Lower books score more, but shake the pile.'); area.innerHTML = '<div class="blist" id="blist"></div>';
-      st.books.slice().reverse().forEach(function(b){ if(b.top) return; var x = document.createElement('button'); x.type = 'button'; x.style.backgroundColor = b.col;
-        x.innerHTML = '<span></span><small></small>'; x.firstChild.textContent = b.subj; x.lastChild.textContent = depthName(b.t) + ', ' + b.t + (b.t === '1' ? ' point' : ' points');
-        x.onclick = function(){ [].forEach.call(document.querySelectorAll('#blist button'), function(y){ y.disabled = true; }); send(st.seq, 'pick', b.i); msg('Pulling ' + b.subj + '\u2026'); };
-        $('blist').appendChild(x); }); }
-    else if(st.phase === 'question' && st.q){
-      msg((mine ? 'Your question' : st.turnName + '\u2019s question. Shout your help!') + ' (' + st.q.subj + ')'); area.innerHTML = '<p class="msg" style="font-weight:800"></p><div class="opts" id="popts"></div>';
-      area.firstChild.textContent = st.q.q;
-      st.q.opts.forEach(function(o){ var x = document.createElement('button'); x.type = 'button'; x.className = 'opt'; x.textContent = o; x.disabled = !mine;
-        x.onclick = function(){ [].forEach.call(document.querySelectorAll('#popts .opt'), function(y){ y.disabled = true; }); x.classList.add('right'); send(st.seq, 'zans', o); msg('Answer sent. Watch the pile!'); };
-        $('popts').appendChild(x); }); }
-    else if(st.phase === 'result'){ msg(st.msg || 'Watch the big screen\u2026'); area.innerHTML = ''; }
-    else if(st.phase === 'over'){ msg(st.winner === me.name ? 'You won! Last one standing.' : (st.msg || 'Game over.')); area.innerHTML = ''; }
+  var area = $('parea'), msg = function(text){ $('pmsg').textContent = text; };
+  var connection = document.createElement('p'); connection.id = 'pconnection'; connection.setAttribute('role','status'); connection.hidden = true;
+  var reconnect = document.createElement('button'); reconnect.type = 'button'; reconnect.className = 'go'; reconnect.textContent = 'Retry connection'; reconnect.hidden = true; reconnect.onclick = function(){ poll(); };
+  var leave = document.createElement('button'); leave.type = 'button'; leave.className = 'go'; leave.textContent = 'Leave the game'; leave.hidden = true;
+  $('phone').insertBefore(connection,area); $('phone').appendChild(reconnect); $('phone').appendChild(leave);
+  function connectionError(error){ connection.textContent = partyAccess.message(error); connection.hidden = false; reconnect.hidden = false; }
+  function clearConnection(){ connection.hidden = true; reconnect.hidden = true; }
+  function save(){
+    var records = Array.from(ctx.records.values()).slice(-16).map(function(r){ return { code:r.code, member:r.member, run:r.run, window:r.window, choice:r.choice, request:r.request, kind:r.kind, label:r.label }; });
+    store(storageKey,JSON.stringify(records));
+  }
+  function restore(){
+    try{ var records = JSON.parse(recall(storageKey) || '[]'); if(!Array.isArray(records)) return;
+      records.slice(-16).forEach(function(r){
+        if(!r || r.code !== code || r.member !== ctx.me.id || typeof r.run !== 'string' || typeof r.window !== 'string' || typeof r.request !== 'string' || typeof r.choice !== 'string' || r.choice.length > 250 || ['pick','answer'].indexOf(r.kind) < 0) return;
+        ctx.records.set(r.window,Object.assign({},r,{ state:'unknown', mayHaveCommitted:true, error:null }));
+      });
+    }catch(e){}
+  }
+  function current(record){ return !!(ctx.me && ctx.room && record.member === ctx.me.id && record.run === ctx.room.run_id && ctx.room.action && record.window === ctx.room.action.id); }
+  function note(record){
+    var noun = record.kind === 'pick' ? 'book choice' : 'answer';
+    if(record.state === 'pending') return 'Sending your ' + noun + '\u2026';
+    if(record.state === 'confirmed') return (record.kind === 'pick' ? 'Book choice recorded.' : 'Answer recorded.') + ' Watch the big screen.';
+    if(record.state === 'failed') return 'Your ' + noun + ' was not recorded. ' + partyAccess.message(record.error);
+    return 'Could not confirm your ' + noun + '. Retry the same choice to check.';
+  }
+  function drawRecord(record){
+    var text = document.createElement('p'); text.id = 'partySubmissionStatus'; text.setAttribute('role','status'); text.dataset.state = record.state; text.textContent = note(record); area.appendChild(text);
+    if(record.state === 'pending' || record.state === 'confirmed') return;
+    var retry = document.createElement('button'); retry.type = 'button'; retry.className = 'go'; retry.id = 'partySubmissionRetry'; retry.textContent = 'Retry same choice'; retry.onclick = function(){ attempt(record); }; area.appendChild(retry);
+  }
+  async function attempt(record){
+    if(!ctx.me || record.member !== ctx.me.id || record.code !== code || record.state === 'pending' || record.state === 'confirmed') return;
+    var generation = ctx.generation; record.state = 'pending'; record.error = null; save(); draw();
+    try{
+      var receipt = await partyAccess.submit(code,record.run,record.window,record.choice,record.request);
+      if(!receipt || receipt.player_id !== record.member || receipt.window_id !== record.window || receipt.choice !== record.choice) throw new Error('The game did not confirm this choice.');
+      record.state = 'confirmed'; record.receipt = receipt;
+    }catch(error){
+      if(record.state === 'confirmed' && record.receipt) return;
+      record.error = error;
+      var conflict = /already|different|conflict|did not confirm/i.test(error.message || '');
+      var definite = error.status >= 400 && error.status < 500 && error.status !== 408 && !conflict;
+      if(!definite) record.mayHaveCommitted = true;
+      record.state = definite && !record.mayHaveCommitted ? 'failed' : 'unknown';
+    }
+    save(); if(ctx.generation === generation && current(record)) draw();
+  }
+  function submit(choice,label){
+    var room = ctx.room, action = room && room.action;
+    if(!ctx.me || !action || !action.accepting || action.member_id !== ctx.me.id || ctx.records.has(action.id)) return;
+    var record = { code:code, member:ctx.me.id, run:room.run_id, window:action.id, choice:String(choice), request:partyAccess.uuid(), kind:action.kind, label:label, state:'idle', mayHaveCommitted:false, error:null };
+    ctx.records.set(action.id,record); save(); attempt(record);
+  }
+  function acceptReceipts(receipts){
+    (receipts || []).forEach(function(receipt){
+      if(!ctx.me || receipt.player_id !== ctx.me.id || !ctx.room.action || receipt.window_id !== ctx.room.action.id) return;
+      var record = ctx.records.get(receipt.window_id);
+      // A canonical own receipt also resolves a different choice accepted in
+      // another tab. Show the recorded choice, never the rejected local guess.
+      if(record && record.choice !== receipt.choice){ record.choice = receipt.choice; record.request = ''; }
+      if(!record){ record = { code:code, member:ctx.me.id, run:ctx.room.run_id, window:receipt.window_id, choice:receipt.choice, request:'', kind:receipt.kind, mayHaveCommitted:true }; ctx.records.set(receipt.window_id,record); }
+      record.state = 'confirmed'; record.receipt = receipt; record.error = null;
+    }); save();
+  }
+  function draw(){
+    if(!ctx.me || !ctx.room) return;
+    var st = ctx.room.state || {}, action = ctx.room.action, mine = st.turn === ctx.me.id;
+    var record = action && ctx.records.get(action.id);
+    area.innerHTML = '';
+    if((st.outIds || []).indexOf(ctx.me.id) >= 0 && st.phase !== 'over'){ msg('You are out of this party. Stay and watch who wins!'); return; }
+    if(st.phase === 'lobby' || !st.phase){ msg('You\u2019re in, ' + ctx.me.name + '. Waiting for the host to start.'); return; }
+    if(st.phase === 'choose'){
+      if(!mine){ msg((st.turnName || 'The next player') + ' is choosing a book. Watch the big screen.'); return; }
+      msg('Your turn! Choose a book. Lower books score more, but shake the pile.');
+      var list = document.createElement('div'); list.className = 'blist'; list.id = 'blist'; area.appendChild(list);
+      (st.books || []).slice().reverse().forEach(function(book){
+        if(book.top) return;
+        var button = document.createElement('button'); button.type = 'button'; button.style.backgroundColor = book.col;
+        var name = document.createElement('span'); name.textContent = book.subj; var points = document.createElement('small'); points.textContent = depthName(book.t) + ', ' + book.t + (book.t === '1' ? ' point' : ' points');
+        button.appendChild(name); button.appendChild(points);
+        button.disabled = !!record || !action || !action.accepting || action.kind !== 'pick' || action.member_id !== ctx.me.id;
+        if(record && record.choice === String(book.i)) button.classList.add('picked');
+        button.onclick = function(){ submit(String(book.i),book.subj); }; list.appendChild(button);
+      });
+      if(record) drawRecord(record);
+    }else if(st.phase === 'question' && st.q){
+      msg((mine ? 'Your question' : (st.turnName || 'The current player') + '\u2019s question. Shout your help!') + ' (' + st.q.subj + ')');
+      var question = document.createElement('p'); question.className = 'msg'; question.style.fontWeight = '800'; question.textContent = st.q.q; area.appendChild(question);
+      var options = document.createElement('div'); options.className = 'opts'; options.id = 'popts'; area.appendChild(options);
+      st.q.opts.forEach(function(option){
+        var button = document.createElement('button'); button.type = 'button'; button.className = 'opt'; button.textContent = option;
+        button.disabled = !mine || !!record || !action || !action.accepting || action.kind !== 'answer' || action.member_id !== ctx.me.id;
+        if(record && record.choice === option) button.classList.add('picked');
+        button.onclick = function(){ submit(option,option); }; options.appendChild(button);
+      });
+      if(record) drawRecord(record);
+    }else if(st.phase === 'result'){ msg(st.msg || 'Watch the big screen\u2026'); }
+    else if(st.phase === 'over'){ msg(st.winnerId === ctx.me.id ? 'You won! Last one standing.' : (st.msg || 'Game over.')); }
+  }
+  function detach(text){
+    ctx.generation++; ctx.me = null; ctx.room = null; clearTimeout(ctx.timer); clearInterval(ctx.heartbeat); ctx.records.clear();
+    partyAccess.rememberPlayer(''); leave.hidden = true; clearConnection(); join(text);
+  }
+  async function heartbeat(){
+    if(!ctx.me || ctx.beating) return; var member = ctx.me, generation = ctx.generation; ctx.beating = true;
+    try{ await partyAccess.heartbeat(code); }
+    catch(error){ if(ctx.me === member && ctx.generation === generation) connectionError(error); }
+    finally{ ctx.beating = false; }
+  }
+  async function poll(){
+    if(!ctx.me || ctx.polling === ctx.generation) return; var member = ctx.me, generation = ctx.generation; ctx.polling = generation; clearTimeout(ctx.timer);
+    try{
+      var response = await partyAccess.playerState(code);
+      if(ctx.me !== member || ctx.generation !== generation) return;
+      if(!response || !response.member || response.member.id !== member.id){ detach('Your membership changed. Join this room again.'); return; }
+      if(response.room.family !== 'spines' || response.room.edition !== PARTY_EDITION) throw new Error('The room does not match this game edition.');
+      Object.assign(ctx.me,response.member); ctx.room = response.room; acceptReceipts(response.receipts); clearConnection(); draw();
+    }catch(error){ if(ctx.generation === generation){
+      if(/active.*member|membership required|no active/i.test(error.message || '')) detach('You left this room. Join again when you are ready.');
+      else connectionError(error);
+    }}finally{ if(ctx.polling === generation) ctx.polling = null; if(ctx.me && ctx.generation === generation) ctx.timer = setTimeout(poll,900); }
+  }
+  function entered(member){
+    ctx.me = member; ctx.generation++; ctx.room = null; ctx.records.clear(); restore(); leave.hidden = false; area.innerHTML = ''; msg('Joined. Connecting to the big screen\u2026');
+    clearInterval(ctx.heartbeat); ctx.heartbeat = setInterval(heartbeat,10000); heartbeat(); poll();
+  }
+  function join(text){
+    msg(text || ('Room ' + code + '. What should we call you?')); area.innerHTML = '';
+    var input = document.createElement('input'); input.id = 'pname'; input.maxLength = 14; input.placeholder = 'Your name'; input.setAttribute('aria-label','Your name');
+    var button = document.createElement('button'); button.className = 'go'; button.id = 'pjoin'; button.type = 'button'; button.textContent = 'Join'; area.appendChild(input); area.appendChild(button);
+    button.onclick = async function(){
+      var name = input.value.trim().slice(0,14); if(!name || ctx.joining) return; ctx.joining = true; button.disabled = true;
+      try{ await partyAccess.preview(code); var member = await partyAccess.join(code,name); if(!member || !member.id) throw new Error('The game did not confirm your membership.'); partyAccess.rememberPlayer(code); entered(member); }
+      catch(error){ connectionError(error); }finally{ ctx.joining = false; button.disabled = false; }
+    };
+  }
+  leave.onclick = async function(){
+    if(!ctx.me || ctx.leaving || !confirm('Leave this game? You can rejoin and play in the next party.')) return;
+    ctx.leaving = true; leave.disabled = true; var member = ctx.me, generation = ctx.generation;
+    try{ var receipt = await partyAccess.leave(code); if(!receipt || receipt.left !== true) throw new Error('The game did not confirm that you left.'); if(ctx.generation === generation && ctx.me === member) detach('You left the game. Join again when you are ready.'); }
+    catch(error){ if(ctx.generation === generation) connectionError(error); }
+    finally{ ctx.leaving = false; leave.disabled = false; }
   };
-  var poll = async function(){ var rows = await sb('rooms?code=eq.' + code + '&select=phase,state'); if(Array.isArray(rows) && rows[0]) draw(rows[0].state || {}); setTimeout(poll, 900); };
-  if(me) poll(); else join();
+  (async function(){
+    msg('Checking this room\u2026');
+    try{
+      await partyAccess.preview(code);
+      var member = await partyAccess.membership(code);
+      if(member && member.id){ partyAccess.rememberPlayer(code); entered(member); }else join();
+    }catch(error){ join(); connectionError(error); }
+  })();
 }
 if(MODE === 'host') hostStart(); else if(MODE === 'phone') phoneStart();
 </script>
@@ -538,16 +839,19 @@ if(MODE === 'host') hostStart(); else if(MODE === 'phone') phoneStart();
 
   /* react to the game */
   var _next = window.nextTurn, _choose = window.choose, _answer = window.answer, _settle = window.settle, _collapse = window.collapse, _knock = window.partyKnockout;
-  window.nextTurn = function(adv){ var r = _next.apply(this, arguments); try{ say(line('turn', nameOf(P.turn)), 'present'); }catch(e){} return r; };
+  window.nextTurn = function(adv){ var r = _next.apply(this, arguments), mark = hostMark(); Promise.resolve(r).then(function(){ if(P && P.epoch === mark.epoch && P.phase === 'choose') say(line('turn', nameOf(P.turn)), 'present'); }); return r; };
   window.choose = function(i){ var r = _choose.apply(this, arguments); try{ say(line('ask'), 'ask'); }catch(e){} return r; };
   window.answer = function(o){ var right = G && G.q && o === G.q.correct; var r = _answer.apply(this, arguments); say(line(right ? 'right' : 'wrong'), right ? 'celebrate' : 'wince'); return r; };
   window.settle = function(){ var r = _settle.apply(this, arguments);
     try{ if(!G.over && Math.abs(G.lean) > LIMIT*.6) setTimeout(function(){ say(line('lean'), 'shush'); }, 300); }catch(e){} return r; };
   window.collapse = function(){ say(line('fall'), 'wince'); return _collapse.apply(this, arguments); };
   window.partyKnockout = function(){
-    var who = nameOf(P.turn), r = _knock.apply(this, arguments);
-    if(P.phase === 'over'){ setTimeout(function(){ say(line('win', P.winner), 'celebrate'); }, 200); }
-    else { var left = P.alive.length; playScene('break', { name:who + ' is out', round:left + (left === 1 ? ' player left' : ' players left'), bible:BIBLE }); }
+    var who = nameOf(P.turn), epoch = P.epoch, r = _knock.apply(this, arguments);
+    Promise.resolve(r).then(function(){
+      if(!P || P.epoch !== epoch) return;
+      if(P.phase === 'over'){ setTimeout(function(){ if(P && P.epoch === epoch && P.phase === 'over') say(line('win', P.winner), 'celebrate'); }, 200); }
+      else { var left = P.alive.length; playScene('break', { name:who + ' is out', round:left + (left === 1 ? ' player left' : ' players left'), bible:BIBLE }); }
+    });
     return r;
   };
 

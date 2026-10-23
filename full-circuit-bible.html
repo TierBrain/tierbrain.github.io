@@ -631,6 +631,8 @@ button{font:inherit;color:inherit;}
   <p class="sr" id="say" aria-live="polite"></p>
 </div>
 
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script src="questions.js?v=7" onerror="window.__noBank=1"></script>
 <script src="bible-bank.js?v=1" onerror="window.__noBible=1"></script>
 <script>
@@ -816,8 +818,11 @@ function afterRoom(k, won, stats){
 /* the back stairs: three quick questions, never a dead end, but each
    miss costs seconds on the finale clock */
 function runStairs(done){
+  var stairGeneration=typeof TEAM!=='undefined'&&TEAM?TM.generation:null;
+  var currentStairs=function(){return stairGeneration===null||(TM.generation===stairGeneration&&TM.running);};
   var step = 0, missed = 0;
   var next = function(){
+    if(!currentStairs())return;
     if(step >= 3){ H.finalePenalty += missed * 3; done(); return; }
     var q = pickQuestion(tierFor(H.depth, 0)), opts = shuffle([q.correct].concat(q.wrong.slice(0,3)));
     $('stairStep').textContent = 'Step ' + (step+1) + ' of 3';
@@ -826,6 +831,7 @@ function runStairs(done){
     opts.forEach(function(o){
       var b = document.createElement('button'); b.type='button'; b.className='opt'; b.textContent=o;
       b.addEventListener('click', function(){
+        if(!currentStairs())return;
         box.querySelectorAll('.opt').forEach(function(x){ x.disabled = true; if(x.textContent === q.correct) x.classList.add('right'); });
         if(o === q.correct){ SFX.right(); $('stairNote').textContent = 'Right. Up you go.'; }
         else { b.classList.add('wrong'); SFX.wrong(); missed++; $('stairNote').textContent = 'A slip on the stairs. Three seconds off the finale clock.'; }
@@ -861,6 +867,18 @@ Tally.prototype.mistake = function(){ if(H.fuse){ H.fuse = false; return false; 
 Tally.prototype.hit = function(){ this.right++; this.paint(); };
 Tally.prototype.over = function(){ return this.right >= 5 || this.wrong >= 3; };
 
+/* Capture the room instance when scheduling work. A late reveal or animation
+   must not read a replacement room's global state after a team handoff. */
+function circuitRoomCallback(room, callback){
+  var state = room.st;
+  var generation = typeof TEAM !== 'undefined' && TEAM ? TM.generation : null;
+  return function(){
+    if(!state || room.st !== state || state.cancelled ||
+       (generation !== null && (TM.generation !== generation || !TM.running))) return;
+    return callback.apply(this, arguments);
+  };
+}
+
 /* ==========================================================
    ROOM: THE SWITCHBOARD
    ========================================================== */
@@ -878,23 +896,23 @@ function sbDraw(){
 }
 function sbSettle(){
   if(reduceMotion){ SB.swing=0; SB.swingV=0; sbDraw(); return; }
-  var step = function(){ SB.swingV += -SB.swing*0.12; SB.swingV *= 0.86; SB.swing += SB.swingV; sbDraw();
-    if(Math.abs(SB.swing) > 0.3 || Math.abs(SB.swingV) > 0.3) requestAnimationFrame(step); else { SB.swing=0; sbDraw(); } };
+  var step = circuitRoomCallback(SB, function(){ SB.swingV += -SB.swing*0.12; SB.swingV *= 0.86; SB.swing += SB.swingV; sbDraw();
+    if(Math.abs(SB.swing) > 0.3 || Math.abs(SB.swingV) > 0.3) requestAnimationFrame(step); else { SB.swing=0; sbDraw(); } });
   requestAnimationFrame(step);
 }
 function sbMove(to, ms, done){
   if(reduceMotion || !ms){ SB.plugPos = {x:to.x,y:to.y}; sbDraw(); if(done) done(); return; }
   var from = {x:SB.plugPos.x, y:SB.plugPos.y}, t0 = performance.now();
-  var step = function(now){ var k=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-k,3);
+  var step = circuitRoomCallback(SB, function(now){ var k=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-k,3);
     SB.plugPos = {x:from.x+(to.x-from.x)*e, y:from.y+(to.y-from.y)*e}; sbDraw();
-    if(k<1) requestAnimationFrame(step); else { SB.swingV = 6; sbSettle(); if(done) done(); } };
+    if(k<1) requestAnimationFrame(step); else { SB.swingV = 6; sbSettle(); if(done) done(); } });
   requestAnimationFrame(step);
 }
 function runSwitchboard(depth, done){
   var st = SB.st = { depth:depth, done:done, calls:0, live:false, q:null, ans:-1, t0:performance.now(), lastCrackle:0,
     tally:new Tally($('sbLives'), $('sbCount'), 'connected'), CALL_MS:15000 };
   show('room-switchboard');
-  requestAnimationFrame(function(){ SB.plugPos = sbHome(); sbDraw(); setTimeout(sbNext, 300); });
+  requestAnimationFrame(circuitRoomCallback(SB, function(){ SB.plugPos = sbHome(); sbDraw(); setTimeout(circuitRoomCallback(SB, sbNext), 300); }));
 }
 function sbNext(){
   var st = SB.st;
@@ -909,7 +927,7 @@ function sbNext(){
   $('sbWho').textContent = 'Caller ' + st.calls + ' is asking'; $('sbQ').textContent = q.q;
   $('callerLamp').className = 'lamp amber blink'; $('sbLine').classList.remove('low');
   sbMove(sbHome(), 0); SFX.ring(); say('Caller ' + st.calls + ': ' + q.q);
-  st.live = true; st.callStart = performance.now(); requestAnimationFrame(sbTick);
+  st.live = true; st.callStart = performance.now(); requestAnimationFrame(circuitRoomCallback(SB, sbTick));
 }
 function sbTick(now){
   var st = SB.st; if(!st || !st.live) return;
@@ -918,7 +936,7 @@ function sbTick(now){
   if(left < 4000){ $('sbLine').classList.add('low'); $('callerLamp').className = 'lamp amber flicker';
     if(now - st.lastCrackle > 180 + Math.random()*260){ SFX.crackle(); st.lastCrackle = now; } }
   if(left <= 0) return sbResolve(-1);
-  requestAnimationFrame(sbTick);
+  requestAnimationFrame(circuitRoomCallback(SB, sbTick));
 }
 function sbResolve(i){
   var st = SB.st; if(!st.live) return; st.live = false;
@@ -933,7 +951,7 @@ function sbResolve(i){
     $('sbWho').textContent = (i < 0 ? 'The line went dead' : 'Wrong line') + '. It should have been ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
     say('The answer was ' + st.q.correct + '.');
   }
-  setTimeout(function(){ sbMove(sbHome(), right ? 380 : 260, function(){ setTimeout(sbNext, 280); }); }, right ? 900 : 1500);
+  setTimeout(circuitRoomCallback(SB, function(){ sbMove(sbHome(), right ? 380 : 260, circuitRoomCallback(SB, function(){ setTimeout(circuitRoomCallback(SB, sbNext), 280); })); }), right ? 900 : 1500);
 }
 function sbBurst(at){
   if(reduceMotion) return;
@@ -978,7 +996,7 @@ function ghSetPail(x){ var w = GH.board.clientWidth; GH.px = Math.max(40, Math.m
 function runGlasshouse(depth, done){
   GH.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), tally:new Tally($('ghLives'), $('ghCount'), 'caught') };
   show('room-glasshouse');
-  requestAnimationFrame(function(){ ghSetPail(GH.board.clientWidth/2); setTimeout(ghNext, 400); });
+  requestAnimationFrame(circuitRoomCallback(GH, function(){ ghSetPail(GH.board.clientWidth/2); setTimeout(circuitRoomCallback(GH, ghNext), 400); }));
 }
 function ghNext(){
   var st = GH.st;
@@ -1004,13 +1022,13 @@ function ghNext(){
   });
   st.speed = (skyH + 80) / fall;
   st.last = performance.now();
-  cancelAnimationFrame(GH.raf); GH.raf = requestAnimationFrame(ghTick);
+  cancelAnimationFrame(GH.raf); GH.raf = requestAnimationFrame(circuitRoomCallback(GH, ghTick));
 }
 /* simple mode and the number keys: the pail glides under the chosen drop */
 function ghSteer(lane){
   var target = ghLaneX(lane) + 16, from = GH.px, t0 = performance.now();
   if(reduceMotion){ ghSetPail(target); return; }
-  var step = function(now){ var k=Math.min(1,(now-t0)/180); ghSetPail(from + (target-from)*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); };
+  var step = circuitRoomCallback(GH, function(now){ var k=Math.min(1,(now-t0)/180); ghSetPail(from + (target-from)*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); });
   requestAnimationFrame(step);
 }
 function ghTick(now){
@@ -1030,7 +1048,7 @@ function ghTick(now){
     else if(d.y > skyH){ d.done = true; d.el.classList.add('gone');
       if(d.right){ ghMiss(d); } }
   });
-  if(st.drops.some(function(d){ return !d.done; })) GH.raf = requestAnimationFrame(ghTick);
+  if(st.drops.some(function(d){ return !d.done; })) GH.raf = requestAnimationFrame(circuitRoomCallback(GH, ghTick));
 }
 function ghSplash(x, y){
   if(reduceMotion) return;
@@ -1050,14 +1068,14 @@ function ghCatch(d){
     $('ghWho').textContent = 'Wrong drop. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
     say('Wrong drop. The answer was ' + st.q.correct + '.');
   }
-  setTimeout(function(){ cancelAnimationFrame(GH.raf); ghNext(); }, d.right ? 900 : 1600);
+  setTimeout(circuitRoomCallback(GH, function(){ cancelAnimationFrame(GH.raf); ghNext(); }), d.right ? 900 : 1600);
 }
 function ghMiss(d){
   var st = GH.st; if(!st.live) return; st.live = false;
   var counted = st.tally.mistake(); SFX.splash();
   $('ghWho').textContent = 'It got away. The answer was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
   say('Missed. The answer was ' + st.q.correct + '.');
-  setTimeout(function(){ cancelAnimationFrame(GH.raf); ghNext(); }, 1500);
+  setTimeout(circuitRoomCallback(GH, function(){ cancelAnimationFrame(GH.raf); ghNext(); }), 1500);
 }
 /* the physical way: drag anywhere on the glasshouse floor to slide the pail */
 GH.board.addEventListener('pointerdown', function(e){
@@ -1130,7 +1148,7 @@ function runOrrery(depth, done){
   OR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), slow:slow, lastTick:0,
     tally:new Tally($('orLives'), $('orCount'), 'sighted'), Q_MS:15000 };
   show('room-orrery');
-  setTimeout(orNext, 350);
+  setTimeout(circuitRoomCallback(OR, orNext), 350);
 }
 function orNext(){
   var st = OR.st; cancelAnimationFrame(OR.raf);
@@ -1149,7 +1167,7 @@ function orNext(){
   $('orQ').textContent = q.q; $('orLine').classList.remove('low'); $('lever').disabled = false;
   say(q.q);
   st.live = true; st.qStart = performance.now(); st.last = st.qStart;
-  OR.raf = requestAnimationFrame(orTick);
+  OR.raf = requestAnimationFrame(circuitRoomCallback(OR, orTick));
 }
 function orTick(now){
   var st = OR.st; if(!st || !st.live) return;
@@ -1160,7 +1178,7 @@ function orTick(now){
   $('orLineBar').style.transform = 'scaleX(' + Math.max(0, left/st.Q_MS) + ')';
   if(left < 4000) $('orLine').classList.add('low');
   if(left <= 0) return orResolve(-1);
-  OR.raf = requestAnimationFrame(orTick);
+  OR.raf = requestAnimationFrame(circuitRoomCallback(OR, orTick));
 }
 /* ease the orrery so planet i sits exactly in the telescope, then judge it */
 function orSettle(i, ms, then){
@@ -1169,8 +1187,8 @@ function orSettle(i, ms, then){
   if(diff > Math.PI && ms < 400) diff -= 2*Math.PI;
   if(reduceMotion){ OR.theta = from + diff; orDraw(); then(); return; }
   var t0 = performance.now();
-  var step = function(now){ var k = Math.min(1, (now-t0)/ms), e = 1-Math.pow(1-k,3); OR.theta = from + diff*e; orDraw();
-    if(k < 1) requestAnimationFrame(step); else then(); };
+  var step = circuitRoomCallback(OR, function(now){ var k = Math.min(1, (now-t0)/ms), e = 1-Math.pow(1-k,3); OR.theta = from + diff*e; orDraw();
+    if(k < 1) requestAnimationFrame(step); else then(); });
   requestAnimationFrame(step);
 }
 function orStop(){
@@ -1196,7 +1214,7 @@ function orResolve(i){
     $('orWho').textContent = (i < 0 ? 'The orrery ran down' : 'Wrong planet') + '. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
     say('The answer was ' + st.q.correct + '.');
   }
-  setTimeout(orNext, i === st.ans ? 1000 : 1700);
+  setTimeout(circuitRoomCallback(OR, orNext), i === st.ans ? 1000 : 1700);
 }
 $('lever').addEventListener('click', orStop);
 
@@ -1242,7 +1260,7 @@ function srSpin(w, dir){ if(w.locked || !SR.st || !SR.st.live) return; w.at = (w
 function runStrongroom(depth, done){
   SR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), lens:H.items.indexOf('Lens') >= 0,
     tally:new Tally($('srLives'), $('srCount'), 'opened'), Q_MS:22000 };
-  show('room-strongroom'); setTimeout(srNext, 300);
+  show('room-strongroom'); setTimeout(circuitRoomCallback(SR, srNext), 300);
 }
 function srNext(){
   var st = SR.st; cancelAnimationFrame(SR.raf);
@@ -1280,7 +1298,7 @@ function srNext(){
   $('srWho').textContent = st.rounds === 1 && st.lens ? 'The Lens has set one tumbler for you' : (digits ? 'Dial in the number' : 'Spell the answer on the tumblers');
   $('srQ').textContent = q.q; $('srLine').classList.remove('low'); $('tryDoor').disabled = false; $('tryDoor').hidden = simple;
   say(q.q + (digits ? ' Dial in the number.' : ' Spell the answer.'));
-  st.live = true; st.qStart = performance.now(); SR.raf = requestAnimationFrame(srTick);
+  st.live = true; st.qStart = performance.now(); SR.raf = requestAnimationFrame(circuitRoomCallback(SR, srTick));
 }
 function srTick(now){
   var st = SR.st; if(!st || !st.live) return;
@@ -1288,7 +1306,7 @@ function srTick(now){
   $('srLineBar').style.transform = 'scaleX(' + Math.max(0, left/st.Q_MS) + ')';
   if(left < 5000) $('srLine').classList.add('low');
   if(left <= 0) return srResolve(false, true);
-  SR.raf = requestAnimationFrame(srTick);
+  SR.raf = requestAnimationFrame(circuitRoomCallback(SR, srTick));
 }
 /* simple mode: pick a brass plate and the wheels spin to it */
 function srChoose(o){
@@ -1296,7 +1314,7 @@ function srChoose(o){
   var target = String(o).trim().toUpperCase();
   st.wheels.forEach(function(w, i){ var c = target.charAt(i), k = w.set.indexOf(c); if(k >= 0 && !w.locked){ w.at = k; srPaintWheel(w); } });
   tone(1900, 0, 0.03, 'square', 0.04); tone(1700, 0.06, 0.03, 'square', 0.04);
-  setTimeout(function(){ srResolve(target === st.word); }, 380);
+  setTimeout(circuitRoomCallback(SR, function(){ srResolve(target === st.word); }), 380);
 }
 function srTry(){ var st = SR.st; if(!st || !st.live) return; actx();
   var spelled = st.wheels.map(function(w){ return w.set[w.at]; }).join(''); srResolve(spelled === st.word); }
@@ -1311,7 +1329,7 @@ function srResolve(right, timedOut){
     $('srWho').textContent = (timedOut ? 'Time ran out' : 'The alarm sounds') + '. It was ' + st.q.correct + '.' + (counted ? '' : ' The Fuse took the hit.');
     say('The answer was ' + st.q.correct + '.');
   }
-  setTimeout(srNext, right ? 1000 : 1900);
+  setTimeout(circuitRoomCallback(SR, srNext), right ? 1000 : 1900);
 }
 $('tryDoor').addEventListener('click', srTry);
 $('simple').addEventListener('change', function(){ if(SR.st && !$('room-strongroom').hidden){ $('plates').hidden = !simple; $('tryDoor').hidden = simple; } });
@@ -1360,7 +1378,7 @@ function runDarkRoom(depth, done){
   DR.st = { depth:depth, done:done, rounds:0, live:false, t0:performance.now(), wired:wired,
     tally:new Tally($('drLives'), $('drCount'), 'found'), Q_MS: wired ? 30000 : 22000 };
   DR.r = wired ? 104 : 78;
-  show('room-darkroom'); setTimeout(drNext, 300);
+  show('room-darkroom'); setTimeout(circuitRoomCallback(DR, drNext), 300);
 }
 function drPlace(notes){
   /* scatter the notes below the card, without overlapping */
@@ -1408,7 +1426,7 @@ function drNext(){
   $('drLine').classList.remove('low');
   drTorch(DR.board.clientWidth / 2, DR.board.clientHeight * 0.62);
   say(simple ? q.q : 'The question is somewhere on the walls. Move the torch to find it.');
-  st.live = true; st.qStart = performance.now(); DR.raf = requestAnimationFrame(drTick);
+  st.live = true; st.qStart = performance.now(); DR.raf = requestAnimationFrame(circuitRoomCallback(DR, drTick));
 }
 function drTick(now){
   var st = DR.st; if(!st || !st.live) return;
@@ -1417,7 +1435,7 @@ function drTick(now){
   if(left < 5000 && !simple){ $('drLine').classList.add('low'); DR.dark.classList.add('flicker');
     var base = st.wired ? 104 : 78; DR.r = base * (0.62 + 0.38 * left / 5000); drTorch(DR.x, DR.y); }
   if(left <= 0) return drResolve(-1);
-  DR.raf = requestAnimationFrame(drTick);
+  DR.raf = requestAnimationFrame(circuitRoomCallback(DR, drTick));
 }
 function drChoose(i){ actx(); drResolve(i); }
 function drResolve(i){
@@ -1433,7 +1451,7 @@ function drResolve(i){
     say('The answer was ' + st.q.correct + '.');
   }
   DR.r = st.wired ? 104 : 78;
-  setTimeout(drNext, i === ans ? 1100 : 1900);
+  setTimeout(circuitRoomCallback(DR, drNext), i === ans ? 1100 : 1900);
 }
 /* sweep the torch: follow the finger or the mouse. Remember which notes
    were lit before the press, so a blind tap can never pick an answer */
@@ -1629,133 +1647,197 @@ document.addEventListener('keydown', function(e){
 document.addEventListener('keydown', function(e){ if((e.key === ' ' || e.key === 'Enter') && !$('room-orrery').hidden && OR.st && OR.st.live && document.activeElement !== $('lever')){ e.preventDefault(); orStop(); } });
 
 /* ==========================================================
-   TEAM MODE
-   Opened from the big screen's code. This phone waits, and when the
-   host sends its player into a room it runs that very room here, with
-   no lag, reporting each question and answer so the big screen can
-   follow a beat behind.
+   TEAM MODE: verified membership, current assignment and ordered receipts.
+   The phone still runs/grades its mini-game locally; this is access control.
    ========================================================== */
-var TEAM = (function(){ try{ var c = new URLSearchParams(location.search).get('team'); return c ? c.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5) : null; }catch(e){ return null; } })();
-var TM = { me:null, lastSeq:0, curSeq:0, ev:0, lastQ:null, onStairs:false, running:false };
+var TEAM=(function(){try{var c=new URLSearchParams(location.search).get('team');return c?c.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5):null;}catch(e){return null;}})();
+var TM={me:null,running:false,starting:false,generation:0,queue:[],draining:false,nextEvent:0,lastQ:null,onStairs:false,window:null,activity:null,lastWindow:null,finalPending:null};
 if(TEAM){
-  var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-  var sbT = async function(path, opts){ opts = opts || {}; try{
-    var headers = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-    if(opts.method === 'POST' || opts.method === 'PATCH') headers['Prefer'] = 'return=minimal';
-    var r = await fetch(SB_URL + '/rest/v1/' + path, Object.assign({}, opts, {headers:headers}));
-    if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
-    return opts.method ? {ok:false} : [];
-  }catch(e){ return opts.method ? null : []; } };
-  var emit = function(e){
-    if(!TM.running) return;
-    sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq,
-      q_id: 'e' + TM.run + String(TM.ev++).padStart(3, '0'), choice: JSON.stringify(e) }) });
+  var teamAccess=PartyAccess.create('https://cgrbwtcydgfkbqhseeap.supabase.co','sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU',{family:'circuit',edition:ED==='bible'?'bible':'general'});
+  var teamWait=function(title,text,plate){$('twTitle').textContent=title;$('twText').textContent=text;$('twPlate').textContent=plate||'Full Circuit';show('teamWait');};
+  var phoneIssue=function(text,retry){
+    var box=$('teamDelivery');if(!box){box=document.createElement('div');box.id='teamDelivery';box.setAttribute('role','status');
+      box.style.cssText='position:fixed;bottom:12px;left:12px;right:12px;z-index:100000;padding:12px;border-radius:10px;background:#251612;color:#fff;border:2px solid #d7ac61';document.body.appendChild(box);}
+    box.innerHTML='';box.hidden=!text;if(!text)return;var label=document.createElement('span');label.textContent=text;box.appendChild(label);
+    if(retry){var b=document.createElement('button');b.type='button';b.textContent='Retry delivery';b.style.marginLeft='12px';b.onclick=retry;box.appendChild(b);}
   };
-  var report = function(result){
-    if(TM.abortSeq === TM.curSeq) return;   /* this room was handed on or skipped */
-    TM.running = false; TM.reportedSeq = TM.curSeq;
-    sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:TM.curSeq, q_id:'done', choice: JSON.stringify(result) }) });
-    teamWait(result.won ? 'You won the ' + ROOMS[TM.room].item : 'Back to the hallway',
-      result.won ? 'Look up at the big screen. The whole team is carrying it now.' : 'Look up at the big screen. The team will choose the next door.', ROOMS[TM.room].name);
+  var deliveryMessage=function(error){return error&&error.status>=400&&error.status<500&&error.status!==408&&error.status!==429?
+    'This update was not recorded. '+teamAccess.message(error):'Delivery is unconfirmed. Keep this page open and retry the same update.';};
+  var eventData=function(receipt){if(receipt&&receipt.event)return receipt.event;try{return JSON.parse(receipt.choice);}catch(e){return null;}};
+  var sameEvent=function(receipt,payload){var e=eventData(receipt);return !!(e&&Object.keys(payload).every(function(k){return e[k]===payload[k];}));};
+  var showCompletion=function(receipt,roomName){
+    var e=eventData(receipt);if(!e||e.t!=='done')return;
+    TM.completed=receipt;TM.reportedWindow=receipt.window_id;TM.running=false;TM.starting=false;phoneIssue('');
+    var R=ROOMS[roomName||TM.room];teamWait(e.won?'You won the '+(R?R.item:'item'):'Back to the hallway',
+      e.won?'Result confirmed. Look up at the big screen.':'Result confirmed. The team will choose the next door.',R?R.name:'Full Circuit');
   };
-  /* follow every question the rooms draw, so the big screen can show it */
+  var acceptedEvent=function(entry,receipt){
+    if(entry.generation!==TM.generation)return;
+    if(!sameEvent(receipt,entry.payload))throw new Error('A different room update is already recorded.');
+    if(TM.queue[0]===entry)TM.queue.shift();TM.deliveryError=null;
+    if(entry.payload.t==='done')showCompletion(receipt,entry.room);
+    else phoneIssue('');
+  };
+  var drainEvents=async function(){
+    if(TM.draining||TM.deliveryError||!TM.queue.length)return;var generation=TM.generation;TM.draining=true;TM.drainGeneration=generation;
+    try{
+      while(TM.queue.length&&generation===TM.generation){
+        var entry=TM.queue[0];if(entry.generation!==generation){TM.queue.shift();continue;}
+        try{
+          var receipt=await teamAccess.event(TEAM,entry.run,entry.window,entry.activity,entry.seq,entry.payload,entry.request);
+          if(generation!==TM.generation)return;acceptedEvent(entry,receipt);
+        }catch(error){
+          if(generation!==TM.generation)return;TM.deliveryError=error;
+          phoneIssue(deliveryMessage(error),function(){TM.deliveryError=null;drainEvents();});return;
+        }
+      }
+    }finally{if(TM.drainGeneration===generation)TM.draining=false;}
+  };
+  var queueEvent=function(payload){
+    if(!TM.window||!TM.activity)return;
+    var entry={generation:TM.generation,run:TM.run,window:TM.window,activity:TM.activity,seq:TM.nextEvent++,payload:JSON.parse(JSON.stringify(payload)),request:teamAccess.uuid(),room:TM.room};
+    TM.queue.push(entry);drainEvents();
+  };
+  var emit=function(e){if(TM.running&&!TM.doneQueued)queueEvent(e);};
+  var report=function(result,generation){
+    if(generation!==TM.generation||!TM.running||TM.doneQueued)return;
+    TM.doneQueued=true;TM.running=false;
+    teamWait('Saving the room result…','Keep this page open until delivery is confirmed.',ROOMS[TM.room].name);
+    queueEvent(Object.assign({t:'done'},result));
+  };
   ['pickQuestion','srPick','drPick'].forEach(function(fn){
-    var orig = window[fn];
-    window[fn] = function(t){ var q = orig(t); if(TM.running){ TM.lastQ = q; emit({ t: TM.onStairs ? 'stairs' : 'q', q: q.q }); } return q; };
+    var orig=window[fn];window[fn]=function(t){var q=orig(t);if(TM.running){TM.lastQ=q;emit({t:TM.onStairs?'stairs':'q',q:q.q});}return q;};
   });
-  var origHit = Tally.prototype.hit, origMiss = Tally.prototype.mistake;
-  Tally.prototype.hit = function(){ origHit.call(this); if(TM.lastQ) emit({ t:'a', ok:true, r:this.right, w:this.wrong, q:TM.lastQ.q, c:TM.lastQ.correct }); };
-  Tally.prototype.mistake = function(){ var counted = origMiss.call(this);
-    if(TM.lastQ) emit({ t:'a', ok:false, fuse:!counted, r:this.right, w:this.wrong, q:TM.lastQ.q, c:TM.lastQ.correct }); return counted; };
-
-  var teamWait = function(title, text, plate){ $('twTitle').textContent = title; $('twText').textContent = text; $('twPlate').textContent = plate || 'Full Circuit'; show('teamWait'); };
-  var runTeamRoom = function(state){
-    TM.lastSeq = state.roomSeq; TM.curSeq = state.roomSeq; TM.ev = 0; TM.run = Date.now().toString(36); TM.room = state.room; TM.running = true; TM.onStairs = false;
-    H = newHouse(); H.items = (state.items || []).slice(); H.fuse = !!state.fuse; H.depth = state.depth || 0; H.keyUsed = !!state.keyUsed;
-    var run = { switchboard:runSwitchboard, glasshouse:runGlasshouse, orrery:runOrrery, strongroom:runStrongroom, darkroom:runDarkRoom }[state.room];
-    actx(); SFX.door();
-    run(H.depth, function(won, stats){
-      if(won) return report({ won:true, stats:stats, fuse:H.fuse });
-      if(H.items.indexOf('Key') >= 0 && !H.keyUsed) return report({ won:false, stats:stats, keyUsed:true, penalty:0, fuse:H.fuse });
-      TM.onStairs = true;
-      runStairs(function(){ TM.onStairs = false; report({ won:false, stats:stats, penalty:H.finalePenalty, fuse:H.fuse }); });
+  var origHit=Tally.prototype.hit,origMiss=Tally.prototype.mistake;
+  Tally.prototype.hit=function(){origHit.call(this);if(TM.running&&TM.lastQ)emit({t:'a',ok:true,r:this.right,w:this.wrong,q:TM.lastQ.q,c:TM.lastQ.correct});};
+  Tally.prototype.mistake=function(){var counted=origMiss.call(this);if(TM.running&&TM.lastQ)emit({t:'a',ok:false,fuse:!counted,r:this.right,w:this.wrong,q:TM.lastQ.q,c:TM.lastQ.correct});return counted;};
+  var launchTeamRoom=function(state,generation){
+    if(generation!==TM.generation)return;TM.running=true;TM.starting=false;TM.onStairs=false;TM.doneQueued=false;TM.lastQ=null;
+    H=newHouse();H.items=(state.items||[]).slice();H.fuse=!!state.fuse;H.depth=state.depth||0;H.keyUsed=!!state.keyUsed;
+    var run={switchboard:runSwitchboard,glasshouse:runGlasshouse,orrery:runOrrery,strongroom:runStrongroom,darkroom:runDarkRoom}[state.room];
+    actx();SFX.door();
+    run(H.depth,function(won,stats){
+      if(generation!==TM.generation||!TM.running)return;
+      if(won)return report({won:true,stats:stats,fuse:H.fuse},generation);
+      if(H.items.indexOf('Key')>=0&&!H.keyUsed)return report({won:false,stats:stats,keyUsed:true,penalty:0,fuse:H.fuse},generation);
+      TM.onStairs=true;runStairs(function(){if(generation!==TM.generation||!TM.running)return;TM.onStairs=false;report({won:false,stats:stats,penalty:H.finalePenalty,fuse:H.fuse},generation);});
     });
   };
-  /* the host handed this room to someone else, or skipped it: stop quietly */
-  var abortRoom = function(){
-    TM.abortSeq = TM.curSeq; TM.running = false;
-    [SB, GH, OR, SR, DR].forEach(function(X){ if(X && X.st){ X.st.live = false; X.st.done = function(){}; } });
-    [GH, OR, SR, DR].forEach(function(X){ if(X && X.raf) cancelAnimationFrame(X.raf); });
+  var beginActivity=async function(start){
+    if(start.generation!==TM.generation||start.sending||start.acknowledged)return;start.sending=true;
+    try{
+      var result=await teamAccess.activityStart(TEAM,start.run,start.window,start.request);
+      if(start.generation!==TM.generation)return;
+      start.acknowledged=true;TM.pendingStart=null;TM.activity=result.activity_id;TM.nextEvent=result.next_event;phoneIssue('');
+      if(result.completed){showCompletion(result.completed,start.state.room);return;}
+      launchTeamRoom(start.state,start.generation);
+    }catch(error){
+      if(start.generation!==TM.generation)return;
+      phoneIssue(deliveryMessage(error),function(){beginActivity(start);});
+      teamWait('Room start is unconfirmed','Retry the same start request below.');
+    }finally{start.sending=false;}
   };
-  var nameFrom = function(state, id){ var n = (state.names || []).filter(function(x){ return x.id === id; })[0]; return n ? n.name : 'Someone'; };
-  var poll = async function(){
-    if(!TM.me) return;
-    var rows = await sbT('rooms?code=eq.' + TEAM + '&select=phase,state'); var rm = rows && rows[0]; if(!rm) return;
-    var st = rm.state || {}, ph = st.phase;
-    if(TM.running && (ph !== 'room' || st.player !== TM.me.id || st.roomSeq !== TM.curSeq)) abortRoom();
-    if(TM.running) return;
-    if(ph === 'room' && st.player === TM.me.id && st.roomSeq > TM.lastSeq) return runTeamRoom(st);
-    if(ph !== 'after') TM.reportedSeq = 0;
-    if(ph === 'lobby') teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
-    else if(ph === 'hall') teamWait('Choose a door together', 'Look at the big screen and argue about which door to open next.');
-    else if(ph === 'room') teamWait(nameFrom(st, st.player) + ' has gone in', 'Watch the big screen and shout your help. You might be next.', ROOMS[st.room] ? ROOMS[st.room].name : 'Full Circuit');
-    else if(ph === 'machine') teamWait('The house is explored', 'Look at the big screen for the machine.', 'The machine');
-    else if(ph === 'after' && !TM.reportedSeq) teamWait('Look at the big screen', 'The team is about to choose the next door. You could be next.');
-    else if(ph === 'finale'){
-      TM.fast = true;
-      var fq = st.fq;
-      if(fq && st.spark === TM.me.id && fq.id !== TM.answeredFq){
-        if(TM.shownFq !== fq.id){
-          TM.shownFq = fq.id;
-          $('tqQ').textContent = fq.q; $('tqNote').textContent = 'Answer before the spark fades.';
-          var box = $('tqOpts'); box.innerHTML = '';
-          fq.opts.forEach(function(o){
-            var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
-            b.addEventListener('click', function(){
-              if(TM.answeredFq === fq.id) return; TM.answeredFq = fq.id;
-              box.querySelectorAll('.opt').forEach(function(x){ x.disabled = true; }); b.classList.add('right');
-              sbT('moves', { method:'POST', body: JSON.stringify({ code:TEAM, player_id:TM.me.id, turn_seq:100 + fq.id, q_id:'ans', choice:o }) });
-              $('tqNote').textContent = 'Sent. Look up at the big screen.';
-            });
-            box.appendChild(b);
-          });
-          show('teamQ');
-          try{ if(navigator.vibrate) navigator.vibrate([90, 50, 140]); }catch(e){}
-          noise(0, 0.1, 0.25, 4200, 'highpass'); tone(880, 0.05, 0.2, 'sine', 0.09);
-        }
-        /* the Lens, used on the big screen, burns away a wrong answer here too */
-        if(fq.burn >= 0){ var bb = $('tqOpts').children[fq.burn]; if(bb && !bb.disabled){ bb.disabled = true; bb.style.opacity = '.3'; bb.style.textDecoration = 'line-through'; } }
-      } else if(fq && st.spark !== TM.me.id){
-        teamWait('The spark is with ' + nameFrom(st, st.spark), fq.q + ' Shout your help!', 'The machine');
-      }
+  var runTeamRoom=function(state,room){
+    TM.generation++;TM.queue=[];TM.deliveryError=null;TM.draining=false;TM.drainGeneration=TM.generation;
+    TM.starting=true;TM.running=false;TM.window=room.action.id;TM.run=room.run_id;TM.room=state.room;TM.curSeq=state.roomSeq;TM.lastWindow=room.action.id;TM.doneQueued=false;
+    var start={generation:TM.generation,run:room.run_id,window:room.action.id,state:JSON.parse(JSON.stringify(state)),request:teamAccess.uuid()};
+    TM.pendingStart=start;teamWait('Opening your room…','Keep this screen open.',ROOMS[state.room].name);beginActivity(start);
+  };
+  var abortRoom=function(){
+    TM.generation++;TM.running=false;TM.starting=false;TM.queue=[];TM.deliveryError=null;TM.pendingStart=null;TM.window=null;TM.activity=null;TM.doneQueued=false;
+    TM.draining=false;TM.drainGeneration=TM.generation;
+    [SB,GH,OR,SR,DR].forEach(function(X){if(X&&X.st){X.st.cancelled=true;X.st.live=false;X.st.done=function(){};}});
+    [GH,OR,SR,DR].forEach(function(X){if(X&&X.raf)cancelAnimationFrame(X.raf);});
+    SB.drag=null;GH.drag=null;DR.sweeping=null;DR.litAtPress=[];phoneIssue('');
+  };
+  var nameFrom=function(state,id){var n=(state.names||[]).filter(function(x){return x.id===id;})[0];return n?n.name:'Someone';};
+  var confirmFinal=function(receipt){
+    if(!TM.finalPending||receipt.window_id!==TM.finalPending.window||receipt.choice!==TM.finalPending.choice)return false;
+    TM.answeredWindow=receipt.window_id;TM.finalPending.confirmed=true;$('tqNote').textContent='Answer confirmed. Look up at the big screen.';phoneIssue('');return true;
+  };
+  var sendFinal=async function(entry){
+    if(entry!==TM.finalPending||entry.confirmed||entry.sending)return;entry.sending=true;$('tqNote').textContent='Sending your answer…';
+    try{var receipt=await teamAccess.submit(TEAM,entry.run,entry.window,entry.choice,entry.request);if(entry===TM.finalPending)confirmFinal(receipt);}
+    catch(error){if(entry!==TM.finalPending)return;$('tqNote').textContent=deliveryMessage(error);phoneIssue(deliveryMessage(error),function(){sendFinal(entry);});}
+    finally{entry.sending=false;}
+  };
+  var reconcileReceipts=function(receipts){
+    var rows=receipts||[],entry=TM.queue[0];
+    while(entry){
+      var receipt=rows.filter(function(r){return r.window_id===entry.window&&r.activity_id===entry.activity&&r.event_seq===entry.seq&&sameEvent(r,entry.payload);})[0];
+      if(!receipt)break;acceptedEvent(entry,receipt);entry=TM.queue[0];
     }
-    else if(ph === 'over'){ TM.fast = false;
-      teamWait(st.awake ? 'The machine is awake' : 'The machine stays asleep', st.awake ? 'You did it together. Look up at the big screen.' : 'So close. Look up at the big screen.', 'The machine'); }
+    if(TM.queue.length&&!TM.draining&&!TM.deliveryError)drainEvents();
+    if(TM.finalPending){var answer=rows.filter(function(r){return r.window_id===TM.finalPending.window&&r.choice===TM.finalPending.choice;})[0];if(answer)confirmFinal(answer);}
   };
-  /* check twice as often during the finale, when every second counts */
-  var loop = function(){ poll().then(function(){ setTimeout(loop, TM.fast ? 500 : 1200); }, function(){ setTimeout(loop, 1200); }); };
-  var join = async function(){
-    var name = ($('joinName').value || '').trim();
-    if(!name){ $('joinErr').textContent = 'Type a name first.'; return; }
-    var rooms = await sbT('rooms?code=eq.' + TEAM + '&select=code');
-    if(!rooms || !rooms.length){ $('joinErr').textContent = 'No game with that code. Check the big screen.'; return; }
-    var already = await sbT('players?code=eq.' + TEAM + '&select=id');
-    if(Array.isArray(already) && already.length >= 8){ $('joinErr').textContent = 'This house is full: eight players are already inside. Ask the host about starting a second game.'; return; }
-    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('p' + Math.random().toString(36).slice(2));
-    var now = new Date().toISOString();
-    var r = await sbT('players', { method:'POST', body: JSON.stringify({ id:id, code:TEAM, name:name, tag:'full-circuit', score:0, joined_at:now, last_seen:now }) });
-    if(!r || r.ok === false){ $('joinErr').textContent = 'Could not join. Check your connection.'; return; }
-    TM.me = { id:id, name:name }; store('fc_team_' + TEAM, JSON.stringify(TM.me));
-    actx(); teamWait('You are in', 'Waiting for the team to step inside. Keep this screen open.');
-    loop();
+  var showFinalQuestion=function(st,room,receipts){
+    var fq=st.fq,action=room.action;if(!fq||!action){teamWait('The spark is moving','Watch the big screen for the next question.','The machine');return;}
+    if(st.spark!==TM.me.id){teamWait('The spark is with '+nameFrom(st,st.spark),fq.q+' Shout your help!','The machine');return;}
+    if(TM.shownWindow!==action.id){
+      TM.shownWindow=action.id;TM.finalPending=null;TM.answeredWindow=null;phoneIssue('');$('tqQ').textContent=fq.q;$('tqNote').textContent=action.accepting?'Answer before the spark fades.':'This question has closed.';
+      var box=$('tqOpts');box.innerHTML='';
+      fq.opts.forEach(function(o){
+        var b=document.createElement('button');b.type='button';b.className='opt';b.textContent=o;b.disabled=!action.accepting;
+        b.addEventListener('click',function(){
+          if(TM.finalPending||TM.shownWindow!==action.id)return;
+          box.querySelectorAll('.opt').forEach(function(x){x.disabled=true;});b.classList.add('picked');
+          TM.finalPending={run:room.run_id,window:action.id,choice:o,request:teamAccess.uuid()};sendFinal(TM.finalPending);
+        });box.appendChild(b);
+      });show('teamQ');
+      try{if(navigator.vibrate)navigator.vibrate([90,50,140]);}catch(e){}noise(0,0.1,0.25,4200,'highpass');tone(880,0.05,0.2,'sine',0.09);
+    }
+    var accepted=(receipts||[]).filter(function(r){return r.window_id===action.id&&r.kind==='finale';})[0];
+    if(accepted){
+      TM.finalPending={run:room.run_id,window:action.id,choice:accepted.choice,request:null,confirmed:true};
+      $('tqOpts').querySelectorAll('.opt').forEach(function(b){b.disabled=true;if(b.textContent===accepted.choice)b.classList.add('picked');});confirmFinal(accepted);
+    }
+    if(fq.burn>=0){var bb=$('tqOpts').children[fq.burn];if(bb){bb.disabled=true;bb.style.opacity='.3';bb.style.textDecoration='line-through';}}
   };
-  $('joinCode').textContent = TEAM;
-  $('joinBtn').addEventListener('click', join);
-  $('joinName').addEventListener('keydown', function(e){ if(e.key === 'Enter') join(); });
-  /* rejoin on reload, so a phone that sleeps does not lose its place */
-  var saved = null; try{ saved = JSON.parse(recall('fc_team_' + TEAM) || 'null'); }catch(e){}
-  if(saved && saved.id){ TM.me = saved; teamWait('Welcome back', 'Rejoining the team\u2026'); loop(); }
-  else show('join');
+  var poll=async function(){
+    if(!TM.me||TM.polling)return;TM.polling=true;
+    try{
+      var result=await teamAccess.playerState(TEAM);if(!TM.me)return;TM.me=result.member;
+      var room=result.room,st=room.state||{},ph=room.phase,action=room.action;st.names=result.members||st.names||[];
+      if(TM.window&&(ph!=='room'||st.player!==TM.me.id||!action||action.id!==TM.window||room.run_id!==TM.run))abortRoom();
+      reconcileReceipts(result.receipts);
+      if(TM.window&&TM.activity&&action&&action.activity_id!==TM.activity){abortRoom();teamWait('The room was restarted','Another screen restarted this room. Reload this page to take over.');return;}
+      if(TM.window&&action&&!action.accepting&&!action.completed){abortRoom();teamWait('The host is closing this room','Watch the big screen for the next step.');return;}
+      if(TM.running||TM.starting)return;
+      if(ph==='room'&&st.player===TM.me.id&&action){
+        if(action.completed){showCompletion(action.completed,st.room);return;}
+        if(action.accepting&&action.id!==TM.lastWindow){runTeamRoom(st,room);return;}
+        if(TM.doneQueued){teamWait('Saving the room result…','Delivery is still unconfirmed. Keep this page open.');return;}
+        teamWait('The room is waiting','Watch the big screen or reload to restart an unfinished room.',ROOMS[st.room]?ROOMS[st.room].name:'Full Circuit');return;
+      }
+      if(ph!=='finale'){TM.fast=false;TM.finalPending=null;TM.shownWindow=null;}
+      if(ph==='lobby')teamWait('You are in','Waiting for the team to step inside. Keep this screen open.');
+      else if(ph==='hall')teamWait('Choose a door together','Look at the big screen and argue about which door to open next.');
+      else if(ph==='room')teamWait(nameFrom(st,st.player)+' has gone in','Watch the big screen and shout your help. You might be next.',ROOMS[st.room]?ROOMS[st.room].name:'Full Circuit');
+      else if(ph==='machine')teamWait('The house is explored','Look at the big screen for the machine.','The machine');
+      else if(ph==='after')teamWait('Look at the big screen','The team is about to choose the next door. You could be next.');
+      else if(ph==='finale'){TM.fast=true;showFinalQuestion(st,room,result.receipts);}
+      else if(ph==='over')teamWait(st.awake?'The machine is awake':'The machine stays asleep',st.awake?'You did it together. Look up at the big screen.':'So close. Look up at the big screen.','The machine');
+    }catch(error){phoneIssue(teamAccess.message(error));}finally{TM.polling=false;}
+  };
+  var loop=function(){if(!TM.me)return;poll().finally(function(){TM.pollTimer=setTimeout(loop,TM.fast?500:1200);});};
+  var enterTeam=function(member){
+    TM.me=member;teamAccess.rememberPlayer(TEAM);teamWait('You are in','Waiting for the team to step inside. Keep this screen open.');
+    clearInterval(TM.heartbeat);var beat=function(){if(TM.me)teamAccess.heartbeat(TEAM).catch(function(error){phoneIssue(teamAccess.message(error));});};beat();TM.heartbeat=setInterval(beat,12000);
+    var leave=$('teamLeave');if(!leave){leave=document.createElement('button');leave.id='teamLeave';leave.type='button';leave.className='quiet';leave.textContent='Leave team';leave.style.cssText='position:fixed;top:12px;right:12px;z-index:1000';document.body.appendChild(leave);
+      leave.onclick=async function(){leave.disabled=true;try{await teamAccess.leave(TEAM);TM.me=null;clearTimeout(TM.pollTimer);clearInterval(TM.heartbeat);abortRoom();teamAccess.rememberPlayer('');leave.remove();show('join');}catch(error){phoneIssue(teamAccess.message(error));leave.disabled=false;}};}
+    clearTimeout(TM.pollTimer);loop();
+  };
+  var join=async function(){
+    if(TM.joining)return;var name=($('joinName').value||'').trim();if(!name){$('joinErr').textContent='Type a name first.';return;}
+    TM.joining=true;$('joinBtn').disabled=true;$('joinErr').textContent='';
+    try{await teamAccess.preview(TEAM);var member=await teamAccess.join(TEAM,name);actx();enterTeam(member);}
+    catch(error){$('joinErr').textContent=/full|eight|capacity/i.test(error.message)?'This house is full. Ask the host about starting a second game.':teamAccess.message(error);}
+    finally{TM.joining=false;$('joinBtn').disabled=false;}
+  };
+  $('joinCode').textContent=TEAM;$('joinBtn').addEventListener('click',join);$('joinName').addEventListener('keydown',function(e){if(e.key==='Enter')join();});
+  /* A code is only a hint. Restore membership from the verified Auth identity. */
+  teamWait('Checking your team connection…','Keep this page open.');
+  teamAccess.membership(TEAM).then(function(member){if(member)enterTeam(member);else show('join');},function(error){show('join');$('joinErr').textContent=teamAccess.message(error);});
 }
 
 

@@ -337,17 +337,26 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
 
 </script>
 <script src="creak-art.js?v=2"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script>
 "use strict";
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path, opts){ opts=opts||{}; try{
-  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
-  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
-  return opts.method?{ok:false}:[];
-}catch(e){ return opts.method?null:[]; } }
+let hostGeneration=0,engineBusy=false,starting=false,hostProblem=false;
+const access=PartyAccess.create(SB_URL,SB_KEY,{family:'creak',edition:'general'});
+function hostError(error){
+  let box=document.getElementById('partyConnection');
+  if(!box){box=document.createElement('div');box.id='partyConnection';box.setAttribute('role','status');box.style.cssText='padding:12px;margin:12px;border:1px solid #e6b655;border-radius:12px';document.body.appendChild(box);}
+  box.textContent=typeof error==='string'?error:access.message(error);
+  const retry=document.createElement('button');retry.type='button';retry.textContent='Retry connection';retry.onclick=()=>access.retry();box.appendChild(retry);
+  const reload=document.createElement('button');reload.type='button';reload.textContent='Reload';reload.onclick=()=>location.reload();box.appendChild(reload);
+}
+access.onIssue(function(detail){hostProblem=!detail.recovered;
+ if(detail.recovered){const box=document.getElementById('partyConnection');if(box)box.remove();return;}
+ hostError(detail.message+' The game is paused while this is resolved.');
+});
+function currentHost(run,generation){return access.currentRoom()&&access.currentRoom().run_id===run&&hostGeneration===generation;}
 function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
 function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.co'; }
 const $=id=>document.getElementById(id);
@@ -355,13 +364,13 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){retu
 
 const COLS=10, ROWS=10, TOP=COLS*ROWS;
 const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
-/* Each phone chooses a climber (colour, skin, hat) and stores it in its player tag. Two players never share a
+/* Each phone chooses a climber (colour, skin, hat) and shares it through its authenticated membership. Two players never share a
    colour: whoever joined first keeps it and a later clash gets the first free colour. Phones that chose
    nothing get a colour in joining order. */
 function assignLooks(){
   const taken=new Set(), out={};
   G.players.forEach(function(p,i){
-    const want=window.CreakArt?CreakArt.parseLook(p.tag):null;
+    const want=p.look||null;
     let c=(want && !taken.has(want.c))?want.c:-1;
     if(c<0){ c=0; while(taken.has(c) && c<PALETTE.length-1) c++; if(taken.has(c)) c=i%PALETTE.length; }
     taken.add(c);
@@ -526,26 +535,37 @@ function showQOverlay(kind, text, opts){ const v=$('qview'); if(!v) return; v.st
 function hideQOverlay(){ const v=$('qview'); if(v) v.style.display='none'; }
 function tickQTimer(deadline, dur){ const fill=$('qtimerfill'); if(!fill) return; const remain=Math.max(0,deadline-Date.now()); fill.style.width=(100*remain/dur)+'%'; }
 
-async function askQuestionFor(playerId, kind, square){
-  const q=pickQuestion(); const opts=shuffle([q.correct].concat(q.wrong)); const dur=timerFor(square);
-  const qId='q'+(++G.qCounter);
-  G.pendingQCorrect=q.correct; // host-local ONLY -- never written to shared state, so it can't be read by a player
-  const deadline=Date.now()+dur;
-  G.pendingQ={ forPlayer:playerId, qId:qId, kind:kind, q:q.q, opts:opts, deadline:deadline, dur:dur };
-  showQOverlay(kind, q.q, opts);
-  writeState();
-  let resolved=null;
-  while(Date.now()<deadline){
-    tickQTimer(deadline,dur);
-    let rows=[]; try{ rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+encodeURIComponent(playerId)+'&q_id=eq.'+encodeURIComponent(qId)+'&select=choice&order=created_at.asc')||[]; }catch(e){}
-    if(rows.length && rows[0].choice!=null){ resolved=rows[0].choice; break; }
-    await sleep(350);
+async function askQuestionFor(playerId,kind,square){
+ const run=access.currentRoom().run_id,generation=hostGeneration;
+ const q=pickQuestion(),opts=shuffle([q.correct].concat(q.wrong)),dur=timerFor(square),qId='q'+(++G.qCounter);
+ G.pendingQCorrect=q.correct;
+ G.pendingQ={forPlayer:playerId,qId:qId,kind:kind,q:q.q,opts:opts,deadline:Date.now()+dur,dur:dur};
+ await writeState();
+ if(!currentHost(run,generation))return false;
+ const action=access.currentRoom().action;
+ if(!action||!action.accepting||action.member_id!==playerId){
+  const members=await access.members(G.code);
+  if(!(members||[]).some(p=>p.id===playerId)){G.pendingQ=null;G.pendingQCorrect=null;await writeState();return false;}
+  throw new Error('The question could not be opened.');
+ }
+ let deadline=Date.now()+dur;G.pendingQ.deadline=deadline;await writeState();
+ showQOverlay(kind,q.q,opts);
+ let resolved=null;
+ while(currentHost(run,generation)&&G.phase==='live'){
+  if(access.busy()){const before=Date.now();await sleep(200);deadline+=Date.now()-before;G.pendingQ.deadline=deadline;continue;}
+  tickQTimer(deadline,dur);
+  let rows;
+  try{rows=await access.actions(G.code,run,action.id);}catch(error){hostError(error);const before=Date.now();await sleep(350);deadline+=Date.now()-before;continue;}
+  if(!currentHost(run,generation))return false;
+  if(rows.length||Date.now()>=deadline){
+   const closed=await access.close(action.id);
+   if(!currentHost(run,generation))return false;
+   const accepted=(closed.actions||[])[0];resolved=accepted?accepted.choice:null;break;
   }
-  hideQOverlay();
-  const ok=(resolved!=null) && (resolved===G.pendingQCorrect);
-  G.pendingQ=null; G.pendingQCorrect=null;
-  writeState();
-  return ok;
+  await sleep(350);
+ }
+ hideQOverlay();const ok=resolved!=null&&resolved===G.pendingQCorrect;
+ G.pendingQ=null;G.pendingQCorrect=null;await writeState();return ok;
 }
 const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,28],[72,28],[28,50],[72,50],[28,72],[72,72]]};
 function renderDie(v){ const d=$('die'); if(!d) return; d.innerHTML=''; (PIPS[v]||[]).forEach(function(p){ const s=document.createElement('span'); s.className='pip'; s.style.left=p[0]+'%'; s.style.top=p[1]+'%'; d.appendChild(s); }); }
@@ -756,51 +776,60 @@ async function walkToken(pid, fromN, toN){
 }
 
 async function createRoom(){
-  G.code=code5(); G.phase='lobby';
-  const made = await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, phase:'lobby', state:{game:'creak-multi',phase:'lobby'}})});
-  if(!made || made.ok===false){
-    $('code').textContent='----';
-    const u=$('url'); if(u) u.textContent='Cannot reach the game server. Check your connection and reload.';
-    const q=$('qr'); if(q) q.style.display='none';
-    const sb2=$('startBtn'); if(sb2){ sb2.disabled=true; sb2.textContent='No connection'; }
-    return;
-  }
+ try{
+  const saved=access.savedHostCode();
+  const owned=saved?await access.resumeHost(saved):await access.createRoom();
+  hostGeneration++;G.code=owned.code;G.phase='lobby';
   $('code').textContent=G.code;
   const link=baseUrl()+'/creak-multi-play.html?c='+G.code;
-  const u=$('url'); u.textContent=link.replace(/^https?:\/\//,'');
+  $('url').textContent=link.replace(/^https?:\/\//,'');
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
+  if(saved&&owned.run_id&&owned.phase==='live'&&owned.state&&owned.state.board){
+   // Ownership was verified by resumeHost. Restore server state and open a fresh
+   // roll for the interrupted turn; its previous receipts stay closed/history.
+   if(owned.action&&owned.action.accepting)await access.close(owned.action.id);
+   const st=owned.state;
+   usedTags=new Set();
+   try{const hints=JSON.parse(localStorage.getItem('tb_creak_host_hints_v1')||'null');
+    if(hints&&hints.room_id===owned.id&&hints.run_id===owned.run_id&&Array.isArray(hints.usedTags))
+     usedTags=new Set(hints.usedTags.filter(tag=>typeof tag==='string'&&tag.length<=256).slice(0,1000));
+   }catch(error){}
+   Object.assign(G,{phase:'live',board:st.board,order:st.order.slice(),turnIdx:st.turnIdx,
+    positions:st.positions,turnSeq:st.turnSeq+1,seqBase:(st.seqBase||0)+1,
+    qCounter:st.qCounter||0,looks:st.looks||null,winner:null,pendingQ:null,pendingQCorrect:null,
+    turnStartedAt:Date.now()});
+   await pollPlayers();
+   $('lobby').style.display='none';$('boardwrap').style.display='block';$('die').style.display='block';renderDie(6);
+   resize();settleStationaryTokens(null);draw();renderTurnbar();await writeState();
+   setStatus('Back on the mountain. Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026');
+   return true;
+  }
+  if(saved)await access.beginRun();
+  await writeState();return true;
+ }catch(error){$('code').textContent='----';$('startBtn').disabled=true;hostError(error);return false;}
 }
-function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
-const HOST_KEY='creak_multi_host_v1';
-function saveHost(){ try{ localStorage.setItem(HOST_KEY, JSON.stringify({ at:Date.now(), code:G.code, phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx, positions:G.positions,
-  turnSeq:G.turnSeq, seqBase:G.seqBase|0, winner:G.winner, looks:G.looks||null, doneMoves:G.doneMoves||{}, usedTags:[...usedTags] })); }catch(e){} }
-async function resumeHost(){
-  let s=null; try{ s=JSON.parse(localStorage.getItem(HOST_KEY)||'null'); }catch(e){}
-  if(!s || !s.code || Date.now()-s.at>3*3600e3) return false;
-  const rooms=await sb('rooms?code=eq.'+s.code+'&select=code,state'); if(!rooms || !rooms.length) return false;
-  G.code=s.code; G.phase='lobby'; const wasLive=s.phase==='live'; G.turnSeq=s.turnSeq|0; G.seqBase=s.seqBase|0; G.doneMoves=s.doneMoves||{};
-  if(wasLive){ G.board=s.board; G.order=s.order||[]; G.turnIdx=s.turnIdx|0; G.positions=s.positions||{}; G.turnSeq=s.turnSeq|0; G.winner=null; G.looks=s.looks||null;
-    G.doneMoves=s.doneMoves||{}; G.redoTurn=true; usedTags=new Set(s.usedTags||[]); G.turnStartedAt=Date.now(); G.pendingQ=null; G.pendingQCorrect=null; }
-  $('code').textContent=G.code;
-  const link=baseUrl()+'/creak-multi-play.html?c='+G.code; const u=$('url'); if(u) u.textContent=link.replace(/^https?:\/\//,'');
-  const q=$('qr'); if(q) q.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
-  await pollPlayers();
-  if(wasLive){ G.phase='live'; $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block'; renderDie(6); resize(); settleStationaryTokens(null); draw(); renderTurnbar();
-    setStatus('Back on the mountain. Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026'); writeState(); }
-  return true;
-}
-function writeState(){ saveHost(); setRoom({state:{
+function setRoom(patch){return access.publish({phase:G.phase,state:patch.state});}
+function saveHostHints(){try{const owned=access.currentRoom();if(owned&&owned.id)
+ localStorage.setItem('tb_creak_host_hints_v1',JSON.stringify({room_id:owned.id,run_id:owned.run_id,usedTags:[...usedTags]}));
+ }catch(error){} }
+function writeState(){ saveHostHints(); return setRoom({state:{
   game:'creak-multi', phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx,
-  positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null, looks:G.looks||null
+  positions:G.positions, turnSeq:G.turnSeq, seqBase:G.seqBase||0, qCounter:G.qCounter||0,
+  winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null, looks:G.looks||null
 }}); }
 
-async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,tag&order=joined_at.asc'); if(r) G.players=r; }catch(e){}
-  if(G.phase==='lobby') G.looks=assignLooks();
-  if(G.phase==='live') reconcileDropouts(); }
+async function pollPlayers(){
+ if(!G.code)return;
+ const code=G.code,generation=hostGeneration;
+ try{const rows=await access.members(code);if(code!==G.code||generation!==hostGeneration)return;G.players=rows||[];
+  if(G.phase==='lobby')G.looks=assignLooks();
+  if(G.phase==='live'&&!engineBusy)await reconcileDropouts();
+ }catch(error){hostError(error);}
+}
 
 // If someone leaves mid-race, drop them from the rotation so the table doesn't
 // stall waiting on a player who isn't there any more.
-function reconcileDropouts(){
+async function reconcileDropouts(){
   if(!G.order || G.order.length<2) return;
   const present=new Set(G.players.map(function(p){ return p.id; }));
   const survivors=G.order.filter(function(pid){ return present.has(pid); });
@@ -812,7 +841,7 @@ function reconcileDropouts(){
     // last player standing wins by default rather than racing themselves
     G.order=survivors; G.turnIdx=0;
     G.winner={id:survivors[0], name:nameOf(survivors[0])};
-    G.phase='gameover'; draw(); renderTurnbar(); showWin(); writeState(); return;
+    G.phase='gameover'; draw(); renderTurnbar(); showWin(); await writeState(); return;
   }
 
   // keep whoever's turn it is pointing at the right person after the splice
@@ -820,12 +849,12 @@ function reconcileDropouts(){
   G.order=survivors;
   const idx=survivors.indexOf(activeBefore);
   G.turnIdx = idx>=0 ? idx : (G.turnIdx % survivors.length);
-  if(idx<0) G.turnStartedAt=Date.now();                  // active player left: fresh clock for the next one
+  if(idx<0){G.turnSeq++;G.turnStartedAt=Date.now();}                  // active player left: fresh clock for the next one
   if(G.pendingQ && !present.has(G.pendingQ.forPlayer)){  // they left mid-question
     G.pendingQ=null; G.pendingQCorrect=null; hideQOverlay();
   }
   setStatus(goneNames.join(' & ')+(goneNames.length>1?' left':' left')+'. Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026');
-  draw(); renderTurnbar(); writeState();
+  draw(); renderTurnbar(); await writeState();
 }
 
 function renderLobby(){
@@ -838,7 +867,7 @@ function renderLobby(){
     [].forEach.call(el.querySelectorAll('canvas.mini'), function(cv){ const p=G.players[+cv.dataset.i], lk=looks[p.id]; if(!window.CreakArt||!lk) return;
       const X=cv.getContext('2d'); X.clearRect(0,0,88,100); CreakArt.climber(X, 44, 68, {CELL:100, T:0}, {col:lk.col, skin:lk.skin, hat:lk.hat}); });
   }
-  $('startBtn').disabled = G.players.length<2;
+  $('startBtn').disabled = starting||engineBusy||access.busy()||G.phase!=='lobby'||G.players.length<2;
   $('startBtn').textContent = G.players.length<2 ? 'Start (need 2+ players)' : 'Start game ('+G.players.length+' players)';
 }
 
@@ -852,12 +881,10 @@ function renderTurnbar(){
   }).join('');
 }
 
-async function nextFreeSeq(){ let top=-1;
-  try{ const r=await sb('moves?code=eq.'+G.code+'&select=turn_seq&order=turn_seq.desc&limit=1'); if(r && r.length) top=r[0].turn_seq|0; }catch(e){}
-  return Math.max(G.turnSeq|0, top+1); }
+async function nextFreeSeq(){return Math.max(0,(G.turnSeq|0)+1);}
 async function startGame(){
-  if(G.phase==='live' || G.starting) return; G.starting=true;
-  let seq0=0; try{ seq0=await nextFreeSeq(); } finally { G.starting=false; }
+  if(starting||engineBusy||access.busy()||G.phase!=='lobby'||G.players.length<2)return;
+  starting=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;const seq0=await nextFreeSeq();
   G.board=genBoard();
   G.order=G.players.map(function(p){ return p.id; }); G.looks=assignLooks();
   G.turnIdx=0; G.turnSeq=seq0; G.seqBase=seq0; G.winner=null; G.phase='live';
@@ -866,7 +893,8 @@ async function startGame(){
   G.turnStartedAt=Date.now();
   resize(); renderTurnbar();
   setStatus('Waiting for <b>'+nameOf(G.order[0])+'</b> to roll…');
-  writeState();
+  await writeState();G.turnStartedAt=Date.now();
+  }finally{starting=false;if(G.phase==='lobby')renderLobby();}
 }
 function nameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?esc(p.name):'Player'; }
 // Outcome lines (right, wrong, Roc, rockfall, storm...) stay up long enough to be read on the TV,
@@ -878,23 +906,19 @@ async function holdOutcome(){ const left=1500-(Date.now()-statusOutcomeAt); if(l
 
 // ---------- authoritative move processing ----------
 async function pollMoves(){
-  if(G.phase!=='live') return;
-  const activeId=G.order[G.turnIdx];
-  if(!G.turnStartedAt) G.turnStartedAt=Date.now();
-  let rows=[];
-  try{ rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+encodeURIComponent(activeId)+'&turn_seq=eq.'+G.turnSeq+'&select=id,player_id,turn_seq&order=created_at.asc')||[]; }catch(e){}
-  if(rows.length){
-    G.doneMoves=G.doneMoves||{};
-    // a roll not used yet; after a reload the interrupted turn is played again
-    const mv=G.redoTurn ? rows[rows.length-1] : rows.find(function(r){ return !G.doneMoves[r.id]; });
-    if(mv){ G.redoTurn=false; G.doneMoves[mv.id]=1; G.lastProcessedMoveId=mv.id; await resolveTurn(activeId); return; }
-  }
-  G.redoTurn=false;
-  // nobody's rolled -- if they've been away too long, the host rolls for them so the table keeps moving
-  if(Date.now()-G.turnStartedAt > TURN_TIMEOUT_MS){
-    setStatus(nameOf(activeId)+' took too long, rolling for them\u2026');
-    await resolveTurn(activeId);
-  }
+ if(G.phase!=='live'||engineBusy||starting||access.busy())return;
+ engineBusy=true;
+ try{
+  const activeId=G.order[G.turnIdx],room=access.currentRoom(),window=room&&room.action,generation=hostGeneration;
+  if(!window||!window.accepting||window.kind!=='roll'||window.member_id!==activeId)return;
+  const rows=await access.actions(G.code,room.run_id,window.id);
+  if(!currentHost(room.run_id,generation)||G.phase!=='live'||G.order[G.turnIdx]!==activeId)return;
+  if(!rows.length&&Date.now()-G.turnStartedAt<=TURN_TIMEOUT_MS)return;
+  const closed=await access.close(window.id);
+  if(!currentHost(room.run_id,generation)||G.phase!=='live')return;
+  if(!(closed.actions||[]).length)setStatus(nameOf(activeId)+' took too long, rolling for them\u2026');
+  await resolveTurn(activeId);
+ }finally{engineBusy=false;}
 }
 
 async function resolveTurn(playerId){
@@ -914,7 +938,7 @@ async function resolveTurn(playerId){
 
   if(willWin){
     G.positions[playerId]=TOP; G.winner={id:playerId,name:nameOf(playerId)}; G.phase='gameover';
-    settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); writeState(); return;
+    settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); await writeState(); return;
   }
 
   // Landed on a missing tile? Straight down.
@@ -929,7 +953,7 @@ async function resolveTurn(playerId){
     G.turnSeq++; G.turnStartedAt=Date.now();
     draw(); renderTurnbar();
     setStatus('Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026');
-    writeState();
+    await writeState();
     return;
   }
 
@@ -953,7 +977,7 @@ async function resolveTurn(playerId){
     if(typeof after==='number') pos=after;
     if(pos>=TOP){
       G.positions[playerId]=TOP; G.winner={id:playerId,name:nameOf(playerId)}; G.phase='gameover';
-      settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); writeState(); return;
+      settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); await writeState(); return;
     }
   }
   G.positions[playerId]=pos;
@@ -966,7 +990,7 @@ async function resolveTurn(playerId){
   G.turnStartedAt=Date.now();
   draw(); renderTurnbar();
   setStatus('Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026');
-  writeState();
+  await writeState();
 }
 function showWin(){
   const alive=(G.board.ladders||[]).filter(function(l){return l.alive;}).length;
@@ -996,6 +1020,8 @@ function showWin(){
   };
 }
 async function playAgain(){
+  if(engineBusy||starting||access.busy())return;
+  engineBusy=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;
   $('overlay').classList.add('hide');
   const cf=$('confetti'); if(cf) cf.innerHTML='';
   G.phase='lobby'; G.board={ladders:[],snakes:[]}; G.order=[]; G.turnIdx=0; G.positions={};
@@ -1005,22 +1031,22 @@ async function playAgain(){
   $('lobby').style.display='block'; $('lobbyPre').style.display='block';
   await pollPlayers(); renderLobby();
   setStatus('');
-  writeState();
+  await writeState();
+  }finally{engineBusy=false;renderLobby();}
 }
 
 async function loop(){
-  try{
-    if(G.phase==='lobby'){ await pollPlayers(); renderLobby(); }
-    else if(G.phase==='live'){ await pollPlayers(); await pollMoves(); }
-  }catch(e){ try{ console.warn('Creak & Coil turn error', e); }catch(_){} }   /* one bad turn must never freeze the table */
-  setTimeout(loop, 900);
+ try{if(!access.busy()&&!engineBusy&&!starting){
+  if(G.phase==='lobby'){await pollPlayers();renderLobby();}
+  else if(G.phase==='live'){await pollPlayers();await pollMoves();}
+ }}catch(error){hostError(error);}finally{setTimeout(loop,900);}
 }
 
 $('startBtn').addEventListener('click', function(){ if(G.players.length>=2) startGame(); });
-$('ovAgain').addEventListener('click', playAgain);
+$('ovAgain').addEventListener('click', function(){playAgain();});
 window.addEventListener('resize', resize);
 CreakArt.sky.mount(); CreakArt.onThunder=function(){ try{ SFX.rumble(); }catch(e){} };
-resumeHost().then(function(ok){ return ok ? null : createRoom(); }).then(function(){ loop(); });
+createRoom().then(function(ok){if(ok)loop();});
 
 </script>
 <script src="tb-hosts.js"></script>
@@ -1090,13 +1116,15 @@ resumeHost().then(function(ok){ return ok ? null : createRoom(); }).then(functio
   /* moments on the climb: a short scene now and then, never during a question and never two within three turns.
      The turn is held while it plays, so the phones simply wait, and they are told to watch the big screen. */
   var lastCut = -99, seen = {};
-  function moment(kind, opts, chance, force){
-    return new Promise(function(res){
-      if(!window.TBScenes || !cutsOn()) return res(false);
-      if(!force && (G.phase !== 'live' || G.turnSeq - lastCut < 3 || Math.random() > chance)) return res(false);
-      lastCut = G.turnSeq; G.scene = kind; try{ writeState(); }catch(e){}
-      playScene(kind, opts, function(){ G.scene = null; try{ writeState(); }catch(e){} res(true); });
-    });
+  async function moment(kind, opts, chance, force){
+    if(!window.TBScenes || !cutsOn()) return false;
+    if(!force && (G.phase !== 'live' || G.turnSeq - lastCut < 3 || Math.random() > chance)) return false;
+    const room=access.currentRoom(),generation=hostGeneration;
+    lastCut = G.turnSeq; G.scene = kind; await writeState();
+    if(!currentHost(room.run_id,generation))return false;
+    await new Promise(function(res){playScene(kind, opts, res);});
+    if(!currentHost(room.run_id,generation))return false;
+    G.scene = null; await writeState();return true;
   }
   window.ccMoment = moment;
   function rawName(pid){ var p = G.players.find(function(x){ return x.id === pid; }); return p && p.name ? String(p.name) : 'Player'; }
@@ -1117,7 +1145,7 @@ resumeHost().then(function(ok){ return ok ? null : createRoom(); }).then(functio
 
   /* playing: show the guide; summit: a short scene, then the results */
   var _start = window.startGame;
-  window.startGame = function(){ lastCut = -99; seen = {}; var r = _start.apply(this, arguments); document.body.classList.add('cc-playing'); try{ resize(); }catch(e){} say('Rope up, everyone!', 'welcome'); return r; };
+  window.startGame = async function(){ lastCut = -99; seen = {}; var r = await _start.apply(this, arguments); if(G.phase==='live'){document.body.classList.add('cc-playing');try{ resize(); }catch(e){} say('Rope up, everyone!', 'welcome');}return r; };
   var _win = window.showWin;
   window.showWin = function(){ var r = _win.apply(this, arguments); var w = G.winner ? rawName(G.winner.id) : '';
     var ranked = G.order.slice().sort(function(a, b){ return (b === (G.winner && G.winner.id)) - (a === (G.winner && G.winner.id)) || (G.positions[b] || 1) - (G.positions[a] || 1); });

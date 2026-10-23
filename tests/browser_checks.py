@@ -146,6 +146,13 @@ class OfflineBrowserChecks(unittest.TestCase):
         parsed = urlsplit(request.url)
         if parsed.hostname == "tierbrain.test":
             self.totals["local_requests"] += 1
+            if parsed.path == '/js/party-access.js' and self.allow_host_updates:
+                # Debug-export checks exercise the real pages with an explicit
+                # offline Party adapter. Protocol/Auth boundaries have separate
+                # SQL, SDK and full host/phone fixtures.
+                route.fulfill(status=200,body=(ROOT/'tests/fixtures/party-browser-adapter.js').read_text(),
+                              content_type='text/javascript')
+                return
             # local_target also rejects traversal and supports extensionless HTML.
             target = local_target(ROOT, ROOT / "index.html", parsed.path)
             if request.method not in {"GET", "HEAD"} or target is None or not target.is_file():

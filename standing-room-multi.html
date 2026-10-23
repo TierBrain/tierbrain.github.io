@@ -173,17 +173,26 @@ body.sr-playing #tb-shell{display:none;}
 </div>
 
 <script src="questions.js?v=7" onerror="window.__noBank=1"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script>
 "use strict";
 var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path,opts){ opts=opts||{}; try{
-  var headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  var r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({},opts,{headers}));
-  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
-  return opts.method?{ok:false}:[];
-}catch(e){ return opts.method?null:[]; } }
+let hostGeneration=0,engineBusy=false,starting=false,hostProblem=false;
+const access=PartyAccess.create(SB_URL,SB_KEY,{family:'standing',edition:'general'});
+function hostError(error){
+  let box=document.getElementById('partyConnection');
+  if(!box){box=document.createElement('div');box.id='partyConnection';box.setAttribute('role','status');box.style.cssText='padding:12px;margin:12px;border:1px solid #e6b655;border-radius:12px';document.body.appendChild(box);}
+  box.textContent=typeof error==='string'?error:access.message(error);
+  const retry=document.createElement('button');retry.type='button';retry.textContent='Retry connection';retry.onclick=()=>access.retry();box.appendChild(retry);
+  const reload=document.createElement('button');reload.type='button';reload.textContent='Reload';reload.onclick=()=>location.reload();box.appendChild(reload);
+}
+access.onIssue(function(detail){hostProblem=!detail.recovered;
+ if(detail.recovered){const box=document.getElementById('partyConnection');if(box)box.remove();return;}
+ hostError(detail.message+' The game is paused while this is resolved.');
+});
+function currentHost(run,generation){return access.currentRoom()&&access.currentRoom().run_id===run&&hostGeneration===generation;}
 
 var $=function(i){return document.getElementById(i);};
 var COLOURS=['#d8a23c','#4fb0a8','#c96fa8','#7fb85c','#6f8fd8','#e0855c'];
@@ -275,6 +284,7 @@ function paint(){
   renderStanding();
 }
 function colourOf(pid){ var i=G.order.indexOf(pid); return COLOURS[i%COLOURS.length]; }
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function nameOf(pid){ for(var i=0;i<G.players.length;i++) if(G.players[i].id===pid) return G.players[i].name; return 'Player'; }
 function renderStanding(){
   var box=$('standing'); box.innerHTML='';
@@ -283,40 +293,30 @@ function renderStanding(){
     var pid=G.order[i];
     var row=document.createElement('div');
     row.className='srow'+(G.outOf[pid]?' out':'')+(pid===now&&!G.outOf[pid]?' now':'');
-    row.innerHTML='<i class="pdot" style="background:'+colourOf(pid)+'"></i>'+nameOf(pid)
+    row.innerHTML='<i class="pdot" style="background:'+colourOf(pid)+'"></i>'+esc(nameOf(pid))
       +'<span class="gr">'+(G.outOf[pid]?'under':groundFor(pid)+' ground')+'</span>';
     box.appendChild(row);
   }
 }
 
 /* ---------- room ---------- */
-async function writeState(){
-  await sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify({
-    phase:G.phase, updated_at:new Date().toISOString(),
-    state:{ game:'standing-room', phase:G.phase, N:G.N, solid:G.solid, pos:G.pos,
-            outOf:G.outOf, order:G.order, turn:G.turn, seq:G.seq,
-            qId:G.qId, q:G.q?{q:G.q.q,opts:G.q.opts}:null,
-            names:G.players.map(function(p){return {id:p.id,name:p.name};}) }
-  })});
-}
+function writeState(){return access.publish({phase:G.phase,state:{
+ game:'standing-room',phase:G.phase,N:G.N,solid:G.solid,pos:G.pos,outOf:G.outOf,order:G.order,turn:G.turn,seq:G.seq,
+ qId:G.qId,q:G.q?{q:G.q.q,opts:G.q.opts}:null,names:G.players.map(function(p){return {id:p.id,name:p.name};})
+}});}
 async function createRoom(){
-  G.code=code5();
-  var made=await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code,phase:'lobby',state:{game:'standing-room',phase:'lobby'}})});
-  if(!made||made.ok===false){
-    $('code').textContent='----';
-    $('status').textContent='No connection';
-    $('joinurl').textContent='Cannot reach the game server. Check the internet and reload.';
-    return;
-  }
-  $('code').textContent=G.code;
-  var link=baseUrl()+'/standing-room-play.html?c='+G.code;
-  $('joinurl').textContent=link.replace(/^https?:\/\//,''); $('joinurl').href=link;
+ try{
+  const saved=access.savedHostCode(),owned=saved?await access.resumeHost(saved):await access.createRoom();
+  if(saved)await access.beginRun();hostGeneration++;G.code=owned.code;
+  $('code').textContent=G.code;const link=baseUrl()+'/standing-room-play.html?c='+G.code;
+  $('joinurl').textContent=link.replace(/^https?:\/\//,'');$('joinurl').href=link;
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
-  $('status').innerHTML='<span class="live">Live</span> &middot; room '+G.code;
-  writeState();
+  $('status').textContent='Live · room '+G.code;await writeState();return true;
+ }catch(error){$('code').textContent='----';$('startBtn').disabled=true;hostError(error);return false;}
 }
 async function pollPlayers(){
-  var r=await sb('players?code=eq.'+G.code+'&select=id,name&order=joined_at.asc');
+  var code=G.code,generation=hostGeneration;var r=await access.members(code);
+  if(code!==G.code||generation!==hostGeneration)return;
   if(r) G.players=r;
   $('pcount').textContent='('+G.players.length+')';
   var box=$('plist');
@@ -325,7 +325,7 @@ async function pollPlayers(){
     box.innerHTML='';
     for(var i=0;i<G.players.length;i++){
       var c=document.createElement('div'); c.className='pchip';
-      c.innerHTML='<i class="pdot" style="background:'+COLOURS[i%COLOURS.length]+'"></i>'+G.players[i].name;
+      c.innerHTML='<i class="pdot" style="background:'+COLOURS[i%COLOURS.length]+'"></i>'+esc(G.players[i].name);
       box.appendChild(c);
     }
   }
@@ -333,8 +333,9 @@ async function pollPlayers(){
 }
 
 /* ---------- play ---------- */
-function startGame(){
-  if(G.players.length<2) return;
+async function startGame(){
+  if(starting||engineBusy||access.busy()||G.phase!=='lobby'||G.players.length<2)return;
+  starting=true;try{await access.beginRun();hostGeneration++;
   G.N=boardSize(G.players.length);
   G.solid=[]; for(var i=0;i<G.N*G.N;i++) G.solid[i]=true;
   G.order=G.players.map(function(p){return p.id;});
@@ -352,10 +353,13 @@ function startGame(){
   $('lobby').style.display='none';
   $('stage').classList.add('on');
   $('endStage').classList.remove('on');
-  buildBoard(); paint(); askTurn();
+  buildBoard();paint();await askTurn();
+  }finally{starting=false;}
 }
 
-function askTurn(){
+async function askTurn(){
+  const generation=hostGeneration;const members=await access.members(G.code);if(generation!==hostGeneration||G.phase!=='live')return;
+  const active=new Set((members||[]).map(p=>p.id));G.order.forEach(p=>{if(!active.has(p))G.outOf[p]=true;});
   /* skip anyone already under, and eliminate anyone with nowhere to go */
   var guard=0;
   while(guard++<G.order.length*2){
@@ -381,36 +385,46 @@ function askTurn(){
   $('qtext').textContent=G.q.q;
   var box=$('qopts'); box.innerHTML='';
   G.q.opts.forEach(function(o){ var d=document.createElement('div'); d.className='qopt'; d.textContent=o; box.appendChild(d); });
-  paint(); writeState();
+  paint();await writeState();
   waitForAnswer(who);
 }
 function alive(){ return G.order.filter(function(p){ return !G.outOf[p]; }); }
 
-/* pollGen + busy: only one check runs at a time, and a reply is acted on once, even when the
-   network is slower than the poll interval. */
-var pollTimer=null, pollGen=0;
-function waitForAnswer(who){
-  clearInterval(pollTimer);
-  var started=Date.now(), gen=++pollGen, busy=false;
-  pollTimer=setInterval(async function(){
-    if(busy || gen!==pollGen) return; busy=true;
-    try{
-      var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+G.qId+'&select=choice');
-      if(gen!==pollGen) return;
-      if(rows && rows.length){
-        clearInterval(pollTimer); pollGen++;
-        resolveAnswer(who, rows[0].choice);
-        return;
-      }
-      if(Date.now()-started>45000){   /* nobody there: move them badly and carry on */
-        clearInterval(pollTimer); pollGen++;
-        resolveAnswer(who, '__timeout__');
-      }
-    } finally { busy=false; }
-  },900);
+var pollTimer=null;
+function waitForAnswer(who){return waitForWindow(who,null,45000,900);}
+async function waitForWindow(who,opts,timeout,interval){
+ clearInterval(pollTimer);
+ // A late reply from an older answer/step poll must not clear or resolve the newer one.
+ const token={};G.pollToken=token;
+ const room=access.currentRoom(),action=room&&room.action,generation=hostGeneration,qId=G.qId;
+ if(!action||!action.accepting||action.member_id!==who){
+  const members=await access.members(G.code);
+  if(!currentHost(room.run_id,generation))return;
+  if(!(members||[]).some(p=>p.id===who)){G.outOf[who]=true;paint();return nextTurn();}
+  hostError('The next turn could not be opened. Reload the host page.');return;
+ }
+ let started=Date.now(),polling=false,finished=false;
+ pollTimer=setInterval(async function(){
+  if(polling||finished||access.busy()||G.pollToken!==token)return;polling=true;
+  try{
+   const rows=await access.actions(G.code,room.run_id,action.id),members=await access.members(G.code);
+   if(G.pollToken!==token||!currentHost(room.run_id,generation)||G.phase!=='live'||G.qId!==qId)return;
+   const departed=!(members||[]).some(p=>p.id===who);
+   if(!rows.length&&!departed&&Date.now()-started<=timeout)return;
+   finished=true;engineBusy=true;
+   const closed=await access.close(action.id);
+   if(G.pollToken!==token||!currentHost(room.run_id,generation)||G.phase!=='live'||G.qId!==qId)return;
+   clearInterval(pollTimer);
+   const accepted=(closed.actions||[])[0];
+   if(departed){G.outOf[who]=true;paint();return nextTurn();}
+   if(opts){const tile=accepted?Number(accepted.choice):opts[(Math.random()*opts.length)|0];if(opts.includes(tile))await stepTo(who,tile);}
+   else await resolveAnswer(who,accepted?accepted.choice:'__timeout__');
+  }catch(error){hostError(error);started+=interval;finished=false;}
+  finally{polling=false;engineBusy=false;}
+ },interval);
 }
 
-function resolveAnswer(who, choice){
+async function resolveAnswer(who, choice){
   var right = choice===G.q.correct;
   var opts=legal(who);
   var box=$('qopts').children;
@@ -423,7 +437,7 @@ function resolveAnswer(who, choice){
     $('say').className='say good';
     opts.forEach(function(i){ $('board').children[i].classList.add('lit'); });
     G.qId=G.qId+':step';
-    writeState();
+    await writeState();
     waitForStep(who,opts);
   } else {
     $('say').textContent=(choice==='__timeout__'?nameOf(who)+' hesitated.':nameOf(who)+' got it wrong.')+' The water chooses.';
@@ -437,36 +451,20 @@ function resolveAnswer(who, choice){
       G.pos[who]=from; G.solid[from]=wasSolid;
       if(s<worstScore){ worstScore=s; worst=o; }
     });
-    setTimeout(function(){ stepTo(who,worst); },1100);
+    const run=access.currentRoom().run_id,generation=hostGeneration;
+    setTimeout(function(){if(currentHost(run,generation)&&G.phase==='live')stepTo(who,worst);},1100);
   }
 }
 
-function waitForStep(who,opts){
-  clearInterval(pollTimer);
-  var started=Date.now(), gen=++pollGen, busy=false;
-  pollTimer=setInterval(async function(){
-    if(busy || gen!==pollGen) return; busy=true;
-    try{
-      var rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+who+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=choice');
-      if(gen!==pollGen) return;
-      if(rows && rows.length){
-        var t=parseInt(rows[0].choice,10);
-        if(opts.indexOf(t)>=0){ clearInterval(pollTimer); pollGen++; stepTo(who,t); return; }
-      }
-      if(Date.now()-started>30000){
-        clearInterval(pollTimer); pollGen++;
-        stepTo(who,opts[(Math.random()*opts.length)|0]);
-      }
-    } finally { busy=false; }
-  },800);
-}
+function waitForStep(who,opts){return waitForWindow(who,opts,30000,800);}
 
-function stepTo(who,tile){
+async function stepTo(who,tile){
   var from=G.pos[who];
   G.pos[who]=tile;
   G.solid[from]=false;
-  paint();
-  setTimeout(nextTurn,700);
+  paint();await writeState();
+  const run=access.currentRoom().run_id,generation=hostGeneration;
+  setTimeout(function(){if(currentHost(run,generation)&&G.phase==='live')nextTurn();},700);
 }
 function nextTurn(){
   $('say').textContent=''; $('say').className='say';
@@ -475,8 +473,9 @@ function nextTurn(){
   askTurn();
 }
 
-function finish(){
-  clearInterval(pollTimer); pollGen++;
+async function finish(){
+  clearInterval(pollTimer);G.pollToken=null;
+  const action=access.currentRoom().action;if(action&&action.accepting)await access.close(action.id);
   G.phase='over';
   var left=alive();
   $('stage').classList.remove('on');
@@ -488,16 +487,23 @@ function finish(){
     $('wTitle').textContent='Everyone went under';
     $('wSub').textContent='Nobody found dry board.';
   }
-  writeState();
+  await writeState();
 }
 
 $('startBtn').addEventListener('click',startGame);
-$('againBtn').addEventListener('click',function(){
-  G.phase='lobby'; $('endStage').classList.remove('on'); $('lobby').style.display='';
-  $('stage').classList.remove('on'); used={}; writeState(); pollPlayers();
-});
 
-createRoom().then(function(){ pollPlayers(); setInterval(function(){ if(G.phase==='lobby') pollPlayers(); },1500); });
+async function playAgain(){
+ if(engineBusy||starting||access.busy())return;
+ engineBusy=true;try{
+  clearInterval(pollTimer);G.pollToken=null;await access.beginRun();hostGeneration++;
+  G.phase='lobby';G.order=[];G.turn=0;G.seq=0;G.qId='';G.q=null;G.solid=[];G.pos={};G.outOf={};
+  $('endStage').classList.remove('on');$('lobby').style.display='';$('stage').classList.remove('on');used={};
+  await writeState();await pollPlayers();
+ }finally{engineBusy=false;}
+}
+$('againBtn').addEventListener('click',function(){playAgain();});
+
+createRoom().then(function(ok){if(!ok)return;pollPlayers().catch(hostError);let busy=false;setInterval(async function(){if(busy||G.phase!=='lobby'||access.busy())return;busy=true;try{await pollPlayers();}catch(error){hostError(error);}finally{busy=false;}},1500);});
 </script>
 <script src="tb-hosts.js"></script>
 <script src="tb-scenes.js"></script>
@@ -556,9 +562,9 @@ createRoom().then(function(){ pollPlayers(); setInterval(function(){ if(G.phase=
     if(win){ win.insertBefore(box, win.firstChild); box.classList.add('atend'); host.resize(); }
     if(left.length === 1) setTimeout(function(){ say(line('win', nameOf(left[0])), 'celebrate'); }, 300); else say('Everyone\u2019s in the water!', 'wince');
     return r; };
-  document.getElementById('againBtn').addEventListener('click', function(){ home.insertBefore(box, home.firstChild); box.classList.remove('atend'); host.resize(); host.set('calm'); });
+  var _again=window.playAgain;window.playAgain=async function(){var result=await _again.apply(this,arguments);if(G.phase==='lobby'){home.insertBefore(box,home.firstChild);box.classList.remove('atend');host.resize();host.set('calm');}return result;};
   var _start = window.startGame;
-  window.startGame = function(){ var r = _start.apply(this, arguments); if(G.phase === 'live') document.body.classList.add('sr-playing'); return r; };
+  window.startGame = async function(){var r=await _start.apply(this,arguments);if(G.phase==='live')document.body.classList.add('sr-playing');return r;};
 
   /* lobby: cutscenes and host */
   var card = document.querySelectorAll('.lobby .card')[1];
