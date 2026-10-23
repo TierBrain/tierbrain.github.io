@@ -45,6 +45,7 @@ jobs:
       - name: Verify both Throne host and phone pages with isolated adapter fixtures
         run: python tests/throne_browser_checks.py
       - name: Verify Party host, phone, reconnect and solo behavior with blocked external requests
+        if: ${{ !cancelled() }}
         run: python tests/party_browser_checks.py
       - name: Verify score policies and rollback in disposable PostgreSQL
         run: |

@@ -293,7 +293,7 @@ DECLARE spec jsonb;w party_private.windows;nextid uuid;BEGIN
   IF w.id IS NOT NULL THEN
    IF w.kind<>spec->>'kind' OR w.member_id<>(spec->>'member_id')::uuid OR w.signature IS DISTINCT FROM spec->'signature' THEN RAISE EXCEPTION 'Action identity cannot be changed or reused' USING ERRCODE='22023';END IF;
    IF w.kind='finale' THEN
-    IF NOT(w.choices @> spec->'choices') THEN RAISE EXCEPTION 'Burned option cannot be restored' USING ERRCODE='22023';END IF;
+    IF NOT(w.choices @> (spec->'choices')) THEN RAISE EXCEPTION 'Burned option cannot be restored' USING ERRCODE='22023';END IF;
     UPDATE party_private.windows SET choices=spec->'choices' WHERE id=w.id;
    ELSIF w.choices IS DISTINCT FROM spec->'choices' THEN RAISE EXCEPTION 'Action choices cannot change' USING ERRCODE='22023';END IF;
    nextid:=w.id;
