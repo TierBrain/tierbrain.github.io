@@ -733,7 +733,8 @@ class BrowserGameGuards(unittest.TestCase):
         host.wait_for_function("G.phase === 'live'")
         host.evaluate("async () => { usedTags.add('saved-reload-tag'); await writeState(); }")
         host.reload(wait_until="domcontentloaded")
-        host.wait_for_function("typeof G !== 'undefined' && G.phase === 'live'", timeout=15000)
+        host.wait_for_function("""typeof G !== 'undefined' && G.phase === 'live'
+            && document.getElementById('status').textContent.includes('Back on the mountain')""", timeout=15000)
         self.assertEqual(host.locator("#code").inner_text().strip(), code)
         self.assertIn("Back on the mountain", host.locator("#status").inner_text())
         self.assertTrue(host.evaluate("usedTags.has('saved-reload-tag')"))
