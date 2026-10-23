@@ -85,27 +85,72 @@
   </div>
   <div class="foot" id="foot"></div>
 
+<script src="vendor/supabase.js"></script>
+<script src="js/throne-access.js"></script>
 <script>
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path, opts){ opts=opts||{}; try{
-  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
-  if(r.ok){ if(opts.method) return null; return await r.json(); }
-  return opts.method?null:[];
-}catch(e){ return opts.method?null:[]; } }
-
+const THRONE_EDITION='bible';
+const access=ThroneAccess.create(SB_URL,SB_KEY,THRONE_EDITION);
+function gameNow(){return typeof access.now==='function'?access.now():Date.now();}
 const $=id=>document.getElementById(id);
 const OPTC=['#e6b655','#86bf9d','#8f7be6','#e8765f'];
-let myId=(crypto.randomUUID?crypto.randomUUID():('id'+Math.random().toString(36).slice(2)+Date.now()));
-let code='', myName='', joined=false;
-let lastSig='', curQid=null, buzzedQid=null, answeredQid=null, lastBeat=0;
-let unlockQid=null, unlockTimer=null, lastState=null;
-
+const SUBMISSION_KEY='tb_throne_'+THRONE_EDITION+'_submissions_v1';
+let myId='',code='',myName='',joined=false,joining=false,leaving=false,generation=0,pollTimer=null,lastBeat=0;
+let lastSig='',curQid=null,unlockQid=null,unlockTimer=null,lastState=null;
+const requests=new Map();
 const params=new URLSearchParams(location.search);
-if(params.get('c')) $('codeIn').value=params.get('c').toUpperCase();
-
+if(params.get('c'))$('codeIn').value=params.get('c').toUpperCase().slice(0,5);
+function connectionStatus(text){let box=$('connectionStatus');if(!box){box=document.createElement('div');box.id='connectionStatus';box.className='err';box.setAttribute('role','status');$('foot').before(box);}box.textContent=text;}
+function saveRequests(){try{const entries=Array.from(requests.entries()).slice(-100);localStorage.setItem(SUBMISSION_KEY,JSON.stringify(entries));}catch(error){}}
+function restoreRequests(){try{const entries=JSON.parse(localStorage.getItem(SUBMISSION_KEY)||'[]');if(!Array.isArray(entries))return;for(const item of entries.slice(-100)){if(!Array.isArray(item)||typeof item[0]!=='string'||!item[1]||!['buzz','answer'].includes(item[1].kind))continue;const record=item[1];if(record.code===code){requests.set(item[0],{kind:record.kind,code,question:record.question,choice:record.choice,status:'unknown'});}}}catch(error){}}
+function requestKey(kind,question){return code+'|'+question+'|'+kind;}
+function submission(kind,question){return requests.get(requestKey(kind,question));}
+function submissionSignature(question){return ['buzz','answer'].map(kind=>{const r=submission(kind,question);return r?kind+':'+r.status+':'+r.choice:'';}).join('|');}
+function definitive(error){return error&&error.status>=400&&error.status<500&&error.status!==408;}
+async function submit(kind,st,choice){
+  if(!joined||leaving||!st||st.qId!==curQid)return;
+  const key=requestKey(kind,st.qId),existing=requests.get(key);
+  if(existing&&(existing.status==='pending'||existing.status==='confirmed'))return;
+  const record=existing||{kind,code,question:st.qId,choice:kind==='answer'?choice:null,status:'pending'};
+  // A retry always sends the original choice, including after an unknown response.
+  record.status='pending';record.message='';requests.set(key,record);saveRequests();lastSig='';render(lastState||st);
+  const turn=generation,roomCode=code,question=st.qId;
+  try{
+    const receipt=kind==='buzz'?await access.buzz(roomCode,question):await access.answer(roomCode,question,record.choice);
+    if(turn!==generation)return;
+    record.status='confirmed';record.receipt=receipt;saveRequests();
+    if(kind==='buzz'){playBuzz();try{if(navigator.vibrate)navigator.vibrate(50);}catch(error){}}
+  }catch(error){
+    if(turn!==generation)return;
+    record.status=definitive(error)?'failed':'unknown';record.message=access.message(error);saveRequests();
+  }
+  if(turn===generation&&joined&&curQid===question){lastSig='';render(lastState||st);}
+}
+function renderSubmission(kind,st){
+  const record=submission(kind,st.qId);if(!record)return;
+  const label=kind==='buzz'?'Buzz':'Answer';
+  let heading='',detail='';
+  if(record.status==='pending'){heading='Sending your '+kind+'…';detail='Waiting for confirmation.';}
+  else if(record.status==='confirmed'){heading=label+' recorded';detail=kind==='buzz'?'Waiting for the host.':'Watch the big screen.';}
+  else if(record.status==='failed'){heading=label+' not recorded';detail=record.message||'Please try again.';}
+  else{heading='Confirmation unavailable';detail='Your '+kind+' may have reached the game. Retry to check the same submission.';}
+  setHTML('<div class="pa-title">'+esc(heading)+'</div><div class="pa-msg">'+esc(detail)+'</div>');
+  if(record.status==='unknown'||record.status==='failed'){
+    const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Retry same '+kind;
+    button.addEventListener('click',()=>submit(kind,st,record.choice));area().appendChild(button);
+  }
+}
+function reconcileReceipts(payload,st){
+  const receipts=payload.receipts||{},question=receipts.question_id||st.qId;
+  if(!question)return;
+  for(const kind of ['buzz','answer']){
+    const receipt=receipts[kind];if(!receipt)continue;
+    const key=requestKey(kind,question),previous=requests.get(key);
+    requests.set(key,{kind,code,question,choice:kind==='answer'?receipt.choice:null,status:'confirmed',receipt});
+  }
+  saveRequests();
+}
 // buzzer sound (klaxon)
 let actx=null;
 function playBuzz(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); const a=actx; if(a.state==='suspended')a.resume();
@@ -115,26 +160,36 @@ function playBuzz(){ try{ if(!actx) actx=new (window.AudioContext||window.webkit
   mix.connect(out);out.connect(a.destination);o1.start(t);o2.start(t);lfo.start(t);o1.stop(t+dur);o2.stop(t+dur);lfo.stop(t+dur);}catch(e){} }
 
 async function join(){
-  code=$('codeIn').value.trim().toUpperCase(); myName=$('nameIn').value.trim();
-  if(code.length!==5){ $('err').textContent='Enter the 5-letter code.'; return; }
-  if(!myName){ $('err').textContent='Enter your name.'; return; }
-  $('joinBtn').disabled=true; $('err').textContent='';
-  const rooms=await sb('rooms?code=eq.'+code+'&select=code');
-  if(!rooms||!rooms.length){ $('err').textContent='Room not found. Check the code.'; $('joinBtn').disabled=false; return; }
-  const now=new Date().toISOString();
-  await sb('players',{method:'POST',body:JSON.stringify({id:myId, code, name:myName, tag:'throne-bible', score:0, joined_at:now, last_seen:now})});
-  joined=true; $('joinCard').style.display='none'; $('playCard').style.display='block';
-  $('foot').innerHTML='Room '+code+' · <button class="leave" id="leaveBtn">Leave</button>';
-  $('leaveBtn').addEventListener('click', ()=>{ try{ sb('players?id=eq.'+myId,{method:'DELETE'}); }catch(e){} location.reload(); });
-  poll(); setInterval(poll, 300);
+  if(joining||joined)return;
+  const roomCode=$('codeIn').value.trim().toUpperCase(),name=$('nameIn').value.trim();
+  if(roomCode.length!==5){$('err').textContent='Enter the 5-letter code.';return;}
+  if(!name||name.length>14){$('err').textContent='Enter your name (up to 14 characters).';return;}
+  joining=true;$('joinBtn').disabled=true;$('err').textContent='';
+  try{
+    const preview=await access.preview(roomCode);if(!preview){$('err').textContent='Room not found. Check the code.';return;}
+    const member=await access.join(roomCode,name);await enterGame(roomCode,member);
+  }catch(error){$('err').textContent=access.message(error);}
+  finally{joining=false;$('joinBtn').disabled=false;}
 }
-$('joinBtn').addEventListener('click', join);
-
-async function beat(){ const now=Date.now(); if(now-lastBeat<10000) return; lastBeat=now; try{ await sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){} }
-
-function role(st){ if(st.champ&&st.champ.id===myId) return 'champ'; if(st.chal&&st.chal.id===myId) return 'chal'; const i=(st.queue||[]).findIndex(p=>p.id===myId); if(i>=0) return 'q'+(i+1); return 'spec'; }
-/* Queue info for waiting players. A winner stays on and only the loser re-joins the back,
-   so the queue moves by one seat per question: position N plays about N questions from now. */
+async function enterGame(roomCode,member){
+  if(!member||!member.id)throw new Error('Your place in the game could not be confirmed.');
+  ++generation;code=roomCode;myId=member.id;myName=member.name;joined=true;leaving=false;lastSig='';lastState=null;curQid=null;lastBeat=0;
+  access.rememberPlayer(code);requests.clear();restoreRequests();
+  $('joinCard').style.display='none';$('playCard').style.display='block';
+  $('foot').replaceChildren(document.createTextNode('Room '+code+' · '));const button=document.createElement('button');button.className='leave';button.id='leaveBtn';button.textContent='Leave';button.addEventListener('click',leave);$('foot').appendChild(button);
+  setHTML('<div class="pa-msg">Joining the game…</div>');await poll();
+}
+async function leave(){
+  if(!joined||leaving)return;leaving=true;const button=$('leaveBtn');if(button)button.disabled=true;
+  try{
+    await access.leave(code);for(const [key,record] of requests)if(record.code===code)requests.delete(key);saveRequests();++generation;joined=false;clearTimeout(pollTimer);clearTimeout(unlockTimer);access.rememberPlayer('');
+    $('joinCard').style.display='';$('playCard').style.display='none';$('foot').replaceChildren();connectionStatus('');$('err').textContent='';
+  }catch(error){connectionStatus(access.message(error)+' Your place has not been cleared. Retry Leave.');}
+  finally{leaving=false;if(button)button.disabled=false;}
+}
+$('joinBtn').addEventListener('click',join);
+async function beat(){if(Date.now()-lastBeat<10000)return;await access.heartbeat(code);lastBeat=Date.now();}
+function role(st){if(st.champ&&st.champ.id===myId)return 'champ';if(st.chal&&st.chal.id===myId)return 'chal';const i=(st.queue||[]).findIndex(p=>p.id===myId);return i>=0?'q'+(i+1):'spec';}
 function queueInfo(st, pos){
   const q=st.queue||[]; const n=parseInt(pos,10); if(!n) return '';
   const left=Math.max(0,(st.qTotal||0)-(st.qIndex||0));
@@ -147,23 +202,33 @@ function queueInfo(st, pos){
   if(st.qTotal && n>left) h+='<div class="pa-hint">Heads up: the game may end before your turn.</div>';
   return h;
 }
-function area(){ return $('playCard'); }
-function setHTML(h){ area().innerHTML=h; }
-
+function area(){return $('playCard');}
+function setHTML(html){area().innerHTML=html;}
 async function poll(){
-  if(!joined) return; beat();
-  let rows=[]; try{ rows=await sb('rooms?code=eq.'+code+'&select=state,phase'); }catch(e){}
-  const st=(rows&&rows[0]&&rows[0].state)||{};
-  if(st.qId!==curQid){ curQid=st.qId; unlockQid=null; clearTimeout(unlockTimer); }
-  lastState=st;
-  render(st);
+  if(!joined)return;const turn=generation,roomCode=code;clearTimeout(pollTimer);
+  try{
+    const payload=await access.playerState(roomCode);if(turn!==generation||!joined)return;
+    const st=Object.assign({},payload.state||{},{phase:payload.phase||(payload.state||{}).phase});st.qId=payload.q_id||st.qId||null;
+    reconcileReceipts(payload,st);
+    if(st.qId!==curQid){curQid=st.qId;unlockQid=null;clearTimeout(unlockTimer);}
+    lastState=st;connectionStatus('');render(st);
+    try{await beat();}catch(error){if(turn===generation)connectionStatus(access.message(error));}
+  }catch(error){if(turn===generation)connectionStatus(access.message(error));}
+  finally{if(turn===generation&&joined)pollTimer=setTimeout(poll,400);}
 }
-
+async function restoreMembership(){
+  const saved=access.savedPlayerCode(),requested=$('codeIn').value.trim().toUpperCase();
+  if(!saved||(requested&&requested!==saved))return;
+  joining=true;$('joinBtn').disabled=true;
+  try{const member=await access.membership(saved);if(member)await enterGame(saved,member);else access.rememberPlayer('');}
+  catch(error){$('err').textContent=access.message(error);}
+  finally{joining=false;$('joinBtn').disabled=false;}
+}
 function render(st){
   const phase=st.phase||'lobby';
   const r=role(st);
   const up=(r==='champ'||r==='chal');
-  const sig=phase+'|'+r+'|'+st.qId+'|'+(st.answerer?st.answerer.id:'-')+'|'+((st.lockedOut||[]).indexOf(myId)>=0);
+  const sig=phase+'|'+r+'|'+st.qId+'|'+(st.answerer?st.answerer.id:'-')+'|'+((st.lockedOut||[]).indexOf(myId)>=0)+'|'+submissionSignature(st.qId);
 
   if(phase==='lobby'){ if(lastSig!=='lobby'){ lastSig='lobby'; setHTML('<div class="pa-title">You\u2019re in!</div><div class="pa-msg">Waiting for the host to start the game\u2026</div><div class="pa-hint">Sit tight, you\u2019ll be called up.</div>'); } return; }
 
@@ -177,6 +242,7 @@ function render(st){
   if(phase==='between'){ if(lastSig!==sig){ lastSig=sig; const m=(st.between&&st.between.msg)||''; const qp=(r[0]==='q')?r.slice(1):null; setHTML('<div class="pa-title">Next up\u2026</div><div class="pa-msg">'+esc(m)+'</div>'+(qp?'<div class="pa-hint">You\u2019re #'+qp+' in the queue.</div>':'')); } return; }
 
   if(phase==='gameover'){ if(lastSig!=='over'){ lastSig='over'; const w=st.winner||{}; const mine=w.id===myId;
+      if(!w.id){setHTML('<div class="pa-title">Run ended</div><div class="pa-msg">No champion was recorded. Join the host’s next room to play again.</div>');return;}
       const su=st.summary||{}; let extra=''; if(su.flawless){ extra='A flawless run! \ud83d\udc51'; } else if(su.finaleScore&&su.finalists){ extra='Finale: '+(su.finaleScore[su.finalists.closer.id]||0)+'\u2013'+(su.finaleScore[su.finalists.king.id]||0); }
       setHTML('<div class="pa-title">\ud83d\udc51 Champion!</div><div class="'+(mine?'pa-good':'pa-msg')+'" style="font-size:22px;margin-top:6px">'+(mine?'You win the crown!':esc(w.name||',')+' takes the crown')+'</div>'+(extra?'<div class="pa-hint">'+esc(extra)+'</div>':'')+'<div class="pa-hint">Thanks for playing!</div>'); } return; }
 
@@ -213,17 +279,15 @@ function render(st){
     const someoneAnswering=!!st.answerer;
     // buzz phase, I can buzz
     if(!someoneAnswering && !iLocked){
-      if(buzzedQid===st.qId){ if(lastSig!=='buzzwait|'+st.qId){ lastSig='buzzwait|'+st.qId; setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">Waiting\u2026</div>'); } return; }
-      const remain=(st.buzzOpenAt||0)-Date.now(); const counting=remain>0;
+      if(submission('buzz',st.qId)){if(lastSig!==sig){lastSig=sig;renderSubmission('buzz',st);}return;}
+      const remain=(st.buzzOpenAt||0)-gameNow(); const counting=remain>0;
       if(counting && unlockQid!==st.qId){ unlockQid=st.qId; clearTimeout(unlockTimer); unlockTimer=setTimeout(function(){ lastSig=''; if(lastState) render(lastState); }, Math.max(0,remain)); }
       const csig='buzz|'+st.qId+'|'+(counting?Math.ceil(remain/1000):'go');
       if(lastSig!==csig){ lastSig=csig;
         if(counting){ setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="countnum">Get ready</div><div class="pa-hint">Read the question. Buzzers unlock together.</div>'); }
         else {
           setHTML('<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="buzzwrap"><button class="buzzbtn" id="bz">BUZZ</button></div><div class="pa-hint">First to buzz answers, but get it wrong and it\u2019s theirs!</div>');
-          $('bz').addEventListener('click', ()=>{ if(buzzedQid===st.qId) return; buzzedQid=st.qId; playBuzz(); try{ if(navigator.vibrate)navigator.vibrate(50);}catch(e){}
-            $('bz').classList.add('hit'); sb('buzzes',{method:'POST',body:JSON.stringify({code, q_id:st.qId, player_id:myId, name:myName, tag:''})});
-            setHTML('<div class="pa-title">Buzzed!</div><div class="pa-msg">You\u2019re in, answering\u2026</div>'); lastSig='buzzwait|'+st.qId; });
+          $('bz').addEventListener('click',()=>submit('buzz',st));
         }
       }
       return;
@@ -232,15 +296,14 @@ function render(st){
     if(iLocked && !iAnswer){ if(lastSig!==sig){ lastSig=sig; setHTML('<div class="pa-bad">Not quite!</div><div class="pa-msg" style="margin-top:6px">Over to your opponent\u2026</div>'); } return; }
     // I'm the answerer -> options
     if(iAnswer){
-      if(answeredQid===st.qId){ if(lastSig!=='answered|'+st.qId){ lastSig='answered|'+st.qId; setHTML('<div class="pa-title">Locked in</div><div class="pa-msg">\u2026</div>'); } return; }
+      if(submission('answer',st.qId)){if(lastSig!==sig){lastSig=sig;renderSubmission('answer',st);}return;}
       if(lastSig!==sig){ lastSig=sig;
         let h='<div class="qtext">'+esc(st.q?st.q.q:'')+'</div><div class="pa-hint" style="margin-top:0">Quick, pick your answer!</div><div class="pgrid" id="grid"></div>';
         setHTML(h); const opts=(st.q&&st.q.opts)||[]; const grid=$('grid');
         opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='pbtn'; b.style.setProperty('--oc',OPTC[i]);
           const k=document.createElement('span'); k.className='pk'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o;
-          b.appendChild(k); b.appendChild(t); b.addEventListener('click',()=>{ if(answeredQid===st.qId) return; answeredQid=st.qId;
-            sb('answers',{method:'POST',body:JSON.stringify({code, q_id:st.qId, player_id:myId, tag:'', choice:i})});
-            setHTML('<div class="pa-title">Locked in</div><div class="pa-msg">\u2026</div>'); lastSig='answered|'+st.qId; }); grid.appendChild(b); }); }
+          b.appendChild(k);b.appendChild(t);b.addEventListener('click',()=>submit('answer',st,i));grid.appendChild(b);});}
+
       return;
     }
     // opponent is answering
@@ -248,6 +311,8 @@ function render(st){
   }
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+restoreMembership();
 </script>
 <script src="tb-shell.js" data-tone="dark" defer></script>
 </body>
