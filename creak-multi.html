@@ -884,7 +884,7 @@ function renderTurnbar(){
 async function nextFreeSeq(){return Math.max(0,(G.turnSeq|0)+1);}
 async function startGame(){
   if(starting||engineBusy||access.busy()||G.phase!=='lobby'||G.players.length<2)return;
-  starting=true;try{await access.beginRun();hostGeneration++;const seq0=await nextFreeSeq();
+  starting=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;const seq0=await nextFreeSeq();
   G.board=genBoard();
   G.order=G.players.map(function(p){ return p.id; }); G.looks=assignLooks();
   G.turnIdx=0; G.turnSeq=seq0; G.seqBase=seq0; G.winner=null; G.phase='live';
@@ -894,7 +894,7 @@ async function startGame(){
   resize(); renderTurnbar();
   setStatus('Waiting for <b>'+nameOf(G.order[0])+'</b> to roll…');
   await writeState();G.turnStartedAt=Date.now();
-  }finally{starting=false;}
+  }finally{starting=false;if(G.phase==='lobby')renderLobby();}
 }
 function nameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?esc(p.name):'Player'; }
 // Outcome lines (right, wrong, Roc, rockfall, storm...) stay up long enough to be read on the TV,
@@ -1021,7 +1021,7 @@ function showWin(){
 }
 async function playAgain(){
   if(engineBusy||starting||access.busy())return;
-  engineBusy=true;try{await access.beginRun();hostGeneration++;
+  engineBusy=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;
   $('overlay').classList.add('hide');
   const cf=$('confetti'); if(cf) cf.innerHTML='';
   G.phase='lobby'; G.board={ladders:[],snakes:[]}; G.order=[]; G.turnIdx=0; G.positions={};

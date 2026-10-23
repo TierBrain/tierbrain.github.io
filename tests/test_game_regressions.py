@@ -766,7 +766,10 @@ class BrowserGameGuards(unittest.TestCase):
         host.evaluate("() => { G.order.forEach(pid => G.positions[pid] = 99); settleStationaryTokens(null); writeState(); }")
         self.assertTrue(play_until("G.phase === 'gameover'", 40), "first game never finished")
         first_last = host.evaluate("G.turnSeq")
-        host.evaluate("document.getElementById('ovAgain').click()")
+        self.assertTrue(host.evaluate("""() => {
+            document.getElementById('ovAgain').click();
+            return document.getElementById('startBtn').disabled;
+        }"""), "Start stayed enabled while the rematch reset was pending")
         host.wait_for_function("G.phase === 'lobby' && !document.getElementById('startBtn').disabled", timeout=15000)
         host.evaluate("document.getElementById('startBtn').click()")
         host.wait_for_function("G.phase === 'live'", timeout=20000)
