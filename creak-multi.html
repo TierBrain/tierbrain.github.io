@@ -664,14 +664,13 @@ async function flyRoc(pid, toN){ const s0=G.tokenPix[pid]||squareCenter(G.positi
   await addTween(450,function(t){ const e=ease(t); roc.x=lerp(dest.x,W+CELL,e); roc.y=lerp(dest.y-CELL*0.55,dest.y-CELL*2.2,e); },function(){ roc.show=false; }); zoomOut(600); }
 async function braceHop(pid){ const c=G.tokenPix[pid]||squareCenter(G.positions[pid]||1); await addTween(320,function(t){ G.tokenPix[pid]={x:c.x,y:c.y-Math.sin(t*Math.PI)*CELL*0.4}; },function(){ G.tokenPix[pid]=c; }); }
 function addTween(dur, update, done){ return new Promise(function(res){ tweens.push({start:T,dur:Math.max(1,dur),update:update,done:function(){ if(done)done(); res(); }}); }); }
-function animLoop(now){ const dt=Math.min(50, now-(animLoop._last||now)); animLoop._last=now; T=now;
-  for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); tw.update(t); if(t>=1){ tweens.splice(i,1); tw.done(); } }
-  updateParticles(dt);
-  if(G.phase==='live'||G.phase==='gameover') draw();
-  requestAnimationFrame(animLoop);
+function animLoop(now){ requestAnimationFrame(animLoop); const dt=Math.min(50, now-(animLoop._last||now)); animLoop._last=now; T=now;
+  for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); try{ tw.update(t); }catch(e){} if(t>=1){ tweens.splice(i,1); try{ tw.done(); }catch(e){} } }
+  try{ updateParticles(dt); }catch(e){ particles=[]; }
+  try{ if((G.phase==='live'||G.phase==='gameover') && CELL>0) draw(); }catch(e){}
 }
 requestAnimationFrame(animLoop);
-function artB(){ return {X:ctx, CELL:CELL, COLS:COLS, ROWS:ROWS, TOP:TOP, W:W, H:H, sq:squareCenter, T:T, isCrater:function(n){ return isCrater(n, G.board); }, craters:G.board.craters||[], age:G.turnSeq||0}; }
+function artB(){ return {X:ctx, CELL:CELL, COLS:COLS, ROWS:ROWS, TOP:TOP, W:W, H:H, sq:squareCenter, T:T, isCrater:function(n){ return isCrater(n, G.board); }, craters:G.board.craters||[], age:(G.turnSeq-(G.seqBase|0))||0}; }
 function drawCells(){
   const B=artB();
   ctx.drawImage(CreakArt.boardLayer(B, DPR), 0, 0, W, H);
@@ -772,7 +771,25 @@ async function createRoom(){
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
 }
 function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
-function writeState(){ setRoom({state:{
+const HOST_KEY='creak_multi_host_v1';
+function saveHost(){ try{ localStorage.setItem(HOST_KEY, JSON.stringify({ at:Date.now(), code:G.code, phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx, positions:G.positions,
+  turnSeq:G.turnSeq, seqBase:G.seqBase|0, winner:G.winner, looks:G.looks||null, doneMoves:G.doneMoves||{}, usedTags:[...usedTags] })); }catch(e){} }
+async function resumeHost(){
+  let s=null; try{ s=JSON.parse(localStorage.getItem(HOST_KEY)||'null'); }catch(e){}
+  if(!s || !s.code || Date.now()-s.at>3*3600e3) return false;
+  const rooms=await sb('rooms?code=eq.'+s.code+'&select=code,state'); if(!rooms || !rooms.length) return false;
+  G.code=s.code; G.phase='lobby'; const wasLive=s.phase==='live'; G.turnSeq=s.turnSeq|0; G.seqBase=s.seqBase|0; G.doneMoves=s.doneMoves||{};
+  if(wasLive){ G.board=s.board; G.order=s.order||[]; G.turnIdx=s.turnIdx|0; G.positions=s.positions||{}; G.turnSeq=s.turnSeq|0; G.winner=null; G.looks=s.looks||null;
+    G.doneMoves=s.doneMoves||{}; G.redoTurn=true; usedTags=new Set(s.usedTags||[]); G.turnStartedAt=Date.now(); G.pendingQ=null; G.pendingQCorrect=null; }
+  $('code').textContent=G.code;
+  const link=baseUrl()+'/creak-multi-play.html?c='+G.code; const u=$('url'); if(u) u.textContent=link.replace(/^https?:\/\//,'');
+  const q=$('qr'); if(q) q.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
+  await pollPlayers();
+  if(wasLive){ G.phase='live'; $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block'; renderDie(6); resize(); settleStationaryTokens(null); draw(); renderTurnbar();
+    setStatus('Back on the mountain. Waiting for <b>'+nameOf(G.order[G.turnIdx])+'</b>\u2026'); writeState(); }
+  return true;
+}
+function writeState(){ saveHost(); setRoom({state:{
   game:'creak-multi', phase:G.phase, board:G.board, order:G.order, turnIdx:G.turnIdx,
   positions:G.positions, turnSeq:G.turnSeq, winner:G.winner, pendingQ:G.pendingQ, scene:G.scene||null, looks:G.looks||null
 }}); }
@@ -835,10 +852,15 @@ function renderTurnbar(){
   }).join('');
 }
 
+async function nextFreeSeq(){ let top=-1;
+  try{ const r=await sb('moves?code=eq.'+G.code+'&select=turn_seq&order=turn_seq.desc&limit=1'); if(r && r.length) top=r[0].turn_seq|0; }catch(e){}
+  return Math.max(G.turnSeq|0, top+1); }
 async function startGame(){
+  if(G.phase==='live' || G.starting) return; G.starting=true;
+  let seq0=0; try{ seq0=await nextFreeSeq(); } finally { G.starting=false; }
   G.board=genBoard();
   G.order=G.players.map(function(p){ return p.id; }); G.looks=assignLooks();
-  G.turnIdx=0; G.turnSeq=0; G.winner=null; G.phase='live';
+  G.turnIdx=0; G.turnSeq=seq0; G.seqBase=seq0; G.winner=null; G.phase='live';
   G.positions={}; G.order.forEach(function(pid){ G.positions[pid]=1; });
   $('lobby').style.display='none'; $('boardwrap').style.display='block'; $('die').style.display='block'; renderDie(6);
   G.turnStartedAt=Date.now();
@@ -862,12 +884,12 @@ async function pollMoves(){
   let rows=[];
   try{ rows=await sb('moves?code=eq.'+G.code+'&player_id=eq.'+encodeURIComponent(activeId)+'&turn_seq=eq.'+G.turnSeq+'&select=id,player_id,turn_seq&order=created_at.asc')||[]; }catch(e){}
   if(rows.length){
-    const mv=rows[0];
-    if(mv.id<=G.lastProcessedMoveId) return; // already handled (poll overlap safety)
-    G.lastProcessedMoveId=mv.id;
-    await resolveTurn(activeId);
-    return;
+    G.doneMoves=G.doneMoves||{};
+    // a roll not used yet; after a reload the interrupted turn is played again
+    const mv=G.redoTurn ? rows[rows.length-1] : rows.find(function(r){ return !G.doneMoves[r.id]; });
+    if(mv){ G.redoTurn=false; G.doneMoves[mv.id]=1; G.lastProcessedMoveId=mv.id; await resolveTurn(activeId); return; }
   }
+  G.redoTurn=false;
   // nobody's rolled -- if they've been away too long, the host rolls for them so the table keeps moving
   if(Date.now()-G.turnStartedAt > TURN_TIMEOUT_MS){
     setStatus(nameOf(activeId)+' took too long, rolling for them\u2026');
@@ -951,7 +973,7 @@ function showWin(){
   const totalL=(G.board.ladders||[]).length;
   $('ovLine').textContent=G.winner.name+' reached the summit first!';
   $('ovStats').innerHTML =
-    '<div class="ovstat"><b>'+G.turnSeq+'</b><span>turns</span></div>'+
+    '<div class="ovstat"><b>'+(G.turnSeq-(G.seqBase|0))+'</b><span>turns</span></div>'+
     '<div class="ovstat"><b>'+alive+'/'+totalL+'</b><span>ladders left</span></div>'+
     '<div class="ovstat"><b>'+G.order.length+'</b><span>racers</span></div>';
   const ranked=G.order.slice().sort(function(a,b){ return (G.positions[b]||1)-(G.positions[a]||1); });
@@ -968,7 +990,7 @@ function showWin(){
   setStatus('');
   $('ovShare').onclick=function(){
     TBShare.open({ game:'creak-multi', kicker:'Creak & Coil \u00b7 Multiplayer', big:G.winner.name,
-      lines:['Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.', 'Finished in '+G.turnSeq+' turns with '+alive+' of '+totalL+' ladders still standing.'],
+      lines:['Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.', 'Finished in '+(G.turnSeq-(G.seqBase|0))+' turns with '+alive+' of '+totalL+' ladders still standing.'],
       footer:'Think you can beat them?', accent:'#e6b655',
       shareText:G.winner.name+' just won a race up Creak & Coil. Think you can beat them?' });
   };
@@ -977,7 +999,7 @@ async function playAgain(){
   $('overlay').classList.add('hide');
   const cf=$('confetti'); if(cf) cf.innerHTML='';
   G.phase='lobby'; G.board={ladders:[],snakes:[]}; G.order=[]; G.turnIdx=0; G.positions={};
-  G.turnSeq=0; G.winner=null; G.tokenPix={}; G.pendingQ=null; G.pendingQCorrect=null; usedTags=new Set();
+  G.turnSeq=(G.turnSeq|0)+1; G.winner=null; G.tokenPix={}; G.pendingQ=null; G.pendingQCorrect=null; usedTags=new Set();
   hideQOverlay();
   $('boardwrap').style.display='none'; $('die').style.display='none';
   $('lobby').style.display='block'; $('lobbyPre').style.display='block';
@@ -987,8 +1009,10 @@ async function playAgain(){
 }
 
 async function loop(){
-  if(G.phase==='lobby'){ await pollPlayers(); renderLobby(); }
-  else if(G.phase==='live'){ await pollPlayers(); await pollMoves(); }
+  try{
+    if(G.phase==='lobby'){ await pollPlayers(); renderLobby(); }
+    else if(G.phase==='live'){ await pollPlayers(); await pollMoves(); }
+  }catch(e){ try{ console.warn('Creak & Coil turn error', e); }catch(_){} }   /* one bad turn must never freeze the table */
   setTimeout(loop, 900);
 }
 
@@ -996,7 +1020,7 @@ $('startBtn').addEventListener('click', function(){ if(G.players.length>=2) star
 $('ovAgain').addEventListener('click', playAgain);
 window.addEventListener('resize', resize);
 CreakArt.sky.mount(); CreakArt.onThunder=function(){ try{ SFX.rumble(); }catch(e){} };
-createRoom().then(function(){ loop(); });
+resumeHost().then(function(ok){ return ok ? null : createRoom(); }).then(function(){ loop(); });
 
 </script>
 <script src="tb-hosts.js"></script>
@@ -1099,7 +1123,7 @@ createRoom().then(function(){ loop(); });
     var ranked = G.order.slice().sort(function(a, b){ return (b === (G.winner && G.winner.id)) - (a === (G.winner && G.winner.id)) || (G.positions[b] || 1) - (G.positions[a] || 1); });
     var podium = ranked.slice(0, 3).map(function(pid){ return { name:rawName(pid), look:lookOf(pid) }; });
     host.set('celebrate');
-    playScene('break', { name:w + ' reached the summit!', round:G.turnSeq + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
+    playScene('break', { name:w + ' reached the summit!', round:(G.turnSeq-(G.seqBase|0)) + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
     return r; };
   var _again = window.playAgain;
   window.playAgain = function(){ document.body.classList.remove('cc-playing'); try{ CreakArt.sky.progress(0); }catch(e){} host.set('calm'); return _again.apply(this, arguments); };

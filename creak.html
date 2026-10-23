@@ -112,7 +112,7 @@
       <div class="die" id="die"></div>
     </div>
     <button class="btn" id="roll">Roll</button>
-    <button class="btn ghost" id="newgame" style="margin-top:10px">New board</button>
+    <button class="btn ghost small" id="newgame" style="margin-top:18px">Start a new board</button>
     <div class="soloopts"><button class="btn ghost small" id="climberBtn" type="button">🧗 Your climber</button><label class="cuts"><input type="checkbox" id="cutsToggle"> Cutscenes</label></div>
   </div>
   <div class="foot">Ladders rot, snakes strike, and watch for the Roc that lifts you, the rockfalls, and storms that batter the ladders. 🔊 top-right.<br>
@@ -523,7 +523,7 @@ function drawParticles(){ for(const p of particles){ const k=1-p.life/p.max; if(
 function animateTo(n,dur){ const from={x:tokenPix.x,y:tokenPix.y}, to=squareCenter(n); tokenMoving=true; return addTween(dur,function(t){ const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; tokenPix={x:from.x+(to.x-from.x)*e,y:from.y+(to.y-from.y)*e}; },function(){ tokenPix=to; tokenMoving=false; }); }
 async function walk(fromN,toN){ const step=toN>fromN?1:-1; for(let n=fromN+step; step>0?n<=toN:n>=toN; n+=step){ await animateTo(n,150); } }
 async function slideAlongSnake(s){ zoomIn(1.45,function(){ return tokenPix; },320); tokenMoving=true; await addTween(240,function(t){ s._writhe=t*0.9; },null); shake(CELL*0.10,520); await addTween(780,function(t){ const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; tokenPix=snakePointAt(s,e); s._writhe=0.9*(1-t*0.35); },function(){ tokenPix=squareCenter(s.to); tokenMoving=false; }); await addTween(300,function(t){ s._writhe=0.55*(1-t); },function(){ s._writhe=0; }); zoomOut(650); }
-function loop(now){ const dt=Math.min(50,now-(loop._last||now)); loop._last=now; T=now; for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); tw.update(t); if(t>=1){ tweens.splice(i,1); tw.done(); } } updateParticles(dt); draw(); requestAnimationFrame(loop); }
+function loop(now){ requestAnimationFrame(loop); const dt=Math.min(50,now-(loop._last||now)); loop._last=now; T=now; for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]; const t=Math.min(1,(T-tw.start)/tw.dur); try{ tw.update(t); }catch(e){} if(t>=1){ tweens.splice(i,1); try{ tw.done(); }catch(e){} } } try{ updateParticles(dt); }catch(e){ particles=[]; } try{ if(CELL>0) draw(); }catch(e){} }
 
 // ---------- dice face ----------
 const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,28],[72,28],[28,50],[72,50],[28,72],[72,72]]};
@@ -655,7 +655,23 @@ async function maybeEvent(){ const r=Math.random();
 
 // ---------- game flow ----------
 function setStatus(html){ $('status').innerHTML=html; }
+/* a climb in progress is kept on this phone, so a reload (or the phone closing the tab) carries on where you were */
+const SAVE_KEY='creak_solo_save_v1';
+function saveClimb(){ try{ if(pos>=TOP){ localStorage.removeItem(SAVE_KEY); return; }
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, at:Date.now(), board:{ ladders:board.ladders, snakes:board.snakes, craters:board.craters }, pos:pos, turns:turns, correct:correct, total:total, usedTags:[...usedTags], seenCut:seenCut, lastCut:lastCut })); }catch(e){} }
+function clearClimb(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeClimb(){ let s=null; try{ s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){}
+  if(!s || s.v!==1 || !s.board || !(s.pos>1) || s.pos>=TOP || Date.now()-s.at>14*864e5) return false;
+  board={ ladders:s.board.ladders||[], snakes:s.board.snakes||[], craters:s.board.craters||[], craterAllowed:null };
+  pos=s.pos; turns=s.turns|0; correct=s.correct|0; total=s.total|0; usedTags=new Set(s.usedTags||[]); seenCut=s.seenCut||{}; lastCut=s.lastCut|0; openedOnce=true;
+  tokenPix=squareCenter(pos); setStatus('Welcome back. You were on square <b>'+pos+'</b> after '+turns+' turn'+(turns===1?'':'s')+'. Roll to carry on.'); draw(); return true; }
 async function rollTurn(){
+  if(busy) return; $('newgame').disabled=true;
+  try{ await rollTurnInner(); }
+  catch(e){ busy=false; $('roll').disabled=false; }   /* never leave the climb stuck with the Roll button greyed out */
+  finally{ $('newgame').disabled=false; if(pos<TOP) saveClimb(); }
+}
+async function rollTurnInner(){
   if(busy) return; busy=true; $('roll').disabled=true;
   const d=rint(1,6); lastRoll=d; turns++; const startPos=pos;
   try{SFX.roll();}catch(e){} $('die').classList.add('rolling');
@@ -707,7 +723,7 @@ async function rollTurn(){
 function bestScore(){ try{ return parseInt(localStorage.getItem('creak_best')||'0',10)||null; }catch(e){ return null; } }
 function confetti(){ const c=$('confetti'); if(!c) return; c.innerHTML=''; const em=['🎉','⭐','🏔️','🪜','✨']; for(let i=0;i<26;i++){ const sp=document.createElement('span'); sp.textContent=em[i%em.length]; sp.style.left=(Math.random()*100)+'%'; sp.style.animationDelay=(Math.random()*0.9)+'s'; sp.style.animationDuration=(2+Math.random()*1.4)+'s'; sp.style.fontSize=(14+Math.random()*16)+'px'; c.appendChild(sp); } }
 function win(){
-  busy=false;
+  busy=false; clearClimb();
   const left=board.ladders.filter(l=>l.alive).length, tot=board.ladders.length;
   const prev=bestScore(); const isBest = !prev || turns<prev;
   if(isBest){ try{ localStorage.setItem('creak_best', String(turns)); }catch(e){} }
@@ -727,6 +743,7 @@ function win(){
     shareText:'I climbed Creak & Coil in '+turns+' turns. Can you beat me?' }); };
 }
 function newGame(){
+  clearClimb(); newArmed=false; $('newgame').textContent='Start a new board';
   board=genBoard(); pos=1; lastRoll=0; busy=false; usedTags=new Set(); turns=0; correct=0; total=0; lastCut=-99; seenCut={};
   tokenPix=squareCenter(pos);
   const cf=$('confetti'); if(cf) cf.innerHTML='';
@@ -770,12 +787,20 @@ $('roll').addEventListener('click', async function(){
   if(!openedOnce && turns===0 && cutsOn()){ openedOnce=true; busy=true; $('roll').disabled=true; await playScene('opening', {sub:'The long climb', cols:[CreakArt.lookStyle(myLook)]}); busy=false; $('roll').disabled=false; }
   rollTurn();
 });
-$('newgame').addEventListener('click', newGame);
+/* starting again mid-climb needs a second tap, so a slip of the thumb below Roll can't wipe out a climb */
+let newArmed=false, newArmT=0;
+$('newgame').addEventListener('click', function(){
+  if(busy) return;
+  if(turns>0 && pos<TOP && !newArmed){ newArmed=true; $('newgame').textContent='Tap again to start over'; clearTimeout(newArmT);
+    newArmT=setTimeout(function(){ newArmed=false; $('newgame').textContent='Start a new board'; }, 3500); return; }
+  clearTimeout(newArmT); newGame();
+});
 $('ovAgain').addEventListener('click', newGame);
 { let muted=false; const mb=$('mute'); if(mb) mb.addEventListener('click', function(){ muted=!muted; try{SFX.mute(muted);}catch(e){} mb.textContent=muted?'🔇':'🔊'; window.ccMuted=muted; }); }
 window.addEventListener('resize', resize);
 CreakArt.sky.mount(); CreakArt.onThunder=function(){ try{ SFX.rumble(); }catch(e){} };
 resize();
+resumeClimb();
 requestAnimationFrame(loop);
 
 </script>
