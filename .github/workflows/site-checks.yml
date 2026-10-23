@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,6 +37,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Run browser regressions with synthetic data and blocked external requests
         run: python tests/browser_checks.py
+      - name: Verify both Throne host and phone pages with isolated adapter fixtures
+        run: python tests/throne_browser_checks.py
       - name: Verify score policies and rollback in disposable PostgreSQL
         run: |
           docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
@@ -47,6 +49,19 @@ jobs:
         run: python tests/check_show_access.py
       - name: Verify Big Quiz ownership and cross-edition isolation in disposable PostgreSQL
         run: python tests/check_big_quiz_access.py
+      - name: Verify Throne ownership, gameplay, historical Hall access and rollback in disposable PostgreSQL
+        run: python tests/check_throne_access.py --report /tmp/tierbrain-throne-access.json
+      - name: Verify Throne SDK sessions and gameplay through real isolated Auth and PostgREST
+        run: python tests/throne_stack/run-acceptance.py --report /tmp/tierbrain-throne-http.json
+      - name: Preserve redacted Throne verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: throne-verification
+          path: |
+            /tmp/tierbrain-throne-access.json
+            /tmp/tierbrain-throne-http.json
+          if-no-files-found: ignore
       - name: Build and validate preview and production hosting assets
         run: |
           python build-site.py --preview

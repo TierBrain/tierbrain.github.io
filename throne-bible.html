@@ -585,16 +585,14 @@
 
 </script>
 
+<script src="vendor/supabase.js"></script>
+<script src="js/throne-access.js"></script>
 <script>
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path, opts){ opts=opts||{}; try{
-  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
-  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
-  return opts.method?{ok:false}:[];
-}catch(e){ return opts.method?null:[]; } }
+const THRONE_EDITION='bible';
+const access=ThroneAccess.create(SB_URL,SB_KEY,THRONE_EDITION);
+function gameNow(){return typeof access.now==='function'?access.now():Date.now();}
 
 const POOL=[{"q": "Who built an ark to survive a great flood?", "correct": "Noah", "wrong": ["Moses", "Abraham", "David"], "tag": null}, {"q": "In the Bible, who were the first man and woman?", "correct": "Adam and Eve", "wrong": ["Cain and Abel", "Abraham and Sarah", "Isaac and Rebekah"], "tag": null}, {"q": "Which young shepherd defeated the giant Goliath?", "correct": "David", "wrong": ["Samson", "Saul", "Solomon"], "tag": null}, {"q": "Who was swallowed by a great fish (often called a whale)?", "correct": "Jonah", "wrong": ["Job", "Joshua", "Jeremiah"], "tag": null}, {"q": "God created the world in how many days, resting on the seventh?", "correct": "Six", "wrong": ["Three", "Seven", "Ten"], "tag": null}, {"q": "Who led the Israelites out of slavery in Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Joseph"], "tag": null}, {"q": "What did God give Moses on Mount Sinai?", "correct": "The Ten Commandments", "wrong": ["The Golden Calf", "The Ark of the Covenant", "The Book of Psalms"], "tag": null}, {"q": "Who was born in a manger in Bethlehem?", "correct": "Jesus", "wrong": ["John the Baptist", "Moses", "Isaac"], "tag": null}, {"q": "How many disciples (apostles) did Jesus choose?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Three"], "tag": null}, {"q": "Who baptised Jesus in the River Jordan?", "correct": "John the Baptist", "wrong": ["Peter", "Paul", "Andrew"], "tag": null}, {"q": "What is the first book of the Bible?", "correct": "Genesis", "wrong": ["Exodus", "Psalms", "Matthew"], "tag": null}, {"q": "Which garden did Adam and Eve live in?", "correct": "The Garden of Eden", "wrong": ["Gethsemane", "Babylon", "Canaan"], "tag": null}, {"q": "In Eden, who tempted Eve to eat the forbidden fruit?", "correct": "The serpent", "wrong": ["A lion", "An angel", "A raven"], "tag": null}, {"q": "Jesus turned water into what at a wedding in Cana?", "correct": "Wine", "wrong": ["Bread", "Oil", "Milk"], "tag": null}, {"q": "Who was swallowed by a great fish?", "correct": "Jonah", "wrong": ["Job", "Joshua", "Jeremiah"], "tag": "jonah"}, {"q": "In which garden did Adam and Eve live?", "correct": "Eden", "wrong": ["Gethsemane", "Babylon", "Canaan"], "tag": "eden"}, {"q": "In the Parable of the Good Samaritan, who finally helped the injured man?", "correct": "A Samaritan", "wrong": ["A priest", "A Levite", "A Roman soldier"], "tag": null}, {"q": "The Parable of the Prodigal Son is about a father and his…?", "correct": "Two sons", "wrong": ["Three daughters", "Twelve disciples", "Seven servants"], "tag": null}, {"q": "Who wrote many of the Psalms and was a king of Israel?", "correct": "David", "wrong": ["Solomon", "Saul", "Samuel"], "tag": null}, {"q": "Which king was famed for his wisdom and built the first Temple in Jerusalem?", "correct": "Solomon", "wrong": ["David", "Saul", "Hezekiah"], "tag": null}, {"q": "Jesus delivered a famous sermon known as the Sermon on the…?", "correct": "Mount", "wrong": ["Plain", "Sea", "Hill"], "tag": null}, {"q": "The Beatitudes ('Blessed are…') come from which teaching?", "correct": "The Sermon on the Mount", "wrong": ["The Last Supper", "The Road to Emmaus", "Pentecost"], "tag": null}, {"q": "Which brother killed Abel in the first murder?", "correct": "Cain", "wrong": ["Seth", "Esau", "Ishmael"], "tag": null}, {"q": "God asked Abraham to sacrifice which son, before stopping him?", "correct": "Isaac", "wrong": ["Ishmael", "Jacob", "Joseph"], "tag": null}, {"q": "Which prophet was taken up to heaven in a chariot of fire?", "correct": "Elijah", "wrong": ["Elisha", "Isaiah", "Ezekiel"], "tag": null}, {"q": "Who interpreted Pharaoh's dreams and rose to power in Egypt?", "correct": "Joseph", "wrong": ["Moses", "Daniel", "Aaron"], "tag": null}, {"q": "The walls of which city fell after the Israelites marched around them?", "correct": "Jericho", "wrong": ["Babylon", "Nineveh", "Jerusalem"], "tag": null}, {"q": "Who was the first king of Israel?", "correct": "Saul", "wrong": ["David", "Solomon", "Samuel"], "tag": null}, {"q": "In the Parable of the Sower, the seed falls on different kinds of…?", "correct": "Soil", "wrong": ["Water", "Sand", "Snow"], "tag": null}, {"q": "Which Gospel is the first book of the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Luke", "John"], "tag": null}, {"q": "Who led the Israelites out of Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Joseph"], "tag": "moses"}, {"q": "Who was thrown into the lions’ den?", "correct": "Daniel", "wrong": ["David", "Elijah", "Samuel"], "tag": "daniel"}, {"q": "What did God create on the first day?", "correct": "Light", "wrong": ["Animals", "The sea", "The stars"], "tag": "creation-light"}, {"q": "Which king is traditionally credited with writing Psalm 23?", "correct": "David", "wrong": ["Solomon", "Asaph", "Moses"], "tag": null}, {"q": "The Parable of the Good Samaritan appears in which Gospel?", "correct": "Luke", "wrong": ["Matthew", "Mark", "John"], "tag": null}, {"q": "The Parable of the Prodigal Son appears only in which Gospel?", "correct": "Luke", "wrong": ["Matthew", "Mark", "John"], "tag": null}, {"q": "How many books are there in the Protestant Bible?", "correct": "66", "wrong": ["27", "39", "100"], "tag": null}, {"q": "How many books are in the New Testament?", "correct": "27", "wrong": ["12", "39", "50"], "tag": null}, {"q": "Who was the father of John the Baptist, a priest struck mute?", "correct": "Zechariah", "wrong": ["Zebedee", "Zacchaeus", "Zerubbabel"], "tag": null}, {"q": "Which disciple was chosen to replace Judas Iscariot among the Twelve?", "correct": "Matthias", "wrong": ["Barnabas", "Stephen", "Silas"], "tag": null}, {"q": "On the road to Emmaus, the disciples recognised the risen Jesus when he…?", "correct": "Broke bread", "wrong": ["Spoke their names", "Healed them", "Walked on water"], "tag": null}, {"q": "Which prophet saw a vision of a valley of dry bones?", "correct": "Ezekiel", "wrong": ["Isaiah", "Jeremiah", "Daniel"], "tag": null}, {"q": "Who was the tax collector that climbed a sycamore tree to see Jesus?", "correct": "Zacchaeus", "wrong": ["Matthew", "Nicodemus", "Bartimaeus"], "tag": null}, {"q": "Abel offered animals from his flock; Cain offered what?", "correct": "Crops", "wrong": ["Fish", "Gold", "Wine"], "tag": null}, {"q": "On which mountain did Noah's ark come to rest?", "correct": "Mount Ararat", "wrong": ["Mount Sinai", "Mount Carmel", "Mount Nebo"], "tag": null}, {"q": "On which mountain did Moses die, viewing the Promised Land?", "correct": "Mount Nebo", "wrong": ["Mount Sinai", "Mount Ararat", "Mount Tabor"], "tag": null}, {"q": "How many plagues did God send upon Egypt?", "correct": "Ten", "wrong": ["Seven", "Twelve", "Three"], "tag": null}, {"q": "Which giant did David defeat with a sling?", "correct": "Goliath", "wrong": ["Saul", "Samson", "Og"], "tag": "goliath"}, {"q": "On which mountain did Moses receive the commandments?", "correct": "Mount Sinai", "wrong": ["Mount Zion", "Mount Carmel", "Mount Nebo"], "tag": "ten-commandments"}, {"q": "Who was the wisest king of Israel?", "correct": "Solomon", "wrong": ["Saul", "David", "Hezekiah"], "tag": "solomon"}, {"q": "In what language was most of the Old Testament originally written?", "correct": "Hebrew", "wrong": ["Greek", "Aramaic", "Latin"], "tag": null}, {"q": "The shortest verse in most English Bibles, “Jesus wept,” is in which Gospel?", "correct": "John", "wrong": ["Matthew", "Mark", "Luke"], "tag": null}, {"q": "Who succeeded Moses to lead Israel into the Promised Land?", "correct": "Joshua", "wrong": ["Aaron", "Caleb", "Gideon"], "tag": null}, {"q": "Which book of the Bible never once mentions God by name?", "correct": "Esther", "wrong": ["Ruth", "Job", "Jonah"], "tag": null}, {"q": "The mysterious “writing on the wall” appeared at whose feast in Babylon?", "correct": "Belshazzar", "wrong": ["Nebuchadnezzar", "Darius", "Cyrus"], "tag": null}, {"q": "Methuselah, the longest-lived man, was the grandfather of which ark-builder?", "correct": "Noah", "wrong": ["Abraham", "Enoch", "Lot"], "tag": null}, {"q": "Who interpreted Pharaoh's dreams of seven fat and seven lean cows?", "correct": "Joseph", "wrong": ["Daniel", "Moses", "Aaron"], "tag": null}, {"q": "The Ten Commandments are recorded in Exodus and which other book?", "correct": "Deuteronomy", "wrong": ["Leviticus", "Numbers", "Genesis"], "tag": null}, {"q": "Which prophet was told to marry Gomer, an unfaithful wife, as a living parable?", "correct": "Hosea", "wrong": ["Amos", "Joel", "Micah"], "tag": null}, {"q": "Goliath was a champion of which people?", "correct": "The Philistines", "wrong": ["The Amalekites", "The Moabites", "The Canaanites"], "tag": null}, {"q": "How many days had Lazarus been dead before Jesus raised him?", "correct": "Four", "wrong": ["Three", "Two", "Seven"], "tag": null}, {"q": "On which island was Paul shipwrecked and bitten by a snake?", "correct": "Malta", "wrong": ["Cyprus", "Crete", "Patmos"], "tag": null}, {"q": "Which Roman governor sentenced Jesus to crucifixion?", "correct": "Pontius Pilate", "wrong": ["Herod Antipas", "Felix", "Festus"], "tag": null}, {"q": "In which garden did Jesus pray on the night of his arrest?", "correct": "Gethsemane", "wrong": ["Eden", "Bethany", "Siloam"], "tag": null}, {"q": "Which book comes first in the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Genesis", "Acts"], "tag": "gospel-matthew"}, {"q": "Who baptised Jesus in the Jordan?", "correct": "John the Baptist", "wrong": ["Peter", "Andrew", "Elijah"], "tag": "john-baptist"}, {"q": "Who was thrown into the lions’ den but not harmed?", "correct": "Daniel", "wrong": ["David", "Joseph", "Elijah"], "tag": null}, {"q": "On what were the Ten Commandments written?", "correct": "Stone tablets", "wrong": ["A scroll", "Papyrus", "Wood"], "tag": null}, {"q": "Who baptised Jesus in the Jordan River?", "correct": "John the Baptist", "wrong": ["Peter", "Paul", "Andrew"], "tag": null}, {"q": "How many disciples did Jesus choose?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Forty"], "tag": null}, {"q": "Who denied Jesus three times before the rooster crowed?", "correct": "Peter", "wrong": ["Judas", "Thomas", "John"], "tag": null}, {"q": "Which sea did Moses part for the Israelites?", "correct": "The Red Sea", "wrong": ["The Dead Sea", "The Sea of Galilee", "The Jordan"], "tag": null}, {"q": "Who was the strong man betrayed by Delilah?", "correct": "Samson", "wrong": ["Gideon", "Saul", "Goliath"], "tag": null}, {"q": "In which town was Jesus born?", "correct": "Bethlehem", "wrong": ["Nazareth", "Jerusalem", "Capernaum"], "tag": null}, {"q": "How many days and nights did it rain during the flood?", "correct": "Forty", "wrong": ["Seven", "Twelve", "Thirty"], "tag": null}, {"q": "What was Jesus’ first miracle?", "correct": "Turning water into wine", "wrong": ["Healing a leper", "Walking on water", "Feeding 5,000"], "tag": null}, {"q": "Which Gospel comes first in the New Testament?", "correct": "Matthew", "wrong": ["Mark", "Luke", "John"], "tag": null}, {"q": "Who led Israel out of Egypt?", "correct": "Moses", "wrong": ["Aaron", "Joshua", "Caleb"], "tag": "moses"}, {"q": "Who killed the giant Goliath?", "correct": "David", "wrong": ["Saul", "Samson", "Jonathan"], "tag": "goliath"}, {"q": "Who was asked by God to leave his home and became the father of many nations?", "correct": "Abraham", "wrong": ["Isaac", "Jacob", "Lot"], "tag": "abraham"}, {"q": "What was the name of Abraham's wife, who laughed when told she would have a son?", "correct": "Sarah", "wrong": ["Rebekah", "Rachel", "Leah"], "tag": "sarah"}, {"q": "Which son did God ask Abraham to sacrifice, before providing a ram instead?", "correct": "Isaac", "wrong": ["Ishmael", "Jacob", "Esau"], "tag": "isaac-sacrifice"}, {"q": "Who sold his birthright to his brother for a bowl of stew?", "correct": "Esau", "wrong": ["Jacob", "Cain", "Reuben"], "tag": "esau"}, {"q": "Which patriarch dreamed of a ladder reaching up to heaven?", "correct": "Jacob", "wrong": ["Joseph", "Abraham", "Daniel"], "tag": "jacob-ladder"}, {"q": "What new name was Jacob given after wrestling through the night?", "correct": "Israel", "wrong": ["Isaac", "Ishmael", "Judah"], "tag": "jacob-israel"}, {"q": "Joseph was given a special coat of many what?", "correct": "Colours", "wrong": ["Patches", "Feathers", "Jewels"], "tag": "josephs-coat"}, {"q": "Who was the oldest man in the Bible, said to have lived 969 years?", "correct": "Methuselah", "wrong": ["Noah", "Adam", "Enoch"], "tag": "methuselah"}, {"q": "At which tower did God confuse the people's language?", "correct": "The Tower of Babel", "wrong": ["The Tower of David", "Jericho", "Nineveh"], "tag": "babel"}, {"q": "Who turned into a pillar of salt for looking back at the city she fled?", "correct": "Lot's wife", "wrong": ["Sarah", "Rebekah", "Miriam"], "tag": "lots-wife"}, {"q": "What sign did God set in the sky as a promise after the flood?", "correct": "A rainbow", "wrong": ["A star", "A cloud", "A dove"], "tag": "rainbow-promise"}, {"q": "Which bird did Noah send out that returned with an olive leaf?", "correct": "A dove", "wrong": ["A raven", "An eagle", "A sparrow"], "tag": "noahs-dove"}, {"q": "From what did God speak to Moses on the mountain?", "correct": "A burning bush", "wrong": ["A cloud", "A whirlwind", "A pillar of fire"], "tag": "burning-bush"}, {"q": "Who was the brother of Moses and Israel's first high priest?", "correct": "Aaron", "wrong": ["Joshua", "Caleb", "Hur"], "tag": "aaron"}, {"q": "What was the sister of Moses called?", "correct": "Miriam", "wrong": ["Deborah", "Zipporah", "Rachel"], "tag": "miriam"}, {"q": "What was the first plague that struck Egypt, turning the Nile red?", "correct": "Water into blood", "wrong": ["Locusts", "Frogs", "Darkness"], "tag": "plague-blood"}, {"q": "What food did God provide from heaven for Israel in the wilderness?", "correct": "Manna", "wrong": ["Quail only", "Bread of the land", "Honey"], "tag": "manna"}, {"q": "The idol the Israelites made while Moses was on the mountain was a golden what?", "correct": "Calf", "wrong": ["Bull", "Serpent", "Eagle"], "tag": "golden-calf"}, {"q": "On which mountain did Moses receive the Ten Commandments?", "correct": "Mount Sinai", "wrong": ["Mount Nebo", "Mount Carmel", "Mount Zion"], "tag": "mount-sinai"}, {"q": "The sacred chest that held the stone tablets was the Ark of the what?", "correct": "Covenant", "wrong": ["Testimony only", "Promise", "Law"], "tag": "ark-covenant"}, {"q": "Whose donkey spoke to warn him on the road?", "correct": "Balaam", "wrong": ["Balak", "Barak", "Boaz"], "tag": "balaam"}, {"q": "What meal marks the night the angel of death 'passed over' Israel's homes?", "correct": "The Passover", "wrong": ["The Feast of Booths", "Pentecost", "The Sabbath meal"], "tag": "passover"}, {"q": "Who hid the spies in Jericho and helped Israel take the city?", "correct": "Rahab", "wrong": ["Ruth", "Deborah", "Jael"], "tag": "rahab"}, {"q": "Which woman was both a judge and a prophetess of Israel?", "correct": "Deborah", "wrong": ["Miriam", "Esther", "Hannah"], "tag": "deborah"}, {"q": "With how many men did Gideon defeat the Midianite army?", "correct": "300", "wrong": ["600", "1,000", "100"], "tag": "gideon-300"}, {"q": "Whose strength lay in his uncut hair?", "correct": "Samson", "wrong": ["Goliath", "Saul", "Elijah"], "tag": "samson-hair"}, {"q": "Who cut Samson's hair and betrayed him?", "correct": "Delilah", "wrong": ["Jezebel", "Bathsheba", "Rahab"], "tag": "delilah"}, {"q": "Which loyal woman said, 'Where you go, I will go'?", "correct": "Ruth", "wrong": ["Naomi", "Esther", "Rachel"], "tag": "ruth"}, {"q": "Who was Ruth's mother-in-law?", "correct": "Naomi", "wrong": ["Sarah", "Hannah", "Leah"], "tag": "naomi"}, {"q": "Which man of Bethlehem married Ruth?", "correct": "Boaz", "wrong": ["Jesse", "Obed", "Elimelech"], "tag": "boaz"}, {"q": "Who was the boy that heard God calling him in the night and answered, 'Here I am'?", "correct": "Samuel", "wrong": ["David", "Daniel", "Samson"], "tag": "samuel"}, {"q": "Who prayed for a son and gave him, Samuel, to serve the Lord?", "correct": "Hannah", "wrong": ["Sarah", "Ruth", "Rebekah"], "tag": "hannah"}, {"q": "Which instrument did David play to soothe King Saul?", "correct": "The harp", "wrong": ["The lyre-drum", "The trumpet", "The flute"], "tag": "david-harp"}, {"q": "Who was David's close friend, the son of King Saul?", "correct": "Jonathan", "wrong": ["Absalom", "Samuel", "Nathan"], "tag": "jonathan"}, {"q": "Which king was famous for asking God for wisdom?", "correct": "Solomon", "wrong": ["David", "Saul", "Hezekiah"], "tag": "solomon-wisdom"}, {"q": "Which queen travelled far to test Solomon with hard questions?", "correct": "The Queen of Sheba", "wrong": ["Queen Esther", "Queen Jezebel", "Queen Vashti"], "tag": "queen-sheba"}, {"q": "Who built the first great temple in Jerusalem?", "correct": "Solomon", "wrong": ["David", "Nehemiah", "Herod"], "tag": "solomon-temple"}, {"q": "Who succeeded Elijah and received a double portion of his spirit?", "correct": "Elisha", "wrong": ["Elijah", "Isaiah", "Samuel"], "tag": "elisha"}, {"q": "Which army commander was healed of leprosy after dipping seven times in the Jordan?", "correct": "Naaman", "wrong": ["Nebuchadnezzar", "Goliath", "Cornelius"], "tag": "naaman"}, {"q": "Which three men were thrown into a fiery furnace but were unharmed?", "correct": "Shadrach, Meshach and Abednego", "wrong": ["Peter, James and John", "Cain, Abel and Seth", "Saul, David and Jonathan"], "tag": "fiery-furnace"}, {"q": "Daniel was thrown into a den of what?", "correct": "Lions", "wrong": ["Bears", "Wolves", "Snakes"], "tag": "lions-den"}, {"q": "Which Babylonian king had a dream that Daniel interpreted?", "correct": "Nebuchadnezzar", "wrong": ["Belshazzar", "Darius", "Cyrus"], "tag": "nebuchadnezzar"}, {"q": "Who rebuilt the walls of Jerusalem after the exile?", "correct": "Nehemiah", "wrong": ["Ezra", "Zerubbabel", "Nehushtan"], "tag": "nehemiah"}, {"q": "Which prophet was swallowed by a great fish for three days?", "correct": "Jonah", "wrong": ["Job", "Amos", "Hosea"], "tag": "jonah-fish"}, {"q": "Which man lost everything yet kept his faith, becoming a byword for patience?", "correct": "Job", "wrong": ["Jeremiah", "Elijah", "Hosea"], "tag": "job"}, {"q": "Which wicked queen opposed the prophet Elijah?", "correct": "Jezebel", "wrong": ["Athaliah", "Delilah", "Herodias"], "tag": "jezebel"}, {"q": "Which prophet saw a valley of dry bones come to life?", "correct": "Ezekiel", "wrong": ["Isaiah", "Daniel", "Jeremiah"], "tag": "dry-bones"}, {"q": "How many books are in the whole Bible?", "correct": "66", "wrong": ["72", "39", "27"], "tag": "bible-66"}, {"q": "How many books are in the Old Testament?", "correct": "39", "wrong": ["27", "46", "40"], "tag": "ot-39"}, {"q": "What is the last book of the Bible?", "correct": "Revelation", "wrong": ["Malachi", "Jude", "Acts"], "tag": "last-revelation"}, {"q": "The first four books of the New Testament are known as the what?", "correct": "The Gospels", "wrong": ["The Epistles", "The Law", "The Prophets"], "tag": "gospels"}, {"q": "Which day did God rest on after creating the world?", "correct": "The seventh", "wrong": ["The sixth", "The first", "The third"], "tag": "sabbath-rest"}, {"q": "How many tribes of Israel were there?", "correct": "Twelve", "wrong": ["Ten", "Seven", "Forty"], "tag": "twelve-tribes"}, {"q": "Which book of the Bible is a collection of songs and prayers?", "correct": "Psalms", "wrong": ["Proverbs", "Judges", "Kings"], "tag": "psalms"}, {"q": "Which book is best known for its short sayings of wisdom?", "correct": "Proverbs", "wrong": ["Psalms", "Job", "Ruth"], "tag": "proverbs"}, {"q": "Which angel told Mary she would give birth to Jesus?", "correct": "Gabriel", "wrong": ["Michael", "Raphael", "Uriel"], "tag": "gabriel"}, {"q": "Who was the mother of Jesus?", "correct": "Mary", "wrong": ["Martha", "Elizabeth", "Anna"], "tag": "mary"}, {"q": "What was the trade of Joseph, the earthly father of Jesus?", "correct": "Carpenter", "wrong": ["Fisherman", "Shepherd", "Tax collector"], "tag": "joseph-carpenter"}, {"q": "What did the wise men follow to find Jesus?", "correct": "A star", "wrong": ["An angel", "A dove", "A cloud"], "tag": "star-bethlehem"}, {"q": "How many gifts did the wise men famously bring?", "correct": "Three", "wrong": ["Two", "Four", "Seven"], "tag": "three-gifts"}, {"q": "Which of these was a gift of the wise men?", "correct": "Frankincense", "wrong": ["Silver", "Bread", "Oil"], "tag": "gift-frankincense"}, {"q": "Which king ordered the killing of baby boys after Jesus was born?", "correct": "Herod", "wrong": ["Pilate", "Caesar", "Nebuchadnezzar"], "tag": "herod"}, {"q": "In which town did Jesus grow up?", "correct": "Nazareth", "wrong": ["Bethlehem", "Jerusalem", "Capernaum"], "tag": "nazareth"}, {"q": "What did John the Baptist eat in the wilderness?", "correct": "Locusts and wild honey", "wrong": ["Bread and fish", "Figs and dates", "Manna"], "tag": "john-locusts"}, {"q": "For how many days was Jesus tempted in the wilderness?", "correct": "Forty", "wrong": ["Seven", "Three", "Thirty"], "tag": "temptation-40"}, {"q": "Which disciple is remembered for doubting the resurrection until he saw Jesus?", "correct": "Thomas", "wrong": ["Peter", "Philip", "Andrew"], "tag": "doubting-thomas"}, {"q": "Which disciple betrayed Jesus?", "correct": "Judas Iscariot", "wrong": ["Peter", "Thomas", "John"], "tag": "judas"}, {"q": "For how many pieces of silver did Judas betray Jesus?", "correct": "Thirty", "wrong": ["Twenty", "Forty", "Fifty"], "tag": "thirty-silver"}, {"q": "How many times did Peter deny knowing Jesus?", "correct": "Three", "wrong": ["Two", "Once", "Seven"], "tag": "peter-denies"}, {"q": "Which brothers left their fishing nets to follow Jesus first?", "correct": "Peter and Andrew", "wrong": ["James and John", "Philip and Thomas", "Matthew and Mark"], "tag": "peter-andrew"}, {"q": "Which disciple had been a tax collector?", "correct": "Matthew", "wrong": ["Peter", "John", "Andrew"], "tag": "matthew-tax"}, {"q": "With how many loaves and fish did Jesus feed five thousand?", "correct": "Five loaves and two fish", "wrong": ["Two loaves and five fish", "Seven loaves", "Twelve loaves"], "tag": "feeding-5000"}, {"q": "On what did Jesus walk to reach his disciples' boat?", "correct": "Water", "wrong": ["A bridge", "The shore", "A cloud"], "tag": "walking-water"}, {"q": "What did Jesus calm with the words, 'Peace, be still'?", "correct": "A storm", "wrong": ["A crowd", "A fever", "A fire"], "tag": "calming-storm"}, {"q": "Whom did Jesus raise from the dead after four days in the tomb?", "correct": "Lazarus", "wrong": ["Jairus", "Stephen", "Nicodemus"], "tag": "lazarus"}, {"q": "At which wedding did Jesus turn water into wine?", "correct": "Cana", "wrong": ["Nazareth", "Bethany", "Capernaum"], "tag": "cana"}, {"q": "How many lepers did Jesus heal, of whom only one returned to thank him?", "correct": "Ten", "wrong": ["Seven", "Twelve", "Five"], "tag": "ten-lepers"}, {"q": "In one parable, a lost son who returns home is welcomed by his father. He is known as the what?", "correct": "The Prodigal Son", "wrong": ["The Lost Sheep", "The Good Son", "The Faithful Servant"], "tag": "prodigal-son"}, {"q": "In the parable of the sower, seed that fell on good soil produced what?", "correct": "A great harvest", "wrong": ["Thorns", "Nothing", "Weeds"], "tag": "parable-sower"}, {"q": "In one parable, a shepherd leaves 99 sheep to find how many lost?", "correct": "One", "wrong": ["Ten", "Three", "Seven"], "tag": "lost-sheep"}, {"q": "Jesus said faith as small as which tiny seed can move mountains?", "correct": "A mustard seed", "wrong": ["A wheat seed", "A poppy seed", "An acorn"], "tag": "mustard-seed"}, {"q": "Jesus's most famous prayer begins with which words?", "correct": "Our Father", "wrong": ["Praise the Lord", "Hear, O Israel", "Glory to God"], "tag": "lords-prayer"}, {"q": "The blessings Jesus taught on the mountain ('Blessed are...') are called the what?", "correct": "The Beatitudes", "wrong": ["The Commandments", "The Parables", "The Psalms"], "tag": "beatitudes"}, {"q": "On the night before he died, Jesus shared what meal with his disciples?", "correct": "The Last Supper", "wrong": ["The Passover lamb only", "A wedding feast", "Breakfast by the sea"], "tag": "last-supper"}, {"q": "In which garden was Jesus arrested?", "correct": "Gethsemane", "wrong": ["Eden", "Golgotha", "Bethany"], "tag": "gethsemane-arrest"}, {"q": "At which place, 'the place of the skull', was Jesus crucified?", "correct": "Golgotha", "wrong": ["Bethlehem", "Galilee", "Emmaus"], "tag": "golgotha"}, {"q": "Who was made to carry Jesus's cross?", "correct": "Simon of Cyrene", "wrong": ["Simon Peter", "Joseph of Arimathea", "Barabbas"], "tag": "simon-cyrene"}, {"q": "Which prisoner was released instead of Jesus?", "correct": "Barabbas", "wrong": ["Judas", "Lazarus", "Stephen"], "tag": "barabbas"}, {"q": "What was placed on Jesus's head at the crucifixion?", "correct": "A crown of thorns", "wrong": ["A golden crown", "A veil", "A helmet"], "tag": "crown-thorns"}, {"q": "On which day did Jesus rise from the dead?", "correct": "The third day", "wrong": ["The seventh day", "The next day", "The fortieth day"], "tag": "third-day"}, {"q": "Who was the first to see the risen Jesus at the tomb?", "correct": "Mary Magdalene", "wrong": ["Peter", "Thomas", "Mary the mother of Jesus"], "tag": "mary-magdalene"}, {"q": "On the road to which village did two disciples meet the risen Jesus?", "correct": "Emmaus", "wrong": ["Damascus", "Jericho", "Bethany"], "tag": "emmaus"}, {"q": "At which festival did the Holy Spirit come with tongues of fire?", "correct": "Pentecost", "wrong": ["Passover", "Tabernacles", "Epiphany"], "tag": "pentecost"}, {"q": "Who was the first Christian martyr, stoned for his faith?", "correct": "Stephen", "wrong": ["Paul", "Peter", "James"], "tag": "stephen"}, {"q": "On the road to which city was Saul blinded and converted?", "correct": "Damascus", "wrong": ["Jerusalem", "Antioch", "Rome"], "tag": "damascus-road"}, {"q": "By what name did Saul become better known as an apostle?", "correct": "Paul", "wrong": ["Silas", "Barnabas", "Timothy"], "tag": "paul"}, {"q": "Who travelled with Paul on his first missionary journey?", "correct": "Barnabas", "wrong": ["Luke", "Timothy", "Titus"], "tag": "barnabas"}, {"q": "Paul wrote many letters in the New Testament, also called what?", "correct": "Epistles", "wrong": ["Gospels", "Psalms", "Proverbs"], "tag": "epistles"}, {"q": "On which island was John when he received the visions of Revelation?", "correct": "Patmos", "wrong": ["Cyprus", "Crete", "Malta"], "tag": "patmos"}, {"q": "Who baptised Jesus?", "correct": "John the Baptist", "wrong": ["Peter", "Andrew", "Paul"], "tag": "john-the-baptist"}, {"q": "What did Moses part to escape Egypt?", "correct": "The Red Sea", "wrong": ["The Jordan", "The Nile", "Galilee"], "tag": "the-red-sea"}, {"q": "What did the wise men follow?", "correct": "A star", "wrong": ["An angel", "A dove", "A cloud"], "tag": "a-star"}, {"q": "Who denied Jesus three times?", "correct": "Peter", "wrong": ["Judas", "Thomas", "John"], "tag": "peter"}, {"q": "What was Jesus's first miracle?", "correct": "Turning water into wine", "wrong": ["Healing a leper", "Walking on water", "Feeding 5,000"], "tag": "turning-water-into-wine"}, {"q": "Who was the strongest man in the Bible?", "correct": "Samson", "wrong": ["Goliath", "Saul", "Gideon"], "tag": "samson"}, {"q": "What did God send to flood the earth?", "correct": "Rain", "wrong": ["Fire", "Locusts", "Hail"], "tag": "rain"}, {"q": "Which sea did Jesus walk on?", "correct": "Galilee", "wrong": ["The Red Sea", "The Dead Sea", "The Mediterranean"], "tag": "galilee"}, {"q": "Who wrote most of the Psalms?", "correct": "David", "wrong": ["Solomon", "Moses", "Isaiah"], "tag": "david"}, {"q": "What did Jesus ride into Jerusalem?", "correct": "A donkey", "wrong": ["A horse", "A camel", "A chariot"], "tag": "a-donkey"}, {"q": "How many days did God take to create the world?", "correct": "Six", "wrong": ["Three", "Seven", "Twelve"], "tag": "six"}, {"q": "Who was the first murderer in the Bible?", "correct": "Cain", "wrong": ["Abel", "Esau", "Lamech"], "tag": "cain"}, {"q": "What food did God provide in the wilderness?", "correct": "Manna", "wrong": ["Bread", "Fish", "Figs"], "tag": "manna"}, {"q": "Which apostle was a tax collector?", "correct": "Matthew", "wrong": ["Mark", "Luke", "John"], "tag": "matthew"}, {"q": "What was written on the stone tablets?", "correct": "The Ten Commandments", "wrong": ["The Psalms", "The Beatitudes", "The Lord's Prayer"], "tag": "the-ten-commandments"}, {"q": "Who betrayed Jesus?", "correct": "Judas Iscariot", "wrong": ["Peter", "Thomas", "Barabbas"], "tag": "judas-iscariot"}, {"q": "What animal spoke to Balaam?", "correct": "A donkey", "wrong": ["A serpent", "A raven", "A lion"], "tag": "a-donkey"}, {"q": "Who was Jesus's cousin, born to Elizabeth?", "correct": "John the Baptist", "wrong": ["James", "Andrew", "Simon"], "tag": "john-the-baptist"}, {"q": "What did the shepherds see in the sky?", "correct": "Angels", "wrong": ["A comet", "A rainbow", "Fire"], "tag": "angels"}, {"q": "Which animal did Jesus compare himself to as a shepherd's charge?", "correct": "A lamb", "wrong": ["A lion", "A dove", "An ox"], "tag": "a-lamb"}, {"q": "Who was swallowed up when the ground opened?", "correct": "Korah", "wrong": ["Achan", "Uzzah", "Nadab"], "tag": "korah"}, {"q": "What did the Israelites build while Moses was on the mountain?", "correct": "A golden calf", "wrong": ["A tower", "An altar", "An ark"], "tag": "a-golden-calf"}, {"q": "Who was the first person to see the risen Jesus?", "correct": "Mary Magdalene", "wrong": ["Peter", "John", "Thomas"], "tag": "mary-magdalene"}, {"q": "What is the second book of the Bible?", "correct": "Exodus", "wrong": ["Leviticus", "Genesis", "Numbers"], "tag": "exodus"}, {"q": "Which apostle was a doctor?", "correct": "Luke", "wrong": ["Matthew", "Mark", "Paul"], "tag": "luke"}, {"q": "What did Jesus say we should do to our enemies?", "correct": "Love them", "wrong": ["Avoid them", "Judge them", "Fear them"], "tag": "love-them"}, {"q": "How many plagues struck Egypt?", "correct": "Ten", "wrong": ["Seven", "Twelve", "Three"], "tag": "ten"}, {"q": "Who cut Samson's hair?", "correct": "Delilah", "wrong": ["Jezebel", "Rahab", "Michal"], "tag": "delilah"}, {"q": "What was the name of the first garden?", "correct": "Eden", "wrong": ["Gethsemane", "Babylon", "Canaan"], "tag": "eden"}, {"q": "Which prophet foretold a virgin would conceive?", "correct": "Isaiah", "wrong": ["Jeremiah", "Micah", "Malachi"], "tag": "isaiah"}, {"q": "What fell from heaven to feed Israel?", "correct": "Manna", "wrong": ["Quail only", "Rain", "Fire"], "tag": "manna"}, {"q": "Who was the tax collector Jesus called down from a tree?", "correct": "Zacchaeus", "wrong": ["Matthew", "Levi", "Simon"], "tag": "zacchaeus"}, {"q": "What did Jesus turn water into?", "correct": "Wine", "wrong": ["Oil", "Bread", "Milk"], "tag": "wine"}, {"q": "Which brother did Cain kill?", "correct": "Abel", "wrong": ["Seth", "Enoch", "Noah"], "tag": "abel"}, {"q": "What did Peter cut off in the garden?", "correct": "A servant's ear", "wrong": ["A rope", "A branch", "A sword"], "tag": "a-servant-s-ear"}, {"q": "Who wrote the book of Proverbs, largely?", "correct": "Solomon", "wrong": ["David", "Moses", "Job"], "tag": "solomon"}, {"q": "What did God create on the seventh day?", "correct": "He rested", "wrong": ["Man", "Animals", "Stars"], "tag": "he-rested"}, {"q": "Who was the first woman?", "correct": "Eve", "wrong": ["Sarah", "Mary", "Ruth"], "tag": "eve"}, {"q": "What did Noah build?", "correct": "An ark", "wrong": ["A tower", "A temple", "A boat house"], "tag": "an-ark"}, {"q": "Who led Israel out of slavery?", "correct": "Moses", "wrong": ["Joshua", "Aaron", "Abraham"], "tag": "moses"}, {"q": "What did David use to kill Goliath?", "correct": "A sling and stone", "wrong": ["A sword", "A spear", "A bow"], "tag": "a-sling-and-stone"}, {"q": "Which day is the Sabbath?", "correct": "The seventh", "wrong": ["The first", "The third", "The sixth"], "tag": "the-seventh"}, {"q": "Who was thrown to the lions?", "correct": "Daniel", "wrong": ["Joseph", "Jeremiah", "Micah"], "tag": "daniel"}, {"q": "What is the fourth Gospel?", "correct": "John", "wrong": ["Luke", "Mark", "Acts"], "tag": "john"}, {"q": "Who wrote the Ten Commandments?", "correct": "God", "wrong": ["Moses", "Aaron", "Joshua"], "tag": "god"}, {"q": "What did Jesus do on the third day?", "correct": "Rose from the dead", "wrong": ["Ascended", "Preached", "Fasted"], "tag": "rose-from-the-dead"}, {"q": "Which fruit is linked with the fall?", "correct": "We are not told", "wrong": ["An apple", "A fig", "A grape"], "tag": "we-are-not-told"}, {"q": "Which king asked God for wisdom?", "correct": "Solomon", "wrong": ["David", "Saul", "Hezekiah"], "tag": "solomon"}, {"q": "Which prophet was taken up in a whirlwind?", "correct": "Elijah", "wrong": ["Elisha", "Enoch", "Isaiah"], "tag": "elijah"}, {"q": "What did Esau sell for a bowl of stew?", "correct": "His birthright", "wrong": ["His coat", "His land", "His flock"], "tag": "his-birthright"}, {"q": "Which city's walls fell after seven days?", "correct": "Jericho", "wrong": ["Ai", "Babylon", "Nineveh"], "tag": "jericho"}, {"q": "Who was the father of John the Baptist?", "correct": "Zechariah", "wrong": ["Joseph", "Simeon", "Eli"], "tag": "zechariah"}, {"q": "Which disciple doubted the resurrection?", "correct": "Thomas", "wrong": ["Philip", "Andrew", "Bartholomew"], "tag": "thomas"}, {"q": "Who was the Roman governor at Jesus's trial?", "correct": "Pontius Pilate", "wrong": ["Herod", "Caesar", "Felix"], "tag": "pontius-pilate"}, {"q": "What did Elijah challenge on Mount Carmel?", "correct": "The prophets of Baal", "wrong": ["The Philistines", "King Saul", "The Assyrians"], "tag": "the-prophets-of-baal"}, {"q": "Who was thrown into a fiery furnace?", "correct": "Shadrach, Meshach and Abednego", "wrong": ["Daniel", "Jeremiah", "Elijah"], "tag": "shadrach-meshach-and-abednego"}, {"q": "Which woman judged Israel?", "correct": "Deborah", "wrong": ["Miriam", "Esther", "Huldah"], "tag": "deborah"}, {"q": "Who replaced Judas among the apostles?", "correct": "Matthias", "wrong": ["Barnabas", "Stephen", "Silas"], "tag": "matthias"}, {"q": "What was Paul's name before conversion?", "correct": "Saul", "wrong": ["Silas", "Simon", "Stephen"], "tag": "saul"}, {"q": "On which road was Paul blinded?", "correct": "The road to Damascus", "wrong": ["The road to Emmaus", "The Jericho road", "The Appian Way"], "tag": "the-road-to-damascus"}, {"q": "Who helped Moses hold up his hands in battle?", "correct": "Aaron and Hur", "wrong": ["Joshua and Caleb", "Miriam and Aaron", "Jethro and Zipporah"], "tag": "aaron-and-hur"}, {"q": "Which queen saved the Jews from Haman?", "correct": "Esther", "wrong": ["Vashti", "Jezebel", "Bathsheba"], "tag": "esther"}, {"q": "Who was the oldest man in the Bible?", "correct": "Methuselah", "wrong": ["Adam", "Noah", "Enoch"], "tag": "methuselah"}, {"q": "What did Jacob see in his dream at Bethel?", "correct": "A ladder to heaven", "wrong": ["A burning bush", "A wheel of fire", "Dry bones"], "tag": "a-ladder-to-heaven"}, {"q": "Which disciple walked on water with Jesus?", "correct": "Peter", "wrong": ["John", "James", "Andrew"], "tag": "peter"}, {"q": "Who was raised from the dead after four days?", "correct": "Lazarus", "wrong": ["Jairus's daughter", "The widow's son", "Tabitha"], "tag": "lazarus"}, {"q": "What did Jesus say is the greatest commandment?", "correct": "Love God with all your heart", "wrong": ["Do not steal", "Honour your parents", "Keep the Sabbath"], "tag": "love-god-with-all-your-heart"}, {"q": "Which apostle wrote Revelation?", "correct": "John", "wrong": ["Peter", "Paul", "James"], "tag": "john"}, {"q": "Who was Abraham's nephew?", "correct": "Lot", "wrong": ["Isaac", "Laban", "Nahor"], "tag": "lot"}, {"q": "Who was Isaac's wife?", "correct": "Rebekah", "wrong": ["Rachel", "Leah", "Sarah"], "tag": "rebekah"}, {"q": "Which disciple was called Didymus?", "correct": "Thomas", "wrong": ["Philip", "Nathanael", "Simon"], "tag": "thomas"}, {"q": "Who hid baby Moses in the reeds?", "correct": "His mother", "wrong": ["Pharaoh's daughter", "Miriam", "A servant"], "tag": "his-mother"}, {"q": "Which king danced before the Ark?", "correct": "David", "wrong": ["Solomon", "Saul", "Hezekiah"], "tag": "david"}, {"q": "Who was the giant from Gath?", "correct": "Goliath", "wrong": ["Og", "Anak", "Sihon"], "tag": "goliath"}, {"q": "Which nation held Israel captive in Babylon?", "correct": "The Babylonians", "wrong": ["The Assyrians", "The Persians", "The Egyptians"], "tag": "the-babylonians"}, {"q": "Who was Aaron's sister?", "correct": "Miriam", "wrong": ["Deborah", "Zipporah", "Hannah"], "tag": "miriam"}, {"q": "What did Gideon use to test God?", "correct": "A fleece", "wrong": ["A staff", "A sword", "A stone"], "tag": "a-fleece"}, {"q": "In which town did Jesus heal the centurion's servant?", "correct": "Capernaum", "wrong": ["Bethany", "Nazareth", "Cana"], "tag": "a-centurion-at-capernaum"}, {"q": "Which sea is also called Chinnereth?", "correct": "Galilee", "wrong": ["The Dead Sea", "The Red Sea", "The Great Sea"], "tag": "galilee"}, {"q": "Who was the prophet during Ahab's reign?", "correct": "Elijah", "wrong": ["Elisha", "Amos", "Jonah"], "tag": "elijah"}, {"q": "What was Jesus accused of claiming to be?", "correct": "King of the Jews", "wrong": ["A prophet", "A priest", "A teacher"], "tag": "king-of-the-jews"}, {"q": "Who carried Jesus's cross?", "correct": "Simon of Cyrene", "wrong": ["Joseph of Arimathea", "Nicodemus", "Barabbas"], "tag": "simon-of-cyrene"}, {"q": "Which disciple was the brother of James, son of Zebedee?", "correct": "John", "wrong": ["Andrew", "Peter", "Philip"], "tag": "john"}, {"q": "Who was released instead of Jesus?", "correct": "Barabbas", "wrong": ["Judas", "Stephen", "Lazarus"], "tag": "barabbas"}, {"q": "What did the Israelites eat at the first Passover?", "correct": "Lamb and bitter herbs", "wrong": ["Manna", "Fish", "Bread only"], "tag": "lamb-and-bitter-herbs"}, {"q": "Which apostle was stoned and left for dead at Lystra?", "correct": "Paul", "wrong": ["Peter", "Silas", "Timothy"], "tag": "paul"}, {"q": "Who was the woman at the well from?", "correct": "Samaria", "wrong": ["Galilee", "Judea", "Phoenicia"], "tag": "samaria"}, {"q": "What did Jesus write on the ground?", "correct": "We are not told", "wrong": ["The Law", "Their sins", "A prayer"], "tag": "we-are-not-told"}, {"q": "Which king had a dream of a great statue?", "correct": "Nebuchadnezzar", "wrong": ["Belshazzar", "Darius", "Cyrus"], "tag": "nebuchadnezzar"}, {"q": "Who was Joseph sold to?", "correct": "Ishmaelite traders", "wrong": ["Egyptians", "Philistines", "Midianite kings"], "tag": "ishmaelite-traders"}, {"q": "Which prophet anointed Saul?", "correct": "Samuel", "wrong": ["Nathan", "Gad", "Ahijah"], "tag": "samuel"}, {"q": "Who was Moses's brother?", "correct": "Aaron", "wrong": ["Hur", "Caleb", "Joshua"], "tag": "aaron"}, {"q": "Who wrote Lamentations, by tradition?", "correct": "Jeremiah", "wrong": ["Ezekiel", "Isaiah", "Baruch"], "tag": "jeremiah"}, {"q": "Which apostle was crucified upside down, by tradition?", "correct": "Peter", "wrong": ["Andrew", "Paul", "James"], "tag": "peter"}, {"q": "Who was the first king of the divided northern kingdom?", "correct": "Jeroboam", "wrong": ["Rehoboam", "Omri", "Ahab"], "tag": "jeroboam"}, {"q": "Which woman anointed Jesus's feet with perfume?", "correct": "Mary of Bethany", "wrong": ["Mary Magdalene", "Martha", "Joanna"], "tag": "mary-of-bethany"}, {"q": "What did Jesus say to the storm?", "correct": "Peace, be still", "wrong": ["Go away", "Be calm", "Rise no more"], "tag": "peace-be-still"}, {"q": "Who was the father of King David?", "correct": "Jesse", "wrong": ["Obed", "Boaz", "Saul"], "tag": "jesse"}, {"q": "Who was the father of Methuselah?", "correct": "Enoch", "wrong": ["Lamech", "Jared", "Seth"], "tag": "enoch"}, {"q": "Which judge defeated the Midianites with 300 men?", "correct": "Gideon", "wrong": ["Samson", "Jephthah", "Ehud"], "tag": "gideon"}, {"q": "Who was the first Christian martyr?", "correct": "Stephen", "wrong": ["James", "Peter", "Paul"], "tag": "stephen"}, {"q": "Which prophet married Gomer?", "correct": "Hosea", "wrong": ["Amos", "Micah", "Joel"], "tag": "hosea"}, {"q": "Who was king when Jesus was born?", "correct": "Herod the Great", "wrong": ["Herod Antipas", "Augustus", "Archelaus"], "tag": "herod-the-great"}, {"q": "Which mountain did Moses die on?", "correct": "Mount Nebo", "wrong": ["Mount Sinai", "Mount Carmel", "Mount Hor"], "tag": "mount-nebo"}, {"q": "Who was the high priest at Jesus's trial?", "correct": "Caiaphas", "wrong": ["Annas", "Eli", "Zadok"], "tag": "caiaphas"}, {"q": "Which book tells of the return from exile and rebuilding the wall?", "correct": "Nehemiah", "wrong": ["Ezra", "Esther", "Haggai"], "tag": "nehemiah"}, {"q": "Who was David's closest friend?", "correct": "Jonathan", "wrong": ["Nathan", "Joab", "Absalom"], "tag": "jonathan"}, {"q": "Which apostle was a tentmaker by trade?", "correct": "Paul", "wrong": ["Peter", "Luke", "Timothy"], "tag": "paul"}, {"q": "Who anointed David as king?", "correct": "Samuel", "wrong": ["Nathan", "Zadok", "Eli"], "tag": "samuel"}, {"q": "Which island was Paul shipwrecked on?", "correct": "Malta", "wrong": ["Cyprus", "Crete", "Patmos"], "tag": "malta"}, {"q": "Who was Timothy's grandmother?", "correct": "Lois", "wrong": ["Eunice", "Priscilla", "Phoebe"], "tag": "lois"}, {"q": "Which prophet saw a valley of dry bones?", "correct": "Ezekiel", "wrong": ["Daniel", "Jeremiah", "Isaiah"], "tag": "ezekiel"}, {"q": "Who led Israel after Moses died?", "correct": "Joshua", "wrong": ["Caleb", "Aaron", "Eleazar"], "tag": "joshua"}, {"q": "Which woman hid the spies in Jericho?", "correct": "Rahab", "wrong": ["Ruth", "Jael", "Deborah"], "tag": "rahab"}, {"q": "Who was struck down for touching the Ark?", "correct": "Uzzah", "wrong": ["Ahio", "Nadab", "Abihu"], "tag": "uzzah"}, {"q": "Which Gospel begins 'In the beginning was the Word'?", "correct": "John", "wrong": ["Matthew", "Mark", "Luke"], "tag": "john"}, {"q": "Who was Bathsheba's first husband?", "correct": "Uriah", "wrong": ["Nabal", "Joab", "Abner"], "tag": "uriah"}, {"q": "Which city did Jonah refuse to go to?", "correct": "Nineveh", "wrong": ["Tarshish", "Babylon", "Damascus"], "tag": "nineveh"}, {"q": "Who was the mother of Samuel?", "correct": "Hannah", "wrong": ["Peninnah", "Elizabeth", "Rachel"], "tag": "hannah"}, {"q": "Which plague was the last on Egypt?", "correct": "Death of the firstborn", "wrong": ["Darkness", "Locusts", "Hail"], "tag": "death-of-the-firstborn"}, {"q": "Who wrote the book of Acts?", "correct": "Luke", "wrong": ["Paul", "Mark", "John"], "tag": "luke"}, {"q": "Which king saw writing on the wall?", "correct": "Belshazzar", "wrong": ["Nebuchadnezzar", "Darius", "Cyrus"], "tag": "belshazzar"}, {"q": "Who was Jacob's first wife?", "correct": "Leah", "wrong": ["Rachel", "Rebekah", "Bilhah"], "tag": "leah"}, {"q": "Who was the father of Isaac?", "correct": "Abraham", "wrong": ["Terah", "Nahor", "Lot"], "tag": "abraham"}, {"q": "Which prophet ate a scroll?", "correct": "Ezekiel", "wrong": ["Jeremiah", "John", "Daniel"], "tag": "ezekiel"}, {"q": "Who was the first judge of Israel?", "correct": "Othniel", "wrong": ["Ehud", "Deborah", "Gideon"], "tag": "othniel"}, {"q": "Which apostle raised Tabitha from the dead?", "correct": "Peter", "wrong": ["Paul", "John", "Philip"], "tag": "peter"}, {"q": "Who was Hosea's unfaithful wife?", "correct": "Gomer", "wrong": ["Delilah", "Jezebel", "Michal"], "tag": "gomer"}, {"q": "Which city hosted the first council of the church?", "correct": "Jerusalem", "wrong": ["Antioch", "Ephesus", "Rome"], "tag": "jerusalem"}, {"q": "Who was Paul's companion on his second journey?", "correct": "Silas", "wrong": ["Barnabas", "Mark", "Luke"], "tag": "silas"}, {"q": "Which king was struck with leprosy for burning incense?", "correct": "Uzziah", "wrong": ["Ahaz", "Manasseh", "Joash"], "tag": "uzziah"}, {"q": "Who was the mother of John Mark?", "correct": "Mary", "wrong": ["Rhoda", "Lydia", "Priscilla"], "tag": "mary"}, {"q": "Abraham sent his senior servant to find a wife for Isaac. Which woman did he bring back?", "correct": "Rebekah", "wrong": ["Rachel", "Leah", "Sarah"], "tag": "eliezer"}, {"q": "Which tribe received no land inheritance?", "correct": "Levi", "wrong": ["Dan", "Simeon", "Benjamin"], "tag": "levi"}, {"q": "Who was the queen mother who seized the throne?", "correct": "Athaliah", "wrong": ["Jezebel", "Michal", "Bathsheba"], "tag": "athaliah"}, {"q": "Which prophet was a herdsman from Tekoa?", "correct": "Amos", "wrong": ["Micah", "Hosea", "Joel"], "tag": "amos"}, {"q": "Who baptised the Ethiopian eunuch?", "correct": "Philip", "wrong": ["Peter", "Paul", "Stephen"], "tag": "philip"}, {"q": "Which king tore his robe at hearing the Law?", "correct": "Josiah", "wrong": ["Hezekiah", "Jehoshaphat", "Asa"], "tag": "josiah"}, {"q": "Who was struck dumb until his son was born?", "correct": "Zechariah", "wrong": ["Simeon", "Eli", "Joseph"], "tag": "zechariah"}, {"q": "Which two men appeared with Jesus at the Transfiguration?", "correct": "Moses and Elijah", "wrong": ["Abraham and Isaac", "David and Samuel", "Enoch and Noah"], "tag": "moses-and-elijah"}, {"q": "At the cross, what did the Roman centurion say of Jesus?", "correct": "Truly this was the Son of God", "wrong": ["He was a prophet", "He was innocent of blood", "He was a king of the Jews"], "tag": "a-centurion"}, {"q": "Which New Testament letter is the shortest by word count?", "correct": "3 John", "wrong": ["Philemon", "Jude", "2 John"], "tag": "3-john"}, {"q": "Who was Lot's wife turned into?", "correct": "A pillar of salt", "wrong": ["A tree", "Stone", "Dust"], "tag": "a-pillar-of-salt"}, {"q": "Which king was the youngest to take the throne at seven?", "correct": "Joash", "wrong": ["Josiah", "Uzziah", "Manasseh"], "tag": "joash"}, {"q": "Who was Barnabas's cousin?", "correct": "Mark", "wrong": ["Luke", "Silas", "Timothy"], "tag": "mark"}, {"q": "Which prophet was told not to mourn his wife?", "correct": "Ezekiel", "wrong": ["Hosea", "Jeremiah", "Isaiah"], "tag": "ezekiel"}, {"q": "In Mark 1, Jesus drove an unclean spirit out of a man in which town's synagogue?", "correct": "Capernaum", "wrong": ["Nazareth", "Bethsaida", "Jericho"], "tag": "a-man-with-an-unclean-spirit"}, {"q": "Which city was Lydia from?", "correct": "Thyatira", "wrong": ["Philippi", "Ephesus", "Colossae"], "tag": "thyatira"}, {"q": "Who succeeded Moses at God's command?", "correct": "Joshua", "wrong": ["Caleb", "Eleazar", "Aaron"], "tag": "joshua"}, {"q": "Which feast celebrates deliverance from Haman?", "correct": "Purim", "wrong": ["Passover", "Pentecost", "Booths"], "tag": "purim"}, {"q": "Which priest did Hannah leave the boy Samuel with to serve at Shiloh?", "correct": "Eli", "wrong": ["Zadok", "Abiathar", "Ahimelech"], "tag": "eli"}, {"q": "What did Paul leave at Troas?", "correct": "His cloak and scrolls", "wrong": ["A letter", "A staff", "His purse"], "tag": "his-cloak-and-scrolls"}, {"q": "Which minor prophet's book has only one chapter?", "correct": "Obadiah", "wrong": ["Nahum", "Haggai", "Zephaniah"], "tag": "obadiah"}, {"q": "Who was the runaway slave Paul wrote about?", "correct": "Onesimus", "wrong": ["Tychicus", "Epaphras", "Archippus"], "tag": "onesimus"}, {"q": "Which king reigned for only seven days?", "correct": "Zimri", "wrong": ["Elah", "Shallum", "Tibni"], "tag": "zimri"}, {"q": "Who was the father of Boaz?", "correct": "Salmon", "wrong": ["Obed", "Jesse", "Elimelech"], "tag": "salmon"}, {"q": "Which sorcerer opposed Paul on Cyprus?", "correct": "Elymas", "wrong": ["Simon Magus", "Demetrius", "Alexander"], "tag": "elymas"}, {"q": "Which prophet confronted David over Bathsheba?", "correct": "Nathan", "wrong": ["Gad", "Samuel", "Ahijah"], "tag": "nathan"}, {"q": "Which disciple is called 'the Zealot'?", "correct": "Simon", "wrong": ["Judas", "Thaddaeus", "James"], "tag": "simon"}, {"q": "Which woman was a seller of purple cloth?", "correct": "Lydia", "wrong": ["Dorcas", "Priscilla", "Chloe"], "tag": "lydia"}, {"q": "Who was the first son of Adam and Eve after Abel died?", "correct": "Seth", "wrong": ["Enosh", "Cain", "Enoch"], "tag": "seth"}, {"q": "Who was the Ethiopian official Philip baptised?", "correct": "A eunuch", "wrong": ["A centurion", "A merchant", "A scribe"], "tag": "a-eunuch"}, {"q": "Which city did Paul call his birthplace?", "correct": "Tarsus", "wrong": ["Antioch", "Ephesus", "Corinth"], "tag": "tarsus"}, {"q": "Which judge made a rash vow about his daughter?", "correct": "Jephthah", "wrong": ["Gideon", "Samson", "Abimelech"], "tag": "jephthah"}, {"q": "Who was the king of Salem who blessed Abram?", "correct": "Melchizedek", "wrong": ["Abimelech", "Bera", "Amraphel"], "tag": "melchizedek"}, {"q": "Which apostle was put to death by the sword under Herod Agrippa in Acts 12?", "correct": "James", "wrong": ["Peter", "Andrew", "Philip"], "tag": "james"}, {"q": "Who was the wife of Ananias?", "correct": "Sapphira", "wrong": ["Priscilla", "Damaris", "Rhoda"], "tag": "sapphira"}, {"q": "Which mountain did Elijah hear a still small voice on?", "correct": "Horeb", "wrong": ["Carmel", "Sinai", "Tabor"], "tag": "horeb"}, {"q": "Who was the father of Jesse?", "correct": "Obed", "wrong": ["Boaz", "Salmon", "Nahshon"], "tag": "obed"}, {"q": "Whose servant had his eyes opened to see horses and chariots of fire on the hills?", "correct": "Elisha", "wrong": ["Elijah", "Isaiah", "Jeremiah"], "tag": "elisha-s-servant"}, {"q": "Who was the scribe who read the Law to the people?", "correct": "Ezra", "wrong": ["Nehemiah", "Baruch", "Shaphan"], "tag": "ezra"}, {"q": "Which king made an alliance sealed by marrying Jezebel?", "correct": "Ahab", "wrong": ["Omri", "Jehu", "Joram"], "tag": "ahab"}, {"q": "Who was the first person recorded as filled with the Spirit for craftsmanship?", "correct": "Bezalel", "wrong": ["Oholiab", "Hiram", "Aaron"], "tag": "bezalel"}, {"q": "Which city did Paul address about an unknown god?", "correct": "Athens", "wrong": ["Corinth", "Ephesus", "Philippi"], "tag": "athens"}, {"q": "Who was the judge that was left-handed?", "correct": "Ehud", "wrong": ["Othniel", "Shamgar", "Jephthah"], "tag": "ehud"}, {"q": "Which of Job's friends spoke last?", "correct": "Elihu", "wrong": ["Eliphaz", "Bildad", "Zophar"], "tag": "elihu"}, {"q": "Who was the mother of Ishmael?", "correct": "Hagar", "wrong": ["Sarah", "Keturah", "Rebekah"], "tag": "hagar"}, {"q": "Who was the king of Tyre who helped build the temple?", "correct": "Hiram", "wrong": ["Nahash", "Achish", "Toi"], "tag": "hiram"}, {"q": "Which man was carried by angels to Abraham's side?", "correct": "Lazarus the beggar", "wrong": ["Lazarus of Bethany", "Stephen", "Enoch"], "tag": "lazarus-the-beggar"}, {"q": "Which offering did Cain bring?", "correct": "Fruit of the ground", "wrong": ["A lamb", "A dove", "Grain and oil"], "tag": "fruit-of-the-ground"}, {"q": "Which mountain range did the ark rest upon?", "correct": "Ararat", "wrong": ["Sinai", "Zion", "Carmel"], "tag": "ararat"}, {"q": "Who was the governor before Festus?", "correct": "Felix", "wrong": ["Pilate", "Gallio", "Agrippa"], "tag": "felix"}, {"q": "Who was the last king of Judah?", "correct": "Zedekiah", "wrong": ["Jehoiakim", "Jehoiachin", "Josiah"], "tag": "zedekiah"}, {"q": "Which mountain did Abraham take Isaac to?", "correct": "Moriah", "wrong": ["Sinai", "Carmel", "Horeb"], "tag": "moriah"}, {"q": "Which New Testament book presents Jesus as our great high priest?", "correct": "Hebrews", "wrong": ["Romans", "Colossians", "1 Peter"], "tag": "hebrews"}, {"q": "Who was the first man?", "correct": "Adam", "wrong": ["Cain", "Seth", "Enoch"], "tag": "adam"}, {"q": "What did Jesus feed 5,000 people with?", "correct": "Five loaves and two fish", "wrong": ["Manna", "Bread and wine", "Seven loaves"], "tag": "five-loaves-and-two-fish"}, {"q": "What was Jesus's earthly father's trade?", "correct": "Carpenter", "wrong": ["Fisherman", "Shepherd", "Tax collector"], "tag": "carpenter"}, {"q": "What did Jesus calm on the Sea of Galilee?", "correct": "A storm", "wrong": ["A crowd", "A fire", "A fever"], "tag": "a-storm"}, {"q": "Which mountain hosted the Sermon?", "correct": "A mountainside in Galilee", "wrong": ["Sinai", "Zion", "Carmel"], "tag": "a-mountainside-in-galilee"}, {"q": "How many people were saved in Noah's ark?", "correct": "Eight", "wrong": ["Four", "Twelve", "Two"], "tag": "eight"}, {"q": "Who was the first Gentile convert baptised by Peter?", "correct": "Cornelius", "wrong": ["Lydia", "Titus", "Luke"], "tag": "cornelius"}, {"q": "What did God use to guide Israel by night?", "correct": "A pillar of fire", "wrong": ["A star", "A cloud", "An angel"], "tag": "a-pillar-of-fire"}, {"q": "What sign did God give Noah after the flood?", "correct": "A rainbow", "wrong": ["A dove", "An olive branch", "A star"], "tag": "a-rainbow"}, {"q": "Which city was Paul heading to when he was blinded?", "correct": "Damascus", "wrong": ["Jerusalem", "Antioch", "Rome"], "tag": "damascus"}, {"q": "What did Jesus wash at the Last Supper?", "correct": "The disciples' feet", "wrong": ["Their hands", "The cups", "The table"], "tag": "the-disciples-feet"}, {"q": "What is the shortest verse in the Bible?", "correct": "Jesus wept", "wrong": ["God is love", "Pray always", "Rejoice always"], "tag": "jesus-wept"}, {"q": "What did Jesus say he was, the bread of what?", "correct": "Life", "wrong": ["Heaven", "Truth", "Grace"], "tag": "life"}, {"q": "Who was the father of the prodigal son waiting for?", "correct": "His younger son", "wrong": ["His elder son", "A servant", "A friend"], "tag": "his-younger-son"}, {"q": "What did the good Samaritan pour on the wounds?", "correct": "Oil and wine", "wrong": ["Water", "Balm", "Myrrh"], "tag": "oil-and-wine"}, {"q": "Which parable features seed on four soils?", "correct": "The Sower", "wrong": ["The Weeds", "The Mustard Seed", "The Talents"], "tag": "the-sower"}, {"q": "How many talents did the first servant receive?", "correct": "Five", "wrong": ["Two", "One", "Ten"], "tag": "five"}, {"q": "What did Jesus call Herod?", "correct": "That fox", "wrong": ["A wolf", "A serpent", "A lion"], "tag": "that-fox"}, {"q": "What was the name of the pool where a man waited 38 years?", "correct": "Bethesda", "wrong": ["Siloam", "Gihon", "Bethsaida"], "tag": "bethesda"}, {"q": "Which two sisters welcomed Jesus into their home?", "correct": "Mary and Martha", "wrong": ["Rachel and Leah", "Ruth and Naomi", "Mary and Salome"], "tag": "mary-and-martha"}, {"q": "What did the widow put into the treasury?", "correct": "Two small coins", "wrong": ["A gold ring", "A loaf", "Nothing"], "tag": "two-small-coins"}, {"q": "Which garden tree was forbidden?", "correct": "The tree of the knowledge of good and evil", "wrong": ["The tree of life", "The fig tree", "The olive tree"], "tag": "the-tree-of-the-knowledge-of-good-and-evil"}, {"q": "What did Elisha make float?", "correct": "An axe head", "wrong": ["A stone", "A boat", "A staff"], "tag": "an-axe-head"}, {"q": "What happened to the temple curtain when Jesus died?", "correct": "It tore in two", "wrong": ["It caught fire", "It fell", "It turned black"], "tag": "it-tore-in-two"}, {"q": "Who was the mother of Jesus's cousin John?", "correct": "Elizabeth", "wrong": ["Mary", "Anna", "Salome"], "tag": "elizabeth"}, {"q": "What did God give as a sign to Gideon?", "correct": "A fleece of wool", "wrong": ["A rainbow", "A star", "Fire"], "tag": "a-fleece-of-wool"}, {"q": "What did the prodigal son long to eat?", "correct": "Pods fed to pigs", "wrong": ["Bread", "Fish", "Grapes"], "tag": "pods-fed-to-pigs"}, {"q": "What was the sign given to the shepherds?", "correct": "A baby in a manger", "wrong": ["A star", "An angel", "A song"], "tag": "a-baby-in-a-manger"}, {"q": "Which sea did Paul cross to reach Rome?", "correct": "The Mediterranean", "wrong": ["The Adriatic only", "The Aegean only", "The Black Sea"], "tag": "the-mediterranean"}, {"q": "Who asked Jesus 'What is truth?'", "correct": "Pilate", "wrong": ["Herod", "Caiaphas", "Annas"], "tag": "pilate"}, {"q": "What did Jesus say to Peter about the rooster?", "correct": "It would crow after three denials", "wrong": ["It would not crow", "It would crow at dawn", "It would wake the city"], "tag": "it-would-crow-after-three-denials"}, {"q": "Which tribe was Paul from?", "correct": "Benjamin", "wrong": ["Judah", "Levi", "Ephraim"], "tag": "benjamin"}, {"q": "Guess it: I am an ancient and mighty land. A famine once drew families to me. Joseph rose to great power here.", "correct": "Egypt", "wrong": ["Babylon", "Canaan", "Assyria"], "tag": "egypt"}, {"q": "Guess it: I am a river, not a sea. Israel crossed me on dry ground. Naaman washed in me seven times.", "correct": "The Jordan", "wrong": ["The Nile", "The Red Sea", "Galilee"], "tag": "the-jordan"}, {"q": "Guess it: I was made of wood and overlaid with gold. Angels stretched their wings above me. I held tablets of stone.", "correct": "The Ark of the Covenant", "wrong": ["The Golden Calf", "The Bronze Serpent", "The Menorah"], "tag": "the-ark-of-the-covenant"}, {"q": "Guess it: I was found in a desert place. I was on fire but not consumed. A shepherd turned aside to see me.", "correct": "The Burning Bush", "wrong": ["The Pillar of Fire", "The Star of Bethlehem", "Jacob's Ladder"], "tag": "the-burning-bush"}, {"q": "Guess it: I was built of brick and pride. My builders wanted to reach the heavens. We all spoke one language then.", "correct": "The Tower of Babel", "wrong": ["Jericho", "The Temple", "Solomon's Palace"], "tag": "the-tower-of-babel"}, {"q": "Guess it: I took place in an upper room. Feet were washed before the meal. Bread was broken and shared.", "correct": "The Last Supper", "wrong": ["The Wedding at Cana", "The Feeding of 5,000", "Passover in Egypt"], "tag": "the-last-supper"}, {"q": "Guess it: I was a leader among the Pharisees. I came to Jesus under cover of night. I was told I must be born again.", "correct": "Nicodemus", "wrong": ["Joseph of Arimathea", "Gamaliel", "Zacchaeus"], "tag": "nicodemus"}, {"q": "Guess it: David longed to build me but could not. His son completed the work. Gold and cedar filled my rooms.", "correct": "The Temple", "wrong": ["The Tabernacle", "The Synagogue", "Solomon's Palace"], "tag": "the-temple"}, {"q": "Guess it: I began after ten terrible signs. A meal was eaten in haste. A sea opened before a fleeing people.", "correct": "The Exodus", "wrong": ["The Conquest", "The Exile", "The Return"], "tag": "the-exodus"}, {"q": "Guess it: It happened on a Friday. A crown of thorns was involved. Soldiers cast lots for clothing.", "correct": "The Crucifixion", "wrong": ["The Ascension", "The Transfiguration", "The Resurrection"], "tag": "the-crucifixion"}, {"q": "Guess it: I sat by a roadside every day. I could not see, so I begged. I heard a crowd and shouted out.", "correct": "Bartimaeus", "wrong": ["Zacchaeus", "Lazarus", "Simon"], "tag": "bartimaeus"}, {"q": "Guess it: It happened on the first day of the week. A stone was found rolled away. Angels asked why they sought the living among the dead.", "correct": "The Resurrection", "wrong": ["The Ascension", "Pentecost", "The Transfiguration"], "tag": "the-resurrection"}];
 function slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
@@ -662,55 +660,72 @@ let G={ code:null, phase:'lobby', champ:null, chal:null, queue:[], streak:0, qIn
         bestStreak:{}, totalCorrect:{}, blemished:[], lastWinner:null, summary:null,
         mode:'spine', closer:null, finalists:null, finaleScore:null, finaleWinner:null, finIntroMsg:'' };
 
-function code5(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
+let hostGeneration=0, tickBusy=false, engineBusy=false, roomOpening=false, starting=false, finalizing=false;
+let queueIssue=false, finishedRun=null, openingBusy=false;
 function baseUrl(){ const h=location.href||''; if(/^https?:\/\//.test(h)){ const b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.co'; }
-
-async function createRoom(){
-  G.code=code5(); G.phase='lobby';
-  const made = await sb('rooms',{method:'POST',body:JSON.stringify({code:G.code, seed:(Math.random()*1e9)|0, phase:'lobby', state:{game:'throne-bible',phase:'lobby'}})});
-  // If the room never reached the server, showing a code would be worse than
-  // showing nothing: the host would read it out and nobody could ever join.
-  if(!made || made.ok===false){
-    $('code').textContent='----';
-    $('stat').textContent='No connection';
-    const u=$('url'); if(u){ u.textContent='Cannot reach the game server. Check your connection and reload.'; u.removeAttribute('href'); }
-    const q=$('qr'); if(q) q.style.display='none';
-    return;
-  }
-  $('code').textContent=G.code;
-  const link=baseUrl()+'/throne-bible-play.html?c='+G.code;
-  const u=$('url'); u.textContent=link.replace(/^https?:\/\//,''); u.href=link;
-  G.joinLink=link;
-  $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
-  $('dot').classList.add('live'); $('stat').textContent='Live · room '+G.code;
-  writeState(); loadLegends();
+function connectionNotice(text,retry){
+  let box=$('connectionNotice');
+  if(!box){ box=document.createElement('div');box.id='connectionNotice';box.setAttribute('role','status');box.style.cssText='position:fixed;left:12px;right:12px;top:12px;z-index:10000;padding:12px;border-radius:12px;background:#302028;color:#fff;text-align:center';document.body.appendChild(box); }
+  box.replaceChildren();box.hidden=!text;
+  if(text){const span=document.createElement('span');span.textContent=text;box.appendChild(span);if(retry){const button=document.createElement('button');button.type='button';button.textContent='Retry';button.style.marginLeft='12px';button.onclick=()=>access.retry();box.appendChild(button);}}
 }
-function setRoom(patch){ return sb('rooms?code=eq.'+G.code,{method:'PATCH',body:JSON.stringify(patch)}); }
-/* ---------- Hall of Fame: private by default ----------
-   This used to be one board shared by every game played anywhere, filtered
-   only by edition. A child who won at one church appeared on the big screen
-   at every other church, permanently, under whatever name they had typed, with
-   no way to remove it.
-
-   Now it lives on this device unless the host chooses a code to share it with
-   their own group's other devices, which is exactly how the quizzes already
-   work. The group is recorded inside the existing 'game' field, so no change
-   to the database was needed. */
+access.onIssue(function(issue){
+  if(issue.recovered){queueIssue=false;connectionNotice('',false);return;}
+  queueIssue=true;connectionNotice(issue.message+' The game is waiting for this request to be confirmed.',issue.canRetry);
+  $('stat').textContent='Connection needs attention';
+});
+function sameHost(generation,run){ const r=access.currentRoom();return generation===hostGeneration&&(!run||(r&&r.run_id===run)); }
+function syncRoom(room){
+  if(!room)return;
+  const st=room.state||{},oldCorrect=G.q&&G.q.correctIdx;
+  G.code=room.code;G.runId=room.run_id;G.qId=room.q_id||st.qId||null;G.phase=room.phase||st.phase||G.phase;
+  for(const key of ['champ','chal','queue','streak','bestStreak','totalCorrect','blemished','lastWinner','streakKing','finaleScore','finaleWinner','qIndex','qTotal','mode','answerer','lockedOut','buzzOpenAt','buzzWin','ansWin','finalists','winner','summary']){
+    if(Object.prototype.hasOwnProperty.call(st,key))G[key]=st[key];
+  }
+  if(Object.prototype.hasOwnProperty.call(st,'q'))G.q=st.q?Object.assign({},st.q,{correctIdx:oldCorrect}):null;
+}
+function syncStats(stats){ if(!stats)return;for(const key of ['streak','bestStreak','totalCorrect','blemished','lastWinner','streakKing','finaleScore','finaleWinner'])if(Object.prototype.hasOwnProperty.call(stats,key))G[key]=stats[key]; }
+function lockRunSettings(locked){ for(const id of ['qMinus','qPlus','tMinus','tPlus','topicIn','topicClear','liveToggle']){const el=$(id);if(el)el.disabled=locked;} }
+function scheduleStep(callback,delay){
+  clearTimeout(G._t);const generation=hostGeneration,run=G.runId;
+  G._t=setTimeout(async function(){
+    if(!sameHost(generation,run))return;
+    engineBusy=true;
+    try{await callback();}catch(error){connectionNotice(access.message(error),false);}finally{engineBusy=false;}
+  },delay);
+}
+async function createRoom(){
+  if(roomOpening)return;roomOpening=true;const generation=++hostGeneration;clearTimeout(G._t);
+  $('code').textContent='…';$('stat').textContent='Connecting…';lockRunSettings(true);
+  try{
+    let next=null;const saved=access.savedHostCode();
+    if(saved){try{next=await access.resumeHost(saved);}catch(error){if(error.status===401||error.status===403||error.code==='42501'||/expired|not found|unavailable/i.test(error.message)){access.forgetHost();}else throw error;}}
+    if(!next)next=await access.createRoom();
+    if(generation!==hostGeneration)return;
+    syncRoom(next);G.phase='lobby';G.q=null;G.qId=null;G.answerer=null;G.queue=[];G.champ=null;G.chal=null;G.summary=null;G.winner=null;G.deadmsg='';
+    // A restored host opens a fresh lobby; an old round is never resumed by its code.
+    await writeState();
+    if(generation!==hostGeneration)return;
+    $('lobby').style.display='';$('arena').style.display='none';$('code').textContent=G.code;
+    const link=baseUrl()+'/throne-bible-play.html?c='+G.code;
+    const u=$('url');u.textContent=link.replace(/^https?:\/\//,'');u.href=link;G.joinLink=link;
+    const qr=$('qr');if(qr){qr.style.display='';qr.src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);}
+    $('dot').classList.add('live');$('stat').textContent='Live · room '+G.code;
+    lockRunSettings(false);await pollPlayers();renderLobby();await loadLegends();
+  }catch(error){$('code').textContent='----';$('stat').textContent='Not connected';connectionNotice(access.message(error),false);}
+  finally{roomOpening=false;}
+}
+async function setRoom(patch){ const next=await access.publish(patch);syncRoom(next);return next; }
+/* ---------- Hall of Fame: on this device unless the host chooses a group ----------
+   New champions are recorded from a confirmed owned-run result. A chosen group
+   shares that result through the scoped server API; the same API reads earlier
+   group records. With no group code, only this device stores the confirmed entry. */
 const HOF_EDITION='throne-bible';
 const HOF_LOCAL_KEY='tb_hof_'+HOF_EDITION, HOF_CODE_KEY='tb_hofcode_'+HOF_EDITION;
 function hofCode(){ let c=''; try{ c=localStorage.getItem(HOF_CODE_KEY)||''; }catch(e){}
   return c.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24); }
 function hofLocalRead(){ try{ return JSON.parse(localStorage.getItem(HOF_LOCAL_KEY)||'[]')||[]; }catch(e){ return []; } }
 function hofLocalWrite(list){ try{ localStorage.setItem(HOF_LOCAL_KEY, JSON.stringify(list.slice(-200))); }catch(e){} }
-async function writeLegend(winner, flawless){
-  if(!winner) return;
-  const entry={ name:winner.name, streak:(G.bestStreak[winner.id]||0), flawless:!!flawless,
-                questions:G.qTotal, players:(G.players?G.players.length:0), created_at:new Date().toISOString() };
-  const code=hofCode();
-  if(code){ try{ await sb('legends',{method:'POST',body:JSON.stringify(Object.assign({game:HOF_EDITION+':'+code},entry))}); }catch(e){} }
-  else { const L=hofLocalRead(); L.push(entry); hofLocalWrite(L); }
-  loadLegends();
-}
 /* A hall of fame ordered by date is a log, not a leaderboard. Rank on the
    streak, because that is the thing the game is actually about: how long you
    held the throne. A flawless run keeps its crown as the rarer honour, but it
@@ -718,7 +733,7 @@ async function writeLegend(winner, flawless){
    on. Pull a wider slice so we can keep only each person's best run. */
 async function loadLegends(){ let r=[];
   const code=hofCode();
-  if(code){ try{ r=await sb('legends?game=eq.'+encodeURIComponent(HOF_EDITION+':'+code)+'&select=name,streak,flawless,created_at&order=streak.desc,created_at.desc&limit=60')||[]; }catch(e){} }
+  if(code){try{r=await access.legends(code)||[];}catch(error){connectionNotice(access.message(error),false);return;}}
   else { r=hofLocalRead(); }
   paintHofScope();
   const best={};
@@ -771,173 +786,198 @@ function renderLegends(list){ const el=$('hofList'); if(!el) return;
     el.appendChild(row);
   }); }
 
-function livePlayers(){ const now=Date.now(); return G.players.filter(p=>{ const t=p.last_seen?Date.parse(p.last_seen):0; return (now-t)<STALE_MS || !p.last_seen; }); }
+function livePlayers(){ const now=gameNow(); return G.players.filter(p=>{ const t=p.last_seen?Date.parse(p.last_seen):0; return (now-t)<STALE_MS || !p.last_seen; }); }
 function isLive(id){ return livePlayers().some(p=>p.id===id); }
 function enqueue(p){ if(p) G.queue.push({id:p.id,name:p.name}); }
 function dequeue(){ while(G.queue.length){ const p=G.queue.shift(); if(isLive(p.id)) return p; } return null; }
 
-async function pollPlayers(){ try{ const r=await sb('players?code=eq.'+G.code+'&select=id,name,last_seen&order=joined_at.asc'); if(r) G.players=r; }catch(e){} }
-
-/* One poll at a time. The 300ms timer used to start a new poll while the last was still waiting on
-   the network, so a slow connection graded the same answer several times (inflated streaks,
-   one-question finales, skipped questions). */
-let tickBusy=false;
-async function tick(){
-  if(tickBusy) return;
-  tickBusy=true;
-  try{ await tickOnce(); } finally { tickBusy=false; }
+async function pollPlayers(){
+  const generation=hostGeneration,code=G.code;if(!code)return;
+  const members=await access.members(code);if(generation===hostGeneration&&code===G.code)G.players=members||[];
 }
-async function tickOnce(){
-  if(!G.code) return;
-  await pollPlayers();
-  if(G.phase==='lobby'){ renderLobby(); return; }
-  if(G.phase==='live'){ await liveTick(); }
-  render();
+async function tick(){
+  if(!G.code||tickBusy||engineBusy||roomOpening||starting||finalizing||access.busy())return;
+  tickBusy=true;const generation=hostGeneration;
+  try{
+    await pollPlayers();if(generation!==hostGeneration)return;if(!queueIssue){connectionNotice('',false);$('stat').textContent='Live · room '+G.code;}
+    if(G.phase==='lobby'){renderLobby();return;}
+    if(G.phase==='live')await liveTick();
+    if(generation===hostGeneration)render();
+  }catch(error){if(generation===hostGeneration&&!queueIssue)connectionNotice(access.message(error),false);}
+  finally{tickBusy=false;}
 }
 async function liveTick(){
-  const now=Date.now();
-  if(!G.answerer && now<(G.buzzOpenAt||0)) return;
+  const generation=hostGeneration,question=G.qId,run=G.runId;
+  if(!question)return;
   if(!G.answerer){
-    let bz=[]; try{ bz=await sb('buzzes?code=eq.'+G.code+'&q_id=eq.'+encodeURIComponent(G.qId)+'&select=player_id,created_at&order=created_at.asc')||[]; }catch(e){}
-    const first=bz.find(b=> (G.champ&&b.player_id===G.champ.id)||(G.chal&&b.player_id===G.chal.id) );
-    const elig = first && G.lockedOut.indexOf(first.player_id)<0 ? first : null;
-    if(elig){ const who=(elig.player_id===G.champ.id)?G.champ:G.chal; G.answerer={id:who.id,name:who.name}; G.ansWin=now+ANS_MS; SFX.buzz(); HS('point'); writeState(); }
-    else if(now>G.buzzWin){ await bothMiss(); }
-  } else {
-    let ans=[]; try{ ans=await sb('answers?code=eq.'+G.code+'&q_id=eq.'+encodeURIComponent(G.qId)+'&player_id=eq.'+G.answerer.id+'&select=choice,created_at&order=created_at.asc')||[]; }catch(e){}
-    if(ans.length){ await grade(ans[0].choice); }
-    else if(now>G.ansWin){ await grade(-1); }
-  }
-}
-async function grade(choice){
-  const ok = (choice===G.q.correctIdx);
-  if(G.mode==='finale'){ gradeFinale(ok); return; }
-  if(ok){ await win(G.answerer); return; }
-  if(!G.firstResolved){ G.firstResolved=true; G.lockedOut.push(G.answerer.id);
-    const opp=(G.answerer.id===G.champ.id)?G.chal:G.champ; G.answerer={id:opp.id,name:opp.name}; G.ansWin=Date.now()+ANS_MS; writeState();
-  } else { await bothMiss(); }
-}
-async function win(p){
-  const isChamp = G.champ && p.id===G.champ.id;
-  const fallen = (!isChamp && G.champ && G.streak>=1) ? {name:G.champ.name, streak:G.streak} : null;   // a reigning champion was just beaten
-  G.pendingLoser = isChamp? G.chal : G.champ;
-
-  if(isChamp){ G.streak++; } else { G.champ={id:p.id,name:p.name}; G.streak=1; }
-  G.totalCorrect[p.id]=(G.totalCorrect[p.id]||0)+1;
-  G.bestStreak[p.id]=Math.max(G.bestStreak[p.id]||0, G.streak);
-  G.lastWinner={id:p.id,name:p.name};
-  if(G.pendingLoser) blemish(G.pendingLoser.id);
-  G.outcome='win';
-  if(fallen){
-    const big = fallen.streak>=3;
-    SFX.correct(); SFX.fall(big); HS(big?'celebrate':'point');
-    hostSay(big ? pick(['A reign is over!','The mighty have fallen!','Unbelievable!']) : pick(['New champion!','Off the throne!','A changing of the guard!']));
-    banner(true, esc(p.name)+' takes the throne!', esc(fallen.name)+(fallen.streak>1?' falls after '+fallen.streak+' in a row':' is dethroned'), big?'fallenbig':'fallen', big?4400:3400);
+    if(gameNow()<(G.buzzOpenAt||0))return;
+    const next=await access.selectBuzz(question);if(!sameHost(generation,run)||G.qId!==question)return;
+    syncRoom(next);
+    if(G.answerer){SFX.buzz();HS('point');render();}
+    else if(gameNow()>G.buzzWin)await grade(-1);
     return;
   }
-  SFX.correct(); HS('celebrate');
-  banner(true, esc(p.name)+' takes it!', G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
+  const who=G.answerer.id;
+  const answers=await access.answers(G.code,run,question);
+  if(!sameHost(generation,run)||G.qId!==question||!G.answerer||G.answerer.id!==who)return;
+  const answer=(answers||[]).find(row=>row.player_id===who);
+  if(answer)await grade(answer.choice);
+  else if(gameNow()>G.ansWin)await grade(-1);
 }
-function blemish(id){ if(id && G.blemished.indexOf(id)<0) G.blemished.push(id); }
-function nameFor(id){ if(G.champ&&G.champ.id===id) return G.champ.name; if(G.chal&&G.chal.id===id) return G.chal.name; const q=G.queue.find(p=>p.id===id); if(q) return q.name; const p=G.players.find(x=>x.id===id); return p?p.name:','; }
-function streakKing(){ let best=null; Object.keys(G.bestStreak).forEach(function(id){ const sc=G.bestStreak[id]; if(!best || sc>best.s || (sc===best.s && (G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0))){ best={id:id, s:sc, name:nameFor(id)}; } }); return best; }
-async function bothMiss(){ G.outcome='bothmiss'; G.pendingLoser=null;
-  if(G.champ) blemish(G.champ.id); if(G.chal) blemish(G.chal.id);
-  SFX.wrong(); HS('wince');
-  banner(false, 'Nobody got it!', 'Both step aside. Two new challengers.');
+async function grade(choice){
+  if(G.grading||G.phase!=='live')return;G.grading=true;
+  const generation=hostGeneration,run=G.runId,question=G.qId;
+  const previous={champ:G.champ,chal:G.chal,streak:G.streak,mode:G.mode};
+  const answerer=G.answerer?G.answerer.id:null;
+  try{
+    const result=await access.grade(question,answerer,!!G.q&&choice===G.q.correctIdx);
+    if(!sameHost(generation,run)||G.qId!==question)return;
+    syncRoom(result.room);syncStats(result.stats);
+    if(result.outcome==='waiting')return;
+    if(result.outcome==='handoff'){render();return;}
+    if(previous.mode==='finale'){await gradeFinale(result);return;}
+    if(result.outcome==='win'&&result.winner){await win(result.winner,previous);return;}
+    if(result.outcome==='bothmiss')await bothMiss();
+  }finally{G.grading=false;}
 }
-function banner(ok,msg,sub,kind,ms){
-  G.phase='reveal'; G.revealOk=ok; G.revealMsg=msg; G.revealSub=sub; G.revealKind=kind||''; writeState(); render();
-  clearTimeout(G._t); G._t=setTimeout(afterReveal, ms||REVEAL_MS);
+async function win(player,previous){
+  const isChamp=previous.champ&&player.id===previous.champ.id;
+  const fallen=(!isChamp&&previous.champ&&previous.streak>=1)?{name:previous.champ.name,streak:previous.streak}:null;
+  G.pendingLoser=isChamp?previous.chal:previous.champ;G.outcome='win';
+  if(fallen){
+    const big=fallen.streak>=3;SFX.correct();SFX.fall(big);HS(big?'celebrate':'point');
+    hostSay(big?pick(['A reign is over!','The mighty have fallen!','Unbelievable!']):pick(['New champion!','Off the throne!','A changing of the guard!']));
+    await banner(true,esc(player.name)+' takes the throne!',esc(fallen.name)+(fallen.streak>1?' falls after '+fallen.streak+' in a row':' is dethroned'),big?'fallenbig':'fallen',big?4400:3400);return;
+  }
+  SFX.correct();HS('celebrate');await banner(true,esc(player.name)+' takes it!',G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
 }
-function afterReveal(){
+function nameFor(id){if(G.champ&&G.champ.id===id)return G.champ.name;if(G.chal&&G.chal.id===id)return G.chal.name;const q=G.queue.find(p=>p.id===id);if(q)return q.name;const p=G.players.find(x=>x.id===id);return p?p.name:',';}
+function streakKing(){if(Object.prototype.hasOwnProperty.call(G,'streakKing'))return G.streakKing;let best=null;Object.keys(G.bestStreak||{}).forEach(function(id){const sc=G.bestStreak[id];if(!best||sc>best.s||(sc===best.s&&(G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0)))best={id,s:sc,name:nameFor(id)};});return best;}
+async function bothMiss(){G.outcome='bothmiss';G.pendingLoser=null;SFX.wrong();HS('wince');await banner(false,'Nobody got it!','Both step aside. Two new challengers.');}
+async function banner(ok,msg,sub,kind,ms){
+  G.phase='reveal';G.revealOk=ok;G.revealMsg=msg;G.revealSub=sub;G.revealKind=kind||'';
+  await writeState();render();scheduleStep(afterReveal,ms||REVEAL_MS);
+}
+async function afterReveal(){
   if(G.mode==='finale'){
-    if(G.outcome==='finalewin'){ finishGame(G.finaleWinner); return; }
-    G.phase='between'; G.betweenMsg=scoreStr(); writeState(); render();
-    clearTimeout(G._t); G._t=setTimeout(nextFinaleQuestion, BETWEEN_MS); return;
+    if(G.outcome==='finalewin'){await finishGame(G.finaleWinner);return;}
+    G.phase='between';G.betweenMsg=scoreStr();await writeState();render();scheduleStep(nextFinaleQuestion,BETWEEN_MS);return;
   }
-  if(G.outcome==='win'){ enqueue(G.pendingLoser); G.chal=dequeue(); }
-  else if(G.outcome==='bothmiss'){ enqueue(G.champ); enqueue(G.chal); G.champ=dequeue(); G.chal=dequeue(); G.streak=0; }
-  if(!G.champ || !G.chal){ G.phase='gameover'; G.winner=G.champ||G.chal; G.deadmsg='Not enough players left.'; writeState(); render(); return; }
-  G.phase='between'; G.betweenMsg = (G.streak>0? (esc(G.champ.name)+' holds, streak '+G.streak) : 'Fresh duel!')+' · Next: '+esc(G.chal.name);
-  if(G.qIndex>=G.qTotal && G.outcome==='win') G.betweenMsg='That was the last question! Time to crown a champion…';
-  writeState(); render();
-  clearTimeout(G._t); G._t=setTimeout(nextOrEnd, BETWEEN_MS);
+  if(G.outcome==='win'){enqueue(G.pendingLoser);G.chal=dequeue();}
+  else if(G.outcome==='bothmiss'){enqueue(G.champ);enqueue(G.chal);G.champ=dequeue();G.chal=dequeue();}
+  if(!G.champ||!G.chal){await endWithoutWinner();return;}
+  G.phase='between';G.betweenMsg=(G.streak>0?(esc(G.champ.name)+' holds, streak '+G.streak):'Fresh duel!')+' · Next: '+esc(G.chal.name);
+  if(G.qIndex>=G.qTotal&&G.outcome==='win')G.betweenMsg='That was the last question! Time to crown a champion…';
+  await writeState();render();scheduleStep(nextOrEnd,BETWEEN_MS);
 }
-function nextOrEnd(){
-  if(G.qIndex>=G.qTotal){
-    if(G.outcome==='win'){ G.closer=G.lastWinner; enterFinale(); return; }
-    nextQuestion(); return;   // both-miss on/after the final question -> sudden-death decider
+async function nextOrEnd(){
+  if(G.qIndex>=G.qTotal&&G.outcome==='win'){G.closer=G.lastWinner;await enterFinale();return;}
+  await nextQuestion();
+}
+async function enterFinale(){
+  const sk=streakKing(),closer=G.closer;
+  if(!closer){await finishGame(G.champ);return;}
+  if(!sk||sk.id===closer.id||!isLive(sk.id)){await finishGame({id:closer.id,name:closer.name});return;}
+  if(!isLive(closer.id)){await finishGame({id:sk.id,name:sk.name});return;}
+  G.mode='finale';G.finalists={closer:{id:closer.id,name:closer.name},king:{id:sk.id,name:sk.name}};
+  G.champ={id:closer.id,name:closer.name};G.chal={id:sk.id,name:sk.name};G.queue=[];
+  G.phase='finintro';G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+', first to 2 wins.';
+  await writeState();render();if(window.ThroneHall)ThroneHall.finale();SFX.sting();HS('present');hostSay(pick(QUIPS.finale));
+  scheduleStep(serveQuestion,(window.ThroneHall&&ThroneHall.finaleMs)?ThroneHall.finaleMs():3200);
+}
+function scoreStr(){const c=G.finalists.closer,k=G.finalists.king;return esc(c.name)+' '+((G.finaleScore||{})[c.id]||0)+' - '+((G.finaleScore||{})[k.id]||0)+' '+esc(k.name);}
+async function gradeFinale(result){
+  if(result.outcome==='win'&&result.winner){
+    SFX.correct();HS('celebrate');
+    if(G.finaleWinner){G.outcome='finalewin';await banner(true,esc(result.winner.name)+' wins the Finale!',scoreStr());}
+    else{G.outcome='finalepoint';await banner(true,esc(result.winner.name)+' scores!',scoreStr());}
+  }else if(result.outcome==='bothmiss'){G.outcome='finalemiss';await banner(false,'Nobody got it!',scoreStr()+', next question.');}
+}
+async function finishGame(winner){
+  if(finalizing||finishedRun===G.runId)return;if(!winner){await endWithoutWinner();return;}finalizing=true;
+  const generation=hostGeneration,run=G.runId,group=hofCode();
+  try{
+    const result=await access.finalize(winner.id,group||null);
+    if(!sameHost(generation,run))return;
+    syncRoom(result.room);finishedRun=run;G.phase='gameover';
+    SFX.fanfare();SFX.applause();HS('celebrate');hostSay(pick(QUIPS.win));render();
+    // Shared rows were written atomically by finalize. Local entries follow its confirmation.
+    if(!group&&result.result){const list=hofLocalRead();if(!list.some(row=>row.run_id===run)){list.push(Object.assign({},result.result,{run_id:run}));hofLocalWrite(list);}}
+    await loadLegends();
+  }finally{finalizing=false;}
+}
+function pickQuestion(){const pool=topicPool();let cand=pool.filter(o=>!G.used.has(qid(o)));if(!cand.length){G.used=new Set();cand=pool.slice();}const it=cand[Math.floor(Math.random()*cand.length)];G.used.add(qid(it));return it;}
+function prepareSeats(live){
+  const byId=new Map(live.map(player=>[player.id,{id:player.id,name:player.name}]));
+  if(G.mode==='finale')return !!(G.champ&&G.chal&&byId.has(G.champ.id)&&byId.has(G.chal.id));
+  const waiting=[],seen=new Set();
+  for(const player of [...G.queue,...live])if(byId.has(player.id)&&!seen.has(player.id)){seen.add(player.id);waiting.push(byId.get(player.id));}
+  let champ=G.champ&&byId.get(G.champ.id),chal=G.chal&&byId.get(G.chal.id);
+  if(!champ){champ=chal||waiting.shift();chal=null;}
+  if(chal&&champ&&chal.id===champ.id)chal=null;
+  const next=()=>{while(waiting.length){const player=waiting.shift();if((!champ||player.id!==champ.id)&&(!chal||player.id!==chal.id))return player;}return null;};
+  if(!chal)chal=next();
+  G.champ=champ||null;G.chal=chal||null;
+  G.queue=waiting.filter(player=>(!champ||player.id!==champ.id)&&(!chal||player.id!==chal.id));
+  return !!(champ&&chal);
+}
+async function serveQuestion(){
+  const generation=hostGeneration,run=G.runId,previousQuestion=G.qId,index=G.qIndex,mode=G.mode;
+  let it=null,opts=null;
+  for(let attempt=0;attempt<3;attempt++){
+    await pollPlayers();if(!sameHost(generation,run))return;
+    G.qIndex=index;G.mode=mode;
+    if(!prepareSeats(livePlayers())){await endWithoutWinner();return;}
+    if(!it){it=pickQuestion();opts=shuffle([it.correct].concat(it.wrong));}
+    G.q={q:it.q,opts,correctIdx:opts.indexOf(it.correct)};G.outcome=null;G._lastTick=null;
+    try{
+      const next=await access.openQuestion({q:it.q,opts,champ_id:G.champ.id,chal_id:G.chal.id,queue:G.queue,mode,qIndex:index});
+      if(!sameHost(generation,run))return;
+      syncRoom(next);HS('ask');render();return;
+    }catch(error){
+      if(error.code!=='PT412')throw error;
+      const current=await access.resumeHost(G.code);
+      if(!sameHost(generation,run))return;
+      if(current.run_id!==run||current.q_id!==previousQuestion){
+        queueIssue=true;G.phase='between';G.betweenMsg='Another host window changed this room. Reload to continue.';connectionNotice(G.betweenMsg,false);render();return;
+      }
+      syncRoom(current);G.qIndex=index;G.mode=mode;
+    }
   }
-  nextQuestion();
+  scheduleStep(serveQuestion,400);
 }
-function enterFinale(){
-  const sk=streakKing(); const closer=G.closer;
-  if(!closer){ finishGame(G.champ); return; }
-  if(!sk || sk.id===closer.id || !isLive(sk.id)){ finishGame({id:closer.id,name:closer.name}); return; }
-  if(!isLive(closer.id)){ finishGame({id:sk.id,name:sk.name}); return; }
-  G.mode='finale';
-  G.finalists={ closer:{id:closer.id,name:closer.name}, king:{id:sk.id,name:sk.name} };
-  G.champ={id:closer.id,name:closer.name}; G.chal={id:sk.id,name:sk.name}; G.queue=[]; G.streak=0;
-  G.finaleScore={}; G.finaleScore[closer.id]=0; G.finaleScore[sk.id]=0;
-  G.phase='finintro'; if(window.ThroneHall) ThroneHall.finale(); G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+', first to 2 wins.';
-  SFX.sting(); HS('present'); hostSay(pick(QUIPS.finale));
-  writeState(); render();
-  clearTimeout(G._t); G._t=setTimeout(serveQuestion, (window.ThroneHall && ThroneHall.finaleMs) ? ThroneHall.finaleMs() : 3200);
+async function nextQuestion(){G.qIndex++;await serveQuestion();}
+async function nextFinaleQuestion(){await serveQuestion();}
+async function endWithoutWinner(){
+  G.phase='gameover';G.winner=null;G.summary=null;G.deadmsg='This run ended because a seated player left or lost their connection. No champion was recorded.';
+  await writeState();render();
 }
-function scoreStr(){ const c=G.finalists.closer, k=G.finalists.king; return esc(c.name)+' '+(G.finaleScore[c.id]||0)+' - '+(G.finaleScore[k.id]||0)+' '+esc(k.name); }
-function gradeFinale(ok){
-  if(ok){ const id=G.answerer.id; G.finaleScore[id]=(G.finaleScore[id]||0)+1; SFX.correct(); HS('celebrate');
-    if(G.finaleScore[id]>=2){ G.finaleWinner={id:id,name:G.answerer.name}; G.outcome='finalewin'; banner(true, esc(G.answerer.name)+' wins the Finale!', scoreStr()); }
-    else { G.outcome='finalepoint'; banner(true, esc(G.answerer.name)+' scores!', scoreStr()); }
-  } else {
-    if(!G.firstResolved){ G.firstResolved=true; G.lockedOut.push(G.answerer.id); const opp=(G.answerer.id===G.champ.id)?G.chal:G.champ; G.answerer={id:opp.id,name:opp.name}; G.ansWin=Date.now()+ANS_MS; writeState(); }
-    else { G.outcome='finalemiss'; banner(false, 'Nobody got it!', scoreStr()+', next question.'); }
-  }
-}
-function finishGame(winner){ G.phase='gameover'; G.winner=winner; const sk=streakKing(); SFX.fanfare(); SFX.applause(); HS('celebrate'); hostSay(pick(QUIPS.win));
-  const flawless=(winner && G.blemished.indexOf(winner.id)<0);
-  G.summary={ champ:winner, closer:G.closer, streakKing:sk, flawless:flawless, finaleScore:G.finaleScore||null, finalists:G.finalists||null };
-  writeState(); render(); writeLegend(winner, flawless);
-}
-function pickQuestion(){ const pool=topicPool();
-  let cand=pool.filter(o=>!G.used.has(qid(o)));
-  if(!cand.length){ G.used=new Set(); cand=pool.slice(); }
-  const it=cand[Math.floor(Math.random()*cand.length)]; G.used.add(qid(it)); return it; }
-function serveQuestion(){ const it=pickQuestion(); const opts=shuffle([it.correct].concat(it.wrong));
-  G.q={ q:it.q, opts, correctIdx:opts.indexOf(it.correct) };
-  G.qId=G.code+':'+(G.mode==='finale'?'F':'')+G.qIndex+':'+Math.floor(Math.random()*1e6);
-  G.answerer=null; G.buzzOpenAt=Date.now()+COUNTDOWN_MS; G.buzzWin=G.buzzOpenAt+BUZZ_MS; G.ansWin=0; G.lockedOut=[]; G.firstResolved=false; G.outcome=null;
-  G.phase='live'; G._lastTick=null; HS('ask'); writeState(); render();
-}
-function nextQuestion(){ G.qIndex++; serveQuestion(); }
-function nextFinaleQuestion(){ serveQuestion(); }
-function endGame(){ G.phase='gameover'; const sk=streakKing(); G.winner=G.champ;
-  G.summary={ champ:G.champ, closer:G.lastWinner, streakKing:sk, flawless:(G.champ && G.blemished.indexOf(G.champ.id)<0) };
-  writeState(); render(); }
-
+async function endGame(){if(G.champ)await finishGame(G.champ);else await endWithoutWinner();}
 async function startGame(){
-  const live=livePlayers(); if(live.length<2){ return; }
-  const order=shuffle(live.map(p=>({id:p.id,name:p.name})));
-  G.champ=order[0]; G.chal=order[1]; G.queue=order.slice(2);
-  G.streak=0; G.qIndex=0; G.used=new Set();
-  G.bestStreak={}; G.totalCorrect={}; G.blemished=[]; G.lastWinner=null; G.summary=null;
-  G.mode='spine'; G.closer=null; G.finalists=null; G.finaleScore=null; G.finaleWinner=null;
-  $('lobby').style.display='none'; $('arena').style.display='block';
-  try{ window.dispatchEvent(new Event('resize')); }catch(e){}
-  SFX.on(); SFX.theme(); HS('welcome'); hostSay(pick(QUIPS.welcome));
-  nextQuestion();
+  if(starting||engineBusy||access.busy()||G.phase!=='lobby')return;
+  const live=livePlayers();if(live.length<2)return;
+  starting=true;const generation=hostGeneration;lockRunSettings(true);
+  try{
+    const next=await access.beginRun({qTotal:G.qTotal,answerMs:ANS_MS,live:LIVE_ROOM});
+    if(generation!==hostGeneration)return;
+    syncRoom(next);finishedRun=null;
+    const order=shuffle(live.map(p=>({id:p.id,name:p.name})));
+    G.champ=order[0];G.chal=order[1];G.queue=order.slice(2);G.qIndex=0;G.used=new Set();G.closer=null;G.finalists=null;G.finaleScore=null;G.finaleWinner=null;G.deadmsg='';G.mode='spine';
+    await writeState();
+    $('lobby').style.display='none';$('arena').style.display='block';
+    try{window.dispatchEvent(new Event('resize'));}catch(error){}
+    SFX.on();SFX.theme();HS('welcome');hostSay(pick(QUIPS.welcome));
+    await nextQuestion();
+  }catch(error){connectionNotice(access.message(error),false);}
+  finally{starting=false;}
 }
-
-function writeState(){
-  const st={ game:'throne-bible', phase:G.phase, live:LIVE_ROOM, champ:G.champ, chal:G.chal, queue:G.queue, streak:G.streak,
-    qIndex:G.qIndex, qTotal:G.qTotal, q:G.q?{q:G.q.q, opts:G.q.opts}:null, qId:G.qId, buzzOpenAt:(G.phase==='live'?(G.buzzOpenAt||0):0), answerer:G.answerer, lockedOut:G.lockedOut,
-    buzzWin:(G.phase==='live'&&!G.answerer)?G.buzzWin:0, ansWin:(G.phase==='live'&&G.answerer)?G.ansWin:0,
+async function writeState(){
+  if(!G.code)return;
+  const st={game:'throne',phase:G.phase,live:LIVE_ROOM,champ:G.champ,chal:G.chal,queue:G.queue,
     reveal:G.phase==='reveal'?{ok:G.revealOk,msg:G.revealMsg,sub:G.revealSub,correctIdx:G.q?G.q.correctIdx:-1}:null,
-    between:G.phase==='between'?{msg:G.betweenMsg}:null,
-    mode:G.mode, finintro:G.phase==='finintro'?{msg:G.finIntroMsg}:null, finaleScore:G.finaleScore||null, finalists:G.finalists||null,
-    winner:G.phase==='gameover'?G.winner:null, summary:G.phase==='gameover'?G.summary:null };
-  setRoom({phase:G.phase, q_id:G.qId||'', state:st});
+    between:G.phase==='between'?{msg:G.betweenMsg}:null,mode:G.mode,
+    finintro:G.phase==='finintro'?{msg:G.finIntroMsg}:null,finalists:G.finalists||null};
+  return await setRoom({phase:G.phase,state:st});
 }
 
 /* ---------- render ---------- */
@@ -947,7 +987,7 @@ function renderLobby(){
   const pl=$('plist');
   if(!live.length){ pl.innerHTML='<span class="empty" style="color:var(--dim);font-weight:700">Waiting for players to join…</span>'; }
   else { pl.innerHTML=''; live.forEach(p=>{ const s=document.createElement('span'); s.className='pchip'; s.textContent=p.name; pl.appendChild(s); }); }
-  $('startBtn').disabled = live.length<2;
+  $('startBtn').disabled = live.length<2||roomOpening||starting||access.busy();
 }
 function render(){
   if(G.phase==='lobby'){ renderLobby(); return; }
@@ -966,7 +1006,7 @@ function render(){
     else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
       let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
-      b.innerHTML='👑 '+esc((G.winner&&G.winner.name)||'…')+' holds the throne!<div class="sub">'+sub+'</div><button class="coffee" id="banShare" style="border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-top:8px;margin-right:8px;background:none;color:var(--dim);font-weight:800;font-size:13px;cursor:pointer;">Share result 📸</button><a class="coffee" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Enjoyed the game? ☕ Buy me a coffee</a>'; 
+      b.innerHTML=(G.winner?'👑 '+esc(G.winner.name)+' holds the throne!':'Run ended')+'<div class="sub">'+sub+'</div><button class="coffee" id="banShare" style="border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-top:8px;margin-right:8px;background:none;color:var(--dim);font-weight:800;font-size:13px;cursor:pointer;">Share result 📸</button><a class="coffee" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Enjoyed the game? ☕ Buy me a coffee</a>';
       setTimeout(function(){ var sb=$('banShare'); if(!sb) return; sb.onclick=function(){
         var winnerName=(G.winner&&G.winner.name)||'Someone';
         var lines=[]; if(sk&&sk.s>0) lines.push('Longest streak: '+sk.s+' by '+sk.name+'.');
@@ -994,7 +1034,7 @@ function render(){
   const opts=$('opts'); opts.innerHTML='';
   (G.q?G.q.opts:[]).forEach((o,i)=>{ const d=document.createElement('div'); d.className='opt c'+i; const k=document.createElement('span'); k.className='k'; k.textContent='ABCD'[i]; const t=document.createElement('span'); t.textContent=o; d.appendChild(k); d.appendChild(t); opts.appendChild(d); });
   // timer / countdown
-  const now=Date.now(); const wrap=$('timerWrap'); const bar=$('timer'); const sc=$('stcount');
+  const now=gameNow(); const wrap=$('timerWrap'); const bar=$('timer'); const sc=$('stcount');
   const cd = (!G.answerer) ? ((G.buzzOpenAt||0)-now) : -1;
   if(cd>0){
     // The buzzers still unlock together, but showing '3 2 1' advertised the wait.
@@ -1164,7 +1204,7 @@ function playSting(key, done){
   timer=setTimeout(finish, T.dur);
 }
 
-$('startBtn').addEventListener('click', function(){ if(livePlayers().length<2) return; if(topicEmpty()){ updateTopicNote(); const ti=$('topicIn'); if(ti) ti.focus(); return; } playSting('throne-bible', startGame); });
+$('startBtn').addEventListener('click', function(){ if(starting||engineBusy||openingBusy||access.busy()||G.phase!=='lobby'||livePlayers().length<2) return; if(topicEmpty()){ updateTopicNote(); const ti=$('topicIn'); if(ti) ti.focus(); return; } playSting('throne-bible', startGame); });
 /* Up to 50 questions. Past 20 it steps in fives, so a long game is a few taps
    rather than thirty. Both pools are far larger than 50, so no repeats. */
 function qStep(n){ return n > 20 ? 5 : 1; }
@@ -1177,7 +1217,7 @@ function showAnsTime(){ const el=$('tTot'); if(el) el.textContent=(ANS_MS/1000)+
   lt.addEventListener('change',function(){
     LIVE_ROOM=lt.checked;
     try{ localStorage.setItem('tb_throne_live', LIVE_ROOM?'1':'0'); }catch(e){}
-    writeState();
+    if(!starting&&!roomOpening&&!engineBusy&&!access.busy())writeState().catch(error=>connectionNotice(access.message(error),false));
   });
 })();
 $('tMinus').addEventListener('click', ()=>{ ANS_MS=Math.max(ANS_MIN, ANS_MS-1000); showAnsTime(); });
@@ -1217,12 +1257,12 @@ $('qPlus').addEventListener('click', ()=>{
   G.qTotal = Math.min(50, G.qTotal + qStep(G.qTotal + 1));
   $('qTot').textContent = G.qTotal;
 });
-$('newBtn').addEventListener('click', ()=>{ clearTimeout(G._t); location.reload(); });
+$('newBtn').addEventListener('click', ()=>{if(roomOpening||starting||engineBusy||tickBusy||finalizing||G.grading||access.busy()||__stingBusy||openingBusy){connectionNotice('Please wait for the current action to finish before opening a new room.',false);return;}if(!confirm('Open a new room? Everyone will need to join its new code.'))return;++hostGeneration;clearTimeout(G._t);access.forgetHost();location.reload();});
 { let muted=false; const mb=$('muteBtn'); if(mb) mb.addEventListener('click', ()=>{ muted=!muted; SFX.mute(muted); mb.textContent=muted?'🔇':'🔊'; }); }
 { const cb=$('copyBtn'); if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(G.joinLink||''); }catch(e){ try{ const t=document.createElement('textarea'); t.value=G.joinLink||''; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_){} } cb.textContent='Copied \u2713'; cb.classList.add('done'); setTimeout(()=>{ cb.textContent='Copy join link'; cb.classList.remove('done'); }, 1600); }); }
 
 createRoom();
-setInterval(tick, 300);
+(function loop(){setTimeout(async function(){try{await tick();}finally{loop();}},300);})();
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 <script src="tb-hosts.js" data-host="throne" defer></script>
@@ -1278,10 +1318,12 @@ setInterval(tick, 300);
     /* the opening plays in place of the old title sting */
     var start = $('startBtn'), busy = false;
     if(start) start.addEventListener('click', function(e){
-      if(busy || !cutsOn() || !window.TBScenes) return;
-      try{ if(livePlayers().length < 2 || topicEmpty()) return; }catch(x){ return; }
-      e.stopImmediatePropagation(); e.preventDefault(); busy = true;
-      playScene('opening', {}, function(){ try{ startGame(); }catch(x){} setTimeout(function(){ busy = false; }, 1500); });
+      if(busy){e.stopImmediatePropagation();e.preventDefault();return;}
+      if(!cutsOn() || !window.TBScenes) return;
+      try{ if(starting||engineBusy||access.busy()||G.phase!=='lobby'||livePlayers().length<2||topicEmpty()) return; }catch(x){return;}
+      e.stopImmediatePropagation();e.preventDefault();busy=true;openingBusy=true;
+      const generation=hostGeneration;
+      playScene('opening',{},function(){busy=false;openingBusy=false;if(generation!==hostGeneration)return;startGame().catch(error=>connectionNotice(access.message(error),false));});
     }, true);
     /* replace the old mute toggle with one that remembers */
     var mb = $('muteBtn'); if(mb){ var nb = mb.cloneNode(true); mb.parentNode.replaceChild(nb, mb); var on = lsGet(KEY_SOUND, '1') === '1'; applySound(on);

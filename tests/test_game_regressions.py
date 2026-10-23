@@ -29,8 +29,10 @@ from check_site import local_target  # noqa: E402
 
 try:
     from playwright.sync_api import sync_playwright
+    from throne_browser_checks import FIXTURE as THRONE_FIXTURE
 except ImportError:  # static checks still run without the browser package
     sync_playwright = None
+    THRONE_FIXTURE = None
 
 ORIGIN = "https://tierbrain.test"
 BACKEND_HOST = "cgrbwtcydgfkbqhseeap.supabase.co"
@@ -178,8 +180,8 @@ class StaticGameGuards(unittest.TestCase):
         for page in ("throne.html", "throne-bible.html"):
             with self.subTest(page=page):
                 source = read(page)
-                self.assertIn("if(tickBusy) return;", source)
-                self.assertIn("try{ await tickOnce(); } finally { tickBusy=false; }", source)
+                self.assertRegex(source, r"if\([^\n;]*\btickBusy\b[^\n;]*\)\s*return;")
+                self.assertRegex(source, r"finally\s*\{\s*tickBusy\s*=\s*false;")
 
     def test_standing_room_acts_on_each_reply_once(self):
         """Same overlap risk in Standing Room's answer and step polls: a reply must be acted on once."""
@@ -442,6 +444,9 @@ class BrowserGameGuards(unittest.TestCase):
         request = route.request
         parsed = urlsplit(request.url)
         if parsed.hostname == "tierbrain.test":
+            if parsed.path == "/js/throne-access.js":
+                route.fulfill(status=200, body=THRONE_FIXTURE, content_type="text/javascript")
+                return
             target = local_target(ROOT, ROOT / "index.html", parsed.path)
             if target is None or not target.is_file():
                 route.fulfill(status=404, body="Missing local file")
@@ -763,6 +768,9 @@ class BrowserGameGuards(unittest.TestCase):
         for page_name in ("throne.html", "throne-bible.html"):
             with self.subTest(page=page_name):
                 host = self.throne(page_name)
+                # The isolated access fixture starts with a three-question run.
+                # Exercise the original 20→25 boundary explicitly.
+                host.evaluate("() => { G.qTotal=20; renderLobby(); }")
                 seen = []
                 for button in ("#qPlus", "#qPlus", "#qMinus", "#qMinus", "#qMinus"):
                     host.locator(button).click()
@@ -776,15 +784,15 @@ class BrowserGameGuards(unittest.TestCase):
             with self.subTest(page=page_name):
                 host = self.throne(page_name)
                 self.assertGreaterEqual(host.evaluate("ThroneHall.finaleMs()"), 5000)
-                messages = host.evaluate("""() => {
+                messages = host.evaluate("""async () => {
                     const now = new Date().toISOString();
                     const ps = ['A', 'B', 'C'].map(n => ({id: n, name: n, last_seen: now}));
-                    const banner = (qIndex) => {
+                    const banner = async (qIndex) => {
                         Object.assign(G, {players: ps, champ: {id: 'A', name: 'A'}, chal: {id: 'B', name: 'B'},
                             queue: [{id: 'C', name: 'C'}], pendingLoser: {id: 'B', name: 'B'}, outcome: 'win',
                             mode: 'spine', streak: 1, qIndex: qIndex, qTotal: 5});
-                        afterReveal(); clearTimeout(G._t); return G.betweenMsg; };
-                    return [banner(2), banner(5)]; }""")
+                        await afterReveal(); clearTimeout(G._t); return G.betweenMsg; };
+                    return [await banner(2), await banner(5)]; }""")
                 self.assertIn("Next:", messages[0])
                 self.assertIn("last question", messages[1])
                 self.assertNotIn("Next:", messages[1])
