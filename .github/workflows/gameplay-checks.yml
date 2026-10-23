@@ -1,0 +1,51 @@
+name: Gameplay checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gameplay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [big_quiz, throne, creak, standing, circuit, spines]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install browser test dependencies
+        run: |
+          timeout 180 python -m pip install --timeout 30 --retries 2 -r requirements-dev.txt
+          if command -v google-chrome >/dev/null; then
+            echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(command -v google-chrome)" >> "$GITHUB_ENV"
+            google-chrome --version
+          else
+            timeout 180 python -m playwright install --with-deps chromium
+          fi
+      - name: Verify real-stack gameplay for ${{ matrix.family }}
+        run: python tests/gameplay_stack/run-browser-acceptance.py --family '${{ matrix.family }}' --report '/tmp/tierbrain-gameplay-${{ matrix.family }}.json'
+      - name: Preserve ${{ matrix.family }} gameplay report and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameplay-${{ matrix.family }}
+          path: |
+            /tmp/tierbrain-gameplay-${{ matrix.family }}.json
+            /tmp/tierbrain-gameplay-${{ matrix.family }}-failure-*.png
+          if-no-files-found: warn

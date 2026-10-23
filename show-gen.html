@@ -657,7 +657,7 @@ async function poll(){
     const players=await access.members(room.code);
     if(request!==pollRequest)return;pollFailures=0;
     renderBoards(players||[]);
-    if(!hostIssue){setStatus('Live · room '+room.code, true);hideBanner();}
+    if(!hostIssue){setStatus('Live · room '+room.code, true);if(!document.body.classList.contains('show-interrupted'))hideBanner();}
   }catch(e){if(request!==pollRequest)return;setStatus('Reconnecting…',false);pollFailures++;if(!hostIssue&&(pollFailures>=3||e.status===401||e.status===403)){const b=$('banner');b.textContent=access.message(e)+' Reload this page if the connection does not return.';b.classList.add('show');}}
 }
 
@@ -832,6 +832,50 @@ start();
                 buzzer:{title:'The Buzzer', win:10000, build:buildBuzzer, intro:'Final round: The Buzzer!', rules:'When the buzzers open, hit BUZZ! The first in each team gets to answer. Get it wrong and your team\u2019s buzzer reopens for everyone else. Each team races separately.'},
                 fiveclues:{title:'Five Clues', win:6500, build:buildClues, intro:'Five Clues!', rules:'Clues appear one at a time. Lock in your guess whenever you\u2019re sure, the earlier you\u2019re right, the more points you score (5 down to 1).'} };
   const G={phase:'lobby', ptr:-1, type:null, win:15000, label:'', qi:0, questions:[], curId:'', deadline:0, introUntil:0, revealUntil:0, paused:false, scored:false, lastAnsPoll:0};
+  const SHOW_CHECKPOINT='tb_bigquiz_show_v1';
+  function roomPhase(){return G.phase==='bz'?'buzzer':(G.phase==='fc'?'fiveclues':G.phase);}
+  function engineQuestion(){return ['question','reveal','bz','fc'].includes(G.phase)?G.curId:'';}
+  function checkpointMatches(game){
+    const finite=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
+    if(!['deadline','introUntil','revealUntil','win'].every(k=>finite(game[k]))||game.win<=0||typeof game.paused!=='boolean')return false;
+    if((game.phase==='question'&&game.deadline<=0)||(game.phase==='round_intro'&&game.introUntil<=0)||(game.phase==='reveal'&&game.revealUntil<=0))return false;
+    const q=game.questions[Math.min(game.qi,game.questions.length-1)],st=room.state||{};
+    const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+    if(['question','reveal'].includes(game.phase)){
+      const publicQuestion=liveState(q);
+      if(!same(q.opts,st.opts)||publicQuestion.qkind!==st.qkind||publicQuestion.qtext!==st.qtext
+        ||(game.phase==='reveal'&&q.correct!==st.correct))return false;
+    }
+    if(game.phase==='bz'){
+      const bz=game.buzz,b=st.bz;
+      if(!b||bz.phase!==b.phase||!same(q.opts,b.opts)||q.q!==b.qtext||!same(bz.q,q)||bz.correct!==q.correct
+        ||!['armAt','revealUntil','lastPoll'].every(k=>finite(bz[k]))||(bz.openedAt!==undefined&&!finite(bz.openedAt))
+        ||(bz.phase==='reveal'&&q.correct!==b.correct))return false;
+      for(const tag of ['youth','adult']){
+        const l=bz.lanes[tag],canonical=b.lanes&&b.lanes[tag];
+        if(!l||!canonical||!finite(l.adl)||!finite(l.winStart)||!l.out||!same(Object.keys(l.out).sort(),(canonical.out||[]).slice().sort())
+          ||l.adl!==(canonical.adl?Date.parse(canonical.adl):0)
+          ||!same([l.st,l.bid,l.bname,l.win],[canonical.st,canonical.bid,canonical.bname,canonical.win]))return false;
+      }
+    }
+    if(game.phase==='fc'){
+      const fc=game.fc,f=st.fc;
+      if(!f||!Array.isArray(q.clues)||fc.phase!==f.phase||fc.clueIdx!==f.clueIdx||!same(q.opts,f.opts)||q.cat!==f.cat
+        ||!same(q.clues.slice(0,fc.clueIdx+1),f.clues)||!finite(fc.clueDeadline)||!finite(fc.revealUntil)
+        ||!Array.isArray(fc.clueTimes)||fc.clueTimes.length!==fc.clueIdx+1||!fc.clueTimes.every(finite)
+        ||(fc.phase==='reveal'&&q.correct!==f.correct))return false;
+    }
+    return true;
+  }
+  function saveShow(){
+    // This tab's private question bank is useful only after the server proves
+    // ownership again. Never use it to overwrite a newer room revision.
+    if(!room||access.busy()||G.starting||G.finalizing||room.phase!==roomPhase()
+      ||(room.q_id||'')!==engineQuestion()||G.phase==='interrupted'
+      ||(G.buzz&&(G.buzz.resolving||G.buzz.closing))||(G.fc&&G.fc.scored&&G.fc.phase!=='reveal'))return;
+    try{sessionStorage.setItem(SHOW_CHECKPOINT,JSON.stringify({room:room.id,run:room.run_id,version:room.version,
+      order:SHOW_ORDER,qpr:QPR,theme:THEME,game:Object.assign({},G,{usedTags:Array.from(G.usedTags||[])})}));}catch(e){}
+  }
 
   function rng(seed){ let s=(seed>>>0)||1; s=(s^0x9e3779b9)>>>0; s=(Math.imul(s^(s>>>16),0x45d9f3b))>>>0; s=(Math.imul(s^(s>>>15),0x119de1f3))>>>0;
     return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
@@ -856,7 +900,7 @@ start();
   function setRoom(patch){ if(!room||G.starting) return Promise.resolve();
     // Publish settings only after the authenticated run has been confirmed.
     patch.state=Object.assign({},room.state||{},patch.state||{},{teams:{youth:'Team A',adult:'Team B'}});
-    return access.publish(patch).then(function(){room=access.currentRoom();return room;}); }
+    return access.publish(patch).then(function(){room=access.currentRoom();saveShow();return room;}); }
   function showPanel(which){ $('joinPanel').classList.toggle('hide', which!=='join'); $('qPanel').classList.toggle('hide', which!=='q'); var bp=$('bzPanel'); if(bp) bp.classList.toggle('hide', which!=='bz'); var fp=$('fcPanel'); if(fp) fp.classList.toggle('hide', which!=='fc'); var vp=$('finalePanel'); if(vp) vp.classList.toggle('hide', which!=='final'); var cp=$('closingPanel'); if(cp) cp.classList.toggle('hide', which!=='closing'); }
   function setCompact(on){ document.body.classList.toggle('compact', !!on); }
 
@@ -896,6 +940,7 @@ start();
 
   async function startShow(){ if(!room){ alert('Connect to a room before starting the show.'); return; }if(G.starting||access.busy())return;G.starting=true;
     try{await access.beginRun();room=access.currentRoom();}catch(e){G.starting=false;showBanner('Could not start the show. Reload this page and try again.');return;}G.starting=false;
+    document.body.classList.remove('show-interrupted');hideBanner();$('startShow').textContent='Start show';
     G.gameSeed=(Math.random()*4294967296)>>>0; G.usedTags=new Set(); SHOW_ORDER=buildShowOrder((room.seed|0)||1); /* the order the lobby announced */ G.ptr=0; document.body.classList.add('playing'); SFX.on(); SFX.theme(); hostSay(pick(QUIPS.welcome),'delight'); startRoundByPtr(); }
   function startRoundByPtr(){ const type=SHOW_ORDER[G.ptr], meta=RMETA[type];
     G.type=type; G.win=meta.win; if(!G.usedTags) G.usedTags=new Set(); G.questions=meta.build(((G.gameSeed||(room.seed|0))+G.ptr*7)>>>0, QPR, THEME, G.usedTags); G.questions.forEach(function(q){ if(q.tag) G.usedTags.add(q.tag); }); G.qi=0;
@@ -956,7 +1001,7 @@ start();
     const youth=board('youth'), adult=board('adult');
     let teamWin=null; if(youth.count||adult.count){ teamWin = youth.total>adult.total?'youth':(adult.total>youth.total?'adult':'tie'); }
     const fin={ youth:youth, adult:adult, teamWin:teamWin };
-    renderFinale(fin); await setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();$('closingBtn').classList.remove('hide');
+    renderFinale(fin); await setRoom({phase:'final', q_id:'', state:{round:'Final scores', fin:fin}}); poll();$('closingBtn').classList.remove('hide');$('startShow').textContent='Play again';$('startShow').classList.remove('hide');
     setTimeout(function(){if(!room||room.id!==finalRoomId||G.phase!=='final')return;SFX.cymbal(); SFX.fanfare(); SFX.applause(); hostSay(pick(QUIPS.finale),'yay'); }, 1300);
     }finally{G.finalizing=false;} }
   function renderFinale(fin){ const medals=['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
@@ -1475,7 +1520,8 @@ start();
     else if(G.phase==='reveal'){ if(now>=G.revealUntil) nextQuestion(); }
     else if(G.phase==='bz'){ buzzerTick(); }
     else if(G.phase==='fc'){ cluesTick(); } }
-  setInterval(gameTick, 250);
+  setInterval(function(){gameTick();saveShow();}, 250);
+  window.addEventListener('pagehide',saveShow);
 
   /* ==================== OPENING STING ====================
    Plays when the host presses Start, before any game logic runs, so it
@@ -1628,11 +1674,55 @@ $('startShow').addEventListener('click', function(){ if(!room){ alert('Still con
     G.deadline=0;G.introUntil=0;G.revealUntil=0;G.lastAnsPoll=0;
     G.paused=false;G.scored=false;G.starting=false;G.finalizing=false;G.buzz=null;G.fc=null;
     G.lobbyRoomId=room.id;
-    document.body.classList.remove('playing','ops-open');setCompact(false);showPanel('join');
+    document.body.classList.remove('playing','ops-open','show-interrupted');setCompact(false);showPanel('join');
     for(const id of ['pauseBtn','skipBtn','nextRoundBtn','closingBtn'])$(id).classList.add('hide');
     $('startShow').classList.remove('hide');$('pauseBtn').textContent='Pause';
     refreshLineup();
     return setRoom({phase:'lobby',q_id:'',state:{}});
+  }
+  function restoreShowRoom(){
+    // resumeHost has already verified this account owns the canonical room.
+    // A different revision may belong to another host tab: do not replay it.
+    let saved;try{saved=JSON.parse(sessionStorage.getItem(SHOW_CHECKPOINT)||'null');}catch(e){}
+    const game=saved&&saved.game;
+    const phase=game&&(game.phase==='bz'?'buzzer':(game.phase==='fc'?'fiveclues':game.phase));
+    const key=game&&['question','reveal','bz','fc'].includes(game.phase)?game.curId:'';
+    const valid=game&&saved.room===room.id&&saved.run===room.run_id&&saved.version===room.version
+      &&phase===room.phase&&key===(room.q_id||'')&&Array.isArray(saved.order)
+      &&Number.isInteger(saved.qpr)&&saved.qpr>=4&&saved.qpr<=12&&THEME_NAMES[saved.theme]
+      &&saved.order.length>0&&saved.order.every(t=>!!RMETA[t])&&saved.order[game.ptr]===game.type
+      &&Array.isArray(game.questions)&&game.questions.length>0&&Number.isInteger(game.qi)&&game.qi>=0&&game.qi<=game.questions.length&&game.questions[Math.min(game.qi,game.questions.length-1)]
+      &&game.questions.every(q=>q&&Array.isArray(q.opts)&&q.opts.length===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4)
+      &&(!key||(game.qi===room.q_index&&game.ptr===room.round_index))
+      &&(game.phase!=='bz'||(game.buzz&&game.buzz.lanes))&&(game.phase!=='fc'||game.fc)&&checkpointMatches(game);
+    if(!valid){
+      G.phase='interrupted';G.lobbyRoomId=room.id;document.body.classList.add('show-interrupted');
+      showPanel('q');setCompact(false);$('qPrompt').textContent='Show interrupted';$('qText').textContent='The room and scores are safe. This tab cannot safely resume the previous question.';$('opts').innerHTML='';
+      for(const id of ['pauseBtn','skipBtn','nextRoundBtn','closingBtn'])$(id).classList.add('hide');
+      $('startShow').classList.remove('hide');$('startShow').textContent='Restart show';
+      showBanner('The saved show does not match the current room. Restart the show to keep these players and scores, or open a new room. ');
+      const restart=document.createElement('button');restart.className='btn';restart.textContent='Restart show';restart.onclick=startShow;$('banner').appendChild(restart);
+      return false;
+    }
+    Object.assign(G,game);G.usedTags=new Set(game.usedTags||[]);G.lobbyRoomId=room.id;G.starting=false;G.finalizing=false;
+    if(G.buzz){G.buzz.resolving=false;G.buzz.closing=false;}
+    SHOW_ORDER=saved.order;QPR=saved.qpr;THEME=saved.theme;document.body.classList.add('playing');
+    $('startShow').classList.add('hide');$('pauseBtn').textContent=G.paused?'Resume':'Pause';
+    for(const id of ['pauseBtn','skipBtn','nextRoundBtn','closingBtn'])$(id).classList.add('hide');
+    if(['question','reveal','round_intro','bz','fc'].includes(G.phase)){
+      $('pauseBtn').classList.remove('hide');$('skipBtn').classList.remove('hide');
+    }
+    if(G.phase==='bz'){showPanel('bz');setCompact(G.buzz.phase!=='reveal');renderBuzzerStage();}
+    else if(G.phase==='fc'){showPanel('fc');setCompact(G.fc.phase!=='reveal');renderCluesStage();}
+    else if(G.phase==='final'){showPanel('final');renderFinale(room.state.fin);$('closingBtn').classList.remove('hide');$('startShow').textContent='Play again';$('startShow').classList.remove('hide');}
+    else if(G.phase==='closing'){showPanel('closing');const c=room.state.close||{};$('closeText').textContent='\u201c'+(c.text||'')+'\u201d';$('closeRef').textContent=c.ref?(', '+c.ref):'';$('startShow').textContent='Play again';$('startShow').classList.remove('hide');}
+    else if(G.phase==='round_scores'){
+      showPanel('q');$('rLabel').textContent=G.label;$('qNum').textContent='';$('qPrompt').textContent='';$('qText').textContent='Round '+(G.ptr+1)+' complete! Scores on the boards below.';$('opts').innerHTML='';
+      const next=$('nextRoundBtn');next.textContent='Next: Round '+(G.ptr+2)+': '+RMETA[SHOW_ORDER[G.ptr+1]].title+' \u25b8';next.classList.remove('hide');
+    }else if(G.phase==='round_intro'){
+      showPanel('q');$('rLabel').textContent=G.label;$('qNum').textContent='';$('qPrompt').textContent='How this round works';$('qText').textContent=RMETA[G.type].rules;$('opts').innerHTML='';
+    }else {showPanel('q');setCompact(G.phase==='question');renderQuestion(G.questions[G.qi]);if(G.phase==='reveal')renderReveal(G.questions[G.qi]);}
+    return true;
   }
   canOpenNewRoom=function(){return !access.busy()&&!__stingBusy&&!G.starting&&!G.finalizing&&G.phase!=='scoring'
     &&!(G.buzz&&(G.buzz.resolving||G.buzz.closing))
@@ -1667,7 +1757,7 @@ $('startShow').addEventListener('click', function(){ if(!room){ alert('Still con
   const _waitRoom=setInterval(function(){
     if(typeof room==='undefined'||!room)return;
     clearInterval(_waitRoom);
-    if(G.phase==='lobby'&&!G.starting&&G.lobbyRoomId!==room.id)resetShowRoom();
+    if(G.phase==='lobby'&&!G.starting&&G.lobbyRoomId!==room.id){if(room.phase==='lobby')resetShowRoom();else restoreShowRoom();}
   }, 400);
   /* The opening cutscene only needs to request a normal show start. */
   document.addEventListener('tb:start-show', startShow);

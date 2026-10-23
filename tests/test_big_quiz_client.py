@@ -93,7 +93,8 @@ let releaseBegin;
 const state=sandbox({intercept:async name=>{if(name==='bigquiz_begin_run')await new Promise(resolve=>{releaseBegin=resolve;});}});
 const access=state.api;await access.createRoom();let room=access.currentRoom();
 const G={phase:'lobby',starting:false};let SHOW_ORDER=[],roundPublished=null,resets=0;
-const window={},document={body:{classList:{add(){}}}},SFX={on(){},theme(){}},QUIPS={welcome:['welcome']};
+const window={},document={body:{classList:{add(){},remove(){}}}},SFX={on(){},theme(){}},QUIPS={welcome:['welcome']};
+function $(id){return {textContent:''};}function hideBanner(){}function saveShow(){}
 const _waitRoom=1;
 function clearInterval(){}function resetShowRoom(){resets++;}
 function hostSay(){}function pick(a){return a[0];}function buildShowOrder(){return ['rapidfire'];}
@@ -127,6 +128,7 @@ const G={phase:'round_scores',ptr:2,type:'verse',label:'Old round',qi:8,question
 const elements=new Map();function $(id){if(!elements.has(id)){const classes=new Set();elements.set(id,{textContent:'',classList:{add:c=>classes.add(c),remove:(...cs)=>cs.forEach(c=>classes.delete(c)),contains:c=>classes.has(c)}});}return elements.get(id);}
 const window={},document={body:{classList:{remove(){}}}};let __stingBusy=false;
 function setCompact(){}function showPanel(panel){assert.equal(panel,'join');}function refreshLineup(){}
+function saveShow(){}
 """
         checks = r"""
 await resetShowRoom();
@@ -165,6 +167,26 @@ const originalBusy=access.busy;access.busy=()=>true;assert.equal(canOpenNewRoom(
         self.assertNotIn("tb_show_submissions_v1", phone)
         for html_id in ("connectionStatus", "connectionRetry", "teamBtnYouth", "teamBtnAdult"):
             self.assertEqual(len(re.findall(r'\bid="'+html_id+r'"', phone)), 1)
+
+    def test_reload_checkpoint_matches_canonical_question_and_typed_clocks(self):
+        source = (ROOT / "show-gen.html").read_text()
+        match = "function checkpointMatches(game){" + source.split("function checkpointMatches(game){", 1)[1].split("  function saveShow(){", 1)[0]
+        self.node(r"""
+const q={kind:'mc',q:'Canonical question?',opts:['A','B','C','D'],correct:2};
+let room={state:{qkind:'mc',qtext:q.q,opts:q.opts}};
+function liveState(x){return {qkind:x.kind,qtext:x.q};}
+const game={phase:'question',qi:0,questions:[q],deadline:100,introUntil:0,revealUntil:0,win:8000,paused:true};
+""" + match + r"""
+assert.equal(checkpointMatches(game),true);
+for(const value of [null,undefined,'100',NaN,Infinity,-1,0]){
+ const altered={...game,deadline:value};assert.equal(checkpointMatches(altered),false,String(value));
+}
+for(const patch of [{q:'Other question?'},{kind:'verse-ref'},{opts:['D','C','B','A']}]){
+ assert.equal(checkpointMatches({...game,questions:[{...q,...patch}]}),false);
+}
+room.state.correct=2;assert.equal(checkpointMatches({...game,phase:'reveal',revealUntil:200}),true);
+assert.equal(checkpointMatches({...game,phase:'reveal',revealUntil:200,questions:[{...q,correct:1}]}),false);
+""")
 
 
 if __name__ == "__main__":

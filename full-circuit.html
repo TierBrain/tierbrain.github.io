@@ -1514,7 +1514,7 @@ function jPaint(){
 function runFinale(){
   F = { t: Math.max(20, 60 + (fHas('Spring') ? 12 : 0) - H.finalePenalty) * 1000,
         charge: fHas('Key') ? (ED === 'bible' ? 1 : 2) : 0, target: ED === 'bible' ? 7 : 10, step: fHas('Wire') ? 1.5 : 1,
-        lensLeft: fHas('Lens'), fuse: fHas('Fuse'), at: null, live: false, last: 0, asked: 0, right: 0, shorts: 0 };
+        lensLeft: fHas('Lens'), fuse: !!H.fuse, at: null, live: false, last: 0, asked: 0, right: 0, shorts: 0 };
   if(ED === 'bible') jBuild();
   $('machine').classList.remove('awake');
   PARTS.forEach(function(p){
