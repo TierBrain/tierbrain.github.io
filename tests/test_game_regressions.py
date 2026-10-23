@@ -26,6 +26,7 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from check_site import local_target  # noqa: E402
+from party_shared_fixture import PartySharedFixture
 
 try:
     from playwright.sync_api import sync_playwright
@@ -58,7 +59,8 @@ class StaticGameGuards(unittest.TestCase):
     def test_shared_climb_phone_redraws_when_a_question_arrives(self):
         """Bug: the phone only redrew on a new turn, so a mid-turn question never appeared."""
         source = read("creak-multi-play.html")
-        self.assertIn("const sig='live|'+st.turnSeq+'|'+myTurn+'|'+(st.pendingQ?st.pendingQ.qId:'');", source)
+        self.assertIn("room.version", source)
+        self.assertIn("record&&record.state", source)
 
     def test_shared_climb_shows_why_a_piece_moves(self):
         """Bug: pieces jumped up or down with no Roc, rocks, debris or snake slide on screen."""
@@ -130,7 +132,8 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("CreakArt.lookStyle(myLook)", solo)
         self.assertIn('src="creak-art.js', phone)
         self.assertIn('id="climberCard"', phone)
-        self.assertIn("select=id,name,tag", host)
+        self.assertIn("await access.members(code)", host)
+        self.assertIn("const want=p.look||null;", host)
         self.assertIn("looks:G.looks||null", re.search(r"function writeState\(\)\{(.*?)\}\}\); \}", host, re.S).group(1))
 
     QUIZ_FAMILY = {"quiz-climb": ("Quiz Climb", "climb"), "higher-lower": ("Higher or Lower", "higher"), "odd-one-out": ("Odd One Out", "odd"),
@@ -186,7 +189,8 @@ class StaticGameGuards(unittest.TestCase):
     def test_standing_room_acts_on_each_reply_once(self):
         """Same overlap risk in Standing Room's answer and step polls: a reply must be acted on once."""
         source = read("standing-room-multi.html")
-        self.assertEqual(source.count("if(busy || gen!==pollGen) return; busy=true;"), 2)
+        self.assertIn("if(polling||finished||access.busy()||G.pollToken!==token)return;polling=true;", source)
+        self.assertIn("G.pollToken!==token", source)
 
     def test_hosted_games_load_the_host_and_cutscene_engines(self):
         """Bug guard: an older upload of a hosted game drops its animated host and cutscenes."""
@@ -324,13 +328,14 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("function animLoop(now){ requestAnimationFrame(animLoop);", shared)
         self.assertIn("try{ tw.update(t); }catch(e){}", solo)
         self.assertIn("try{ tw.update(t); }catch(e){}", shared)
-        self.assertIn("}catch(e){ try{ console.warn('Creak & Coil turn error', e); }catch(_){} }", shared)
+        self.assertIn("finally{setTimeout(loop,900);}", shared)
 
     def test_creak_shared_climb_reads_every_roll(self):
         """Rolls are tracked by id, not by comparing ids, so a roll is never ignored whatever ids the database uses."""
         shared = read("creak-multi.html")
         self.assertNotIn("if(mv.id<=G.lastProcessedMoveId) return;", shared)
-        self.assertIn("rows.find(function(r){ return !G.doneMoves[r.id]; })", shared)
+        self.assertIn("const closed=await access.close(window.id);", shared)
+        self.assertIn("await resolveTurn(activeId);", shared)
 
     def test_creak_shared_climb_rematch_never_reuses_turn_numbers(self):
         """Bug: 'Play again' restarted turn numbers at 0, so the host kept finding last game's first roll and froze."""
@@ -346,6 +351,7 @@ class FakeBackend:
         self.tables = {}
         self.seq = 0
         self.lock = threading.Lock()
+        self.party = PartySharedFixture()
 
     @staticmethod
     def matches(row, filters):
@@ -444,6 +450,13 @@ class BrowserGameGuards(unittest.TestCase):
         request = route.request
         parsed = urlsplit(request.url)
         if parsed.hostname == "tierbrain.test":
+            if parsed.path == "/__party_fixture":
+                status,data=self.backend.party.respond(json.loads(request.post_data))
+                route.fulfill(status=status,body=json.dumps(data),content_type="application/json")
+                return
+            if parsed.path == "/js/party-access.js":
+                route.fulfill(status=200,body=read("tests/fixtures/party-shared-browser-adapter.js"),content_type="text/javascript")
+                return
             if parsed.path == "/js/throne-access.js":
                 route.fulfill(status=200, body=THRONE_FIXTURE, content_type="text/javascript")
                 return
@@ -563,7 +576,7 @@ class BrowserGameGuards(unittest.TestCase):
         phones[0].locator("#climberPick [data-k='c'] button[data-v='3']").click()
         phones[0].locator("#climberPick [data-k='h'] button[data-v='helmet']").click()
         phones[1].wait_for_function("document.querySelector(`#climberPick [data-k='c'] button[data-v='3']`).disabled", timeout=8000)
-        host.wait_for_function("G.players.length === 2 && G.players.some(p => /c3[.]s[0-9][.]hhelmet/.test(p.tag || ''))", timeout=8000)
+        host.wait_for_function("G.players.length === 2 && G.players.some(p => p.look && p.look.c===3 && p.look.h==='helmet')", timeout=8000)
         host.locator("#startBtn").click()
         host.wait_for_function("G.phase === 'live'")
         looks = host.evaluate("() => G.order.map(id => G.looks[id])")
@@ -718,10 +731,12 @@ class BrowserGameGuards(unittest.TestCase):
         host.wait_for_function("!document.getElementById('startBtn').disabled", timeout=15000)
         host.locator("#startBtn").click()
         host.wait_for_function("G.phase === 'live'")
+        host.evaluate("async () => { usedTags.add('saved-reload-tag'); await writeState(); }")
         host.reload(wait_until="domcontentloaded")
         host.wait_for_function("typeof G !== 'undefined' && G.phase === 'live'", timeout=15000)
         self.assertEqual(host.locator("#code").inner_text().strip(), code)
         self.assertIn("Back on the mountain", host.locator("#status").inner_text())
+        self.assertTrue(host.evaluate("usedTags.has('saved-reload-tag')"))
 
     def test_creak_shared_climb_play_again_keeps_going(self):
         """Bug: after 'Play again' in the same room, the first roll of the new game was never read and the table froze."""

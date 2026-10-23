@@ -75,6 +75,9 @@
       <button class="btn" id="joinBtn">Join &#9656;</button>
       <div class="err" id="err"></div>
     </div>
+    <div id="partyConnection" role="status" aria-live="polite" hidden></div>
+    <div id="partySubmission" hidden></div>
+    <div id="partyControls" hidden><span id="partyRoom"></span> <button type="button" id="partyLeave">Leave the game</button></div>
     <div class="card" id="playCard" style="display:none"></div>
     <div class="card" id="climberCard" style="display:none;margin-top:12px">
       <label>Your climber</label>
@@ -85,184 +88,154 @@
   <div class="foot" id="foot"></div>
 
 <script src="creak-art.js?v=2"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script>
+
 "use strict";
 const SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 const SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path, opts){ opts=opts||{}; try{
-  const headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  const r=await fetch(SB_URL+'/rest/v1/'+path, Object.assign({}, opts, {headers}));
-  if(r.ok){ if(opts.method) return null; return await r.json(); }
-  return opts.method?null:[];
-}catch(e){ return opts.method?null:[]; } }
-
+const access=PartyAccess.create(SB_URL,SB_KEY,{family:'creak',edition:'general'});
 const $=id=>document.getElementById(id);
-const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
-let myId=(crypto.randomUUID?crypto.randomUUID():('id'+Math.random().toString(36).slice(2)+Date.now()));
-/* your climber: chosen here before the game starts, kept in this phone for next time, and sent to the TV in the player tag */
-let myLook=window.CreakArt?CreakArt.savedLook():{c:0,s:0,h:'bobble'}, lookPicker=null, lookTimer=0;
-function pushLook(){ clearTimeout(lookTimer); lookTimer=setTimeout(function(){ if(!window.CreakArt) return; sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({tag:'creak-multi:'+CreakArt.encodeLook(myLook)})}); }, 250); }
-function showClimber(on, players){
-  const card=$('climberCard'); if(!card || !window.CreakArt) return; card.style.display=on?'block':'none'; if(!on) return;
-  if(!lookPicker) lookPicker=CreakArt.picker($('climberPick'), myLook, function(l){ myLook=l; CreakArt.saveLook(l); pushLook(); });
-  /* colours chosen by the others; if someone who joined before me already has mine, I move to a free one */
-  const me=players.findIndex(function(p){ return p.id===myId; }), takenAll=[], takenBefore=[];
-  players.forEach(function(p,i){ if(p.id===myId) return; const l=CreakArt.parseLook(p.tag); if(!l) return; takenAll.push(l.c); if(me<0 || i<me) takenBefore.push(l.c); });
-  if(takenBefore.indexOf(myLook.c)>=0){ let c=0; while(c<PALETTE.length && takenAll.indexOf(c)>=0) c++; if(c<PALETTE.length){ myLook.c=c; lookPicker.set(myLook); CreakArt.saveLook(myLook); pushLook(); } }
-  lookPicker.taken(takenAll);
+const params=new URLSearchParams(location.search),submissions=new Map(),SUBMISSIONS_KEY='tb_party_'+'creak'+'_general_submissions_v1';
+let me=null,latest=null,lastSig='',joining=false,leaving=false,polling=false,generation=0,pollTimer=null,beatTimer=null,beating=false;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function connectionError(error){const box=$('partyConnection');box.hidden=false;box.textContent=access.message(error)+' ';
+ const retry=document.createElement('button');retry.type='button';retry.textContent='Retry connection';retry.onclick=()=>poll();box.appendChild(retry);}
+function clearConnection(){$('partyConnection').hidden=true;}
+function rememberSubmissions(){try{localStorage.setItem(SUBMISSIONS_KEY,JSON.stringify(Array.from(submissions.values()).slice(-40).map(r=>({code:r.code,member:r.member,run:r.run,window:r.window,choice:r.choice,request:r.request}))));}catch(e){}}
+function restoreSubmissions(){try{const rows=JSON.parse(localStorage.getItem(SUBMISSIONS_KEY)||'[]');if(!Array.isArray(rows))return;
+ for(const r of rows.slice(-40)){if(!r||r.member!==me.id||r.code!==me.code||typeof r.choice!=='string'||r.choice.length>2000||!['run','window','request'].every(k=>typeof r[k]==='string'&&/^[0-9a-f-]{36}$/i.test(r[k])))continue;
+  if(!submissions.has(r.window))submissions.set(r.window,Object.assign({},r,{state:'unknown',mayHaveCommitted:true,error:null}));}
+}catch(e){}}
+function currentRecord(){const action=latest&&latest.room&&latest.room.action;const r=action&&submissions.get(action.id);return r&&me&&r.member===me.id&&r.code===me.code?r:null;}
+function recordText(record){
+ if(record.state==='pending')return 'Sending your move…';
+ if(record.state==='confirmed')return 'Move recorded. Watch the big screen.';
+ if(record.state==='failed')return 'Your move was not recorded. '+access.message(record.error);
+ return 'Could not confirm your move. Retry the same move to check.';
 }
-let code='', myName='', joined=false, lastBeat=0, lastSig='', myRolledSeq=-1, myQId=null, qTimerHandle=null;
-
-const params=new URLSearchParams(location.search);
-
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-
+function renderSubmission(record){const box=$('partySubmission');box.textContent='';box.hidden=!record;if(!record)return;
+ const text=document.createElement('div');text.setAttribute('role','status');text.setAttribute('aria-live','polite');text.dataset.state=record.state;text.textContent=recordText(record);box.appendChild(text);
+ if(record.state==='unknown'||record.state==='failed'){const retry=document.createElement('button');retry.type='button';retry.textContent='Retry same move';retry.onclick=()=>attemptSubmission(record);box.appendChild(retry);}
+}
+function reconcileReceipts(receipts){for(const receipt of receipts||[]){
+ if(!me||receipt.player_id!==me.id||!receipt.window_id)continue;
+ let record=submissions.get(receipt.window_id);
+ if(!record){record={code:me.code,member:me.id,run:latest.room.run_id,window:receipt.window_id,choice:String(receipt.choice),request:access.uuid()};submissions.set(record.window,record);}
+ if(record.code===me.code&&record.member===me.id&&record.choice===String(receipt.choice)){record.state='confirmed';record.ack=receipt;record.error=null;}
+ }rememberSubmissions();}
+async function attemptSubmission(record){
+ if(!me||record.member!==me.id||record.code!==me.code||record.state==='pending'||record.state==='confirmed')return;
+ record.state='pending';record.error=null;rememberSubmissions();lastSig='';render();
+ try{const ack=await access.submit(record.code,record.run,record.window,record.choice,record.request);
+  if(!ack||ack.window_id!==record.window||ack.player_id!==record.member||String(ack.choice)!==record.choice)throw new Error('The game did not confirm this move.');
+  record.state='confirmed';record.ack=ack;
+ }catch(error){record.error=error;const conflict=/already|different|conflict|did not confirm/i.test(error.message||'');
+  const definite=error.status>=400&&error.status<500&&error.status!==408&&!conflict;
+  if(!definite)record.mayHaveCommitted=true;record.state=definite&&!record.mayHaveCommitted?'failed':'unknown';
+ }
+ rememberSubmissions();if(me&&me.id===record.member&&me.code===record.code){lastSig='';render();}
+}
+function submitChoice(choice){
+ const room=latest&&latest.room,action=room&&room.action;
+ if(!me||!action||!action.accepting||action.member_id!==me.id)return;
+ let record=submissions.get(action.id);if(record)return;
+ record={code:me.code,member:me.id,run:room.run_id,window:action.id,choice:String(choice),request:access.uuid(),state:'idle',mayHaveCommitted:false,error:null};
+ submissions.set(action.id,record);return attemptSubmission(record);
+}
+function returnToJoin(message){generation++;clearInterval(pollTimer);clearInterval(beatTimer);me=null;latest=null;lastSig='';access.rememberPlayer('');
+ $('joinCard').classList.remove('hide');$('joinCard').style.display='';$('playCard').classList.add('hide');$('playCard').style.display='none';
+ clearTimeout(lookTimer);lookTimer=0;$('climberCard').style.display='none';
+ $('partySubmission').hidden=true;$('partyControls').hidden=true;clearConnection();if(message)$('err').textContent=message;}
+function enterGame(){generation++;$('joinCard').classList.add('hide');$('joinCard').style.display='none';$('playCard').classList.remove('hide');$('playCard').style.display='';
+ $('partyControls').hidden=false;$('partyRoom').textContent='Room '+me.code;restoreSubmissions();enterEdition();
+ clearInterval(pollTimer);clearInterval(beatTimer);poll();beat();pollTimer=setInterval(poll,900);beatTimer=setInterval(beat,10000);}
 async function join(){
-  code=$('codeIn').value.trim().toUpperCase(); myName=$('nameIn').value.trim();
-  if(code.length!==5){ $('err').textContent='Enter the 5-letter code.'; return; }
-  if(!myName){ $('err').textContent='Enter your name.'; return; }
-  $('joinBtn').disabled=true; $('err').textContent='';
-  const rooms=await sb('rooms?code=eq.'+code+'&select=code');
-  if(!rooms||!rooms.length){ $('err').textContent='Room not found. Check the code.'; $('joinBtn').disabled=false; return; }
-  const now=new Date().toISOString();
-  await sb('players',{method:'POST',body:JSON.stringify({id:myId, code, name:myName, tag:'creak-multi', score:0, joined_at:now, last_seen:now})});
-  try{ localStorage.setItem('creak_multi_session', JSON.stringify({code:code, playerId:myId, name:myName})); }catch(e){}
-  pushLook();
-  enterGame();
+ if(joining||me)return;const code=($('codeIn').value||'').trim().toUpperCase(),name=($('nameIn').value||'').trim();
+ if(code.length!==5){$('err').textContent='Enter the five-letter code on the big screen.';return;}if(!name){$('err').textContent='Enter your name.';return;}
+ joining=true;$('joinBtn').disabled=true;$('err').textContent='';
+ try{await access.preview(code);const member=await access.join(code,name);if(!member||!member.id)throw new Error('The game did not confirm that you joined.');
+  me=Object.assign({code},member);access.rememberPlayer(code);enterGame();
+ }catch(error){$('err').textContent=access.message(error);}finally{joining=false;$('joinBtn').disabled=false;}
 }
-function enterGame(){
-  joined=true; $('joinCard').style.display='none'; $('playCard').style.display='block';
-  $('foot').innerHTML='Room '+code+' &middot; <button class="leave" id="leaveBtn">Leave</button>';
-  $('leaveBtn').addEventListener('click', function(){ try{ sb('players?id=eq.'+myId,{method:'DELETE'}); }catch(e){} try{ localStorage.removeItem('creak_multi_session'); }catch(e){} location.reload(); });
-  poll(); setInterval(poll, 900);
+async function tryResume(){
+ const saved=access.savedPlayerCode(),explicit=(params.get('c')||'').toUpperCase();if(!saved||(explicit&&explicit!==saved))return;
+ joining=true;$('joinBtn').disabled=true;
+ try{const member=await access.membership(saved);if(member&&member.id){me=Object.assign({code:saved},member);enterGame();}else access.rememberPlayer('');}
+ catch(error){$('err').textContent=access.message(error);}finally{joining=false;$('joinBtn').disabled=false;}
 }
-function tryResume(){
-  let saved=null; try{ saved=JSON.parse(localStorage.getItem('creak_multi_session')||'null'); }catch(e){}
-  if(!saved || !saved.code || !saved.playerId) return false;
-  // if the URL points at a different room, don't auto-resume the old one
-  const urlCode=params.get('c'); if(urlCode && urlCode.toUpperCase()!==saved.code) return false;
-  code=saved.code; myId=saved.playerId; myName=saved.name||'Player';
-  pushLook();
-  enterGame();
-  return true;
-}
-if(!tryResume() && params.get('c')) $('codeIn').value=params.get('c').toUpperCase();
-$('joinBtn').addEventListener('click', join);
-
-async function beat(){ const now=Date.now(); if(now-lastBeat<10000) return; lastBeat=now; try{ await sb('players?id=eq.'+myId,{method:'PATCH',body:JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){} }
-
-function area(){ return $('playCard'); }
-function setHTML(h){ area().innerHTML=h; }
-
-async function submitAnswer(qId, choice, btnEl){
-  if(qTimerHandle){ clearInterval(qTimerHandle); qTimerHandle=null; }
-  const all=document.querySelectorAll('.qopt2'); all.forEach(function(b){ b.disabled=true; });
-  if(btnEl) btnEl.classList.add('picked');
-  try{ await sb('moves',{method:'POST',body:JSON.stringify({code:code, player_id:myId, turn_seq:-1, q_id:qId, choice:choice})}); }catch(e){}
-}
-async function rollNow(){
-  const btn=$('rollBtn'); if(btn){ btn.disabled=true; btn.textContent='Rolling…'; }
-  myRolledSeq = window.__lastState ? window.__lastState.turnSeq : -1;
-  try{ await sb('moves',{method:'POST',body:JSON.stringify({code:code, player_id:myId, turn_seq:myRolledSeq})}); }catch(e){}
-}
-
-function renderQuestion(pq){
-  if(myQId===pq.qId) return; // already showing this exact question, don't re-render and lose disabled state
-  myQId=pq.qId;
-  const LABELS={ladder:'\ud83e\ude9c Climb it! Answer to hold the ladder',snake:'\ud83d\udc0d Sneak past! Answer to dodge the snake',rock:'\ud83e\udea8 Rockfall! Answer to scramble clear',storm:'\ud83c\udf29\ufe0f Storm! Answer to shelter the ladders'};
-  const kindLabel = LABELS[pq.kind] || LABELS.snake;
-  setHTML('<div class="qkind2">'+kindLabel+'</div>'+
-    '<div class="qtimerbar"><i id="qfill"></i></div>'+
-    '<div class="qtext2">'+esc(pq.q)+'</div>'+
-    '<div class="qopts2">'+pq.opts.map(function(o,i){ return '<button class="qopt2" data-i="'+i+'">'+esc(o)+'</button>'; }).join('')+'</div>');
-  document.querySelectorAll('.qopt2').forEach(function(btn){
-    btn.addEventListener('click', function(){ submitAnswer(pq.qId, pq.opts[parseInt(btn.dataset.i,10)], btn); });
-  });
-  if(qTimerHandle) clearInterval(qTimerHandle);
-  const totalDur = pq.dur || 10000;
-  qTimerHandle=setInterval(function(){
-    const fill=$('qfill'); if(!fill){ clearInterval(qTimerHandle); return; }
-    const remain=Math.max(0, pq.deadline-Date.now());
-    const pct=Math.max(0, Math.min(100, 100*remain/totalDur));
-    fill.style.width=pct+'%';
-    if(remain<=0){ clearInterval(qTimerHandle); qTimerHandle=null; }
-  }, 150);
-}
-function renderRows(st, highlightTurn){
-  const rows=(st.order||[]).map(function(pid,i){
-    const p=(st.players||[]).find(function(x){return x.id===pid;}) || {name:'Player'};
-    const active = highlightTurn && i===st.turnIdx;
-    const mine = pid===myId;
-    return '<div class="row'+(active?' active':'')+(mine?' me':'')+'"><span class="dot" style="background:'+((st.looks&&st.looks[pid])?st.looks[pid].col:PALETTE[i%PALETTE.length])+'"></span><span class="nm">'+esc(p.name)+(mine?' (you)':'')+'</span><span>'+(st.positions?(st.positions[pid]||1):1)+'</span></div>';
-  }).join('');
-  return '<div class="rows">'+rows+'</div>';
-}
-
+async function beat(){if(!me||beating)return;beating=true;const member=me;try{await access.heartbeat(member.code);}catch(error){if(me===member)connectionError(error);}finally{beating=false;}}
 async function poll(){
-  if(!joined) return; beat();
-  if(!window.__lastState || !window.__lastState.pendingQ) myQId=null;
-  let rooms=[]; try{ rooms=await sb('rooms?code=eq.'+code+'&select=state'); }catch(e){}
-  if(!rooms||!rooms.length) return;
-  const st=rooms[0].state||{};
-  let players=[]; try{ players=await sb('players?code=eq.'+code+'&select=id,name,tag&order=joined_at.asc')||[]; }catch(e){}
-  st.players=players;
-  window.__lastState=st;
+ if(!me||polling)return;polling=true;const member=me,view=generation;
+ try{const state=await access.playerState(member.code);if(me!==member||generation!==view)return;
+  if(!state||!state.member||state.member.id!==member.id){returnToJoin('You are no longer in that room. Enter the code to rejoin.');return;}
+  latest=state;reconcileReceipts(state.receipts);clearConnection();render();
+ }catch(error){if(me===member&&generation===view)connectionError(error);}finally{polling=false;}
+}
+async function leave(){
+ if(!me||leaving)return;leaving=true;$('partyLeave').disabled=true;const member=me;
+ try{const result=await access.leave(member.code);if(!result||result.left!==true)throw new Error('The game did not confirm that you left.');if(me===member)returnToJoin('You left the room.');}
+ catch(error){if(me===member)connectionError(error);}finally{leaving=false;$('partyLeave').disabled=false;}
+}
+$('joinBtn').addEventListener('click',join);$('partyLeave').addEventListener('click',leave);
+$('nameIn').addEventListener('keydown',event=>{if(event.key==='Enter')join();});
+if(params.get('c'))$('codeIn').value=params.get('c').toUpperCase().slice(0,5);
+tryResume();
 
-  showClimber(st.phase==='lobby' || !st.phase, players);
-  if(st.phase==='lobby' || !st.phase){
-    myRolledSeq=-1;
-    const sig='lobby|'+players.length;
-    if(sig!==lastSig){ lastSig=sig;
-      setHTML('<div class="pa-title">Waiting for the host to start&hellip;</div>'+
-        '<div class="pa-hint">'+players.length+' player'+(players.length===1?'':'s')+' joined</div>'+renderRows(st,false));
-    }
-    return;
-  }
-
-  if(st.phase==='live' && st.scene){
-    const sig='scene|'+st.scene+'|'+st.turnSeq;
-    if(sig!==lastSig){ lastSig=sig;
-      setHTML('<div class="pa-title">🎬 Watch the big screen!</div><div class="pa-hint">Something is happening on the mountain&hellip;</div>'+renderRows(st,true)); }
-    return;
-  }
-
-  if(st.phase==='live'){
-    const myTurn = st.order && st.order[st.turnIdx]===myId;
-    const sig='live|'+st.turnSeq+'|'+myTurn+'|'+(st.pendingQ?st.pendingQ.qId:'');
-    if(sig!==lastSig){ lastSig=sig;
-      if(myTurn && st.pendingQ && st.pendingQ.forPlayer===myId){
-        renderQuestion(st.pendingQ);
-      } else if(myTurn && myRolledSeq===st.turnSeq){
-        setHTML('<div class="pa-title">Climbing&hellip;</div><div class="pa-hint">Watch the big screen.</div>'+renderRows(st,true));
-      } else if(myTurn){
-        setHTML('<div class="pa-title">Your turn! 🎲</div>'+
-          '<button class="btn rollbtn" id="rollBtn">Roll the dice</button>'+renderRows(st,true));
-        $('rollBtn').addEventListener('click', rollNow);
-      } else if(st.pendingQ){
-        const askedName=(players.find(function(p){return p.id===st.pendingQ.forPlayer;})||{}).name||'someone';
-        setHTML('<div class="pa-title">'+esc(askedName)+' is answering&hellip;</div><div class="pa-hint">Watch the big screen.</div>'+renderRows(st,true));
-      } else {
-        const activeName=(players.find(function(p){return p.id===(st.order||[])[st.turnIdx];})||{}).name||'someone';
-        setHTML('<div class="pa-title">Waiting for '+esc(activeName)+'&hellip;</div>'+renderRows(st,true));
-      }
-    } else if(!myTurn){
-      // keep the position list fresh even without a signature change on repeated polls
-      const list=area().querySelector('.rows'); if(list) list.outerHTML=renderRows(st,true);
-    }
-    return;
-  }
-
-  if(st.phase==='gameover'){
-    myRolledSeq=-1;
-    const sig='over|'+(st.winner?st.winner.id:'');
-    if(sig!==lastSig){ lastSig=sig;
-      const won = st.winner && st.winner.id===myId;
-      setHTML('<div class="win"><div class="big">'+(won?'👑':'🏁')+'</div>'+
-        '<div class="pa-title">'+(won?'You reached the summit!':(esc(st.winner?st.winner.name:'Someone')+' won!'))+'</div>'+
-        '<div class="pa-hint">Thanks for playing.</div></div>'+renderRows(st,false));
-    }
-  }
+const PALETTE=['#e6b655','#86bf9d','#e8765f','#8f7be6','#e58fb6','#5aa9e6','#d94f6a','#e9e2d4'];
+let qTimerHandle=null;
+/* The phone chooses a climber; the server binds the change to this verified membership. */
+let myLook=window.CreakArt?CreakArt.savedLook():{c:0,s:0,h:'bobble'},lookPicker=null,lookTimer=0,lookBusy=false,lookDirty=false,lookVersion=0;
+function pushLook(){
+ lookDirty=true;lookVersion++;clearTimeout(lookTimer);lookTimer=setTimeout(sendLook,250);
+}
+async function sendLook(){
+ lookTimer=0;
+ if(lookBusy||!lookDirty||!me||!latest||latest.room.phase!=='lobby'||!window.CreakArt)return;
+ const member=me,version=lookVersion,choice={c:myLook.c,s:myLook.s,h:myLook.h};lookBusy=true;
+ $('climberHint').textContent='Saving your climber…';
+ try{const saved=await access.heartbeat(member.code,choice);
+  if(me!==member)return;
+  if(!saved||saved.id!==member.id||!saved.look||saved.look.c!==choice.c||saved.look.s!==choice.s||saved.look.h!==choice.h)throw new Error('The game did not confirm your climber.');
+  if(version===lookVersion)lookDirty=false;
+  $('climberHint').textContent=lookDirty?'Saving your climber…':'Your climber is saved. Colours with a line through are taken.';
+ }catch(error){if(me===member){$('climberHint').textContent='Could not confirm your climber. It will retry while you are in the lobby.';connectionError(error);}}
+ finally{lookBusy=false;if(me===member&&lookDirty)lookTimer=setTimeout(sendLook,1200);}
+}
+function showClimber(on,players){
+ const card=$('climberCard');if(!card||!window.CreakArt)return;card.style.display=on?'block':'none';if(!on)return;
+ if(!lookPicker)lookPicker=CreakArt.picker($('climberPick'),myLook,function(look){myLook=look;CreakArt.saveLook(look);pushLook();});
+ const memberIndex=players.findIndex(p=>p.id===me.id),takenAll=[],takenBefore=[];
+ players.forEach(function(p,i){if(p.id===me.id||!p.look)return;takenAll.push(p.look.c);if(memberIndex<0||i<memberIndex)takenBefore.push(p.look.c);});
+ if(takenBefore.includes(myLook.c)){let c=0;while(c<PALETTE.length&&takenAll.includes(c))c++;if(c<PALETTE.length){myLook.c=c;lookPicker.set(myLook);CreakArt.saveLook(myLook);pushLook();}}
+ lookPicker.taken(takenAll);if(lookDirty&&!lookBusy&&!lookTimer)sendLook();
+}
+function enterEdition(){pushLook();}
+function setHTML(html){$('playCard').innerHTML=html;}
+function renderRows(st,highlight){return '<div class="rows">'+(st.order||[]).map((id,i)=>{
+ const player=(latest.members||[]).find(p=>p.id===id)||{name:'Player'};
+ return '<div class="row'+(highlight&&i===st.turnIdx?' active':'')+(id===me.id?' me':'')+'"><span class="dot" style="background:'+((st.looks&&st.looks[id])?st.looks[id].col:PALETTE[i%PALETTE.length])+'"></span><span class="nm">'+esc(player.name)+(id===me.id?' (you)':'')+'</span><span>'+((st.positions||{})[id]||1)+'</span></div>';
+}).join('')+'</div>';}
+function rollNow(){return submitChoice('roll');}
+function submitAnswer(qId,choice){if(!latest||!latest.room.state.pendingQ||latest.room.state.pendingQ.qId!==qId)return;return submitChoice(choice);}
+function renderQuestion(q,record){
+ const labels={ladder:'🪜 Climb it! Answer to hold the ladder',snake:'🐍 Sneak past! Answer to dodge the snake',rock:'🪨 Rockfall! Answer to scramble clear',storm:'⛈️ Storm! Answer to shelter the ladders'};
+ setHTML('<div class="qkind2">'+(labels[q.kind]||labels.snake)+'</div><div class="qtimerbar"><i id="qfill"></i></div><div class="qtext2">'+esc(q.q)+'</div><div class="qopts2">'+(q.opts||[]).map((o,i)=>'<button class="qopt2'+(record&&record.choice===o?' picked':'')+'" data-i="'+i+'"'+(record?' disabled':'')+'>'+esc(o)+'</button>').join('')+'</div>');
+ document.querySelectorAll('.qopt2').forEach(button=>button.addEventListener('click',()=>submitAnswer(q.qId,q.opts[Number(button.dataset.i)])));
+ clearInterval(qTimerHandle);qTimerHandle=setInterval(()=>{const fill=$('qfill');if(!fill){clearInterval(qTimerHandle);return;}fill.style.width=Math.max(0,Math.min(100,100*(q.deadline-Date.now())/(q.dur||10000)))+'%';},150);
+}
+function render(){
+ if(!me||!latest)return;const room=latest.room,st=room.state||{},action=room.action,record=currentRecord();renderSubmission(record);showClimber(room.phase==='lobby',latest.members||[]);
+ const sig=JSON.stringify([room.run_id,room.version,record&&record.state,(latest.members||[]).map(p=>[p.id,p.name,p.look])]);if(sig===lastSig)return;lastSig=sig;clearInterval(qTimerHandle);
+ if(room.phase==='lobby'){setHTML('<div class="pa-title">Waiting for the host to start…</div><div class="pa-hint">'+(latest.members||[]).length+' players joined</div>'+renderRows(st,false));return;}
+ if(st.phase==='live' && st.scene){setHTML('<div class="pa-title">🎬 Watch the big screen!</div><div class="pa-hint">Something is happening on the mountain…</div>'+renderRows(st,true));return;}
+ if(room.phase==='gameover'){const won=st.winner&&st.winner.id===me.id;setHTML('<div class="win"><div class="big">'+(won?'👑':'🏁')+'</div><div class="pa-title">'+(won?'You reached the summit!':esc(st.winner?st.winner.name:'Someone')+' won!')+'</div><div class="pa-hint">Thanks for playing.</div></div>'+renderRows(st,false));return;}
+ const mine=(st.order||[])[st.turnIdx]===me.id;
+ if(mine&&st.pendingQ&&st.pendingQ.forPlayer===me.id){renderQuestion(st.pendingQ,record);return;}
+ if(mine&&action&&action.accepting&&action.kind==='roll'&&!record){setHTML('<div class="pa-title">Your turn! 🎲</div><button class="btn rollbtn" id="rollBtn">Roll the dice</button>'+renderRows(st,true));$('rollBtn').addEventListener('click',rollNow);return;}
+ const active=(latest.members||[]).find(p=>p.id===(st.order||[])[st.turnIdx]);
+ setHTML('<div class="pa-title">'+(mine?(record&&record.state==='confirmed'?'Climbing…':'Watch the big screen.'):esc(active?active.name:'Someone')+' is playing…')+'</div>'+renderRows(st,true));
 }
 
 </script>

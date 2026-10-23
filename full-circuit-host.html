@@ -317,6 +317,8 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
   </div>
 </div>
 
+<script src="vendor/supabase.js"></script>
+<script src="js/party-access.js"></script>
 <script src="questions.js?v=7" onerror="window.__noBank=1"></script>
 <script src="bible-bank.js?v=1" onerror="window.__noBible=1"></script>
 <script>
@@ -324,15 +326,8 @@ h1{font-size:clamp(28px,3.4vw,44px);line-height:1.15;margin:18px 0 10px;}
 var ED = /[?&]ed=bible\b/.test(location.search) ? 'bible' : 'house';
 var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-async function sb(path,opts){ opts=opts||{}; try{
-  var headers=Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},opts.headers||{});
-  if(opts.method==='POST'||opts.method==='PATCH') headers['Prefer']='return=minimal';
-  var r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({},opts,{headers}));
-  if(r.ok){ if(opts.method) return {ok:true}; return await r.json(); }
-  return opts.method?{ok:false}:[];
-}catch(e){ return opts.method?null:[]; } }
+var access=PartyAccess.create(SB_URL,SB_KEY,{family:'circuit',edition:ED==='bible'?'bible':'general'});
 var $ = function(id){ return document.getElementById(id); };
-function code5(){ var s='', A='ABCDEFGHJKLMNPQRSTUVWXYZ'; for(var i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
 function baseUrl(){ var h=location.href; if(/^https?:\/\//.test(h)){ var b=h.replace(/\/[^\/]*\.html.*$/,'').replace(/\/$/,''); if(b) return b; } return 'https://tierbrain.co'; }
 function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -354,13 +349,33 @@ var G = { code:'', phase:'lobby', players:[], done:{}, items:[], depth:0, finale
 
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.hidden = (s.id !== id); }); }
 function nameOf(id){ var p = G.players.filter(function(x){ return x.id === id; })[0]; return p ? p.name : 'Someone'; }
-async function writeState(){
-  await sb('rooms?code=eq.' + G.code, { method:'PATCH', body: JSON.stringify({ phase:G.phase, updated_at:new Date().toISOString(),
-    state:{ game:'full-circuit', phase:G.phase, room:G.room, player:G.player, roomSeq:G.roomSeq, depth:G.depth,
-            items:G.items, fuse:G.fuse, keyUsed:G.keyUsed, spark:G.spark || null, fq:G.fq || null, awake:G.awake,
-            names:G.players.map(function(p){ return {id:p.id, name:p.name}; }) } }) });
+function hostIssue(detail){
+  var box=$('connectionIssue');
+  if(!box){ box=document.createElement('div');box.id='connectionIssue';box.setAttribute('role','alert');
+    box.style.cssText='position:fixed;bottom:12px;left:12px;right:12px;z-index:100000;padding:12px;background:#251612;color:#fff;border:2px solid #d7ac61;border-radius:10px';
+    document.body.appendChild(box); }
+  box.innerHTML='';
+  if(detail.recovered){box.hidden=true;return;}
+  box.hidden=false;var text=document.createElement('span');text.textContent=detail.message||access.message(detail.error);box.appendChild(text);
+  if(detail.canRetry){var retry=document.createElement('button');retry.type='button';retry.textContent='Retry update';retry.style.marginLeft='12px';retry.onclick=function(){access.retry();};box.appendChild(retry);}
 }
-
+access.onIssue(hostIssue);
+function hostError(error){hostIssue({error:error,message:access.message(error),canRetry:false});}
+function roomToken(){var r=access.currentRoom();return r?{id:r.id,run:r.run_id,window:r.action&&r.action.id}:null;}
+function sameToken(token){var r=access.currentRoom();return !!(token&&r&&r.id===token.id&&r.run_id===token.run);}
+function sameAssignment(token){var r=access.currentRoom();return sameToken(token)&&G.phase==='room'&&r.action&&r.action.id===token.window;}
+async function closeAction(){
+  var r=access.currentRoom();return r&&r.action?access.close(r.action.id):{room:r,actions:[]};
+}
+function completionFrom(rows){
+  for(var i=0;i<(rows||[]).length;i++){var row=rows[i],e=row.event; if(!e){try{e=JSON.parse(row.choice);}catch(x){}}
+    if(row.q_id==='done'||(e&&e.t==='done'))return e;}
+  return null;
+}
+async function writeState(){
+  return access.publish({phase:G.phase,state:{game:'full-circuit',phase:G.phase,room:G.room,player:G.player,roomSeq:G.roomSeq,depth:G.depth,
+    items:G.items.slice(),fuse:!!G.fuse,keyUsed:!!G.keyUsed,spark:G.spark||null,fq:G.fq||null,awake:typeof G.awake==='boolean'?G.awake:null}});
+}
 
 /* ==================== THE STORY ====================
    Narration exactly as written in the spec's Narration script. Lines are
@@ -540,41 +555,53 @@ function jBuildHost(){
 
 /* ---------- the lobby ---------- */
 async function openHouse(){
-  G.code = code5();
-  var made = await sb('rooms', { method:'POST', body: JSON.stringify({ code:G.code, phase:'lobby', state:{ game:'full-circuit', phase:'lobby' } }) });
-  if(!made || made.ok === false){ $('code').textContent = '----'; $('status').textContent = 'Cannot reach the game server. Check the internet and reload.'; return; }
-  $('code').textContent = G.code;
-  var link = baseUrl() + (ED === 'bible' ? '/full-circuit-bible.html' : '/full-circuit.html') + '?team=' + G.code;
-  $('url').textContent = link.replace(/^https?:\/\//, '');
-  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=' + encodeURIComponent(link);
-  $('status').textContent = 'Room ' + G.code;
-  writeState(); pollPlayers(); setInterval(pollPlayers, 2000);
+  $('startBtn').disabled=true;$('status').textContent='Connecting…';
+  try{
+    var saved=access.savedHostCode(),r=null;
+    if(saved){
+      try{r=await access.resumeHost(saved);await access.beginRun();}
+      catch(error){if(error.code==='42501'||/expired|not found/i.test(error.message)){access.forgetHost();}else throw error;}
+    }
+    if(!r)r=await access.createRoom();
+    G.code=r.code;G.phase='lobby';G.starting=false;G.transitioning=false;G.completedWindow=null;G.fq=null;G.spark=null;
+    $('code').textContent=G.code;
+    var link=baseUrl()+(ED==='bible'?'/full-circuit-bible.html':'/full-circuit.html')+'?team='+G.code;
+    $('url').textContent=link.replace(/^https?:\/\//,'');
+    $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=190x190&data='+encodeURIComponent(link);
+    await writeState();$('status').textContent='Room '+G.code;await pollPlayers();setInterval(pollPlayers,2000);
+  }catch(error){$('code').textContent='----';$('status').textContent=access.message(error);hostError(error);}
 }
 function toast(t){ var e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function(){ e.classList.remove('on'); }, 3500); }
 async function pollPlayers(){
-  var r = await sb('players?code=eq.' + G.code + '&select=id,name&order=joined_at.asc');
-  if(!Array.isArray(r)) return;
-  var before = {}; G.players.forEach(function(p){ before[p.id] = true; });
-  G.players = r.slice(0, 8);
-  /* the door stays open all game: a latecomer is welcomed and offered the next room */
-  if(G.phase !== 'lobby'){
-    G.players.forEach(function(p){ if(!before[p.id]){ G.playedBy[p.id] = G.playedBy[p.id] || 0; toast(p.name + ' has joined the house');
-      if(G.phase === 'finale' && FN){ fnRing(); if(G.spark && $('pc-' + G.spark)){ $('pc-' + G.spark).classList.add('hot'); $('w-' + G.spark).classList.add('live'); } }
-      writeState(); } });
-  }
-  $('pcount').textContent = G.players.length ? G.players.length + (G.players.length === 1 ? ' player' : ' players') + ' in the house' : 'Waiting for players';
-  $('chips').innerHTML = G.players.length ? G.players.map(function(p){ return '<span class="chip">' + esc(p.name) + '</span>'; }).join('') : '<span class="none">Nobody has joined yet.</span>';
-  $('startBtn').disabled = G.players.length < 3;
+  if(!G.code||G.rosterPolling)return;G.rosterPolling=true;
+  try{
+    var code=G.code,r=await access.members(code);if(code!==G.code)return;
+    var before={};G.players.forEach(function(p){before[p.id]=true;});G.players=r;
+    if(G.phase!=='lobby')G.players.forEach(function(p){if(!before[p.id]){G.playedBy[p.id]=G.playedBy[p.id]||0;toast(p.name+' has joined the house');}});
+    if(G.phase==='finale'&&FN){fnRing();if(G.spark&&$('pc-'+G.spark)){$('pc-'+G.spark).classList.add('hot');$('w-'+G.spark).classList.add('live');}}
+    if(G.phase==='room'&&G.player&&!G.players.some(function(p){return p.id===G.player;}))openTrouble(true);
+    $('pcount').textContent=G.players.length?G.players.length+(G.players.length===1?' player':' players')+' in the house':'Waiting for players';
+    $('chips').innerHTML=G.players.length?G.players.map(function(p){return '<span class="chip">'+esc(p.name)+'</span>';}).join(''):'<span class="none">Nobody has joined yet.</span>';
+    $('startBtn').disabled=G.players.length<3||G.starting||access.busy();
+  }catch(error){$('status').textContent=access.message(error);}finally{G.rosterPolling=false;}
 }
-$('startBtn').addEventListener('click', function(){
-  G.phase = 'hall'; G.prev = null; G.players.forEach(function(p){ G.playedBy[p.id] = 0; }); writeState();
-  var first = localStorage.getItem('fc_host_arrived') !== '1';
-  playStory('arrive', { lines:NARR.arrival, from:'night', to:'hall', skippable:!first }, function(){ try{ localStorage.setItem('fc_host_arrived', '1'); }catch(e){} paintHall(); });
-});
+async function beginTeamHouse(){
+  if(G.phase!=='lobby'||G.starting||access.busy()||G.players.length<3)return;
+  G.starting=true;$('startBtn').disabled=true;
+  try{
+    await access.beginRun();G.phase='hall';G.prev=null;G.done={};G.items=[];G.depth=0;G.finalePenalty=0;G.fuse=false;G.keyUsed=false;
+    G.room=null;G.player=null;G.roomSeq=0;G.spark=null;G.fq=null;G.completedWindow=null;
+    G.players.forEach(function(p){G.playedBy[p.id]=0;});await writeState();var token=roomToken();
+    var first=localStorage.getItem('fc_host_arrived')!=='1';
+    playStory('arrive',{lines:NARR.arrival,from:'night',to:'hall',skippable:!first},function(){if(!sameToken(token))return;try{localStorage.setItem('fc_host_arrived','1');}catch(e){}paintHall();});
+  }catch(error){hostError(error);}finally{G.starting=false;}
+}
+$('startBtn').addEventListener('click',beginTeamHouse);
 
 /* ---------- the hallway ---------- */
-function paintHall(){
-  G.phase = 'hall';
+async function paintHall(){
+  if(G.transitioning||access.busy())return;
+  G.phase = 'hall';G.player=null;G.fq=null;
   var played = ORDER.filter(function(k){ return G.done[k]; }).length;
   $('hallCount').textContent = played + ' of 5 rooms explored';
   $('pack').innerHTML = G.items.length ? G.items.map(function(i){ return '<span class="chip">' + i + '</span>'; }).join('') : '<span class="none">The team is carrying nothing yet.</span>';
@@ -589,9 +616,10 @@ function paintHall(){
   m.className = 'door machine'; m.disabled = !all;
   m.innerHTML = '<span class="hint">' + (all ? 'The machine is waiting' : 'A locked door. Something hums behind it.') + '</span>';
   m.addEventListener('click', openMachine); box.appendChild(m);
-  show('hall'); writeState();
+  show('hall'); await writeState();
 }
 function pickPlayer(k){
+  if(G.phase!=='hall'||G.transitioning||access.busy())return;
   $('pickSub').textContent = ROOMS[k].hint + '. Who is brave enough?';
   var box = $('whos'); box.innerHTML = '';
   G.players.slice().sort(function(a,b){ return (G.playedBy[a.id]||0) - (G.playedBy[b.id]||0); }).forEach(function(p){
@@ -606,78 +634,80 @@ function pickPlayer(k){
 $('pickCancel').addEventListener('click', function(){ $('picker').hidden = true; });
 
 /* ---------- a room: the phone plays it, the big screen follows ---------- */
-function sendIn(k, pid){
-  G.phase = 'room'; G.room = k; G.player = pid; G.roomSeq++; G.seen = {};
-  $('mPlate').textContent = ROOMS[k].name; $('mWhoTop').textContent = nameOf(pid) + ' has gone in';
-  $('mWho').textContent = 'Waiting for ' + nameOf(pid) + '\u2019s phone\u2026';
-  $('mQ').textContent = ''; $('mOut').textContent = ''; $('mOut').className = 'outcome';
-  $('mRight').textContent = '0'; $('mWrong').textContent = '0'; $('feed').innerHTML = '';
-  show('mirror'); writeState();
-  G.lastEvent = performance.now(); G.troubleShown = false; $('trouble').hidden = true;
-  /* the walk plays on the big screen while the phone picks up its room */
-  playStory('walk', { lines:storyWalkLines(G.prev, k, G.items, G.fuse), from:G.prev ? G.prev.room : 'hall', to:k, glyph:ROOMS[k].glyph }, function(){ G.lastEvent = performance.now(); });
-  clearInterval(G.poll); G.poll = setInterval(followRoom, 900);
+async function sendIn(k,pid){
+  if(G.phase!=='hall'||G.transitioning||access.busy())return;
+  G.transitioning=true;
+  try{
+    await closeAction();G.phase='room';G.room=k;G.player=pid;G.roomSeq++;G.cursor=0;G.completedWindow=null;
+    $('mPlate').textContent=ROOMS[k].name;$('mWhoTop').textContent=nameOf(pid)+' has gone in';
+    $('mWho').textContent='Waiting for '+nameOf(pid)+'’s phone…';$('mQ').textContent='';$('mOut').textContent='';$('mOut').className='outcome';
+    $('mRight').textContent='0';$('mWrong').textContent='0';$('feed').innerHTML='';show('mirror');await writeState();
+    var token=roomToken();G.lastEvent=performance.now();G.troubleShown=false;$('trouble').hidden=true;
+    playStory('walk',{lines:storyWalkLines(G.prev,k,G.items,G.fuse),from:G.prev?G.prev.room:'hall',to:k,glyph:ROOMS[k].glyph},function(){if(sameAssignment(token))G.lastEvent=performance.now();});
+    clearInterval(G.poll);G.poll=setInterval(followRoom,900);
+  }catch(error){hostError(error);}finally{G.transitioning=false;}
 }
-/* if a phone goes quiet for 35 seconds, offer the host a way out */
 function watchdog(){
-  if(G.phase !== 'room' || G.troubleShown) return;
-  if(performance.now() - (G.lastEvent || 0) > 35000) openTrouble(true);
+  if(G.phase!=='room'||G.troubleShown||G.transitioning||access.busy())return;
+  if(performance.now()-(G.lastEvent||0)>35000)openTrouble(true);
 }
 function openTrouble(auto){
-  G.troubleShown = true;
-  $('trTitle').textContent = auto ? 'We have not heard from ' + nameOf(G.player) + '’s phone' : 'Trouble with ' + nameOf(G.player) + '’s phone?';
-  $('trText').textContent = 'If it has locked, gone to sleep or lost signal, ' + nameOf(G.player) + ' can reload the page to start the room again. Or hand the room to someone else, or skip it: skipping loses its item, but there is no trip up the back stairs.';
-  $('trouble').hidden = false;
+  if(G.phase!=='room')return;G.troubleShown=true;
+  $('trTitle').textContent=auto?'We have not heard from '+nameOf(G.player)+'’s phone':'Trouble with '+nameOf(G.player)+'’s phone?';
+  $('trText').textContent='The player can reload to restart an unfinished room. Accepted results are recovered. Or hand the room to someone else, or skip it: skipping loses its item without the back stairs.';
+  $('trouble').hidden=false;
 }
-$('troubleBtn').addEventListener('click', function(){ openTrouble(false); });
-$('trWait').addEventListener('click', function(){ $('trouble').hidden = true; G.troubleShown = false; G.lastEvent = performance.now(); });
-$('trHand').addEventListener('click', function(){ $('trouble').hidden = true; clearInterval(G.poll); var k = G.room; G.phase = 'hall'; writeState(); pickPlayer(k); });
-$('trSkip').addEventListener('click', function(){
-  $('trouble').hidden = true; clearInterval(G.poll);
-  var k = G.room, R = ROOMS[k]; G.done[k] = 'lost'; G.depth++; G.prev = { room:k, won:false };
-  $('aPlate').textContent = R.name; $('aTitle').textContent = 'The room was skipped';
-  $('aText').textContent = 'No ' + R.item + ' this time, but no trip up the back stairs either.';
-  G.phase = 'after'; G.player = null; show('after'); writeState();
-});
-setInterval(watchdog, 2000);
+$('troubleBtn').addEventListener('click',function(){openTrouble(false);});
+$('trWait').addEventListener('click',function(){$('trouble').hidden=true;G.troubleShown=false;G.lastEvent=performance.now();});
+async function leaveRoomAssignment(skip){
+  if(G.phase!=='room'||G.transitioning||access.busy())return;G.transitioning=true;clearInterval(G.poll);var token=roomToken();
+  try{
+    var closed=await closeAction();if(!sameAssignment(token))return;
+    var completed=completionFrom(closed.actions);if(completed){await roomOver(completed,token,closed);return;}
+    var k=G.room,R=ROOMS[k];$('trouble').hidden=true;G.player=null;
+    if(skip){G.done[k]='lost';G.depth++;G.prev={room:k,won:false};$('aPlate').textContent=R.name;$('aTitle').textContent='The room was skipped';
+      $('aText').textContent='No '+R.item+' this time, but no trip up the back stairs either.';G.phase='after';show('after');await writeState();}
+    else{G.phase='hall';await writeState();G.transitioning=false;pickPlayer(k);}
+  }catch(error){hostError(error);}finally{G.transitioning=false;}
+}
+$('trHand').addEventListener('click',function(){leaveRoomAssignment(false);});
+$('trSkip').addEventListener('click',function(){leaveRoomAssignment(true);});
+setInterval(watchdog,2000);
 async function followRoom(){
-  var rows = await sb('moves?code=eq.' + G.code + '&player_id=eq.' + G.player + '&turn_seq=eq.' + G.roomSeq + '&select=q_id,choice&order=q_id.asc');
-  if(!Array.isArray(rows)) return;
-  rows.forEach(function(r){
-    if(G.seen[r.q_id]) return; G.seen[r.q_id] = true;
-    var e; try{ e = JSON.parse(r.choice); }catch(x){ return; }
-    G.lastEvent = performance.now();
-    if(r.q_id === 'done') return roomOver(e);
-    if(e.t === 'q'){ $('mWho').textContent = nameOf(G.player) + ' is answering'; $('mQ').textContent = e.q; $('mOut').textContent = ''; $('mOut').className = 'outcome'; }
-    if(e.t === 'a'){
-      $('mRight').textContent = e.r; $('mWrong').textContent = e.w;
-      $('mOut').textContent = e.ok ? 'Right!' : (e.fuse ? 'Wrong, but the Fuse took it' : 'Wrong. It was ' + e.c);
-      $('mOut').className = 'outcome ' + (e.ok ? 'ok' : 'bad');
-      var li = document.createElement('li'); li.className = e.ok ? 'ok' : 'bad';
-      li.innerHTML = '<small>' + (e.ok ? 'Right' : 'Wrong') + '</small>' + esc(e.q || '') + '<br><b>' + esc(e.c || '') + '</b>';
-      var f = $('feed'); f.insertBefore(li, f.firstChild); while(f.children.length > 5) f.removeChild(f.lastChild);
+  if(G.phase!=='room'||G.transitioning||G.following||access.busy())return;G.following=true;var token=roomToken();
+  try{
+    if(!token||!token.window)return;
+    var rows=await access.actions(G.code,token.run,token.window,G.cursor||0);if(!sameAssignment(token))return;
+    for(var i=0;i<rows.length;i++){
+      if(!sameAssignment(token))return;var r=rows[i];G.cursor=Math.max(G.cursor||0,Number(r.id));var e=r.event;
+      if(!e){try{e=JSON.parse(r.choice);}catch(x){continue;}}G.lastEvent=performance.now();
+      if(r.q_id==='done'||e.t==='done'){await roomOver(e,token);return;}
+      if(e.t==='q'){$('mWho').textContent=nameOf(G.player)+' is answering';$('mQ').textContent=e.q;$('mOut').textContent='';$('mOut').className='outcome';}
+      if(e.t==='a'){
+        $('mRight').textContent=e.r;$('mWrong').textContent=e.w;$('mOut').textContent=e.ok?'Right!':(e.fuse?'Wrong, but the Fuse took it':'Wrong. It was '+e.c);$('mOut').className='outcome '+(e.ok?'ok':'bad');
+        var li=document.createElement('li');li.className=e.ok?'ok':'bad';li.innerHTML='<small>'+(e.ok?'Right':'Wrong')+'</small>'+esc(e.q||'')+'<br><b>'+esc(e.c||'')+'</b>';
+        var f=$('feed');f.insertBefore(li,f.firstChild);while(f.children.length>5)f.removeChild(f.lastChild);
+      }
+      if(e.t==='stairs'){$('mWho').textContent=nameOf(G.player)+' is on the back stairs';$('mQ').textContent=e.q||'';}
     }
-    if(e.t === 'stairs'){ $('mWho').textContent = nameOf(G.player) + ' is on the back stairs'; $('mQ').textContent = e.q || ''; }
-  });
+  }catch(error){$('status').textContent=access.message(error);}finally{G.following=false;}
 }
-function roomOver(e){
-  clearInterval(G.poll);
-  var k = G.room, R = ROOMS[k], who = nameOf(G.player);
-  G.done[k] = e.won ? 'won' : 'lost'; G.depth++; G.playedBy[G.player] = (G.playedBy[G.player] || 0) + 1;
-  G.prev = { room:k, won:!!e.won };
-  if(e.won){ G.items.push(R.item); if(R.item === 'Fuse') G.fuse = true; }
-  if(typeof e.fuse === 'boolean' && !(e.won && R.item === 'Fuse')) G.fuse = e.fuse;
-  if(e.keyUsed) G.keyUsed = true;
-  G.finalePenalty += (e.penalty || 0);
-  $('aPlate').textContent = R.name;
-  $('aTitle').textContent = e.won ? who + ' won the ' + R.item : 'The room beat ' + who;
-  $('aText').textContent = (e.stats || '') + (e.won ? '' : (e.keyUsed ? ' The team\u2019s Key opened a shortcut past the back stairs.'
-    : ' The back stairs cost the team ' + (e.penalty || 0) + ' seconds on the finale clock.'));
-  G.phase = 'after'; writeState();
-  if(e.won) show('after');
-  else playStory('stairs', { lines:[e.keyUsed ? NARR.keyShortcut : NARR.stairs[Math.floor(Math.random()*NARR.stairs.length)]], from:k, to:'hall' }, function(){ show('after'); });
+async function roomOver(e,token,alreadyClosed){
+  token=token||roomToken();if(!sameAssignment(token)||G.completedWindow===token.window)return;
+  clearInterval(G.poll);G.transitioning=true;
+  try{
+    var closed=alreadyClosed||await closeAction();if(!sameAssignment(token))return;
+    e=completionFrom(closed.actions)||e;G.completedWindow=token.window;
+    var k=G.room,R=ROOMS[k],who=nameOf(G.player);G.done[k]=e.won?'won':'lost';G.depth++;G.playedBy[G.player]=(G.playedBy[G.player]||0)+1;G.prev={room:k,won:!!e.won};
+    if(e.won&&G.items.indexOf(R.item)<0){G.items.push(R.item);if(R.item==='Fuse')G.fuse=true;}
+    if(typeof e.fuse==='boolean'&&!(e.won&&R.item==='Fuse'))G.fuse=e.fuse;if(e.keyUsed)G.keyUsed=true;G.finalePenalty+=(e.penalty||0);
+    $('aPlate').textContent=R.name;$('aTitle').textContent=e.won?who+' won the '+R.item:'The room beat '+who;
+    $('aText').textContent=(e.stats||'')+(e.won?'':(e.keyUsed?' The team’s Key opened a shortcut past the back stairs.':' The back stairs cost the team '+(e.penalty||0)+' seconds on the finale clock.'));
+    G.phase='after';G.player=null;await writeState();
+    if(e.won)show('after');else playStory('stairs',{lines:[e.keyUsed?NARR.keyShortcut:NARR.stairs[Math.floor(Math.random()*NARR.stairs.length)]],from:k,to:'hall'},function(){if(sameToken(token)&&G.phase==='after')show('after');});
+  }catch(error){hostError(error);}finally{G.transitioning=false;}
 }
-$('aBtn').addEventListener('click', paintHall);
+$('aBtn').addEventListener('click',paintHall);
 
 /* ---------- THE TEAM FINALE ----------
    The team is the circuit. The spark leaps to a random player, never the
@@ -700,12 +730,14 @@ function fqPick(t){ var L = FQ[t].filter(function(q){ return !usedFQ[q.q]; }); i
   var q = L[Math.floor(Math.random()*L.length)]; usedFQ[q.q] = 1; return q; }
 function shuffle(a){ a = a.slice(); for(var i=a.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 function has(i){ return G.items.indexOf(i) >= 0; }
-function openMachine(){
+async function openMachine(){
+  if(G.phase!=='hall'||G.transitioning||access.busy())return;
   var n = G.items.length, line = n === 0 ? NARR.reveal.none : (n === 5 ? NARR.reveal.all : NARR.reveal.some);
-  G.phase = 'machine'; writeState();
-  playStory('reveal', { lines:[line, NARR.needTeam], from:'hall', to:'machine' }, startFinale);
+  G.phase='machine';await writeState();var token=roomToken();
+  playStory('reveal',{lines:[line,NARR.needTeam],from:'hall',to:'machine'},function(){if(sameToken(token)&&G.phase==='machine')startFinale();});
 }
-function startFinale(){
+async function startFinale(){
+  if(G.phase!=='machine'||G.transitioning||access.busy())return;
   FN = { t: Math.max(30, 90 + (has('Spring') ? 12 : 0) - G.finalePenalty) * 1000, charge: has('Key') ? (ED === 'bible' ? 1 : 2) : 0, target: ED === 'bible' ? 7 : 10,
          step: has('Wire') ? 1.5 : 1, lens: has('Lens'), fuse: has('Fuse'), seq: 0, live: false, right: 0, shorts: 0, last: 0 };
   G.awake = null; G.spark = null; G.fq = null;
@@ -718,8 +750,8 @@ function startFinale(){
   $('fnParts').textContent = G.items.length + ' of 5 parts fitted' + (G.finalePenalty ? '. The back stairs cost ' + G.finalePenalty + ' seconds' : '');
   $('fnWho').textContent = 'Everyone, get your phones ready'; $('fnQ').textContent = 'The spark could land on any of you.';
   $('fnOpts').innerHTML = ''; $('fnOut').textContent = ''; $('lensUse').hidden = true;
-  G.phase = 'finale'; show('finale'); fnRing(); fnPaint(); writeState();
-  setTimeout(function(){ FN.live = true; FN.last = performance.now(); FN.clock = setInterval(fnTick, 100); fnLeap(); }, 2600);
+  G.phase='finale';show('finale');fnRing();fnPaint();await writeState();var token=roomToken(),finale=FN;
+  setTimeout(function(){if(FN!==finale||!sameToken(token)||G.phase!=='finale')return;FN.live=true;FN.last=performance.now();FN.clock=setInterval(fnTick,100);fnLeap();},2600);
 }
 /* the players sit on an oval round the machine, each wired to it */
 function fnRing(){
@@ -744,12 +776,15 @@ function fnPaint(){
   $('fnChargeWrap').setAttribute('aria-label', 'Charge ' + Math.round(pct) + ' percent');
 }
 function fnTick(){
-  var now = performance.now(); FN.t -= (now - FN.last); FN.last = now; fnPaint();
-  if(FN.live && FN.pending && now - FN.sentAt > 10000) fnResolve(null);   /* too slow: a short circuit */
-  if(FN.t <= 0 && FN.live){ FN.t = 0; fnPaint(); fnEnd(false); }
+  if(!FN||!FN.live)return;var now=performance.now();
+  if(access.busy()||FN.resolving||FN.leaping){FN.last=now;return;}
+  FN.t-=(now-FN.last);FN.last=now;fnPaint();
+  if(FN.t<=0){FN.t=0;fnPaint();if(FN.pending){FN.endRequested=true;fnResolve(null);}else fnEnd(false);return;}
+  if(FN.pending&&now-FN.sentAt>10000)fnResolve(null);
 }
-function fnLeap(){
-  if(!FN.live) return;
+async function fnLeap(){
+  if(!FN||!FN.live||FN.leaping||FN.resolving||access.busy())return;var finale=FN;FN.leaping=true;
+  try{
   if(FN.charge >= FN.target) return fnEnd(true);
   /* Still random, never the same player twice running, but weighted
      towards whoever has held the spark least. Pure chance let one player
@@ -757,12 +792,13 @@ function fnLeap(){
      This lean cut that to 4 in 2,000, while the chance of guessing who is
      next only rose from 24% to 27%. */
   FN.had = FN.had || {};
-  var pool = G.players.filter(function(p){ return p.id !== G.spark; });
+  var pool=G.players.filter(function(p){return p.id!==FN.lastSpark;});
+  if(!pool.length)pool=G.players.slice();if(!pool.length)return fnEnd(false);
   var weights = pool.map(function(p){ return 1 / Math.pow(1 + (FN.had[p.id] || 0), 4); });
   var total = weights.reduce(function(a, w){ return a + w; }, 0), pick = Math.random() * total, to = pool[pool.length - 1];
   for(var wi = 0; wi < pool.length; wi++){ pick -= weights[wi]; if(pick <= 0){ to = pool[wi]; break; } }
   FN.had[to.id] = (FN.had[to.id] || 0) + 1;
-  var from = G.spark ? FN.pos[G.spark] : { x: $('ring').clientWidth/2, y: $('ring').clientHeight/2 }, b = FN.pos[to.id], pts = [from.x + ',' + from.y];
+  var from = FN.lastSpark&&FN.pos[FN.lastSpark] ? FN.pos[FN.lastSpark] : { x: $('ring').clientWidth/2, y: $('ring').clientHeight/2 }, b = FN.pos[to.id], pts = [from.x + ',' + from.y];
   for(var k=1;k<7;k++){ var t = k/7; pts.push((from.x + (b.x-from.x)*t + (Math.random()*28-14)).toFixed(1) + ',' + (from.y + (b.y-from.y)*t + (Math.random()*28-14)).toFixed(1)); }
   pts.push(b.x + ',' + b.y);
   var arc = $('fnArc'); arc.setAttribute('points', pts.join(' ')); arc.classList.remove('flash'); void arc.getBoundingClientRect(); arc.classList.add('flash');
@@ -775,44 +811,58 @@ function fnLeap(){
   $('fnWho').textContent = 'The spark is with ' + to.name; $('fnQ').textContent = q.q; $('fnOut').textContent = ''; $('fnOut').className = 'outcome';
   $('fnOpts').innerHTML = opts.map(function(o){ return '<li>' + esc(o) + '</li>'; }).join('');
   $('lensUse').hidden = !FN.lens;
-  FN.pending = true; FN.sentAt = performance.now(); writeState();
-  clearInterval(FN.poll); FN.poll = setInterval(fnListen, 600);
+  await writeState();if(FN!==finale||!FN.live)return;FN.pending=true;FN.sentAt=performance.now();
+  clearInterval(FN.poll);FN.poll=setInterval(fnListen,600);
+  }catch(error){hostError(error);}finally{if(FN===finale)FN.leaping=false;}
 }
 async function fnListen(){
-  if(!FN.pending) return;
-  var rows = await sb('moves?code=eq.' + G.code + '&player_id=eq.' + G.spark + '&turn_seq=eq.' + (100 + FN.seq) + '&select=choice');
-  if(Array.isArray(rows) && rows.length && FN.pending) fnResolve(rows[0].choice);
+  if(!FN||!FN.pending||FN.listening||FN.resolving||access.busy())return;
+  var finale=FN,token=roomToken();if(!token||!token.window)return;FN.listening=true;
+  try{
+    var rows=await access.actions(G.code,token.run,token.window);
+    if(FN===finale&&sameToken(token)&&access.currentRoom().action&&access.currentRoom().action.id===token.window&&FN.pending&&rows.length)await fnResolve(rows[0].choice);
+  }catch(error){$('status').textContent=access.message(error);}finally{if(FN===finale)FN.listening=false;}
 }
-$('lensUse').addEventListener('click', function(){
-  if(!FN || !FN.lens || !FN.pending) return;
-  var wrongIdx = G.fq.opts.map(function(o, i){ return o === FN.q.correct ? -1 : i; }).filter(function(i){ return i >= 0; });
-  var burn = wrongIdx[Math.floor(Math.random()*wrongIdx.length)];
-  FN.lens = false; $('lensUse').hidden = true; G.fq.burn = burn;
-  $('fnOpts').children[burn].classList.add('burn'); $('fnOut').textContent = 'The Lens burns away one wrong answer.'; writeState();
+$('lensUse').addEventListener('click',async function(){
+  if(!FN||!FN.lens||!FN.pending||FN.resolving||access.busy())return;
+  var wrongIdx=G.fq.opts.map(function(o,i){return o===FN.q.correct?-1:i;}).filter(function(i){return i>=0;});
+  var burn=wrongIdx[Math.floor(Math.random()*wrongIdx.length)];FN.lens=false;$('lensUse').hidden=true;G.fq.burn=burn;
+  $('fnOpts').children[burn].classList.add('burn');$('fnOut').textContent='The Lens burns away one wrong answer.';await writeState();
 });
-function fnResolve(choice){
-  if(!FN.pending) return; FN.pending = false; clearInterval(FN.poll);
-  var who = nameOf(G.spark), idx = G.fq.opts.indexOf(FN.q.correct);
-  if(idx >= 0) $('fnOpts').children[idx].classList.add('right');
-  if(choice === FN.q.correct){ FN.charge += FN.step; FN.right++; $('fnOut').textContent = who + ' got it. Current flows!'; $('fnOut').className = 'outcome ok'; }
-  else if(FN.fuse){ FN.fuse = false; $('fnOut').textContent = (choice === null ? who + ' ran out of time' : 'Wrong') + ', but the Fuse takes the short.'; $('fnOut').className = 'outcome bad'; }
-  else { FN.t -= 3000; FN.shorts++; $('fnOut').textContent = (choice === null ? who + ' ran out of time' : 'Wrong') + '. Short circuit: three seconds lost.'; $('fnOut').className = 'outcome bad'; }
-  fnPaint();
-  setTimeout(fnLeap, 1600);
+async function fnResolve(choice){
+  if(!FN||!FN.pending||FN.resolving)return;
+  var finale=FN,token=roomToken();FN.resolving=true;FN.pending=false;clearInterval(FN.poll);
+  try{
+    var closed=await closeAction();if(FN!==finale||!sameToken(token)||G.phase!=='finale')return;
+    choice=closed.actions&&closed.actions.length?closed.actions[0].choice:null;
+    var who=nameOf(G.spark),idx=G.fq.opts.indexOf(FN.q.correct);
+    if(idx>=0)$('fnOpts').children[idx].classList.add('right');
+    if(choice===FN.q.correct){FN.charge+=FN.step;FN.right++;$('fnOut').textContent=who+' got it. Current flows!';$('fnOut').className='outcome ok';}
+    else if(FN.fuse){FN.fuse=false;$('fnOut').textContent=(choice===null?who+' ran out of time':'Wrong')+', but the Fuse takes the short.';$('fnOut').className='outcome bad';}
+    else{FN.t-=3000;FN.shorts++;$('fnOut').textContent=(choice===null?who+' ran out of time':'Wrong')+'. Short circuit: three seconds lost.';$('fnOut').className='outcome bad';}
+    FN.lastSpark=G.spark;G.spark=null;G.fq=null;fnPaint();await writeState();FN.resolving=false;
+    if(FN.endRequested||FN.t<=0||FN.charge>=FN.target){await fnEnd(FN.charge>=FN.target);return;}
+    setTimeout(function(){if(FN===finale&&sameToken(token)&&G.phase==='finale')fnLeap();},1600);
+  }catch(error){hostError(error);}finally{if(FN===finale)FN.resolving=false;}
 }
-function fnEnd(awake){
-  if(!FN.live) return; FN.live = false; FN.pending = false; clearInterval(FN.clock); clearInterval(FN.poll);
-  G.awake = awake; G.spark = null; G.fq = null; G.phase = 'over'; writeState();
-  if(awake){ $('machine').classList.add('awake'); $('fnWho').textContent = ''; $('fnQ').textContent = ED === 'bible' ? 'The walls come tumbling down!' : 'It is awake.'; $('fnOpts').innerHTML = ''; }
-  else { $('fnQ').textContent = ED === 'bible' ? 'The walls still stand.' : 'The charge fades.'; }
-  var secs = Math.ceil(Math.max(0, FN.t)/1000);
-  setTimeout(function(){
-    $('endTitle').textContent = awake ? 'The machine is awake' : 'The machine stays asleep';
-    $('endText').textContent = awake
-      ? 'With ' + secs + ' seconds to spare, the team carried the current all the way round. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.'
-      : 'The clock ran out with the machine ' + Math.round(100 * FN.charge / FN.target) + '% charged. ' + FN.right + ' right, ' + FN.shorts + ' short circuits.';
-    playStory('end', { lines:[awake ? NARR.end.awake : NARR.end.asleep], from:'machine', to:'machine', awake:awake }, function(){ show('ending'); });
-  }, awake ? 3200 : 2000);
+async function fnEnd(awake){
+  if(!FN||!FN.live||FN.ending)return;
+  if(FN.pending){FN.endRequested=true;return fnResolve(null);}
+  if(FN.resolving){FN.endRequested=true;return;}
+  var finale=FN,token=roomToken();FN.ending=true;FN.live=false;FN.pending=false;clearInterval(FN.clock);clearInterval(FN.poll);
+  try{
+    await closeAction();if(FN!==finale||!sameToken(token))return;
+    G.awake=awake;G.spark=null;G.fq=null;G.phase='over';await writeState();
+    if(awake){$('machine').classList.add('awake');$('fnWho').textContent='';$('fnQ').textContent=ED==='bible'?'The walls come tumbling down!':'It is awake.';$('fnOpts').innerHTML='';}
+    else $('fnQ').textContent=ED==='bible'?'The walls still stand.':'The charge fades.';
+    var secs=Math.ceil(Math.max(0,FN.t)/1000);
+    setTimeout(function(){
+      if(FN!==finale||!sameToken(token)||G.phase!=='over')return;
+      $('endTitle').textContent=awake?'The machine is awake':'The machine stays asleep';
+      $('endText').textContent=awake?'With '+secs+' seconds to spare, the team carried the current all the way round. '+FN.right+' right, '+FN.shorts+' short circuits.':'The clock ran out with the machine '+Math.round(100*FN.charge/FN.target)+'% charged. '+FN.right+' right, '+FN.shorts+' short circuits.';
+      playStory('end',{lines:[awake?NARR.end.awake:NARR.end.asleep],from:'machine',to:'machine',awake:awake},function(){if(FN===finale&&sameToken(token)&&G.phase==='over')show('ending');});
+    },awake?3200:2000);
+  }catch(error){hostError(error);}finally{if(FN===finale)FN.ending=false;}
 }
 $('againBtn').addEventListener('click', function(){ location.reload(); });
 

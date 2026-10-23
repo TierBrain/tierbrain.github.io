@@ -39,6 +39,8 @@ jobs:
         run: python tests/browser_checks.py
       - name: Verify both Throne host and phone pages with isolated adapter fixtures
         run: python tests/throne_browser_checks.py
+      - name: Verify Party host, phone, reconnect and solo behavior with blocked external requests
+        run: python tests/party_browser_checks.py
       - name: Verify score policies and rollback in disposable PostgreSQL
         run: |
           docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
@@ -54,6 +56,12 @@ jobs:
       - name: Verify Throne SDK sessions and gameplay through real isolated Auth and PostgREST
         if: ${{ !cancelled() }}
         run: python tests/throne_stack/run-acceptance.py --report /tmp/tierbrain-throne-http.json
+      - name: Verify Party ownership, gameplay, prior families and rollback in disposable PostgreSQL
+        if: ${{ !cancelled() }}
+        run: python tests/check_party_access.py --report /tmp/tierbrain-party-access.json
+      - name: Verify all six Party editions through real isolated Auth and PostgREST
+        if: ${{ !cancelled() }}
+        run: python tests/party_stack/run-acceptance.py --report /tmp/tierbrain-party-http.json
       - name: Preserve redacted Throne verification reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,6 +70,8 @@ jobs:
           path: |
             /tmp/tierbrain-throne-access.json
             /tmp/tierbrain-throne-http.json
+            /tmp/tierbrain-party-access.json
+            /tmp/tierbrain-party-http.json
           if-no-files-found: ignore
       - name: Build and validate preview and production hosting assets
         run: |
