@@ -52,6 +52,7 @@ jobs:
       - name: Verify Throne ownership, gameplay, historical Hall access and rollback in disposable PostgreSQL
         run: python tests/check_throne_access.py --report /tmp/tierbrain-throne-access.json
       - name: Verify Throne SDK sessions and gameplay through real isolated Auth and PostgREST
+        if: ${{ !cancelled() }}
         run: python tests/throne_stack/run-acceptance.py --report /tmp/tierbrain-throne-http.json
       - name: Preserve redacted Throne verification reports
         if: always()

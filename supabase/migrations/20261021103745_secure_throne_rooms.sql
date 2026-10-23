@@ -341,7 +341,7 @@ BEGIN
   END IF;
  END IF;
  waiting:=throne_private.queue(CASE WHEN p_question ? 'queue' THEN p_question->'queue' ELSE r.state->'queue' END,r.id);
- IF EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(waiting) v WHERE (v->>'id')::uuid IN (champ,chal)) THEN RAISE EXCEPTION 'Seated players cannot also be queued' USING ERRCODE='22023';END IF;
+ IF EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(waiting) AS waiting_member(value) WHERE (waiting_member.value->>'id')::uuid IN (champ,chal)) THEN RAISE EXCEPTION 'Seated players cannot also be queued' USING ERRCODE='22023';END IF;
  idx:=throne_private.num(p_question,'qIndex',1,10000);
  SELECT COALESCE(pg_catalog.max(q1.ordinal),0)+1 INTO ordinal FROM throne_private.questions q1 WHERE run_id=n.id;
  IF ordinal>2000 THEN RAISE EXCEPTION 'Run question limit reached' USING ERRCODE='54000';END IF;
