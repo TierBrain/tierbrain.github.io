@@ -1,0 +1,33 @@
+name: Legacy access retirement checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify guarded legacy closure and preserved game and score contracts
+        run: |
+          docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+          python tests/check_legacy_retirement.py --report /tmp/tierbrain-legacy-retirement.json
+      - name: Preserve synthetic legacy closure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-access-verification
+          path: /tmp/tierbrain-legacy-retirement.json
+          if-no-files-found: error
