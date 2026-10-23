@@ -1,0 +1,18 @@
+{
+  "cli_version": "2.81.3",
+  "source": "/workspace/.tools/supabase-2.81.3/supabase services --output json; local fields, remote fields empty",
+  "local": {
+    "supabase/postgres": "17.6.1.095",
+    "supabase/gotrue": "v2.187.0",
+    "postgrest/postgrest": "v14.5"
+  },
+  "stack_postgres": "postgres:17.11, root-confirmed cached official image; plain PostgreSQL intentionally replaces CLI-specific database image",
+  "runtime_verified": false,
+  "root_inspected_digests": {
+    "postgres:17.11": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+    "supabase/gotrue:v2.187.0": "sha256:8b0b3f68d9a8667e183b481ff74f5d72eedc1e8b70f6bde2aab1e5d79d16df62",
+    "postgrest/postgrest:v14.5": "sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9",
+    "node:22": "sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392"
+  },
+  "adapted_for": "Big Quiz acceptance: same reviewed SDK and pinned local runtime images; root must record actual run evidence separately"
+}

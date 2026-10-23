@@ -111,6 +111,7 @@ class OfflineBrowserChecks(unittest.TestCase):
         self.allow_scores_post = False
         self.allow_host_updates = False
         self.allow_show_phone = False
+        self.show_prefix = "show_"
         self.show_joined = False
         self.show_member = {"id": "44444444-4444-4444-8444-444444444444", "code": "SYNTH",
                             "name": "PHONE_PLAYER", "tag": "youth", "score": 0,
@@ -128,6 +129,7 @@ class OfflineBrowserChecks(unittest.TestCase):
           localStorage.setItem('cv_stage_room', 'SYNTH');
           localStorage.setItem('cv_stage_room_gen', 'SYNTH');
           localStorage.setItem('tb_show_host_room_v1', 'SYNTH');
+          localStorage.setItem('tb_bigquiz_host_room_v1', 'SYNTH');
         }""")
 
     def tearDown(self):
@@ -193,7 +195,7 @@ class OfflineBrowserChecks(unittest.TestCase):
                 self.totals['synthetic_mutations'] += 1
             route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(data))
             return
-        if table.startswith('rpc/show_'):
+        if table.startswith('rpc/' + self.show_prefix):
             host_rpcs = {'show_create_room', 'show_host_resume', 'show_begin_run', 'show_host_publish',
                          'show_host_members', 'show_host_answers', 'show_host_buzzes'}
             phone_params = {'show_preview': {'p_code'}, 'show_join': {'p_code', 'p_name', 'p_tag'},
@@ -201,7 +203,7 @@ class OfflineBrowserChecks(unittest.TestCase):
                             'show_leave': {'p_code'}, 'show_player_state': {'p_code'},
                             'show_answer': {'p_code', 'p_question_key', 'p_choice'},
                             'show_buzz': {'p_code', 'p_question_key'}}
-            name = table.removeprefix('rpc/')
+            name = 'show_' + table.removeprefix('rpc/' + self.show_prefix)
             allowed = ((self.allow_host_updates and name in host_rpcs)
                        or (self.allow_show_phone and name in phone_params))
             if not allowed or request.method != 'POST':
@@ -214,7 +216,7 @@ class OfflineBrowserChecks(unittest.TestCase):
                 self.assertEqual(args['p_code'], 'SYNTH')
                 if name == 'show_preview':
                     data = {'code': self.show_room['code'], 'phase': self.show_room['phase'],
-                            'state': {key: self.show_room['state'][key] for key in ('teams', 'bible')}}
+                            'state': {key: self.show_room['state'][key] for key in ('teams', 'bible') if key in self.show_room['state']}}
                 elif name == 'show_join':
                     self.show_joined = True
                     self.show_member.update(name=args['p_name'], tag=args['p_tag'])
@@ -309,6 +311,7 @@ class OfflineBrowserChecks(unittest.TestCase):
         route.fulfill(status=200, headers=headers, content_type="application/json", body=json.dumps(data))
 
     def open_page(self, path):
+        self.show_prefix = 'bigquiz_' if path.split('?', 1)[0] in {'show-gen.html', 'play-gen.html'} else 'show_'
         page = self.context.new_page()
         page.on("pageerror", lambda error: self.errors.append(f"{path}: {error}"))
         page.goto(ORIGIN + "/" + path, wait_until="domcontentloaded")
@@ -454,9 +457,10 @@ class OfflineBrowserChecks(unittest.TestCase):
                 self.assertTrue(page.locator("#rLabel").inner_text().startswith("Round 1"))
                 writes = [json.loads(call["body"]) for call in self.calls
                           if call["table"] == "rooms" and call["method"] == "PATCH"]
-                if name == 'show':
+                if name in {'show', 'show-gen'}:
+                    prefix = 'show_' if name == 'show' else 'bigquiz_'
                     writes = [json.loads(call['body'])['p_patch'] for call in self.calls
-                              if call['table'] == 'rpc/show_host_publish']
+                              if call['table'] == 'rpc/' + prefix + 'host_publish']
                     self.assertFalse(any(call['table'] in {'rooms', 'players', 'answers', 'buzzes'}
                                          for call in self.calls))
                 self.assertTrue(any(write.get("phase") == "round_intro" for write in writes))
@@ -464,6 +468,13 @@ class OfflineBrowserChecks(unittest.TestCase):
                 page.close()
 
     def test_show_phone_mobile_join_normal_buzzer_and_clue_acknowledgements(self):
+        self.check_show_phone_mobile('play.html')
+
+    def test_big_quiz_phone_mobile_join_normal_buzzer_and_clue_acknowledgements(self):
+        self.show_room['state'].pop('bible')
+        self.check_show_phone_mobile('play-gen.html')
+
+    def check_show_phone_mobile(self, page_path):
         self.allow_show_phone = True
         self.context.set_default_timeout(8000)
         run = '33333333-3333-4333-8333-333333333333'
@@ -486,7 +497,7 @@ class OfflineBrowserChecks(unittest.TestCase):
                                    arg=state)
 
         question(0, 'question', {'opts': options, 'live': True, 'qkind': 'mc', 'qtext': 'Synthetic normal question'})
-        page = self.open_page('play.html?c=SYNTH')
+        page = self.open_page(page_path + '?c=SYNTH')
         page.set_viewport_size({'width': 375, 'height': 667})
         self.assertTrue(page.locator('#joinScreen').is_visible())
         self.assertEqual(page.locator('#code').input_value(), 'SYNTH')
@@ -574,7 +585,7 @@ class OfflineBrowserChecks(unittest.TestCase):
         self.assertNotIn('Locked in', page.locator('#playArea').inner_text())
         self.assertEqual(page.locator('#submissionRetry').count(), 0)
 
-        writes = [call for call in self.calls if call['table'] in {'rpc/show_answer', 'rpc/show_buzz'}]
+        writes = [call for call in self.calls if call['table'] in {'rpc/' + self.show_prefix + 'answer', 'rpc/' + self.show_prefix + 'buzz'}]
         self.assertEqual(len(writes), 6)
         clue_writes = [json.loads(call['body']) for call in writes if json.loads(call['body'])['p_question_key'].endswith(':p0q2')]
         self.assertEqual(len(clue_writes), 2)
