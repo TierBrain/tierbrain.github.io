@@ -315,6 +315,27 @@ class StaticGameGuards(unittest.TestCase):
         engine = read("first-finger.js")
         self.assertIn("if(serverNow() - gat < 8000 || R.pendingGo)", engine, "An old start signal must never launch a lone game")
 
+    def test_creak_animation_errors_never_freeze_a_climb(self):
+        """Bug: one drawing error stopped the animation loop, so every turn waited for ever and the game froze."""
+        solo, shared = read("creak.html"), read("creak-multi.html")
+        self.assertIn("function loop(now){ requestAnimationFrame(loop);", solo)
+        self.assertIn("function animLoop(now){ requestAnimationFrame(animLoop);", shared)
+        self.assertIn("try{ tw.update(t); }catch(e){}", solo)
+        self.assertIn("try{ tw.update(t); }catch(e){}", shared)
+        self.assertIn("}catch(e){ try{ console.warn('Creak & Coil turn error', e); }catch(_){} }", shared)
+
+    def test_creak_shared_climb_reads_every_roll(self):
+        """Rolls are tracked by id, not by comparing ids, so a roll is never ignored whatever ids the database uses."""
+        shared = read("creak-multi.html")
+        self.assertNotIn("if(mv.id<=G.lastProcessedMoveId) return;", shared)
+        self.assertIn("rows.find(function(r){ return !G.doneMoves[r.id]; })", shared)
+
+    def test_creak_shared_climb_rematch_never_reuses_turn_numbers(self):
+        """Bug: 'Play again' restarted turn numbers at 0, so the host kept finding last game's first roll and froze."""
+        shared = read("creak-multi.html")
+        self.assertNotIn("G.turnSeq=0; G.winner=null; G.tokenPix={};", shared)
+        self.assertIn("G.turnSeq=seq0; G.seqBase=seq0;", shared)
+
 
 class FakeBackend:
     """Stateful in-memory stand-in for the database REST calls the party games make."""
@@ -655,6 +676,82 @@ class BrowserGameGuards(unittest.TestCase):
             phone.wait_for_function("document.querySelectorAll('#answers .ans').length === 4", timeout=15000)
         self.assertEqual(maya.evaluate("() => [...document.querySelectorAll('#answers .ans')].map(b => b.dataset.a)"),
                          leo.evaluate("() => [...document.querySelectorAll('#answers .ans')].map(b => b.dataset.a)"))
+
+    def creak_solo(self, context):
+        page = self.open(context, "creak.html")
+        page.wait_for_function("document.getElementById('roll') && !document.getElementById('roll').disabled")
+        return page
+
+    def test_creak_new_board_needs_a_second_tap_and_a_climb_survives_a_reload(self):
+        """Bugs: a slip of the thumb onto New board, just below Roll, wiped out a climb; a reload started again."""
+        context = self.context(390, 844, {"tb-cutscenes-guide": "0"})
+        page = self.creak_solo(context)
+        page.locator("#roll").click()
+        page.wait_for_function("""() => { const o=[...document.querySelectorAll('.qopt:not([disabled])')].find(x => x.offsetParent); if(o) o.click();
+            return !document.getElementById('roll').disabled; }""", polling=300, timeout=30000)
+        self.assertEqual(page.evaluate("turns"), 1)
+        page.locator("#newgame").click()
+        self.assertEqual(page.evaluate("turns"), 1, "One tap must not start a new board mid-climb")
+        self.assertIn("Tap again", page.locator("#newgame").inner_text())
+        where = page.evaluate("pos")
+        page.reload(wait_until="domcontentloaded")
+        page.wait_for_function("document.getElementById('status').innerText.indexOf('Welcome back') >= 0")
+        self.assertEqual(page.evaluate("[turns, pos]"), [1, where])
+        page.locator("#newgame").click()
+        page.locator("#newgame").click()
+        self.assertEqual(page.evaluate("[turns, pos]"), [0, 1])
+
+    def test_creak_shared_climb_big_screen_reload_carries_on(self):
+        """Bug: reloading the big screen mid-game made a new room and lost the game for everyone."""
+        host = self.open(self.context(1280, 720, {"tb-cutscenes-guide": "0"}), "creak-multi.html")
+        host.wait_for_function("/^[A-Z]{5}$/.test(document.getElementById('code').textContent.trim())")
+        code = host.locator("#code").inner_text().strip()
+        for name in ("Maya", "Leo"):
+            phone = self.open(self.context(390, 844), "creak-multi-play.html?c=" + code)
+            phone.locator("#nameIn").fill(name)
+            phone.locator("#joinBtn").click()
+        host.wait_for_function("!document.getElementById('startBtn').disabled", timeout=15000)
+        host.locator("#startBtn").click()
+        host.wait_for_function("G.phase === 'live'")
+        host.reload(wait_until="domcontentloaded")
+        host.wait_for_function("typeof G !== 'undefined' && G.phase === 'live'", timeout=15000)
+        self.assertEqual(host.locator("#code").inner_text().strip(), code)
+        self.assertIn("Back on the mountain", host.locator("#status").inner_text())
+
+    def test_creak_shared_climb_play_again_keeps_going(self):
+        """Bug: after 'Play again' in the same room, the first roll of the new game was never read and the table froze."""
+        host = self.open(self.context(1280, 720, {"tb-cutscenes-guide": "0"}), "creak-multi.html")
+        host.wait_for_function("/^[A-Z]{5}$/.test(document.getElementById('code').textContent.trim())")
+        code = host.locator("#code").inner_text().strip()
+        phones = []
+        for name in ("Maya", "Leo"):
+            phone = self.open(self.context(390, 844), "creak-multi-play.html?c=" + code)
+            phone.locator("#nameIn").fill(name)
+            phone.locator("#joinBtn").click()
+            phones.append(phone)
+        roll = "() => { const r = document.getElementById('rollBtn'); if (r && !r.disabled) r.click(); }"
+
+        def play_until(condition, seconds):
+            for _ in range(seconds * 2):
+                if host.evaluate(condition):
+                    return True
+                for phone in phones:
+                    phone.evaluate(roll)
+                host.wait_for_timeout(500)
+            return host.evaluate(condition)
+
+        host.wait_for_function("!document.getElementById('startBtn').disabled", timeout=15000)
+        host.locator("#startBtn").click()
+        host.wait_for_function("G.phase === 'live'", timeout=20000)
+        host.evaluate("() => { G.order.forEach(pid => G.positions[pid] = 99); settleStationaryTokens(null); writeState(); }")
+        self.assertTrue(play_until("G.phase === 'gameover'", 40), "first game never finished")
+        first_last = host.evaluate("G.turnSeq")
+        host.evaluate("document.getElementById('ovAgain').click()")
+        host.wait_for_function("G.phase === 'lobby' && !document.getElementById('startBtn').disabled", timeout=15000)
+        host.evaluate("document.getElementById('startBtn').click()")
+        host.wait_for_function("G.phase === 'live'", timeout=20000)
+        self.assertGreater(host.evaluate("G.seqBase"), first_last)
+        self.assertTrue(play_until("G.turnSeq - G.seqBase >= 2", 40), "second game froze on its first roll")
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
