@@ -127,7 +127,7 @@ try{
   assert.notEqual(m1.id,u1.id);assert.notEqual(m2.id,u2.id);assert.notEqual(m1.id,m2.id);
   assert.equal((await p1.access.join(room.code,'Changed name')).id,m1.id,'join retry must reuse server membership');
   assert.equal((await p1.access.membership(room.code)).name,m1.name,'join retry cannot rewrite canonical name');
-  const roster=await host.access.members(room.code);assert.deepEqual(roster.map(m=>m.id).sort(),[m1.id,m2.id].sort());
+  const roster=plain(await host.access.members(room.code));assert.deepEqual(roster.map(m=>m.id).sort(),[m1.id,m2.id].sort());
   const run=await host.access.beginRun({qTotal:3,answerMs:15000,live:true});assert(run.run_id);
   await host.access.publish({phase:'lobby',state:{live:true,champ:m1,chal:m2,queue:[],mode:'spine'}});
   const openedAt=Date.now();
@@ -175,10 +175,10 @@ try{
   checks.push('member-only canonical receipts and HTTP409/PT409 conflicts match the actual transport');
 
   const historical=await host.access.legends('THRONE_HTTP_SCOPE');
-  assert.deepEqual(historical.map(row=>row.name),['HTTP legacy general target']);
+  assert.deepEqual(plain(historical).map(row=>row.name),['HTTP legacy general target']);
   const historicalBible=success(await raw(host,'throne_legends',{p_edition:'bible',p_group_code:'THRONE_HTTP_SCOPE'}),'Bible historical scope');
   assert.deepEqual(historicalBible.map(row=>row.name),['HTTP legacy Bible target']);
-  assert.deepEqual(await host.access.legends('THRONE_HTTP_EMPTY'),[]);
+  assert.deepEqual(plain(await host.access.legends('THRONE_HTTP_EMPTY')),[]);
   checks.push('read-only Hall bridge returns only the requested historical group and edition');
 
   const persistedPlayer=realm(p2.store);assert.equal((await verified(persistedPlayer)).id,u2.id);
