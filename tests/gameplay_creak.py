@@ -17,6 +17,13 @@ COURSE = """() => {
   window.__creakEvent = 'none';
   window.__creakTrace = [];
   window.__creakTorn = 0;
+  window.__creakRosterCalls = 0;
+  const originalRoster = pollPlayers;
+  pollPlayers = async function () {
+    window.__creakRosterCalls++;
+    try { return await originalRoster.apply(this, arguments); }
+    finally { window.__creakRosterCalls--; }
+  };
   const random = Math.random;
   let seed = 3169;
   Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -234,31 +241,18 @@ def run(env):
     _, after, actor, _ = _turn(host, phones, automatic=True)
     env.check("creak: native inactivity timeout rolls for the active phone", time.monotonic() - before + already_waiting >= 25 and after["positions"][actor] == 25 and host.evaluate("window.__creakTrace.some(line => line.includes('took too long'))"))
 
-    # Hold a real roster request while the two phones leave. Release it through
-    # the harness's backend route afterwards; no roster or receipts are faked.
-    # This covers both departures in one poll without relying on CI timing.
-    roster_route = "**/rest/v1/rpc/party_host_members"
-    waiting_roster = []
-
-    def hold_roster(route):
-        waiting_roster.append(route)
-
-    host.route(roster_route, hold_roster)
-    for _ in range(100):
-        if waiting_roster:
-            break
-        host.wait_for_timeout(100)
-    if not waiting_roster:
-        raise AssertionError("Creak host did not request its next roster")
+    # Pause only automatic host roster polling so both real leave RPCs land
+    # between polls. Drain an existing poll first, then restore and invoke the
+    # actual host function. No memberships, actions, receipts or state are faked.
+    host.evaluate("() => { window.__creakResumeRoster=pollPlayers; pollPlayers=async()=>{}; }")
+    host.wait_for_function("window.__creakRosterCalls===0 && !engineBusy && !access.busy()", timeout=20000)
     try:
         one.evaluate("document.getElementById('partyLeave').click()")
         two.evaluate("document.getElementById('partyLeave').click()")
         one.wait_for_function("me === null", timeout=20000)
         two.wait_for_function("me === null", timeout=20000)
     finally:
-        host.unroute(roster_route, hold_roster)
-        for route in waiting_roster:
-            route.fallback()
+        host.evaluate("async () => { pollPlayers=window.__creakResumeRoster; delete window.__creakResumeRoster; await pollPlayers(); }")
     host.wait_for_function("G.phase === 'lobby' && !engineBusy && !access.busy()", timeout=20000)
     abandoned = _snapshot(host)
     env.check("creak: every racer leaving returns an abandoned race to a lobby", abandoned["run"] != after["run"] and not abandoned["order"] and host.evaluate("G.players.length") == 0)

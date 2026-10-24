@@ -116,6 +116,7 @@ class PartyCreakStandingChecks(unittest.TestCase):
 const assert=require('node:assert/strict');
 let room={run_id:'run-1',action:{id:'roll-1',kind:'roll',member_id:'p1',accepting:true}},hostGeneration=1,engineBusy=false,starting=false,releaseClose;
 const G={code:'ABCDE',phase:'live',order:['p1'],turnIdx:0,turnStartedAt:Date.now()},TURN_TIMEOUT_MS=25000,calls=[];
+const controls={};function $(id){return controls[id]||(controls[id]={disabled:false});}
 const access={busy:()=>false,currentRoom:()=>room,actions:async()=>{calls.push('actions');return [{choice:'roll'}];},close:()=>{calls.push('close');return new Promise(resolve=>releaseClose=resolve);}};
 function currentHost(run,generation){return room.run_id===run&&hostGeneration===generation;}
 async function resolveTurn(id){calls.push('resolve:'+id);}function nameOf(){return 'Fixture';}function setStatus(){}
@@ -123,12 +124,12 @@ async function resolveTurn(id){calls.push('resolve:'+id);}function nameOf(){retu
         checks = r"""
 (async()=>{
  const first=pollMoves();await Promise.resolve();await pollMoves();assert.deepEqual(calls,['actions','close']);
- assert.equal(engineBusy,true);releaseClose({actions:[{choice:'roll'}]});await first;assert.deepEqual(calls,['actions','close','resolve:p1']);assert.equal(engineBusy,false);
+ assert.equal(engineBusy,true);releaseClose({actions:[{choice:'roll'}]});await first;assert.deepEqual(calls,['actions','close','resolve:p1']);assert.equal(engineBusy,false);assert.equal(controls.ovAgain.disabled,true);
  calls.length=0;const old=pollMoves();await Promise.resolve();hostGeneration++;releaseClose({actions:[{choice:'roll'}]});await old;
  assert.deepEqual(calls,['actions','close']);assert.equal(engineBusy,false);
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """
-        self.node(fixture + function(source, "pollMoves") + checks)
+        self.node(fixture + function(source, "updateRematchButton") + function(source, "pollMoves") + checks)
 
     def test_creak_each_question_kind_uses_closed_snapshot_before_clearing(self):
         source = (ROOT / "creak-multi.html").read_text()
@@ -201,17 +202,18 @@ function writeState(){calls.push('publish:'+G.qId);return new Promise(resolve=>r
                 source = (ROOT / name).read_text()
                 fixture = r"""
 const assert=require('node:assert/strict');let engineBusy=false,starting=false,hostGeneration=1,pollTimer=null,releaseRun,used={},usedTags=new Set();
-const G={phase:'over',order:['old'],turn:2,seq:7},calls=[];
-const access={busy:()=>false,beginRun:()=>{calls.push('begin');return new Promise(resolve=>releaseRun=resolve);}};
-function $(id){return {classList:{add(){},remove(){}},style:{},innerHTML:''};}function clearInterval(){}function hideQOverlay(){}function renderLobby(){}function setStatus(){}
+const G={phase:'over',order:['old'],turn:2,seq:7},calls=[],room={phase:'gameover'},controls={};
+const access={busy:()=>false,currentRoom:()=>room,beginRun:()=>{calls.push('begin');return new Promise(resolve=>releaseRun=resolve);}};
+function $(id){return controls[id]||(controls[id]={classList:{add(){},remove(){}},style:{},innerHTML:'',disabled:false});}function clearInterval(){}function hideQOverlay(){}function renderLobby(){}function setStatus(){}
 async function pollPlayers(){}async function writeState(){calls.push('publish:'+G.phase);}
 """
                 checks = r"""
-(async()=>{const pending=playAgain();assert.deepEqual(calls,['begin']);assert.equal(engineBusy,true);await playAgain();assert.deepEqual(calls,['begin']);
+(async()=>{const pending=playAgain();assert.deepEqual(calls,['begin']);assert.equal(engineBusy,true);if(typeof updateRematchButton==='function'){assert.equal(controls.ovAgain.disabled,true);assert.equal(controls.startBtn.disabled,true);}await playAgain();assert.deepEqual(calls,['begin']);
  releaseRun();await pending;assert.deepEqual(calls,['begin','publish:lobby']);assert.equal(engineBusy,false);assert.equal(hostGeneration,2);assert.equal(G.order.length,0);
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """
-                self.node(fixture + function(source, "playAgain") + checks)
+                rematch_helper = function(source, "updateRematchButton") + "\nG.phase='gameover';\n" if name == "creak-multi.html" else ""
+                self.node(fixture + rematch_helper + function(source, "playAgain") + checks)
 
     def test_no_legacy_transport_or_identity_restore_and_duplicate_host_retired(self):
         for name in ("creak-multi.html", "creak-multi-play.html", "standing-room-multi.html", "standing-room-play.html"):

@@ -206,7 +206,7 @@ def edition(env, bible):
     finish_room(env, prefix, host, phones[2], 'strongroom', token)
     env.check(prefix + 'five actual mini-games won, five parts fitted', host.evaluate("G.depth===5&&G.items.length===5&&Object.values(G.done).every(x=>x==='won')"))
     host.locator('#doors button.machine').click()
-    wait(host, 'G.phase===\'finale\'&&FN.pending&&!access.busy()')
+    wait(host, 'G.phase===\'finale\'&&FN&&FN.pending&&!access.busy()')
     env.check(prefix + 'Spring/Wire/Key finale benefits and spent Fuse', host.evaluate("FN.t>90000&&FN.t<=102000&&FN.step===1.5&&FN.charge===(ED==='bible'?1:2)&&!FN.fuse"))
     window = host.evaluate('access.currentRoom().action.id')
     host.locator('#lensUse').click()
@@ -223,10 +223,10 @@ def edition(env, bible):
     wait(host, 'FN.shorts===1&&!FN.resolving&&!access.busy()')
     env.check(prefix + 'spent Fuse is not resurrected for finale mistake', host.evaluate('FN.shorts===1&&!FN.fuse'))
     # Pending finale host refresh must preserve question, counts and a used Lens.
-    wait(host, 'FN.pending&&!access.busy()')
+    wait(host, 'FN&&FN.pending&&!access.busy()')
     saved = host.evaluate('({run:access.currentRoom().run_id,window:access.currentRoom().action.id,charge:FN.charge,shorts:FN.shorts,time:FN.t})')
     host.reload()
-    wait(host, "G.phase==='finale'&&!G.recovery&&FN.pending&&!access.busy()")
+    wait(host, "G.phase==='finale'&&!G.recovery&&FN&&FN.pending&&!access.busy()")
     fast_story(host)
     env.check(prefix + 'finale refresh preserves run/window/score and consumed Lens', host.evaluate('s=>access.currentRoom().run_id===s.run&&access.currentRoom().action.id===s.window&&FN.charge===s.charge&&FN.shorts===s.shorts&&!FN.lens&&FN.t<=s.time', saved))
     # One true question timeout then finish with submitted phone answers.
@@ -234,7 +234,7 @@ def edition(env, bible):
     wait(host, 'FN.shorts===2&&!FN.resolving&&!access.busy()')
     previous_spark = None
     for _ in range(10):
-        wait(host, "G.phase==='over'||(FN.pending&&!FN.resolving&&!access.busy())")
+        wait(host, "G.phase==='over'||(FN&&FN.pending&&!FN.resolving&&!access.busy())")
         if host.evaluate("G.phase==='over'"):
             break
         info = host.evaluate('({spark:G.spark,window:access.currentRoom().action.id,correct:FN.q.correct})')
@@ -250,7 +250,7 @@ def edition(env, bible):
     wait(host, "!document.querySelector('#ending').hidden")
     env.check(prefix + 'normal finale reaches a displayed win with counted shorts', host.evaluate('FN.charge>=FN.target&&FN.right>0&&FN.shorts===2') and 'right' in host.locator('#endText').inner_text())
     for p in phones:
-        wait(p, "document.querySelector('#twTitle').textContent==='The machine is awake'")
+        wait(p, "title=>document.querySelector('#twTitle').textContent===title", 'The walls came down' if bible else 'The machine is awake')
     host.locator('#againBtn').click()
     wait(host, "G.phase==='lobby'&&!access.busy()&&!document.querySelector('#startBtn').disabled")
     env.check(prefix + 'rematch rotates run, resets progress and retains phones', host.evaluate('old=>access.currentRoom().run_id!==old&&G.depth===0&&G.items.length===0&&G.players.length===3', run))
