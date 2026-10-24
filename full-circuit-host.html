@@ -372,9 +372,47 @@ function completionFrom(rows){
     if(row.q_id==='done'||(e&&e.t==='done'))return e;}
   return null;
 }
+/* The checkpoint is a host-only display/progress hint. Verified ownership and
+   the current server run, phase, public state and action window must all match
+   before it can restore anything. Stream/finale answers still come from the
+   canonical receipts; a refresh never starts a new run implicitly. */
+var HOST_CHECKPOINT='tb_circuit_host_checkpoint_'+(ED==='bible'?'bible':'general')+'_v1';
+var HOST_PROGRESS=['phase','done','items','depth','finalePenalty','fuse','keyUsed','room','player','roomSeq','playedBy','prev','spark','fq','awake'];
+function hostPublicState(){
+  return {game:'full-circuit',phase:G.phase,room:G.room,player:G.player,roomSeq:G.roomSeq,depth:G.depth,
+    items:G.items.slice(),fuse:!!G.fuse,keyUsed:!!G.keyUsed,spark:G.spark||null,fq:G.fq||null,awake:typeof G.awake==='boolean'?G.awake:null};
+}
+function stateKey(state){
+  var fields=['game','phase','room','player','roomSeq','depth','items','fuse','keyUsed','spark','fq','awake'];
+  function sorted(v){if(Array.isArray(v))return v.map(sorted);if(v&&typeof v==='object'){var o={};Object.keys(v).sort().forEach(function(k){o[k]=sorted(v[k]);});return o;}return v;}
+  var value={};fields.forEach(function(k){value[k]=state[k]===undefined?null:state[k];});return JSON.stringify(sorted(value));
+}
+function saveHostCheckpoint(){
+  var r=access.currentRoom();if(!r||r.phase!==G.phase||stateKey(r.state||{})!==stateKey(hostPublicState()))return;
+  var f=null;
+  if(FN){f={};['t','charge','target','step','lens','fuse','seq','live','right','shorts','q','lastSpark','had'].forEach(function(k){if(FN[k]!==undefined)f[k]=FN[k];});
+    f.questionLeft=FN.pending?Math.max(0,10000-(performance.now()-FN.sentAt)):null;}
+  var progress={};HOST_PROGRESS.forEach(function(k){if(G[k]!==undefined)progress[k]=G[k];});
+  try{localStorage.setItem(HOST_CHECKPOINT,JSON.stringify({room:r.id,run:r.run_id,window:r.action?r.action.id:null,state:stateKey(r.state||{}),at:Date.now(),progress:progress,finale:f,
+    after:{title:$('aTitle').textContent,text:$('aText').textContent}}));}catch(error){}
+}
+function hostCheckpoint(r){
+  try{
+    var c=JSON.parse(localStorage.getItem(HOST_CHECKPOINT)||'null'),p=c&&c.progress;
+    if(!p||!Number.isFinite(c.at)||c.at<1||c.at>Date.now()+1000||c.room!==r.id||c.run!==r.run_id||c.window!==(r.action?r.action.id:null)||c.state!==stateKey(r.state||{})||p.phase!==r.phase)return null;
+    if(Object.keys(p).some(function(k){return HOST_PROGRESS.indexOf(k)<0;})||!p.done||Array.isArray(p.done)||Object.keys(p.done).some(function(k){return ORDER.indexOf(k)<0||['won','lost'].indexOf(p.done[k])<0;})||Object.keys(p.done).length!==p.depth)return null;
+    if(!Number.isFinite(p.finalePenalty)||p.finalePenalty<0||p.finalePenalty>45||stateKey(Object.assign({game:'full-circuit'},p))!==stateKey(r.state||{}))return null;
+    if(r.phase==='after'&&(!c.after||typeof c.after.title!=='string'||typeof c.after.text!=='string'))return null;
+    if((r.phase==='finale'||r.phase==='over')){
+      var f=c.finale;if(!f||!['t','charge','target','step','right','shorts','seq'].every(function(k){return Number.isFinite(f[k])&&f[k]>=0;})||f.target!==(ED==='bible'?7:10))return null;
+      if(typeof f.live!=='boolean'||typeof f.lens!=='boolean'||typeof f.fuse!=='boolean'||f.step!==(p.items.indexOf('Wire')>=0?1.5:1)||f.t>102000||f.charge>20||f.right>1000000||f.shorts>1000000||!Number.isInteger(f.seq)||f.seq>1000000)return null;
+      if(p.fq&&(!Number.isFinite(f.questionLeft)||f.questionLeft<0||f.questionLeft>10000||f.seq!==p.fq.id||!f.q||f.q.q!==p.fq.q||p.fq.opts.indexOf(f.q.correct)<0))return null;
+    }
+    return c;
+  }catch(error){return null;}
+}
 async function writeState(){
-  return access.publish({phase:G.phase,state:{game:'full-circuit',phase:G.phase,room:G.room,player:G.player,roomSeq:G.roomSeq,depth:G.depth,
-    items:G.items.slice(),fuse:!!G.fuse,keyUsed:!!G.keyUsed,spark:G.spark||null,fq:G.fq||null,awake:typeof G.awake==='boolean'?G.awake:null}});
+  var r=await access.publish({phase:G.phase,state:hostPublicState()});saveHostCheckpoint();return r;
 }
 
 /* ==================== THE STORY ====================
@@ -554,21 +592,62 @@ function jBuildHost(){
 }
 
 /* ---------- the lobby ---------- */
+function interruptedHouse(){
+  show('lobby');$('startBtn').disabled=true;$('status').textContent='This game is still open, but its host progress could not be restored. The room has been left unchanged.';
+  var box=document.createElement('div');box.id='hostRecovery';box.setAttribute('role','alert');
+  var text=document.createElement('p');text.textContent='Return to the original host browser to continue, or start again with this team.';box.appendChild(text);
+  var b=document.createElement('button');b.type='button';b.className='go';b.textContent='Start again with this team';b.onclick=restartHouse;box.appendChild(b);$('status').after(box);
+  G.recovery=true;
+}
+async function restartHouse(){
+  if(G.restarting||access.busy())return;G.restarting=true;
+  try{
+    clearInterval(G.poll);if(FN){clearInterval(FN.clock);clearInterval(FN.poll);FN.live=false;}
+    await access.beginRun();FN=null;
+    Object.assign(G,{phase:'lobby',done:{},items:[],depth:0,finalePenalty:0,fuse:false,keyUsed:false,room:null,player:null,roomSeq:0,playedBy:{},prev:null,spark:null,fq:null,awake:null,completedWindow:null,recovery:false,transitioning:false,starting:false});
+    var recovery=$('hostRecovery');if(recovery)recovery.remove();await writeState();show('lobby');$('status').textContent='Room '+G.code;await pollPlayers();
+  }catch(error){hostError(error);}finally{G.restarting=false;}
+}
+async function restoreHost(c,r){
+  HOST_PROGRESS.forEach(function(k){if(c.progress[k]!==undefined)G[k]=c.progress[k];});G.code=r.code;G.starting=false;G.transitioning=false;G.following=false;G.completedWindow=null;G.cursor=0;
+  if(G.phase==='hall'){await paintHall();return;}
+  if(G.phase==='room'){
+    $('mPlate').textContent=ROOMS[G.room].name;$('mWhoTop').textContent=nameOf(G.player)+' has gone in';$('mWho').textContent='Reconnecting to '+nameOf(G.player)+'’s phone…';
+    $('mQ').textContent='';$('mOut').textContent='';$('mRight').textContent='0';$('mWrong').textContent='0';$('feed').innerHTML='';show('mirror');
+    G.lastEvent=performance.now();G.troubleShown=false;await followRoom();G.poll=setInterval(followRoom,900);return;
+  }
+  if(G.phase==='after'){$('aPlate').textContent=ROOMS[G.room].name;$('aTitle').textContent=c.after.title;$('aText').textContent=c.after.text;show('after');return;}
+  if(G.phase==='machine'){await startFinale();return;}
+  FN=c.finale;
+  if(G.phase==='over'){paintEnding();return;}
+  if(G.phase==='finale'){
+    var elapsed=Math.max(0,Date.now()-c.at);FN.t=Math.max(0,FN.t-(FN.live?elapsed:0));FN.live=true;FN.last=performance.now();FN.pending=!!G.fq;
+    FN.sentAt=performance.now()-(10000-Math.max(0,(FN.questionLeft||0)-elapsed));FN.resolving=false;FN.leaping=false;FN.listening=false;FN.ending=false;
+    paintFinale();
+    if(G.fq){$('fnWho').textContent='The spark is with '+nameOf(G.spark);$('fnQ').textContent=G.fq.q;$('fnOpts').innerHTML=G.fq.opts.map(function(o){return '<li>'+esc(o)+'</li>';}).join('');
+      if(G.fq.burn>=0)$('fnOpts').children[G.fq.burn].classList.add('burn');$('lensUse').hidden=!FN.lens;}
+    FN.clock=setInterval(fnTick,100);if(FN.pending){FN.poll=setInterval(fnListen,600);await fnListen();}else if(FN.t<=0)await fnEnd(false);else await fnLeap();
+  }
+}
 async function openHouse(){
   $('startBtn').disabled=true;$('status').textContent='Connecting…';
   try{
-    var saved=access.savedHostCode(),r=null;
+    var saved=access.savedHostCode(),r=null,resumed=false;
     if(saved){
-      try{r=await access.resumeHost(saved);await access.beginRun();}
+      try{r=await access.resumeHost(saved);resumed=true;}
       catch(error){if(error.code==='42501'||/expired|not found/i.test(error.message)){access.forgetHost();}else throw error;}
     }
     if(!r)r=await access.createRoom();
-    G.code=r.code;G.phase='lobby';G.starting=false;G.transitioning=false;G.completedWindow=null;G.fq=null;G.spark=null;
+    G.code=r.code;G.starting=false;G.transitioning=false;G.completedWindow=null;
     $('code').textContent=G.code;
     var link=baseUrl()+(ED==='bible'?'/full-circuit-bible.html':'/full-circuit.html')+'?team='+G.code;
     $('url').textContent=link.replace(/^https?:\/\//,'');
     $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=190x190&data='+encodeURIComponent(link);
-    await writeState();$('status').textContent='Room '+G.code;await pollPlayers();setInterval(pollPlayers,2000);
+    if(resumed&&r.phase!=='lobby'){
+      var checkpoint=hostCheckpoint(r);G.phase=r.phase;G.recovery=!checkpoint;await pollPlayers();
+      if(checkpoint)await restoreHost(checkpoint,r);else interruptedHouse();
+    }else{G.phase='lobby';if(!resumed)await writeState();$('status').textContent='Room '+G.code;await pollPlayers();}
+    setInterval(pollPlayers,2000);
   }catch(error){$('code').textContent='----';$('status').textContent=access.message(error);hostError(error);}
 }
 function toast(t){ var e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function(){ e.classList.remove('on'); }, 3500); }
@@ -582,11 +661,11 @@ async function pollPlayers(){
     if(G.phase==='room'&&G.player&&!G.players.some(function(p){return p.id===G.player;}))openTrouble(true);
     $('pcount').textContent=G.players.length?G.players.length+(G.players.length===1?' player':' players')+' in the house':'Waiting for players';
     $('chips').innerHTML=G.players.length?G.players.map(function(p){return '<span class="chip">'+esc(p.name)+'</span>';}).join(''):'<span class="none">Nobody has joined yet.</span>';
-    $('startBtn').disabled=G.players.length<3||G.starting||access.busy();
+    $('startBtn').disabled=!!G.recovery||G.players.length<3||G.starting||access.busy();
   }catch(error){$('status').textContent=access.message(error);}finally{G.rosterPolling=false;}
 }
 async function beginTeamHouse(){
-  if(G.phase!=='lobby'||G.starting||access.busy()||G.players.length<3)return;
+  if(G.phase!=='lobby'||G.recovery||G.starting||access.busy()||G.players.length<3)return;
   G.starting=true;$('startBtn').disabled=true;
   try{
     await access.beginRun();G.phase='hall';G.prev=null;G.done={};G.items=[];G.depth=0;G.finalePenalty=0;G.fuse=false;G.keyUsed=false;
@@ -739,8 +818,12 @@ async function openMachine(){
 async function startFinale(){
   if(G.phase!=='machine'||G.transitioning||access.busy())return;
   FN = { t: Math.max(30, 90 + (has('Spring') ? 12 : 0) - G.finalePenalty) * 1000, charge: has('Key') ? (ED === 'bible' ? 1 : 2) : 0, target: ED === 'bible' ? 7 : 10,
-         step: has('Wire') ? 1.5 : 1, lens: has('Lens'), fuse: has('Fuse'), seq: 0, live: false, right: 0, shorts: 0, last: 0 };
+         step: has('Wire') ? 1.5 : 1, lens: has('Lens'), fuse: !!G.fuse, seq: 0, live: false, right: 0, shorts: 0, last: 0 };
   G.awake = null; G.spark = null; G.fq = null;
+  G.phase='finale';paintFinale();await writeState();var token=roomToken(),finale=FN;
+  setTimeout(function(){if(FN!==finale||!sameToken(token)||G.phase!=='finale')return;FN.live=true;FN.last=performance.now();FN.clock=setInterval(fnTick,100);fnLeap();},2600);
+}
+function paintFinale(){
   if(ED === 'bible') jBuildHost();
   PARTS.forEach(function(p){ var g = document.getElementById('p-' + p), fitted = has(p);
     g.querySelectorAll('circle:not(.glow), rect:not(.glow), path').forEach(function(el){ var line = el.getAttribute('fill') === 'none';
@@ -750,8 +833,7 @@ async function startFinale(){
   $('fnParts').textContent = G.items.length + ' of 5 parts fitted' + (G.finalePenalty ? '. The back stairs cost ' + G.finalePenalty + ' seconds' : '');
   $('fnWho').textContent = 'Everyone, get your phones ready'; $('fnQ').textContent = 'The spark could land on any of you.';
   $('fnOpts').innerHTML = ''; $('fnOut').textContent = ''; $('lensUse').hidden = true;
-  G.phase='finale';show('finale');fnRing();fnPaint();await writeState();var token=roomToken(),finale=FN;
-  setTimeout(function(){if(FN!==finale||!sameToken(token)||G.phase!=='finale')return;FN.live=true;FN.last=performance.now();FN.clock=setInterval(fnTick,100);fnLeap();},2600);
+  show('finale');fnRing();fnPaint();
 }
 /* the players sit on an oval round the machine, each wired to it */
 function fnRing(){
@@ -779,6 +861,7 @@ function fnTick(){
   if(!FN||!FN.live)return;var now=performance.now();
   if(access.busy()||FN.resolving||FN.leaping){FN.last=now;return;}
   FN.t-=(now-FN.last);FN.last=now;fnPaint();
+  if(!FN.checkpointAt||now-FN.checkpointAt>1000){saveHostCheckpoint();FN.checkpointAt=now;}
   if(FN.t<=0){FN.t=0;fnPaint();if(FN.pending){FN.endRequested=true;fnResolve(null);}else fnEnd(false);return;}
   if(FN.pending&&now-FN.sentAt>10000)fnResolve(null);
 }
@@ -811,7 +894,7 @@ async function fnLeap(){
   $('fnWho').textContent = 'The spark is with ' + to.name; $('fnQ').textContent = q.q; $('fnOut').textContent = ''; $('fnOut').className = 'outcome';
   $('fnOpts').innerHTML = opts.map(function(o){ return '<li>' + esc(o) + '</li>'; }).join('');
   $('lensUse').hidden = !FN.lens;
-  await writeState();if(FN!==finale||!FN.live)return;FN.pending=true;FN.sentAt=performance.now();
+  await writeState();if(FN!==finale||!FN.live)return;FN.pending=true;FN.sentAt=performance.now();saveHostCheckpoint();
   clearInterval(FN.poll);FN.poll=setInterval(fnListen,600);
   }catch(error){hostError(error);}finally{if(FN===finale)FN.leaping=false;}
 }
@@ -838,7 +921,7 @@ async function fnResolve(choice){
     var who=nameOf(G.spark),idx=G.fq.opts.indexOf(FN.q.correct);
     if(idx>=0)$('fnOpts').children[idx].classList.add('right');
     if(choice===FN.q.correct){FN.charge+=FN.step;FN.right++;$('fnOut').textContent=who+' got it. Current flows!';$('fnOut').className='outcome ok';}
-    else if(FN.fuse){FN.fuse=false;$('fnOut').textContent=(choice===null?who+' ran out of time':'Wrong')+', but the Fuse takes the short.';$('fnOut').className='outcome bad';}
+    else if(FN.fuse){FN.fuse=false;G.fuse=false;$('fnOut').textContent=(choice===null?who+' ran out of time':'Wrong')+', but the Fuse takes the short.';$('fnOut').className='outcome bad';}
     else{FN.t-=3000;FN.shorts++;$('fnOut').textContent=(choice===null?who+' ran out of time':'Wrong')+'. Short circuit: three seconds lost.';$('fnOut').className='outcome bad';}
     FN.lastSpark=G.spark;G.spark=null;G.fq=null;fnPaint();await writeState();FN.resolving=false;
     if(FN.endRequested||FN.t<=0||FN.charge>=FN.target){await fnEnd(FN.charge>=FN.target);return;}
@@ -849,22 +932,25 @@ async function fnEnd(awake){
   if(!FN||!FN.live||FN.ending)return;
   if(FN.pending){FN.endRequested=true;return fnResolve(null);}
   if(FN.resolving){FN.endRequested=true;return;}
-  var finale=FN,token=roomToken();FN.ending=true;FN.live=false;FN.pending=false;clearInterval(FN.clock);clearInterval(FN.poll);
+  var finale=FN,token=roomToken();FN.ending=true;FN.live=false;FN.pending=false;FN.t=Math.max(0,FN.t);clearInterval(FN.clock);clearInterval(FN.poll);
   try{
     await closeAction();if(FN!==finale||!sameToken(token))return;
     G.awake=awake;G.spark=null;G.fq=null;G.phase='over';await writeState();
     if(awake){$('machine').classList.add('awake');$('fnWho').textContent='';$('fnQ').textContent=ED==='bible'?'The walls come tumbling down!':'It is awake.';$('fnOpts').innerHTML='';}
     else $('fnQ').textContent=ED==='bible'?'The walls still stand.':'The charge fades.';
-    var secs=Math.ceil(Math.max(0,FN.t)/1000);
     setTimeout(function(){
       if(FN!==finale||!sameToken(token)||G.phase!=='over')return;
-      $('endTitle').textContent=awake?'The machine is awake':'The machine stays asleep';
-      $('endText').textContent=awake?'With '+secs+' seconds to spare, the team carried the current all the way round. '+FN.right+' right, '+FN.shorts+' short circuits.':'The clock ran out with the machine '+Math.round(100*FN.charge/FN.target)+'% charged. '+FN.right+' right, '+FN.shorts+' short circuits.';
-      playStory('end',{lines:[awake?NARR.end.awake:NARR.end.asleep],from:'machine',to:'machine',awake:awake},function(){if(FN===finale&&sameToken(token)&&G.phase==='over')show('ending');});
+      playStory('end',{lines:[awake?NARR.end.awake:NARR.end.asleep],from:'machine',to:'machine',awake:awake},function(){if(FN===finale&&sameToken(token)&&G.phase==='over')paintEnding();});
     },awake?3200:2000);
   }catch(error){hostError(error);}finally{if(FN===finale)FN.ending=false;}
 }
-$('againBtn').addEventListener('click', function(){ location.reload(); });
+function paintEnding(){
+  var awake=!!G.awake,secs=Math.ceil(Math.max(0,FN.t)/1000);
+  $('endTitle').textContent=awake?'The machine is awake':'The machine stays asleep';
+  $('endText').textContent=awake?'With '+secs+' seconds to spare, the team carried the current all the way round. '+FN.right+' right, '+FN.shorts+' short circuits.':'The clock ran out with the machine '+Math.round(100*FN.charge/FN.target)+'% charged. '+FN.right+' right, '+FN.shorts+' short circuits.';
+  show('ending');
+}
+$('againBtn').addEventListener('click',restartHouse);
 
 openHouse();
 </script>

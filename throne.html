@@ -845,13 +845,14 @@ async function win(player,previous){
   if(fallen){
     const big=fallen.streak>=3;SFX.correct();SFX.fall(big);HS(big?'celebrate':'point');
     hostSay(big?pick(['A reign is over!','The mighty have fallen!','Unbelievable!']):pick(['New champion!','Off the throne!','A changing of the guard!']));
-    await banner(true,esc(player.name)+' takes the throne!',esc(fallen.name)+(fallen.streak>1?' falls after '+fallen.streak+' in a row':' is dethroned'),big?'fallenbig':'fallen',big?4400:3400);return;
+    await banner(true,player.name+' takes the throne!',fallen.name+(fallen.streak>1?' falls after '+fallen.streak+' in a row':' is dethroned'),big?'fallenbig':'fallen',big?4400:3400);return;
   }
-  SFX.correct();HS('celebrate');await banner(true,esc(player.name)+' takes it!',G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
+  SFX.correct();HS('celebrate');await banner(true,player.name+' takes it!',G.streak>1?('A streak of '+G.streak+'!'):'Holds the throne.');
 }
 function nameFor(id){if(G.champ&&G.champ.id===id)return G.champ.name;if(G.chal&&G.chal.id===id)return G.chal.name;const q=G.queue.find(p=>p.id===id);if(q)return q.name;const p=G.players.find(x=>x.id===id);return p?p.name:',';}
 function streakKing(){if(Object.prototype.hasOwnProperty.call(G,'streakKing'))return G.streakKing;let best=null;Object.keys(G.bestStreak||{}).forEach(function(id){const sc=G.bestStreak[id];if(!best||sc>best.s||(sc===best.s&&(G.totalCorrect[id]||0)>(G.totalCorrect[best.id]||0)))best={id,s:sc,name:nameFor(id)};});return best;}
 async function bothMiss(){G.outcome='bothmiss';G.pendingLoser=null;SFX.wrong();HS('wince');await banner(false,'Nobody got it!','Both step aside. Two new challengers.');}
+// Shared presentation stays plain text; each host/phone escapes at its DOM sink.
 async function banner(ok,msg,sub,kind,ms){
   G.phase='reveal';G.revealOk=ok;G.revealMsg=msg;G.revealSub=sub;G.revealKind=kind||'';
   await writeState();render();scheduleStep(afterReveal,ms||REVEAL_MS);
@@ -864,7 +865,7 @@ async function afterReveal(){
   if(G.outcome==='win'){enqueue(G.pendingLoser);G.chal=dequeue();}
   else if(G.outcome==='bothmiss'){enqueue(G.champ);enqueue(G.chal);G.champ=dequeue();G.chal=dequeue();}
   if(!G.champ||!G.chal){await endWithoutWinner();return;}
-  G.phase='between';G.betweenMsg=(G.streak>0?(esc(G.champ.name)+' holds, streak '+G.streak):'Fresh duel!')+' · Next: '+esc(G.chal.name);
+  G.phase='between';G.betweenMsg=(G.streak>0?(G.champ.name+' holds, streak '+G.streak):'Fresh duel!')+' · Next: '+G.chal.name;
   if(G.qIndex>=G.qTotal&&G.outcome==='win')G.betweenMsg='That was the last question! Time to crown a champion…';
   await writeState();render();scheduleStep(nextOrEnd,BETWEEN_MS);
 }
@@ -879,16 +880,16 @@ async function enterFinale(){
   if(!isLive(closer.id)){await finishGame({id:sk.id,name:sk.name});return;}
   G.mode='finale';G.finalists={closer:{id:closer.id,name:closer.name},king:{id:sk.id,name:sk.name}};
   G.champ={id:closer.id,name:closer.name};G.chal={id:sk.id,name:sk.name};G.queue=[];
-  G.phase='finintro';G.finIntroMsg='Grand Finale! '+esc(closer.name)+' vs '+esc(sk.name)+', first to 2 wins.';
+  G.phase='finintro';G.finIntroMsg='Grand Finale! '+closer.name+' vs '+sk.name+', first to 2 wins.';
   await writeState();render();if(window.ThroneHall)ThroneHall.finale();SFX.sting();HS('present');hostSay(pick(QUIPS.finale));
   scheduleStep(serveQuestion,(window.ThroneHall&&ThroneHall.finaleMs)?ThroneHall.finaleMs():3200);
 }
-function scoreStr(){const c=G.finalists.closer,k=G.finalists.king;return esc(c.name)+' '+((G.finaleScore||{})[c.id]||0)+' - '+((G.finaleScore||{})[k.id]||0)+' '+esc(k.name);}
+function scoreStr(){const c=G.finalists.closer,k=G.finalists.king;return c.name+' '+((G.finaleScore||{})[c.id]||0)+' - '+((G.finaleScore||{})[k.id]||0)+' '+k.name;}
 async function gradeFinale(result){
   if(result.outcome==='win'&&result.winner){
     SFX.correct();HS('celebrate');
-    if(G.finaleWinner){G.outcome='finalewin';await banner(true,esc(result.winner.name)+' wins the Finale!',scoreStr());}
-    else{G.outcome='finalepoint';await banner(true,esc(result.winner.name)+' scores!',scoreStr());}
+    if(G.finaleWinner){G.outcome='finalewin';await banner(true,result.winner.name+' wins the Finale!',scoreStr());}
+    else{G.outcome='finalepoint';await banner(true,result.winner.name+' scores!',scoreStr());}
   }else if(result.outcome==='bothmiss'){G.outcome='finalemiss';await banner(false,'Nobody got it!',scoreStr()+', next question.');}
 }
 async function finishGame(winner){
@@ -998,14 +999,15 @@ function render(){
     else if(G.phase==='reveal'){ const k=G.revealKind||''; const sig=G.qId+'|'+G.revealMsg; if(!(k && b.dataset.sig===sig)){   // a re-render must not restart the dethroning animation
     b.dataset.sig=k?sig:''; b.className='banner '+(G.revealOk?'good':'bad')+(k?(' fallen'+(k==='fallenbig'?' big':'')):'');
     const crown=k?'<svg class="fall-crown" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 58 L14 18 L36 38 L50 8 L64 38 L86 18 L92 58 Z" fill="#e6b655" stroke="#f2d27a" stroke-width="3" stroke-linejoin="round"/><rect x="8" y="58" width="84" height="8" rx="2" fill="#c98a1c"/><circle cx="14" cy="16" r="5" fill="#f2d27a"/><circle cx="50" cy="6" r="5" fill="#f2d27a"/><circle cx="86" cy="16" r="5" fill="#f2d27a"/></svg>':'';
-    b.innerHTML=(k?crown+'<div class="fall-title">THE THRONE HAS FALLEN!</div>':'')+G.revealMsg+'<div class="sub">'+(G.revealSub||'')+'</div>';
+    b.innerHTML=(k?crown+'<div class="fall-title">THE THRONE HAS FALLEN!</div>':'')+esc(G.revealMsg)+'<div class="sub">'+esc(G.revealSub||'')+'</div>';
     if(k==='fallenbig'){ document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); setTimeout(function(){ document.body.classList.remove('shake'); }, 700); } } }
-    else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+(G.betweenMsg||'')+'</div>'; }
+    else if(G.phase==='between'){ b.className='banner'; b.innerHTML='<div class="sub" style="font-size:22px">'+esc(G.betweenMsg||'')+'</div>'; }
     else if(G.phase==='gameover'){ b.className='banner good'; const su=G.summary||{}; const sk=su.streakKing;
-      let sub=''; if(G.deadmsg){ sub=G.deadmsg; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
-      b.innerHTML=(G.winner?'👑 '+esc(G.winner.name)+' holds the throne!':'Run ended')+'<div class="sub">'+sub+'</div><button class="coffee" id="banShare" style="border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-top:8px;margin-right:8px;background:none;color:var(--dim);font-weight:800;font-size:13px;cursor:pointer;">Share result 📸</button><a class="coffee" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Enjoyed the game? ☕ Buy me a coffee</a>';
+      let sub=''; if(G.deadmsg){ sub=esc(G.deadmsg); } else if(!G.winner||!su.recorded){ sub='No champion was recorded.'; } else { const bits=[]; if(sk&&sk.s>0) bits.push('Longest streak: '+sk.s+' by '+esc(sk.name)); if(su.closer&&su.closer.name) bits.push('Last question: '+esc(su.closer.name)); if(su.flawless) bits.push('A FLAWLESS LEGEND! 👑'); bits.push('Added to the Hall of Fame'); sub=bits.join(' · ')||('After '+G.qTotal+' questions.'); }
+      b.innerHTML=(G.winner?'👑 '+esc(G.winner.name)+' holds the throne!':'Run ended')+'<div class="sub">'+sub+'</div>'+(G.winner&&su.recorded?'<button class="coffee" id="banShare" style="border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-top:8px;margin-right:8px;background:none;color:var(--dim);font-weight:800;font-size:13px;cursor:pointer;">Share result 📸</button>':'')+'<a class="coffee" href="https://buymeacoffee.com/tierbrain" target="_blank" rel="noopener">Enjoyed the game? ☕ Buy me a coffee</a>';
       setTimeout(function(){ var sb=$('banShare'); if(!sb) return; sb.onclick=function(){
-        var winnerName=(G.winner&&G.winner.name)||'Someone';
+        if(!G.winner||!su.recorded)return;
+        var winnerName=G.winner.name;
         var lines=[]; if(sk&&sk.s>0) lines.push('Longest streak: '+sk.s+' by '+sk.name+'.');
         if(su.flawless) lines.push('A flawless run, never lost the throne.');
         lines.push('After '+G.qTotal+' questions.');

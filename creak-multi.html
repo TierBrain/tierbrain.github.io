@@ -206,7 +206,7 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
     <div class="ovstats" id="ovStats"></div>
     <div class="ovstand" id="ovStand"></div>
     <button class="btn" id="ovShare" style="max-width:260px">Share result 📸</button>
-    <button class="btn ghost2" id="ovAgain" style="max-width:260px">Play again</button>
+    <button class="btn ghost2" id="ovAgain" style="max-width:260px" disabled>Play again</button>
   </div>
 
 <script>
@@ -836,12 +836,17 @@ async function reconcileDropouts(){
   if(survivors.length===G.order.length) return;          // nobody left
   const goneNames=G.order.filter(function(pid){ return !present.has(pid); }).map(nameOf);
 
-  if(survivors.length===0){ return; }                    // everyone vanished; leave state alone
+  if(survivors.length===0){
+    // Explicitly leaving closes the departed members' action windows. A new
+    // join has a new member ID, so this abandoned rotation cannot resume.
+    await playAgain();
+    return;
+  }
   if(survivors.length===1){
     // last player standing wins by default rather than racing themselves
     G.order=survivors; G.turnIdx=0;
-    G.winner={id:survivors[0], name:nameOf(survivors[0])};
-    G.phase='gameover'; draw(); renderTurnbar(); showWin(); await writeState(); return;
+    G.winner={id:survivors[0], name:rawNameOf(survivors[0])};
+    G.phase='gameover'; draw(); renderTurnbar(); showWin(); await writeState(); updateRematchButton(); return;
   }
 
   // keep whoever's turn it is pointing at the right person after the splice
@@ -896,7 +901,12 @@ async function startGame(){
   await writeState();G.turnStartedAt=Date.now();
   }finally{starting=false;if(G.phase==='lobby')renderLobby();}
 }
-function nameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?esc(p.name):'Player'; }
+function rawNameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?String(p.name):'Player'; }
+function nameOf(pid){ return esc(rawNameOf(pid)); }
+function updateRematchButton(){
+ const room=access.currentRoom();
+ $('ovAgain').disabled=G.phase!=='gameover'||!room||room.phase!=='gameover'||engineBusy||starting||access.busy();
+}
 // Outcome lines (right, wrong, Roc, rockfall, storm...) stay up long enough to be read on the TV,
 // and for the host and sound effects that react to them, before the next player is called.
 const OUTCOME_RE=/answered right|rung snaps|slips past|woke the snake|scrambles clear|caught in the rockfall|shelters the ladders|storm batters|falls through|Roc sweeps|crumbles|slithers away|lashes out|tears tiles/;
@@ -918,7 +928,7 @@ async function pollMoves(){
   if(!currentHost(room.run_id,generation)||G.phase!=='live')return;
   if(!(closed.actions||[]).length)setStatus(nameOf(activeId)+' took too long, rolling for them\u2026');
   await resolveTurn(activeId);
- }finally{engineBusy=false;}
+ }finally{engineBusy=false;updateRematchButton();}
 }
 
 async function resolveTurn(playerId){
@@ -937,7 +947,7 @@ async function resolveTurn(playerId){
   await walkToken(playerId, fromPos, target);  // animate the token step by step
 
   if(willWin){
-    G.positions[playerId]=TOP; G.winner={id:playerId,name:nameOf(playerId)}; G.phase='gameover';
+    G.positions[playerId]=TOP; G.winner={id:playerId,name:rawNameOf(playerId)}; G.turnSeq++; G.phase='gameover';
     settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); await writeState(); return;
   }
 
@@ -976,7 +986,7 @@ async function resolveTurn(playerId){
     const after=await maybeEvent(playerId);
     if(typeof after==='number') pos=after;
     if(pos>=TOP){
-      G.positions[playerId]=TOP; G.winner={id:playerId,name:nameOf(playerId)}; G.phase='gameover';
+      G.positions[playerId]=TOP; G.winner={id:playerId,name:rawNameOf(playerId)}; G.turnSeq++; G.phase='gameover';
       settleStationaryTokens(null); draw(); renderTurnbar(); showWin(); await writeState(); return;
     }
   }
@@ -993,9 +1003,13 @@ async function resolveTurn(playerId){
   await writeState();
 }
 function showWin(){
+  // Results can render before their final publication completes. Keep the
+  // rematch control unavailable until that win is committed and the engine idle.
+  $('ovAgain').disabled=true;
   const alive=(G.board.ladders||[]).filter(function(l){return l.alive;}).length;
   const totalL=(G.board.ladders||[]).length;
-  $('ovLine').textContent=G.winner.name+' reached the summit first!';
+  const summit=(G.positions[G.winner.id]||1)>=TOP;
+  $('ovLine').textContent=G.winner.name+(summit?' reached the summit first!':' is the last climber standing!');
   $('ovStats').innerHTML =
     '<div class="ovstat"><b>'+(G.turnSeq-(G.seqBase|0))+'</b><span>turns</span></div>'+
     '<div class="ovstat"><b>'+alive+'/'+totalL+'</b><span>ladders left</span></div>'+
@@ -1014,14 +1028,14 @@ function showWin(){
   setStatus('');
   $('ovShare').onclick=function(){
     TBShare.open({ game:'creak-multi', kicker:'Creak & Coil \u00b7 Multiplayer', big:G.winner.name,
-      lines:['Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.', 'Finished in '+(G.turnSeq-(G.seqBase|0))+' turns with '+alive+' of '+totalL+' ladders still standing.'],
+      lines:[summit?'Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.':'Last climber standing.', 'Finished in '+(G.turnSeq-(G.seqBase|0))+' turns with '+alive+' of '+totalL+' ladders still standing.'],
       footer:'Think you can beat them?', accent:'#e6b655',
-      shareText:G.winner.name+' just won a race up Creak & Coil. Think you can beat them?' });
+      shareText:G.winner.name+(summit?' just won a race up Creak & Coil.':' is the last climber standing in Creak & Coil.')+' Think you can beat them?' });
   };
 }
 async function playAgain(){
   if(engineBusy||starting||access.busy())return;
-  engineBusy=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;
+  engineBusy=true;$('startBtn').disabled=true;updateRematchButton();try{await access.beginRun();hostGeneration++;
   $('overlay').classList.add('hide');
   const cf=$('confetti'); if(cf) cf.innerHTML='';
   G.phase='lobby'; G.board={ladders:[],snakes:[]}; G.order=[]; G.turnIdx=0; G.positions={};
@@ -1032,7 +1046,7 @@ async function playAgain(){
   await pollPlayers(); renderLobby();
   setStatus('');
   await writeState();
-  }finally{engineBusy=false;renderLobby();}
+  }finally{engineBusy=false;renderLobby();updateRematchButton();}
 }
 
 async function loop(){
@@ -1151,7 +1165,7 @@ createRoom().then(function(ok){if(ok)loop();});
     var ranked = G.order.slice().sort(function(a, b){ return (b === (G.winner && G.winner.id)) - (a === (G.winner && G.winner.id)) || (G.positions[b] || 1) - (G.positions[a] || 1); });
     var podium = ranked.slice(0, 3).map(function(pid){ return { name:rawName(pid), look:lookOf(pid) }; });
     host.set('celebrate');
-    playScene('break', { name:w + ' reached the summit!', round:(G.turnSeq-(G.seqBase|0)) + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
+    playScene('break', { name:w + ((G.positions[G.winner.id]||1)>=TOP?' reached the summit!':' is the last climber standing!'), round:(G.turnSeq-(G.seqBase|0)) + ' turns', look:podium[0] ? podium[0].look : null }, function(){ if(podium.length > 1) playScene('podium', { podium:podium }); });
     return r; };
   var _again = window.playAgain;
   window.playAgain = function(){ document.body.classList.remove('cc-playing'); try{ CreakArt.sky.progress(0); }catch(e){} host.set('calm'); return _again.apply(this, arguments); };

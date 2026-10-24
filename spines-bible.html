@@ -435,7 +435,7 @@ if(partyAccess) partyAccess.onIssue(function(issue){
 function partyHostTask(work){
   if(!P) return Promise.resolve();
   var owner = P, epoch = P.epoch; owner.queued++;
-  $('skipBtn').disabled = true;
+  updatePartySkip();
   var task = partyTail.then(async function(){
     if(P !== owner || P.epoch !== epoch) return;
     try{ return await work(); }
@@ -521,13 +521,15 @@ async function openPartyRoom(fresh){
 function hostStart(){
   document.body.classList.add('host'); $('start').hidden = true; $('lobby').hidden = false;
   P = { epoch:++partyHostEpoch, room:null, code:'', connected:false, players:[], activeIds:[], alive:[], out:[], idx:0, seq:0, turn:null, phase:'lobby', q:null, queued:0, polling:false, msg:'', winnerId:null };
-  $('lstart').addEventListener('click', function(){ partyHostTask(startPartyRun); });
+  $('lstart').addEventListener('click', function(){ if(P.phase === 'lobby') partyHostTask(startPartyRun); });
   openPartyRoom(false);
   P.poll = setInterval(pollPartyHost, 900);
 }
 async function startPartyRun(){
+  if(!P || !P.connected) return;
   var members = await partyCriticalRead(function(){ return partyAccess.members(P.code); });
-  mergePartyMembers(members); if(members.length < 2) return;
+  mergePartyMembers(members);
+  if(members.length < 2){ $('lobby').hidden = false; return; }
   P.room = await partyAccess.beginRun(); P.epoch = ++partyHostEpoch;
   P.alive = members.map(function(p){ return p.id; }); P.out = []; P.idx = 0; P.seq = 0; P.turn = null; P.q = null; P.msg = ''; P.winnerId = null;
   $('lobby').hidden = true; $('end').hidden = true; actx(); newGame(); await nextTurn(false);
@@ -879,7 +881,11 @@ if(MODE === 'host') hostStart(); else if(MODE === 'phone') phoneStart();
     if(opened || start.disabled || !cutsOn()) return;
     e.stopImmediatePropagation(); e.preventDefault(); opened = true;
     $('lobby').hidden = true;
-    playScene('opening', { title:BIBLE ? 'Spines: Bible Edition' : 'Spines', bible:BIBLE }, function(){ start.click(); });
+    playScene('opening', { title:BIBLE ? 'Spines: Bible Edition' : 'Spines', bible:BIBLE }, function(){
+      // Membership may change during the opening. Restore the lobby before
+      // trying Start so a now-disabled button cannot strand the host.
+      $('lobby').hidden = false; start.click();
+    });
   }, true);
 })();
 

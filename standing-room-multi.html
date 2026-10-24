@@ -179,7 +179,7 @@ body.sr-playing #tb-shell{display:none;}
 "use strict";
 var SB_URL='https://cgrbwtcydgfkbqhseeap.supabase.co';
 var SB_KEY='sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-let hostGeneration=0,engineBusy=false,starting=false,hostProblem=false;
+let hostGeneration=0,engineBusy=false,starting=false,hostProblem=false,finishing=false;
 const access=PartyAccess.create(SB_URL,SB_KEY,{family:'standing',edition:'general'});
 function hostError(error){
   let box=document.getElementById('partyConnection');
@@ -300,24 +300,97 @@ function renderStanding(){
 }
 
 /* ---------- room ---------- */
-function writeState(){return access.publish({phase:G.phase,state:{
+function updateControls(){
+ $('startBtn').disabled=starting||engineBusy||finishing||access.busy()||G.players.length<2||G.phase!=='lobby';
+ $('againBtn').disabled=starting||engineBusy||finishing||access.busy()||G.phase!=='over';
+}
+// Private recovery hints supplement an authenticated canonical room; they never
+// restore membership, ownership, a run, or board positions from local storage.
+function rememberHostTurn(){
+ const room=access.currentRoom();if(!room)return;
+ try{localStorage.setItem('tb_standing_host_turn_v1',JSON.stringify({room:room.id,run:room.run_id,
+  qId:G.qId,q:G.q&&G.q.q,correct:G.q&&G.q.correct,origin:G.turnStart,move:G.lastMove||null}));}catch(e){}
+}
+function savedHostTurn(room){
+ try{const hint=JSON.parse(localStorage.getItem('tb_standing_host_turn_v1')||'null');
+  return hint&&hint.room===room.id&&hint.run===room.run_id&&hint.qId===G.qId&&G.q&&hint.q===G.q.q?hint:null;
+ }catch(e){return null;}
+}
+function writeState(){rememberHostTurn();return access.publish({phase:G.phase,state:{
  game:'standing-room',phase:G.phase,N:G.N,solid:G.solid,pos:G.pos,outOf:G.outOf,order:G.order,turn:G.turn,seq:G.seq,
  qId:G.qId,q:G.q?{q:G.q.q,opts:G.q.opts}:null,names:G.players.map(function(p){return {id:p.id,name:p.name};})
 }});}
+function showQuestion(who){
+ $('qwho').textContent=nameOf(who)+'\u2019s turn';$('qtext').textContent=G.q?G.q.q:'';
+ const box=$('qopts');box.innerHTML='';
+ if(G.q)G.q.opts.forEach(function(o){const d=document.createElement('div');d.className='qopt';d.textContent=o;box.appendChild(d);});
+}
+function showOutcome(){
+ const left=alive();$('stage').classList.remove('on');$('endStage').classList.add('on');
+ $('wTitle').textContent=left.length===1?nameOf(left[0])+' is still standing':'Everyone went under';
+ $('wSub').textContent=left.length===1?'Everyone else went under.':'Nobody found dry board.';
+}
+async function resumeGame(room){
+ const state=room.state||{};G.phase=room.phase;G.players=state.names||[];
+ if(G.phase==='lobby')return;
+ ['N','solid','pos','outOf','order','turn','seq','qId'].forEach(function(k){G[k]=state[k];});
+ G.q=state.q?{q:state.q.q,opts:state.q.opts.slice()}:null;
+ $('lobby').style.display='none';buildBoard();paint();
+ if(G.phase==='over'){showOutcome();return;}
+ $('stage').classList.add('on');document.body.classList.add('sr-playing');
+ const who=G.order[G.turn],hint=savedHostTurn(room),action=room.action;
+ // An interrupted publication may already have committed its collapsed tile.
+ // Match every coordinate before advancing; never apply a saved position.
+ const move=hint&&hint.move;
+ if(move&&move.qId===G.qId&&move.who===who&&Number.isInteger(move.from)&&Number.isInteger(move.tile)
+    &&G.pos[who]===move.tile&&G.solid[move.from]===false&&move.from!==move.tile){
+  return nextTurn();
+ }
+ if(G.q){
+  const answers=BANK.filter(q=>q.q===G.q.q&&G.q.opts.includes(q.correct));
+  const bankCorrect=new Set(answers.map(q=>q.correct)).size===1?answers[0].correct:null;
+  const correct=bankCorrect||(hint&&G.q.opts.includes(hint.correct)?hint.correct:null);
+  G.q.correct=correct;used[G.q.q]=true;
+ }
+ G.turnStart=action&&action.accepting?G.pos[who]:
+  (hint&&Number.isInteger(hint.origin)&&hint.origin>=0&&hint.origin<G.N*G.N?hint.origin:undefined);showQuestion(who);
+ const members=await access.members(G.code);
+ if(!(members||[]).some(p=>p.id===who)){G.outOf[who]=true;paint();return nextTurn();}
+ if(action&&action.member_id===who&&action.key===G.qId){
+  if(action.accepting&&action.kind==='step'){
+   legal(who).forEach(i=>$('board').children[i].classList.add('lit'));return waitForStep(who,legal(who));
+  }
+  if(action.accepting&&action.kind==='answer'&&G.q&&G.q.correct){rememberHostTurn();return waitForAnswer(who);}
+  // Freeze the real accepted receipt before resolving an interrupted result.
+  const closed=await access.close(action.id),accepted=(closed.actions||[])[0];
+  if(action.kind==='answer'&&G.q&&G.q.correct&&hint&&Number.isInteger(hint.origin)&&G.pos[who]===hint.origin)
+   return resolveAnswer(who,accepted?accepted.choice:'__timeout__');
+  if(action.kind==='step'&&hint&&Number.isInteger(hint.origin)&&G.pos[who]===hint.origin&&accepted&&legal(who).includes(Number(accepted.choice)))
+   return stepTo(who,Number(accepted.choice));
+ }
+ // No reliable local grading/movement checkpoint: keep the canonical floor,
+ // close the old action, then give this player a fresh uniquely keyed question.
+ if(action&&action.accepting)await access.close(action.id);
+ $('status').textContent='Live · room '+G.code+' · interrupted turn restarted';
+ return askTurn();
+}
 async function createRoom(){
  try{
+  $('startBtn').disabled=true;
   const saved=access.savedHostCode(),owned=saved?await access.resumeHost(saved):await access.createRoom();
-  if(saved)await access.beginRun();hostGeneration++;G.code=owned.code;
+  hostGeneration++;G.code=owned.code;
   $('code').textContent=G.code;const link=baseUrl()+'/standing-room-play.html?c='+G.code;
   $('joinurl').textContent=link.replace(/^https?:\/\//,'');$('joinurl').href=link;
   $('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(link);
-  $('status').textContent='Live · room '+G.code;await writeState();return true;
+  $('status').textContent='Live · room '+G.code;
+  if(saved)await resumeGame(owned);else await writeState();
+  updateControls();return true;
  }catch(error){$('code').textContent='----';$('startBtn').disabled=true;hostError(error);return false;}
 }
 async function pollPlayers(){
   var code=G.code,generation=hostGeneration;var r=await access.members(code);
   if(code!==G.code||generation!==hostGeneration)return;
-  if(r) G.players=r;
+  if(r){if(G.phase==='lobby')G.players=r;else G.players=G.players.filter(p=>!r.some(member=>member.id===p.id)).concat(r);}
   $('pcount').textContent='('+G.players.length+')';
   var box=$('plist');
   if(!G.players.length){ box.innerHTML='<span class="hint">Waiting for people to join&hellip;</span>'; }
@@ -329,13 +402,13 @@ async function pollPlayers(){
       box.appendChild(c);
     }
   }
-  $('startBtn').disabled = G.players.length<2 || G.phase!=='lobby';
+  updateControls();
 }
 
 /* ---------- play ---------- */
 async function startGame(){
   if(starting||engineBusy||access.busy()||G.phase!=='lobby'||G.players.length<2)return;
-  starting=true;try{await access.beginRun();hostGeneration++;
+  starting=true;if(typeof updateControls==='function')updateControls();try{await access.beginRun();hostGeneration++;
   G.N=boardSize(G.players.length);
   G.solid=[]; for(var i=0;i<G.N*G.N;i++) G.solid[i]=true;
   G.order=G.players.map(function(p){return p.id;});
@@ -349,12 +422,12 @@ async function startGame(){
   for(var k=0;k<G.order.length;k++){
     G.pos[G.order[k]]=edge[Math.round(k*edge.length/G.order.length)%edge.length];
   }
-  G.turn=0; G.phase='live'; G.seq=0;
+  G.turn=0; G.phase='live'; G.seq=0;G.lastMove=null;
   $('lobby').style.display='none';
   $('stage').classList.add('on');
   $('endStage').classList.remove('on');
   buildBoard();paint();await askTurn();
-  }finally{starting=false;}
+  }finally{starting=false;if(typeof updateControls==='function')updateControls();}
 }
 
 async function askTurn(){
@@ -377,8 +450,8 @@ async function askTurn(){
   }
   if(alive().length<=1) return finish();
 
-  var who=G.order[G.turn];
-  G.q=pickQ();
+  var who=G.order[G.turn];G.turnStart=G.pos[who];
+  G.q=Object.assign({},pickQ());
   G.q.opts=shuffled([G.q.correct].concat(G.q.wrong));
   G.qId='q'+(++G.seq);
   $('qwho').textContent=nameOf(who)+'\u2019s turn';
@@ -420,7 +493,7 @@ async function waitForWindow(who,opts,timeout,interval){
    if(opts){const tile=accepted?Number(accepted.choice):opts[(Math.random()*opts.length)|0];if(opts.includes(tile))await stepTo(who,tile);}
    else await resolveAnswer(who,accepted?accepted.choice:'__timeout__');
   }catch(error){hostError(error);started+=interval;finished=false;}
-  finally{polling=false;engineBusy=false;}
+  finally{polling=false;engineBusy=false;if(typeof updateControls==='function')updateControls();}
  },interval);
 }
 
@@ -460,6 +533,7 @@ function waitForStep(who,opts){return waitForWindow(who,opts,30000,800);}
 
 async function stepTo(who,tile){
   var from=G.pos[who];
+  G.lastMove={qId:G.qId,who:who,from:from,tile:tile};rememberHostTurn();
   G.pos[who]=tile;
   G.solid[from]=false;
   paint();await writeState();
@@ -474,32 +548,24 @@ function nextTurn(){
 }
 
 async function finish(){
-  clearInterval(pollTimer);G.pollToken=null;
-  const action=access.currentRoom().action;if(action&&action.accepting)await access.close(action.id);
-  G.phase='over';
-  var left=alive();
-  $('stage').classList.remove('on');
-  $('endStage').classList.add('on');
-  if(left.length===1){
-    $('wTitle').textContent=nameOf(left[0])+' is still standing';
-    $('wSub').textContent='Everyone else went under.';
-  } else {
-    $('wTitle').textContent='Everyone went under';
-    $('wSub').textContent='Nobody found dry board.';
-  }
-  await writeState();
+  if(finishing)return;finishing=true;updateControls();
+  try{
+   clearInterval(pollTimer);G.pollToken=null;
+   const action=access.currentRoom().action;if(action&&action.accepting)await access.close(action.id);
+   G.phase='over';showOutcome();await writeState();
+  }finally{finishing=false;updateControls();}
 }
 
 $('startBtn').addEventListener('click',startGame);
 
 async function playAgain(){
- if(engineBusy||starting||access.busy())return;
- engineBusy=true;try{
+ if(engineBusy||starting||access.busy()||G.phase!=='over')return;
+ engineBusy=true;if(typeof updateControls==='function')updateControls();try{
   clearInterval(pollTimer);G.pollToken=null;await access.beginRun();hostGeneration++;
-  G.phase='lobby';G.order=[];G.turn=0;G.seq=0;G.qId='';G.q=null;G.solid=[];G.pos={};G.outOf={};
+  G.phase='lobby';G.order=[];G.turn=0;G.seq=0;G.qId='';G.q=null;G.solid=[];G.pos={};G.outOf={};G.lastMove=null;
   $('endStage').classList.remove('on');$('lobby').style.display='';$('stage').classList.remove('on');used={};
   await writeState();await pollPlayers();
- }finally{engineBusy=false;}
+ }finally{engineBusy=false;if(typeof updateControls==='function')updateControls();}
 }
 $('againBtn').addEventListener('click',function(){playAgain();});
 
