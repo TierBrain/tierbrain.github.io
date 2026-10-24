@@ -354,6 +354,15 @@ class StaticGameGuards(unittest.TestCase):
                 self.assertIn('<script src="smudged-art.js?v=1"></script>', src)
 
 
+    def test_full_circuit_polish_loads_after_the_game_on_every_page(self):
+        """Full Circuit: the opening, hallway map and finale polish load after each page's own script, so they can dress its scenes."""
+        for page in ("full-circuit.html", "full-circuit-bible.html", "full-circuit-host.html", "full-circuit-bible-host.html"):
+            with self.subTest(page=page):
+                src = read(page)
+                self.assertIn('<script src="fc-polish.js?v=1"></script>', src)
+                self.assertGreater(src.index('<script src="fc-polish.js?v=1"></script>'), src.rindex("function playStory("))
+
+
 class FakeBackend:
     """Stateful in-memory stand-in for the database REST calls the party games make."""
 
@@ -813,6 +822,21 @@ class BrowserGameGuards(unittest.TestCase):
                 self.assertTrue(page.locator("#end").is_hidden(), "the results card should wait for the ending scene")
                 page.locator(".sea-scene").click()
                 page.wait_for_function("!document.getElementById('end').hidden", timeout=3000)
+
+    def test_full_circuit_opening_map_and_finale_are_dressed(self):
+        """Full Circuit: a night sky over the opening, a map of the house in the hallway, and a machine that wakes or sags."""
+        for page_name in ("full-circuit.html", "full-circuit-bible.html"):
+            with self.subTest(page=page_name):
+                page = self.open(self.context(390, 844), page_name)
+                page.locator("#enterBtn").click()
+                page.wait_for_selector(".story.k-arrive .s-sky", timeout=4000)
+                page.evaluate("() => { document.querySelectorAll('.story').forEach(s => s.remove()); storyBusy = false; H = newHouse(); H.prev = null;"
+                              " H.done.switchboard = 'won'; H.items.push('Wire'); H.prev = { room:'switchboard', won:true }; paintHall(); }")
+                self.assertEqual(page.locator("#hall .fc-map .rm.won").count(), 1)
+                page.evaluate("() => { H.items = ['Lens','Fuse','Wire','Spring','Key']; runFinale(); }")
+                page.wait_for_selector("#machine .fx-aura", state="attached", timeout=4000)
+                page.evaluate("() => fEnd(false)")
+                page.wait_for_function("document.getElementById('machine').classList.contains('asleep')", timeout=3000)
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
