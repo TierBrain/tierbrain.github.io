@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy | TierBrain</title>
-<meta name="description" content="How TierBrain handles information: no accounts, no ads, no selling your data.">
+<meta name="description" content="How TierBrain handles guest sessions, shared game results, early-access emails and analytics. No registration is needed to play.">
 <link rel="canonical" href="https://tierbrain.co/privacy.html">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%231c1013'/%3E%3Cg transform='translate(2.4 2.4) scale(.9)'%3E%3Cdefs%3E%3CclipPath id='c'%3E%3Cpath d='M22.3 9C15 6 6 10 6 20C3 24 4 32 9 34C10 40 18 42 22.3 38Z'/%3E%3Cpath d='M25.7 9C33 6 42 10 42 20C45 24 44 32 39 34C38 40 30 42 25.7 38Z'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23c)'%3E%3Crect y='5' width='48' height='11.07' fill='%23f2d27a'/%3E%3Crect y='19.47' width='48' height='9.07' fill='%23d9694f'/%3E%3Crect y='31.93' width='48' height='10.07' fill='%2386bf9d'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -116,46 +116,45 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
       <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
   </header>
-  <main id="main" class="doc">
+  <main id="main" tabindex="-1" class="doc">
     <a class="back" href="./">Back to the games</a>
     <h1>Privacy</h1>
-    <p class="lede">The short version: no accounts, no sign-up, and no selling your data. This page explains the little that is collected and why.</p>
-    <p class="updated">Last updated 18 October 2026</p>
+    <p class="lede">You don’t need to register or choose a password to play. Online games use a guest session and store game information so players can play together. This page explains those details, optional emails and analytics.</p>
+    <p class="updated">Last updated 24 October 2026</p>
 
     <h2>Who we are</h2>
     <!-- CONFIRM before publishing: add the legal name / trading details of whoever runs the site, and any registration your local regulator requires. -->
     <p>TierBrain runs tierbrain.co. You can reach us at <a href="mailto:hello@tierbrain.co">hello@tierbrain.co</a>.</p>
     <h2>What we collect, and why</h2>
     <ul>
-      <li><strong>Page views.</strong> We use Cloudflare Web Analytics to count visits to pages. It doesn’t use cookies, doesn’t store anything on your device and doesn’t follow you around other sites.</li>
-      <li><strong>Saved on your device.</strong> Your light or dark mode choice and your Today’s question streak are kept in your browser’s local storage, on your own device. Daily Ascent saves your streak and your recent answers and confidence choices there, which is how your calibration rating is worked out. Games do the same for things like your best score, sound and simple-mode settings, your nickname, and, if you host, the current room code so a reload doesn’t lose the game. None of this is sent to us, and clearing your browser data removes it.</li>
-      <!-- CONFIRM: how long multiplayer room data (rooms, players, answers, buzzes) is kept, and whether old rooms are deleted automatically. -->
-      <li><strong>Multiplayer games.</strong> When you host or join a game, the nickname you type, your team, your answers, buzzes and score are stored on our database service while the game runs, so everyone in the room can see them.</li>
-      <li><strong>Group leaderboards.</strong> In games such as Smudged, a group code is optional. Only if you enter one and press Save, your name, score, level and time left are stored under that code. Anyone who knows the code can see the group’s results.</li>
-      <!-- CONFIRM: how Wall of Fame entries are created and removed (I could not see wall.html). -->
+      <li><strong>Page views and performance.</strong> We use Cloudflare Web Analytics for page-view and performance statistics. It doesn’t use advertising or tracking cookies.</li>
+      <li><strong>Saved on your device.</strong> Your theme, local best scores, sound settings and daily-game progress are kept in your browser’s storage. Some games also save a nickname, room code or current host-game state there to help you resume. Clearing browser data removes these local copies. Nicknames and game information are also sent to the database when you use an online room or save a shared result, as described below.</li>
+      <li><strong>Guest sessions.</strong> Our database service, Supabase, creates a guest session for online games. Session identifiers are saved in your browser so the game can recognise the same player or host after a reload. Supabase stores the corresponding guest identity. Clearing browser data can prevent you from resuming that session; it does not automatically delete information already stored on the server.</li>
+      <li><strong>Multiplayer games.</strong> Your room code, nickname, team where applicable, game actions, answers, buzzes, progress and results are sent to Supabase to run the game. Players see the in-game details shared by that game, such as nicknames and results. The host receives the information needed to run and score the game.</li>
+      <li><strong>Group leaderboards.</strong> If you choose to save a shared result, your nickname, score, level and time left are stored under the group code. These are public shared results. A group code organises a board; it is not a password. Please use a nickname you are happy to share.</li>
       <li><strong>Wall of Fame.</strong> Where a game shows scores on the Wall of Fame, the nickname and score shown are public. Please don’t use your full name. You can ask us to remove an entry at any time.</li>
       <li><strong>Emails.</strong> If you email us, we use your address and message only to reply and, if needed, to fix the problem.</li>
+      <li><strong>Early access.</strong> If you submit the optional TierBrain Host form, we store your email address and the intended use you select to manage the early-access list and send its update. You can ask to leave the list by emailing <a href="mailto:hello@tierbrain.co?subject=Early%20access%20removal">hello@tierbrain.co</a>.</li>
     </ul>
     <h2>What we don’t collect</h2>
-    <p>We don’t ask for accounts, passwords, emails, ages or locations to play. We don’t sell your data and we don’t use it for advertising.</p>
+    <p>We don’t ask you to register an account or provide a password, email address, age or location to play. An early-access email is optional and separate from playing. We don’t sell your data or use it for advertising.</p>
     <h2>Other services</h2>
     <ul>
       <li><strong>Hosting.</strong> Our hosting provider sees standard technical details, such as your IP address, when your browser loads a page.</li>
-      <li><strong>Database.</strong> Multiplayer rooms and group leaderboards run on Supabase, a database service. It stores the information described above on our behalf.</li>
+      <li><strong>Database and guest sessions.</strong> Multiplayer rooms, guest identities, shared leaderboards and the early-access list run on Supabase. It stores the information described above on our behalf.</li>
       <li><strong>QR codes.</strong> When a host’s screen shows a QR code to join, the code image is drawn by a third-party service (QR Server), which receives the join link, including the room code, to do so.</li>
       <li><strong>Google Fonts.</strong> Pages load their fonts from Google, so your browser asks Google’s servers for them and Google receives your IP address.</li>
       <li><strong>Sharing.</strong> The Share button on Today’s question opens your device’s share sheet, or X (Twitter) if your device can’t share. Whatever you share is then governed by that service.</li>
       <li><strong>Buy Me a Coffee.</strong> If you follow the coffee link, you leave TierBrain and their privacy policy applies.</li>
     </ul>
     <h2>Cookies</h2>
-    <!-- CONFIRM: that no game page sets cookies. -->
-    <p>TierBrain doesn’t use cookies for tracking or advertising. Services you choose to visit from here, such as the coffee link, may set their own.</p>
+    <p>TierBrain doesn’t use cookies for tracking or advertising. Online games use browser storage for their guest sessions and game settings. Services you choose to visit from here, such as the coffee link, may set their own cookies.</p>
     <h2>Children</h2>
-    <p>TierBrain is for everyone, including families. There are no accounts, and we don’t ask for names, emails or ages. We don’t knowingly collect personal information from children. Parents and carers: please help younger players pick a nickname that isn’t their real name.</p>
+    <p>TierBrain is for everyone, including families. We don’t require a real name, email address or age to play. Parents and carers: please help younger players choose a nickname that isn’t their real name, and keep contact details or other personal information out of game fields.</p>
     <h2>Your rights</h2>
     <p>You can ask us what we hold about you, to correct it, or to delete it, by emailing <a href="mailto:hello@tierbrain.co?subject=Privacy%20request">hello@tierbrain.co</a>. If you’re unhappy with how we’ve handled something, you can complain to your local data protection authority. In the UK, that’s the Information Commissioner’s Office (ico.org.uk).</p>
     <h2>How long we keep things</h2>
-    <p>Anything saved in your browser stays until you clear it. Analytics are counts, not profiles of individuals. Emails are kept for as long as we need to deal with your message.</p>
+    <p>Anything saved in your browser stays until you clear it. Access to a live room is time-limited, but room expiry does not itself mean that stored game records are immediately deleted. Shared results and game records may remain after a game ends. Early-access details are kept for managing the list and sending its update; emails are kept for dealing with the message. To request removal of information stored by TierBrain, email <a href="mailto:hello@tierbrain.co?subject=Privacy%20request">hello@tierbrain.co</a>.</p>
     <h2>Changes</h2>
     <p>If we change how TierBrain handles information, we’ll update this page and the date at the top.</p>
   </main>

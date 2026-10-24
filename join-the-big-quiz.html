@@ -43,6 +43,8 @@
   .eyebrow .dim{ color:var(--ink-dim); letter-spacing:.14em; }
   .title{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(40px,10vw,68px); line-height:.98; margin:clamp(10px,2.4vw,20px) 0 clamp(6px,1.4vw,12px); }
   .title b{ color:var(--gold-hi); font-weight:700; }
+  a.url{text-decoration:underline;text-underline-offset:3px;}
+  a:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px;}
   .lede{ font-size:clamp(14px,3.2vw,19px); font-weight:700; color:var(--ink-dim); margin-bottom:clamp(20px,4vw,34px); }
 
   .steps{ display:flex; flex-direction:column; gap:clamp(14px,3vw,24px); }
@@ -72,7 +74,11 @@
   .tip b{ color:var(--ink); }
   .foot{ margin-top:clamp(18px,3.5vw,28px); text-align:center; font-family:'Fraunces',serif; font-style:italic; color:var(--ink-dim); font-size:clamp(13px,2.8vw,17px); }
 
-  @media (max-width:420px){ .tips{ grid-template-columns:1fr; } }
+  @media screen and (max-width:420px){
+    .tips{grid-template-columns:1fr;}
+    .board{flex-direction:column;align-items:flex-start;}
+    .board > div:last-child{width:100%;min-width:0;}
+  }
 
   @media print{
     @page{ size:A4 portrait; margin:12mm; }
@@ -87,9 +93,9 @@
 <meta name="theme-color" content="#130a0d">
 </head>
 <body>
-  <section class="poster">
+  <main id="main" tabindex="-1" class="poster">
     <div class="eyebrow">The Big Quiz <span class="dim">· a general knowledge game show</span></div>
-    <div class="title">How to <b>join</b></div>
+    <h1 class="title">How to <b>join</b></h1>
     <div class="lede">It takes about 20 seconds. Just grab your phone.</div>
 
     <div class="steps">
@@ -98,7 +104,7 @@
         <p>Point it at the QR code on the big screen. No app needed.</p></div></div>
       <div class="step"><div class="num">2</div><div>
         <h3>Tap the link that pops up</h3>
-        <p>Or type <span class="url">tierbrain.co/play-gen.html</span> into your browser.</p></div></div>
+        <p>Or open <a class="url" href="play-gen.html">tierbrain.co/play-gen.html</a> in your browser.</p></div></div>
       <div class="step"><div class="num">3</div><div>
         <h3>Enter the code &amp; your name</h3>
         <p>The 5-letter code is on the big screen. Your name shows on the scoreboard.</p></div></div>
@@ -125,7 +131,7 @@
       <div class="tip"><b>Dropped out?</b> Rejoin with the same code.</div>
     </div>
     <div class="foot">Eyes up front. Let the quiz begin.</div>
-  </section>
+  </main>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

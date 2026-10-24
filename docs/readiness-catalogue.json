@@ -1,0 +1,768 @@
+{
+  "format": "tierbrain-readiness-catalogue-v1",
+  "baseline_commit": "1fdf0b3db415b2f62c315fc2151d0e4403ecdd30",
+  "source": "index.html anchors with data-title, parsed by sync-catalogue.py",
+  "counts": {
+    "catalogue_entries": 69,
+    "topic_quiz_entries": 25,
+    "non_topic_entries": 44,
+    "leaderboard_utilities": 1,
+    "previous_gameplay_editions": 9,
+    "additional_online_editions": 7
+  },
+  "interpretation": [
+    "Baseline inventory, not a claim that this readiness pass is complete",
+    "69 catalogue cards include a leaderboard and copied or shared engines; they are not 69 distinct game engines",
+    "Only named tests and their documented limits support a coverage claim",
+    "Question fact accuracy and physical device testing are not inferred from automated page checks"
+  ],
+  "entries": [
+    {
+      "href": "full-circuit.html",
+      "title": "Full Circuit",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "circuit_solo",
+      "baseline_evidence": "tests/gameplay_circuit.py",
+      "baseline_scope": "Same file used as Team phone in prior suite; complete solo path is separate coverage"
+    },
+    {
+      "href": "creak.html",
+      "title": "Creak & Coil",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "throne.html",
+      "title": "Hold The Throne",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "throne",
+      "baseline_evidence": "tests/gameplay_throne.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "show-gen.html",
+      "title": "The Big Quiz",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "big_quiz",
+      "baseline_evidence": "tests/gameplay_big_quiz.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "full-circuit-host.html",
+      "title": "Full Circuit: Team",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "circuit_team",
+      "baseline_evidence": "tests/gameplay_circuit.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "show.html",
+      "title": "Chapter & Verse",
+      "catalogue_categories": [
+        "game",
+        "multiplayer",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "chapter_and_verse",
+      "baseline_evidence": "tests/show_stack/README.md",
+      "baseline_scope": "Earlier secured Show family stack and browser checks; separate from nine-edition gameplay suite"
+    },
+    {
+      "href": "throne-bible.html",
+      "title": "Hold The Throne: Bible Edition",
+      "catalogue_categories": [
+        "game",
+        "multiplayer",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "throne",
+      "baseline_evidence": "tests/gameplay_throne.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "full-circuit-bible-host.html",
+      "title": "Full Circuit: Bible Edition, Team",
+      "catalogue_categories": [
+        "game",
+        "multiplayer",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "circuit_team",
+      "baseline_evidence": "tests/gameplay_circuit.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "standing-room-multi.html",
+      "title": "Standing Room: Together",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "standing_together",
+      "baseline_evidence": "tests/gameplay_standing.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "creak-multi.html",
+      "title": "Creak & Coil: The Shared Climb",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "creak_shared",
+      "baseline_evidence": "tests/gameplay_creak.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "finish-line.html",
+      "title": "Finish Line",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "finish_line",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "tug-of-war.html",
+      "title": "Tug of War",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "tug",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "first-finger.html",
+      "title": "First Finger",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "first_finger_general",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "first-finger-bible.html",
+      "title": "First Finger: Bible",
+      "catalogue_categories": [
+        "game",
+        "multiplayer",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "first_finger_bible",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "spines.html",
+      "title": "Spines",
+      "catalogue_categories": [
+        "game",
+        "puzzle",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "spines_party_and_solo_smoke",
+      "baseline_evidence": "tests/gameplay_spines.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "spines-bible.html",
+      "title": "Spines: Bible Edition",
+      "catalogue_categories": [
+        "game",
+        "puzzle",
+        "multiplayer",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "spines_party_and_solo_smoke",
+      "baseline_evidence": "tests/gameplay_spines.py",
+      "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "gaslight.html",
+      "title": "Gaslight",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "full-circuit-bible.html",
+      "title": "Full Circuit: Bible Edition",
+      "catalogue_categories": [
+        "game",
+        "puzzle",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "circuit_solo",
+      "baseline_evidence": "tests/gameplay_circuit.py",
+      "baseline_scope": "Same file used as Team phone in prior suite; complete solo path is separate coverage"
+    },
+    {
+      "href": "standing-room.html",
+      "title": "Standing Room",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "quiet-line.html",
+      "title": "The Quiet Line",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "quiet-line-vault.html",
+      "title": "The Vault",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "core.html",
+      "title": "Reach the Core",
+      "catalogue_categories": [
+        "game",
+        "adventure"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "core_race",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "castle.html",
+      "title": "Escape the Keep",
+      "catalogue_categories": [
+        "game",
+        "adventure"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "castle_race",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "labyrinth.html",
+      "title": "Out of the Labyrinth",
+      "catalogue_categories": [
+        "game",
+        "adventure"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "labyrinth_race",
+      "baseline_transport": "Public scores used for room/event messages",
+      "baseline_scope": "Additional online edition identified for owned-room repair in this pass"
+    },
+    {
+      "href": "claim.html",
+      "title": "Claim the Board",
+      "catalogue_categories": [
+        "game",
+        "strategy"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "jigsaw.html",
+      "title": "Jigsaw",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "piece-by-piece.html",
+      "title": "Piece by Piece",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "daily.html",
+      "title": "Daily Ascent",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "wheel.html",
+      "title": "Smudged",
+      "catalogue_categories": [
+        "game",
+        "puzzle"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "smudged-bible.html",
+      "title": "Smudged: Bible Edition",
+      "catalogue_categories": [
+        "game",
+        "puzzle",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "brain-coaster.html",
+      "title": "Brain Coaster",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "wall.html",
+      "title": "Wall of Fame",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "leaderboard_utility",
+      "coverage_group": "public_and_code_shared_boards",
+      "baseline_evidence": "tests/browser_checks.py",
+      "baseline_scope": "Leaderboard filtering and rendering, not a game playthrough"
+    },
+    {
+      "href": "five-clues.html",
+      "title": "Five Clues",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "five-clues-bible.html",
+      "title": "Five Clues: Bible",
+      "catalogue_categories": [
+        "game",
+        "bible"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "snap-sort.html",
+      "title": "Snap Sort",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "call-your-shot.html",
+      "title": "Call Your Shot",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "matchup.html",
+      "title": "Match Up",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "higher-lower.html",
+      "title": "Higher or Lower",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "odd-one-out.html",
+      "title": "Odd One Out",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "guess-the-year.html",
+      "title": "Guess the Year",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "fact-fiction.html",
+      "title": "Fact or Fiction",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "spot-the-lie.html",
+      "title": "Spot the Lie",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "recall.html",
+      "title": "Recall",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "unscramble.html",
+      "title": "Unscramble",
+      "catalogue_categories": [
+        "game"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Requires individual flow evidence; a source audit or page-load smoke alone is not a full playthrough"
+    },
+    {
+      "href": "leeds-rhinos-quiz.html",
+      "title": "Leeds Rhinos",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "manutd-quiz.html",
+      "title": "Manchester United",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "arsenal-quiz.html",
+      "title": "Arsenal FC",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "premier-league-quiz.html",
+      "title": "Premier League",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "sport-quiz.html",
+      "title": "Sport",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "wrestling-quiz.html",
+      "title": "Wrestling",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "afrobeats-quiz.html",
+      "title": "Afrobeats",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "hiphop-rap-quiz.html",
+      "title": "Hip Hop & Rap",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "rnb-quiz.html",
+      "title": "R&B",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "music-quiz.html",
+      "title": "Music",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "bible-quiz.html",
+      "title": "The Bible",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "religion-quiz.html",
+      "title": "World Religions",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "film-screen-quiz.html",
+      "title": "Film & Screen",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "rhousewives-quiz.html",
+      "title": "Real Housewives",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "scifi-quiz.html",
+      "title": "Science Fiction",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "general-knowledge-quiz.html",
+      "title": "General Knowledge",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "history-quiz.html",
+      "title": "History",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "science-quiz.html",
+      "title": "Science",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "maths-quiz.html",
+      "title": "Maths",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "politics-quiz.html",
+      "title": "Politics & Government",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "crypto-quiz.html",
+      "title": "Crypto & Blockchain",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "geography-quiz.html",
+      "title": "Geography",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "nature-quiz.html",
+      "title": "Nature & Animals",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "food-drink-quiz.html",
+      "title": "Food & Drink",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    },
+    {
+      "href": "books-words-quiz.html",
+      "title": "Books & Words",
+      "catalogue_categories": [
+        "quiz"
+      ],
+      "entry_type": "topic_quiz_inline_copy",
+      "coverage_group": "topic_quiz_25",
+      "baseline_scope": "Twenty-question countdown engine copied into each entry; shared source structure is not evidence of all individual browser runs"
+    }
+  ]
+}

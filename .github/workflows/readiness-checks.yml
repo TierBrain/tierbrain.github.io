@@ -1,0 +1,53 @@
+name: Readiness checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [ux, ops, quiz, solo_a]
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install bounded browser dependencies
+        env:
+          READINESS_BROWSER: ${{ matrix.browser }}
+        run: |
+          timeout 180 python -m pip install --timeout 30 --retries 2 -r requirements-dev.txt
+          if [ "$READINESS_BROWSER" = chromium ] && command -v google-chrome >/dev/null; then
+            echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            timeout 240 python -m playwright install --with-deps "$READINESS_BROWSER"
+          fi
+      - name: Verify ${{ matrix.family }} in ${{ matrix.browser }}
+        run: python tests/readiness/run-acceptance.py --family '${{ matrix.family }}' --browser '${{ matrix.browser }}' --report '/tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json'
+      - name: Preserve synthetic verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-${{ matrix.family }}-${{ matrix.browser }}
+          path: |
+            /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json
+            /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}-failure-*.png
+          if-no-files-found: warn

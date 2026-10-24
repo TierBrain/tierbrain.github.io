@@ -35,6 +35,9 @@
       linear-gradient(165deg,#130a0d,#1c1013 55%,#241418);
     background-attachment:fixed;padding:0 20px 70px;}
   .wrap{max-width:880px;margin:0 auto;}
+  .skip{position:absolute;left:12px;top:-64px;z-index:100;background:var(--gold);color:#1c1013;font-weight:800;padding:10px 16px;border-radius:10px;}
+  .skip:focus{top:12px;}
+  a:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px;}
   header{padding:26px 0 4px;}
   .word{font-family:'Baloo 2';font-weight:700;font-size:19px;}
   .word b{color:var(--gold);font-weight:800;}
@@ -66,11 +69,13 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
+<a class="skip" href="#main">Skip to the packs</a>
 <div class="wrap">
   <header>
     <a class="word" href="/">Tier<b>Brain</b></a>
   </header>
 
+  <main id="main" tabindex="-1">
   <div class="hero">
     <h1>Game night, sorted.</h1>
     <p class="lede">Put TierBrain on the telly or a laptop. Everyone else joins on their phone.
@@ -324,6 +329,7 @@
   <div class="tail">
     <p>That is <span id="packCount">42</span> of them. There are <a href="/" id="catalogueCount">69</a> in total, including the ones that did not fit a pack.</p>
   </div>
+  </main>
 </div>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
 <script src="tb-shell.js" data-tone="dark" defer></script>

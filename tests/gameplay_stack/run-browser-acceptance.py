@@ -46,7 +46,8 @@ input.on('line',async line=>{
 """
 
 
-def run(family, report_path):
+def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_engine='chromium', extra_inputs=()):
+    module_path = module_path or ROOT/('tests/gameplay_'+family+'.py')
     report = {'passed':False,'cleanup_completed':False,'family':family,
               'started_at':datetime.now(timezone.utc).isoformat(),
               'fixture':'actual pages and vendored SDK / local GoTrue / PostgREST / PostgreSQL',
@@ -92,8 +93,11 @@ def run(family, report_path):
             inputs = [*migrations,SHARED/'compose.yaml',SHARED/'bootstrap.sql',SHARED/'auth-claims.sql',
                       ROOT/'tests/fixtures/show_auth_baseline.sql',ROOT/'tests/fixtures/legacy_retirement_baseline.sql',
                       ROOT/'tests/fixtures/scores_baseline.sql',Path(__file__),Path(__file__).with_name('browser_env.py'),
-                      ROOT/('tests/gameplay_'+family+'.py'),ROOT/'vendor/supabase.js']
-            inputs += list(ROOT.glob('js/*access.js'))
+                      module_path,ROOT/'vendor/supabase.js']
+            inputs += list(extra_inputs)
+            inputs += list(ROOT.glob('js/*.js'))
+            inputs += list(ROOT.glob('*.js'))
+            inputs += list(ROOT.glob('*.css'))
             inputs += list(ROOT.glob('*.html'))
             report['input_sha256'] = {str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()
                                       for path in inputs}
@@ -150,11 +154,14 @@ def run(family, report_path):
                 return response['status'],base64.b64decode(response['body']),response['headers']
             from playwright.sync_api import sync_playwright
             with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(headless=True,
-                    executable_path=os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE') or None,
-                    args=['--no-sandbox'])
-                browser_env = BrowserEnv(browser,ROOT,transport,report,report_path)
-                spec = importlib.util.spec_from_file_location('gameplay_'+family,ROOT/('tests/gameplay_'+family+'.py'))
+                launch = {'headless':True}
+                if browser_engine == 'chromium':
+                    launch.update(executable_path=os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE') or None,
+                                  args=['--no-sandbox'])
+                browser = getattr(playwright,browser_engine).launch(**launch)
+                browser_env = env_class(browser,ROOT,transport,report,report_path)
+                report['browser_engine'] = browser_engine
+                spec = importlib.util.spec_from_file_location('gameplay_'+family,module_path)
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 try:
