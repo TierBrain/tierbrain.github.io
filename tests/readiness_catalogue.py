@@ -107,6 +107,8 @@ def _first_interaction(env, page, name):
     """Exercise remaining solo entry flows through rendered controls only."""
     if name in ('full-circuit.html', 'full-circuit-bible.html'):
         _keyboard_enter(env, page, '#enterBtn', name)
+        page.locator('.story.k-arrive').wait_for(state='visible', timeout=6000)
+        page.keyboard.press('Enter')
         page.locator('#hall').wait_for(state='visible', timeout=6000)
         env.check(name + ': solo opening reaches a house with doors', page.locator('#doors button').count() >= 4)
     elif name == 'creak.html':
@@ -135,6 +137,7 @@ def _first_interaction(env, page, name):
     elif name == 'jigsaw.html':
         _keyboard_enter(env, page, '#tierList .tier', name)
         page.locator('#game.on').wait_for(state='visible')
+        page.wait_for_function("document.querySelector('#hPieces').textContent==='0/12'",timeout=6000)
         env.check(name + ': keyboard selection creates the twelve-piece puzzle',
                   page.locator('#hPieces').inner_text() == '0/12' and page.locator('#cv').evaluate('canvas => canvas.width > 0 && canvas.height > 0'))
         _keyboard_enter(env, page, '#menuBtn', name + ' return')
@@ -142,6 +145,7 @@ def _first_interaction(env, page, name):
     elif name == 'piece-by-piece.html':
         _keyboard_enter(env, page, '#deckFlags', name)
         page.locator('#game.on').wait_for(state='visible')
+        page.locator('#opts button').first.wait_for(state='visible',timeout=6000)
         env.check(name + ': selected deck renders answer options and a canvas',
                   page.locator('#opts button').count() >= 2 and page.locator('#cvWrap canvas').count() == 1)
     elif name in ('wheel.html', 'smudged-bible.html'):

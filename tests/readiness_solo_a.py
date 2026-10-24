@@ -47,7 +47,12 @@ def choose(page, name, right=True):
     else:
         answer = value['correct'] if right else value['wrong'][0]
         # Options contain visual key/mark children; match their text span exactly.
-        page.locator('#opts button').filter(has=page.locator('.txt', has_text=re.compile('^'+re.escape(str(answer))+'$'))).click()
+        option=page.locator('#opts button').filter(has=page.locator('.txt', has_text=re.compile('^'+re.escape(str(answer))+'$')))
+        if name == 'call-your-shot.html':
+            option.focus()
+            page.keyboard.press('Enter')
+        else:
+            option.click()
         if name == 'call-your-shot.html':
             page.locator('#ringHunch').focus()
             page.keyboard.press('Enter')
@@ -204,7 +209,7 @@ def finish_race(env):
     env.check('Finish: only the authenticated host can start', guest.locator('#goBtn').is_disabled())
     host.locator('#goBtn').click()
     for page in (host, guest):
-        race_wait(page, "__readinessRace().phase==='race'&&!__readinessRace().busy")
+        race_wait(page, "__readinessRace().phase==='race'&&__readinessRace().current&&!__readinessRace().busy&&document.querySelectorAll('#opts button').length===4")
     first = race_probe(host)
     env.check('Finish: clients adopt one server run and seeded question order',
               first['room']['run_id'] == race_probe(guest)['room']['run_id']
@@ -228,6 +233,7 @@ def finish_race(env):
     race_wait(host, "__readinessRace().phase==='race'&&__readinessRace().progress===3")
     env.check('Finish: refresh restores canonical member, run and accepted progress',
               race_probe(host)['member']['id'] == identity and race_probe(host)['activeRun'] == run)
+    finished_presence = None
     for page in (host, guest):
         while race_probe(page)['progress'] < 12:
             race_wait(page, "__readinessRace().phase==='race'&&!__readinessRace().busy&&!__readinessRace().locked")
@@ -235,6 +241,10 @@ def finish_race(env):
             page.locator('#opts button[data-a="1"]').click()
             race_wait(page, "old=>__readinessRace().progress>old&&!__readinessRace().busy", before)
         page.locator('#resultScreen').wait_for(state='visible')
+        if page == host:
+            finished_presence = race_probe(host)['member']['last_seen']
+    race_wait(host, "stamp=>__readinessRace().member.last_seen!==stamp", finished_presence, timeout=6000)
+    env.check('Finish: a finisher stays present for the next host rematch',race_probe(host)['member']['last_seen'] != finished_presence)
     race_wait(host, "Object.values(__readinessRace().players).filter(p=>p.finished).length===2")
     env.check('Finish: both twelve-answer runs publish unique canonical finishes',
               all(sum(row.get('kind') == 'progress' and row.get('level') == 1 and row.get('member_id') == race_probe(page)['member']['id'] for row in race_probe(host)['rows']) == 1

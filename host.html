@@ -212,7 +212,7 @@ const btn=document.getElementById('hf_submit');
 const err=document.getElementById('hf_err');
 const done=document.getElementById('hf_done');
 
-function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function validEmail(v){ return v.length<=254 && v.split('@')[0].length<=64 && !/[\u0000-\u001f\u007f]/.test(v) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
 form.addEventListener('submit', async function(e){
   e.preventDefault();
@@ -234,19 +234,22 @@ form.addEventListener('submit', async function(e){
   const controller=new AbortController();
   const timeout=setTimeout(function(){controller.abort();},12000);
   try{
-    const res=await fetch(SB_URL+'/rest/v1/host_leads', {
+    const res=await fetch(SB_URL+'/rest/v1/rpc/submit_host_lead', {
       method:'POST', signal:controller.signal,
       headers:{
         'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY,
-        'Content-Type':'application/json', 'Prefer':'return=minimal'
+        'Content-Type':'application/json'
       },
-      body: JSON.stringify({ email:email, context: ctxEl.value || null })
+      body: JSON.stringify({ p_email:email, p_context: ctxEl.value || null })
     });
+    const receipt=await res.json().catch(function(){return null;});
+    if(res.status===429 || res.status===503 || (receipt && receipt.code==='54000')){ throw new Error('temporarily unavailable'); }
     if(!res.ok){ throw new Error('request failed'); }
+    if(!receipt || receipt.ok!==true){ throw new Error('unconfirmed signup'); }
     form.style.display='none';
     done.classList.add('show'); done.focus();
   }catch(e){
-    err.textContent=e.name==='AbortError'?"We couldn't confirm your signup in time. Please try again.":"Something went wrong, please try again in a moment.";
+    err.textContent=e.name==='AbortError'?"We couldn't confirm your signup in time. Please try again.":e.message==='temporarily unavailable'?"Early access signup is temporarily unavailable. Please try again later.":"Something went wrong, please try again in a moment.";
     err.classList.add('show');
     btn.disabled=false; btn.textContent='Join early access';
     err.focus();

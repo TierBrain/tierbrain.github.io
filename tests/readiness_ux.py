@@ -58,9 +58,10 @@ def _host_form(env):
             return
         calls.append(json.loads(route.request.post_data))
         route.fulfill(status=response['status'],headers={
-            'access-control-allow-origin':'https://tierbrain.test'},body='')
+            'access-control-allow-origin':'https://tierbrain.test'},content_type='application/json',
+            body='{"ok":true}' if response['status']<400 else '{"message":"Synthetic unavailable intake"}')
 
-    page.route('**/rest/v1/host_leads',host_response)
+    page.route('**/rest/v1/rpc/submit_host_lead',host_response)
     page.locator('#hf_email').fill('not-an-email')
     page.locator('#hf_submit').click()
     env.check('host form: invalid email is announced and focused',
@@ -79,7 +80,7 @@ def _host_form(env):
     page.locator('#hf_submit').click()
     page.locator('#hf_done').wait_for(state='visible')
     env.check('host form: successful signup confirms the actual values and moves focus',
-              calls==[{'email':'readiness@example.invalid','context':'church'}]*2
+              calls==[{'p_email':'readiness@example.invalid','p_context':'church'}]*2
               and page.locator('#hostForm').is_hidden()
               and page.evaluate("document.activeElement.id==='hf_done'"))
 
@@ -88,7 +89,7 @@ def _host_form(env):
       window.__hostCalls=0;
       const real=window.fetch;
       window.fetch=(url,options)=>{
-        if(!String(url).endsWith('/rest/v1/host_leads'))return real(url,options);
+        if(!String(url).endsWith('/rest/v1/rpc/submit_host_lead'))return real(url,options);
         window.__hostCalls++;
         return new Promise((resolve,reject)=>{window.__hostReject=reject;});
       };
@@ -106,7 +107,7 @@ def _host_form(env):
       const realTimer=window.setTimeout, realFetch=window.fetch;
       window.setTimeout=(fn,ms,...args)=>realTimer(fn,ms===12000?30:ms,...args);
       window.fetch=(url,options)=>{
-        if(!String(url).endsWith('/rest/v1/host_leads'))return realFetch(url,options);
+        if(!String(url).endsWith('/rest/v1/rpc/submit_host_lead'))return realFetch(url,options);
         return new Promise((resolve,reject)=>{
           options.signal.addEventListener('abort',()=>reject(new DOMException('Synthetic form timeout','AbortError')),{once:true});
         });

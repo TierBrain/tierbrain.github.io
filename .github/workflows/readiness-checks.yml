@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        family: [ux, ops, quiz, solo_a, solo_b, catalogue, races, race_a, race_b]
+        family: [ux, ops, quiz, solo_a, solo_b, catalogue, races, race_a, race_b, score_ui, host_lead]
         browser: [chromium, webkit]
     steps:
       - uses: actions/checkout@v4
@@ -65,12 +65,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify local transition and transport regressions
+        run: |
+          python tests/test_race_access.py
+          python tests/readiness_quiz.py --unit
+          python tests/readiness_solo_a.py
+          python tests/readiness_solo_b.py --unit
+          python tests/readiness_ops.py --unit
       - name: Cache the pinned disposable PostgreSQL image
         run: timeout 180 docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
       - name: Verify ownership, concurrency, score bounds and rollback
         run: |
           python tests/check_race_access.py --report /tmp/tierbrain-readiness-race-sql.json
           python tests/check_readiness_score_policy.py --report /tmp/tierbrain-readiness-score-policy.json
+          python tests/check_host_leads.py --report /tmp/tierbrain-host-leads-native.json
       - name: Preserve synthetic database verification evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -79,4 +87,5 @@ jobs:
           path: |
             /tmp/tierbrain-readiness-race-sql.json
             /tmp/tierbrain-readiness-score-policy.json
+            /tmp/tierbrain-host-leads-native.json
           if-no-files-found: warn

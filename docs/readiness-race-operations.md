@@ -58,15 +58,16 @@ run maintenance. Existing cleanup jobs are unchanged.
 
 **Scheduling the cleanup is pending.** This migration does not create a cron
 job, and the function's presence does not establish that deletion runs
-periodically. Review and authorize a bounded service-side schedule separately;
-record its frequency, owner, failure alert and successful execution. Monitor
+periodically. Review the installed cron extension and existing jobs, then
+configure a bounded service-side schedule without duplicating maintenance.
+Record its frequency, owner, failure alert and successful execution. Monitor
 storage, room/request budgets and real event sizes before paid availability
 commitments. A long, full lobby can exhaust receipt capacity before four hours.
 
 ## Private backup and rollback
 
 The selected routine is manual private downloads. Before deployment, export the
-existing application privately. After the approved migration, extend the
+existing application privately. After the migration, extend the
 application backup allowlist to include:
 
 - `race_private.rooms`, `members`, `events`, and `requests`, with their complete
@@ -76,7 +77,7 @@ application backup allowlist to include:
 - functions in `race_private`, the seven public `race_*` RPCs, and
   `public.cleanup_race_rooms()`, including definitions, owners and EXECUTE ACLs.
 
-Preserve the migration and any separately approved cleanup schedule definition.
+Preserve the migration and the configured cleanup schedule definition.
 Keep exports, guest UIDs, request payloads and restore evidence out of the
 public repository and public CI artifacts. Record dates, scope and checksums;
 restore into an isolated disposable database and check rows, sequence

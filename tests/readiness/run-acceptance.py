@@ -20,7 +20,7 @@ spec.loader.exec_module(environment)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--family',choices=('ux','ops','quiz','solo_a','solo_b','catalogue','races','race_a','race_b'),required=True)
+    parser.add_argument('--family',choices=('ux','ops','quiz','solo_a','solo_b','catalogue','races','race_a','race_b','score_ui','host_lead'),required=True)
     parser.add_argument('--browser',choices=('chromium','webkit'),default='chromium')
     parser.add_argument('--report',type=Path,required=True)
     args = parser.parse_args()

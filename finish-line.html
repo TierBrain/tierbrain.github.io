@@ -343,7 +343,7 @@
   }
   function readOnly(packet,reason){if(phase!=='waiting'||activeRun!==packet.room.run_id){resetLocalRace();activeRun=packet.room.run_id;}readOnlyReason=reason;phase='waiting';locked=true;if(misT)clearInterval(misT);processRows(packet.rows||[]);show('resultScreen');renderResults();}
   function startPoll(){ if(pollT) clearInterval(pollT); pollT=setInterval(poll,POLL_MS); poll(); }
-  function startHeartbeat(){if(hbT)clearInterval(hbT);hbT=setInterval(function(){if(!leaving&&(phase==='lobby'||phase==='race'||phase==='waiting')&&!access.busy()){var epoch=raceEpoch;access.heartbeat().catch(function(error){if(epoch===raceEpoch&&!leaving)netIssue(error);});}},HB_MS);}
+  function startHeartbeat(){if(hbT)clearInterval(hbT);hbT=setInterval(function(){if(!leaving&&(phase==='lobby'||phase==='race'||phase==='waiting'||phase==='results')&&!access.busy()){var epoch=raceEpoch;access.heartbeat().catch(function(error){if(epoch===raceEpoch&&!leaving)netIssue(error);});}},HB_MS);}
   function stopHeartbeat(){ if(hbT){ clearInterval(hbT); hbT=null; } }
 
   // ---- menu / join ----
@@ -407,7 +407,7 @@
     if(window.TBRace) TBRace.raceReset(); if(misT) clearInterval(misT); misT=setInterval(maybeMishap,500);
     queue=shuffle(POOL,seeded(access.current().room.seed));show('raceScreen');
     if(!players[me]) players[me]={progress:0,finished:false,finishAt:null};
-    laneEls={}; $('track').innerHTML='';
+    laneEls=Object.create(null); $('track').innerHTML='';
     renderTrack();updateProg();if(myFinish){finishRace({created_at:myFinish});return;}renderQuestion();
   }
   function updateProg(){ $('raceProg').textContent=progress+' / '+FINISH; }
@@ -483,7 +483,7 @@
   function finishRace(receipt){
     myFinish=receipt&&receipt.created_at||myFinish;
     if(players[me]){ players[me].finished=true; players[me].finishAt=myFinish; }
-    stopHeartbeat(); if(misT) clearInterval(misT);
+    if(misT) clearInterval(misT);
     phase='results'; poll();
     if(window.TBRace){ TBRace.flag(function(){ if(phase==='results'){ show('resultScreen'); renderResults(); } }); return; }
     show('resultScreen'); renderResults();

@@ -280,14 +280,25 @@ def run(report_path,pglite_module=None):
     def sql(statement):return docker(['exec','-i',name,'psql','-X','-qAt','-v','ON_ERROR_STOP=1','-U','postgres','-d','postgres'],statement)
     deadline=time.monotonic()+30
     while True:
-     try:
-      if sql('SELECT 1;')=='1':break
-     except AssertionError:pass
-     if time.monotonic()>deadline:raise AssertionError('Isolated PostgreSQL startup timed out')
+     # initdb's temporary PostgreSQL server can answer SELECT 1 immediately
+     # before shutting down. Require PID 1 to exec the final server first;
+     # probing the temporary socket does not establish fixture readiness.
+     process=subprocess.run(DOCKER+['exec',name,'cat','/proc/1/comm'],
+                            text=True,capture_output=True,env=env,timeout=5)
+     ready=None
+     if process.returncode==0 and process.stdout.strip()=='postgres':
+      ready=subprocess.run(DOCKER+['exec',name,'psql','-X','-qAt','-v',
+                                  'ON_ERROR_STOP=1','-U','postgres','-d','postgres',
+                                  '-c','SELECT 1'],
+                           text=True,capture_output=True,env=env,timeout=5)
+     if ready is not None and ready.returncode==0 and ready.stdout.strip()=='1':break
+     if time.monotonic()>=deadline:raise AssertionError('Isolated PostgreSQL final server did not become ready')
      time.sleep(.2)
     info=json.loads(docker(['inspect',name]))[0]
+    assert info['Id']==container and info['Config']['Labels'].get('codex.task')=='tierbrain-race-access-tests'
     assert info['HostConfig']['NetworkMode']=='none' and not info['HostConfig']['PortBindings'] and sql('SHOW listen_addresses;')==''
     report['engine']=IMAGE
+    report['readiness']='PID 1 is final postgres server and SELECT 1 succeeded'
    sql(BASELINE);report['postgres_version']=sql('SELECT version();')
    suite(sql,report,concurrent=not pglite_module)
    report['passed']=True

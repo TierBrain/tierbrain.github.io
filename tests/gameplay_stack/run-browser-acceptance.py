@@ -88,7 +88,7 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
         bridge = None
         try:
             migrations = sorted((ROOT/'supabase/migrations').glob('*.sql'))
-            if len(migrations) != 9:
+            if len(migrations) != 10:
                 raise AssertionError('Review fixture order when migration set changes')
             inputs = [*migrations,SHARED/'compose.yaml',SHARED/'bootstrap.sql',SHARED/'auth-claims.sql',
                       ROOT/'tests/fixtures/show_auth_baseline.sql',ROOT/'tests/fixtures/legacy_retirement_baseline.sql',
@@ -113,6 +113,10 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
             fixture = 'DO $legacy$'+(ROOT/'tests/fixtures/show_auth_baseline.sql').read_text().split('DO $legacy$',1)[1]
             fixture += (ROOT/'tests/fixtures/legacy_retirement_baseline.sql').read_text()
             fixture += 'DROP TABLE public.scores;\nCREATE TABLE public.scores'+(ROOT/'tests/fixtures/scores_baseline.sql').read_text().split('CREATE TABLE public.scores',1)[1]
+            # The retirement fixture uses this unrelated sentinel table. The
+            # reviewed live baseline has no lead table; the new intake
+            # migration must create the actual private-access contract.
+            fixture += '\nDROP TABLE public.host_leads;\n'
             # The cleanup migration expects the reviewed pre-cutover EXECUTE
             # grant. Restore only this fixture grant before applying migrations.
             fixture += '\nGRANT EXECUTE ON FUNCTION public.cleanup_old_events() TO authenticated;\n'
@@ -178,6 +182,12 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
             report['error'] = redact(str(error))
             report['traceback'] = redact(traceback.format_exc())[-12000:]
             print(report['error'],flush=True)
+            print(report['traceback'],flush=True)
+            failed_checks = [item for item in report.get('checks',[]) if not item.get('passed')]
+            if failed_checks:
+                print(redact(json.dumps({'failed_checks':failed_checks}))[-10000:],flush=True)
+            if report.get('page_errors'):
+                print(redact(json.dumps({'page_errors':report['page_errors']})),flush=True)
         finally:
             if bridge is not None:
                 bridge.stdin.close()
