@@ -25,6 +25,7 @@
       + '.tb-links a{display:inline-flex;align-items:center;min-height:40px;padding:0 8px;color:var(--tbink);font-weight:800;}'
       + '.tb-links a:hover,.tb-home:hover .tb-sub{color:var(--tbgold);text-decoration:underline;text-underline-offset:3px;}'
       + '.tb-foot a:focus-visible{outline:3px solid var(--tbgold);outline-offset:2px;border-radius:6px;}'
+      + '.tb-shop{margin:4px auto 2px;font-size:13px;font-weight:700;color:var(--tbmut);}.tb-shop a{color:var(--tbgold);font-weight:800;text-decoration:underline;text-underline-offset:3px;}'
       + '.tb-fine{margin:6px auto 0;max-width:56ch;font-size:12px;font-weight:600;color:var(--tbmut);}';
     if(hideWhen) css += hideWhen.split(',').map(function(x){ return x.trim() + ':not([hidden]) ~ .tb-foot'; }).join(',') + '{visibility:hidden;}';
     var st = document.createElement('style'); st.id = 'tb-shell-css'; st.textContent = css; document.head.appendChild(st);
@@ -32,7 +33,8 @@
       + '<g clip-path="url(#tbsc)"><rect y="5" width="48" height="11.07" fill="#f2d27a"/><rect y="19.47" width="48" height="9.07" fill="#d9694f"/><rect y="31.93" width="48" height="10.07" fill="#86bf9d"/></g></svg>';
     var f = document.createElement('footer'); f.id = 'tb-shell'; f.className = 'tb-foot tb-' + (tone === 'light' ? 'light' : 'dark');
     f.innerHTML = '<a class="tb-home" href="./" aria-label="All TierBrain games">' + mark + '<span class="tb-w"><span>Tier</span><b>Brain</b></span><span class="tb-sub">All games</span></a>'
-      + '<nav class="tb-links" aria-label="About and legal"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html#report">Report a question</a></nav>'
+      + '<p class="tb-shop">Hosting a quiz night? <a href="https://payhip.com/TierBrain" target="_blank" rel="noopener">Printable quiz packs in the shop</a></p>'
+      + '<nav class="tb-links" aria-label="About and legal"><a href="https://payhip.com/TierBrain" target="_blank" rel="noopener">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html#report">Report a question</a></nav>'
       + (notice === 'quiz' ? '<p class="tb-fine">TierBrain is an independent site. It is not affiliated with, endorsed by or sponsored by any club, league, broadcaster, programme or brand named in a quiz.</p>' : '');
     var host = (target && document.querySelector(target)) || document.body; host.appendChild(f);
   }
