@@ -1,26 +1,27 @@
-name: Keep Supabase awake
+name: Supabase availability check
 
-# Free Supabase projects pause after ~1 week of inactivity, which would
-# silently break multiplayer. This pings the database every 3 days so it
-# never sleeps. It costs nothing and needs no maintenance.
-#
-# INSTALL: put this file in your repo at  .github/workflows/keepalive.yml
-# (create the .github/workflows folders if they don't exist), then commit.
-# You can also trigger it manually from the repo's "Actions" tab.
+# A bounded, read-only check of the public score API. A successful response
+# confirms this endpoint is available; it is not a backup or a guarantee that
+# a Free plan project will remain active. Inspect failed runs in Actions.
 
 on:
   schedule:
-    - cron: '0 6 */3 * *'   # 06:00 UTC, every 3 days
-  workflow_dispatch:         # lets you run it by hand from the Actions tab
+    - cron: '0 6 */3 * *'   # 06:00 UTC on every third calendar day of the month
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
-      - name: Ping the database
+      - name: Check the public score API
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://cgrbwtcydgfkbqhseeap.supabase.co/rest/v1/legends?select=name&limit=1" \
+          code=$(curl --fail --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            --connect-timeout 8 --max-time 20 --retry 2 --retry-delay 3 --retry-max-time 65 \
+            "https://cgrbwtcydgfkbqhseeap.supabase.co/rest/v1/scores?select=id&limit=0" \
             -H "apikey: sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU")
-          echo "Supabase responded with HTTP $code"
+          echo "Supabase score API responded with HTTP $code"
           if [ "$code" != "200" ]; then echo "Unexpected status"; exit 1; fi

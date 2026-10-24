@@ -49,8 +49,12 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
     background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);
     background-size:22px 22px;}
+  .host-content{display:flex;flex-direction:column;align-items:center;width:100%;}
+  .skip{position:absolute;left:12px;top:-64px;z-index:100;background:var(--gold);color:#1c1013;font-weight:800;padding:10px 16px;border-radius:10px;}
+  .skip:focus{top:12px;}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
 
-  .back{align-self:flex-start;max-width:680px;width:100%;margin:0 auto 18px;
+  .back{align-self:flex-start;max-width:680px;width:100%;min-height:44px;margin:0 auto 18px;
     font-weight:800;font-size:14px;color:var(--mut);text-decoration:none;display:flex;align-items:center;gap:6px;}
   .back:hover{color:var(--ink);}
 
@@ -106,6 +110,7 @@
   .cta:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f0a;}
   .cta:disabled{opacity:.6;cursor:default;}
   .note{text-align:center;color:var(--mut);font-size:12px;font-weight:700;margin-top:12px;}
+  .note a{color:var(--gold);text-underline-offset:3px;}
 
   .done{display:none;text-align:center;padding:10px 4px 4px;}
   .done.show{display:block;}
@@ -126,9 +131,9 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
-
+  <a class="skip" href="#main">Skip to early access</a>
   <a class="back" href="/">&larr; TierBrain</a>
-
+  <main id="main" tabindex="-1" class="host-content">
   <header>
     <div class="kicker"><b>Coming soon</b> &middot; Early access</div>
     <h1>TierBrain Host</h1>
@@ -163,7 +168,7 @@
 
     <form id="hostForm" novalidate>
       <label for="hf_email">Email</label>
-      <input type="email" id="hf_email" placeholder="you@example.com" required autocomplete="email">
+      <input type="email" id="hf_email" placeholder="you@example.com" required autocomplete="email" inputmode="email" maxlength="254" aria-describedby="hf_err hf_privacy" aria-invalid="false">
 
       <label for="hf_context">What would you use it for? (optional)</label>
       <select id="hf_context">
@@ -177,19 +182,21 @@
       </select>
 
       <!-- honeypot: invisible to real people, bots often fill every field -->
-      <input class="hp" type="text" id="hf_hp" tabindex="-1" autocomplete="off">
+      <input class="hp" type="text" id="hf_hp" tabindex="-1" autocomplete="off" aria-hidden="true">
 
       <button class="cta" id="hf_submit" type="submit">Join early access</button>
-      <div class="err" id="hf_err">Please enter a valid email address.</div>
+      <div class="err" id="hf_err" role="alert" tabindex="-1">Please enter a valid email address.</div>
+      <p class="note" id="hf_privacy">We’ll use your email for the early-access update. <a href="privacy.html">Privacy details</a>.</p>
       <p class="note">Free TierBrain stays free either way.</p>
     </form>
 
-    <div class="done" id="hf_done">
+    <div class="done" id="hf_done" role="status" tabindex="-1">
       <div class="big">🎉</div>
       <h3>You're on the list</h3>
       <p>Thanks! We'll email you the moment TierBrain Host is ready to try.</p>
     </div>
   </div>
+  </main>
 
   <footer>Made for fun by TierBrain &middot; <a href="/">Back to all games</a></footer>
 
@@ -205,11 +212,13 @@ const btn=document.getElementById('hf_submit');
 const err=document.getElementById('hf_err');
 const done=document.getElementById('hf_done');
 
-function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function validEmail(v){ return v.length<=254 && v.split('@')[0].length<=64 && !/[\u0000-\u001f\u007f]/.test(v) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
 form.addEventListener('submit', async function(e){
   e.preventDefault();
+  if(btn.disabled) return;
   err.classList.remove('show');
+  emailEl.setAttribute('aria-invalid','false');
   const email=emailEl.value.trim();
 
   if(hpEl.value){ return; } // bot filled the honeypot; silently drop
@@ -217,27 +226,34 @@ form.addEventListener('submit', async function(e){
   if(!validEmail(email)){
     err.textContent='Please enter a valid email address.';
     err.classList.add('show');
+    emailEl.setAttribute('aria-invalid','true'); emailEl.focus();
     return;
   }
 
-  btn.disabled=true; btn.textContent='Joining…';
+  btn.disabled=true; btn.textContent='Joining…'; form.setAttribute('aria-busy','true');
+  const controller=new AbortController();
+  const timeout=setTimeout(function(){controller.abort();},12000);
   try{
-    const res=await fetch(SB_URL+'/rest/v1/host_leads', {
-      method:'POST',
+    const res=await fetch(SB_URL+'/rest/v1/rpc/submit_host_lead', {
+      method:'POST', signal:controller.signal,
       headers:{
         'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY,
-        'Content-Type':'application/json', 'Prefer':'return=minimal'
+        'Content-Type':'application/json'
       },
-      body: JSON.stringify({ email:email, context: ctxEl.value || null })
+      body: JSON.stringify({ p_email:email, p_context: ctxEl.value || null })
     });
+    const receipt=await res.json().catch(function(){return null;});
+    if(res.status===429 || res.status===503 || (receipt && receipt.code==='54000')){ throw new Error('temporarily unavailable'); }
     if(!res.ok){ throw new Error('request failed'); }
+    if(!receipt || receipt.ok!==true){ throw new Error('unconfirmed signup'); }
     form.style.display='none';
-    done.classList.add('show');
+    done.classList.add('show'); done.focus();
   }catch(e){
-    err.textContent="Something went wrong, please try again in a moment.";
+    err.textContent=e.name==='AbortError'?"We couldn't confirm your signup in time. Please try again.":e.message==='temporarily unavailable'?"Early access signup is temporarily unavailable. Please try again later.":"Something went wrong, please try again in a moment.";
     err.classList.add('show');
     btn.disabled=false; btn.textContent='Join early access';
-  }
+    err.focus();
+  }finally{clearTimeout(timeout);form.setAttribute('aria-busy','false');}
 });
 </script>
 <!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->

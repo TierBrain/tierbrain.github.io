@@ -352,6 +352,7 @@
   let pairsQ,pptr,board,selLeft,busy;
 
   function startGame(){
+    runEpoch++;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;pendingMove=null; selLeft=null; busy=false;
     pairsQ={1:shuffle(PAIRS[1]),2:shuffle(PAIRS[2]),3:shuffle(PAIRS[3]),4:shuffle(PAIRS[4])}; pptr={1:0,2:0,3:0,4:0};
     hideAllScreens();
@@ -360,7 +361,11 @@
   }
 
   let TIME_LIMIT=120000;   // countdown length, set by the clock selector
-  let playing=false;
+  let playing=false, runEpoch=0;
+  function inRun(callback, delay){
+    const epoch=runEpoch;
+    return setTimeout(function(){ if(playing && epoch===runEpoch) callback(); }, delay);
+  }
   function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
   function tickTimer(){
     const rem=remainingMs();
@@ -415,8 +420,8 @@
     });
   }
 
-  function tapLeft(k){ if(busy) return; if(board.matched[board.leftOrder[k]]) return; selLeft=(selLeft===k?null:k); renderMatch(); }
-  function tapRight(m){ if(busy) return; if(board.matched[board.rightOrder[m]]) return; if(selLeft===null){ setPrompt('Pick a tile on the left first.'); return; } attemptMatch(selLeft,m); }
+  function tapLeft(k){ if(!playing||busy) return; if(board.matched[board.leftOrder[k]]) return; selLeft=(selLeft===k?null:k); renderMatch(); }
+  function tapRight(m){ if(!playing||busy) return; if(board.matched[board.rightOrder[m]]) return; if(selLeft===null){ setPrompt('Pick a tile on the left first.'); return; } attemptMatch(selLeft,m); }
 
   function renderStrikes(){
     const el=$('strikes'); el.innerHTML='';
@@ -429,7 +434,7 @@
   }
 
   function attemptMatch(lk, rm){
-    if(busy) return;
+    if(!playing||busy) return;
     const pIdx=board.leftOrder[lk], rIdx=board.rightOrder[rm];
     if(board.matched[pIdx] || board.matched[rIdx]) return;
     busy=true; answered++;
@@ -447,7 +452,7 @@
     }
     $('progbar').style.width=(correct/20*100)+'%';
     renderMatch();
-    setTimeout(function(){
+    inRun(function(){
       board.flash=null;
       if(!playing) return;
       if(totalWrong>=4){ endOut(); return; }
@@ -456,19 +461,19 @@
       else if(pendingMove==='down'){ toast('Level Down',LVL_COLOR[level]); sDown(); }
       pendingMove=null; busy=false;
       const left=board.pairs.map(function(_,i){ return i; }).filter(function(i){ return !board.matched[i]; });
-      if(left.length===1){ board.matched[left[0]]=true; setPrompt('Last pair matches itself, here\u2019s a new board.'); renderMatch(); setTimeout(function(){ if(playing) newBoard(); }, 520); }
+      if(left.length===1){ board.matched[left[0]]=true; setPrompt('Last pair matches itself, here\u2019s a new board.'); renderMatch(); inRun(function(){ newBoard(); }, 520); }
       else if(boardCleared()){ newBoard(); } else { renderMatch(); }
     }, right?460:760);
   }
 
   function endOut(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
-    playing=false; stopTimer(); sDone();
+    runEpoch++; playing=false; stopTimer(); sDone();
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
@@ -477,7 +482,7 @@
     show('doneScreen');
   }
   function endTimeUp(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
@@ -489,7 +494,7 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
-  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  function toMenu(){ ensureAudio(); runEpoch++; playing=false; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});

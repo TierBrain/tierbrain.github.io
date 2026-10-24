@@ -139,7 +139,7 @@
     <p class="lead">Two teams, one rope and a mud pit in the middle. Everyone enters the same room code and picks a side. Every right answer hauls the rope your way; every wrong one lets it slip. Drag the ribbon over your own line and the other lot end up in the mud.</p>
     <p class="note">Watch your footing: now and then a puller slips, trips or sneezes, and the rope gives a little.</p>
     <div class="field"><label for="nameIn">Nickname</label><input id="nameIn" maxlength="14" placeholder="e.g. QuizFox" autocomplete="off" aria-describedby="nicknameHelp"><p class="note" id="nicknameHelp">Use a nickname and avoid personal details.</p></div>
-    <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="8" placeholder="TUG1" autocomplete="off"></div>
+    <div class="field"><label for="codeIn">Room code (share it)</label><input id="codeIn" class="code" maxlength="12" placeholder="TUG1" autocomplete="off"></div>
     <div class="err" id="menuErr"></div>
     <button class="cta" id="joinBtn">Enter room</button>
     <p class="note">Pick any code and tell your friends: same code, same match.</p>
@@ -180,7 +180,7 @@
       </div>
     </div>
     <div class="qbox"><div class="qtext" id="qtext">…</div></div>
-    <div class="opts" id="opts"></div>
+    <div class="opts" id="opts"></div><button type="button" class="home" id="leaveTug">Leave tug</button>
   </div>
 
   <div class="screen hidden" id="resultScreen">
@@ -192,6 +192,9 @@
   </div>
 </div>
 
+<div id="raceNotice" class="hidden" role="status" aria-live="polite" style="position:fixed;top:12px;left:12px;right:12px;z-index:9999;background:#181b2a;color:white;padding:12px;border:1px solid #f0be57;border-radius:12px;"><span id="raceNoticeText"></span> <button type="button" id="raceRetry">Retry pending action</button> <button type="button" id="raceLeave">Leave room</button></div>
+<script src="vendor/supabase.js"></script>
+<script src="js/race-access.js"></script>
 <script src="tb-races.js?v=1" data-race="tug"></script>
 <script>
 (function(){
@@ -258,48 +261,39 @@
   var me='', code='', side=0, phase='menu', started=false, ended=false;
   var myCorrect=0, myWrong=0, lastPlayers={}, queue=[], qi=0, current=null, locked=false;
   var startTime=0, pollT=null, hbT=null, capT=null, actx=null;
-  var goUsed=0, goAt=0, nowSrv=0, pendingGo=false, myMis=0, lastMisAt=0, seenMis={}, prevT={blue:0,red:0}, endW=0, END='__END__';
+  var myMis=0,lastMisAt=0,seenMis={},prevT={blue:0,red:0};
+  var sessionEpoch=0,race=null,activeRun=null,myId=null,packet=null,polling=false,countT=null,roundEpoch=0,ending=false;
+
+
+  function raceIssue(issue){$('raceNotice').dataset.state=issue.state||'failed';if(issue.recovered){$('raceNotice').classList.add('hidden');return;}
+    $('raceNoticeText').textContent=issue.message||'Room connection interrupted. Retry to confirm your action.';$('raceRetry').hidden=!issue.canRetry;$('raceNotice').classList.remove('hidden');}
+  function raceError(error){if(error&&error.code==='race_left')return;raceIssue({message:race&&race.message?race.message(error):String(error&&error.message||error),canRetry:!!(race&&race.pending())});}
+  function client(){if(!race){if(!window.RaceAccess)throw new Error('Room service did not load. Reload the page to try again.');race=RaceAccess.create(SB_URL,SB_KEY,{family:'tug',edition:'general',onIssue:raceIssue});}return race;}
+  function rememberRoom(value){try{if(value)sessionStorage.setItem('qc_tug_race',JSON.stringify(value));else sessionStorage.removeItem('qc_tug_race');}catch(e){}}
+  function savedRoom(){try{return JSON.parse(sessionStorage.getItem('qc_tug_race')||'null');}catch(e){return null;}}
+  function seeded(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function ownProgress(){var m=race.member();if(!m)return;side=m.side;myCorrect=m.last_correct||0;myWrong=m.last_wrong||0;myMis=m.last_mishaps||0;}
+  function submitProgress(){return race.submit('progress',{correct:myCorrect,level:side,wrong:myWrong,mishaps:myMis}).then(function(row){
+    myCorrect=row.correct;myWrong=row.wrong;myMis=row.mishaps;lastPlayers[myId]={id:myId,name:me,side:side,correct:myCorrect,wrong:myWrong,mis:myMis};return row;});}
 
   function beep(f,d,t,g){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); var o=actx.createOscillator(),v=actx.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(v); v.connect(actx.destination); var n=actx.currentTime; v.gain.setValueAtTime(g||0.12,n); v.gain.exponentialRampToValueAtTime(0.0001,n+(d||0.1)); o.start(n); o.stop(n+(d||0.1)); }catch(e){} }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function shuffle(a,rng){a=a.slice();rng=rng||Math.random;for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
   function show(id){ ['menuScreen','lobbyScreen','countScreen','tugScreen','resultScreen'].forEach(function(s){ $(s).classList.add('hidden'); }); $(id).classList.remove('hidden'); }
   function toast(t){ var el=$('toast'); el.textContent=t; el.classList.add('show'); setTimeout(function(){ el.classList.remove('show'); },1500); }
   function fmtT(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
 
-  function sbBase(){ return SB_URL.replace(/\/+$/,'')+'/rest/v1/scores'; }
-  function sbHeaders(extra){ return Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY}, extra||{}); }
-  function ping(nm, sd, corr, wr){
-    var body=[{quiz_id:QUIZ_ID, group_code:code, name:nm, correct:corr|0, level:sd|0, time_left:(wr|0)+(nm===me?100*myMis:0)}];
-    return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)}).catch(function(){});
-  }
-  function sbRead(){
-    var url=sbBase()+'?select=name,correct,level,time_left,created_at'
-      +'&quiz_id=eq.'+encodeURIComponent(QUIZ_ID)+'&group_code=eq.'+encodeURIComponent(code)
-      +'&order=created_at.desc&limit=400';
-    return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; });
-  }
 
-  function ts(r){ var c=String(r&&r.created_at||''); if(/^\d+(\.\d+)?$/.test(c)) return parseFloat(c)*1000; var x=Date.parse(c); return isNaN(x)?0:x; }
+
+
+
+
+
   /* rows from this round only: a rematch never inherits the last tug's pulls, and an old start signal never restarts it */
-  function processRows(rows){
-    var p={}, go=0, top=0, racing=(phase!=='lobby'&&phase!=='menu');
-    rows.forEach(function(r){ var at=ts(r); if(at>top) top=at; if(r.name===GO && at>go) go=at; });
-    nowSrv=top; goAt=go;
-    if(pendingGo && goAt>goUsed){ goUsed=goAt; pendingGo=false; }
-    endW=0; var endT=0;
-    rows.forEach(function(r){
-      var at=ts(r);
-      if(r.name===END){ if(racing && at>=goUsed && (!endT || at<endT)){ endT=at; endW=r.level; } return; }
-      if(r.name===GO || p[r.name]) return; // first = latest (desc)
-      if(racing ? goUsed-at>12000 : top-at>12000) return;   // still here when the tug began, or still in the lobby
-      var tl=r.time_left|0, now=racing && at>=goUsed;
-      p[r.name]={side:r.level, correct:now?r.correct:0, wrong:now?tl%100:0, mis:now?Math.floor(tl/100):0};
-    });
-    if(me && (side || p[me])){ p[me]={side:side, correct:myCorrect, wrong:myWrong, mis:myMis}; }
-    if(phase==='tug'){ for(var nm in p){ if(nm===me) continue; var m=p[nm].mis||0;
-      if(seenMis[nm]==null) seenMis[nm]=m; else if(m>seenMis[nm]){ seenMis[nm]=m; if(window.TBRace) TBRace.slip(nm,p[nm].side,m,false); } } }
-    lastPlayers=p; return goAt>goUsed;
+  function processRows(rows){var p={};rows.forEach(function(r){if(!r.member_id||r.kind==='end'||r.name==='__GO__')return;var id=r.member_id,at=Date.parse(r.created_at);if(phase==='lobby'&&race.serverNow()-at>30000)return;if(p[id]&&p[id].at>=at)return;
+      p[id]={id:id,name:r.name,side:r.level,correct:r.correct,wrong:r.wrong||0,mis:r.mishaps||0,at:at};});
+    if(phase==='tug'){Object.keys(p).forEach(function(id){if(id===myId)return;var m=p[id].mis;if(seenMis[id]==null)seenMis[id]=m;else if(m>seenMis[id]){seenMis[id]=m;if(window.TBRace)TBRace.slip(p[id].name,p[id].side,m,false);}});}
+    lastPlayers=p;
   }
   function ropeOf(p){
     var R=0;
@@ -309,85 +303,63 @@
     }
     return R;
   }
-  function teamOf(sd){ return Object.keys(lastPlayers).filter(function(nm){ return lastPlayers[nm].side===sd; }).sort().map(function(nm){ return {name:nm, me:nm===me}; }); }
+  function teamOf(sd){return Object.keys(lastPlayers).filter(function(id){return lastPlayers[id].side===sd;}).sort().map(function(id){return{name:lastPlayers[id].name,me:id===myId};});}
   function sideCounts(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b++; else if(p[nm].side===2)r++; } return {blue:b,red:r}; }
   function tallies(p){ var b=0,r=0; for(var nm in p){ if(p[nm].side===1)b+=p[nm].correct; else if(p[nm].side===2)r+=p[nm].correct; } return {blue:b,red:r}; }
 
-  function poll(){
-    return sbRead().then(function(rows){
-      var fresh=processRows(rows);
-      if(phase==='lobby'){ renderLobby(); if(fresh){ goUsed=goAt; if(nowSrv-goAt<8000 && !started) beginCountdown(); } }
-      else if(phase==='tug' && endW){ finish(endW===3?0:endW, true); }
-      else if(phase==='tug'){ var tt=tallies(lastPlayers); if(window.TBRace){ if(tt.blue>prevT.blue) TBRace.heave(1); if(tt.red>prevT.red) TBRace.heave(2); } prevT=tt; renderTug(); checkEnd(); }
-    });
+  function poll(){if(phase==='menu'||phase==='leaving'||polling||!race||!race.current())return Promise.resolve();polling=true;var epoch=sessionEpoch;
+    return race.state().then(function(next){if(epoch!==sessionEpoch||!next)return;packet=next;myId=next.member.id;me=next.member.name;
+      if(activeRun&&next.room.run_id!==activeRun){roundEpoch++;activeRun=null;started=false;ended=false;ending=false;locked=false;if(capT)clearInterval(capT);if(countT)clearInterval(countT);phase='lobby';show('lobbyScreen');if(window.TBRace)TBRace.tugMenu();}
+      if(!race.busy())ownProgress();processRows(next.rows||[]);
+      if(phase==='lobby'){
+        renderLobby();
+        if(next.room.phase==='playing'&&(next.room.roster||[]).some(function(member){return member.id===myId;})){race.useRun(next.room.run_id);activeRun=next.room.run_id;beginCountdown();}
+        else if(next.room.phase==='finished')finish((next.room.result||{}).winner===3?0:(next.room.result||{}).winner||0);
+      }else if((phase==='tug'||phase==='countdown')&&next.room.phase==='finished')finish((next.room.result||{}).winner===3?0:(next.room.result||{}).winner||0);
+      else if(phase==='tug'){var tt=tallies(lastPlayers);if(window.TBRace){if(tt.blue>prevT.blue)TBRace.heave(1);if(tt.red>prevT.red)TBRace.heave(2);}prevT=tt;renderTug();checkEnd();}
+    }).catch(function(error){if(epoch===sessionEpoch)raceError(error);}).then(function(){if(epoch===sessionEpoch)polling=false;});
   }
-  function startPoll(){ if(pollT) clearInterval(pollT); pollT=setInterval(poll,POLL_MS); poll(); }
-  function startHB(){ if(hbT) clearInterval(hbT); hbT=setInterval(function(){ if(phase==='lobby'||(phase==='tug'&&side)){ ping(me,side,myCorrect,myWrong); } },HB_MS); }
+  function startPoll(){if(pollT)clearInterval(pollT);pollT=setInterval(poll,POLL_MS);poll();}
+  function startHB(){if(hbT)clearInterval(hbT);hbT=setInterval(function(){if(race&&race.current()&&!race.busy()&&phase!=='menu'&&phase!=='leaving')race.heartbeat().catch(raceError);},10000);}
   function stopHB(){ if(hbT){ clearInterval(hbT); hbT=null; } }
 
-  function enterRoom(){
-    var n=($('nameIn').value||'').trim(); var c=($('codeIn').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(n.length<1){ $('menuErr').textContent='Enter your name.'; return; }
-    if(c.length<2){ $('menuErr').textContent='Enter a room code (2+ letters/numbers).'; return; }
-    me=n; code=c; side=0; started=false; ended=false; myCorrect=0; myWrong=0; myMis=0; lastPlayers={}; goUsed=0; pendingGo=false;
-    try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-    $('lobbyCode').textContent=code; phase='lobby'; show('lobbyScreen'); renderLobby();
-    ping(me,0,0,0).then(startPoll); startHB();
+  function enterRoom(){var n=($('nameIn').value||'').trim(),c=($('codeIn').value||'').trim().toUpperCase();
+    if(!n||n.length>14){$('menuErr').textContent='Enter a nickname of 1–14 characters.';return;}if(!/^[A-Z0-9]{4,12}$/.test(c)){$('menuErr').textContent='Use a room code of 4–12 letters or numbers.';return;}
+    var epoch=++sessionEpoch;polling=false;$('joinBtn').disabled=true;$('menuErr').textContent='Connecting…';
+    try{client().enter(c,n).then(function(next){if(epoch!==sessionEpoch||!next)return;packet=next;me=next.member.name;myId=next.member.id;code=c;side=next.member.side;activeRun=null;started=false;ended=false;ending=false;roundEpoch++;ownProgress();lastPlayers={};
+      rememberRoom({code:c,name:me});$('lobbyCode').textContent=code;phase='lobby';show('lobbyScreen');processRows(next.rows||[]);renderLobby();startPoll();startHB();$('menuErr').textContent='';
+    }).catch(function(error){if(epoch!==sessionEpoch)return;$('menuErr').textContent=race.message(error);raceError(error);}).then(function(){$('joinBtn').disabled=false;});}catch(error){$('joinBtn').disabled=false;$('menuErr').textContent=String(error.message||error);raceError(error);}
   }
-  function pickSide(s){ side=s; ping(me,side,myCorrect,myWrong); startHB(); renderLobby(); }
-  function leave(){ phase='menu'; started=false; if(pollT)clearInterval(pollT); stopHB(); if(capT)clearInterval(capT); show('menuScreen'); if(window.TBRace) TBRace.tugMenu(); }
-
-  function renderLobby(){
-    var rb=$('rosterBlue'), rr=$('rosterRed'), wait=[]; rb.innerHTML=''; rr.innerHTML='';
-    Object.keys(lastPlayers).sort().forEach(function(nm){
-      var sd=lastPlayers[nm].side; if(sd!==1 && sd!==2){ wait.push(nm===me?'you':nm); return; }
-      var d=document.createElement('div'); d.textContent=nm+(nm===me?' (you)':'');
-      (sd===1?rb:rr).appendChild(d);
-    });
-    $('colBlue').classList.toggle('mine', side===1);
-    $('colRed').classList.toggle('mine', side===2);
-    var c=sideCounts(lastPlayers); var ready=(c.blue>=1 && c.red>=1 && side!==0);
-    $('goBtn').disabled=!ready;
-    $('lobbyNote').textContent = (ready ? 'Ready! Anyone can start.' : side===0 ? 'Pick a side to join the tug.' : 'Both sides need at least one puller.')
-      + (wait.length ? ' Still choosing: '+wait.join(', ')+'.' : '') + (ready && Math.max(c.blue,c.red)>Math.min(c.blue,c.red)+1 ? ' The teams are uneven: someone could swap sides.' : '');
+  function pickSide(s){if(!race||!packet||packet.room.phase!=='lobby'||race.busy())return;race.heartbeat({side:s}).then(function(next){packet=next;side=next.member.side;return poll();}).catch(raceError);}
+  function leave(){if(!race||!race.current()){phase='menu';show('menuScreen');return;}phase='leaving';sessionEpoch++;polling=false;roundEpoch++;started=false;locked=true;if(pollT)clearInterval(pollT);stopHB();if(capT)clearInterval(capT);if(countT)clearInterval(countT);
+    race.leave().then(function(){rememberRoom(null);activeRun=null;packet=null;myId=null;phase='menu';$('raceNotice').classList.add('hidden');show('menuScreen');if(window.TBRace)TBRace.tugMenu();}).catch(raceError);
   }
 
-  function pressGo(){ if(started) return; ping(GO,0,0,0); goUsed=Math.max(goUsed,nowSrv); pendingGo=true; beginCountdown(); }
-  function beginCountdown(){
-    if(started) return; started=true; phase='countdown'; show('countScreen');
-    var n=3; $('countNum').textContent=n; beep(440,0.12,'square',0.13); if(window.TBRace) TBRace.countdown(3, {blue:teamOf(1), red:teamOf(2)});
-    var iv=setInterval(function(){
-      n--;
-      if(n>0){ $('countNum').textContent=n; beep(440,0.12,'square',0.13); if(window.TBRace) TBRace.countdown(n); }
-      else if(n===0){ $('countNum').textContent='PULL!'; beep(880,0.25,'square',0.16); if(window.TBRace) TBRace.countdown(0); }
-      else { clearInterval(iv); startTug(); }
-    },1000);
+  function renderLobby(){var rb=$('rosterBlue'),rr=$('rosterRed'),wait=[];rb.innerHTML='';rr.innerHTML='';
+    Object.keys(lastPlayers).sort().forEach(function(id){var p=lastPlayers[id],sd=p.side;if(sd!==1&&sd!==2){wait.push(id===myId?'you':p.name);return;}var d=document.createElement('div');d.textContent=p.name+(id===myId?' (you)':'');(sd===1?rb:rr).appendChild(d);});
+    $('colBlue').classList.toggle('mine',side===1);$('colRed').classList.toggle('mine',side===2);
+    var lobby=packet&&packet.room.phase==='lobby',c=sideCounts(lastPlayers),ready=c.blue>=1&&c.red>=1&&side!==0;
+    $('joinBlue').disabled=!lobby||race.busy();$('joinRed').disabled=!lobby||race.busy();$('goBtn').hidden=!race.isHost();$('goBtn').textContent=lobby?'Start the tug':'Start a new round';$('goBtn').disabled=race.busy()||(lobby&&!ready);
+    $('lobbyNote').textContent=!lobby?'This tug is in progress. New arrivals can wait here for the next round.':side===0?'Pick a side to join the tug.':!ready?'Both sides need at least one puller.':race.isHost()?'Both teams are ready. You host this room and can start.':'Both teams are ready. Waiting for the host.';
+    if(wait.length)$('lobbyNote').textContent+=' Still choosing: '+wait.join(', ')+'.';
   }
 
-  function startTug(){
-    phase='tug'; startTime=Date.now(); queue=shuffle(POOL); qi=0; seenMis={}; lastMisAt=Date.now(); prevT=tallies(lastPlayers);
-    show('tugScreen'); renderTug(); renderQuestion();
-    if(capT) clearInterval(capT);
-    capT=setInterval(function(){
-      if(phase!=='tug') return;
-      var left=CAP-(Date.now()-startTime)/1000;
-      $('capClock').textContent=fmtT(left); $('capClock').classList.toggle('low', left<20);
-      if(left<=0){ checkEnd(true); return; }
-      maybeSlip();
-    },500);
+  function pressGo(){if(!race||!race.isHost()||race.busy())return;$('goBtn').disabled=true;race.state().then(function(next){packet=next;return next.room.phase==='lobby'?race.start({}):race.reset();}).then(poll).catch(raceError);}
+  function beginCountdown(){if(started)return;started=true;phase='countdown';show('countScreen');var epoch=++roundEpoch;
+    function tick(){if(epoch!==roundEpoch)return;var left=Date.parse(packet.room.play_at)-race.serverNow();if(left<=0){clearInterval(countT);countT=null;startTug();return;}var n=Math.ceil(left/1000);$('countNum').textContent=n;if(window.TBRace)TBRace.countdown(n,{blue:teamOf(1),red:teamOf(2)});}
+    countT=setInterval(tick,100);tick();
+  }
+
+  function startTug(){phase='tug';startTime=Date.now()-(race.serverNow()-Date.parse(packet.room.play_at));ownProgress();queue=shuffle(POOL,seeded(packet.room.seed));qi=myCorrect+myWrong;seenMis={};lastMisAt=Date.now();prevT=tallies(lastPlayers);locked=false;
+    show('tugScreen');renderTug();renderQuestion();if(capT)clearInterval(capT);
+    capT=setInterval(function(){if(phase!=='tug')return;var left=(Date.parse(packet.room.deadline)-race.serverNow())/1000;$('capClock').textContent=fmtT(left);$('capClock').classList.toggle('low',left<20);if(left<=0){locked=true;checkEnd(true);return;}maybeSlip();},500);
   }
   /* a spanner in the works: now and then your own puller slips, trips or sneezes, and everyone sees it.
      Bigger teams have more pullers to come a cropper, which evens things up a little. */
-  function maybeSlip(){
-    if(phase!=='tug' || ended || !side || locked || myMis>=2) return;
-    if(Date.now()-startTime<8000 || Date.now()-lastMisAt<14000) return;
-    var n=Object.keys(lastPlayers).filter(function(k){ return lastPlayers[k].side; }).length||1;
-    if(Math.random() >= 0.5/MISHAP_EVERY/n) return;
-    myMis++; lastMisAt=Date.now(); lastPlayers[me]={side:side, correct:myCorrect, wrong:myWrong, mis:myMis};
-    ping(me,side,myCorrect,myWrong); if(window.TBRace) TBRace.slip(me,side,myMis,true);
-    locked=true; $('opts').classList.add('locked','tbr-wait');
-    renderTug(); checkEnd(); if(ended) return;
-    setTimeout(function(){ if(phase==='tug' && !ended){ locked=false; $('opts').classList.remove('locked','tbr-wait'); } }, 1700);
+  function maybeSlip(){if(phase!=='tug'||ended||!side||locked||race.busy()||myMis>=2)return;if(Date.now()-startTime<8000||Date.now()-lastMisAt<14000)return;
+    var n=Object.keys(lastPlayers).filter(function(id){return lastPlayers[id].side;}).length||1;if(Math.random()>=0.5/MISHAP_EVERY/n)return;
+    myMis++;lastMisAt=Date.now();locked=true;$('opts').classList.add('locked','tbr-wait');var epoch=roundEpoch;
+    submitProgress().then(function(){if(epoch!==roundEpoch||phase!=='tug')return;if(window.TBRace)TBRace.slip(me,side,myMis,true);renderTug();checkEnd();setTimeout(function(){if(epoch===roundEpoch&&phase==='tug'&&!ended){locked=false;$('opts').classList.remove('locked','tbr-wait');}},1700);}).catch(function(error){raceError(error);poll();});
   }
   function renderTug(){
     var R=ropeOf(lastPlayers), t=tallies(lastPlayers);
@@ -409,32 +381,18 @@
       box.appendChild(b);
     });
   }
-  function answer(o,btn){
-    if(locked||phase!=='tug') return; locked=true;
-    var ok=(o===current[1]);
-    $('opts').classList.add('locked');
-    if(ok){ btn.classList.add('good'); beep(720,0.07,'sine',0.13); myCorrect++; if(window.TBRace) TBRace.heave(side,true); }
-    else { btn.classList.add('bad'); beep(200,0.13,'sawtooth',0.12); myWrong++; if(window.TBRace) TBRace.say('Wrong! The rope slips back a little.','bad'); else toast('Wrong! The rope slips back a little.'); var right=$('opts').querySelector('[data-a="1"]'); if(right) right.classList.add('good'); }
-    if(side){ lastPlayers[me]={side:side,correct:myCorrect,wrong:myWrong,mis:myMis}; }
-    ping(me,side,myCorrect,myWrong);
-    renderTug(); checkEnd();
-    if(ended) return;
-    setTimeout(function(){ if(phase==='tug') renderQuestion(); }, ok?360:1100);
+  function answer(o,btn){if(locked||phase!=='tug'||ended||race.busy()||race.serverNow()>=Date.parse(packet.room.deadline))return;locked=true;var ok=o===current[1],epoch=roundEpoch;
+    $('opts').classList.add('locked');Array.prototype.forEach.call($('opts').children,function(button){button.disabled=true;});
+    if(ok){btn.classList.add('good');beep(720,0.07,'sine',0.13);myCorrect++;}else{btn.classList.add('bad');beep(200,0.13,'sawtooth',0.12);myWrong++;var right=$('opts').querySelector('[data-a="1"]');if(right)right.classList.add('good');}
+    submitProgress().then(function(){if(epoch!==roundEpoch||phase!=='tug')return;renderTug();checkEnd();if(ended)return;setTimeout(function(){if(epoch===roundEpoch&&phase==='tug'&&!ended)renderQuestion();},ok?360:1100);}).catch(function(error){raceError(error);poll();});
   }
-  function checkEnd(timeup){
-    if(ended || phase!=='tug') return;
-    var R=ropeOf(lastPlayers);
-    var winner=0;
-    if(R>=THRESH) winner=2;
-    else if(R<=-THRESH) winner=1;
-    else if(timeup){ winner = R>0?2 : R<0?1 : 0; }
-    if(winner!==0 || timeup){ ping(END,winner||3,0,0); finish(winner); }
+  function checkEnd(timeup){if(ended||ending||phase!=='tug'||race.busy())return;var R=ropeOf(lastPlayers);if(Math.abs(R)<THRESH&&!timeup&&race.serverNow()<Date.parse(packet.room.deadline))return;
+    ending=true;locked=true;race.submit('end',{}).then(function(row){ending=false;if(phase==='tug')finish(row.level===3?0:row.level);}).catch(function(error){ending=false;raceError(error);poll();});
   }
   /* the first phone to see the rope cross the line (or the clock run out) tells everyone, so every phone ends the same tug */
-  function finish(winner){
-    ended=true; phase='results'; stopHB(); if(capT) clearInterval(capT);
-    if(window.TBRace){ TBRace.tugEnd(winner, function(){ if(phase==='results') finishShow(winner); }); return; }
-    finishShow(winner);
+  function finish(winner){if(ended)return;ended=true;ending=false;phase='results';roundEpoch++;stopHB();if(capT)clearInterval(capT);if(countT)clearInterval(countT);
+    $('againBtn').textContent=race.isHost()?'Host a rematch':'Wait for the next round';
+    if(window.TBRace){TBRace.tugEnd(winner,function(){if(phase==='results')finishShow(winner);});return;}finishShow(winner);
   }
   function finishShow(winner){
     show('resultScreen'); if(window.TBRace) TBRace.tugResult();
@@ -444,13 +402,13 @@
     else { wb.textContent=nameOf[winner]+' wins! \uD83C\uDFC6'; wb.style.color=(winner===1?'var(--blue)':'var(--red)'); beep(990,0.3,'square',0.15); }
     // MVP = most correct
     var mvp=null,best=-1;
-    for(var nm in lastPlayers){ if(lastPlayers[nm].correct>best){ best=lastPlayers[nm].correct; mvp=nm; } }
+    for(var id in lastPlayers){if(lastPlayers[id].correct>best){best=lastPlayers[id].correct;mvp=id;}}
     var t=tallies(lastPlayers);
     var pl=$('placard'); pl.innerHTML='';
     function row(label,val,col){ var d=document.createElement('div'); d.className='place'; d.innerHTML='<span style="flex:1;color:'+col+'">'+label+'</span><span>'+val+' pulls</span>'; pl.appendChild(d); }
     row('Blue team', t.blue, 'var(--blue)');
     row('Red team', t.red, 'var(--red)');
-    if(mvp){ var d=document.createElement('div'); d.className='place'; d.innerHTML='<span style="flex:1">\uD83D\uDCAA MVP: '+esc(mvp)+(mvp===me?' (you)':'')+'</span><span>'+best+'</span>'; pl.appendChild(d); }
+    if(mvp){ var d=document.createElement('div'); d.className='place'; d.innerHTML='<span style="flex:1">\uD83D\uDCAA MVP: '+esc(lastPlayers[mvp].name)+(mvp===myId?' (you)':'')+'</span><span>'+best+'</span>'; pl.appendChild(d); }
   }
 
   // wiring
@@ -459,12 +417,13 @@
   $('joinBlue').addEventListener('click',function(){ pickSide(1); });
   $('joinRed').addEventListener('click',function(){ pickSide(2); });
   $('goBtn').addEventListener('click',pressGo);
-  $('leaveBtn').addEventListener('click',leave);
+  $('leaveBtn').addEventListener('click',leave);$('leaveTug').addEventListener('click',leave);
   $('menuBtn').addEventListener('click',leave);
-  $('againBtn').addEventListener('click',function(){
-    started=false; ended=false; myCorrect=0; myWrong=0; myMis=0; pendingGo=false; phase='lobby'; show('lobbyScreen'); if(window.TBRace) TBRace.tugMenu();
-    ping(me,side,0,0).then(poll); startHB();
+  $('againBtn').addEventListener('click',function(){if(race.busy())return;phase='lobby';show('lobbyScreen');if(window.TBRace)TBRace.tugMenu();startHB();
+    if(race.isHost())race.state().then(function(next){packet=next;return race.reset();}).then(function(){started=false;ended=false;ending=false;activeRun=null;return poll();}).catch(raceError);else poll();
   });
+  $('raceRetry').addEventListener('click',function(){if(race)race.retry();});$('raceLeave').addEventListener('click',leave);
+  var saved=savedRoom();if(saved&&/^[A-Z0-9]{4,12}$/.test(saved.code)){$('nameIn').value=saved.name;$('codeIn').value=saved.code;enterRoom();}
   document.addEventListener('keydown',function(e){
     if(phase!=='tug') return; var n=parseInt(e.key,10);
     if(n>=1&&n<=4){ var b=$('opts').children[n-1]; if(b) b.click(); }

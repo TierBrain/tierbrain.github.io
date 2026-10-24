@@ -74,7 +74,7 @@
       <button class="opt spd" data-ms="450" aria-pressed="false">Gallop<small>Fast words</small></button>
     </div>
     <button class="go" id="soloBtn">Play on your own</button>
-    <div class="field"><label for="codeIn">Or play with friends: room code</label><input id="codeIn" class="code" maxlength="8" placeholder="SALOON" autocomplete="off"></div>
+    <div class="field"><label for="codeIn">Or play with friends: room code</label><input id="codeIn" class="code" maxlength="12" placeholder="SALOON" autocomplete="off"></div>
     <div class="err" id="menuErr" role="alert"></div>
     <button class="go alt" id="joinBtn">Enter the saloon</button>
     <p class="note">Everyone enters the same code on their own phone. <span id="bestNote"></span></p>
@@ -132,6 +132,8 @@
   </section>
 </div>
 <script src="ff-sets-bible.js?v=1"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/race-access.js"></script>
 <script src="first-finger.js?v=1" data-edition="bib"></script>
 <button type="button" class="tb-snd" id="tbSnd" aria-pressed="true" aria-label="Sound on">🔊</button><div class="tb-sr" id="tbSay" role="status" aria-live="polite"></div>
 <script>

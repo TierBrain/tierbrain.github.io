@@ -373,13 +373,14 @@
   // ============ state ============
   let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
   let picked=null, phase=1;
-  let startT=0,timerId=null;
+  let startT=0,timerId=null,runId=0;
 
   const $=id=>document.getElementById(id);
   function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
   let queues,ptr;
 
   function startGame(){
+    runId++;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
     queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
     hideAllScreens();
@@ -456,6 +457,7 @@
   const RINGTOP={1:'9%',2:'27%',3:'50%'};
   function throwDart(ring){
     if(phase!==2 || !playing) return; phase=3;
+    const run=runId;
     const right=(picked===current.correct);
     const delta=right?PAY[ring].r:PAY[ring].w;
     correct+=delta; answered++;
@@ -468,7 +470,7 @@
     $('shotResult').innerHTML=(right?'<b style="color:var(--right)">Right!</b> ':'<b style="color:var(--wrong)">Wrong.</b> ')+sign+delta+' pts'+(right?'':' &nbsp;·&nbsp; it was '+escapeHtml(current.correct));
     $('throwPrompt').textContent=PAY[ring].name+(right?': nailed it':': ouch');
     setTimeout(function(){
-      if(!playing) return;
+      if(!playing || run!==runId) return;
       if(totalWrong>=4){ endOut(); return; }
       if(answered>=20){ endDone(); return; }
       if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }

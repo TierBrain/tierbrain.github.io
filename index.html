@@ -280,7 +280,7 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
       <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
   </header>
-  <main id="main">
+  <main id="main" tabindex="-1">
 
   <section class="hero" aria-labelledby="heroTitle">
     <div class="hero-copy">
@@ -645,7 +645,11 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
   function chk(){ var y=window.scrollY||document.documentElement.scrollTop; var s=y>500;
     if(s!==shown){shown=s;btn.classList.toggle('show',s);} }
   window.addEventListener('scroll',chk,{passive:true}); chk();
-  btn.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+  btn.addEventListener('click',function(){
+    var reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+    var home=document.querySelector('header .brand'); if(home) home.focus({preventScroll:true});
+  });
 })();
 </script>
 <script>

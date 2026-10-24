@@ -250,7 +250,7 @@ const document={getElementById(id){if(!els.has(id))els.set(id,new E());return el
 const api={savedPlayerCode:()=>'',rememberPlayer(){},message:e=>e.message||'Connection failed',
  answer(code,qid,choice){requests.push({code,qid,choice});return new Promise((a,b)=>{resolveAnswer=a;rejectAnswer=b;});},
  buzz:async(code,qid)=>({q_id:qid,player_id:'member-1'}),membership:async()=>null};
-const ctx=vm.createContext({document,ShowAccess:{create:()=>api},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},location:{search:'',hash:'',reload(){}},window:{},navigator:{},console,setTimeout,clearTimeout,setInterval:()=>1,clearInterval,Map,JSON,Date,Number,Promise,Array});
+const ctx=vm.createContext({document,ShowAccess:{create:()=>api},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},location:{search:'',hash:'',reload(){}},window:{},navigator:{},console,setTimeout,clearTimeout,setInterval:()=>1,clearInterval,Map,JSON,Date,Number,Promise,Array,URLSearchParams});
 """
         body = r"""
 const run=s=>vm.runInContext(s,ctx),q=n=>'d96b154f-08cc-4e4e-9d67-fcc289762969:p0q'+n;

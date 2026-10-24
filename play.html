@@ -186,8 +186,11 @@ function connectionError(error){$('connectionStatus').textContent=access.message
 function clearConnectionError(){$('connectionStatus').hidden=true;$('connectionRetry').hidden=true;}
 
 function prefillCode(){
-  const m=location.search.match(/[?&]c=([^&]+)/) || location.hash.match(/#([A-Za-z0-9]+)/);
-  if(m) $('code').value=decodeURIComponent(m[1]).toUpperCase().slice(0,5);
+  // URLSearchParams tolerates malformed percent-encoding without interrupting
+  // the saved-member reconnect that follows this setup.
+  const hash=location.hash.match(/^#([A-Za-z0-9]+)/);
+  const raw=new URLSearchParams(location.search).get('c') || (hash&&hash[1]) || '';
+  if(raw) $('code').value=raw.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
   const ci=$('code');
   if(ci){ ci.addEventListener('input', peekTeams); peekTeams(); }
 }

@@ -24,13 +24,14 @@
 
   // ============ state ============
   let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
-  let startT=0,timerId=null;
+  let startT=0,timerId=null,advanceTimer=null,runGeneration=0;
 
   const $=id=>document.getElementById(id);
   function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
   let queues,ptr;
 
   function startGame(){
+    runGeneration++; clearTimeout(advanceTimer); advanceTimer=null;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
     queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
     hideAllScreens();
@@ -88,7 +89,10 @@
   }
 
   function answer(choice,btn){
-    if(locked) return; locked=true;
+    if(!playing||locked) return;
+    if(remainingMs()<=0){ endTimeUp(); return; }
+    locked=true;
+    const generation=runGeneration;
     const right=(choice===current.correct);
     answered++;
     const box=$('opts'); box.classList.add('locked');
@@ -111,8 +115,9 @@
     }
     $('progbar').style.width=(answered/20*100)+'%';
 
-    setTimeout(()=>{
-      if(!playing) return;
+    advanceTimer=setTimeout(()=>{
+      if(!playing||generation!==runGeneration) return;
+      advanceTimer=null;
       if(totalWrong>=4){ endOut(); return; }
       if(answered>=20){ endDone(); return; }
       if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
@@ -123,13 +128,13 @@
   }
 
   function endOut(){
-    playing=false; stopTimer(); sOut();
+    playing=false; clearTimeout(advanceTimer); advanceTimer=null; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
-    playing=false; stopTimer(); sDone();
+    playing=false; clearTimeout(advanceTimer); advanceTimer=null; stopTimer(); sDone();
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
@@ -138,7 +143,7 @@
     show('doneScreen');
   }
   function endTimeUp(){
-    playing=false; stopTimer(); sOut();
+    playing=false; clearTimeout(advanceTimer); advanceTimer=null; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
@@ -150,7 +155,7 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
-  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  function toMenu(){ ensureAudio(); playing=false; clearTimeout(advanceTimer); advanceTimer=null; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
@@ -174,8 +179,9 @@
   (function(){ const row=$('timeRow'); if(!row) return;
     TIME_OPTS.forEach(o=>{ const b=document.createElement('button');
       b.className='timeopt'+(o.ms===TIME_LIMIT?' sel':''); b.textContent=o.n+' · '+o.l;
+      b.setAttribute('aria-pressed', String(o.ms===TIME_LIMIT));
       b.addEventListener('click',()=>{ ensureAudio(); TIME_LIMIT=o.ms;
-        [...row.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); beep(560,0.06,'sine',0.12); });
+        [...row.children].forEach(c=>{ c.classList.remove('sel'); c.setAttribute('aria-pressed','false'); }); b.classList.add('sel'); b.setAttribute('aria-pressed','true'); beep(560,0.06,'sine',0.12); });
       row.appendChild(b); });
   })();
   // ============ local leaderboard (per device) ============

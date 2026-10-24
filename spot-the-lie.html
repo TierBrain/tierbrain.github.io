@@ -474,6 +474,7 @@
   let queues,ptr;
 
   function startGame(){
+    runEpoch++;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
     queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
     hideAllScreens();
@@ -482,7 +483,11 @@
   }
 
   let TIME_LIMIT=120000;   // countdown length, set by the clock selector
-  let playing=false;
+  let playing=false, runEpoch=0;
+  function inRun(callback, delay){
+    const epoch=runEpoch;
+    return setTimeout(function(){ if(playing && epoch===runEpoch) callback(); }, delay);
+  }
   function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
   function tickTimer(){
     const rem=remainingMs();
@@ -532,10 +537,10 @@
   }
 
   function answer(choice,btn){
-    if(locked) return; locked=true;
+    if(!playing||locked) return; locked=true;
     const right=(choice===current.correct);
     answered++;
-    const box=$('opts'); box.classList.add('locked'); setTimeout(function(){ if(window.LX) LX.reveal(current, right, box); }, 0); startT += 900;   /* the clock pauses for the reveal */
+    const box=$('opts'); box.classList.add('locked'); inRun(function(){ if(window.LX) LX.reveal(current, right, box); }, 0); startT += 900;   /* the clock pauses for the reveal */
     // reveal
     [...box.children].forEach(c=>{
       const label=c.querySelector('.txt').textContent;
@@ -556,7 +561,7 @@
     }
     $('progbar').style.width=(answered/20*100)+'%';
 
-    setTimeout(()=>{
+    inRun(()=>{
       if(!playing) return;
       if(totalWrong>=4){ endOut(); return; }
       if(answered>=20){ endDone(); return; }
@@ -568,13 +573,13 @@
   }
 
   function endOut(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
-    playing=false; stopTimer(); sDone();
+    runEpoch++; playing=false; stopTimer(); sDone();
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
@@ -583,7 +588,7 @@
     show('doneScreen');
   }
   function endTimeUp(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
@@ -595,7 +600,7 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
-  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  function toMenu(){ ensureAudio(); runEpoch++; playing=false; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
