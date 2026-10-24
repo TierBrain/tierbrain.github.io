@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Run complete game pages against disposable real Auth and PostgreSQL.
 
-Only synthetic data is used. Auth and REST publish ephemeral loopback ports so
-the host browser can reach the internal Compose network. All browser requests
-are intercepted; the hosted Supabase project is never contacted.
+Only synthetic data is used. Intercepted browser HTTP is carried over a
+persistent docker-exec pipe into the internal Compose network. There are no
+host ports, public fixture listeners or hosted Supabase requests.
 """
 import argparse
+import base64
 from datetime import datetime, timezone
 import hashlib
 import importlib.util
@@ -14,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import select
 import subprocess
 import tempfile
 import traceback
@@ -26,6 +28,22 @@ DOCKER = ['docker','--host=unix:///var/run/docker.sock']
 ENV = {k:v for k,v in os.environ.items() if k not in {
     'DOCKER_HOST','DOCKER_CONTEXT','DOCKER_TLS','DOCKER_TLS_VERIFY','DOCKER_CERT_PATH'}}
 FAMILIES = ('big_quiz','throne','creak','standing','circuit','spines')
+
+TRANSPORT = r"""
+const readline=require('node:readline');
+const input=readline.createInterface({input:process.stdin,terminal:false});
+input.on('line',async line=>{
+  try {
+    const q=JSON.parse(line), base={'/auth/v1':'http://auth:9999','/rest/v1':'http://rest:3000'}[q.prefix];
+    if(!base||typeof q.path!=='string'||!q.path.startsWith('/'))throw Error('Invalid fixture target');
+    const response=await fetch(base+q.path,{method:q.method,headers:q.headers,
+      body:q.body===null?undefined:Buffer.from(q.body,'base64'),
+      redirect:'error',signal:AbortSignal.timeout(20000)});
+    const body=Buffer.from(await response.arrayBuffer()).toString('base64');
+    process.stdout.write(JSON.stringify({status:response.status,headers:Object.fromEntries(response.headers),body})+'\n');
+  } catch(error) {process.stdout.write(JSON.stringify({error:'Internal fixture HTTP transport failed: '+error.name})+'\n');}
+});
+"""
 
 
 def run(family, report_path):
@@ -54,12 +72,7 @@ def run(family, report_path):
 
     with tempfile.TemporaryDirectory(prefix=project+'-') as temp:
         stack = Path(temp)
-        compose_text = (SHARED/'compose.yaml').read_text()
-        for service,port in (('auth',9999),('rest',3000)):
-            compose_text = compose_text.replace('  '+service+':\n',
-                '  '+service+':\n    ports:\n      - target: '+str(port)+
-                '\n        published: "0"\n        host_ip: 127.0.0.1\n        protocol: tcp\n')
-        (stack/'compose.yaml').write_text(compose_text)
+        (stack/'compose.yaml').write_text((SHARED/'compose.yaml').read_text())
         env_file = stack/'.env'
         fd = os.open(env_file,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
         with os.fdopen(fd,'w') as handle:
@@ -71,6 +84,7 @@ def run(family, report_path):
                                 'ON_ERROR_STOP=1','-U','postgres','-d','postgres'],text,70)
         def node(text):return dc(['exec','-T','driver','node','--input-type=module'],text,70)
         browser_env = None
+        bridge = None
         try:
             migrations = sorted((ROOT/'supabase/migrations').glob('*.sql'))
             if len(migrations) != 7:
@@ -115,25 +129,31 @@ def run(family, report_path):
                 labels = container['Config']['Labels']
                 if labels.get('com.docker.compose.project') != project:raise AssertionError('Wrong fixture project')
                 bindings = container['HostConfig'].get('PortBindings') or {}
-                service = labels['com.docker.compose.service']
-                expected = {'auth':'9999/tcp','rest':'3000/tcp'}.get(service)
-                if set(bindings) != ({expected} if expected else set()):raise AssertionError('Unexpected exposed service')
-                if any(binding['HostIp'] != '127.0.0.1' for ports in bindings.values() for binding in ports):
-                    raise AssertionError('Fixture port is not confined to loopback')
+                if bindings:raise AssertionError('Host ports are forbidden')
                 networks.update(value['NetworkID'] for value in container['NetworkSettings']['Networks'].values())
             if len(networks) != 1:raise AssertionError('Expected one fixture network')
             if not json.loads(command(DOCKER+['network','inspect',*networks]))[0]['Internal']:
                 raise AssertionError('Fixture network must be internal')
-            def address(service,port):
-                value = dc(['port',service,str(port)]).strip()
-                if not re.fullmatch(r'127\.0\.0\.1:\d+',value):raise AssertionError('Invalid loopback mapping')
-                return 'http://'+value
+            dc(['exec','-T','driver','node','-e',
+                "require('fs').writeFileSync('/tmp/browser-transport.cjs',require('fs').readFileSync(0))"],TRANSPORT,30)
+            bridge = subprocess.Popen(compose+['exec','-T','driver','node','/tmp/browser-transport.cjs'],
+                stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+                text=True,bufsize=1,env=ENV)
+            def transport(prefix,path,method,headers,body):
+                bridge.stdin.write(json.dumps({'prefix':prefix,'path':path,'method':method,'headers':headers,
+                    'body':None if body is None else base64.b64encode(body).decode('ascii')})+'\n')
+                bridge.stdin.flush()
+                if not select.select([bridge.stdout],[],[],25)[0]:
+                    raise RuntimeError('Internal fixture HTTP pipe timed out')
+                response = json.loads(bridge.stdout.readline())
+                if response.get('error'):raise RuntimeError(response['error'])
+                return response['status'],base64.b64decode(response['body']),response['headers']
             from playwright.sync_api import sync_playwright
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(headless=True,
                     executable_path=os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE') or None,
                     args=['--no-sandbox'])
-                browser_env = BrowserEnv(browser,ROOT,address('auth',9999),address('rest',3000),report,report_path)
+                browser_env = BrowserEnv(browser,ROOT,transport,report,report_path)
                 spec = importlib.util.spec_from_file_location('gameplay_'+family,ROOT/('tests/gameplay_'+family+'.py'))
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -152,6 +172,12 @@ def run(family, report_path):
             report['traceback'] = redact(traceback.format_exc())[-12000:]
             print(report['error'],flush=True)
         finally:
+            if bridge is not None:
+                bridge.stdin.close()
+                try:bridge.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    bridge.kill()
+                    bridge.wait(timeout=5)
             try:
                 dc(['down','--volumes','--remove-orphans'],timeout=90)
                 if dc(['ps','--all','--quiet']).strip():raise AssertionError('Fixture containers remain')

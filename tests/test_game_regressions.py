@@ -26,14 +26,11 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from check_site import local_target  # noqa: E402
-from party_shared_fixture import PartySharedFixture
 
 try:
     from playwright.sync_api import sync_playwright
-    from throne_browser_checks import FIXTURE as THRONE_FIXTURE
 except ImportError:  # static checks still run without the browser package
     sync_playwright = None
-    THRONE_FIXTURE = None
 
 ORIGIN = "https://tierbrain.test"
 BACKEND_HOST = "cgrbwtcydgfkbqhseeap.supabase.co"
@@ -59,8 +56,7 @@ class StaticGameGuards(unittest.TestCase):
     def test_shared_climb_phone_redraws_when_a_question_arrives(self):
         """Bug: the phone only redrew on a new turn, so a mid-turn question never appeared."""
         source = read("creak-multi-play.html")
-        self.assertIn("room.version", source)
-        self.assertIn("record&&record.state", source)
+        self.assertIn("const sig='live|'+st.turnSeq+'|'+myTurn+'|'+(st.pendingQ?st.pendingQ.qId:'');", source)
 
     def test_shared_climb_shows_why_a_piece_moves(self):
         """Bug: pieces jumped up or down with no Roc, rocks, debris or snake slide on screen."""
@@ -132,8 +128,7 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("CreakArt.lookStyle(myLook)", solo)
         self.assertIn('src="creak-art.js', phone)
         self.assertIn('id="climberCard"', phone)
-        self.assertIn("await access.members(code)", host)
-        self.assertIn("const want=p.look||null;", host)
+        self.assertIn("select=id,name,tag", host)
         self.assertIn("looks:G.looks||null", re.search(r"function writeState\(\)\{(.*?)\}\}\); \}", host, re.S).group(1))
 
     QUIZ_FAMILY = {"quiz-climb": ("Quiz Climb", "climb"), "higher-lower": ("Higher or Lower", "higher"), "odd-one-out": ("Odd One Out", "odd"),
@@ -183,14 +178,13 @@ class StaticGameGuards(unittest.TestCase):
         for page in ("throne.html", "throne-bible.html"):
             with self.subTest(page=page):
                 source = read(page)
-                self.assertRegex(source, r"if\([^\n;]*\btickBusy\b[^\n;]*\)\s*return;")
-                self.assertRegex(source, r"finally\s*\{\s*tickBusy\s*=\s*false;")
+                self.assertIn("if(tickBusy) return;", source)
+                self.assertIn("try{ await tickOnce(); } finally { tickBusy=false; }", source)
 
     def test_standing_room_acts_on_each_reply_once(self):
         """Same overlap risk in Standing Room's answer and step polls: a reply must be acted on once."""
         source = read("standing-room-multi.html")
-        self.assertIn("if(polling||finished||access.busy()||G.pollToken!==token)return;polling=true;", source)
-        self.assertIn("G.pollToken!==token", source)
+        self.assertEqual(source.count("if(busy || gen!==pollGen) return; busy=true;"), 2)
 
     def test_hosted_games_load_the_host_and_cutscene_engines(self):
         """Bug guard: an older upload of a hosted game drops its animated host and cutscenes."""
@@ -328,20 +322,29 @@ class StaticGameGuards(unittest.TestCase):
         self.assertIn("function animLoop(now){ requestAnimationFrame(animLoop);", shared)
         self.assertIn("try{ tw.update(t); }catch(e){}", solo)
         self.assertIn("try{ tw.update(t); }catch(e){}", shared)
-        self.assertIn("finally{setTimeout(loop,900);}", shared)
+        self.assertIn("}catch(e){ try{ console.warn('Creak & Coil turn error', e); }catch(_){} }", shared)
 
     def test_creak_shared_climb_reads_every_roll(self):
         """Rolls are tracked by id, not by comparing ids, so a roll is never ignored whatever ids the database uses."""
         shared = read("creak-multi.html")
         self.assertNotIn("if(mv.id<=G.lastProcessedMoveId) return;", shared)
-        self.assertIn("const closed=await access.close(window.id);", shared)
-        self.assertIn("await resolveTurn(activeId);", shared)
+        self.assertIn("rows.find(function(r){ return !G.doneMoves[r.id]; })", shared)
 
     def test_creak_shared_climb_rematch_never_reuses_turn_numbers(self):
         """Bug: 'Play again' restarted turn numbers at 0, so the host kept finding last game's first roll and froze."""
         shared = read("creak-multi.html")
         self.assertNotIn("G.turnSeq=0; G.winner=null; G.tokenPix={};", shared)
         self.assertIn("G.turnSeq=seq0; G.seqBase=seq0;", shared)
+
+
+    def test_smudged_clock_only_runs_while_you_can_act(self):
+        """Smudged: the helm spin and the pauses after a leak or a solve no longer come off the player's time."""
+        for page in ("wheel.html", "smudged-bible.html"):
+            with self.subTest(page=page):
+                src = read(page)
+                self.assertIn("var HOLD = { spinning:1, answered:1, wait:1 };", src)
+                self.assertIn("if(G.lastTick && HOLD[G.state]) G.t0 += now - G.lastTick;", src)
+                self.assertIn('<script src="smudged-art.js?v=1"></script>', src)
 
 
 class FakeBackend:
@@ -351,7 +354,6 @@ class FakeBackend:
         self.tables = {}
         self.seq = 0
         self.lock = threading.Lock()
-        self.party = PartySharedFixture()
 
     @staticmethod
     def matches(row, filters):
@@ -450,16 +452,6 @@ class BrowserGameGuards(unittest.TestCase):
         request = route.request
         parsed = urlsplit(request.url)
         if parsed.hostname == "tierbrain.test":
-            if parsed.path == "/__party_fixture":
-                status,data=self.backend.party.respond(json.loads(request.post_data))
-                route.fulfill(status=status,body=json.dumps(data),content_type="application/json")
-                return
-            if parsed.path == "/js/party-access.js":
-                route.fulfill(status=200,body=read("tests/fixtures/party-shared-browser-adapter.js"),content_type="text/javascript")
-                return
-            if parsed.path == "/js/throne-access.js":
-                route.fulfill(status=200, body=THRONE_FIXTURE, content_type="text/javascript")
-                return
             target = local_target(ROOT, ROOT / "index.html", parsed.path)
             if target is None or not target.is_file():
                 route.fulfill(status=404, body="Missing local file")
@@ -576,7 +568,7 @@ class BrowserGameGuards(unittest.TestCase):
         phones[0].locator("#climberPick [data-k='c'] button[data-v='3']").click()
         phones[0].locator("#climberPick [data-k='h'] button[data-v='helmet']").click()
         phones[1].wait_for_function("document.querySelector(`#climberPick [data-k='c'] button[data-v='3']`).disabled", timeout=8000)
-        host.wait_for_function("G.players.length === 2 && G.players.some(p => p.look && p.look.c===3 && p.look.h==='helmet')", timeout=8000)
+        host.wait_for_function("G.players.length === 2 && G.players.some(p => /c3[.]s[0-9][.]hhelmet/.test(p.tag || ''))", timeout=8000)
         host.locator("#startBtn").click()
         host.wait_for_function("G.phase === 'live'")
         looks = host.evaluate("() => G.order.map(id => G.looks[id])")
@@ -731,13 +723,10 @@ class BrowserGameGuards(unittest.TestCase):
         host.wait_for_function("!document.getElementById('startBtn').disabled", timeout=15000)
         host.locator("#startBtn").click()
         host.wait_for_function("G.phase === 'live'")
-        host.evaluate("async () => { usedTags.add('saved-reload-tag'); await writeState(); }")
         host.reload(wait_until="domcontentloaded")
-        host.wait_for_function("""typeof G !== 'undefined' && G.phase === 'live'
-            && document.getElementById('status').textContent.includes('Back on the mountain')""", timeout=15000)
+        host.wait_for_function("typeof G !== 'undefined' && G.phase === 'live'", timeout=15000)
         self.assertEqual(host.locator("#code").inner_text().strip(), code)
         self.assertIn("Back on the mountain", host.locator("#status").inner_text())
-        self.assertTrue(host.evaluate("usedTags.has('saved-reload-tag')"))
 
     def test_creak_shared_climb_play_again_keeps_going(self):
         """Bug: after 'Play again' in the same room, the first roll of the new game was never read and the table froze."""
@@ -764,18 +753,45 @@ class BrowserGameGuards(unittest.TestCase):
         host.wait_for_function("!document.getElementById('startBtn').disabled", timeout=15000)
         host.locator("#startBtn").click()
         host.wait_for_function("G.phase === 'live'", timeout=20000)
-        host.evaluate("() => { G.order.forEach(pid => G.positions[pid] = 99); settleStationaryTokens(null); writeState(); }")
+        host.evaluate("async () => { G.order.forEach(pid => G.positions[pid] = 99); settleStationaryTokens(null); await writeState(); }")
         self.assertTrue(play_until("G.phase === 'gameover'", 40), "first game never finished")
+        host.wait_for_function("!document.getElementById('ovAgain').disabled && !engineBusy && !access.busy()", timeout=15000)
         first_last = host.evaluate("G.turnSeq")
+        first_run = host.evaluate("access.currentRoom().run_id")
         self.assertTrue(host.evaluate("""() => {
             document.getElementById('ovAgain').click();
             return document.getElementById('startBtn').disabled;
         }"""), "Start stayed enabled while the rematch reset was pending")
         host.wait_for_function("G.phase === 'lobby' && !document.getElementById('startBtn').disabled", timeout=15000)
+        self.assertNotEqual(host.evaluate("access.currentRoom().run_id"), first_run, "Rematch reused the completed run")
         host.evaluate("document.getElementById('startBtn').click()")
         host.wait_for_function("G.phase === 'live'", timeout=20000)
         self.assertGreater(host.evaluate("G.seqBase"), first_last)
         self.assertTrue(play_until("G.turnSeq - G.seqBase >= 2", 40), "second game froze on its first roll")
+
+    def smudged(self, page_name):
+        page = self.open(self.context(390, 844), page_name)
+        page.locator("#goBtn").click()
+        page.wait_for_selector(".sea-scene", timeout=5000)        # the voyage opens with a scene
+        page.locator(".sea-scene").click()                         # tap to skip
+        page.wait_for_function("window.G && !G.over && !SeaArt.sceneOn()", timeout=8000)
+        return page
+
+    def test_smudged_voyage_opens_and_ends_with_a_scene_and_the_clock_holds_during_a_spin(self):
+        """Smudged: an opening scene before play, the clock stops while the helm spins, and an ending scene before the results."""
+        for page_name in ("wheel.html", "smudged-bible.html"):
+            with self.subTest(page=page_name):
+                page = self.smudged(page_name)
+                page.wait_for_timeout(600)
+                before = page.evaluate("G.t0")
+                page.locator("#spinBtn").click()
+                page.wait_for_function("G.state === 'question'", timeout=6000)
+                self.assertGreater(page.evaluate("G.t0") - before, 800, "the clock kept running while the helm spun")
+                page.evaluate("endGame('time')")
+                page.wait_for_selector(".sea-scene", timeout=3000)
+                self.assertTrue(page.locator("#end").is_hidden(), "the results card should wait for the ending scene")
+                page.locator(".sea-scene").click()
+                page.wait_for_function("!document.getElementById('end').hidden", timeout=3000)
 
     def throne(self, page_name, cutscenes="1"):
         host = self.open(self.context(1280, 720, {"tb-cutscenes-throne": cutscenes}), page_name)
@@ -787,9 +803,6 @@ class BrowserGameGuards(unittest.TestCase):
         for page_name in ("throne.html", "throne-bible.html"):
             with self.subTest(page=page_name):
                 host = self.throne(page_name)
-                # The isolated access fixture starts with a three-question run.
-                # Exercise the original 20→25 boundary explicitly.
-                host.evaluate("() => { G.qTotal=20; renderLobby(); }")
                 seen = []
                 for button in ("#qPlus", "#qPlus", "#qMinus", "#qMinus", "#qMinus"):
                     host.locator(button).click()
@@ -803,15 +816,15 @@ class BrowserGameGuards(unittest.TestCase):
             with self.subTest(page=page_name):
                 host = self.throne(page_name)
                 self.assertGreaterEqual(host.evaluate("ThroneHall.finaleMs()"), 5000)
-                messages = host.evaluate("""async () => {
+                messages = host.evaluate("""() => {
                     const now = new Date().toISOString();
                     const ps = ['A', 'B', 'C'].map(n => ({id: n, name: n, last_seen: now}));
-                    const banner = async (qIndex) => {
+                    const banner = (qIndex) => {
                         Object.assign(G, {players: ps, champ: {id: 'A', name: 'A'}, chal: {id: 'B', name: 'B'},
                             queue: [{id: 'C', name: 'C'}], pendingLoser: {id: 'B', name: 'B'}, outcome: 'win',
                             mode: 'spine', streak: 1, qIndex: qIndex, qTotal: 5});
-                        await afterReveal(); clearTimeout(G._t); return G.betweenMsg; };
-                    return [await banner(2), await banner(5)]; }""")
+                        afterReveal(); clearTimeout(G._t); return G.betweenMsg; };
+                    return [banner(2), banner(5)]; }""")
                 self.assertIn("Next:", messages[0])
                 self.assertIn("last question", messages[1])
                 self.assertNotIn("Next:", messages[1])

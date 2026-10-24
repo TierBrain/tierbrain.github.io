@@ -932,7 +932,7 @@ async function fnEnd(awake){
   if(!FN||!FN.live||FN.ending)return;
   if(FN.pending){FN.endRequested=true;return fnResolve(null);}
   if(FN.resolving){FN.endRequested=true;return;}
-  var finale=FN,token=roomToken();FN.ending=true;FN.live=false;FN.pending=false;clearInterval(FN.clock);clearInterval(FN.poll);
+  var finale=FN,token=roomToken();FN.ending=true;FN.live=false;FN.pending=false;FN.t=Math.max(0,FN.t);clearInterval(FN.clock);clearInterval(FN.poll);
   try{
     await closeAction();if(FN!==finale||!sameToken(token))return;
     G.awake=awake;G.spark=null;G.fq=null;G.phase='over';await writeState();

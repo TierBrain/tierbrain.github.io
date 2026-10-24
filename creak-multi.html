@@ -206,7 +206,7 @@ body.cc-playing:has(#qview[style*="block"]) .cchost{z-index:45;}
     <div class="ovstats" id="ovStats"></div>
     <div class="ovstand" id="ovStand"></div>
     <button class="btn" id="ovShare" style="max-width:260px">Share result 📸</button>
-    <button class="btn ghost2" id="ovAgain" style="max-width:260px">Play again</button>
+    <button class="btn ghost2" id="ovAgain" style="max-width:260px" disabled>Play again</button>
   </div>
 
 <script>
@@ -846,7 +846,7 @@ async function reconcileDropouts(){
     // last player standing wins by default rather than racing themselves
     G.order=survivors; G.turnIdx=0;
     G.winner={id:survivors[0], name:rawNameOf(survivors[0])};
-    G.phase='gameover'; draw(); renderTurnbar(); showWin(); await writeState(); return;
+    G.phase='gameover'; draw(); renderTurnbar(); showWin(); await writeState(); updateRematchButton(); return;
   }
 
   // keep whoever's turn it is pointing at the right person after the splice
@@ -903,6 +903,10 @@ async function startGame(){
 }
 function rawNameOf(pid){ const p=G.players.find(function(x){return x.id===pid;}); return p?String(p.name):'Player'; }
 function nameOf(pid){ return esc(rawNameOf(pid)); }
+function updateRematchButton(){
+ const room=access.currentRoom();
+ $('ovAgain').disabled=G.phase!=='gameover'||!room||room.phase!=='gameover'||engineBusy||starting||access.busy();
+}
 // Outcome lines (right, wrong, Roc, rockfall, storm...) stay up long enough to be read on the TV,
 // and for the host and sound effects that react to them, before the next player is called.
 const OUTCOME_RE=/answered right|rung snaps|slips past|woke the snake|scrambles clear|caught in the rockfall|shelters the ladders|storm batters|falls through|Roc sweeps|crumbles|slithers away|lashes out|tears tiles/;
@@ -924,7 +928,7 @@ async function pollMoves(){
   if(!currentHost(room.run_id,generation)||G.phase!=='live')return;
   if(!(closed.actions||[]).length)setStatus(nameOf(activeId)+' took too long, rolling for them\u2026');
   await resolveTurn(activeId);
- }finally{engineBusy=false;}
+ }finally{engineBusy=false;updateRematchButton();}
 }
 
 async function resolveTurn(playerId){
@@ -999,6 +1003,9 @@ async function resolveTurn(playerId){
   await writeState();
 }
 function showWin(){
+  // Results can render before their final publication completes. Keep the
+  // rematch control unavailable until that win is committed and the engine idle.
+  $('ovAgain').disabled=true;
   const alive=(G.board.ladders||[]).filter(function(l){return l.alive;}).length;
   const totalL=(G.board.ladders||[]).length;
   $('ovLine').textContent=G.winner.name+((G.positions[G.winner.id]||1)>=TOP?' reached the summit first!':' is the last climber standing!');
@@ -1027,7 +1034,7 @@ function showWin(){
 }
 async function playAgain(){
   if(engineBusy||starting||access.busy())return;
-  engineBusy=true;$('startBtn').disabled=true;try{await access.beginRun();hostGeneration++;
+  engineBusy=true;$('startBtn').disabled=true;updateRematchButton();try{await access.beginRun();hostGeneration++;
   $('overlay').classList.add('hide');
   const cf=$('confetti'); if(cf) cf.innerHTML='';
   G.phase='lobby'; G.board={ladders:[],snakes:[]}; G.order=[]; G.turnIdx=0; G.positions={};
@@ -1038,7 +1045,7 @@ async function playAgain(){
   await pollPlayers(); renderLobby();
   setStatus('');
   await writeState();
-  }finally{engineBusy=false;renderLobby();}
+  }finally{engineBusy=false;renderLobby();updateRematchButton();}
 }
 
 async function loop(){

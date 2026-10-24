@@ -111,7 +111,7 @@ button{font:inherit;color:inherit;}
 .big{font-family:var(--serif);font-style:italic;font-size:46px;color:var(--brass-hi);margin:6px 0 2px;}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 /* ---------- the living sea ---------- */
-.seascape{position:relative;flex:1;min-height:84px;max-height:230px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#143049,#0b2236);}
+.seascape{position:relative;flex:1;min-height:110px;max-height:250px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#143049,#0b2236);}
 .seascape::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#232a33,#121820);opacity:0;transition:opacity 1.2s;}
 .seascape.storm::before{opacity:1;}
 .moon{position:absolute;right:14%;top:12%;width:22px;height:22px;border-radius:50%;background:#f3eedc;box-shadow:0 0 18px rgba(243,238,220,.55);transition:opacity 1.2s;}
@@ -157,6 +157,25 @@ button{font:inherit;color:inherit;}
 .ed-bible .ship.sunk{animation:aground 1.6s ease-out forwards !important;}
 @keyframes aground{to{transform:translate(42px,4px) rotate(11deg);opacity:1;}}
 
+/* the living sea: one canvas fills the panel */
+#seaCv{position:absolute;left:0;right:0;bottom:0;width:100%;display:block;}
+.seascape{box-shadow:inset 0 0 0 1px rgba(223,233,238,.08),0 10px 28px rgba(0,0,0,.35);}
+/* the clock holds while the ship is busy and you cannot act */
+.clock{transition:opacity .25s;} .clock.held{opacity:.45;}
+/* the ink: a cloth wipes the blot and the wet ink runs */
+.tile::before{content:"";position:absolute;left:-40%;top:-10%;width:70%;height:120%;border-radius:45% 55% 50% 40%;pointer-events:none;opacity:0;z-index:2;
+  background:radial-gradient(circle at 40% 40%,#fbf3df,#e6d6b2 70%,rgba(230,214,178,0) 72%);}
+.tile.show::before{animation:rag .5s cubic-bezier(.3,.1,.3,1) forwards;}
+@keyframes rag{0%{opacity:0;transform:translateX(0) rotate(-8deg)}15%{opacity:.95}85%{opacity:.9}100%{opacity:0;transform:translateX(150%) rotate(10deg)}}
+.tile .drip{position:absolute;left:var(--dx,50%);top:72%;width:3px;height:4px;border-radius:50% 50% 60% 60%;background:rgba(36,26,16,.75);opacity:0;pointer-events:none;}
+.tile.show .drip{animation:drip 1.1s .3s ease-in forwards;}
+@keyframes drip{0%{opacity:.85;transform:translateY(0) scaleY(1)}70%{opacity:.6;transform:translateY(12px) scaleY(2.2)}100%{opacity:0;transform:translateY(16px) scaleY(1.4)}}
+.helmbox svg{filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));}
+/* the lower panel eases in rather than snapping between the letters and a question */
+.panel .card,.panel .keys{animation:rise .3s cubic-bezier(.2,.8,.3,1);}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion: reduce){ .tile.show::before,.tile.show .drip{animation:none;opacity:0;} .panel .card,.panel .keys{animation:none;} }
+
 /* the optional group leaderboard */
 .gc{display:block;margin:4px 0 6px;font-weight:800;font-size:14px;color:var(--soft);}
 .gc input,#nameIn{display:block;width:100%;margin-top:6px;font:inherit;font-weight:800;font-size:16px;padding:10px 12px;border-radius:10px;border:2px solid rgba(223,233,238,.2);background:rgba(7,19,32,.6);color:var(--foam);}
@@ -201,7 +220,7 @@ button{font:inherit;color:inherit;}
   <section class="deck">
     <div class="helmbox" id="helmbox" aria-hidden="true">
       <span class="marker" id="marker"></span>
-      <svg viewBox="-110 -110 220 220"><g id="helm"></g></svg>
+      <svg viewBox="-110 -110 220 220"><defs><linearGradient id="hwood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c08a4a"/><stop offset=".5" stop-color="#8c5a2b"/><stop offset="1" stop-color="#5e3a1a"/></linearGradient><radialGradient id="hbrass" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#f6dc9c"/><stop offset=".55" stop-color="#c89b4f"/><stop offset="1" stop-color="#7d5a22"/></radialGradient><radialGradient id="hknob" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#e2b071"/><stop offset="1" stop-color="#6e4520"/></radialGradient></defs><g id="helm"></g></svg>
     </div>
     <div class="side">
       <p class="sea" id="sea"></p>
@@ -211,11 +230,7 @@ button{font:inherit;color:inherit;}
   </section>
 
   <section class="seascape" id="seascape" aria-hidden="true">
-    <div class="moon"></div><div class="shore"></div>
-    <div class="wl"><svg class="wave w1" viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 50 Q50 32 100 50 T200 50 T300 50 T400 50 T500 50 T600 50 T700 50 T800 50 V100 H0 Z" fill="#163c57"/></svg></div>
-    <svg class="ship" id="ship" viewBox="0 0 66 50" aria-hidden="true"><g class="modern"><path d="M33 4 V34" stroke="#c89b4f" stroke-width="2"/><path d="M34 6 L56 30 L34 30 Z" fill="#efe2c4"/><path d="M32 10 L14 30 L32 30 Z" fill="#dcc9a2"/><path d="M4 34 H62 L54 46 H12 Z" fill="#6b4a2c" stroke="#3e2a16" stroke-width="1.5"/></g><g class="roman"><path d="M33 6 V32" stroke="#7a4a22" stroke-width="2.4"/><rect x="18" y="9" width="30" height="20" rx="2" fill="#efe2c4"/><rect x="18" y="16" width="30" height="5" fill="#a3262a"/><path d="M2 32 Q8 30 12 34 H54 Q58 28 64 26 L60 34 Q52 46 33 46 Q14 46 6 38 Z" fill="#7a4a22" stroke="#3e2a16" stroke-width="1.5"/></g></svg>
-    <div class="wl"><svg class="wave w2" viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 50 Q50 32 100 50 T200 50 T300 50 T400 50 T500 50 T600 50 T700 50 T800 50 V100 H0 Z" fill="#1d4a66"/></svg><svg class="wave w3" viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 50 Q50 32 100 50 T200 50 T300 50 T400 50 T500 50 T600 50 T700 50 T800 50 V100 H0 Z" fill="#245a78"/></svg></div>
-    <div class="rain"></div><div class="flash" id="flash"></div>
+    <canvas id="seaCv"></canvas><svg class="ship" id="ship" hidden></svg><div class="flash" id="flash" hidden></div>
   </section>
 
   <section class="panel" id="panel"></section>
@@ -249,6 +264,7 @@ button{font:inherit;color:inherit;}
 <script src="questions.js?v=7" onerror="window.__noBank=1"></script>
 <script src="bible-bank.js?v=1" onerror="window.__noBible=1"></script>
 <script src="smudged-bank.js?v=2" onerror="window.__noExtra=1"></script>
+<script src="smudged-art.js?v=1"></script>
 <script>
 "use strict";
 var $ = function(id){ return document.getElementById(id); };
@@ -325,7 +341,14 @@ var SFX = {
   right: function(){ tone(587, 0, .22, 'sine', .09); tone(880, .1, .32, 'sine', .07); },
   wrong: function(){ noise(0, .35, .28, 400, 'lowpass'); tone(110, 0, .4, 'sine', .12, 70); },
   pop: function(){ tone(900, 0, .07, 'square', .05, 300); noise(.01, .08, .2, 2500); },
-  win: function(){ [523, 659, 784, 1047].forEach(function(f, i){ tone(f, i * .1, .35, 'sine', .08); }); }
+  win: function(){ [523, 659, 784, 1047].forEach(function(f, i){ tone(f, i * .1, .35, 'sine', .08); }); },
+  splash: function(){ noise(0, .5, .22, 700, 'lowpass'); noise(.03, .3, .1, 2400, 'bandpass'); },
+  creak: function(){ tone(140, 0, .45, 'sawtooth', .035, 95); tone(210, .08, .3, 'sawtooth', .02, 150); },
+  bail: function(){ noise(0, .28, .08, 1200, 'bandpass'); },
+  blow: function(){ noise(0, .9, .16, 500, 'bandpass'); tone(70, 0, .6, 'sine', .05, 55); },
+  crack: function(){ noise(0, .12, .3, 3000, 'highpass'); noise(.05, .2, .18, 900, 'bandpass'); },
+  anchor: function(){ noise(0, .55, .24, 600, 'lowpass'); tone(320, .02, .25, 'triangle', .04, 180); },
+  firework: function(){ noise(0, .08, .25, 2600, 'bandpass'); noise(.06, .7, .1, 1800, 'highpass'); }
 };
 
 /* ---------- the helm: eight spokes, three kinds of water ---------- */
@@ -348,11 +371,11 @@ var seaOf = function(k){ return SEAS.filter(function(s){ return s.key === k; })[
     else mk('path', { d:'M2 -8 L-4 1 L0 1 L-2.5 8 L5 -1.5 L1 -1.5 Z', fill:'#f6d36b', transform:tf });
   });
   mk('circle', { r:80, fill:'none', stroke:'#7d5a22', 'stroke-width':7 });
-  mk('circle', { r:80, fill:'none', stroke:'#c89b4f', 'stroke-width':4 });
+  mk('circle', { r:80, fill:'none', stroke:'url(#hbrass)', 'stroke-width':5 });
   for(var i = 0; i < 8; i++){ var a = (i * 45 + 22.5 - 90) * Math.PI / 180;
-    mk('line', { x1:(24 * Math.cos(a)).toFixed(1), y1:(24 * Math.sin(a)).toFixed(1), x2:(100 * Math.cos(a)).toFixed(1), y2:(100 * Math.sin(a)).toFixed(1), stroke:'#a67c3a', 'stroke-width':6, 'stroke-linecap':'round' });
-    mk('circle', { cx:(100 * Math.cos(a)).toFixed(1), cy:(100 * Math.sin(a)).toFixed(1), r:7, fill:'#c89b4f', stroke:'#7d5a22', 'stroke-width':2 }); }
-  mk('circle', { r:22, fill:'#c89b4f', stroke:'#7d5a22', 'stroke-width':3 }); mk('circle', { r:8, fill:'#7d5a22' });
+    mk('line', { x1:(24 * Math.cos(a)).toFixed(1), y1:(24 * Math.sin(a)).toFixed(1), x2:(100 * Math.cos(a)).toFixed(1), y2:(100 * Math.sin(a)).toFixed(1), stroke:'url(#hwood)', 'stroke-width':7, 'stroke-linecap':'round' });
+    mk('circle', { cx:(100 * Math.cos(a)).toFixed(1), cy:(100 * Math.sin(a)).toFixed(1), r:8, fill:'url(#hknob)', stroke:'#4c2e14', 'stroke-width':2 }); }
+  mk('circle', { r:22, fill:'url(#hbrass)', stroke:'#7d5a22', 'stroke-width':3 }); mk('circle', { r:8, fill:'#7d5a22' }); mk('path', { d:'M-60 -52 A80 80 0 0 1 40 -70', stroke:'rgba(255,240,200,.35)', 'stroke-width':3, fill:'none', 'stroke-linecap':'round' });
 })();
 var H = { angle:0, vel:0, spinning:false, raf:0, lastSector:null, drag:null };
 function setAngle(a){ H.angle = a; $('helm').setAttribute('transform', 'rotate(' + a.toFixed(2) + ')'); }
@@ -361,11 +384,13 @@ function spinWith(v){
   if(G.state !== 'spin') return; actx();
   G.state = 'spinning'; paint();
   if(reduce){ setAngle(Math.random() * 360); return settle(); }
-  H.vel = v; H.spinning = true; H.lastSector = Math.floor(H.angle / 45); var last = performance.now();
-  var step = function(now){ var dt = Math.min(.05, (now - last) / 1000); last = now;
-    H.vel *= Math.exp(-1.8 * dt); setAngle(H.angle + H.vel * dt);
+  H.vel = v; H.spinning = true; H.lastSector = Math.floor((H.angle + 22.5) / 45);
+  /* the helm slows on an exact curve, so where it will stop is known from the start and the sea turns as it slows */
+  var K = 2.6, a0 = H.angle, T0 = performance.now(), dur = Math.log(Math.max(15, Math.abs(v)) / 14) / K, fin = a0 + v / K * (1 - Math.exp(-K * dur)), told = false;
+  var step = function(now){ var t = Math.min(dur, (now - T0) / 1000); setAngle(a0 + v / K * (1 - Math.exp(-K * t)));
+    if(!told && t > dur * .35){ told = true; if(window.SeaArt) SeaArt.weather(SECTORS[sectorAt(fin)]); }
     var s = Math.floor((H.angle + 22.5) / 45); if(s !== H.lastSector){ H.lastSector = s; SFX.tick(); var m = $('marker'); m.classList.remove('kick'); void m.offsetWidth; m.classList.add('kick'); }
-    if(Math.abs(H.vel) < 14){ H.spinning = false; return settle(); }
+    if(t >= dur){ H.spinning = false; setAngle(fin); return settle(); }
     H.raf = requestAnimationFrame(step); };
   H.raf = requestAnimationFrame(step);
 }
@@ -386,7 +411,7 @@ function spinWith(v){
 var G = null, CLOCK_MS = 240000, timer = 0;
 function newGame(){
   G = { state:'spin', puzzle:0, level:1, leaks:0, pts:0, picks:0, sea:null, phrase:null, shown:{}, used:{}, solved:0, t0:performance.now(), over:false };
-  var sh = $('ship'); sh.classList.remove('sunk'); $('seascape').classList.remove('aground'); sh.style.setProperty('--sink', '0px'); ambient();
+  var sh = $('ship'); sh.classList.remove('sunk'); $('seascape').classList.remove('aground'); sh.style.setProperty('--sink', '0px'); ambient(); G.streak = 0; if(window.SeaArt) SeaArt.reset();
   nextPuzzle(); clearInterval(timer); timer = setInterval(tick, 250); paint();
 }
 function nextPuzzle(){
@@ -395,7 +420,7 @@ function nextPuzzle(){
   G.phrase = p; G.shown = {}; G.used = {}; G.state = 'spin'; G.sea = null;
   buildMessage(); SFX.pop();
   var pa = document.querySelector('.parch'); pa.classList.remove('unroll'); void pa.offsetWidth; pa.classList.add('unroll');
-  $('seascape').className = 'seascape calm'; rainOn(false);
+  $('seascape').className = 'seascape calm'; rainOn(false); if(window.SeaArt){ SeaArt.weather('calm'); SeaArt.lighthouse(false); SeaArt.newBottle(); }
   $('sea').textContent = ''; hint('Spin the helm to choose your waters.'); say('A new message. ' + (p.clue || CAT[p.cat]) + '.'); paint();
 }
 function buildMessage(){
@@ -408,7 +433,7 @@ function buildMessage(){
   words.forEach(function(word){ var wd = document.createElement('div'); wd.className = 'word';
     word.split('').forEach(function(ch){ var tl = document.createElement('div'); tl.className = 'tile' + (/[A-Z]/.test(ch) ? '' : ' punct'); tl.dataset.ch = ch; tl.setAttribute('aria-hidden', 'true');
       tl.style.setProperty('--r', (Math.random() * 40 - 20).toFixed(0) + 'deg');
-      tl.innerHTML = '<span class="let">' + ch + '</span><span class="ink"></span>'; wd.appendChild(tl); });
+      tl.innerHTML = '<span class="let">' + ch + '</span><span class="ink"></span><span class="drip" style="--dx:' + (30 + Math.random() * 40).toFixed(0) + '%"></span>'; wd.appendChild(tl); });
     msg.appendChild(wd); });
   $('cat').textContent = G.phrase.clue ? 'Riddle: ' + G.phrase.clue : (CAT[G.phrase.cat] || 'A message'); countLeft();
 }
@@ -417,6 +442,7 @@ function countLeft(){ var n = hidden(); $('count').textContent = n + (n === 1 ? 
   /* read the message as it appears: revealed letters, and "blank" for each smudge */
   var words = [].map.call(document.querySelectorAll('#msg .word'), function(w){
     return [].map.call(w.querySelectorAll('.tile'), function(t){ return (t.classList.contains('show') || t.classList.contains('punct')) ? t.dataset.ch : 'blank'; }).join(', '); });
+  if(window.SeaArt) SeaArt.lighthouse(n > 0 && n <= 2);
   $('msg').setAttribute('aria-label', 'The message, ' + words.length + (words.length === 1 ? ' word: ' : ' words: ') + words.join('. Next word: ') + '.'); }
 function reveal(ch){
   var tiles = [].filter.call(document.querySelectorAll('#msg .tile'), function(t){ return t.dataset.ch === ch && !t.classList.contains('show'); });
@@ -428,7 +454,7 @@ function hint(t){ $('hint').textContent = t; }
 
 function settle(){
   var k = SECTORS[sectorAt(H.angle)], s = seaOf(k); G.sea = s;
-  $('seascape').className = 'seascape ' + k; rainOn(k === 'storm');
+  $('seascape').className = 'seascape ' + k; rainOn(k === 'storm'); if(window.SeaArt){ SeaArt.weather(k); if(k === 'storm') SeaArt.lightning(); }
   if(k === 'storm'){ SFX.thunder(); buzz(40); if(!reduce){ var f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); } }
   $('sea').textContent = s.name;
   var q = askFrom(s.tier); G.q = q; G.state = 'question';
@@ -439,14 +465,15 @@ function answer(o, btn){
   if(G.state !== 'question') return;
   var right = o === G.q.correct;
   [].forEach.call(document.querySelectorAll('.opt'), function(b){ b.disabled = true; if(b.textContent === G.q.correct) b.classList.add('right'); });
+  G.streak = right ? (G.streak || 0) + 1 : 0; if(right && G.streak % 3 === 0 && window.SeaArt) SeaArt.whale();
   if(right){ SFX.right(); G.picks = G.sea.letters; G.state = 'answered';
     setTimeout(function(){ G.state = 'pick'; hint('Choose ' + (G.picks === 1 ? 'a letter.' : G.picks + ' letters.') + (G.sea.vowels ? ' Vowels are open in a storm.' : '')); paint(); }, 650); }
   else { btn.classList.add('wrong'); SFX.wrong(); leak('A wrong answer. The hull springs a leak.'); }
 }
 function leak(text){
   G.leaks++; paintHull(); hint(text); say(text); buzz([70, 40, 70]);
-  $('ship').style.setProperty('--sink', (G.leaks * 8) + 'px');
-  if(G.leaks >= 3){ G.state = 'wait'; paint(); $('ship').classList.add('sunk'); $('seascape').classList.add('aground'); return setTimeout(function(){ endGame('sunk'); }, 1700); }
+  $('ship').style.setProperty('--sink', (G.leaks * 8) + 'px'); G.streak = 0; if(window.SeaArt) SeaArt.leak(G.leaks);
+  if(G.leaks >= 3){ G.state = 'wait'; paint(); $('ship').classList.add('sunk'); $('seascape').classList.add('aground'); if(window.SeaArt) SeaArt.sink(); return setTimeout(function(){ endGame('sunk'); }, reduce ? 1200 : 1100); }
   G.state = 'wait'; paint(); setTimeout(function(){ G.state = 'spin'; $('sea').textContent = ''; hint('Spin the helm again.'); paint(); }, 1100);
 }
 function pick(ch){
@@ -463,7 +490,7 @@ function pick(ch){
 function complete(bonusLetters){
   var gain = 25 + bonusLetters * 10; G.pts += gain; G.solved++;
   [].forEach.call(document.querySelectorAll('#msg .tile:not(.show)'), function(t, i){ setTimeout(function(){ t.classList.add('show'); }, reduce ? 0 : i * 60); });
-  SFX.win(); hint(bonusLetters ? 'Read it with ' + bonusLetters + ' letters still smudged: ' + gain + ' points.' : 'The whole message is clear: ' + gain + ' points.');
+  if(window.SeaArt) SeaArt.solved(); SFX.win(); hint(bonusLetters ? 'Read it with ' + bonusLetters + ' letters still smudged: ' + gain + ' points.' : 'The whole message is clear: ' + gain + ' points.');
   say('Solved. ' + G.phrase.text); G.state = 'wait'; paint();
   setTimeout(function(){ if(G.puzzle >= 20) endGame('done'); else nextPuzzle(); }, 2200);
 }
@@ -473,10 +500,13 @@ function trySolve(text){
   if(a === b){ var left = hidden(); G.state = 'wait'; complete(left); }
   else { SFX.wrong(); leak('Not quite. The hull springs a leak.'); }
 }
+var HOLD = { spinning:1, answered:1, wait:1 };
 function tick(){
   if(!G || G.over) return;
+  var now = performance.now(); if(G.lastTick && HOLD[G.state]) G.t0 += now - G.lastTick; G.lastTick = now; $('clock').classList.toggle('held', !!HOLD[G.state]);
   var left = Math.max(0, CLOCK_MS - (performance.now() - G.t0)), s = Math.ceil(left / 1000);
   $('clock').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); $('clock').classList.toggle('low', s <= 20);
+  if(window.SeaArt) SeaArt.time(1 - left / CLOCK_MS, left / 1000);
   if(left <= 0) endGame('time');
 }
 function endGame(why){
@@ -489,7 +519,8 @@ function endGame(why){
   RUN = { pts:G.pts, solved:G.solved, left:Math.max(0, Math.round((CLOCK_MS - (performance.now() - G.t0)) / 1000)), saved:false };
   if(groupCode()){ $('board').hidden = false; $('saveRow').hidden = G.pts <= 0; $('saveBtn').disabled = false; $('saveBtn').textContent = 'Save';
     try{ $('nameIn').value = localStorage.getItem('smudged_name') || ''; }catch(e){} loadBoard(); } else $('board').hidden = true;
-  $('end').hidden = false; $('againBtn').focus();
+  var showEnd = function(){ $('end').hidden = false; $('againBtn').focus(); };
+  if(window.SeaArt && !reduce) SeaArt.scene(why === 'sunk' ? 'sunk' : (why === 'time' ? 'time' : 'done'), showEnd); else showEnd();
 }
 
 /* ---------- drawing the lower panel and the buttons ---------- */
@@ -563,6 +594,8 @@ $('saveBtn').addEventListener('click', async function(){ if(!RUN || RUN.saved) r
       body:JSON.stringify([{ quiz_id:QUIZ_ID, group_code:groupCode(), name:name, correct:RUN.pts, level:RUN.solved, time_left:RUN.left }]) });
     if(!r.ok) throw new Error('save'); RUN.saved = true; RUN.name = name; $('saveRow').hidden = true; await loadBoard();
   }catch(e){ this.disabled = false; this.textContent = 'Try again'; } });
+/* ---------- the living sea ---------- */
+if(window.SeaArt){ SeaArt.mount($('seaCv'), { edition:ED, reduce:reduce }); SeaArt.onSound = function(n){ if(SFX[n]) SFX[n](); }; }
 /* ---------- controls ---------- */
 $('soundBtn').addEventListener('click', function(){ muted = !muted; this.textContent = muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
   this.setAttribute('aria-pressed', String(!muted)); this.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on'); if(AMB) AMB.master.gain.value = muted ? 0 : 1; });
@@ -578,7 +611,8 @@ var CLOCKS = [{ n:'Relaxed', ms:240000, l:'4:00' }, { n:'Classic', ms:180000, l:
   CLOCKS.forEach(function(c){ var b = document.createElement('button'); b.type = 'button'; b.textContent = c.n + ', ' + c.l; if(c.ms === chosen) b.classList.add('on');
     b.addEventListener('click', function(){ chosen = c.ms; store('smudged_clock', String(c.ms)); [].forEach.call(box.children, function(x){ x.classList.remove('on'); }); b.classList.add('on'); });
     box.appendChild(b); });
-  var begin = function(){ CLOCK_MS = chosen; $('start').hidden = true; $('end').hidden = true; actx(); newGame(); };
+  var begin = function(){ CLOCK_MS = chosen; $('start').hidden = true; $('end').hidden = true; actx();
+    if(window.SeaArt && !reduce){ SeaArt.reset(); SeaArt.scene('open', newGame); } else newGame(); };
   var go = function(){ actx(); if($('start').hidden || reduce){ return begin(); }
     $('bottle').classList.add('pop'); tone(900, 0, .08, 'square', .06, 280); noise(.01, .09, .22, 2500); setTimeout(begin, 520); };
   $('goBtn').addEventListener('click', go); $('againBtn').addEventListener('click', go);

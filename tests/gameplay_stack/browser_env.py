@@ -1,4 +1,4 @@
-"""Real page/SDK fixture with every backend request confined to loopback.
+"""Real page/SDK fixture with backend HTTP confined to an internal Docker pipe.
 
 Source adapters are served unchanged. Only the transport destination changes:
 GoTrue and PostgREST both run in the disposable Compose project. No HAR, token
@@ -7,25 +7,18 @@ or Auth body is recorded in artifacts.
 import json
 import mimetypes
 from pathlib import Path
-from urllib.error import HTTPError
 from urllib.parse import unquote, urlsplit
-from urllib.request import ProxyHandler, Request, build_opener
 
 ORIGIN = 'https://tierbrain.test'
 PROJECT_HOST = 'cgrbwtcydgfkbqhseeap.supabase.co'
 
 
 class BrowserEnv:
-    def __init__(self, browser, root, auth_url, rest_url, report, report_path):
+    def __init__(self, browser, root, transport, report, report_path):
         self.browser, self.root = browser, root.resolve()
-        self.auth_url, self.rest_url = auth_url, rest_url
-        for value in (auth_url, rest_url):
-            parsed = urlsplit(value)
-            if parsed.scheme != 'http' or parsed.hostname != '127.0.0.1':
-                raise ValueError('Fixture backend must be loopback HTTP')
+        self.transport = transport
         self.report, self.report_path = report, report_path
         self.pages, self.contexts, self.calls, self.interruptions = [], [], {}, {}
-        self.opener = build_opener(ProxyHandler({}))  # loopback never uses an outbound proxy
         report.update(checks=[], notes=[], page_errors=[], blocked_external_requests=0,
                       backend_requests=0, hosted_requests=0)
 
@@ -83,10 +76,9 @@ class BrowserEnv:
             if request.method == 'OPTIONS':
                 route.fulfill(status=204, headers=cors)
                 return
-            prefix, target = next(((prefix,base) for prefix,base in (
-                ('/auth/v1',self.auth_url),('/rest/v1',self.rest_url))
-                if url.path == prefix or url.path.startswith(prefix+'/')), (None,None))
-            if target is None:
+            prefix = next((prefix for prefix in ('/auth/v1','/rest/v1')
+                if url.path == prefix or url.path.startswith(prefix+'/')), None)
+            if prefix is None:
                 self.report['blocked_external_requests'] += 1
                 route.fulfill(status=404, headers=cors, body='{}')
                 return
@@ -96,17 +88,11 @@ class BrowserEnv:
             headers = {key:value for key,value in request.headers.items()
                        if key.lower() in ('authorization','apikey','content-type','accept',
                                           'x-client-info','x-supabase-api-version','prefer')}
-            req = Request(target+suffix, method=request.method, headers=headers,
-                          data=request.post_data_buffer)
-            try:
-                response = self.opener.open(req, timeout=20)
-            except HTTPError as error:
-                response = error
-            with response:
-                status, body = response.status, response.read()
-                response_headers = {key.lower():value for key,value in response.headers.items()
-                                    if key.lower() not in ('connection','transfer-encoding',
-                                        'content-length','content-encoding','access-control-allow-origin')}
+            status, body, raw_headers = self.transport(prefix, suffix, request.method,
+                                                      headers, request.post_data_buffer)
+            response_headers = {key.lower():value for key,value in raw_headers.items()
+                                if key.lower() not in ('connection','transfer-encoding',
+                                    'content-length','content-encoding','access-control-allow-origin')}
             self.report['backend_requests'] += 1
             if prefix == '/rest/v1' and suffix.startswith('/rpc/'):
                 name = url.path.rsplit('/',1)[-1]
