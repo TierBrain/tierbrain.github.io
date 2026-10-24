@@ -498,6 +498,7 @@
   let queues,ptr;
 
   function startGame(){
+    runEpoch++;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
     queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3]),4:shuffle(BANK[4])}; ptr={1:0,2:0,3:0,4:0};
     hideAllScreens();
@@ -506,7 +507,11 @@
   }
 
   let TIME_LIMIT=120000;   // countdown length, set by the clock selector
-  let playing=false;
+  let playing=false, runEpoch=0;
+  function inRun(callback, delay){
+    const epoch=runEpoch;
+    return setTimeout(function(){ if(playing && epoch===runEpoch) callback(); }, delay);
+  }
   function remainingMs(){ return Math.max(0, TIME_LIMIT-(performance.now()-startT)); }
   function tickTimer(){
     const rem=remainingMs();
@@ -552,15 +557,17 @@
       b.addEventListener('click',()=>tapTile(idx)); t.appendChild(b); });
   }
   function tapTile(idx){
-    if(uSolved||locked) return; const L=uLetters[idx]; if(L.used) return;
+    if(!playing||uSolved||locked) return; const L=uLetters[idx]; if(L.used) return;
     const __r=window.UX?UX.from(idx):null; L.used=true; uGuess.push(idx); renderSlots(); renderTiles(); if(window.UX) UX.flew(__r);
     if(uGuess.length===current.word.length) checkWord();
   }
-  function undoTile(){ if(uSolved||locked) return; const i=uGuess.pop(); if(i==null) return;
+  function undoTile(){ if(!playing||uSolved||locked) return; const i=uGuess.pop(); if(i==null) return;
     uLetters[i].used=false; $('uMsg').textContent=''; renderSlots(); renderTiles(); }
-  function clearAll(){ if(uSolved||locked) return; uGuess.forEach(i=>uLetters[i].used=false); uGuess=[];
+  function clearAll(){ if(!playing||uSolved||locked) return; uGuess.forEach(i=>uLetters[i].used=false); uGuess=[];
     $('uMsg').textContent=''; renderSlots(); renderTiles(); }
   function checkWord(){
+    if(!playing||uSolved||locked) return;
+    const word=current;
     const built=uGuess.map(i=>uLetters[i].ch).join('');
     const sortL=function(w){ return w.toUpperCase().split('').sort().join(''); };
     const alt=Object.keys(BANK).some(function(k){ return BANK[k].some(function(it){ return it.word.toUpperCase()===built && sortL(it.word)===sortL(current.word); }); });
@@ -570,10 +577,10 @@
     } else {
       $('uMsg').textContent='Not quite, try again'; $('uMsg').style.color='var(--wrong)';
       const s=$('uSlots'); s.classList.add('shake'); if(window.UX) UX.miss(); setTimeout(()=>s.classList.remove('shake'),420);
-      setTimeout(()=>{ if(!uSolved&&!locked){ clearAll(); } }, 600);
+      inRun(()=>{ if(current===word&&!uSolved&&!locked){ clearAll(); } }, 600);
     }
   }
-  function skipWord(){ if(uSolved||locked) return;
+  function skipWord(){ if(!playing||uSolved||locked) return;
     $('uMsg').textContent='Answer: '+current.word.toUpperCase(); $('uMsg').style.color='var(--mut)';
     resolve(false); }
 
@@ -588,13 +595,13 @@
   }
 
   function resolve(success){
-    if(locked) return; locked=true; answered++;
+    if(!playing||locked) return; locked=true; answered++;
     if(success){ correct++; sRight(); streakW=0; streakC++;
       if(streakC>=2 && level<4){ level++; streakC=0; pendingMove='up'; } }
     else { totalWrong++; sWrong(); if(window.UX) UX.failed(); streakC=0; streakW++; renderStrikes();
       if(totalWrong<4 && streakW>=2 && level>1){ level--; streakW=0; pendingMove='down'; } }
     $('progbar').style.width=(answered/20*100)+'%';
-    setTimeout(()=>{
+    inRun(()=>{
       if(!playing) return;
       if(totalWrong>=4){ endOut(); return; }
       if(answered>=20){ endDone(); return; }
@@ -605,13 +612,13 @@
   }
 
   function endOut(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
-    playing=false; stopTimer(); sDone();
+    runEpoch++; playing=false; stopTimer(); sDone();
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
@@ -620,7 +627,7 @@
     show('doneScreen');
   }
   function endTimeUp(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
@@ -632,7 +639,7 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
-  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  function toMenu(){ ensureAudio(); runEpoch++; playing=false; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});

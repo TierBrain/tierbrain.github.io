@@ -123,7 +123,12 @@ class BrowserEnv:
                           body=target.read_bytes())
             return
         self.report['blocked_external_requests'] += 1
-        route.fulfill(status=204, headers=cors)
+        if request.resource_type == 'script':
+            # WebKit validates module MIME types even for intercepted empty
+            # responses. Omit third-party code with a valid empty JS module.
+            route.fulfill(status=200,headers=cors,content_type='application/javascript',body='')
+        else:
+            route.fulfill(status=204, headers=cors)
 
     def finish(self):
         self.check('real backend requests were exercised', self.report['backend_requests'] > 0)

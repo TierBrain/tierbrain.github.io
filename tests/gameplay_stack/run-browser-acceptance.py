@@ -88,7 +88,7 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
         bridge = None
         try:
             migrations = sorted((ROOT/'supabase/migrations').glob('*.sql'))
-            if len(migrations) != 7:
+            if len(migrations) != 9:
                 raise AssertionError('Review fixture order when migration set changes')
             inputs = [*migrations,SHARED/'compose.yaml',SHARED/'bootstrap.sql',SHARED/'auth-claims.sql',
                       ROOT/'tests/fixtures/show_auth_baseline.sql',ROOT/'tests/fixtures/legacy_retirement_baseline.sql',
@@ -114,7 +114,7 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
             fixture += (ROOT/'tests/fixtures/legacy_retirement_baseline.sql').read_text()
             fixture += 'DROP TABLE public.scores;\nCREATE TABLE public.scores'+(ROOT/'tests/fixtures/scores_baseline.sql').read_text().split('CREATE TABLE public.scores',1)[1]
             # The cleanup migration expects the reviewed pre-cutover EXECUTE
-            # grant. Restore only this fixture grant before applying all seven.
+            # grant. Restore only this fixture grant before applying migrations.
             fixture += '\nGRANT EXECUTE ON FUNCTION public.cleanup_old_events() TO authenticated;\n'
             sql(fixture)
             for migration in migrations:

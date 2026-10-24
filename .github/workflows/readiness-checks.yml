@@ -12,11 +12,11 @@ permissions:
 jobs:
   readiness:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        family: [ux, ops, quiz, solo_a]
+        family: [ux, ops, quiz, solo_a, solo_b, catalogue, races, race_a, race_b]
         browser: [chromium, webkit]
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           if [ "$READINESS_BROWSER" = chromium ] && command -v google-chrome >/dev/null; then
             echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(command -v google-chrome)" >> "$GITHUB_ENV"
           else
-            timeout 240 python -m playwright install --with-deps "$READINESS_BROWSER"
+            timeout 420 python -m playwright install --with-deps "$READINESS_BROWSER"
           fi
       - name: Verify ${{ matrix.family }} in ${{ matrix.browser }}
         run: python tests/readiness/run-acceptance.py --family '${{ matrix.family }}' --browser '${{ matrix.browser }}' --report '/tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json'
@@ -50,4 +50,33 @@ jobs:
           path: |
             /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json
             /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}-failure-*.png
+          if-no-files-found: warn
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cache the pinned disposable PostgreSQL image
+        run: timeout 180 docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+      - name: Verify ownership, concurrency, score bounds and rollback
+        run: |
+          python tests/check_race_access.py --report /tmp/tierbrain-readiness-race-sql.json
+          python tests/check_readiness_score_policy.py --report /tmp/tierbrain-readiness-score-policy.json
+      - name: Preserve synthetic database verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-database
+          path: |
+            /tmp/tierbrain-readiness-race-sql.json
+            /tmp/tierbrain-readiness-score-policy.json
           if-no-files-found: warn

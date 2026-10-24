@@ -367,6 +367,11 @@ function thunk(freq, dur){
 
 let doorIx = 0, queue = [], ptr = 0, round = null, entered = [], held = null;
 let triesLeft = TRIES, wordsDone = 0, startedAt = 0, ledger = [], doorLog = [];
+let runEpoch = 0, wordEpoch = 0, runActive = false, wordLocked = true;
+function wordTask(callback, delay){
+  const run = runEpoch, word = wordEpoch;
+  return setTimeout(() => { if(runActive && run === runEpoch && word === wordEpoch) callback(); }, delay);
+}
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function fmt(ms){ const s=Math.max(0,Math.round(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -411,8 +416,11 @@ function drawNotches(){
 }
 
 function loadWord(){
+  if(!runActive) return;
+  wordEpoch++;
   if(ptr >= queue.length){ openDoor(); return; }
   round = queue[ptr];
+  wordLocked = false;
   entered=[]; held=null;
   $('clueText').textContent = round.q;
   $('say').textContent=''; $('say').className='say';
@@ -456,15 +464,16 @@ function renderKeys(){
   for(let d=2;d<=9;d++){
     const b=document.createElement('button');
     b.className='k'+(held===d?' held':'');
+    b.disabled = wordLocked;
     b.innerHTML='<div class="n">'+d+'</div><div class="l">'+LETTERS[d]+'</div>';
-    b.addEventListener('click',()=>{ held=d; thunk(120,0.07); renderKeys(); renderChoose(); });
+    b.addEventListener('click',()=>{ if(!runActive || wordLocked) return; held=d; thunk(120,0.07); renderKeys(); renderChoose(); });
     pad.appendChild(b);
   }
   const back=document.createElement('button');
   back.className='k';
   back.innerHTML='<div class="n" style="font-size:12px;letter-spacing:.14em;font-weight:400;padding:4px 0">BACK</div>';
-  back.disabled = entered.length===0 && held===null;
-  back.addEventListener('click',()=>{ if(held!==null) held=null; else entered.pop(); renderCode(); renderKeys(); renderChoose(); });
+  back.disabled = wordLocked || (entered.length===0 && held===null);
+  back.addEventListener('click',()=>{ if(!runActive || wordLocked) return; if(held!==null) held=null; else entered.pop(); renderCode(); renderKeys(); renderChoose(); });
   pad.appendChild(back);
 }
 
@@ -476,13 +485,14 @@ function renderChoose(){
     box.appendChild(h); return;
   }
   (LETTERS[held]||'').split('').forEach(L=>{
-    const b=document.createElement('button'); b.className='pick'; b.textContent=L;
+    const b=document.createElement('button'); b.className='pick'; b.textContent=L; b.disabled=wordLocked;
     b.addEventListener('click',()=>put(L));
     box.appendChild(b);
   });
 }
 
 function put(L){
+  if(!runActive || wordLocked) return;
   if(entered.length>=round.code.length) return;
   entered.push(L); held=null;
   thunk(150 + entered.length*12, 0.08);
@@ -492,6 +502,8 @@ function put(L){
 }
 
 function judge(){
+  if(!runActive || wordLocked) return;
+  wordLocked = true; renderKeys(); renderChoose();
   const guess=entered.join('').toUpperCase();
   const answer=round.a.replace(/[^A-Za-z]/g,'').toUpperCase();
   if(guess===answer){
@@ -500,34 +512,37 @@ function judge(){
     $('say').textContent = round.a;
     $('say').className='say ok';
     drawNotches(); renderTurns(); renderLocks();
-    setTimeout(loadWord, 1100);
+    wordTask(loadWord, 1100);
   } else {
     triesLeft--;
     if(triesLeft<=0){
       thunk(55,0.5);
       $('say').textContent='The lock holds.';
       $('say').className='say no';
-      setTimeout(()=>finish(false), 1100);
+      wordTask(()=>finish(false), 1100);
       return;
     }
     $('say').textContent = triesLeft===1 ? 'Wrong. One try left.' : 'Wrong. ' + triesLeft + ' tries left.';
     $('say').className='say no';
-    setTimeout(()=>{ entered=[]; held=null; $('say').textContent=''; $('say').className='say';
+    wordTask(()=>{ entered=[]; held=null; wordLocked=false; $('say').textContent=''; $('say').className='say';
       renderCode(); renderKeys(); renderChoose(); }, 950);
   }
 }
 
 function openDoor(){
+  wordLocked=true; wordEpoch++; renderKeys(); renderChoose();
   thunk(70,0.55);   // the lock turning
   doorLog.push(DOORS[doorIx].n + ', ' + DOORS[doorIx].w);
   $('say').textContent = DOORS[doorIx].w;
   $('say').className='say ok';
   doorIx++;
-  if(doorIx>=DOORS.length){ setTimeout(()=>finish(true), 1300); return; }
-  setTimeout(()=>{ queue=buildDoor(doorIx); ptr=0; loadWord(); }, 1300);
+  if(doorIx>=DOORS.length){ wordTask(()=>finish(true), 1300); return; }
+  wordTask(()=>{ queue=buildDoor(doorIx); ptr=0; loadWord(); }, 1300);
 }
 
 function finish(allOpen){
+  if(!runActive) return;
+  runActive=false; wordLocked=true; wordEpoch++; renderKeys(); renderChoose();
   const ms=Date.now()-startedAt;
   $('closeTitle').textContent = allOpen ? 'THE LAST DOOR OPENS' : 'THE LOCK HOLDS';
   $('closeSub').textContent = allOpen
@@ -547,6 +562,7 @@ function finish(allOpen){
 }
 
 function begin(){
+  runEpoch++; runActive=true;
   doorIx=0; wordsDone=0; triesLeft=TRIES; doorLog=[]; startedAt=Date.now();
   $('entry').classList.add('hide'); $('closing').classList.add('hide');
   queue=buildDoor(0); ptr=0; loadWord();
@@ -577,6 +593,7 @@ $('shareBtn').addEventListener('click',()=>{
 document.addEventListener('keydown',(e)=>{
   if(!$('entry').classList.contains('hide')){ if(e.key==='Enter') $('enterBtn').click(); return; }
   if(!$('closing').classList.contains('hide')){ if(e.key==='Enter') $('againBtn').click(); return; }
+  if(!runActive || wordLocked) return;
   if(e.key>='2'&&e.key<='9'){ held=parseInt(e.key,10); thunk(120,0.07); renderKeys(); renderChoose(); e.preventDefault(); return; }
   if(held!==null && /^[a-zA-Z]$/.test(e.key)){
     const L=e.key.toUpperCase();

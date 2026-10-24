@@ -64,7 +64,7 @@ grading and abuse-control design.
 ## Availability checks
 
 `.github/workflows/keepalive.yml` makes a bounded GET of
-`/rest/v1/scores?select=id&limit=1` and discards the body. It fails on a response
+`/rest/v1/scores?select=id&limit=0` and discards the body. It fails on a response
 other than HTTP 200 or a transport failure. It does not insert a fake score,
 create a room, sign in a user or reopen the retired `legends` table.
 

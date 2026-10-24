@@ -177,7 +177,7 @@
     <div id="hud"><div id="livesBox"></div><span class="hstat">Cleared <b id="statCorrect">0</b></span><span id="tierPill">EXPLORER</span><span id="runTimer">0:00</span></div>
     <div id="mpBar" class="hidden"></div>
     <div id="mapScroll"><div id="mapInner"><svg id="edgesSvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
-    <div id="hint"></div>
+    <div id="hint"></div><button type="button" id="raceExitGame" class="linkbtn" hidden>Leave race</button>
   </section>
   <section id="lobby" class="screen hidden" style="justify-content:center;align-items:center;">
     <div class="sub">Race &middot; Room</div>
@@ -187,6 +187,7 @@
     <button id="startRaceBtn" class="cta" style="max-width:320px;width:100%;">Start race</button>
     <button id="leaveLobby" class="linkbtn">Leave room</button>
   </section>
+  <div id="raceNotice" class="hidden" role="status" aria-live="polite" style="position:fixed;top:12px;left:12px;right:12px;z-index:9999;background:#181b2a;color:white;padding:12px;border:1px solid #f0be57;border-radius:12px;"><span id="raceNoticeText"></span> <button type="button" id="raceRetry">Retry pending action</button> <button type="button" id="raceLeave">Leave room</button></div>
   <div id="countdown" class="hidden">3</div>
   <div id="obWrap" class="hidden"><div id="obCard">
     <div id="obBanner"></div><div id="obStreak" class="hidden"></div>
@@ -202,6 +203,7 @@
     </div>
     <div class="board"><h3 id="boardTitle">This device</h3><ul id="boardList"></ul><div class="bempty hidden" id="boardEmpty"></div></div>
     <button id="againBtn" class="cta" style="max-width:320px;width:100%;">Play again</button>
+    <button type="button" id="raceNewRound" class="linkbtn" hidden>Start a new round</button>
     <button id="menuBtn2" class="linkbtn">Back to menu</button>
   </section>
   <section id="boardScreen" class="screen hidden" style="justify-content:center;align-items:center;">
@@ -210,6 +212,8 @@
     <button id="boardBack" class="cta" style="max-width:320px;width:100%;">Back</button>
   </section>
 </div>
+<script src="vendor/supabase.js"></script>
+<script src="js/race-access.js"></script>
 <script src="tb-worlds.js?v=1" data-world="space"></script>
 <script>
 (function(){
@@ -296,50 +300,93 @@
 
   var S=null, charIdx=0, tierIdx=0, timerRAF=null, used={};
 
-  // ---------- multiplayer (race) ----------
-  var mode='solo', mpOn=false, myName='Player', room='', MPID=W.id+'_mp', raceTier=0;
-  var lobbyId=null, pollId=null, resultsId=null;
-  function hstr(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  // ---------- authenticated multiplayer (race) ----------
+  var mode='solo', mpOn=false, myName='Player', room='', raceTier=0;
+  var lobbyId=null, pollId=null, resultsId=null, countdownId=null, race=null;
+  var raceSessionEpoch=0,reading=false, heartbeatAt=0, activeRun=null, watchedLobbyRun=null, racePacket=null;
+  var raceKey=W.id+'_race_session', checkpointKey=W.id+'_race_checkpoint';
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-  function mpInsert(o){ o.quiz_id=MPID; o.group_code=room; return fetch(sbBase(),{method:'POST',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify([o])}).catch(function(){}); }
-  function mpPing(depth,lives,state){ return mpInsert({name:myName,correct:depth,level:lives,time_left:state}); }
-  function mpGO(tier){ return mpInsert({name:'__GO__',correct:0,level:tier,time_left:0}); }
-  function mpPoll(){ var url=sbBase()+'?select=name,correct,level,time_left,created_at&quiz_id=eq.'+encodeURIComponent(MPID)+'&group_code=eq.'+encodeURIComponent(room)+'&order=created_at.desc&limit=120'; return fetch(url,{headers:sbHeaders()}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; }); }
-  function digest(rows){ var goStart=null,tier=0,latest={},finals={},maxT=0;
-    rows.forEach(function(r){ var t=Date.parse(r.created_at); if(t>maxT) maxT=t;
-      if(r.name==='__GO__'){ if(goStart===null||t<goStart){ goStart=t; tier=r.level; } return; }
-      if(!latest[r.name]||t>latest[r.name].t) latest[r.name]={depth:r.correct,lives:r.level,state:r.time_left,t:t};
-      if(r.time_left===1){ if(finals[r.name]==null||t<finals[r.name]) finals[r.name]=t; } });
-    var players=Object.keys(latest).map(function(n){ return {name:n,depth:latest[n].depth,lives:latest[n].lives,state:latest[n].state,t:latest[n].t,fin:(finals[n]!=null?finals[n]:null)}; });
-    return {go:goStart!=null,start:goStart,tier:tier,maxT:maxT,players:players}; }
+  function raceStore(key,value){ try{ if(value===null) sessionStorage.removeItem(key); else sessionStorage.setItem(key,JSON.stringify(value)); }catch(e){} }
+  function raceLoad(key){ try{ return JSON.parse(sessionStorage.getItem(key)||'null'); }catch(e){ return null; } }
+  function raceIssue(issue){ var box=$('raceNotice'); if(issue.recovered){ box.classList.add('hidden'); return; }
+    box.dataset.state=issue.state||'failed';$('raceNoticeText').textContent=issue.message||'Room connection interrupted. Retry to confirm the pending action.';
+    $('raceRetry').hidden=!issue.canRetry; box.classList.remove('hidden'); }
+  function reportRaceError(error){if(error&&error.code==='race_left')return;raceIssue({message:(race&&race.message?race.message(error):String(error&&error.message||error)),canRetry:!!(race&&race.busy())}); }
+  function raceClient(){ if(!race){ if(!window.RaceAccess) throw new Error('Room service did not load. Reload the page to try again.');
+      race=RaceAccess.create(SB_URL,SB_KEY,{family:W.id==='qc_keep'?'castle':W.id.replace(/^qc_/,''),edition:'general',onIssue:raceIssue}); } return race; }
+  function invalidateCheckpoint(){ raceStore(checkpointKey,null); }
+  function saveCheckpoint(event){ if(!S||S.pending||S.done||!racePacket||!racePacket.member||!racePacket.room) return;
+    raceStore(checkpointKey,{room_id:racePacket.room.id,run_id:activeRun,member_id:racePacket.member.id,
+      progress:{correct:event.correct,level:event.level,time_left:event.time_left},tier:raceTier,seed:racePacket.room.seed,
+      pos:S.pos,visited:S.visited,lives:S.lives,correct:S.correct,wrongs:S.wrongs,t0:S.t0,used:used,charIdx:charIdx}); }
+  function restoreCheckpoint(packet){ var cp=raceLoad(checkpointKey),r=packet.room,m=packet.member;
+    if(!(r.roster||[]).some(function(member){return member.id===m.id;})||!cp||cp.room_id!==r.id||cp.run_id!==r.run_id||cp.member_id!==m.id||cp.seed!==r.seed||cp.tier!==r.options.tier||!cp.progress||
+      cp.progress.correct!==m.last_correct||cp.progress.level!==m.last_level||cp.progress.time_left!==m.last_time||m.last_time!==0||cp.lives!==m.last_level||cp.lives<1) return false;
+    var map=genMap(cp.tier,mulberry32(cp.seed));
+    if(!map.nodes[cp.pos]||map.nodes[cp.pos].row!==m.last_correct||!cp.visited||!cp.visited[cp.pos]||Object.keys(cp.visited).some(function(id){return !map.nodes[id];})) return false;
+    race.useRun(r.run_id); activeRun=r.run_id; raceTier=cp.tier; charIdx=Math.max(0,Math.min(CHARS.length-1,cp.charIdx|0)); used=cp.used||{};
+    S={map:map,pos:cp.pos,lives:cp.lives,correct:cp.correct,wrongs:cp.wrongs,t0:cp.t0,pending:null,visited:cp.visited,done:false}; mpOn=true;
+    $('tierPill').textContent=TIERS[raceTier].name.toUpperCase(); $('mpBar').classList.remove('hidden');$('raceExitGame').hidden=false;show('game');
+    requestAnimationFrame(function(){ buildMap(); refreshMap(); startRunTimer(); $('hint').textContent='Race restored at your last confirmed cleared obstacle.'; });
+    stopRacePoll(); pollId=setInterval(racePollTick,1600); return true; }
+  function mpPing(depth,lives,state){ var owner=S,run=activeRun,epoch=raceSessionEpoch;if(!race||!run) return Promise.reject(new Error('No active race run.'));
+    invalidateCheckpoint(); if(owner) owner.netBusy=true;
+    return race.submit('progress',{correct:depth,level:lives,time_left:state}).then(function(event){
+      if(epoch!==raceSessionEpoch){var abandoned=new Error('Race left');abandoned.code='race_left';throw abandoned;}if(S===owner&&activeRun===run){ owner.netBusy=false; saveCheckpoint(event); } return event;
+    }).catch(function(error){ reportRaceError(error); throw error; }); }
+  function digest(rows){ var latest={},finals={};
+    rows.forEach(function(row){ if(!row.member_id||row.name==='__GO__'||row.name==='__END__') return; var id=row.member_id,t=Date.parse(row.created_at);
+      if(!latest[id]||t>latest[id].t) latest[id]={id:id,name:row.name,depth:row.correct,lives:row.level,state:row.time_left,t:t};
+      if(row.kind==='progress'&&row.time_left===1&&(finals[id]==null||t<finals[id])) finals[id]=t; });
+    return {players:Object.keys(latest).map(function(id){ var p=latest[id];p.fin=finals[id]==null?null:finals[id];return p; })}; }
   function sortStandings(ps){ return ps.slice().sort(function(a,b){ var af=a.fin!=null,bf=b.fin!=null; if(af&&bf) return a.fin-b.fin; if(af) return -1; if(bf) return 1; var ae=a.state===2,be=b.state===2; if(ae!==be) return ae?1:-1; return b.depth-a.depth; }); }
   function stopLobby(){ if(lobbyId){ clearInterval(lobbyId); lobbyId=null; } }
   function stopRacePoll(){ if(pollId){ clearInterval(pollId); pollId=null; } }
   function stopResults(){ if(resultsId){ clearInterval(resultsId); resultsId=null; } }
-  function stopAllNet(){ stopLobby(); stopRacePoll(); stopResults(); }
-  function enterLobby(){ mpOn=false; show('lobby'); $('lobbyCode').textContent=room; $('lobbyStatus').textContent='Waiting for players\u2026'; mpPing(0,LIVES,0); stopLobby(); lobbyId=setInterval(lobbyTick,1500); lobbyTick(); }
-  function lobbyTick(){ mpPing(0,LIVES,0); mpPoll().then(function(rows){ var d=digest(rows);
-    var present=d.players.filter(function(p){ return (d.maxT-p.t)<12000; }).map(function(p){ return p.name; });
-    if(present.indexOf(myName)<0) present.push(myName); renderLobby(present);
-    if(d.go && (d.maxT-d.start)<15000){ stopLobby(); beginCountdown(d.tier); } }); }
-  function renderLobby(list){ var ul=$('lobbyList'); ul.innerHTML=''; list.forEach(function(n){ var li=document.createElement('li'); li.className='prow'; li.innerHTML='<span class="dot" style="background:var(--gate)"></span>'+escapeHtml(n)+(n===myName?' <small>(you)</small>':''); ul.appendChild(li); });
-    $('lobbyStatus').textContent = list.length>1 ? (list.length+' in the room, anyone can start') : 'Waiting for players\u2026 share the room code'; }
-  function beginCountdown(tier){ raceTier=tier; var ov=$('countdown'); ov.classList.remove('hidden'); var n=3; ov.textContent='3'; beep(440,.1,'sine',.12);
-    var iv=setInterval(function(){ n--; if(n>0){ ov.textContent=String(n); beep(440,.1,'sine',.12); } else if(n===0){ ov.textContent='GO!'; beep(720,.16,'sine',.14); } else { clearInterval(iv); ov.classList.add('hidden'); startRaceGame(); } },800); }
-  function startRaceGame(){ mpOn=true; beginGame(raceTier, mulberry32(hstr(room))); mpPing(0,LIVES,0); stopRacePoll(); pollId=setInterval(racePollTick,1600); racePollTick(); }
-  function racePollTick(){ mpPoll().then(function(rows){ renderMpBar(digest(rows)); }); }
-  function renderMpBar(d){ var bar=$('mpBar'); if(!mpOn){ bar.classList.add('hidden'); return; } bar.classList.remove('hidden');
-    var R=(S?S.map.R+1:1), ord=sortStandings(d.players);
-    bar.innerHTML=ord.slice(0,5).map(function(p){ var pct=Math.round(Math.min(1,p.depth/R)*100); var mark=p.fin!=null?' \u2713':(p.state===2?' \u2717':'');
-      return '<div class="mprow'+(p.name===myName?' me':'')+'"><span class="mpn">'+escapeHtml(p.name)+mark+'</span><span class="mpt"><span class="mpf" style="width:'+pct+'%"></span></span></div>'; }).join(''); }
-  function mpResults(outcome){ stopRacePoll(); show('result'); $('saveArea').classList.add('hidden'); $('againBtn').classList.add('hidden');
-    $('resTitle').textContent = outcome==='win'?W.winTitle:'Out of the race'; $('resTitle').style.color = outcome==='win'?'var(--gold)':'var(--wrong)';
-    stopResults(); resultsId=setInterval(resultsTick,1600); resultsTick(); }
-  function resultsTick(){ mpPoll().then(function(rows){ var ord=sortStandings(digest(rows).players); var winner=(ord.length&&ord[0].fin!=null)?ord[0].name:null;
-    var html=''; if(winner) html+='<div style="margin-bottom:10px;font-weight:800;color:var(--gold);">'+(winner===myName?'You won the race!':escapeHtml(winner)+' won the race')+'</div>';
-    html+='<ul style="list-style:none;padding:0;margin:0 auto;display:flex;flex-direction:column;gap:6px;max-width:340px;">';
-    ord.forEach(function(p,i){ var tag=p.fin!=null?('#'+(i+1)+' in'):(p.state===2?'out':('depth '+p.depth)); html+='<li class="brow'+(p.name===myName?' me':'')+'"><span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(p.name)+'</span><span class="bsc">'+tag+'</span></li>'; });
-    html+='</ul>'; $('resStats').innerHTML=html; }); }
+  function stopAllNet(){ stopLobby();stopRacePoll();stopResults();if(countdownId){clearInterval(countdownId);countdownId=null;}$('countdown').classList.add('hidden'); }
+  function readRace(){if(reading||!race)return Promise.resolve(null);reading=true;var epoch=raceSessionEpoch;
+    return race.state().then(function(packet){if(epoch!==raceSessionEpoch||!packet)return null;racePacket=packet; if(Date.now()-heartbeatAt>10000&&!race.busy()){ heartbeatAt=Date.now();race.heartbeat().catch(reportRaceError); }return packet;
+    }).catch(function(error){if(epoch===raceSessionEpoch)reportRaceError(error);return null;}).then(function(packet){reading=false;return packet;}); }
+  function enterLobby(){var epoch=++raceSessionEpoch;reading=false;mpOn=false; stopAllNet(); show('lobby'); $('lobbyCode').textContent=room; $('lobbyStatus').textContent='Connecting to your room…'; $('startRaceBtn').disabled=true;
+    try{raceClient().enter(room,myName).then(function(packet){if(epoch!==raceSessionEpoch||!packet)return;racePacket=packet;myName=packet.member.name;raceStore(raceKey,{code:room,name:myName});
+      if(packet.room.phase==='lobby') watchedLobbyRun=packet.room.run_id;
+      lobbyId=setInterval(lobbyTick,1500);lobbyTick();}).catch(function(error){if(epoch===raceSessionEpoch)reportRaceError(error);});}catch(error){reportRaceError(error);} }
+  function renderLobby(packet){ var ul=$('lobbyList'),mine=packet.member.id,d=digest(packet.rows||[]),normal=packet.room.phase==='lobby';ul.innerHTML='';
+    d.players.forEach(function(p){if(normal&&race.serverNow()-p.t>30000)return;var li=document.createElement('li');li.className='prow';li.innerHTML='<span class="dot" style="background:var(--gate)"></span>'+escapeHtml(p.name)+(p.id===mine?' <small>(you)</small>':'')+(!normal?' <small>depth '+p.depth+' · '+p.lives+' ♥</small>':'');ul.appendChild(li);});
+    $('startRaceBtn').hidden=!packet.host;$('startRaceBtn').disabled=!packet.host||race.busy();$('startRaceBtn').textContent=normal?'Start race':'Start a new round';
+    $('lobbyStatus').textContent=normal?(packet.host?'You host this room. Start when everyone has joined.':'Waiting for the host to start the race.'):'This race is already in progress. Your interrupted position cannot be restored safely. Standings are read-only; leave or ask the host for a new round.'; }
+  function lobbyTick(){ readRace().then(function(packet){if(!packet)return;renderLobby(packet);
+    if(packet.room.phase==='lobby'){watchedLobbyRun=packet.room.run_id;return;}
+    if(packet.room.phase!=='lobby'&&race.serverNow()<Date.parse(packet.room.deadline)&&restoreCheckpoint(packet)){stopLobby();return;}
+    if(packet.room.phase==='playing'&&watchedLobbyRun&&packet.member.progress_at==null&&(packet.room.roster||[]).some(function(m){return m.id===packet.member.id;})&&race.serverNow()<Date.parse(packet.room.play_at)+1500){
+      stopLobby();race.useRun(packet.room.run_id);activeRun=packet.room.run_id;beginCountdown(packet);return;}
+    if(packet.room.phase==='finished')$('lobbyStatus').textContent='This round has ended. Leave the room or wait for the host to start a new round.';
+  }); }
+  function startRaceControl(){ if(!race||!race.isHost()||race.busy())return;$('startRaceBtn').disabled=true;
+    race.state().then(function(packet){racePacket=packet;return packet.room.phase==='lobby'?race.start({tier:tierIdx}):race.reset();}).then(function(){invalidateCheckpoint();lobbyTick();}).catch(reportRaceError); }
+  function beginCountdown(packet){ raceTier=packet.room.options.tier; racePacket=packet;var run=packet.room.run_id,ov=$('countdown');ov.classList.remove('hidden');
+    function tick(){ if(activeRun!==run)return;var left=Date.parse(packet.room.play_at)-race.serverNow();if(left<=0){clearInterval(countdownId);countdownId=null;ov.classList.add('hidden');startRaceGame(packet);return;}ov.textContent=String(Math.ceil(left/1000)); }
+    countdownId=setInterval(tick,100);tick(); }
+  function startRaceGame(packet){ if(packet.room.run_id!==activeRun)return;mpOn=true;beginGame(raceTier,mulberry32(packet.room.seed));S.t0=Date.parse(packet.room.play_at)-(race.serverNow()-Date.now());
+    saveCheckpoint({correct:0,level:LIVES,time_left:0});stopRacePoll();pollId=setInterval(racePollTick,1600);racePollTick(); }
+  function racePollTick(){readRace().then(function(packet){if(!packet)return;
+    if(packet.room.run_id!==activeRun||packet.room.phase==='lobby'){if(S)S.done=true;stopRunTimer();stopObTimer();invalidateCheckpoint();$('obWrap').classList.add('hidden');mpOn=false;stopRacePoll();show('lobby');watchedLobbyRun=packet.room.run_id;stopLobby();lobbyId=setInterval(lobbyTick,1500);lobbyTick();return;}
+    renderMpBar(digest(packet.rows||[]));
+    if(race.serverNow()>=Date.parse(packet.room.deadline)&&S&&!S.done&&!S.netBusy){S.done=true;stopRunTimer();stopObTimer();$('obWrap').classList.add('hidden');mpResults('closed');}
+  }); }
+  function renderMpBar(d){var bar=$('mpBar');if(!mpOn){bar.classList.add('hidden');return;}bar.classList.remove('hidden');var R=S?S.map.R+1:1,mine=race.member().id;
+    bar.innerHTML=sortStandings(d.players).slice(0,5).map(function(p){var pct=Math.round(Math.min(1,p.depth/R)*100),mark=p.fin!=null?' ✓':p.state===2?' ✗':'';
+      return '<div class="mprow'+(p.id===mine?' me':'')+'"><span class="mpn">'+escapeHtml(p.name)+mark+'</span><span class="mpt"><span class="mpf" style="width:'+pct+'%"></span></span></div>';}).join(''); }
+  function mpResults(outcome){stopRacePoll();invalidateCheckpoint();show('result');$('saveArea').classList.add('hidden');$('againBtn').classList.add('hidden');$('raceNewRound').hidden=!race.isHost();
+    $('resTitle').textContent=outcome==='win'?W.winTitle:outcome==='closed'?'The race has ended':'Out of the race';$('resTitle').style.color=outcome==='win'?'var(--gold)':'var(--wrong)';stopResults();resultsId=setInterval(resultsTick,1600);resultsTick(); }
+  function resultsTick(){readRace().then(function(packet){if(!packet)return;if(packet.room.run_id!==activeRun||packet.room.phase==='lobby'){racePollTick();return;}
+    var ord=sortStandings(digest(packet.rows||[]).players),mine=packet.member.id,winner=ord.find(function(p){return p.fin!=null;}),html='';
+    if(winner)html+='<div style="margin-bottom:10px;font-weight:800;color:var(--gold);">'+(winner.id===mine?'You won the race!':escapeHtml(winner.name)+' won the race')+'</div>';
+    html+='<ul style="list-style:none;padding:0;margin:0 auto;display:flex;flex-direction:column;gap:6px;max-width:340px;">';ord.forEach(function(p,i){var tag=p.fin!=null?'#'+(i+1)+' in':p.state===2?'out':'depth '+p.depth;
+      html+='<li class="brow'+(p.id===mine?' me':'')+'"><span class="brk">'+(i+1)+'</span><span class="bnm">'+escapeHtml(p.name)+'</span><span class="bsc">'+tag+'</span></li>';});$('resStats').innerHTML=html+'</ul>';}); }
+  function leaveRace(){if(!race){show('menu');return;}raceSessionEpoch++;reading=false;stopAllNet();stopRunTimer();stopObTimer();if(S)S.done=true;invalidateCheckpoint();
+    race.leave().then(function(){raceStore(raceKey,null);activeRun=null;mpOn=false;watchedLobbyRun=null;$('obWrap').classList.add('hidden');$('raceNotice').classList.add('hidden');$('raceNewRound').hidden=true;show('menu');}).catch(reportRaceError); }
+  function raceClockClosed(){if(!mpOn||!S||S.done||!racePacket||!racePacket.room||race.serverNow()<Date.parse(racePacket.room.deadline))return false;S.done=true;stopRunTimer();stopObTimer();$('obWrap').classList.add('hidden');mpResults('closed');return true;}
   function buildModeRow(){ var mr=$('modeRow'); mr.innerHTML=''; [['solo','Solo'],['race','Race a friend']].forEach(function(m){ var b=document.createElement('button'); b.className='chip'+(mode===m[0]?' sel':''); b.style.setProperty('--cc','var(--gate)'); b.textContent=m[1]; b.addEventListener('click',function(){ mode=m[0]; buildModeRow(); updateModeUI(); ensureAudio(); }); mr.appendChild(b); }); }
   function updateModeUI(){ var race=(mode==='race'); $('codeLbl').innerHTML = race?'Room code (required)':'Squad code (optional: share a board with friends)'; $('startBtn').textContent = race?'Find players':'Begin'; }
   function pickQuestion(t){ t=Math.max(1,Math.min(4,t)); var arr=BANK[String(t)]; if(!used[t]) used[t]={}; var tries=0,idx;
@@ -374,14 +421,14 @@
   function renderLives(){ var box=$('livesBox'); box.innerHTML=''; for(var i=0;i<LIVES;i++){ var sp=document.createElement('span'); sp.innerHTML=window.TBWorld?TBWorld.life(i<S.lives):'<svg viewBox="0 0 24 24" fill="currentColor" class="'+(i<S.lives?'':'lost')+'"><path d="M12 3l6.5 17L12 16.4 5.5 20z"/></svg>'; box.appendChild(sp.firstChild); } }
 
   function beginGame(tier,rng){ used={}; S={map:genMap(tier,rng),pos:null,lives:LIVES,correct:0,wrongs:0,t0:Date.now(),pending:null,visited:{},done:false}; S.pos=S.map.startId; S.visited[S.pos]=1;
-    $('tierPill').textContent=TIERS[tier].name.toUpperCase(); $('mpBar').classList.toggle('hidden',!mpOn); show('game');
-    requestAnimationFrame(function(){ buildMap(); refreshMap(); startRunTimer(); $('hint').textContent=W.hint||'Tap a glowing node to advance.'; }); }
+    $('tierPill').textContent=TIERS[tier].name.toUpperCase(); $('mpBar').classList.toggle('hidden',!mpOn);$('raceExitGame').hidden=!mpOn;show('game');
+    var rendering=S;requestAnimationFrame(function(){ if(S!==rendering||S.done)return;buildMap(); refreshMap(); startRunTimer(); $('hint').textContent=W.hint||'Tap a glowing node to advance.'; }); }
   function startRun(){ mpOn=false; $('againBtn').classList.remove('hidden'); beginGame(tierIdx, Math.random); }
-  var runTimerId=null; function startRunTimer(){ stopRunTimer(); runTimerId=setInterval(function(){ $('runTimer').textContent=fmt((Date.now()-S.t0)/1000); },500); }
+  var runTimerId=null; function startRunTimer(){ stopRunTimer(); runTimerId=setInterval(function(){if(raceClockClosed())return;$('runTimer').textContent=fmt((Date.now()-S.t0)/1000); },500); }
   function stopRunTimer(){ if(runTimerId){ clearInterval(runTimerId); runTimerId=null; } }
-  function onNodeTap(id){ if(!S||S.pending||S.finishing) return; var node=S.map.nodes[id],cur=S.map.nodes[S.pos]; if(cur.out.indexOf(id)<0||S.visited[id]) return;
-    if(node.type==='core'){ S.visited[id]=1; S.pos=id; S.finishing=true; S.endAt=Date.now(); stopRunTimer(); refreshMap(); if(window.TBWorld){ TBWorld.finish(true); setTimeout(win, 1500); } else win(); return; } beginAttempt(node); }
-  function beginAttempt(node){ var cfg=TYPE[node.type]; S.pending={node:node,cfg:cfg,need:cfg.pass,have:0}; $('obCard').style.setProperty('--c','var(--'+node.type+')'); $('obWrap').classList.remove('hidden'); if(window.TBWorld) TBWorld.obstacle(node.type); nextQuestion(); }
+  function onNodeTap(id){if(raceClockClosed())return;if(!S||S.done||S.pending||S.finishing||S.netBusy) return; var node=S.map.nodes[id],cur=S.map.nodes[S.pos]; if(cur.out.indexOf(id)<0||S.visited[id]) return;
+    if(node.type==='core'){ S.visited[id]=1; S.pos=id; S.finishing=true; S.endAt=Date.now(); stopRunTimer(); refreshMap(); if(window.TBWorld){ var winning=S;TBWorld.finish(true);setTimeout(function(){if(S===winning&&!S.done)win();},1500); } else win(); return; } beginAttempt(node); }
+  function beginAttempt(node){ if(mpOn)invalidateCheckpoint(); var cfg=TYPE[node.type]; S.pending={node:node,cfg:cfg,need:cfg.pass,have:0}; $('obCard').style.setProperty('--c','var(--'+node.type+')'); $('obWrap').classList.remove('hidden'); if(window.TBWorld) TBWorld.obstacle(node.type); nextQuestion(); }
   function nextQuestion(){ var p=S.pending,cfg=p.cfg,qt=Math.max(1,Math.min(4,S.map.base+cfg.delta)),qd=pickQuestion(qt); S.cur=qd;
     var td=W.types[p.node.type]; $('obBanner').textContent=(td.prefix||'')+td.label;
     var sk=$('obStreak'); if(p.need>1){ sk.classList.remove('hidden'); sk.textContent=p.have>0?('Held '+p.have+' of '+p.need+', keep going!'):'Two correct in a row to break through.'; } else sk.classList.add('hidden');
@@ -390,24 +437,24 @@
   function startObTimer(sec){ stopObTimer(); var bar=$('obTimer'),t0=Date.now(),ms=sec*1000; bar.style.width='100%';
     (function tick(){ var left=ms-(Date.now()-t0),pct=Math.max(0,left/ms*100); bar.style.width=pct+'%'; if(left<=0){ answer(false,null); return; } timerRAF=requestAnimationFrame(tick); })(); }
   function stopObTimer(){ if(timerRAF){ cancelAnimationFrame(timerRAF); timerRAF=null; } }
-  function answer(ok,btn){ if(!S.pending||S.pending.locked) return; S.pending.locked=true; stopObTimer();
+  function answer(ok,btn){if(raceClockClosed())return;if(!S||S.done||!S.pending||S.pending.locked) return; S.pending.locked=true; var run=S,pending=S.pending; stopObTimer();
     Array.prototype.forEach.call($('obOpts').children,function(b){ b.style.pointerEvents='none'; });
     if(ok){ if(btn) btn.classList.add('good'); sfxGood(); S.correct++; S.pending.have++;
       if(window.TBWorld) TBWorld.answer(S.pending.have>=S.pending.need?'through':'good');
-      if(S.pending.have>=S.pending.need){ $('obFx').textContent='Through!'; $('obFx').style.color='var(--right)'; setTimeout(function(){ passNode(S.pending.node); },620); }
-      else { $('obFx').textContent='1 down, 1 to go!'; $('obFx').style.color='var(--gold)'; setTimeout(function(){ S.pending.locked=false; nextQuestion(); },720); } }
+      if(S.pending.have>=S.pending.need){ $('obFx').textContent='Through!'; $('obFx').style.color='var(--right)'; setTimeout(function(){ if(S===run&&!S.done&&S.pending===pending)passNode(pending.node); },620); }
+      else { $('obFx').textContent='1 down, 1 to go!'; $('obFx').style.color='var(--gold)'; setTimeout(function(){ if(S===run&&!S.done&&S.pending===pending){S.pending.locked=false;nextQuestion();} },720); } }
     else { if(btn) btn.classList.add('bad'); sfxBad();
       Array.prototype.forEach.call($('obOpts').children,function(b,i){ if(S.cur.opts[i].ok) b.classList.add('good'); });
       S.lives--; S.wrongs++; S.pending.have=0; renderLives(); if(window.TBWorld){ TBWorld.answer(S.lives<=0?'dead':'wrong'); TBWorld.hit(); }
-      if(S.lives<=0){ $('obFx').textContent='Defeated.'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ defeat(S.pending.node); },900); }
-      else { $('obFx').textContent=(btn?'Wrong!':'Out of time!')+' \u2212 a life'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ S.pending.locked=false; nextQuestion(); },1000); } } }
-  function passNode(node){ S.visited[node.id]=1; S.pos=node.id; S.pending=null; $('obWrap').classList.add('hidden'); refreshMap(); if(mpOn) mpPing(S.map.nodes[S.pos].row,S.lives,0);
+      if(S.lives<=0){ $('obFx').textContent='Defeated.'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ if(S===run&&!S.done&&S.pending===pending)defeat(pending.node); },900); }
+      else { $('obFx').textContent=(btn?'Wrong!':'Out of time!')+' \u2212 a life'; $('obFx').style.color='var(--wrong)'; setTimeout(function(){ if(S===run&&!S.done&&S.pending===pending){S.pending.locked=false;nextQuestion();} },1000); } } }
+  function passNode(node){ S.visited[node.id]=1; S.pos=node.id; S.pending=null; $('obWrap').classList.add('hidden'); refreshMap(); if(mpOn)mpPing(S.map.nodes[S.pos].row,S.lives,0).catch(function(){});
     var cur=S.map.nodes[S.pos]; if(cur.out.length===1&&S.map.nodes[cur.out[0]].type==='core') $('hint').textContent=W.dest.charAt(0).toUpperCase()+W.dest.slice(1)+' is in reach: make the final move!'; else $('hint').textContent='Cleared! Choose your next move.'; }
-  function win(){ stopRunTimer(); stopObTimer(); if(mpOn){ S.done=true; mpPing(S.map.R+1,S.lives,1); mpResults('win'); return; } var el=((S.endAt||Date.now())-S.t0)/1000; lastRun={correct:S.correct,level:S.lives,timeLeft:el,t:Date.now()};
+  function win(){ stopRunTimer(); stopObTimer(); if(mpOn){ S.done=true; mpPing(S.map.R+1,S.lives,1).then(function(){mpResults('win');}).catch(function(){}); return; } var el=((S.endAt||Date.now())-S.t0)/1000; lastRun={correct:S.correct,level:S.lives,timeLeft:el,t:Date.now()};
     $('resTitle').textContent=W.winTitle; $('resTitle').style.color='var(--gold)';
     $('resStats').innerHTML='Reached '+W.dest+' in <b>'+fmt(el)+'</b><br>'+S.lives+' \u2665 remaining \u00b7 '+S.correct+' obstacles cleared';
     boardCtx='result'; if(window.TBWorld) TBWorld.result(true); $('saveArea').classList.remove('hidden'); $('saveSummary').textContent=fmtScore(lastRun); var nm=lsGet(NAME_KEY); if(nm) $('boardName').value=nm; show('result'); showBoard(); }
-  function defeat(node){ stopRunTimer(); stopObTimer(); S.pending=null; $('obWrap').classList.add('hidden'); if(mpOn){ S.done=true; mpPing(node?node.row:0,S.lives,2); mpResults('lose'); return; } lastRun=null; var depth=node?node.row:0;
+  function defeat(node){ stopRunTimer(); stopObTimer(); S.pending=null; $('obWrap').classList.add('hidden'); if(mpOn){ S.done=true; mpPing(node?node.row:0,S.lives,2).then(function(){mpResults('lose');}).catch(function(){}); return; } lastRun=null; var depth=node?node.row:0;
     $('resTitle').textContent=W.loseTitle; $('resTitle').style.color='var(--wrong)';
     $('resStats').innerHTML='Your run ended at depth <b>'+depth+'</b> of '+S.map.R+'<br>'+S.correct+' obstacles cleared \u00b7 '+fmt((Date.now()-S.t0)/1000);
     boardCtx='result'; if(window.TBWorld) TBWorld.result(false); $('saveArea').classList.add('hidden'); show('result'); showBoard(); }
@@ -419,15 +466,19 @@
     var how=$('howEl'); how.innerHTML=''; ['gate','timed','enemy','sealed'].forEach(function(t){ var d=document.createElement('div'); d.className='howline'; d.innerHTML='<span class="pip" style="background:var(--'+t+')"></span>'+W.types[t].label+'<small>: '+HOWDESC[t]+'</small>'; how.appendChild(d); }); }
   function init(){ fillTexts(); var nm=lsGet(NAME_KEY); if(nm) $('nameIn').value=nm; var gc=lsGet(GROUP_KEY); if(gc) $('codeIn').value=gc; buildMenu(); buildModeRow(); updateModeUI();
     $('startBtn').addEventListener('click',function(){ ensureAudio(); myName=($('nameIn').value||'').trim().slice(0,14)||'Player'; lsSet(NAME_KEY,myName); var code=($('codeIn').value||'').trim(); lsSet(GROUP_KEY,code);
-      if(mode==='race'){ room=code.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24); if(!room){ $('menuErr').textContent='Enter a room code to race.'; return; } $('menuErr').textContent=''; enterLobby(); }
+      if(mode==='race'){ room=code.toUpperCase(); if(!/^[A-Z0-9]{4,12}$/.test(room)){ $('menuErr').textContent='Use a room code of 4–12 letters or numbers.'; return; } $('menuErr').textContent=''; enterLobby(); }
       else { startRun(); } });
-    $('startRaceBtn').addEventListener('click',function(){ ensureAudio(); mpGO(tierIdx); $('lobbyStatus').textContent='Starting\u2026'; });
-    $('leaveLobby').addEventListener('click',function(){ stopAllNet(); show('menu'); });
+    $('startRaceBtn').addEventListener('click',startRaceControl);
+    $('leaveLobby').addEventListener('click',leaveRace);
     $('boardBtn').addEventListener('click',function(){ ensureAudio(); boardCtx='menu'; show('boardScreen'); showBoard(); });
     $('boardBack').addEventListener('click',function(){ show('menu'); });
     $('boardSave').addEventListener('click',saveScore);
     $('againBtn').addEventListener('click',function(){ ensureAudio(); startRun(); });
-    $('menuBtn2').addEventListener('click',function(){ stopAllNet(); show('menu'); }); }
+    $('menuBtn2').addEventListener('click',function(){if(mpOn||activeRun)leaveRace();else{stopAllNet();show('menu');}});
+    $('raceRetry').addEventListener('click',function(){if(race)race.retry();});$('raceLeave').addEventListener('click',leaveRace);$('raceExitGame').addEventListener('click',leaveRace);
+    $('raceNewRound').addEventListener('click',function(){stopResults();mpOn=false;show('lobby');stopLobby();lobbyId=setInterval(lobbyTick,1500);startRaceControl();});
+    var saved=raceLoad(raceKey);if(saved&&/^[A-Z0-9]{4,12}$/.test(saved.code)){mode='race';room=saved.code;myName=saved.name;$('nameIn').value=myName;$('codeIn').value=room;buildModeRow();updateModeUI();enterLobby();}
+  }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 
   function validateMap(m){ var idsl=Object.keys(m.nodes); for(var i=0;i<idsl.length;i++){ var n=m.nodes[idsl[i]]; if(n.type!=='start'&&n.in.length===0) return 'in'; if(n.type!=='core'&&n.out.length===0) return 'out'; }
