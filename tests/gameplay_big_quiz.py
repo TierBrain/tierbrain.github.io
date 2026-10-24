@@ -28,7 +28,9 @@ def run(env):
     env.check("Big Quiz: two distinct real phones join opposite teams", member_ids[0] != member_ids[1])
 
     def controls():
-        if not host.evaluate("document.body.classList.contains('ops-open')"):
+        # Lobby controls are already visible; the gear appears only once the
+        # show is playing and operator controls collapse.
+        if host.locator("#opsToggle").is_visible() and not host.evaluate("document.body.classList.contains('ops-open')"):
             host.locator("#opsToggle").click()
 
     def settled():

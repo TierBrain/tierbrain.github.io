@@ -26,14 +26,14 @@ def state(host):
 
 def question(host, previous=None):
     host.wait_for_function(
-        "old=>G.phase==='live'&&!!G.qId&&G.qId!==old&&!starting",
+        "old=>typeof G!=='undefined'&&G.phase==='live'&&!!G.qId&&G.qId!==old&&!starting",
         arg=previous, timeout=25000)
     return state(host)
 
 
 def phone_question(page, qid, phase='live'):
     page.wait_for_function(
-        "v=>joined&&lastState&&lastState.qId===v.qid&&lastState.phase===v.phase",
+        "v=>typeof joined!=='undefined'&&joined&&lastState&&lastState.qId===v.qid&&lastState.phase===v.phase",
         arg={'qid': qid, 'phase': phase}, timeout=15000)
 
 
@@ -49,12 +49,12 @@ def join(page, phone_path, room_code, name):
     page.goto(f'{origin.scheme}://{origin.netloc}/{phone_path}?c={room_code}')
     page.locator('#nameIn').fill(name)
     page.locator('#joinBtn').click()
-    page.wait_for_function('joined&&!!myId&&!!lastState', timeout=20000)
+    page.wait_for_function("typeof joined!=='undefined'&&joined&&!!myId&&!!lastState", timeout=20000)
     return page.evaluate('myId')
 
 
 def setup(host, answer_seconds=7):
-    host.wait_for_function("!!G.code&&!roomOpening&&G.phase==='lobby'", timeout=25000)
+    host.wait_for_function("typeof G!=='undefined'&&!!G.code&&!roomOpening&&G.phase==='lobby'", timeout=25000)
     # Exercise the actual controls, including the regression-prone 20/25 step.
     host.locator('#qPlus').click()
     assert host.locator('#qTot').inner_text() == '25'
@@ -109,8 +109,9 @@ def new_room(host, pages):
         timeout=15000)
     host.once('dialog', lambda dialog: dialog.accept())
     host.locator('#newBtn').click()
+    # Reload can expose the new document before its gameplay script declares G.
     host.wait_for_function(
-        "old=>G.code&&G.code!==old&&!roomOpening&&G.phase==='lobby'",
+        "old=>typeof G!=='undefined'&&G.code&&G.code!==old&&!roomOpening&&G.phase==='lobby'",
         arg=old, timeout=25000)
     return host.evaluate('G.code')
 
@@ -131,7 +132,7 @@ def run_edition(env, edition):
         # The page is already on the correct URL; avoid a redundant bootstrap.
         page.locator('#nameIn').fill(name)
         page.locator('#joinBtn').click()
-        page.wait_for_function('joined&&!!myId&&!!lastState', timeout=20000)
+        page.wait_for_function("typeof joined!=='undefined'&&joined&&!!myId&&!!lastState", timeout=20000)
         phones[page.evaluate('myId')] = page
     env.check(prefix + 'three independent phones joined', len(phones) == 3)
     q1 = start(host, 3)

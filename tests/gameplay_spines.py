@@ -71,7 +71,7 @@ def _edition(env, path, edition):
     env.check(prefix + "_duplicate_names_distinct_members", ids[0] != ids[1])
 
     host.locator("#cutsToggle").check()
-    host.evaluate("TBScenes.play=(stage, game, kind, options)=>{window.__finishOpening=options.onEnd;return true;}")
+    host.evaluate("() => { TBScenes.play=(stage, game, kind, options)=>{window.__finishOpening=options.onEnd;return true;}; }")
     host.locator("#lstart").click()
     _wait(host, "typeof __finishOpening==='function' && document.querySelector('#lobby').hidden")
     _leave(two)

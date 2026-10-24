@@ -67,7 +67,13 @@ COURSE = """() => {
 def _snapshot(host):
     return host.evaluate("""() => ({
       phase:G.phase, order:G.order.slice(), turn:G.turnIdx, seq:G.turnSeq,
-      positions:{...G.positions}, board:JSON.parse(JSON.stringify(G.board)),
+      positions:{...G.positions}, board:{
+        // Art adds transient _eye/_alpha/_writhe fields while drawing. Compare
+        // the actual game model that SQL preserves, independently of frames.
+        ladders:(G.board.ladders||[]).map(({from,to,health,maxHealth,alive})=>({from,to,health,maxHealth,alive})),
+        snakes:(G.board.snakes||[]).map(({from,to,stir,threshold,alive})=>({from,to,stir,threshold,alive})),
+        craters:(G.board.craters||[]).slice()
+      },
       run:access.currentRoom().run_id,
       published:access.currentRoom().state,
       winner:G.winner
@@ -192,7 +198,8 @@ def run(env):
     host.wait_for_function("G.phase === 'live' && document.getElementById('status').textContent.includes('Back on the mountain') && !access.busy()", timeout=30000)
     host.evaluate(COURSE)
     restored = _snapshot(host)
-    env.check("creak: board reload restores canonical positions and board", restored["positions"] == before_reload["positions"] and restored["board"] == before_reload["published"]["board"])
+    env.check("creak: board reload restores canonical positions and board", restored["positions"] == before_reload["positions"] and restored["board"] == before_reload["published"]["board"],
+              {"before_positions": before_reload["positions"], "restored_positions": restored["positions"], "expected_board": before_reload["published"]["board"], "restored_board": restored["board"]})
     env.check("creak: board reload retains its run and opens a fresh roll", restored["run"] == before_reload["run"] and restored["seq"] == before_reload["seq"] + 1)
 
     turn("creak: wrong rockfall answer moves the climber down", 44, event="rock", answer="wrong")
@@ -269,4 +276,8 @@ def run(env):
     host.wait_for_function("G.phase === 'gameover' && !access.busy()", timeout=20000)
     one.wait_for_function("latest && latest.room.phase === 'gameover'", timeout=20000)
     env.check("creak: last remaining racer wins without a false summit message", "last climber standing" in host.locator("#ovLine").inner_text() and "last climber standing" in one.locator("#playCard").inner_text())
+    host.evaluate("() => { const open=TBShare.open; TBShare.open=options=>{window.__creakShare=options;return open(options);}; }")
+    host.locator("#ovShare").click()
+    env.check("creak: default-win share card reports its real finish and turn count", host.evaluate("window.__creakShare.lines[0]==='Last climber standing.' && window.__creakShare.lines[1].startsWith('Finished in '+(G.turnSeq-G.seqBase)+' turns') && !window.__creakShare.shareText.includes('summit')"))
+    host.evaluate("TBShare.close()")
     env.note(f"Creak completed {turns} normal turns, all four question kinds, native question/roll timeouts, reload/reconnect, rematch and leave/rejoin against real Auth/SQL. Only presentation and random outcomes were controlled.")

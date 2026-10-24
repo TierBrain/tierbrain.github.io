@@ -1008,7 +1008,8 @@ function showWin(){
   $('ovAgain').disabled=true;
   const alive=(G.board.ladders||[]).filter(function(l){return l.alive;}).length;
   const totalL=(G.board.ladders||[]).length;
-  $('ovLine').textContent=G.winner.name+((G.positions[G.winner.id]||1)>=TOP?' reached the summit first!':' is the last climber standing!');
+  const summit=(G.positions[G.winner.id]||1)>=TOP;
+  $('ovLine').textContent=G.winner.name+(summit?' reached the summit first!':' is the last climber standing!');
   $('ovStats').innerHTML =
     '<div class="ovstat"><b>'+(G.turnSeq-(G.seqBase|0))+'</b><span>turns</span></div>'+
     '<div class="ovstat"><b>'+alive+'/'+totalL+'</b><span>ladders left</span></div>'+
@@ -1027,9 +1028,9 @@ function showWin(){
   setStatus('');
   $('ovShare').onclick=function(){
     TBShare.open({ game:'creak-multi', kicker:'Creak & Coil \u00b7 Multiplayer', big:G.winner.name,
-      lines:['Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.', 'Finished in '+(G.turnSeq-(G.seqBase|0))+' turns with '+alive+' of '+totalL+' ladders still standing.'],
+      lines:[summit?'Beat '+(G.order.length-1)+' other climber'+(G.order.length===2?'':'s')+' to the summit.':'Last climber standing.', 'Finished in '+(G.turnSeq-(G.seqBase|0))+' turns with '+alive+' of '+totalL+' ladders still standing.'],
       footer:'Think you can beat them?', accent:'#e6b655',
-      shareText:G.winner.name+' just won a race up Creak & Coil. Think you can beat them?' });
+      shareText:G.winner.name+(summit?' just won a race up Creak & Coil.':' is the last climber standing in Creak & Coil.')+' Think you can beat them?' });
   };
 }
 async function playAgain(){

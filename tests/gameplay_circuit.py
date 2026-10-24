@@ -20,7 +20,7 @@ def wait(page, expression, arg=None, timeout=20000):
 
 def fast_story(host):
     # Named visual presentation helper only; all transitions still use real RPCs.
-    host.evaluate("window.playStory=function(kind,options,done){done();}")
+    host.evaluate("() => { window.playStory=function(kind,options,done){done();}; }")
 
 
 def hall(host):
