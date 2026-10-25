@@ -227,15 +227,15 @@ def suite(sql, report, concurrent=False):
  for i in range(4):enter('budgetH','BUDGET'+str(i),'finish',name='Budget')
  deny('fifth active host room rejected across codes','budgetH','enter',state='54000',p_code='BUDGET4',p_family='finish',p_edition='general',p_name='Budget',p_request_id=str(uuid4()))
  if concurrent:
-  enter('parallelH','PARALLEL1','finish',name='Parallel host');enter('parallelP','PARALLEL1','finish',name='Parallel player')
+  enter('parallelH','PARALLEL1','finish',name='Parallel host');enter('parallelP','PARALLEL1','finish',name='Parallel guest')
   packet=rpc('parallelH','state',p_code='PARALLEL1',p_family='finish',p_edition='general')
   args={**scope(packet),'p_run_id':packet['room']['run_id'],'p_expected_version':packet['room']['version'],'p_options':{},'p_request_id':str(uuid4())}
   with ThreadPoolExecutor(max_workers=2) as pool:receipts=list(pool.map(lambda _:rpc('parallelH','start',**args),range(2)))
   record('concurrent identical starts produce one exact receipt',receipts[0]==receipts[1])
   # Different request UUIDs and room codes must not race past the global cap.
-  for i in range(3):enter('parallelBudget','PCBUDGET'+str(i),'finish',name='Parallel budget')
+  for i in range(3):enter('parallelBudget','PCBUDGET'+str(i),'finish',name='Budget host')
   def concurrent_enter(i):
-   try:return enter('parallelBudget','PCBUDGET'+str(i),'finish',name='Parallel budget')
+   try:return enter('parallelBudget','PCBUDGET'+str(i),'finish',name='Budget host')
    except AssertionError as error:
     if 'Active race room limit reached' not in str(error):raise
     return None

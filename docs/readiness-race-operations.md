@@ -56,13 +56,20 @@ one day old, including their members/events/receipts. It skips locked rooms.
 Only `service_role` receives EXECUTE; anonymous and authenticated guests cannot
 run maintenance. Existing cleanup jobs are unchanged.
 
-**Scheduling the cleanup is pending.** This migration does not create a cron
-job, and the function's presence does not establish that deletion runs
-periodically. Review the installed cron extension and existing jobs, then
-configure a bounded service-side schedule without duplicating maintenance.
-Record its frequency, owner, failure alert and successful execution. Monitor
-storage, room/request budgets and real event sizes before paid availability
-commitments. A long, full lobby can exhaust receipt capacity before four hours.
+The migration does not create a cron job. After the private backup and guarded
+migration, review the installed extension and jobs, then configure the separate
+`tierbrain-race-cleanup` job at `15 * * * *` as the database operator. Its command
+is `SET statement_timeout='10s'; SET lock_timeout='2s'; SELECT public.cleanup_race_rooms();`.
+The timeouts bound cascaded work as well as the 1,000-room batch. Keep the
+existing cleanup job unchanged. Inspect any existing job with this name before
+updating it, and verify its owner, active state, exact command and successful
+execution in the private release evidence. A function or schedule alone does
+not establish that deletion runs successfully.
+
+Review `cron.job_run_details` for failures after release and before paid events;
+this pass does not install an external failure alert. Monitor storage,
+room/request budgets and real event sizes before paid availability commitments.
+A long, full lobby can exhaust receipt capacity before four hours.
 
 ## Private backup and rollback
 
