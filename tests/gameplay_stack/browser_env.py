@@ -60,7 +60,7 @@ class BrowserEnv:
         page = context.new_page()
         page.set_default_timeout(20000)
         page.on('pageerror', lambda error: self.report['page_errors'].append(
-            {'page':label, 'error':str(error)[:1500]}))
+            {'page':label, 'error':str(error)[:1500], 'stack':str(getattr(error,'stack',''))[:2000]}))
         self.pages.append((page,label))
         page.goto(ORIGIN + '/' + path.lstrip('/'), wait_until='domcontentloaded', timeout=30000)
         return page

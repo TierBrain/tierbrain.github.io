@@ -73,7 +73,7 @@ def suite(sql, report, concurrent=False):
  def record(label,condition=True):
   report['last_case']=label
   if not condition:raise AssertionError(label)
-  checks.append({'name':label,'passed':True})
+  checks.append({'name':label,'passed':True});print(label+': passed',flush=True)
  def context(who,statement,role='authenticated'):
   uid=actor(who) if who else ''
   return sql('BEGIN;SET LOCAL ROLE '+role+';SET LOCAL request.jwt.claim.sub='+lit(uid)+';'+statement+';COMMIT;')
@@ -83,10 +83,12 @@ def suite(sql, report, concurrent=False):
  def snapshot():
   return sql('SELECT jsonb_build_object('+','.join(lit(t)+",(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY to_jsonb(x)::text),'[]') FROM race_private."+t+' x)' for t in TABLES)+');')
  def deny(label,who,name,state='42501',role='authenticated',**args):
+  report['last_case']=label;print('Checking SQL rejection: '+label,flush=True)
   before=snapshot();statement='SELECT '+call(name,args)
   block='DO $deny$ DECLARE observed text;BEGIN BEGIN EXECUTE '+lit(statement)+';EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS observed=RETURNED_SQLSTATE;END;IF observed IS DISTINCT FROM '+lit(state)+" THEN RAISE EXCEPTION 'Expected "+state+", observed %',observed;END IF;END $deny$"
   context(who,block,role);record(label,snapshot()==before)
  def denied_sql(label,statement,state='42501',role='authenticated'):
+  report['last_case']=label;print('Checking SQL rejection: '+label,flush=True)
   block='DO $deny$ DECLARE observed text;BEGIN BEGIN EXECUTE '+lit(statement)+';EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS observed=RETURNED_SQLSTATE;END;IF observed IS DISTINCT FROM '+lit(state)+" THEN RAISE EXCEPTION 'Expected "+state+", observed %',observed;END IF;END $deny$"
   context('outsider',block,role);record(label)
  def scope(packet):
@@ -137,7 +139,12 @@ def suite(sql, report, concurrent=False):
    req=str(uuid4());draw=submit(p,started,'draw',{'round':0,'words':1},req)
    record(tag+' own canonical draw receipt',draw['member_id']==one['member']['id'] and draw['run_id']==started['room']['run_id'] and draw['level']==1000)
    record(tag+' lost acknowledgement replay does not duplicate draw',submit(p,started,'draw',{'round':0,'words':1},req)==draw)
-   deny(tag+' cannot change recorded draw',p,'submit',state='22023',**scope(started),p_run_id=started['room']['run_id'],p_kind='draw',p_payload={'round':0,'words':2},p_request_id=str(uuid4()))
+   # Native psql round trips may advance the study clock beyond word one.
+   # Fresh requests compare against the acknowledged canonical draw, rather
+   # than assuming that the server accepted the client's earlier word claim.
+   record(tag+' fresh UUID reuses the acknowledged canonical draw',submit(p,started,'draw',{'round':0,'words':draw['correct']})==draw)
+   different_word=1 if draw['correct']!=1 else 2
+   deny(tag+' cannot change recorded draw',p,'submit',state='22023',**scope(started),p_run_id=started['room']['run_id'],p_kind='draw',p_payload={'round':0,'words':different_word},p_request_id=str(uuid4()))
    deny(tag+' points must match canonical draw',p,'submit',state='22023',**scope(started),p_run_id=started['room']['run_id'],p_kind='answer',p_payload={'round':0,'points':1600,'flags':1},p_request_id=str(uuid4()))
    points=max(50,math.floor((50+350*(1-draw['correct']/10))/10+.5)*10)
    answer=submit(p,started,'answer',{'round':0,'points':points,'flags':1});record(tag+' source-derived draw score accepted',answer['correct']==points)
@@ -302,7 +309,7 @@ def run(report_path,pglite_module=None):
    sql(BASELINE);report['postgres_version']=sql('SELECT version();')
    suite(sql,report,concurrent=not pglite_module)
    report['passed']=True
- except Exception as error:report['error']=str(error);print('Race acceptance failed: '+str(error),flush=True)
+ except Exception as error:report['error']=str(error);print('Race acceptance failed at '+report.get('last_case','startup')+': '+str(error),flush=True)
  finally:
   if bridge:
    bridge.stdin.close()

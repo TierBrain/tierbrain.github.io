@@ -275,7 +275,7 @@ def finger_race(env, bible=False):
     code = 'FFBA1' if bible else 'FFGA1'
     host = env.new_page('/'+filename, label+' host', mobile=True)
     guest = env.new_page('/'+filename, label+' guest', mobile=True)
-    host.locator('.spd[data-ms="450"]').click()
+    host.locator('#menuScreen .spd[data-ms="450"]').click()
     race_join(host, 'Calamity', code)
     race_join(guest, 'Sundance', code)
     race_wait(host, "!document.querySelector('#goBtn').disabled")

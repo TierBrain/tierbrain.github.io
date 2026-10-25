@@ -82,6 +82,12 @@ def save(env, page, label, qid, group, expected, posts, smudged=False):
     env.check(label+': database readback contains exactly the saved result',
               len(matches) == 1 and all(matches[0].get(key) == value for key,value in expected.items()))
     page.locator(hidden).wait_for(state='hidden')
+    if smudged:
+        env.check(label+': confirmed result leaves no active save control',page.locator(button).is_disabled())
+        # A retained reference to the old control must not submit again even
+        # when its native click method is invoked after confirmation.
+        page.locator(button).evaluate('(button)=>button.click()')
+        page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
     page.wait_for_function("document.querySelector('#boardList').textContent.includes('Score Check')")
     env.check(label+': confirmed save is visible and no duplicate POST occurred',
               page.locator('#boardList').is_visible() and len(posts) == 1

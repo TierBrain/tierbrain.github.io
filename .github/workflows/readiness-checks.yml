@@ -38,6 +38,13 @@ jobs:
           if [ "$READINESS_BROWSER" = chromium ] && command -v google-chrome >/dev/null; then
             echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(command -v google-chrome)" >> "$GITHUB_ENV"
           else
+            # The hosted runner's Azure mirror can stall large font downloads.
+            # Keep the same Ubuntu repositories and package verification.
+            for source in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+              if [ -f "$source" ]; then
+                sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' "$source"
+              fi
+            done
             timeout 420 python -m playwright install --with-deps "$READINESS_BROWSER"
           fi
       - name: Verify ${{ matrix.family }} in ${{ matrix.browser }}
