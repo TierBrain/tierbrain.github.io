@@ -6,11 +6,38 @@ or Auth body is recorded in artifacts.
 """
 import json
 import mimetypes
+import re
+import time
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ORIGIN = 'https://tierbrain.test'
 PROJECT_HOST = 'cgrbwtcydgfkbqhseeap.supabase.co'
+
+
+def navigation_refresh_cancellation(error, refreshes, navigations, used):
+    """Match WebKit's old-document CORS error to a proven reload abort only."""
+    message = error.get('error','') + '\n' + error.get('stack','')
+    if '/auth/v1/token?grant_type=refresh_token' not in message or 'access control checks' not in message:
+        return None
+    at = error['elapsed_ms']
+    failed = [request for request in refreshes if request['page'] == error['page']
+              and request.get('failed_ms') is not None and abs(request['failed_ms']-at) <= 500]
+    # An uncancelled failure in the same interval is ambiguous: fail closed.
+    if any(not request.get('cancelled') for request in failed):
+        return None
+    for request in failed:
+        if request['id'] in used:
+            continue
+        for navigation in navigations:
+            if (navigation['page'] == error['page'] and error['document']==request['document']==navigation['document']
+                    and navigation.get('completed')
+                    and request['id'] in navigation['inflight_refresh_ids']
+                    and navigation['started_ms'] <= request['failed_ms'] <= navigation['finished_ms']+500
+                    and navigation['started_ms'] <= at <= navigation['finished_ms']+500):
+                used.add(request['id'])
+                return {'error':error,'request':dict(request),'navigation':dict(navigation)}
+    return None
 
 
 class BrowserEnv:
@@ -19,8 +46,94 @@ class BrowserEnv:
         self.transport = transport
         self.report, self.report_path = report, report_path
         self.pages, self.contexts, self.calls, self.interruptions = [], [], {}, {}
+        self.started = time.monotonic()
+        self.page_lifecycle, self.refresh_requests, self.navigations = {}, {}, []
         report.update(checks=[], notes=[], page_errors=[], blocked_external_requests=0,
-                      backend_requests=0, hosted_requests=0)
+                      backend_requests=0, hosted_requests=0, network_events=[], navigation_cancellations=[])
+
+    def _elapsed(self):
+        return round((time.monotonic()-self.started)*1000)
+
+    def _network_event(self, event):
+        self.report['network_events'].append(event)
+        self.report['network_events'] = self.report['network_events'][-300:]
+
+    def _refresh_request(self, page, request):
+        url = urlsplit(request.url)
+        if url.hostname != PROJECT_HOST or url.path != '/auth/v1/token' or url.query != 'grant_type=refresh_token':
+            return
+        lifecycle = self.page_lifecycle[page]
+        item = {'id':len(self.refresh_requests)+1,'page':lifecycle['label'],
+                'document':lifecycle['document'],'started_ms':self._elapsed()}
+        self.refresh_requests[request] = item
+        for navigation in self.navigations:
+            if (navigation['page']==item['page'] and navigation['document']==item['document']
+                    and 'finished_ms' not in navigation):
+                navigation['inflight_refresh_ids'].append(item['id'])
+        self._network_event({'event':'refresh_started',**item})
+
+    def _refresh_response(self, response):
+        item = self.refresh_requests.get(response.request)
+        if item is None:
+            return
+        headers = response.headers
+        item.update(status=response.status,allow_origin=headers.get('access-control-allow-origin'))
+        self._network_event({'event':'refresh_response','elapsed_ms':self._elapsed(),**item})
+
+    def _refresh_finished(self, request, failed=False):
+        item = self.refresh_requests.get(request)
+        if item is None:
+            return
+        if failed:
+            failure = request.failure or ''
+            item.update(failed_ms=self._elapsed(),failure=failure[:200],
+                        cancelled=bool(re.search(r'\b(?:cancelled|canceled|aborted|ERR_ABORTED|NS_BINDING_ABORTED)\b',failure,re.I)))
+        else:
+            item['finished_ms'] = self._elapsed()
+        self._network_event({'event':'refresh_failed' if failed else 'refresh_finished',**item})
+
+    def _page_error(self, page, error):
+        lifecycle = self.page_lifecycle[page]
+        self.report['page_errors'].append({'page':lifecycle['label'],'document':lifecycle['document'],
+            'elapsed_ms':self._elapsed(),'error':str(error)[:1500],
+            'stack':str(getattr(error,'stack',''))[:2000]})
+
+    def _document_loaded(self, page, frame):
+        if frame != page.main_frame:
+            return
+        lifecycle = self.page_lifecycle[page]
+        lifecycle['document'] += 1
+        self._network_event({'event':'document_loaded','page':lifecycle['label'],
+                             'document':lifecycle['document'],'elapsed_ms':self._elapsed()})
+
+    def reload_page(self, page, **options):
+        """Perform a real reload, recording which old Auth requests it cancels."""
+        lifecycle = self.page_lifecycle[page]
+        navigation = {'page':lifecycle['label'],'document':lifecycle['document'],
+                      'started_ms':self._elapsed(),'completed':False,
+                      'inflight_refresh_ids':[item['id'] for item in self.refresh_requests.values()
+                          if item['page']==lifecycle['label'] and item['document']==lifecycle['document']
+                          and 'finished_ms' not in item and 'failed_ms' not in item]}
+        self.navigations.append(navigation)
+        try:
+            result = page.reload(**options)
+            navigation['completed'] = True
+            return result
+        finally:
+            navigation['finished_ms'] = self._elapsed()
+            self._network_event({'event':'explicit_reload',**navigation})
+
+    def settle_page_errors(self):
+        # Keep every raw diagnostic. Only a refresh proven cancelled by this
+        # test's native reload belongs to navigation rather than runtime errors.
+        runtime, used = [], set()
+        for error in self.report['page_errors']:
+            cancellation = navigation_refresh_cancellation(error,self.refresh_requests.values(),self.navigations,used)
+            if cancellation is None:
+                runtime.append(error)
+            else:
+                self.report['navigation_cancellations'].append(cancellation)
+        self.report['page_errors'] = runtime
 
     def check(self, name, condition, details=None):
         item = {'name': name, 'passed': bool(condition)}
@@ -58,9 +171,14 @@ class BrowserEnv:
         context.route('**/*', lambda route: self._route(route, context))
         context.route_web_socket('**/*', lambda socket: socket.close())
         page = context.new_page()
+        self.page_lifecycle[page] = {'label':label,'document':0}
         page.set_default_timeout(20000)
-        page.on('pageerror', lambda error: self.report['page_errors'].append(
-            {'page':label, 'error':str(error)[:1500], 'stack':str(getattr(error,'stack',''))[:2000]}))
+        page.on('pageerror', lambda error:self._page_error(page,error))
+        page.on('request', lambda request:self._refresh_request(page,request))
+        page.on('response', self._refresh_response)
+        page.on('requestfinished', self._refresh_finished)
+        page.on('requestfailed', lambda request:self._refresh_finished(request,failed=True))
+        page.on('framenavigated', lambda frame:self._document_loaded(page,frame))
         self.pages.append((page,label))
         page.goto(ORIGIN + '/' + path.lstrip('/'), wait_until='domcontentloaded', timeout=30000)
         return page
@@ -131,6 +249,7 @@ class BrowserEnv:
             route.fulfill(status=204, headers=cors)
 
     def finish(self):
+        self.settle_page_errors()
         self.check('real backend requests were exercised', self.report['backend_requests'] > 0)
         self.check('all page scripts completed without uncaught errors', not self.report['page_errors'],
                    self.report['page_errors'])

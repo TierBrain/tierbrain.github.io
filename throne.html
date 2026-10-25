@@ -1254,7 +1254,15 @@ $('qPlus').addEventListener('click', ()=>{
   G.qTotal = Math.min(50, G.qTotal + qStep(G.qTotal + 1));
   $('qTot').textContent = G.qTotal;
 });
-$('newBtn').addEventListener('click', ()=>{if(roomOpening||starting||engineBusy||tickBusy||finalizing||G.grading||access.busy()||__stingBusy||openingBusy){connectionNotice('Please wait for the current action to finish before opening a new room.',false);return;}if(!confirm('Open a new room? Everyone will need to join its new code.'))return;++hostGeneration;clearTimeout(G._t);access.forgetHost();location.reload();});
+$('newBtn').addEventListener('click', ()=>{
+  // Lobby and finished-room polls only read the roster. Their generation guard
+  // discards a late response after this deliberate room change.
+  const readingRoster=tickBusy&&(G.phase==='lobby'||G.phase==='gameover');
+  if(roomOpening||starting||engineBusy||(tickBusy&&!readingRoster)||finalizing||G.grading||access.busy()||__stingBusy||openingBusy){connectionNotice('Please wait for the current action to finish before opening a new room.',false);return;}
+  if(!confirm('Open a new room? Everyone will need to join its new code.'))return;
+  roomOpening=true;$('newBtn').disabled=true;
+  ++hostGeneration;clearTimeout(G._t);access.forgetHost();location.reload();
+});
 { let muted=false; const mb=$('muteBtn'); if(mb) mb.addEventListener('click', ()=>{ muted=!muted; SFX.mute(muted); mb.textContent=muted?'🔇':'🔊'; }); }
 { const cb=$('copyBtn'); if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(G.joinLink||''); }catch(e){ try{ const t=document.createElement('textarea'); t.value=G.joinLink||''; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_){} } cb.textContent='Copied \u2713'; cb.classList.add('done'); setTimeout(()=>{ cb.textContent='Copy join link'; cb.classList.remove('done'); }, 1600); }); }
 

@@ -43,6 +43,7 @@ class ReadinessEnv(BrowserEnv):
         super()._route(route,context)
 
     def finish(self):
+        self.settle_page_errors()
         self.check('all readiness pages completed without uncaught errors',not self.report['page_errors'],
                    self.report['page_errors'])
         self.check('all injected acknowledgement interruptions were exercised',not self.interruptions)

@@ -240,7 +240,7 @@ def finish_race(env):
         race_wait(host, "n=>__readinessRace().progress===n&&!__readinessRace().busy&&!__readinessRace().locked", target)
     identity = race_probe(host)['member']['id']
     run = race_probe(host)['activeRun']
-    host.reload()
+    env.reload_page(host)
     race_join(host,'constructor','FINA1')
     race_wait(host, "__readinessRace().phase==='race'&&__readinessRace().progress===3")
     env.check('Finish: refresh restores canonical member, run and accepted progress',
@@ -321,7 +321,7 @@ def finger_race(env, bible=False):
             env.check(label+': draw acknowledgement retry retains its UUID', len(calls) >= 2 and calls[0]['request_id'] == calls[1]['request_id'])
         if index == 2:
             member = race_probe(guest)['member']['id']
-            guest.reload()
+            env.reload_page(guest)
             race_join(guest, 'Sundance', code)
             race_wait(guest, "__readinessRace().my&&__readinessRace().my[2]&&__readinessRace().my[2].answered")
             env.check(label+': refresh reconstructs accepted draws and answers without resubmission',

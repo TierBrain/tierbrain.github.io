@@ -74,6 +74,7 @@ jobs:
           node-version: '22'
       - name: Verify local transition and transport regressions
         run: |
+          python tests/test_browser_navigation.py
           python tests/test_race_access.py
           python tests/readiness_quiz.py --unit
           python tests/readiness_solo_a.py

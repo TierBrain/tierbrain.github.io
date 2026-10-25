@@ -477,13 +477,13 @@ def _world_race(env,path):
     requests=env.rpc_calls(host,'race_submit')[calls:]
     env.check(family+': progress retry preserves its receipt UUID',len(requests)==2 and requests[0]['request_id']==requests[1]['request_id'])
     confirmed=_race_state(host)
-    host.reload()
+    env.reload_page(host)
     _race_wait(host,"__readinessRace.snapshot().mpOn && !!document.querySelector('.node.reachable')")
     resumed=_race_state(host)
     env.check(family+': stable checkpoint resumes exact member, run, position and lives',resumed['member']['id']==confirmed['member']['id'] and resumed['activeRun']==confirmed['activeRun'] and resumed['pos']==confirmed['pos'] and resumed['lives']==confirmed['lives'])
     guest.locator('.node.reachable').first.click()
     _race_wait(guest,"!!__readinessRace.snapshot().pending")
-    guest.reload()
+    env.reload_page(guest)
     _race_wait(guest,"/interrupted position/.test(document.querySelector('#lobbyStatus').textContent)")
     env.check(family+': interrupted obstacle reload shows read-only recovery',not _race_state(guest)['mpOn'] and _race_state(guest)['member']['last_correct']==0 and guest.locator('#startRaceBtn').is_hidden())
     turns=0
@@ -576,7 +576,7 @@ def _tug_race(env):
     env.check('Tug: lost answer retries the same receipt once',len(requests)==2 and requests[0]['request_id']==requests[1]['request_id'])
     _tug_answer(guest)
     _race_wait(guest,"__readinessRace.snapshot().member.last_correct===1")
-    guest.reload()
+    env.reload_page(guest)
     _race_wait(guest,"__readinessRace.snapshot().phase==='tug'")
     env.check('Tug: reloading restores canonical counters and the same run',_race_state(guest)['activeRun']==run and _race_state(guest)['correct']==1 and _race_state(guest)['member']['last_correct']==1)
     answers=0

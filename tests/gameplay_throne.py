@@ -6,6 +6,7 @@ private answer index is only the test oracle; deadlines and APIs are unchanged.
 Each edition completes a three-phone finale and a two-phone straight win, then
 checks a queued departure and an abandoned run without inventing a champion.
 """
+import json
 from urllib.parse import urlsplit
 
 
@@ -105,14 +106,33 @@ def new_room(host, pages):
         leave(page)
     old = host.evaluate('G.code')
     host.wait_for_function(
-        "!tickBusy&&!engineBusy&&!finalizing&&!G.grading&&!access.busy()&&!openingBusy",
+        "!roomOpening&&!starting&&!engineBusy&&!finalizing&&!G.grading&&!access.busy()&&!__stingBusy&&!openingBusy&&(!tickBusy||G.phase==='lobby'||G.phase==='gameover')",
         timeout=15000)
-    host.once('dialog', lambda dialog: dialog.accept())
+    confirmations=[]
+    def accept_new_room(dialog):
+        confirmations.append(dialog.message)
+        dialog.accept()
+    host.once('dialog', accept_new_room)
     host.locator('#newBtn').click()
-    # Reload can expose the new document before its gameplay script declares G.
-    host.wait_for_function(
-        "old=>typeof G!=='undefined'&&G.code&&G.code!==old&&!roomOpening&&G.phase==='lobby'",
-        arg=old, timeout=25000)
+    try:
+        assert len(confirmations)==1, 'New room must ask for exactly one deliberate confirmation'
+        # Reload can expose the new document before its gameplay script declares G.
+        host.wait_for_function(
+            "old=>typeof G!=='undefined'&&G.code&&G.code!==old&&!roomOpening&&G.phase==='lobby'",
+            arg=old, timeout=25000)
+    except Exception:
+        print('New-room replay failed: '+json.dumps(host.evaluate("""()=>({
+          code:typeof G==='undefined'?null:G.code,phase:typeof G==='undefined'?null:G.phase,
+          opening:typeof roomOpening==='undefined'?null:roomOpening,
+          starting:typeof starting==='undefined'?null:starting,
+          tickBusy:typeof tickBusy==='undefined'?null:tickBusy,
+          engineBusy:typeof engineBusy==='undefined'?null:engineBusy,
+          finalizing:typeof finalizing==='undefined'?null:finalizing,
+          busy:typeof access==='undefined'?null:access.busy(),
+          notice:document.querySelector('#connectionNotice')?.textContent||'',
+          status:document.querySelector('#stat')?.textContent||''
+        })""")),flush=True)
+        raise
     return host.evaluate('G.code')
 
 
