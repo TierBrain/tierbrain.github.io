@@ -178,7 +178,8 @@ window.__readinessRace=function(){return JSON.parse(JSON.stringify({
  phase:R.phase,solo:R.solo,activeRun:activeRun,busy:access.busy(),room:access.current()&&access.current().room,
  member:access.member(),rows:access.current()&&access.current().rows,
  view:G&&G.view,my:G&&G.my,rounds:G&&G.rounds.map(function(r){return {answer:r.q[1],words:r.n};}),
- totals:G&&totals(),roster:G&&G.roster
+ totals:G&&totals(),roster:G&&G.roster,pending:access.pending(),error:access.error(),
+ now:Date.now(),timeline:G&&timeline(),drawDisabled:$('drawBtn').disabled
 }));};
 """
     return source[:end] + oracle + source[end:]
@@ -189,7 +190,18 @@ def race_probe(page):
 
 
 def race_wait(page, expression, arg=None, timeout=30000):
-    page.wait_for_function(expression, arg=arg, timeout=timeout)
+    try:
+        page.wait_for_function(expression, arg=arg, timeout=timeout)
+    except Exception:
+        state=race_probe(page)
+        schedule=state.get('timeline') or []
+        window=schedule[arg] if isinstance(arg,int) and 0<=arg<len(schedule) else None
+        print('Race wait failed: '+json.dumps({'url':page.url,'arg':arg,'phase':state.get('phase'),
+              'view':state.get('view'),'busy':state.get('busy'),'my':state.get('my'),
+              'pending':state.get('pending'),'error':state.get('error'),'now':state.get('now'),
+              'window':window,'drawDisabled':state.get('drawDisabled'),
+              'rows':len(state.get('rows') or [])},default=str),flush=True)
+        raise
 
 
 def race_join(page, name, code):

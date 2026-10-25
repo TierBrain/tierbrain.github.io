@@ -58,6 +58,9 @@ function clock(){ return performance.now()/1000; }
 function fit(cv){ var w = cv.clientWidth || 360, h = cv.clientHeight || 110, app = $('app'), z = app ? (parseFloat(app.style.zoom) || 1) : 1, d = Math.min(3.5, (window.devicePixelRatio || 1)*z);
   if(cv.width !== Math.round(w*d) || cv.height !== Math.round(h*d)){ cv.width = Math.round(w*d); cv.height = Math.round(h*d); } var X = cv.getContext('2d'); X.setTransform(d, 0, 0, d, 0, 0); return { X:X, w:w, h:h }; }
 function drawStreet(cv, t){
+  // Reduced motion freezes the scenery's clock, but transient effects still
+  // expire against the same real clock used when puff() creates them.
+  var effectTime = RM ? clock() : t;
   var F = fit(cv), X = F.X, w = F.w, h = F.h, hz = h*.62;
   var g = X.createLinearGradient(0, 0, 0, hz); g.addColorStop(0, scene.noon ? '#f6b04f' : '#8fc4e8'); g.addColorStop(1, scene.noon ? '#fde3a6' : '#f6e2b8'); X.fillStyle = g; X.fillRect(0, 0, w, hz);
   var sx = w*.5, sy = h*.16, sg = X.createRadialGradient(sx, sy, 0, sx, sy, h*.6); sg.addColorStop(0, 'rgba(255,250,225,.95)'); sg.addColorStop(.18, 'rgba(255,240,190,.6)'); sg.addColorStop(1, 'rgba(255,230,160,0)');
@@ -70,7 +73,7 @@ function drawStreet(cv, t){
     X.fillStyle = roof; X.fillRect(x - 3, y - 4, fw + 6, 6); X.fillStyle = '#2b1a0f'; X.fillRect(x + fw*.3, y + fh*.45, fw*.4, fh*.55);
     X.fillStyle = '#f1e2c2'; X.fillRect(x + fw*.12, y + fh*.08, fw*.76, fh*.22); X.fillStyle = '#2b1a0f'; X.font = Math.round(fh*.17) + "px Rye, Georgia, serif"; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(sign, x + fw/2, y + fh*.2); }
   front(w*.02, hz - h*.42, w*.3, h*.5, '#8a5a35', '#5e3a20', 'SALOON');
-  var sw = Math.sin(t*2)*.15 + (t - scene.flashAt < .6 ? Math.sin(t*30)*.4 : 0); X.save(); X.translate(w*.02 + w*.3*.3, hz - h*.42 + h*.5*.62); X.fillStyle = '#b07a45';
+  var sw = Math.sin(t*2)*.15 + (effectTime - scene.flashAt < .6 ? Math.sin(t*30)*.4 : 0); X.save(); X.translate(w*.02 + w*.3*.3, hz - h*.42 + h*.5*.62); X.fillStyle = '#b07a45';
   X.save(); X.scale(Math.cos(sw), 1); X.fillRect(0, 0, w*.3*.2, h*.2); X.restore(); X.translate(w*.3*.4, 0); X.save(); X.scale(-Math.cos(sw), 1); X.fillRect(0, 0, w*.3*.2, h*.2); X.restore(); X.restore();
   front(w*.7, hz - h*.36, w*.28, h*.44, '#7b6a55', '#5b4a3a', 'GENERAL');
   var cx = w*.5, cy = hz - h*.3, cr = h*.13; X.fillStyle = '#5e3a20'; X.fillRect(cx - 2, cy, 4, h*.4); X.fillStyle = '#f1e2c2'; X.beginPath(); X.arc(cx, cy, cr, 0, 7); X.fill();
@@ -78,12 +81,12 @@ function drawStreet(cv, t){
   X.beginPath(); X.moveTo(cx, cy); X.lineTo(cx + Math.cos(ang)*cr*.75, cy + Math.sin(ang)*cr*.75); X.stroke(); X.beginPath(); X.moveTo(cx, cy); X.lineTo(cx, cy - cr*.55); X.stroke();
   var tx = ((t*38) % (w + 120)) - 60, ty = h - h*.18 - Math.abs(Math.sin(t*4))*h*.06; X.save(); X.translate(tx, ty); X.rotate(t*5); X.strokeStyle = '#8a6a3a'; X.lineWidth = 1.2;
   for(var k = 0; k < 7; k++){ X.beginPath(); X.ellipse(0, 0, h*.07, h*.035, k*.45, 0, 7); X.stroke(); } X.restore();
-  scene.puffs = scene.puffs.filter(function(p){ var a = t - p.at; if(a > 1.6) return false;
+  scene.puffs = scene.puffs.filter(function(p){ var a = effectTime - p.at; if(a > 1.6) return false;
     if(a < .12){ X.fillStyle = 'rgba(255,230,140,' + (1 - a/.12) + ')'; X.beginPath(); X.arc(p.x, p.y, 10, 0, 7); X.fill(); }
     for(var i = 0; i < 4; i++){ X.fillStyle = 'rgba(235,235,235,' + (.55*(1 - a/1.6)) + ')'; X.beginPath(); X.arc(p.x + i*6 + a*20, p.y - a*16 - i*2, 5 + a*10, 0, 7); X.fill(); }
     if(a < .7){ X.font = '15px Rye, Georgia, serif'; X.textAlign = 'center'; X.lineWidth = 3; X.strokeStyle = '#2b1a0f'; X.strokeText(p.txt, p.x, p.y - 16 - a*10); X.fillStyle = '#ffd36b'; X.fillText(p.txt, p.x, p.y - 16 - a*10); }
     return true; });
-  var sa = t - scene.starAt; if(sa < 1.4){ X.save(); X.translate(w/2, h*.45); var k2 = Math.min(1, sa*4); X.scale(k2, k2); X.rotate(sa*.6); X.fillStyle = '#ffd36b'; X.strokeStyle = '#8a6420'; X.lineWidth = 2; X.beginPath();
+  var sa = effectTime - scene.starAt; if(sa < 1.4){ X.save(); X.translate(w/2, h*.45); var k2 = Math.min(1, sa*4); X.scale(k2, k2); X.rotate(sa*.6); X.fillStyle = '#ffd36b'; X.strokeStyle = '#8a6420'; X.lineWidth = 2; X.beginPath();
     for(var s = 0; s < 12; s++){ var rr = s % 2 ? h*.12 : h*.28, an = s*Math.PI/6 - Math.PI/2; X.lineTo(Math.cos(an)*rr, Math.sin(an)*rr); } X.closePath(); X.globalAlpha = Math.min(1, (1.4 - sa)*3); X.fill(); X.stroke(); X.restore(); }
   if(scene.noon){ X.fillStyle = 'rgba(255,120,40,' + (.08 + .05*Math.sin(t*3)) + ')'; X.fillRect(0, 0, w, h); }
 }
@@ -276,7 +279,9 @@ function renderQuestion(i, upto, final){
 }
 $('drawBtn').onclick = function(){
   if(!G || G.over) return; var i = G.view.r, T = timeline(), t = T[i], now = Date.now(); if(i < 0 || !t || now < t.studyEnd || now >= t.drawEnd) return;
-  var my = G.my[i]; if(my.drawn||my.drawing||my.settling||(!R.solo&&access.busy()))return; var rd = G.rounds[i], k = shownAt(i, t, now); if(k < 1) return;
+  // Presence updates share the transport queue; they must not discard a tap.
+  // An unresolved failed acknowledgement still blocks new gameplay actions.
+  var my = G.my[i]; if(my.drawn||my.drawing||my.settling||(!R.solo&&access.pending()))return; var rd = G.rounds[i], k = shownAt(i, t, now); if(k < 1) return;
   var game=G;
   function revealDraw(receipt){if(G!==game||game.run!==activeRun||G.my[i]!==my)return;my.drawing=false;my.drawn={k:receipt?receipt.correct:k,at:receipt?ts(receipt)-offset:now,srv:receipt?ts(receipt):0};
     SND.draw();puff('BANG');try{if(navigator.vibrate)navigator.vibrate(30);}catch(e){}if(G.view.r===i&&G.view.ph==='play')showDraw(i);}
@@ -303,7 +308,7 @@ function yourCall(i, text, k){ var html = ''; words(text).forEach(function(x, j)
 function openAnswers(){ var box = $('answers'); box.classList.remove('hidden'); box.classList.add('live'); [].forEach.call(box.children, function(b){ b.disabled = false; }); }
 function lockAnswers(){ var box = $('answers'); box.classList.remove('live', 'hidden'); [].forEach.call(box.children, function(b){ b.disabled = true; }); $('timer').classList.add('hidden'); }
 function pick(i,a,btn){
-  if(!G||G.over)return;var my=G.my[i]; if(!my||!my.drawn||my.answered||my.settling||G.view.r!==i||G.view.ph!=='play'||(!R.solo&&access.busy()))return;
+  if(!G||G.over)return;var my=G.my[i]; if(!my||!my.drawn||my.answered||my.settling||G.view.r!==i||G.view.ph!=='play'||(!R.solo&&access.pending()))return;
   var windowNow=timeline()[i],now=Date.now();if(now>=Math.min(my.drawn.at+10000,windowNow.answerEnd)){settle(i,0,F_FROZE,now);lockAnswers();return;}
   var rd = G.rounds[i], mult = rd.noon ? 2 : 1, val = valueAt(my.drawn.k, rd.n), pts, flags;
   if(a === rd.q[1]){ var called = my.end === rd.q[0] && my.drawn.k < rd.g; pts = (called ? val*2 : val)*mult; flags = F_RIGHT | (called ? F_CALLED : 0); }
