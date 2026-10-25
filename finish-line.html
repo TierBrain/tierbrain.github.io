@@ -461,7 +461,8 @@
     });
   }
   function answer(o,btn){
-    if(locked||phase!=='race'||access.busy())return;
+    // Queue answers behind normal heartbeats; unresolved failed receipts block.
+    if(locked||phase!=='race'||access.pending())return;
     var packet=access.current();if(packet&&serverNow()>=Date.parse(packet.room.deadline)){readOnly(packet,'The race time has ended. These are the confirmed standings.');return;}
     locked=true;var epoch=raceEpoch;
     var ok=o===current[1];$('opts').classList.add('locked');

@@ -497,8 +497,13 @@ def _world_race(env,path):
         _race_wait(host,"!__readinessRace.snapshot().netBusy && !__readinessRace.snapshot().busy")
         turns+=1
     host.locator('#result').wait_for(timeout=30000)
-    _race_wait(host,"__readinessRace.snapshot().member.last_time===1")
-    env.check(family+': a complete UI race records the canonical finish',_race_state(host)['member']['last_correct']>=6 and 'You won the race' in host.locator('#resStats').inner_text())
+    # The progress receipt updates the member before the separate standings
+    # request renders resStats. Wait for both observations of the same finish.
+    _race_wait(host,"__readinessRace.snapshot().member.last_time===1 && !__readinessRace.snapshot().netBusy && !__readinessRace.snapshot().busy && document.querySelector('#resStats').textContent.includes('You won the race')")
+    finished=_race_state(host)
+    result_text=host.locator('#resStats').inner_text()
+    env.check(family+': a complete UI race records the canonical finish',finished['member']['last_correct']>=6 and 'You won the race' in result_text,
+              {'canonical_progress':{key:finished['member'].get(key) for key in ('last_correct','last_level','last_time')},'depth':finished['depth'],'result':result_text})
     host.locator('#raceNewRound').click()
     _race_wait(host,"__readinessRace.snapshot().room.phase==='lobby' && document.querySelector('#lobby').offsetParent!==null")
     _race_wait(guest,"__readinessRace.snapshot().room.phase==='lobby'")

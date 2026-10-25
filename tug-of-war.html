@@ -381,7 +381,8 @@
       box.appendChild(b);
     });
   }
-  function answer(o,btn){if(locked||phase!=='tug'||ended||race.busy()||race.serverNow()>=Date.parse(packet.room.deadline))return;locked=true;var ok=o===current[1],epoch=roundEpoch;
+  // Queue answers behind normal heartbeats; unresolved failed receipts block.
+  function answer(o,btn){if(locked||phase!=='tug'||ended||race.pending()||race.serverNow()>=Date.parse(packet.room.deadline))return;locked=true;var ok=o===current[1],epoch=roundEpoch;
     $('opts').classList.add('locked');Array.prototype.forEach.call($('opts').children,function(button){button.disabled=true;});
     if(ok){btn.classList.add('good');beep(720,0.07,'sine',0.13);myCorrect++;}else{btn.classList.add('bad');beep(200,0.13,'sawtooth',0.12);myWrong++;var right=$('opts').querySelector('[data-a="1"]');if(right)right.classList.add('good');}
     submitProgress().then(function(){if(epoch!==roundEpoch||phase!=='tug')return;renderTug();checkEnd();if(ended)return;setTimeout(function(){if(epoch===roundEpoch&&phase==='tug'&&!ended)renderQuestion();},ok?360:1100);}).catch(function(error){raceError(error);poll();});
