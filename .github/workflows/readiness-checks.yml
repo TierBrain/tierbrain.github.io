@@ -1,0 +1,99 @@
+name: Readiness checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [ux, ops, quiz, solo_a, solo_b, catalogue, races, race_a, race_b, score_ui, host_lead]
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install bounded browser dependencies
+        env:
+          READINESS_BROWSER: ${{ matrix.browser }}
+        run: |
+          timeout 180 python -m pip install --timeout 30 --retries 2 -r requirements-dev.txt
+          if [ "$READINESS_BROWSER" = chromium ] && command -v google-chrome >/dev/null; then
+            echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            # The hosted runner's Azure mirror can stall large font downloads.
+            # Keep the same Ubuntu repositories and package verification.
+            for source in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+              if [ -f "$source" ]; then
+                sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' "$source"
+              fi
+            done
+            timeout 420 python -m playwright install --with-deps "$READINESS_BROWSER"
+          fi
+      - name: Verify ${{ matrix.family }} in ${{ matrix.browser }}
+        run: python tests/readiness/run-acceptance.py --family '${{ matrix.family }}' --browser '${{ matrix.browser }}' --report '/tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json'
+      - name: Preserve synthetic verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-${{ matrix.family }}-${{ matrix.browser }}
+          path: |
+            /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}.json
+            /tmp/tierbrain-readiness-${{ matrix.family }}-${{ matrix.browser }}-failure-*.png
+          if-no-files-found: warn
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify local transition and transport regressions
+        run: |
+          python tests/test_browser_navigation.py
+          python tests/test_race_access.py
+          python tests/readiness_quiz.py --unit
+          python tests/readiness_solo_a.py
+          python tests/readiness_solo_b.py --unit
+          python tests/readiness_ops.py --unit
+      - name: Cache the pinned disposable PostgreSQL image
+        run: timeout 180 docker pull postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+      - name: Verify ownership, concurrency, score bounds and rollback
+        run: |
+          python tests/check_race_access.py --report /tmp/tierbrain-readiness-race-sql.json
+          python tests/check_readiness_score_policy.py --report /tmp/tierbrain-readiness-score-policy.json
+          python tests/check_host_leads.py --report /tmp/tierbrain-host-leads-native.json
+      - name: Preserve synthetic database verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-database
+          path: |
+            /tmp/tierbrain-readiness-race-sql.json
+            /tmp/tierbrain-readiness-score-policy.json
+            /tmp/tierbrain-host-leads-native.json
+          if-no-files-found: warn

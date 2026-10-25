@@ -642,7 +642,11 @@ function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w
 function resize(){
   const tv=document.body.classList.contains('cc-playing') && window.innerWidth>=1180;
   const wrapW=Math.min(cv.parentElement?cv.parentElement.clientWidth:360, tv?4000:560);
-  CELL=Math.floor(wrapW/COLS); W=CELL*COLS; H=CELL*ROWS;
+  const nextCell=Math.floor(wrapW/COLS);
+  // The board is display:none in the lobby. Keep its last valid geometry
+  // until it is visible; stone tiles need room beyond their two 1px gutters.
+  if(!Number.isFinite(nextCell)||nextCell<=2) return;
+  CELL=nextCell; W=CELL*COLS; H=CELL*ROWS;
   cv.style.width=W+'px'; cv.style.height=H+'px';
   cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR);
   ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -722,6 +726,7 @@ function drawTokens(){
   });
 }
 function draw(){
+  if(CELL<=2||W<=0||H<=0) return;
   ctx.save();
   ctx.clearRect(0,0,W,H);
   let sx=0,sy=0; if(T<shakeUntil){ const amt=shakeAmt*((shakeUntil-T)/shakeDur); sx=(Math.random()*2-1)*amt; sy=(Math.random()*2-1)*amt; }

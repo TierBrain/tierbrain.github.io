@@ -213,7 +213,7 @@ AUDIT_SQL = """SELECT jsonb_build_object(
 """
 
 
-def run_checks(report_path: Path) -> dict:
+def run_checks(report_path: Path, *, predecessor: Path | None = None) -> dict:
     env = {key: value for key, value in os.environ.items()
            if key not in {"DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_TLS", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"}}
     name = "tierbrain-score-rls-" + secrets.token_hex(6)
@@ -248,11 +248,12 @@ def run_checks(report_path: Path) -> dict:
         if expected != observed:
             raise AssertionError("Migration changed unexpected seed/schema/policy/grant metadata")
     try:
-        for path in [FIXTURE, MIGRATION, ROLLBACK]:
+        inputs = [FIXTURE, MIGRATION, ROLLBACK] + ([predecessor] if predecessor else [])
+        for path in inputs:
             if not path.is_file():
                 raise AssertionError("Required test input missing: " + str(path))
         report["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                   for p in [FIXTURE, MIGRATION, ROLLBACK]}
+                                   for p in inputs}
         docker(["info", "--format", "{{.ServerVersion}}"])
         docker(["image", "inspect", IMAGE])  # Cached image only; never pull.
         with tempfile.TemporaryDirectory(prefix="tierbrain-score-rls-") as temporary:
@@ -293,6 +294,9 @@ def run_checks(report_path: Path) -> dict:
             report["network_isolation"] = {"network_mode": "none", "published_ports": [], "tcp_listen_addresses": ""}
             record("isolated local PostgreSQL ready")
             sql("BEGIN;\n" + FIXTURE.read_text() + "\nCOMMIT;")
+            if predecessor:
+                sql("BEGIN;\n" + predecessor.read_text() + "\nCOMMIT;")
+                record("reviewed predecessor applied to isolated fixture")
             sql("""INSERT INTO public.scores(quiz_id,group_code,name,correct,level,time_left,created_at) VALUES
               ('ordinary_quiz','SYNTHETIC','Synthetic ordinary',7,2,10,'2026-01-01T00:00:00Z'),
               ('qc_piecebypiece','flags','Synthetic legacy',7,1,10,'2026-01-01T00:00:00Z'),
@@ -300,7 +304,7 @@ def run_checks(report_path: Path) -> dict:
             baseline = audit()
             assert len(baseline["rows"]) == 3
             sql(case_sql(regression_cases(False)))
-            record("baseline rejects all nine source regressions", cases=9)
+            record("baseline rejects all source regressions", cases=len(regression_cases(False)))
             auth_case = [case("authenticated insert remains denied", False)]
             sql(case_sql(auth_case, "authenticated"))
             record("baseline authenticated insert denied", cases=1)
@@ -335,7 +339,7 @@ END $check$; ROLLBACK;""" % (principal, expected_rows))
             sql("BEGIN;\n" + ROLLBACK.read_text() + "\nCOMMIT;")
             assert_unchanged(baseline, audit())
             sql(case_sql(regression_cases(False)))
-            record("rollback restores exact baseline and rejects all nine regressions again", cases=9)
+            record("rollback restores exact baseline and rejects source regressions again", cases=len(regression_cases(False)))
             for label, modification, message in [
                 ("changed validation predicate", 'ALTER POLICY "add scores" ON public.scores WITH CHECK (true);', "Score validation changed since review"),
                 ("extra INSERT policy", 'CREATE POLICY unexpected_write ON public.scores FOR INSERT TO anon WITH CHECK (true);', "Additional score write policies exist"),

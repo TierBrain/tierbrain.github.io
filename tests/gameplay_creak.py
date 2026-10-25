@@ -109,6 +109,14 @@ def _turn(host, phones, roll=6, event="none", answer="correct", automatic=False)
     phone = phones[actor]
     host.evaluate("([roll,event]) => { window.__creakRoll=roll; window.__creakEvent=event; }", [roll, event])
     if not automatic:
+        # A board reload opens a new canonical roll window. A phone may still
+        # show its previous button until its next real poll; wait for the new
+        # window rather than submitting that obsolete action in the fixture.
+        phone.wait_for_function("""scope => latest && latest.room.run_id === scope.run
+          && latest.room.state.turnSeq === scope.seq && latest.room.action
+          && latest.room.action.kind === 'roll' && latest.room.action.accepting
+          && latest.room.action.member_id === me.id""",
+          arg={"run":before["run"],"seq":before["seq"]},timeout=15000)
         phone.locator("#rollBtn").wait_for(state="visible", timeout=15000)
         phone.locator("#rollBtn").click()
     # Native 25s inactivity deadline is deliberately exercised for automatic rolls.

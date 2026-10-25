@@ -325,6 +325,7 @@
   let queues,ptr;
 
   function startGame(){
+    runEpoch++;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;
     sequence=[];inputPos=0;accepting=false;
     hideAllScreens();
@@ -333,7 +334,11 @@
   }
 
   let TIME_LIMIT=120000;   // countdown length, set by the clock selector
-  let playing=false;
+  let playing=false, runEpoch=0;
+  function inRun(callback, delay){
+    const epoch=runEpoch;
+    return setTimeout(function(){ if(playing && epoch===runEpoch) callback(); }, delay);
+  }
   let pausedMs=0, pauseAt=0;
   function pauseClock(){ if(!pauseAt) pauseAt=performance.now(); }
   function resumeClock(){ if(pauseAt){ pausedMs+=performance.now()-pauseAt; pauseAt=0; } }
@@ -363,14 +368,14 @@
     inputPos=0; accepting=false; pauseClock();
     $('padStatus').textContent='Watch the pattern\u2026';
     $('padgrid').classList.add('playing');
-    setTimeout(playSeq, 550);
+    inRun(playSeq, 550);
   }
   function playSeq(){
     let i=0; const sp=SPEED[level];
     (function step(){
       if(!playing) return;
       if(i>=sequence.length){ accepting=true; resumeClock(); $('padgrid').classList.remove('playing'); $('padStatus').textContent='Your turn, repeat it'; return; }
-      lightPad(sequence[i]); i++; setTimeout(step, sp);
+      lightPad(sequence[i]); i++; inRun(step, sp);
     })();
   }
   function lightPad(n){
@@ -396,27 +401,27 @@
       if(inputPos>=sequence.length){
         accepting=false; pauseClock(); correct=sequence.length; answered=sequence.length; streakW=0; sRight();
         $('progbar').style.width=(correct/20*100)+'%';
-        if(correct>=20){ setTimeout(()=>{ if(playing) endDone(); }, 520); return; }
+        if(correct>=20){ inRun(()=>{ endDone(); }, 520); return; }
         $('padStatus').textContent='Nice, next round\u2026';
-        setTimeout(()=>{ if(playing) startRound(); }, 680);
+        inRun(()=>{ startRound(); }, 680);
       }
     } else {
       accepting=false; sWrong(); totalWrong++; streakW++; renderStrikes();
       const g=$('padgrid'); g.classList.add('shake'); setTimeout(()=>g.classList.remove('shake'),420);
-      if(totalWrong>=4){ setTimeout(()=>{ if(playing) endOut(); }, 520); return; }
+      if(totalWrong>=4){ inRun(()=>{ endOut(); }, 520); return; }
       $('padStatus').textContent='Missed, watch again\u2026';
-      setTimeout(()=>{ if(playing){ inputPos=0; pauseClock(); $('padStatus').textContent='Watch the pattern\u2026'; $('padgrid').classList.add('playing'); playSeq(); } }, 950);
+      inRun(()=>{ if(playing){ inputPos=0; pauseClock(); $('padStatus').textContent='Watch the pattern\u2026'; $('padgrid').classList.add('playing'); playSeq(); } }, 950);
     }
   }
 
   function endOut(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('outScreen');
   }
   function endDone(){
-    playing=false; stopTimer(); sDone();
+    runEpoch++; playing=false; stopTimer(); sDone();
     $('doneTime').textContent=fmt(remainingMs());
     $('doneCorr').textContent=correct;
     $('doneLvl').textContent='LEVEL '+level;
@@ -425,7 +430,7 @@
     show('doneScreen');
   }
   function endTimeUp(){
-    playing=false; stopTimer(); sOut();
+    runEpoch++; playing=false; stopTimer(); sOut();
     $('tuAns').textContent=answered; $('tuCorr').textContent=correct;
     lastRun={correct:correct,level:level,timeLeft:remainingMs()};
     show('timeupScreen');
@@ -437,7 +442,7 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
-  function toMenu(){ ensureAudio(); playing=false; stopTimer(); show('startScreen'); }
+  function toMenu(){ ensureAudio(); runEpoch++; playing=false; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});

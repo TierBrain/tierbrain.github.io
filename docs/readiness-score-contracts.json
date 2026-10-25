@@ -1,0 +1,430 @@
+{
+  "format": "tierbrain-readiness-score-contracts-v1",
+  "baseline_commit": "1fdf0b3db415b2f62c315fc2151d0e4403ecdd30",
+  "scope": "Public scores writers only. Other authenticated room/result tables retain their separate RPC contracts. Wall of Fame only reads scores.",
+  "security_limit": "These append-only public leaderboards accept bounded client-reported results. This is input validation, not proof that gameplay occurred and not prize-grade anti-cheat.",
+  "migration": "supabase/migrations/20261024123525_readiness_score_contracts.sql",
+  "rollback": "supabase/rollback/readiness_score_contracts.sql",
+  "new_contracts": {
+    "qc_claim": {
+      "sources": [
+        "claim.html"
+      ],
+      "correct": "plots: loss 0..12 with level0; win13..25 with level1",
+      "level": "win flag 0 or1",
+      "time_left": "elapsed rounded seconds >=0"
+    },
+    "qc_call-your-shot": {
+      "sources": [
+        "call-your-shot.html"
+      ],
+      "correct": "signed points -12..60: four strikes and twenty answers, PAY right1/2/3 wrong0/-1/-3",
+      "level": "tier1..4",
+      "time_left": "remaining rounded milliseconds0..210000"
+    },
+    "qc_five-clues / qc_five-clues-bible": {
+      "sources": [
+        "five-clues.html",
+        "five-clues-bible.html"
+      ],
+      "correct": "twelve riddles *1..5 points =0..60",
+      "level": "tier1..4",
+      "time_left": "aggregate remaining clue milliseconds0..360000"
+    },
+    "qc_smudged / qc_smudged-bible": {
+      "sources": [
+        "wheel.html",
+        "smudged-bible.html",
+        "smudged-bank.js"
+      ],
+      "correct": "25*solved +10*hidden A-Z letters across solved messages; zero solved requireszero points; per-tier source letter maxima limit upperbound",
+      "level": "solved messages0..20, five messages per tier",
+      "time_left": "remaining rounded seconds0..240",
+      "letter_maxima_per_tier": {
+        "general": [
+          15,
+          26,
+          27,
+          39
+        ],
+        "bible": [
+          18,
+          25,
+          28,
+          27
+        ]
+      },
+      "maximum_20_message_bounds": {
+        "general": 5850,
+        "bible": 5400
+      },
+      "note": "Maxima permit repeated draws around persisted no-repeat epoch boundaries; they are conservative per-tier bounds, not a claim that every total occurs."
+    }
+  },
+  "new_contract_common": "Name1..20characters, quiz_id1..48characters as before; new game exceptions require group code1..24 uppercase A-Z, digits, underscore or hyphen. No change to other ordinary quiz time handling or pre-existing exceptions.",
+  "retired_room_ids_denied": [
+    "qc_race",
+    "qc_tug",
+    "qc_ff2",
+    "qc_ff2_bible",
+    "qc_keep_mp",
+    "qc_core_mp",
+    "qc_labyrinth_mp"
+  ],
+  "public_score_writer_pages": [
+    {
+      "source": "afrobeats-quiz.html",
+      "quiz_ids": [
+        "qc_afrobeats"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "arsenal-quiz.html",
+      "quiz_ids": [
+        "qc_arsenal-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "bible-quiz.html",
+      "quiz_ids": [
+        "qc_bible-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "books-words-quiz.html",
+      "quiz_ids": [
+        "qc_books-words-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "brain-coaster.html",
+      "quiz_ids": [
+        "qc_braincoaster",
+        "qc_braincoaster_general",
+        "qc_braincoaster_science",
+        "qc_braincoaster_history",
+        "qc_braincoaster_geo",
+        "qc_braincoaster_sport",
+        "qc_braincoaster_screen"
+      ],
+      "contract": "existing cumulative hills/best streak <=170, time_left=0"
+    },
+    {
+      "source": "call-your-shot.html",
+      "quiz_ids": [
+        "qc_call-your-shot"
+      ],
+      "contract": "new Call Your Shot contract"
+    },
+    {
+      "source": "castle.html",
+      "quiz_ids": [
+        "qc_keep"
+      ],
+      "contract": "solo wins only; <=18 correct including retried sealed answers, lives 1..3, elapsed seconds; fits existing ordinary bounds"
+    },
+    {
+      "source": "claim.html",
+      "quiz_ids": [
+        "qc_claim"
+      ],
+      "contract": "new Claim contract"
+    },
+    {
+      "source": "core.html",
+      "quiz_ids": [
+        "qc_core"
+      ],
+      "contract": "solo wins only; <=18 correct including retried sealed answers, lives 1..3, elapsed seconds; fits existing ordinary bounds"
+    },
+    {
+      "source": "crypto-quiz.html",
+      "quiz_ids": [
+        "qc_crypto-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "fact-fiction.html",
+      "quiz_ids": [
+        "qc_fact-fiction"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "film-screen-quiz.html",
+      "quiz_ids": [
+        "qc_film-screen-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "five-clues-bible.html",
+      "quiz_ids": [
+        "qc_five-clues-bible"
+      ],
+      "contract": "new Five Clues contract"
+    },
+    {
+      "source": "five-clues.html",
+      "quiz_ids": [
+        "qc_five-clues"
+      ],
+      "contract": "new Five Clues contract"
+    },
+    {
+      "source": "food-drink-quiz.html",
+      "quiz_ids": [
+        "qc_food-drink-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "gaslight.html",
+      "quiz_ids": [
+        "qc_seance",
+        "qc_gaslight",
+        "qc_midnight",
+        "qc_lamp",
+        "qc_master"
+      ],
+      "contract": "five cases; <=18 deductions +2 accusation bonus, verdict tier 1..4, time_left=0; fits ordinary bounds"
+    },
+    {
+      "source": "general-knowledge-quiz.html",
+      "quiz_ids": [
+        "qc_general-knowledge-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "geography-quiz.html",
+      "quiz_ids": [
+        "qc_geography-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "guess-the-year.html",
+      "quiz_ids": [
+        "qc_guess-year"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "higher-lower.html",
+      "quiz_ids": [
+        "qc_higher-lower"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "hiphop-rap-quiz.html",
+      "quiz_ids": [
+        "qc_hiphop-rap"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "history-quiz.html",
+      "quiz_ids": [
+        "qc_history-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "jigsaw.html",
+      "quiz_ids": [
+        "qc_jigsaw"
+      ],
+      "contract": "existing exact tier/piece-count pairs and elapsed seconds"
+    },
+    {
+      "source": "labyrinth.html",
+      "quiz_ids": [
+        "qc_labyrinth"
+      ],
+      "contract": "solo wins only; <=18 correct including retried sealed answers, lives 1..3, elapsed seconds; fits existing ordinary bounds"
+    },
+    {
+      "source": "leeds-rhinos-quiz.html",
+      "quiz_ids": [
+        "qc_leeds-rhinos-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "manutd-quiz.html",
+      "quiz_ids": [
+        "qc_manutd-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "matchup.html",
+      "quiz_ids": [
+        "qc_matchup"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "maths-quiz.html",
+      "quiz_ids": [
+        "qc_maths-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "music-quiz.html",
+      "quiz_ids": [
+        "qc_music-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "naija-tierbrain.html",
+      "quiz_ids": [
+        "qc_naija-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "nature-quiz.html",
+      "quiz_ids": [
+        "qc_nature-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "odd-one-out.html",
+      "quiz_ids": [
+        "qc_odd-one-out"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "piece-by-piece.html",
+      "quiz_ids": [
+        "qc_piecebypiece"
+      ],
+      "contract": "existing points/count/elapsed contract, 8..368 points per correct answer"
+    },
+    {
+      "source": "politics-quiz.html",
+      "quiz_ids": [
+        "qc_politics-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "premier-league-quiz.html",
+      "quiz_ids": [
+        "qc_premier-league-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "recall.html",
+      "quiz_ids": [
+        "qc_recall"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "religion-quiz.html",
+      "quiz_ids": [
+        "qc_religion-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "rhousewives-quiz.html",
+      "quiz_ids": [
+        "qc_rhousewives-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "rnb-quiz.html",
+      "quiz_ids": [
+        "qc_rnb"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "science-quiz.html",
+      "quiz_ids": [
+        "qc_science-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "scifi-quiz.html",
+      "quiz_ids": [
+        "qc_scifi-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "smudged-bible.html",
+      "quiz_ids": [
+        "qc_smudged-bible"
+      ],
+      "contract": "new Smudged contract"
+    },
+    {
+      "source": "snap-sort.html",
+      "quiz_ids": [
+        "qc_snap-sort"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "sport-quiz.html",
+      "quiz_ids": [
+        "qc_sport-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "spot-the-lie.html",
+      "quiz_ids": [
+        "qc_spot-the-lie"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "unscramble.html",
+      "quiz_ids": [
+        "qc_unscramble"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    },
+    {
+      "source": "wheel.html",
+      "quiz_ids": [
+        "qc_smudged"
+      ],
+      "contract": "new Smudged contract"
+    },
+    {
+      "source": "wrestling-quiz.html",
+      "quiz_ids": [
+        "qc_wrestling-quiz"
+      ],
+      "contract": "ordinary quiz: correct 0..20, level 1..4; existing time predicate unchanged"
+    }
+  ],
+  "verification": {
+    "source_derivation": "python tests/check_readiness_score_policy.py --unit passed locally",
+    "postgres_acceptance": "Pending disposable PostgreSQL CI; do not mark the database migration verified until successful response",
+    "new_allowed_cases": 99,
+    "new_denied_cases": 202,
+    "harness": "tests/check_readiness_score_policy.py uses the existing pinned isolated PostgreSQL harness; tests anon/authenticated scope, exact predecessor guard, legacy row/schema/grant preservation, failure rollback and operator rollback.",
+    "postgres_wasm": "Passed PostgreSQL17/WASM:10groups covering all legacy cases plus99newallowed/202newdenied, role/grant preservation, five guarded failures and exact rollback. Report /tmp/tierbrain-readiness-score-policy-wasm.json. Native pinned PostgreSQL CI remains required."
+  }
+}

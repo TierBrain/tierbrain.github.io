@@ -41,7 +41,9 @@
   .field-hint{max-width:340px;margin:-10px 0 18px;color:var(--mut);font-size:12px;line-height:1.5;text-align:center;}
   .tiers{display:grid; gap:12px; width:100%; max-width:340px;}
   .tier{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line);
-    border-radius:16px; padding:15px 16px; cursor:pointer; transition:transform .08s ease, border-color .15s;}
+    border-radius:16px; padding:15px 16px; cursor:pointer; transition:transform .08s ease, border-color .15s;
+    width:100%;font:inherit;color:var(--ink);text-align:left;}
+  .tier:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
   .tier:active{transform:scale(.98);}
   .tier:hover{border-color:var(--gold-dim);}
   .tier .pcount{font-weight:800; font-size:22px; color:var(--gold); min-width:46px; text-align:center;}
@@ -988,8 +990,8 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&am
 (function(){
   var list=document.getElementById('tierList');
   TIERS.forEach(function(t){
-    var d=document.createElement('div'); d.className='tier';
-    d.innerHTML='<div class="pcount">'+(t.cols*t.rows)+'</div><div class="meta"><div class="tname">'+t.name+'</div><div class="tdesc">'+t.desc+'</div></div>';
+    var d=document.createElement('button'); d.type='button'; d.className='tier';
+    d.innerHTML='<span class="pcount">'+(t.cols*t.rows)+'</span><span class="meta"><span class="tname">'+t.name+'</span><span class="tdesc">'+t.desc+'</span></span>';
     d.addEventListener('click',function(){startTier(t);});
     list.appendChild(d);
   });

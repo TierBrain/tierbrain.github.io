@@ -404,6 +404,11 @@ let secretLetters = []; // its letters, minus spaces
 
 let queue = [], ptr = 0, round = null, entered = [], attempts = 0;
 let lives = LIVES, decoded = 0, cleanFirstTry = 0, startedAt = 0, log = [];
+let runEpoch = 0, roundEpoch = 0, runActive = false, roundLocked = true;
+function roundTask(callback, delay){
+  const run = runEpoch, word = roundEpoch;
+  return setTimeout(() => { if(runActive && run === runEpoch && word === roundEpoch) callback(); }, delay);
+}
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
@@ -510,8 +515,11 @@ function click(pitch){
 }
 
 function loadRound(){
+  if(!runActive) return;
+  roundEpoch++;
   if(ptr >= queue.length){ endRun(true); return; }
   round = queue[ptr];
+  roundLocked = false;
   entered = [];
   armed = null;
   attempts = 0;
@@ -554,6 +562,7 @@ function renderSignal(){
 }
 
 function startRun(){
+  runEpoch++; runActive = true;
   queue = buildQueue();
   ptr = 0; lives = LIVES; decoded = 0; cleanFirstTry = 0; log = [];
   startedAt = Date.now();
@@ -565,11 +574,14 @@ function startRun(){
 function loseLife(){
   lives--;
   renderSignal();
-  if(lives <= 0){ setTimeout(()=>endRun(false), 900); return true; }
+  if(lives <= 0){ roundTask(()=>endRun(false), 900); return true; }
   return false;
 }
 
 function endRun(completed){
+  if(!runActive) return;
+  runActive = false; roundLocked = true; roundEpoch++;
+  renderPad(); renderChoice();
   const ms = Date.now() - startedAt;
   const full = decoded === queue.length;
   $('endTitle').textContent = full ? 'Message received' : 'The line went dead';
@@ -631,6 +643,7 @@ function renderDigits(){
    before the signal finishes, which is the point: a partial code plus the clue
    is often enough, and waiting costs you time. */
 function receive(){
+  const run = runEpoch, word = roundEpoch;
   const total = round.code.length;
   arrived = 0; lostDigits = [];
   arriving = true;
@@ -646,6 +659,8 @@ function receive(){
   renderDigits();
   let i = 0;
   const step = () => {
+    if(!runActive || run !== runEpoch || word !== roundEpoch) return;
+    if(roundLocked){ arriving = false; $('meter').classList.remove('live'); return; }
     if(i >= total){
       arriving = false;
       $('meter').classList.remove('live');
@@ -685,6 +700,7 @@ function renderPad(){
   for(let d=2; d<=9; d++){
     const b = document.createElement('button');
     b.className = 'key' + (armed === d ? ' armed' : '');
+    b.disabled = roundLocked;
     b.innerHTML = '<div class="d">' + d + '</div><div class="l">' + LETTERS[d] + '</div>';
     b.addEventListener('click', () => arm(d));
     pad.appendChild(b);
@@ -693,8 +709,9 @@ function renderPad(){
   const back = document.createElement('button');
   back.className = 'key fn';
   back.innerHTML = '<div class="d">BACK</div>';
-  back.disabled = entered.length === 0 && armed === null;
+  back.disabled = roundLocked || (entered.length === 0 && armed === null);
   back.addEventListener('click', () => {
+    if(!runActive || roundLocked) return;
     if(armed !== null){ armed = null; }
     else { entered.pop(); }
     click(160); renderDigits(); renderPad(); renderChoice();
@@ -706,11 +723,13 @@ function renderPad(){
   give.className = 'key fn';
   give.style.gridColumn = '1 / -1';
   give.innerHTML = '<div class="d">SHOW THE WORD</div>';
+  give.disabled = roundLocked;
   give.addEventListener('click', reveal);
   pad.appendChild(give);
 }
 
 function arm(d){
+  if(!runActive || roundLocked) return;
   armed = d;
   click(180);
   renderPad();
@@ -730,6 +749,7 @@ function renderChoice(){
   (LETTERS[armed] || '').split('').forEach(L => {
     const b = document.createElement('button');
     b.className = 'lt';
+    b.disabled = roundLocked;
     b.textContent = L;
     b.addEventListener('click', () => press(L));
     box.appendChild(b);
@@ -737,6 +757,7 @@ function renderChoice(){
 }
 
 function press(letter){
+  if(!runActive || roundLocked) return;
   if(entered.length >= round.code.length) return;
   entered.push(letter);
   armed = null;
@@ -747,6 +768,8 @@ function press(letter){
 }
 
 function check(){
+  if(!runActive || roundLocked) return;
+  roundLocked = true; renderPad(); renderChoice();
   const guess = entered.join('').toUpperCase();
   const answer = round.a.replace(/[^A-Za-z]/g,'').toUpperCase();
   if(guess === answer){
@@ -757,7 +780,7 @@ function check(){
     $('verdict').className = 'verdict good';
     renderMessage();
     click(440); setTimeout(()=>click(660), 90);
-    setTimeout(()=>{ ptr++; loadRound(); }, 1400);
+    roundTask(()=>{ ptr++; loadRound(); }, 1400);
   } else {
     attempts++;
     click(110);
@@ -771,12 +794,14 @@ function check(){
     // a wrong guess costs a bar but you stay on the same message
     $('verdict').textContent = lives === 1 ? 'Wrong. One bar left.' : 'Wrong. Signal weakening.';
     $('verdict').className = 'verdict bad';
-    setTimeout(()=>{ entered = []; armed = null; $('verdict').textContent=''; $('verdict').className='verdict'; renderDigits(); renderPad(); renderChoice(); }, 1000);
+    roundTask(()=>{ entered = []; armed = null; roundLocked = false; $('verdict').textContent=''; $('verdict').className='verdict'; renderDigits(); renderPad(); renderChoice(); }, 1000);
   }
 }
 
 /* Giving up costs a bar, so it is a real decision rather than a free escape. */
 function reveal(){
+  if(!runActive || roundLocked) return;
+  roundLocked = true;
   entered = round.a.replace(/[^A-Za-z]/g,'').toUpperCase().split('');
   armed = null;
   arrived = round.code.length; lostDigits = [];
@@ -786,7 +811,7 @@ function reveal(){
   $('verdict').textContent = 'It was ' + round.a + '.';
   $('verdict').className = 'verdict';
   if(dead) return;
-  setTimeout(()=>{ ptr++; loadRound(); }, 1700);
+  roundTask(()=>{ ptr++; loadRound(); }, 1700);
 }
 
 $('muteBtn').addEventListener('click', () => {
@@ -815,6 +840,7 @@ $('shareBtn').addEventListener('click', () => {
 document.addEventListener('keydown', (e) => {
   if(!$('startScreen').classList.contains('hide')){ if(e.key==='Enter') $('beginBtn').click(); return; }
   if(!$('endScreen').classList.contains('hide')){ if(e.key==='Enter') $('againBtn').click(); return; }
+  if(!runActive || roundLocked) return;
   if(e.key >= '2' && e.key <= '9'){ arm(parseInt(e.key,10)); e.preventDefault(); return; }
   if(armed !== null && /^[a-zA-Z]$/.test(e.key)){
     const L = e.key.toUpperCase();

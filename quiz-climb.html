@@ -188,7 +188,7 @@
     <div class="timeBig display" id="doneTime">0:00</div>
     <p class="statline"><b id="doneCorr">0</b> correct out of 20 · reached <b id="doneLvl">1</b></p>
     <div class="namebox">
-      <input id="nameInput" maxlength="14" placeholder="Your name" autocomplete="off">
+      <input id="nameInput" aria-label="Name on leaderboard" maxlength="14" placeholder="Your name" autocomplete="off">
       <button class="save" id="saveBtn">Save Time</button>
     </div>
     <div class="savedok hidden" id="savedOk">Saved to the scoreboard!</div>
@@ -300,13 +300,14 @@
 
   // ============ state ============
   let level,answered,correct,totalWrong,streakC,streakW,current,opts,locked,pendingMove;
-  let startT=0,timerId=null;
+  let startT=0,timerId=null,advanceTimer=null,runGeneration=0,playing=false;
 
   const $=id=>document.getElementById(id);
   function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
   let queues,ptr;
 
   function startGame(){
+    runGeneration++; clearTimeout(advanceTimer); advanceTimer=null; playing=true;
     level=1;answered=0;correct=0;totalWrong=0;streakC=0;streakW=0;locked=false;pendingMove=null;
     queues={1:shuffle(BANK[1]),2:shuffle(BANK[2]),3:shuffle(BANK[3])}; ptr={1:0,2:0,3:0};
     hideAllScreens();
@@ -354,7 +355,8 @@
   }
 
   function answer(choice,btn){
-    if(locked) return; locked=true;
+    if(!playing||locked) return; locked=true;
+    const generation=runGeneration;
     const right=(choice===current.correct);
     answered++;
     const box=$('opts'); box.classList.add('locked');
@@ -377,7 +379,9 @@
     }
     $('progbar').style.width=(answered/20*100)+'%';
 
-    setTimeout(()=>{
+    advanceTimer=setTimeout(()=>{
+      if(!playing||generation!==runGeneration) return;
+      advanceTimer=null;
       if(totalWrong>=4){ endOut(); return; }
       if(answered>=20){ endDone(); return; }
       if(pendingMove==='up'){ toast('Level Up!',LVL_COLOR[level]); sUp(); }
@@ -388,12 +392,14 @@
   }
 
   function endOut(){
+    playing=false; clearTimeout(advanceTimer); advanceTimer=null;
     stopTimer(); sOut();
     $('outAns').textContent=answered; $('outCorr').textContent=correct;
     show('outScreen');
   }
   let finishMs=0, reachedLvl=1, savedThis=false;
   function endDone(){
+    playing=false; clearTimeout(advanceTimer); advanceTimer=null;
     stopTimer(); sDone();
     finishMs=performance.now()-startT; reachedLvl=level; savedThis=false;
     $('doneTime').textContent=fmt(finishMs);
@@ -472,20 +478,20 @@
   function show(id){hideAllScreens();$(id).classList.remove('hidden');}
 
   // ============ wiring ============
+  function toMenu(){ ensureAudio(); playing=false; clearTimeout(advanceTimer); advanceTimer=null; stopTimer(); show('startScreen'); }
   $('startBtn').addEventListener('click',()=>{ensureAudio();startGame();});
   $('doneAgain').addEventListener('click',()=>{ensureAudio();startGame();});
   $('outRetry').addEventListener('click',()=>{ensureAudio();startGame();});
-  $('doneMenu').addEventListener('click',()=>{ensureAudio();stopTimer();show('startScreen');});
-  $('outMenu').addEventListener('click',()=>{ensureAudio();stopTimer();show('startScreen');});
+  $('doneMenu').addEventListener('click',toMenu);
+  $('outMenu').addEventListener('click',toMenu);
   $('saveBtn').addEventListener('click',()=>{ensureAudio();doSave();});
   $('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doSave();}});
   $('boardBtn').addEventListener('click',()=>{ensureAudio();show('boardScreen');refreshBoard($('menuBoard'));});
-  $('boardBack').addEventListener('click',()=>{ensureAudio();show('startScreen');});
+  $('boardBack').addEventListener('click',toMenu);
   // keyboard 1-4 to answer
   window.addEventListener('keydown',e=>{
     if(e.target&&e.target.tagName==='INPUT')return;
-    if($('startScreen').classList.contains('hidden') && $('outScreen').classList.contains('hidden')
-       && $('doneScreen').classList.contains('hidden') && $('boardScreen').classList.contains('hidden')){
+    if(playing){
       const n=parseInt(e.key,10);
       if(n>=1&&n<=4){const b=$('opts').children[n-1]; if(b)b.click();}
     }

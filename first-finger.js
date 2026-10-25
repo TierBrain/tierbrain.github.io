@@ -18,7 +18,8 @@ var $ = function(id){ return document.getElementById(id); };
 var RM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 var SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-var QUIZ_ID = EDITION === 'bib' ? 'qc_ff2_bible' : 'qc_ff2';
+var access = RaceAccess.create(SB_URL, SB_KEY, {family:'firstfinger', edition:EDITION === 'bib' ? 'bible' : 'general'});
+var roomEpoch=0, activeRun='', joining=false,leaving=false,pollBusy=false, netBox=null;
 var GO = '__GO__', ROUNDS = 9, STUDY = 2600, GRACE = 3000, ANSWER = 11000, REVEAL = 6000, COUNT = 4000, POLL = 1200, HB = 2600;
 var SPEED = { 900:'Mosey', 650:'Trot', 450:'Gallop' };
 
@@ -57,6 +58,9 @@ function clock(){ return performance.now()/1000; }
 function fit(cv){ var w = cv.clientWidth || 360, h = cv.clientHeight || 110, app = $('app'), z = app ? (parseFloat(app.style.zoom) || 1) : 1, d = Math.min(3.5, (window.devicePixelRatio || 1)*z);
   if(cv.width !== Math.round(w*d) || cv.height !== Math.round(h*d)){ cv.width = Math.round(w*d); cv.height = Math.round(h*d); } var X = cv.getContext('2d'); X.setTransform(d, 0, 0, d, 0, 0); return { X:X, w:w, h:h }; }
 function drawStreet(cv, t){
+  // Reduced motion freezes the scenery's clock, but transient effects still
+  // expire against the same real clock used when puff() creates them.
+  var effectTime = RM ? clock() : t;
   var F = fit(cv), X = F.X, w = F.w, h = F.h, hz = h*.62;
   var g = X.createLinearGradient(0, 0, 0, hz); g.addColorStop(0, scene.noon ? '#f6b04f' : '#8fc4e8'); g.addColorStop(1, scene.noon ? '#fde3a6' : '#f6e2b8'); X.fillStyle = g; X.fillRect(0, 0, w, hz);
   var sx = w*.5, sy = h*.16, sg = X.createRadialGradient(sx, sy, 0, sx, sy, h*.6); sg.addColorStop(0, 'rgba(255,250,225,.95)'); sg.addColorStop(.18, 'rgba(255,240,190,.6)'); sg.addColorStop(1, 'rgba(255,230,160,0)');
@@ -69,7 +73,7 @@ function drawStreet(cv, t){
     X.fillStyle = roof; X.fillRect(x - 3, y - 4, fw + 6, 6); X.fillStyle = '#2b1a0f'; X.fillRect(x + fw*.3, y + fh*.45, fw*.4, fh*.55);
     X.fillStyle = '#f1e2c2'; X.fillRect(x + fw*.12, y + fh*.08, fw*.76, fh*.22); X.fillStyle = '#2b1a0f'; X.font = Math.round(fh*.17) + "px Rye, Georgia, serif"; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(sign, x + fw/2, y + fh*.2); }
   front(w*.02, hz - h*.42, w*.3, h*.5, '#8a5a35', '#5e3a20', 'SALOON');
-  var sw = Math.sin(t*2)*.15 + (t - scene.flashAt < .6 ? Math.sin(t*30)*.4 : 0); X.save(); X.translate(w*.02 + w*.3*.3, hz - h*.42 + h*.5*.62); X.fillStyle = '#b07a45';
+  var sw = Math.sin(t*2)*.15 + (effectTime - scene.flashAt < .6 ? Math.sin(t*30)*.4 : 0); X.save(); X.translate(w*.02 + w*.3*.3, hz - h*.42 + h*.5*.62); X.fillStyle = '#b07a45';
   X.save(); X.scale(Math.cos(sw), 1); X.fillRect(0, 0, w*.3*.2, h*.2); X.restore(); X.translate(w*.3*.4, 0); X.save(); X.scale(-Math.cos(sw), 1); X.fillRect(0, 0, w*.3*.2, h*.2); X.restore(); X.restore();
   front(w*.7, hz - h*.36, w*.28, h*.44, '#7b6a55', '#5b4a3a', 'GENERAL');
   var cx = w*.5, cy = hz - h*.3, cr = h*.13; X.fillStyle = '#5e3a20'; X.fillRect(cx - 2, cy, 4, h*.4); X.fillStyle = '#f1e2c2'; X.beginPath(); X.arc(cx, cy, cr, 0, 7); X.fill();
@@ -77,114 +81,115 @@ function drawStreet(cv, t){
   X.beginPath(); X.moveTo(cx, cy); X.lineTo(cx + Math.cos(ang)*cr*.75, cy + Math.sin(ang)*cr*.75); X.stroke(); X.beginPath(); X.moveTo(cx, cy); X.lineTo(cx, cy - cr*.55); X.stroke();
   var tx = ((t*38) % (w + 120)) - 60, ty = h - h*.18 - Math.abs(Math.sin(t*4))*h*.06; X.save(); X.translate(tx, ty); X.rotate(t*5); X.strokeStyle = '#8a6a3a'; X.lineWidth = 1.2;
   for(var k = 0; k < 7; k++){ X.beginPath(); X.ellipse(0, 0, h*.07, h*.035, k*.45, 0, 7); X.stroke(); } X.restore();
-  scene.puffs = scene.puffs.filter(function(p){ var a = t - p.at; if(a > 1.6) return false;
+  scene.puffs = scene.puffs.filter(function(p){ var a = effectTime - p.at; if(a > 1.6) return false;
     if(a < .12){ X.fillStyle = 'rgba(255,230,140,' + (1 - a/.12) + ')'; X.beginPath(); X.arc(p.x, p.y, 10, 0, 7); X.fill(); }
     for(var i = 0; i < 4; i++){ X.fillStyle = 'rgba(235,235,235,' + (.55*(1 - a/1.6)) + ')'; X.beginPath(); X.arc(p.x + i*6 + a*20, p.y - a*16 - i*2, 5 + a*10, 0, 7); X.fill(); }
     if(a < .7){ X.font = '15px Rye, Georgia, serif'; X.textAlign = 'center'; X.lineWidth = 3; X.strokeStyle = '#2b1a0f'; X.strokeText(p.txt, p.x, p.y - 16 - a*10); X.fillStyle = '#ffd36b'; X.fillText(p.txt, p.x, p.y - 16 - a*10); }
     return true; });
-  var sa = t - scene.starAt; if(sa < 1.4){ X.save(); X.translate(w/2, h*.45); var k2 = Math.min(1, sa*4); X.scale(k2, k2); X.rotate(sa*.6); X.fillStyle = '#ffd36b'; X.strokeStyle = '#8a6420'; X.lineWidth = 2; X.beginPath();
+  var sa = effectTime - scene.starAt; if(sa < 1.4){ X.save(); X.translate(w/2, h*.45); var k2 = Math.min(1, sa*4); X.scale(k2, k2); X.rotate(sa*.6); X.fillStyle = '#ffd36b'; X.strokeStyle = '#8a6420'; X.lineWidth = 2; X.beginPath();
     for(var s = 0; s < 12; s++){ var rr = s % 2 ? h*.12 : h*.28, an = s*Math.PI/6 - Math.PI/2; X.lineTo(Math.cos(an)*rr, Math.sin(an)*rr); } X.closePath(); X.globalAlpha = Math.min(1, (1.4 - sa)*3); X.fill(); X.stroke(); X.restore(); }
   if(scene.noon){ X.fillStyle = 'rgba(255,120,40,' + (.08 + .05*Math.sin(t*3)) + ')'; X.fillRect(0, 0, w, h); }
 }
 function puff(txt){ var cv = $('street'); scene.puffs.push({ x:30 + Math.random()*((cv.clientWidth || 300) - 60), y:(cv.clientHeight || 110)*.72, at:clock(), txt:txt || 'BANG' }); scene.flashAt = clock(); }
 (function loop(){ var t = clock(); ['street0', 'street1', 'street', 'street2'].forEach(function(id){ var cv = $(id); if(cv && cv.offsetParent) drawStreet(cv, RM ? 3 : t); }); requestAnimationFrame(loop); })();
 
-/* ---------------- the database: rows in the shared scores table ----------------
-   lobby heartbeat: level 0 · start signal: name __GO__, correct = seed, level = word speed (ms)
-   a draw: level 1000+round, correct = words seen · an answer: level 2000+round, correct = points, time_left = flags */
+/* ---------------- authenticated, owned race rooms ---------------- */
 var F_RIGHT = 1, F_CALLED = 2, F_WRONG = 4, F_NODRAW = 8, F_FROZE = 16;
 var offset = 0, bestRtt = 1e9;
 function serverNow(){ return Date.now() + offset; }
-function sbBase(){ return SB_URL + '/rest/v1/scores'; }
-function sbHeaders(extra){ var h = { apikey:SB_KEY, Authorization:'Bearer ' + SB_KEY }; for(var k in extra) h[k] = extra[k]; return h; }
-function post(name, correct, level, flags){
-  var row = { quiz_id:QUIZ_ID, group_code:R.code, name:name, correct:correct | 0, level:level | 0, time_left:flags | 0 }, t0 = Date.now();
-  return fetch(sbBase(), { method:'POST', headers:sbHeaders({ 'Content-Type':'application/json', Prefer:'return=representation' }), body:JSON.stringify([row]) })
-    .then(function(r){ return r.ok ? r.json() : []; }).then(function(out){ var t1 = Date.now(), at = out && out[0] ? ts(out[0]) : 0;
-      if(at){ var rtt = t1 - t0; if(rtt < bestRtt || Math.abs(at - (t0 + t1)/2 - offset) > 4000){ bestRtt = rtt; offset = at - (t0 + t1)/2; } } return at; })
-    .catch(function(){ return 0; });
+function syncClock(packet,began){if(!packet)return packet;var ended=Date.now(),at=Date.parse(packet.server_time||'');
+  if(Number.isFinite(at)){ var rtt=ended-began; if(rtt<bestRtt||Math.abs(at-(began+ended)/2-offset)>4000){bestRtt=rtt;offset=at-(began+ended)/2;} } return packet; }
+function netIssue(issue){
+  if(issue&&(issue.code==='race_left'||issue.error&&issue.error.code==='race_left'))return;
+  if(issue&&(issue.state==='confirmed'||issue.recovered)){if(netBox)netBox.hidden=true;return;}
+  if(!netBox){netBox=document.createElement('div');netBox.id='raceConnection';netBox.setAttribute('role','alert');netBox.style.cssText='position:fixed;z-index:10000;top:12px;left:4%;width:92%;box-sizing:border-box;padding:14px;border:2px solid #d7a34c;border-radius:12px;background:#251b17;color:#fff';
+    var message=document.createElement('div');message.id='raceConnectionMessage';netBox.appendChild(message);
+    var retry=document.createElement('button');retry.id='raceConnectionRetry';retry.textContent='Retry connection';retry.onclick=function(){retry.disabled=true;Promise.resolve(access.pending()?access.retry():poll()).then(function(){netBox.hidden=true;}).catch(netIssue).finally(function(){retry.disabled=false;});};netBox.appendChild(retry);var quit=document.createElement('button');quit.id='raceConnectionLeave';quit.textContent='Leave room';quit.onclick=leaveRoom;netBox.appendChild(quit);document.body.appendChild(netBox);}
+  netBox.hidden=false;$('raceConnectionMessage').textContent=issue&&issue.message||access.message(issue);$('raceConnectionRetry').hidden=!!(issue&&issue.canRetry===false);
 }
-function read(){
-  var url = sbBase() + '?select=name,correct,level,time_left,created_at&quiz_id=eq.' + encodeURIComponent(QUIZ_ID) + '&group_code=eq.' + encodeURIComponent(R.code) + '&order=created_at.desc&limit=600';
-  return fetch(url, { headers:sbHeaders({}) }).then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
+access.onIssue(netIssue);
+function read(){var began=Date.now();return access.state().then(function(packet){syncClock(packet,began);return packet&&packet.rows||[];});}
+function post(name,correct,level,flags){
+  if(name!==R.me)return Promise.reject(new Error('Only your own gunslinger can publish.'));
+  var kind=level>=2000?'answer':'draw',payload=kind==='draw'?{round:level-1000,words:correct}:{round:level-2000,points:correct,flags:flags};
+  return access.submit(kind,payload);
 }
 
 /* ---------------- state ---------------- */
-var R = { code:'', me:'', speed:650, solo:true, phase:'menu', goUsed:0, pendingGo:false, rows:[], roster:[], present:[], pollT:0, hbT:0 };
-var G = null;   /* the game in play */
+var R = { code:'', me:'', speed:650, solo:true, phase:'menu', rows:[], roster:[], present:[], pollT:0, hbT:0 };
+var G = null;
 function speedButtons(){ [].forEach.call(document.querySelectorAll('.spd'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.ms === R.speed));
   b.onclick = function(){ R.speed = +b.dataset.ms; speedButtons(); showBest(); }; }); }
 function bestKey(){ return 'ff2_best_' + EDITION + '_' + R.speed; }
 function showBest(){ var b = store(bestKey()), el = $('bestNote'); if(el) el.textContent = b ? 'Your best on your own at ' + SPEED[R.speed] + ': ' + b + '.' : ''; }
-
-/* ---------------- menu ---------------- */
+function stopGame(){if(G){G.over=true;clearInterval(G.tick);}G=null;scene.noon=false;}
 function readName(){ return ($('nameIn').value || '').trim().slice(0, 14); }
-$('soloBtn').onclick = function(){ tone(1, .01); R.solo = true; R.me = readName() || 'You'; R.code = ''; startGame(Math.floor(Math.random()*2147483647), R.speed, Date.now() + COUNT, [R.me]); };
+$('soloBtn').onclick = function(){if(joining||leaving||access.busy())return;stopGame();roomEpoch++;tone(1,.01);R.solo=true;R.me=readName()||'You';R.code='';startGame(Math.floor(Math.random()*2147483647),R.speed,Date.now()+COUNT,[R.me]);};
 $('joinBtn').onclick = enterRoom;
 $('codeIn').addEventListener('keydown', function(e){ if(e.key === 'Enter') enterRoom(); });
 function enterRoom(){
-  var n = readName(), c = ($('codeIn').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if(!n){ $('menuErr').textContent = 'Enter a nickname first.'; return; }
-  if(c.length < 2){ $('menuErr').textContent = 'Enter a room code of at least 2 letters or numbers.'; return; }
-  $('menuErr').textContent = ''; tone(1, .01);
-  R.solo = false; R.me = n; R.code = c; R.goUsed = 0; R.pendingGo = false; R.rows = []; R.present = [];
-  $('lobbyCode').textContent = c; R.phase = 'lobby'; show('lobbyScreen'); renderLobby();
-  post(R.me, 0, 0, 0).then(poll); clearInterval(R.pollT); R.pollT = setInterval(poll, POLL);
-  clearInterval(R.hbT); R.hbT = setInterval(function(){ if(R.phase === 'lobby') post(R.me, 0, 0, 0); }, HB);
+  if(joining||leaving||access.busy())return;var n=readName(),c=($('codeIn').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!n){$('menuErr').textContent='Enter a nickname first.';return;}
+  if(c.length<4||c.length>12){$('menuErr').textContent='Enter a room code of 4 to 12 letters or numbers.';return;}
+  joining=true;var epoch=roomEpoch;$('joinBtn').disabled=true;$('soloBtn').disabled=true;$('menuErr').textContent='Connecting…';var began=Date.now();
+  access.enter(c,n).then(function(packet){if(epoch!==roomEpoch||leaving)return;syncClock(packet,began);stopGame();roomEpoch++;R.solo=false;R.me=packet.member.name;R.code=packet.room.code;activeRun='';R.rows=[];R.present=[];
+    $('lobbyCode').textContent=R.code;R.phase='lobby';show('lobbyScreen');$('menuErr').textContent='';
+    clearInterval(R.pollT);R.pollT=setInterval(poll,POLL);clearInterval(R.hbT);R.hbT=setInterval(function(){if(!leaving&&!R.solo&&R.phase!=='menu'&&!access.busy()){var heartbeatEpoch=roomEpoch;access.heartbeat().catch(function(error){if(heartbeatEpoch===roomEpoch&&!leaving)netIssue(error);});}},HB);return poll();
+  }).catch(function(error){if(error.code!=='race_left'&&epoch===roomEpoch&&!leaving)$('menuErr').textContent=access.message(error);}).finally(function(){joining=false;$('joinBtn').disabled=false;$('soloBtn').disabled=false;});
 }
-function leaveRoom(){ clearInterval(R.pollT); clearInterval(R.hbT); R.phase = 'menu'; if(G){ G.over = true; G = null; } scene.noon = false; show('menuScreen'); showBest(); }
-$('leaveBtn').onclick = leaveRoom; $('homeBtn').onclick = leaveRoom;
-
-/* ---------------- the room ---------------- */
+function leaveRoom(){
+  if(leaving||(access.busy()&&!access.pending()))return;leaving=true;roomEpoch++;clearInterval(R.pollT);clearInterval(R.hbT);stopGame();
+  var leavingRequest=R.solo&&!access.pending()?Promise.resolve():access.leave();leavingRequest.then(function(){activeRun='';R.phase='menu';show('menuScreen');showBest();if(netBox)netBox.hidden=true;}).catch(function(error){leaving=false;netIssue(error);}).finally(function(){leaving=false;});
+}
+$('leaveBtn').onclick=leaveRoom;$('homeBtn').onclick=leaveRoom;
 function poll(){
-  return read().then(function(rows){
-    R.rows = rows; var top = 0, go = null;
-    rows.forEach(function(r){ var at = ts(r); if(at > top) top = at; if(r.name === GO && (!go || at > ts(go))) go = r; });
-    var seen = {}; R.present = [];
-    rows.forEach(function(r){ if(r.name === GO || seen[r.name]) return; seen[r.name] = 1; if(top - ts(r) < 12000) R.present.push(r.name); });
-    if(R.present.indexOf(R.me) < 0) R.present.push(R.me);
-    if(R.phase === 'lobby'){
-      renderLobby();
-      var gat = go ? ts(go) : 0;
-      if(gat > R.goUsed){ R.goUsed = gat;
-        /* a fresh start signal only: an old one never launches a lone game */
-        if(serverNow() - gat < 8000 || R.pendingGo){ R.pendingGo = false; var roster = rosterAt(rows, gat); startGame(go.correct, go.level || 650, gat + COUNT - offset, roster, gat); } }
-    }
-    if(G && !G.over) ingest(rows);
-  });
+  if(pollBusy||leaving||R.solo||R.phase==='menu')return Promise.resolve();pollBusy=true;var epoch=roomEpoch;
+  return read().then(function(rows){if(epoch!==roomEpoch||leaving||R.phase==='menu')return;var packet=access.current();if(!packet)return;var room=packet.room;R.rows=rows;
+    R.present=(packet.members||[]).filter(function(member){return serverNow()-Date.parse(member.last_seen)<30000;}).map(function(member){return member.name;});
+    if(room.phase==='lobby'){if(R.phase!=='lobby'){stopGame();activeRun='';R.phase='lobby';show('lobbyScreen');}renderLobby();return;}
+    if(!(room.roster||[]).some(function(member){return member.id===access.member().id;})){showWaiting(packet);return;}
+    if(room.run_id!==activeRun){adoptRun(packet);}else if(G){ingest(rows);}
+  }).catch(function(error){if(epoch===roomEpoch&&!leaving)netIssue(error);}).finally(function(){pollBusy=false;});
 }
-function rosterAt(rows, gat){ var seen = {}, out = [];
-  rows.forEach(function(r){ var at = ts(r); if(r.name === GO || seen[r.name] || at > gat + 2000 || gat - at > 12000) return; seen[r.name] = 1; out.push(r.name); });
-  if(out.indexOf(R.me) < 0) out.push(R.me); return out.sort(); }
+function showWaiting(packet){stopGame();activeRun='';R.phase='waiting';show('lobbyScreen');renderLobby();$('goBtn').disabled=true;$('lobbyNote').textContent='You were not in this showdown’s starting line-up. Wait for the host’s next showdown or leave the room.';}
+function adoptRun(packet){
+  if(!packet||leaving)return;if(!(packet.room.roster||[]).some(function(member){return member.id===access.member().id;})){showWaiting(packet);return;}
+  var room=packet.room;if(!room.started_at||!room.play_at)return;stopGame();activeRun=room.run_id;access.useRun(activeRun);
+  var roster=(room.roster||[]).map(function(member){return member.name;});
+  if(!roster.length)roster=(packet.members||[]).map(function(member){return member.name;});
+  startGame(room.seed,room.options.speed,Date.parse(room.play_at)-offset,roster,Date.parse(room.started_at));ingest(packet.rows||[]);tick();
+}
 function renderLobby(){
-  var box = $('players'); box.innerHTML = '';
-  R.present.slice().sort().forEach(function(n){ var d = document.createElement('div'); if(n === R.me) d.className = 'me'; d.textContent = n + (n === R.me ? ' (you)' : ''); box.appendChild(d); });
-  $('lobbyCount').textContent = R.present.length + (R.present.length === 1 ? ' gunslinger in the saloon' : ' gunslingers in the saloon');
-  $('goBtn').disabled = R.present.length < 2;
-  $('lobbyNote').textContent = R.present.length < 2 ? 'Waiting for at least one more player. Share the room code.' : 'Ready. Whoever starts chooses the speed.';
+  var box=$('players');box.innerHTML='';R.present.slice().sort().forEach(function(n){var d=document.createElement('div');if(n===R.me)d.className='me';d.textContent=n+(n===R.me?' (you)':'');box.appendChild(d);});
+  $('lobbyCount').textContent=R.present.length+(R.present.length===1?' gunslinger in the saloon':' gunslingers in the saloon');
+  $('goBtn').disabled=R.present.length<2||!access.isHost()||access.busy();$('goBtn').textContent=access.isHost()?'Start the showdown':'Waiting for the host';
+  $('lobbyNote').textContent=R.present.length<2?'Waiting for at least one more player. Share the room code.':access.isHost()?'Ready. Choose the pace and start.':'The host chooses the pace and starts.';
 }
-$('goBtn').onclick = function(){
-  if(R.phase !== 'lobby') return; $('goBtn').disabled = true; R.pendingGo = true;
-  var seed = Math.floor(Math.random()*2147483647);
-  post(GO, seed, R.speed, 0).then(function(at){ if(R.phase !== 'lobby') return;
-    if(at){ R.goUsed = at; R.pendingGo = false; startGame(seed, R.speed, at + COUNT - offset, R.present.slice().sort(), at); poll(); } else poll(); });
+$('goBtn').onclick=function(){
+  if(R.phase!=='lobby'||!access.isHost()||access.busy())return;$('goBtn').disabled=true;
+  var seed=access.current().room.seed,rounds=makeRounds(seed),began=Date.now(),epoch=roomEpoch;
+  access.start({speed:R.speed,rounds:rounds.map(function(rd){return {words:rd.n,noon:rd.noon};})}).then(function(packet){if(epoch!==roomEpoch||leaving)return null;syncClock(packet,began);return access.state();}).then(function(packet){if(packet&&epoch===roomEpoch&&!leaving)adoptRun(packet);}).catch(function(error){if(epoch===roomEpoch&&!leaving)netIssue(error);});
 };
+function makeRounds(seed){var r=rng(seed>>>0),picks=shuffle(SETS.map(function(_,i){return i;}),r).slice(0,ROUNDS);
+  return picks.map(function(si,i){var set=SETS[si],qi=Math.floor(r()*set.q.length),q=set.q[qi];return {set:set,q:q,W:words(q[0]),n:words(q[0]).length,g:giveaway(set,qi),answers:shuffle(set.a,r),noon:i===ROUNDS-1};});}
 
 /* ---------------- a game ----------------
    Every phone builds the same nine rounds from the seed, and runs them from the same start time.
    Times below are on this phone's clock (the server's start time minus the measured offset). */
 function startGame(seed, speed, startLocal, roster, goAt){
-  var r = rng(seed >>> 0), picks = shuffle(SETS.map(function(_, i){ return i; }), r).slice(0, ROUNDS);
-  G = { seed:seed, speed:speed, start:startLocal, roster:roster.slice(), goAt:goAt || 0, over:false, rounds:picks.map(function(si, i){ var set = SETS[si], qi = Math.floor(r()*set.q.length), q = set.q[qi];
-      return { set:set, q:q, W:words(q[0]), n:words(q[0]).length, g:giveaway(set, qi), answers:shuffle(set.a, r), noon:i === ROUNDS - 1 }; }),
-    my:[], seenDraw:{}, skipTo:{}, view:{ r:-1, ph:'' }, score:{}, endShown:false };
+  stopGame();
+  G = { seed:seed, speed:speed, start:startLocal, roster:roster.slice(), goAt:goAt||0, run:activeRun, over:false, rounds:makeRounds(seed),
+    my:[],seenDraw:Object.create(null),skipTo:Object.create(null), view:{ r:-1, ph:'' }, score:Object.create(null),endShown:false };
   R.phase = 'game'; scene.noon = false;
   $('rivals').classList.toggle('hidden', R.solo);
   show('countScreen');
-  if(G.tick) clearInterval(G.tick); G.tick = setInterval(tick, 90); tick();
+  if(!R.solo)ingest(access.current().rows||[]);
+  if(G.tick)clearInterval(G.tick);G.tick=setInterval(tick,90);tick();
 }
 /* the round timetable: each round waits for its answers, then the reveal, then the next */
 function timeline(){
+  var packet=!R.solo&&access.current(),windows=packet&&packet.round_windows;
+  if(windows&&windows.length===ROUNDS)return windows.map(function(w){return {start:Date.parse(w.start_at)-offset,studyEnd:Date.parse(w.study_at)-offset,lastWord:Date.parse(w.answer_until)-offset-ANSWER,drawEnd:Date.parse(w.draw_until)-offset,answerEnd:Date.parse(w.answer_until)-offset,revealAt:Date.parse(w.reveal_at)-offset,end:Date.parse(w.end_at)-offset};});
   var t = G.start, out = [];
   for(var i = 0; i < ROUNDS; i++){ var rd = G.rounds[i], w = G.speed, studyEnd = t + STUDY, lastWord = studyEnd + (rd.n - 1)*w;
     var drawEnd = rd.noon ? lastWord : lastWord + GRACE, answerEnd = lastWord + ANSWER, revealAt = answerEnd;
@@ -204,14 +209,13 @@ function answerOf(name, i){
 function drawOf(name, i){ if(name === R.me || R.solo) return G.my[i] && G.my[i].drawn ? G.my[i].drawn : null; return G.draws && G.draws[name + '#' + i] || null; }
 /* rows from the others: draws (live, with a bang) and answers */
 function ingest(rows){
-  var start = G.goAt - 1000; G.draws = G.draws || {}; G.answers = G.answers || {};
-  rows.forEach(function(r){ var at = ts(r); if(r.name === GO || r.name === R.me) return;
-    /* everyone who was in the saloon when the game began, or who has played a round since, is in it */
-    var inLobby = at <= G.goAt + 2000 && G.goAt - at < 12000, played = at >= start && r.level >= 1000;
-    if((inLobby || played) && G.roster.indexOf(r.name) < 0){ G.roster.push(r.name); G.roster.sort(); }
-    if(at < start || G.roster.indexOf(r.name) < 0) return;
-    if(r.level >= 1000 && r.level < 1000 + ROUNDS){ var key = r.name + '#' + (r.level - 1000); if(!G.draws[key]) G.draws[key] = { k:r.correct, at:at - offset, srv:at }; }
-    if(r.level >= 2000 && r.level < 2000 + ROUNDS){ var key2 = r.name + '#' + (r.level - 2000); if(!G.answers[key2]) G.answers[key2] = { pts:r.correct, flags:r.time_left, at:at - offset }; } });
+  if(!G)return;G.draws=G.draws||Object.create(null);G.answers=G.answers||Object.create(null);
+  rows.forEach(function(row){if(row.run_id!==activeRun||G.roster.indexOf(row.name)<0)return;var at=ts(row),i;
+    if(row.kind==='draw'){i=row.level-1000;if(i<0||i>=ROUNDS)return;G.draws[row.name+'#'+i]={k:row.correct,at:at-offset,srv:at};
+      if(row.member_id===access.member().id){var own=G.my[i]||(G.my[i]={});own.drawn=G.draws[row.name+'#'+i];own.drawing=false;}}
+    if(row.kind==='answer'){i=row.level-2000;if(i<0||i>=ROUNDS)return;G.answers[row.name+'#'+i]={pts:row.correct,flags:row.time_left,at:at-offset};
+      if(row.member_id===access.member().id){var mine=G.my[i]||(G.my[i]={});mine.answered=true;mine.settling=false;mine.pts=row.correct;mine.flags=row.time_left;mine.answeredAt=at-offset;}}
+  });
 }
 
 function tick(){
@@ -250,10 +254,11 @@ function beginRound(i){
     b.innerHTML = '<span class="k">' + 'ABCD'[k] + '</span>'; b.appendChild(document.createTextNode(a)); b.onclick = function(){ pick(i, a, b); }; box.appendChild(b); });
   renderRivals(i);
 }
-function beginWords(i){ var rd = G.rounds[i]; $('posterLab').textContent = rd.noon ? 'HIGH NOON' : 'THE QUESTION'; G.view.shown = 0; }
+function beginWords(i){var rd=G.rounds[i];$('posterLab').textContent=rd.noon?'HIGH NOON':'THE QUESTION';G.view.shown=0;if(G.my[i].drawn&&!G.my[i].answered)showDraw(i);}
 function shownAt(i, t, now){ var rd = G.rounds[i]; return Math.max(0, Math.min(rd.n, Math.floor((now - t.studyEnd)/G.speed) + 1)); }
 function playing(i, t, now){
   var rd = G.rounds[i], my = G.my[i], k = shownAt(i, t, now);
+  if(my.drawing||my.settling)return;
   if(!my.drawn){
     if(k !== G.view.shown){ G.view.shown = k; renderQuestion(i, k); SND.tick(); }
     var open = now < t.drawEnd;
@@ -274,38 +279,47 @@ function renderQuestion(i, upto, final){
 }
 $('drawBtn').onclick = function(){
   if(!G || G.over) return; var i = G.view.r, T = timeline(), t = T[i], now = Date.now(); if(i < 0 || !t || now < t.studyEnd || now >= t.drawEnd) return;
-  var my = G.my[i]; if(my.drawn) return; var rd = G.rounds[i], k = shownAt(i, t, now); if(k < 1) return;
-  my.drawn = { k:k, at:now }; SND.draw(); puff('BANG'); try{ if(navigator.vibrate) navigator.vibrate(30); }catch(e){}
-  if(!R.solo) post(R.me, k, 1000 + i, 0).then(function(at){ if(at) my.drawn.srv = at; });
-  $('drawBtn').disabled = true; $('drawVal').textContent = valueAt(k, rd.n); $('ticker').textContent = 'You drew at word ' + k + '.';
-  renderQuestion(i, k);
-  var cands = rd.set.q.filter(function(o){ return prefixLen(words(o[0]), rd.W) >= k; });
-  if(cands.length > 1 && k < rd.g) finishStep(i, cands, k); else openAnswers();
-  var bar = $('timerBar'), dur = Math.min(10000, t.answerEnd - now); $('timer').classList.remove('hidden'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth;
-  bar.style.transition = 'transform ' + dur + 'ms linear'; bar.style.transform = 'scaleX(0)';
+  // Presence updates share the transport queue; they must not discard a tap.
+  // An unresolved failed acknowledgement still blocks new gameplay actions.
+  var my = G.my[i]; if(my.drawn||my.drawing||my.settling||(!R.solo&&access.pending()))return; var rd = G.rounds[i], k = shownAt(i, t, now); if(k < 1) return;
+  var game=G;
+  function revealDraw(receipt){if(G!==game||game.run!==activeRun||G.my[i]!==my)return;my.drawing=false;my.drawn={k:receipt?receipt.correct:k,at:receipt?ts(receipt)-offset:now,srv:receipt?ts(receipt):0};
+    SND.draw();puff('BANG');try{if(navigator.vibrate)navigator.vibrate(30);}catch(e){}if(G.view.r===i&&G.view.ph==='play')showDraw(i);}
+  if(R.solo)revealDraw();else{my.drawing=true;$('drawBtn').disabled=true;post(R.me,k,1000+i,0).then(revealDraw).catch(netIssue);}
 };
+function showDraw(i){var rd=G.rounds[i],my=G.my[i],k=my.drawn.k,t=timeline()[i],now=Date.now();
+  $('drawBtn').disabled=true;$('drawVal').textContent=valueAt(k,rd.n);$('ticker').textContent='You drew at word '+k+'.';renderQuestion(i,k);
+  var cands=rd.set.q.filter(function(o){return prefixLen(words(o[0]),rd.W)>=k;});
+  if(cands.length>1&&k<rd.g&&!my.end)finishStep(i,cands,k);else openAnswers();
+  var bar=$('timerBar'),dur=Math.max(0,Math.min(my.drawn.at+10000,t.answerEnd)-now);$('timer').classList.remove('hidden');bar.style.transition='none';bar.style.transform='scaleX(1)';void bar.offsetWidth;
+  bar.style.transition='transform '+dur+'ms linear';bar.style.transform='scaleX(0)';
+}
+
 function finishStep(i, cands, k){
   var my = G.my[i], box = document.createElement('div'); box.className = 'finish';
   shuffle(cands).forEach(function(o){ var w = words(o[0]), b = document.createElement('button'); b.className = 'end';
     b.innerHTML = '<span class="seen">… </span>' + esc(w.slice(k).join(' '));
-    b.onclick = function(){ my.end = o[0]; tone(880, .05, 'square', .03); yourCall(i, o[0], k); openAnswers(); }; box.appendChild(b); });
-  var sk = document.createElement('button'); sk.className = 'skip'; sk.textContent = 'Skip: just answer'; sk.onclick = function(){ my.end = ''; renderQuestion(i, k); openAnswers(); };
+    b.onclick = function(){if(!G||G.my[i]!==my||G.view.r!==i||G.view.ph!=='play'||my.answered||my.settling)return;my.end=o[0]; tone(880, .05, 'square', .03); yourCall(i, o[0], k); openAnswers(); }; box.appendChild(b); });
+  var sk = document.createElement('button'); sk.className = 'skip'; sk.textContent = 'Skip: just answer'; sk.onclick = function(){if(!G||G.my[i]!==my||G.view.r!==i||G.view.ph!=='play'||my.answered||my.settling)return;my.end=''; renderQuestion(i, k); openAnswers(); };
   box.appendChild(sk); $('posterLab').textContent = 'HOW DOES IT END?'; $('posterBody').innerHTML = ''; $('posterBody').appendChild(box); $('answers').classList.add('hidden');
 }
 function yourCall(i, text, k){ var html = ''; words(text).forEach(function(x, j){ html += '<span class="w"' + (j >= k ? ' style="color:#7a4b25;font-style:italic"' : '') + '>' + esc(x) + '</span> '; });
   $('posterLab').textContent = 'YOUR CALL'; $('posterBody').innerHTML = '<div class="q">' + html + '</div>'; }
 function openAnswers(){ var box = $('answers'); box.classList.remove('hidden'); box.classList.add('live'); [].forEach.call(box.children, function(b){ b.disabled = false; }); }
 function lockAnswers(){ var box = $('answers'); box.classList.remove('live', 'hidden'); [].forEach.call(box.children, function(b){ b.disabled = true; }); $('timer').classList.add('hidden'); }
-function pick(i, a, btn){
-  var my = G.my[i]; if(!my || !my.drawn || my.answered || G.view.r !== i) return;
+function pick(i,a,btn){
+  if(!G||G.over)return;var my=G.my[i]; if(!my||!my.drawn||my.answered||my.settling||G.view.r!==i||G.view.ph!=='play'||(!R.solo&&access.pending()))return;
+  var windowNow=timeline()[i],now=Date.now();if(now>=Math.min(my.drawn.at+10000,windowNow.answerEnd)){settle(i,0,F_FROZE,now);lockAnswers();return;}
   var rd = G.rounds[i], mult = rd.noon ? 2 : 1, val = valueAt(my.drawn.k, rd.n), pts, flags;
   if(a === rd.q[1]){ var called = my.end === rd.q[0] && my.drawn.k < rd.g; pts = (called ? val*2 : val)*mult; flags = F_RIGHT | (called ? F_CALLED : 0); }
   else { pts = -100*mult; flags = F_WRONG; }
   my.choice = a; btn.style.outline = '3px solid var(--brass)'; lockAnswers(); settle(i, pts, flags, Date.now());
   if(!R.solo){ $('waitNote').textContent = 'Holstered. Waiting for the others…'; $('waitNote').classList.remove('hidden'); }
 }
-function settle(i, pts, flags, now){ var my = G.my[i]; if(my.answered) return; my.answered = true; my.pts = pts; my.flags = flags; my.answeredAt = now;
-  if(!R.solo) post(R.me, pts, 2000 + i, flags); }
+function settle(i,pts,flags,now){var game=G,my=game.my[i];if(my.answered||my.settling||my.drawing)return;
+  if(R.solo){my.answered=true;my.pts=pts;my.flags=flags;my.answeredAt=now;return;}
+  my.settling=true;post(R.me,pts,2000+i,flags).then(function(row){if(G!==game||game.run!==activeRun)return;my.settling=false;my.answered=true;my.pts=row.correct;my.flags=row.time_left;my.answeredAt=ts(row)-offset;if(game.endShown){game.endShown=false;endGame(timeline());}return poll();}).catch(netIssue);
+}
 
 /* other players drawing, live */
 function liveDraws(i){
@@ -323,7 +337,7 @@ function verdictShort(a){ var f = a.flags; return f & F_CALLED ? 'called it +' +
 
 /* scores: everyone's points, plus the fastest gun of each round (first right draw, two or more players) */
 function totals(upTo){
-  var tot = {}, last = upTo == null ? ROUNDS - 1 : upTo; G.roster.forEach(function(n){ tot[n] = 0; });
+  var tot=Object.create(null),last = upTo == null ? ROUNDS - 1 : upTo; G.roster.forEach(function(n){ tot[n] = 0; });
   for(var i = 0; i <= last; i++){ var best = null;
     G.roster.forEach(function(n){ var a = answerOf(n, i); if(!a) return; tot[n] += a.pts; var d = drawOf(n, i);
       if(a.flags & F_RIGHT && d && (!best || srvOf(d) < best.at)) best = { n:n, at:srvOf(d) }; });
@@ -336,7 +350,9 @@ function fastestGun(i){ var best = null; G.roster.forEach(function(n){ var a = a
 /* ---------------- the reveal ---------------- */
 function reveal(i, T){
   var rd = G.rounds[i], my = G.my[i];
-  if(!my.answered) settle(i, 0, my.drawn ? F_FROZE : F_NODRAW, Date.now());
+  if(!my.answered)settle(i,0,my.drawn?F_FROZE:F_NODRAW,Date.now());
+  if(!R.solo&&!my.answered){lockAnswers();$('drawBtn').classList.add('hidden');$('verdict').classList.remove('hidden');$('verdict').textContent='Confirming your round with the room…';G.view.verdictConfirmed=false;return;}
+  G.view.verdictConfirmed=true;
   lockAnswers(); $('drawBtn').classList.add('hidden'); $('waitNote').classList.add('hidden');
   renderQuestion(i, rd.n, true); $('posterLab').textContent = 'THE QUESTION WAS';
   [].forEach.call($('answers').children, function(b){ if(b.dataset.a === rd.q[1]) b.classList.add('right'); else if(b.dataset.a === my.choice) b.classList.add('wrong'); else b.classList.add('dim'); });
@@ -353,7 +369,8 @@ function reveal(i, T){
   $('nextBtn').classList.toggle('hidden', !R.solo);
   G.view.boardSig = '';
 }
-function revealTick(i, t, now){
+function revealTick(i,t,now){
+  if(!G.view.verdictConfirmed&&G.my[i].answered)reveal(i,timeline());
   /* the board fills in as the others' answers arrive */
   var sig = G.roster.map(function(n){ var a = answerOf(n, i); return a ? a.flags + ':' + a.pts : '-'; }).join('|');
   if(sig !== G.view.boardSig){ G.view.boardSig = sig; renderRivals(i); $('scoreLab').textContent = totals(i)[R.me] || 0; if(!R.solo) roundBoard(i); }
@@ -380,11 +397,11 @@ function endGame(T){
   if(R.solo) G.rounds.forEach(function(rd, k){ var m = G.my[k] || {}, d = document.createElement('div');
     d.innerHTML = '<span>' + (k === ROUNDS - 1 ? 'High Noon' : 'Round ' + (k + 1)) + ' · ' + esc(rd.q[1]) + '</span><span>' + esc(m.flags ? verdictShort({ flags:m.flags, pts:m.pts }) : '') + '</span>'; b.appendChild(d); });
   if(!R.solo) order.forEach(function(n, k){ var d = document.createElement('div'); if(n === R.me) d.className = 'me'; d.innerHTML = '<span>' + (k + 1) + '. ' + esc(n === R.me ? n + ' (you)' : n) + '</span><span>' + (tot[n] || 0) + '</span>'; b.appendChild(d); });
-  $('againBtn').textContent = R.solo ? 'Ride again' : 'Back to the saloon';
+  $('againBtn').textContent=R.solo?'Ride again':access.isHost()?'Back to the saloon':'Waiting for the host’s next showdown';$('againBtn').disabled=!R.solo&&(!access.isHost()||access.busy());
 }
-$('againBtn').onclick = function(){
-  if(R.solo){ $('soloBtn').onclick(); return; }
-  G = null; R.phase = 'lobby'; show('lobbyScreen'); renderLobby(); post(R.me, 0, 0, 0).then(poll);
+$('againBtn').onclick=function(){
+  if(R.solo){$('soloBtn').onclick();return;}if(!access.isHost()||access.busy())return;
+  access.reset().then(function(){stopGame();roomEpoch++;activeRun='';R.phase='lobby';show('lobbyScreen');return poll();}).catch(netIssue);
 };
 
 /* ---------------- big screens and keys ---------------- */
