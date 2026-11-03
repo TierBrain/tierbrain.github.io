@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz Maker: make a quiz all about them | TierBrain</title>
+<meta name="description" content="Make a free quiz about the guest of honour for a birthday, wedding, leaving do or family Christmas. Type in the facts and play it on the TV tonight. No sign-up.">
+<link rel="canonical" href="https://tierbrain.co/quiz-maker.html">
+<meta name="theme-color" content="#1f0c11">
+<meta property="og:title" content="Quiz Maker: a quiz all about them">
+<meta property="og:description" content="Type in the facts about the guest of honour and play the quiz on the TV tonight. Free, no sign-up.">
+<meta property="og:url" content="https://tierbrain.co/quiz-maker.html">
+<meta property="og:image" content="https://tierbrain.co/og-image.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+(function(){ if(location.hostname==='tierbrain.github.io'){ location.replace('https://tierbrain.co'+location.pathname+location.search+location.hash); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&family=Fraunces:ital,opsz,wght@1,9..144,500&display=swap">
+<style>
+/* Layout: one narrow working column for making and checking; the play view opens wide like a quiz show on the TV. */
+:root{
+  --ink:#13090d; --plum:#1f0c11; --raised:#2b121a; --line:rgba(251,241,226,.14);
+  --gold:#f2d27a; --cream:#fbf1e2; --muted:#cdb6a2; --wine:#7a1f2b; --good:#86d6a6; --bad:#e58a8a;
+  --display:'Baloo 2',ui-rounded,'Arial Rounded MT Bold',system-ui,sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --tale:'Fraunces',Georgia,'Times New Roman',serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:radial-gradient(ellipse 120% 70% at 50% -10%,#3a1820 0%,var(--plum) 45%,var(--ink) 100%) fixed,var(--ink);color:var(--cream);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.2px}
+.brand b{color:var(--gold)}
+.chip{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);background:var(--gold);border-radius:999px;padding:3px 10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,7vw,52px);line-height:1.02;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--gold)}
+h2{font-family:var(--display);font-weight:800;font-size:24px;margin:0;line-height:1.15}
+h3{font-family:var(--display);font-weight:700;font-size:19px;margin:0;color:var(--gold)}
+.lede{color:var(--muted);font-weight:700;margin:0;max-width:60ch}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0;padding:0;list-style:none}
+.steps li{border-top:2px solid var(--gold);padding-top:8px;font-weight:800;font-size:14px;color:var(--muted)}
+.steps li span{display:block;font-family:var(--display);color:var(--cream);font-size:17px}
+.note{font-size:14px;color:var(--muted);font-weight:700;display:flex;gap:8px;align-items:flex-start;margin:0}
+.note svg{flex:none;margin-top:3px}
+.panel{background:rgba(251,241,226,.045);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.occ{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.occ button{border:2px solid var(--line);background:var(--raised);border-radius:14px;padding:12px 8px;font-weight:900;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:64px;text-align:center}
+.occ button small{font-weight:700;color:var(--muted);font-size:12px}
+.occ button[aria-pressed="true"]{border-color:var(--gold);background:#3a1a22}
+.example{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:rgba(242,210,122,.1);border:1px dashed rgba(242,210,122,.5);border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-weight:800;font-size:14px}
+.field.full{grid-column:1/-1}
+input,select,textarea{width:100%;background:#120a0d;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:700;min-height:44px}
+textarea{min-height:64px;resize:vertical}
+input::placeholder,textarea::placeholder{color:rgba(205,182,162,.55)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);outline:none}
+.hint{font-size:13px;color:var(--muted);font-weight:700;margin:0}
+.storybox{display:flex;flex-direction:column;gap:5px}
+.addstory{align-self:flex-start;background:none;border:0;padding:2px 0;color:var(--gold);font-weight:800;font-size:13px;cursor:pointer;min-height:28px}
+.addstory:hover{text-decoration:underline}
+textarea.story{font-family:var(--tale);font-style:italic;font-weight:500;font-size:15px;min-height:56px}
+.rowbox{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.rowbox .span{grid-column:1/-1}
+.rowbox .rm{justify-self:end}
+.people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.people input{min-width:0}
+.btn{border:0;border-radius:14px;padding:13px 20px;font-weight:900;cursor:pointer;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.go{background:var(--gold);color:var(--ink);font-size:17px}
+.btn.quiet{background:var(--raised);border:1.5px solid var(--line)}
+.btn.small{padding:8px 12px;min-height:38px;font-size:14px;border-radius:10px}
+.btn.tiny{padding:4px 10px;min-height:32px;font-size:13px;border-radius:8px;background:none;border:1px solid var(--line);color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sticky{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;background:rgba(19,9,13,.92);border:1px solid var(--line);border-radius:16px;padding:10px 12px;backdrop-filter:blur(6px)}
+.count{font-weight:900}
+.count b{color:var(--gold)}
+.eranote{font-size:14px;font-weight:800;color:var(--muted);background:rgba(242,210,122,.08);border-radius:10px;padding:8px 12px;margin:0}
+.eranote b{color:var(--gold)}
+.qlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.qlist li{background:rgba(251,241,226,.045);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px}
+.qn{font-family:var(--display);font-weight:800;color:var(--gold);font-size:20px;line-height:1.2;grid-row:span 5}
+.qt{font-weight:800}
+.qa{font-size:14px;color:var(--muted);font-weight:700}
+.qa b{color:var(--good)}
+.qs{font-family:var(--tale);font-style:italic;font-size:14px;color:var(--cream);opacity:.85}
+.kind{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.qtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+/* play */
+.stage{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(14px,2.4vw,26px);min-height:calc(100vh - 80px)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.prog{font-weight:900;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+.prog b{color:var(--gold)}
+.qcard{flex:1;display:flex;flex-direction:column;gap:clamp(14px,2.4vw,28px);justify-content:center}
+.eyebrow{font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-size:clamp(13px,1.4vw,18px)}
+.bigq{font-family:var(--display);font-weight:800;font-size:clamp(28px,4.6vw,64px);line-height:1.08;margin:0;text-wrap:balance}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.4vw,18px)}
+.opt{display:flex;align-items:center;gap:14px;background:var(--raised);border:2px solid var(--line);border-radius:18px;padding:clamp(12px,1.6vw,22px);font-weight:900;font-size:clamp(17px,2.2vw,30px);min-width:0;transition:opacity .35s,border-color .35s,background .35s}
+.opt .L{flex:none;width:clamp(30px,3vw,46px);height:clamp(30px,3vw,46px);border-radius:10px;background:var(--gold);color:var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:.85em}
+.opt span:last-child{min-width:0;overflow-wrap:anywhere}
+.revealed .opt{opacity:.32}
+.revealed .opt.right{opacity:1;border-color:var(--good);background:#173326}
+.revealed .opt.right .L{background:var(--good)}
+.shout{border:2px dashed rgba(242,210,122,.5);border-radius:18px;padding:clamp(16px,2vw,26px);font-weight:900;font-size:clamp(20px,2.6vw,34px);color:var(--muted);text-align:center}
+.revealed .shout{border-style:solid;border-color:var(--good);color:var(--cream);background:#173326}
+.tale{display:flex;gap:clamp(12px,1.6vw,20px);align-items:flex-start;border-left:4px solid var(--gold);padding:clamp(10px,1.4vw,16px) clamp(14px,1.8vw,22px);background:rgba(242,210,122,.08);border-radius:0 16px 16px 0;animation:taleIn .5s ease both}
+.tale small{display:block;font-family:var(--body);font-style:normal;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-size:clamp(11px,1.1vw,15px);margin-bottom:4px}
+.tale p{margin:0;font-family:var(--tale);font-style:italic;font-weight:500;font-size:clamp(18px,2.3vw,32px);line-height:1.3}
+@keyframes taleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.teams{display:flex;gap:8px;flex-wrap:wrap}
+.team{border:2px solid var(--line);background:var(--raised);border-radius:999px;padding:6px 14px;font-weight:900;display:flex;gap:8px;align-items:center;cursor:pointer;min-height:40px}
+.team b{color:var(--gold);font-variant-numeric:tabular-nums}
+.team[aria-pressed="true"]{border-color:var(--good);background:#173326}
+.ctl{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.tip{font-size:13px;color:var(--muted);font-weight:700}
+.podium{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-width:640px}
+.podium li{display:flex;justify-content:space-between;gap:12px;background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-family:var(--display);font-weight:800;font-size:clamp(20px,2.6vw,32px)}
+.podium li:first-child{border-color:var(--gold);background:#3a1a22}
+.podium li b{color:var(--gold);font-variant-numeric:tabular-nums}
+.teamedit{display:flex;gap:8px;flex-wrap:wrap}
+.teamedit input{width:auto;flex:1 1 140px}
+.occwide{width:100%;border:2px dashed rgba(242,210,122,.45);background:transparent;border-radius:14px;padding:12px 14px;font-weight:900;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:4px 12px;flex-wrap:wrap;text-align:left;min-height:56px}
+.occwide small{font-weight:700;color:var(--muted);font-size:13px}
+.occwide[aria-pressed="true"]{border-style:solid;border-color:var(--gold);background:#3a1a22}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:40px;height:40px;border-radius:50%;border:3px solid transparent;background:var(--sw);cursor:pointer;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
+.sw[aria-checked="true"]{border-color:var(--cream)}
+.lab{font-weight:800;font-size:14px}
+#logoPrev{max-height:48px;max-width:160px;background:rgba(251,241,226,.08);border-radius:8px;padding:4px}
+input[type=file]{min-height:auto;padding:8px;font-size:14px;width:100%;min-width:0;flex:1 1 160px}
+.wrap > *,.panel > *,.roundbox > *{min-width:0}
+.roundbox{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;background:rgba(0,0,0,.18)}
+.roundhead{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.roundhead .field{flex:1 1 220px}
+.qrows{display:flex;flex-direction:column;gap:12px}
+.addq{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;font-weight:800;color:var(--muted);padding-top:10px;border-top:1px solid var(--line)}
+.addq .btn.tiny{color:var(--cream)}
+.typechip{justify-self:start;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--gold);border-radius:999px;padding:2px 10px}
+.qlist li.cardli{grid-template-columns:minmax(0,1fr);background:transparent;border-style:dashed}
+.qlist li.cardli .qt{font-family:var(--display);font-size:20px}
+.plogo{max-height:46px;max-width:220px;display:block}
+.biglogo{max-height:clamp(70px,12vw,160px);max-width:min(70%,520px);align-self:flex-start}
+.madewith{font-size:13px;font-weight:800;color:var(--muted);margin:0}
+.roundsub{font-weight:800;color:var(--muted);font-size:clamp(16px,2vw,26px);margin:0}
+.bigq.title{font-size:clamp(36px,6.5vw,96px)}
+@media (max-width:640px){
+  .occ{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  .grid,.rowbox{grid-template-columns:minmax(0,1fr)}
+  .people{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:minmax(0,1fr)}
+  .opts{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.privacy{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between;background:rgba(251,241,226,.045);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.privacy .note{flex:1 1 260px}
+.keep{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:800;color:var(--muted);min-height:44px;cursor:pointer}
+.keep input{width:22px;height:22px;min-height:0;accent-color:var(--gold);margin:0}
+.btn.danger{border-color:rgba(229,138,138,.45)}
+.btn.danger[data-armed="1"]{background:#4a1b22;border-color:var(--bad);color:#fff}
+.done{font-size:14px;font-weight:800;color:var(--good);margin:0}
+.cta{background:linear-gradient(135deg,rgba(242,210,122,.14),rgba(122,31,43,.3));border:1px solid rgba(242,210,122,.4);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.cta p{margin:0;font-weight:700;color:var(--muted)}
+.cta a.btn{align-self:flex-start;text-decoration:none}
+.kind-note{font-size:13px;color:var(--muted);font-weight:700;margin:0}
+.kind-note a,.note a{color:var(--gold)}
+.endtools{display:flex;flex-direction:column;gap:12px;max-width:640px;margin-top:10px}
+#sendCode{font:600 12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;min-height:90px}
+</style>
+</head>
+<body>
+
+<main class="wrap" id="makeView">
+  <div class="top">
+    <a class="brand" href="./" style="text-decoration:none;color:inherit" aria-label="TierBrain: all games">Tier<b>Brain</b></a>
+    <span class="chip">Free</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <h1>A quiz all about <em>them</em></h1>
+    <p class="lede">Fill in what you know about the guest of honour, or the whole family. The maker turns your facts into a quiz show you can run on the TV tonight. Free, with no sign-up.</p>
+  </div>
+  <ol class="steps">
+    <li><span>Fill in facts</span>Add the story behind any of them</li>
+    <li><span>Check the questions</span>Swap the wording or drop any</li>
+    <li><span>Play it</span>On a TV, laptop or phone</li>
+  </ol>
+  <div class="privacy" id="privacyBox">
+    <p class="note"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>TierBrain never sees what you type. It stays on this device, is cleared automatically after 7 days, and you can delete it at any time. <a href="privacy.html#quiz-maker">How this works</a></span></p>
+    <div class="row">
+      <label class="keep"><input type="checkbox" id="noKeep"> Don’t keep anything on this device</label>
+      <button type="button" class="btn quiet small danger" id="deleteBtn">Delete this quiz</button>
+    </div>
+    <p class="done" id="deleteMsg" aria-live="polite" hidden></p>
+  </div>
+  <p class="kind-note">Keep it kind: these quizzes are for celebrating people, not making fun of them. Please don’t make a quiz about a child without their parent or carer. Something wrong? <a href="contact.html">Tell us</a>.</p>
+
+  <section class="panel" aria-labelledby="occT">
+    <h2 id="occT">What's the occasion?</h2>
+    <div class="occ" role="group" aria-label="Occasion">
+      <button type="button" data-occ="birthday" id="occ-birthday">A birthday<small>One guest of honour</small></button>
+      <button type="button" data-occ="couple" id="occ-couple">A couple<small>Wedding or anniversary</small></button>
+      <button type="button" data-occ="leaving" id="occ-leaving">Leaving do<small>Work or retirement</small></button>
+      <button type="button" data-occ="family" id="occ-family">The family<small>Christmas or a reunion</small></button>
+    </div>
+    <div class="example" id="exampleBar" hidden>
+      <span id="exampleText">This is an example. Clear it to start your own.</span>
+      <button type="button" class="btn quiet small" id="clearBtn">Clear and start mine</button>
+    </div>
+  </section>
+
+  <form id="factForm" class="wrap" style="gap:18px" novalidate></form>
+
+  <div class="sticky">
+    <span class="count" id="liveCount">0 questions so far</span>
+    <button type="button" class="btn go" id="makeBtn">Make my quiz</button>
+  </div>
+</main>
+
+<div class="wrap" id="reviewView" hidden>
+  <div class="top">
+    <button type="button" class="btn quiet small" id="backToFacts">Back to the facts</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <h2 id="reviewTitle" style="font-size:clamp(28px,6vw,40px)">Your quiz</h2>
+    <p class="lede" id="reviewLede">Each time you make it, the wrong answers and the order change. Tap <b>New wording</b> on any question you don't like, or remove it.</p>
+    <p class="eranote" id="eraNote" hidden></p>
+  </div>
+  <ol class="qlist" id="qlist"></ol>
+  <section class="panel" aria-labelledby="teamT">
+    <h3 id="teamT">Teams</h3>
+    <p class="hint">After each answer is shown, tap the teams that got it right.</p>
+    <div class="teamedit" id="teamEdit"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addTeam">Add a team</button><button type="button" class="btn quiet small" id="dropTeam">Remove last team</button></div>
+  </section>
+  <section class="cta" aria-labelledby="ctaT">
+    <h3 id="ctaT">Want it printed, branded or made for you?</h3>
+    <p>We can turn your facts into a printable pack and TV slides. For work or a club, we can make a quiz with your own rounds, logo and colours.</p>
+    <a class="btn go" href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener">See custom quizzes on Etsy</a>
+  </section>
+  <section class="panel" aria-labelledby="sendT">
+    <h3 id="sendT">Ordered a custom quiz on Etsy?</h3>
+    <p class="hint">Send us these facts so we can make your printed version. Tap the button, then paste what it copies into an Etsy message to TierBrain about your order. Nothing is sent unless you do.</p>
+    <div class="row"><button type="button" class="btn quiet small" id="sendBtn">Copy for my Etsy order</button></div>
+    <p class="done" id="sendMsg" aria-live="polite" hidden></p>
+    <textarea id="sendCode" readonly rows="4" aria-label="Your quiz, ready to paste into an Etsy message" hidden></textarea>
+  </section>
+  <div class="sticky">
+    <button type="button" class="btn quiet" id="reshuffle">Make it again</button>
+    <button type="button" class="btn go" id="playBtn">Start the quiz</button>
+  </div>
+</div>
+
+<div class="stage" id="playView" hidden>
+  <div class="bar">
+    <div class="brand" id="playBrand">Tier<b>Brain</b></div>
+    <div class="prog" id="prog"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="fsBtn">Full screen</button><button type="button" class="btn quiet small" id="quitBtn">Stop</button></div>
+  </div>
+  <div class="qcard" id="qcard" aria-live="polite"></div>
+  <div class="ctl">
+    <div class="teams" id="teamBar" aria-label="Scores"></div>
+    <div class="row"><span class="tip" id="tip">Space or tap to continue</span><button type="button" class="btn go" id="nextBtn">Show the answer</button></div>
+  </div>
+</div>
+
+<div class="stage" id="endView" hidden>
+  <div class="bar"><div class="brand" id="endBrand">Tier<b>Brain</b></div></div>
+  <div class="qcard">
+    <div class="eyebrow">Final scores</div>
+    <h1 id="winner" style="font-size:clamp(36px,6vw,80px)"></h1>
+    <ol class="podium" id="podium"></ol>
+    <div class="row"><button type="button" class="btn go" id="againBtn">Play it again</button><button type="button" class="btn quiet" id="editBtn">Back to the questions</button></div>
+    <p class="madewith" id="madeWith" hidden>Made with TierBrain · tierbrain.co</p>
+    <div class="endtools">
+      <button type="button" class="btn quiet danger" id="endDeleteBtn">Finished? Delete this quiz</button>
+      <p class="done" id="endDeleteMsg" aria-live="polite" hidden></p>
+      <section class="cta" aria-labelledby="ctaEndT">
+    <h3 id="ctaEndT">Want it printed, branded or made for you?</h3>
+    <p>We can turn your facts into a printable pack and TV slides. For work or a club, we can make a quiz with your own rounds, logo and colours.</p>
+    <a class="btn go" href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener">See custom quizzes on Etsy</a>
+  </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random() * n);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => String(s).toLowerCase().replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const THIS_YEAR = new Date().getFullYear();
+
+/* ---------- wrong-answer pools. A [name, year] pair marks roughly when it was popular, so wrong answers can suit the person's era ---------- */
+const POOLS = {
+  place: ['Leeds','Manchester','Bristol','Glasgow','Cardiff','Liverpool','Birmingham','Newcastle','Brighton','Norwich','Sheffield','Nottingham','Edinburgh','Belfast','Swansea','Plymouth','York','Leicester','Southampton','Hull','Aberdeen','Bradford','Coventry','Stoke-on-Trent'],
+  job: ['Paper round','Shop assistant','Waiter','Office junior','Factory worker','Lifeguard','Car washer','Hairdresser','Farm hand','Bar work',
+    ['Milkman',1960],['Bus conductor',1960],['Cinema usherette',1960],['Coal miner',1962],['Typist',1970],['Bank clerk',1975],['Pools collector',1970],
+    ['Video shop assistant',1990],['Supermarket checkout',1995],['Call centre adviser',2005],['Barista',2012],['Delivery driver',2018]],
+  food: ['Curry','Fish and chips','Roast dinner','Pizza','Lasagne','Spaghetti bolognese','Sushi','Full English','Steak pie','Chilli con carne','Toad in the hole','Shepherd’s pie','Fajitas','Bangers and mash','Pad Thai','Cheese on toast'],
+  drink: ['Tea','Coffee','Gin and tonic','Lager','Red wine','White wine','Prosecco','Cider','Whisky','Irn-Bru','Diet Coke','Bitter','Hot chocolate','Orange squash','Rum and Coke'],
+  film: [['Gone with the Wind',1939],['Casablanca',1942],['Singin’ in the Rain',1952],['Some Like It Hot',1959],['Dr. No',1962],['The Great Escape',1963],['Mary Poppins',1964],['Zulu',1964],['The Sound of Music',1965],['The Italian Job',1969],
+    ['The Godfather',1972],['Jaws',1975],['Star Wars',1977],['Saturday Night Fever',1977],['Grease',1978],['E.T.',1982],['Ghostbusters',1984],['Back to the Future',1985],['Top Gun',1986],['Dirty Dancing',1987],
+    ['Pretty Woman',1990],['Home Alone',1990],['Four Weddings and a Funeral',1994],['The Lion King',1994],['The Shawshank Redemption',1994],['Titanic',1997],['Notting Hill',1999],['Gladiator',2000],['Harry Potter and the Philosopher’s Stone',2001],['Love Actually',2003],
+    ['Mamma Mia!',2008],['The Dark Knight',2008],['Frozen',2013],['Paddington',2014],['The Greatest Showman',2017],['Top Gun: Maverick',2022],['Barbie',2023]],
+  music: [['Frank Sinatra',1955],['Elvis Presley',1958],['Cliff Richard',1962],['The Beatles',1965],['Dusty Springfield',1966],['The Rolling Stones',1967],['Tom Jones',1968],['David Bowie',1975],['Elton John',1976],['ABBA',1977],['Fleetwood Mac',1977],['Queen',1978],
+    ['Michael Jackson',1984],['Duran Duran',1984],['Wham!',1984],['Tina Turner',1985],['Madonna',1986],['Bon Jovi',1987],['Whitney Houston',1988],['Kylie Minogue',1989],['Take That',1993],['Oasis',1995],['Spice Girls',1997],['Robbie Williams',1999],['Westlife',2000],
+    ['Coldplay',2005],['Amy Winehouse',2007],['Adele',2011],['One Direction',2013],['Ed Sheeran',2014],['Taylor Swift',2015],['Little Mix',2016],['Dua Lipa',2020],['Harry Styles',2021]],
+  team: ['Arsenal','Aston Villa','Chelsea','Everton','Leeds United','Liverpool','Manchester City','Manchester United','Newcastle United','Tottenham Hotspur','West Ham United','Celtic','Rangers','Sunderland','Nottingham Forest','Wolves','Sheffield United','Sheffield Wednesday'],
+  car: [['Morris Minor',1955],['Ford Anglia',1960],['Triumph Herald',1962],['Mini',1965],['Hillman Imp',1966],['Vauxhall Viva',1968],['Ford Cortina',1970],['Ford Capri',1972],['Austin Allegro',1975],['Ford Escort',1978],
+    ['Austin Metro',1982],['Ford Sierra',1985],['Austin Maestro',1985],['Vauxhall Nova',1987],['Peugeot 205',1987],['Ford Fiesta',1990],['Vauxhall Astra',1992],['Rover 200',1992],['Nissan Micra',1995],['Renault Clio',1995],
+    ['Vauxhall Corsa',2000],['VW Polo',2000],['Ford Focus',2002],['Peugeot 206',2002],['Ford Ka',2005],['VW Golf',2005],['Toyota Yaris',2008],['Fiat 500',2010],['Kia Picanto',2012],['Hyundai i10',2014]],
+  pet: ['Buster','Bella','Max','Poppy','Tilly','Charlie','Molly','Alfie','Daisy','Rocky','Bramble','Smudge','Tigger','Biscuit','Patch','Lucky'],
+  holiday: ['Spain','Cornwall','Florida','Greece','The Lake District','Portugal','Italy','Scotland','France','Turkey','Cyprus','Wales','Lanzarote','New York','Devon','Tenerife'],
+  hobby: ['Juggling','Baking','Karaoke','Gardening','Knitting','Golf','Darts','Painting','Salsa dancing','Magic tricks','Crosswords','Fishing','Snooker','Ballroom dancing'],
+  met: ['At work','At school','At university','On a night out','Through friends','Online','At church','On holiday','At the gym','At a concert','At a wedding','In a pub'],
+  date: ['The cinema','A pub','A restaurant','Bowling','The beach','A football match','A coffee shop','A walk in the park','A concert','Ice skating','The funfair','Crazy golf'],
+  proposal: ['On a beach','At home','Up a mountain','In a restaurant','On holiday','In Paris','At a family party','In the garden','On Christmas Day','On a boat','At a football ground','Under the stars'],
+  song: ['The Way You Look Tonight',['At Last',1961],['Can’t Help Falling in Love',1961],['Unchained Melody',1965],['Can’t Take My Eyes Off You',1967],['Something',1969],['Your Song',1970],['Wonderful Tonight',1977],['Lovely Day',1977],['You’re the One That I Want',1978],
+    ['Endless Love',1981],['Islands in the Stream',1983],['Everything I Do',1991],['I Will Always Love You',1992],['Truly Madly Deeply',1997],['Angels',1997],['Crazy in Love',2003],['Make You Feel My Love',2008],['I’m Yours',2008],
+    ['Marry You',2010],['A Thousand Years',2011],['All of Me',2013],['Thinking Out Loud',2014],['Shut Up and Dance',2015],['Perfect',2017]],
+  role: ['Office manager','Sales executive','Account manager','Receptionist','Team leader','Analyst','Project manager','Developer','Marketing assistant','HR adviser','Engineer','Apprentice','Customer adviser','Admin assistant'],
+  snack: ['Biscuits','Crisps','Jaffa Cakes','Fruit','Chocolate','Flapjacks','Doughnuts','Toast','Sweets','Nuts','Cake','Rice cakes'],
+  brew: ['Builder’s tea','Black coffee','Flat white','Green tea','Earl Grey','Latte','Peppermint tea','Hot chocolate','Tea, two sugars','Cappuccino','Decaf with oat milk'],
+  phrase: ['Let’s take this offline','Who’s making a brew?','Have you tried turning it off and on again?','Is it Friday yet?','Per my last email','Can I just jump in?','Quick question','Right then','It is what it is','Bear with me'],
+  lunch: ['Meal deal','Soup','Jacket potato','Salad','Sandwich from home','Sushi','Leftovers','Pasty','Noodles','Wrap','Beans on toast','Sausage roll'],
+  next: ['A new job','Retirement','Travelling the world','Moving abroad','Going back to study','Starting a business','A round-the-world cruise','Running a café']
+};
+
+/* ---------- the facts each occasion asks for. era: which year the wrong answers should centre on ---------- */
+const OCC = {
+  birthday: {
+    names: [{ id:'n', label:'Whose birthday is it?', ph:'e.g. Auntie Pat' }],
+    groups: [
+      { title:'The basics', hint:'Their age also picks wrong answers from the right era, so a first car is up against cars from their day.', fields:[
+        { id:'age', label:'Which birthday is it?', kind:'num', ph:'e.g. 40', qs:['Which birthday is {n} celebrating?','How old is {n} today?'] },
+        { id:'born', label:'Where were they born?', pool:'place', ph:'e.g. Swansea', qs:['Where was {n} born?','In which town or city was {n} born?'] },
+        { id:'siblings', label:'How many brothers and sisters?', kind:'num', ph:'e.g. 2', qs:['How many brothers and sisters does {n} have?'] },
+        { id:'job', label:'First ever job', pool:'job', era:{ from:'birth', off:16, spread:12 }, ph:'e.g. Paper round', qs:['What was {n}’s first ever job?','Which of these was {n}’s first job?'] },
+        { id:'car', label:'First car', pool:'car', era:{ from:'birth', off:19, spread:7 }, ph:'e.g. Nissan Micra', qs:['What was {n}’s first car?','Which of these was {n}’s first car?'] },
+        { id:'pet', label:'First pet’s name', pool:'pet', ph:'e.g. Biscuit', qs:['What was the name of {n}’s first pet?'] }
+      ]},
+      { title:'Favourite things', fields:[
+        { id:'food', label:'Favourite meal', pool:'food', ph:'e.g. Lasagne', qs:['What is {n}’s favourite meal?','Which dish would {n} choose for a last supper?'] },
+        { id:'drink', label:'Drink of choice', pool:'drink', ph:'e.g. Prosecco', qs:['What is {n}’s drink of choice?','At the bar, what is {n} most likely to order?'] },
+        { id:'film', label:'Favourite film', pool:'film', era:{ from:'birth', off:22, spread:12 }, ph:'e.g. Grease', qs:['Which film could {n} watch again and again?','What is {n}’s favourite film?'] },
+        { id:'music', label:'Favourite band or singer', pool:'music', era:{ from:'birth', off:18, spread:10 }, ph:'e.g. ABBA', qs:['Who is {n}’s favourite band or singer?','Whose music does {n} play at full volume?'] },
+        { id:'team', label:'Team they support', pool:'team', ph:'e.g. Everton', qs:['Which team does {n} support?','Whose results does {n} check first on a Saturday?'] },
+        { id:'holiday', label:'Favourite holiday spot', pool:'holiday', ph:'e.g. Cornwall', qs:['Where is {n}’s favourite place for a holiday?','Where would {n} happily go on holiday every year?'] },
+        { id:'talent', label:'Hidden talent or hobby', pool:'hobby', ph:'e.g. Karaoke', qs:['What is {n}’s hidden talent?','Which of these is {n} secretly brilliant at?'] }
+      ]}
+    ]
+  },
+  couple: {
+    names: [{ id:'n1', label:'First name', ph:'e.g. Sam' }, { id:'n2', label:'Second name', ph:'e.g. Alex' }],
+    groups: [
+      { title:'Their story', hint:'The year they met also picks song choices from the right era.', fields:[
+        { id:'metYear', label:'Year they met', kind:'year', ph:'e.g. 2012', qs:['In which year did {c} meet?'] },
+        { id:'metPlace', label:'Where they met', pool:'met', ph:'e.g. At university', qs:['Where did {c} first meet?','How did {c} first cross paths?'] },
+        { id:'firstDate', label:'First date', pool:'date', ph:'e.g. Bowling', qs:['Where did {c} go on their first date?'] },
+        { id:'proposal', label:'Where the proposal happened', pool:'proposal', ph:'e.g. On a beach', qs:['Where did the proposal happen?'] },
+        { id:'honeymoon', label:'Honeymoon destination', pool:'holiday', ph:'e.g. Greece', qs:['Where did {c} choose for their honeymoon?'] },
+        { id:'song', label:'Their song', pool:'song', era:{ from:'met', off:0, spread:12 }, ph:'e.g. Your Song', qs:['Which song do {c} call their song?'] }
+      ]},
+      { title:'Who’s more likely?', hint:'Pick one of the two for each. Leave any on Skip.', fields:[
+        { id:'love', label:'Who said “I love you” first?', kind:'pick2', qs:['Who said “I love you” first?'] },
+        { id:'cook', label:'Who is the better cook?', kind:'pick2', qs:['Who is the better cook?','Who rules the kitchen?'] },
+        { id:'ready', label:'Who takes longer to get ready?', kind:'pick2', qs:['Who takes longer to get ready?'] },
+        { id:'sofa', label:'Who falls asleep first on the sofa?', kind:'pick2', qs:['Who falls asleep first on the sofa?'] },
+        { id:'driver', label:'Who is the better driver?', kind:'pick2', qs:['Who is the better driver?'] },
+        { id:'remote', label:'Who controls the TV remote?', kind:'pick2', qs:['Who is in charge of the TV remote?'] }
+      ]}
+    ]
+  },
+  leaving: {
+    names: [{ id:'n', label:'Who is leaving?', ph:'e.g. Priya' }],
+    groups: [
+      { title:'At work', fields:[
+        { id:'years', label:'Years at the company', kind:'num', ph:'e.g. 12', qs:['How many years has {n} worked here?'] },
+        { id:'start', label:'Year they joined', kind:'year', ph:'e.g. 2014', qs:['In which year did {n} join?'] },
+        { id:'role', label:'First job title here', pool:'role', ph:'e.g. Apprentice', qs:['What was {n}’s first job title here?'] },
+        { id:'phrase', label:'Their catchphrase', pool:'phrase', ph:'e.g. Bear with me', qs:['Which phrase is {n} most likely to say?'] },
+        { id:'next', label:'What’s next for them', pool:'next', ph:'e.g. Retirement', qs:['What is next for {n}?','Where is {n} heading after this?'] }
+      ]},
+      { title:'Around the office', fields:[
+        { id:'brew', label:'How they take their brew', pool:'brew', ph:'e.g. Flat white', qs:['What is {n}’s usual brew?'] },
+        { id:'snack', label:'Desk snack', pool:'snack', ph:'e.g. Jaffa Cakes', qs:['What is {n}’s desk snack of choice?','Which snack is always in {n}’s drawer?'] },
+        { id:'lunch', label:'Usual lunch', pool:'lunch', ph:'e.g. Meal deal', qs:['What does {n} usually have for lunch?'] },
+        { id:'team', label:'Team they support', pool:'team', ph:'e.g. Celtic', qs:['Which team does {n} support?'] },
+        { id:'holiday', label:'Favourite holiday spot', pool:'holiday', ph:'e.g. Tenerife', qs:['Where does {n} go on holiday?'] }
+      ]}
+    ]
+  },
+  canvas: {
+    head:'The quiz', canvas:true, groups:[],
+    names: [{ id:'title', label:'What is the quiz called?', ph:'e.g. The Big Office Quiz' }, { id:'sub', label:'A line underneath (optional)', ph:'e.g. Leeds office, December 2026', optional:true }]
+  },
+  family: {
+    names: [{ id:'g', label:'What shall we call the group?', ph:'e.g. The Jacksons' }],
+    people: true,
+    groups: [
+      { title:'Who’s who?', hint:'Pick the right person for each. Leave any on Skip. The other names become the wrong answers.', fields:[
+        { id:'w_late', label:'Who is always last to arrive?', kind:'who', qs:['Who is always last to arrive?'] },
+        { id:'w_xmas', label:'Who cooks the Christmas dinner?', kind:'who', qs:['Who cooks the Christmas dinner?','Who is in charge of the Christmas dinner?'] },
+        { id:'w_nap', label:'Who falls asleep first after dinner?', kind:'who', qs:['Who falls asleep first after dinner?'] },
+        { id:'w_photo', label:'Who takes the most photos?', kind:'who', qs:['Who takes the most photos?'] },
+        { id:'w_dance', label:'Who would win a dance-off?', kind:'who', qs:['Who would win a dance-off?'] },
+        { id:'w_lost', label:'Who is most likely to get lost?', kind:'who', qs:['Who is most likely to get lost on the way here?'] },
+        { id:'w_cry', label:'Who cries at adverts?', kind:'who', qs:['Who cries at the Christmas adverts?'] },
+        { id:'w_games', label:'Who is the sorest loser at board games?', kind:'who', qs:['Who is the sorest loser at board games?'] }
+      ]}
+    ]
+  }
+};
+
+const SWATCHES = [['Gold','#f2d27a'],['Coral','#ff9b85'],['Sky','#8ecdf2'],['Mint','#8fe0b8'],['Lilac','#c9b2f5'],['Orange','#ffb057'],['Pink','#f7a8cf']];
+const QTYPES = { mc:'Multiple choice', num:'Number', tf:'True or false', who:'Who on the team?', shout:'Shout it out' };
+const EXAMPLES = {
+  canvas: { label:'Copperkettle & Co’s Christmas do', v:{ title:'The Copperkettle Christmas Quiz', sub:'Leeds office, December 2026', accent:'#8ecdf2', logo:'', people:['Aisha','Ben','Carla','Dev','Elena','Frank'], rounds:[
+    { name:'Know the company', qs:[
+      { type:'num', q:'In which year did Copperkettle & Co open its first office?', a:'2009' },
+      { type:'mc', q:'What was the company first called?', a:'Kettle Freight', w:'Copper & Sons, The Freight Shed, Leeds Haulage' },
+      { type:'tf', q:'Our first ever delivery was a piano', t:'true', story:'To a church hall in Otley. It arrived with two legs.' },
+      { type:'num', q:'How many parcels did we deliver this year, in thousands?', a:'48' } ]},
+    { name:'Office life', qs:[
+      { type:'who', q:'Who has the messiest desk?', p:'Dev' },
+      { type:'who', q:'Who brings in the most cakes?', p:'Carla', story:'Fourteen birthdays covered this year, including two of her own.' },
+      { type:'num', q:'How many cups of tea does the office drink in a week?', a:'240' },
+      { type:'shout', q:'What is the office Wi-Fi called?', a:'KettleNet' } ]},
+    { name:'Christmas', qs:[
+      { type:'mc', q:'Where was last year’s Christmas party?', a:'The Corn Exchange', w:'The Boat House, The bowling alley, The Rose & Crown' },
+      { type:'tf', q:'Frank has never missed a Christmas party', t:'false', story:'He missed 2019. He says he was ill. Nobody believes him.' },
+      { type:'who', q:'Who wore the loudest Christmas jumper last year?', p:'Elena' } ]} ] } },
+  birthday: { label:'Grandad Ken’s 70th', v:{ n:'Ken', age:'70', born:'Sheffield', siblings:'3', job:'Milkman', car:'Ford Anglia', car_s:'He bought it for £40 and it broke down on the M1 the same week.', pet:'Rusty', food:'Roast dinner', drink:'Bitter', film:'The Great Escape', music:'The Beatles', music_s:'He saw them at the Sheffield City Hall in 1963 and still has the ticket.', team:'Sheffield Wednesday', holiday:'Cornwall', talent:'Darts', talent_s:'He once hit a 180 at the Red Lion and they named a stool after him.',
+    tf:[{ s:'Ken once shook hands with the Queen', t:'true', story:'At a factory opening in 1975. He didn’t wash his hand for a week.' }, { s:'Ken has run the London Marathon', t:'true', story:'' }, { s:'Ken has never eaten a curry', t:'false', story:'He has a curry every Friday. Same order for 30 years.' }, { s:'Ken was born on Christmas Day', t:'false', story:'' }],
+    own:[{ q:'What does Ken call the TV remote?', a:'The doofer', w:'The clicker, The zapper, The flicker', story:'' }, { q:'How many grandchildren does Ken have?', a:'7', w:'', story:'And he knows all their birthdays without looking.' }] } },
+  couple: { label:'Sam and Alex’s wedding', v:{ n1:'Sam', n2:'Alex', metYear:'2015', metPlace:'At university', metPlace_s:'Both reached for the last copy of the same textbook.', firstDate:'Crazy golf', proposal:'Up a mountain', proposal_s:'Snowdon, in the rain. The ring nearly went over the edge.', honeymoon:'Greece', song:'Lovely Day', love:'Alex', cook:'Sam', ready:'Alex', sofa:'Sam', driver:'Alex', remote:'Sam',
+    tf:[{ s:'Sam and Alex have the same birthday', t:'true', story:'' }, { s:'Alex proposed on the first attempt', t:'false', story:'It took three tries. The first two were rained off.' }], own:[{ q:'What is the name of their cat?', a:'Pickle', w:'Pepper, Mango, Noodle', story:'' }] } },
+  leaving: { label:'Priya’s leaving do', v:{ n:'Priya', years:'9', start:'2017', role:'Admin assistant', phrase:'Bear with me', next:'Travelling the world', next_s:'Starting in Peru, then wherever the cheapest flight goes.', brew:'Peppermint tea', snack:'Jaffa Cakes', lunch:'Leftovers', team:'Arsenal', holiday:'Lanzarote',
+    tf:[{ s:'Priya once fixed the printer with a paperclip', t:'true', story:'IT had been trying for two days.' }, { s:'Priya has never been late for a meeting', t:'false', story:'' }], own:[{ q:'How many office plants has Priya kept alive?', a:'4', w:'', story:'' }] } },
+  family: { label:'The Jacksons at Christmas', v:{ g:'The Jacksons', people:['Mum','Dad','Grandma Joan','Uncle Dev','Chloe','Jake'],
+    w_late:'Jake', w_late_s:'He once arrived as the pudding was being served.', w_xmas:'Grandma Joan', w_nap:'Dad', w_photo:'Mum', w_dance:'Chloe', w_lost:'Uncle Dev', w_cry:'Mum', w_games:'Uncle Dev',
+    who:[{ q:'Who once got lost in IKEA for three hours?', p:'Uncle Dev', story:'He came out with a lamp and no idea how he got it.' }, { q:'Who still believes they can sing?', p:'Dad', story:'' }],
+    tf:[{ s:'Grandma Joan has been to Australia', t:'true', story:'In 1979. She still talks about the koalas.' }, { s:'Dad once met Paul McCartney', t:'false', story:'' }],
+    own:[{ q:'How many crackers did the family pull last Christmas?', a:'24', w:'', story:'' }] } }
+};
+
+/* ---------- state ---------- */
+let teamsAuto = true, occ = 'birthday', isExample = true, quiz = [], teams = ['Team 1','Team 2'], scores = [], at = 0, revealed = false, got = new Set();
+/* What is typed stays in this browser only. It is never sent to TierBrain. It is cleared after KEEP_DAYS,
+   on "Delete this quiz", and never written while "Don't keep anything on this device" is ticked. */
+const KEY = 'tb-quiz-maker-v1', NOKEEP = 'tb-quiz-maker-nokeep', KEEP_DAYS = 7, DAY = 864e5;
+function store(){ try { return window.localStorage; } catch (e) { return null; } }
+function noKeep(){ const st = store(); try { return !!st && st.getItem(NOKEEP) === '1'; } catch (e) { return false; } }
+function forget(){ const st = store(); try { if (st) st.removeItem(KEY); } catch (e) {} }
+function save(){
+  const st = store(); if (!st) return;
+  if (isExample || noKeep()) { forget(); return; }
+  try { st.setItem(KEY, JSON.stringify({ savedAt:Date.now(), occ, isExample, v:readForm(), teams, teamsAuto })); } catch (e) {}
+}
+function load(){
+  const st = store(); if (!st) return null;
+  try {
+    const s = JSON.parse(st.getItem(KEY) || 'null');
+    if (!s) return null;
+    if (typeof s.savedAt !== 'number' || Date.now() - s.savedAt > KEEP_DAYS * DAY || s.savedAt > Date.now() + DAY) { forget(); return null; }
+    return s;
+  } catch (e) { forget(); }
+  return null;
+}
+
+/* ---------- the form ---------- */
+let uid = 0;
+function storyHTML(key){
+  const id = 'st' + (uid++);
+  return `<div class="storybox"><button type="button" class="addstory" aria-controls="${id}">+ Add the story</button><textarea class="story" id="${id}" ${key ? `data-k="${key}"` : ''} rows="2" maxlength="220" aria-label="The story behind it" placeholder="The story behind it, shown with the answer" hidden></textarea></div>`;
+}
+function syncStories(root){
+  (root || document).querySelectorAll('.storybox').forEach(sb => { const t = sb.querySelector('textarea'); if (t.value.trim()) { t.hidden = false; sb.querySelector('.addstory').hidden = true; } });
+}
+function personOptions(cur){
+  const ps = people();
+  return `<option value="">Skip this one</option>` + ps.map(p => `<option value="${esc(p)}"${p === cur ? ' selected' : ''}>${esc(p)}</option>`).join('');
+}
+function buildForm(v){
+  v = v || {}; const O = OCC[occ]; let h = `<section class="panel"><h3>${O.head || 'Who is it for?'}</h3><div class="grid">`;
+  O.names.forEach(f => { h += `<div class="field"><label for="f-${f.id}">${f.label}</label><input id="f-${f.id}" data-k="${f.id}" placeholder="${esc(f.ph)}" maxlength="40" autocomplete="off"></div>`; });
+  h += '</div></section>';
+  if (O.canvas) return buildCanvas(h, v);
+  if (O.people) h += `<section class="panel"><h3>Who’s playing along?</h3><p class="hint">Add everyone the questions could be about. Their names become the answers.</p><div class="people" id="peopleBox"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addPerson">Add a person</button></div></section>`;
+  O.groups.forEach(g => {
+    h += `<section class="panel"><h3>${g.title}</h3>${g.hint ? `<p class="hint">${g.hint}</p>` : ''}<div class="grid">`;
+    g.fields.forEach(f => {
+      let ctl;
+      if (f.kind === 'pick2') ctl = `<select id="f-${f.id}" data-k="${f.id}" data-pick2="1"><option value="">Skip this one</option></select>`;
+      else if (f.kind === 'who') ctl = `<select id="f-${f.id}" data-k="${f.id}" class="personsel"></select>`;
+      else ctl = `<input id="f-${f.id}" data-k="${f.id}" placeholder="${esc(f.ph)}" ${f.kind ? 'inputmode="numeric"' : ''} maxlength="60" autocomplete="off">`;
+      h += `<div class="field"><label for="f-${f.id}">${f.label}</label>${ctl}${storyHTML(f.id + '_s')}</div>`;
+    });
+    h += '</div></section>';
+  });
+  if (O.people) h += `<section class="panel"><h3>Your own “who” questions</h3><p class="hint">Something only your lot would know.</p><div id="whoRows" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addWho">Add another</button></div></section>`;
+  h += `<section class="panel"><h3>True or false</h3><p class="hint">Mix real facts with made-up fibs. The story is the bit everyone remembers.</p><div id="tfRows" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addTf">Add another</button></div></section>`;
+  h += `<section class="panel"><h3>Your own questions</h3><p class="hint">Add wrong answers separated by commas, or leave them blank for a number or a shout-out answer.</p><div id="ownRows" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addOwn">Add another</button></div></section>`;
+  $('factForm').innerHTML = h;
+
+  if (O.people) {
+    const ps = (v.people && v.people.length) ? v.people : ['', '', '', ''];
+    ps.forEach(addPerson); if (ps.length < 3) for (let i = ps.length; i < 3; i++) addPerson('');
+    $('addPerson').addEventListener('click', () => { if (document.querySelectorAll('.person').length < 16) { addPerson(''); refreshPeople(); document.querySelectorAll('.person')[document.querySelectorAll('.person').length - 1].focus(); } });
+  }
+  document.querySelectorAll('#factForm [data-k]').forEach(el => { const k = el.dataset.k; if (k in v && !el.dataset.pick2 && !el.classList.contains('personsel')) el.value = v[k]; });
+  refreshPick2(v);
+  if (O.people) {
+    refreshPeople(v);
+    ((v.who && v.who.length) ? v.who : [{ q:'', p:'', story:'' }]).forEach(addWhoRow);
+    $('addWho').addEventListener('click', () => { if (document.querySelectorAll('.whorow').length < 10) addWhoRow({ q:'', p:'', story:'' }); });
+  }
+  ((v.tf && v.tf.length) ? v.tf : [{ s:'', t:'true', story:'' }, { s:'', t:'false', story:'' }]).forEach(addTfRow);
+  ((v.own && v.own.length) ? v.own : [{ q:'', a:'', w:'', story:'' }]).forEach(addOwnRow);
+  $('addTf').addEventListener('click', () => { if (document.querySelectorAll('.tfrow').length < 12) addTfRow({ s:'', t:'true', story:'' }); });
+  $('addOwn').addEventListener('click', () => { if (document.querySelectorAll('.ownrow').length < 10) addOwnRow({ q:'', a:'', w:'', story:'' }); });
+  syncStories();
+}
+function buildCanvas(h, v){
+  h += `<section class="panel"><h3>The team (optional)</h3><p class="hint">Add names for “Who on the team?” questions, such as everyone in the office. The other names become the wrong answers.</p><div class="people" id="peopleBox"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addPerson">Add a person</button></div></section>`;
+  h += `<section class="panel"><h3>Rounds</h3><p class="hint">Name each round, then add any mix of questions. Rounds play in this order, each with its own title screen.</p><div id="roundBox" style="display:flex;flex-direction:column;gap:16px"></div>
+    <div class="row"><button type="button" class="btn quiet small" id="addRound">Add a round</button></div></section>`;
+  $('factForm').innerHTML = h;
+  ((v.people && v.people.length) ? v.people : ['', '', '']).forEach(addPerson);
+  $('addPerson').addEventListener('click', () => { if (document.querySelectorAll('.person').length < 30) { addPerson(''); document.querySelectorAll('.person')[document.querySelectorAll('.person').length - 1].focus(); } });
+  document.querySelectorAll('#factForm [data-k]').forEach(el => { const k = el.dataset.k; if (k in v) el.value = v[k]; });
+  ((v.rounds && v.rounds.length) ? v.rounds : [{ name:'', qs:[{ type:'mc' }] }]).forEach(addRound);
+  $('addRound').addEventListener('click', () => { if (document.querySelectorAll('.roundbox').length < 10) { addRound({ name:'', qs:[] }); const r = document.querySelectorAll('.roundbox'); r[r.length - 1].querySelector('.rn').focus(); } });
+  paintBrand(); syncStories();
+}
+function paintBrand(){
+  if (!$('f-accent') || !$('f-logo')) return;
+  const a = $('f-accent').value || SWATCHES[0][1];
+  document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-checked', String(b.dataset.sw === a)));
+  const logo = $('f-logo').value; $('logoPrev').hidden = !logo; $('logoRm').hidden = !logo; if (logo) $('logoPrev').src = logo; else $('logoPrev').removeAttribute('src');
+}
+function addRound(r){
+  const i = uid++, d = document.createElement('div'); d.className = 'roundbox';
+  d.innerHTML = `<div class="roundhead"><div class="field"><label for="rn${i}">Round name</label><input id="rn${i}" class="rn" maxlength="50" placeholder="e.g. Know the company" autocomplete="off"></div><button type="button" class="btn tiny" data-rmround="1">Remove round</button></div>
+    <div class="qrows"></div>
+    <div class="addq"><span>Add a question:</span>${Object.entries(QTYPES).map(([k, l]) => `<button type="button" class="btn tiny" data-addq="${k}">${l}</button>`).join('')}</div>`;
+  $('roundBox').appendChild(d); d.querySelector('.rn').value = r.name || '';
+  (r.qs || []).forEach(q => addQRow(d, q));
+}
+function addQRow(round, q){
+  const i = uid++, d = document.createElement('div'); d.className = 'rowbox qrow'; d.dataset.type = q.type;
+  const PH = { mc:'e.g. What was the company first called?', num:'e.g. How many people work here?', tf:'e.g. Our first customer was a bakery', who:'e.g. Who has the messiest desk?', shout:'e.g. What is the Wi-Fi called?' };
+  let mid = '';
+  if (q.type === 'mc') mid = `<div class="field"><label for="ca${i}">Right answer</label><input id="ca${i}" class="ca" maxlength="60" autocomplete="off"></div><div class="field"><label for="cw${i}">Wrong answers, separated by commas</label><input id="cw${i}" class="cw" maxlength="160" placeholder="Leave blank to make it a shout-out" autocomplete="off"></div>`;
+  else if (q.type === 'num') mid = `<div class="field span"><label for="ca${i}">The number</label><input id="ca${i}" class="ca" inputmode="numeric" maxlength="7" placeholder="Whole numbers. Nearby numbers become the wrong answers." autocomplete="off"></div>`;
+  else if (q.type === 'tf') mid = `<div class="field span"><label for="ct${i}">Is it true?</label><select id="ct${i}" class="ct"><option value="true">True</option><option value="false">A fib</option></select></div>`;
+  else if (q.type === 'who') mid = `<div class="field span"><label for="cp${i}">The answer</label><select id="cp${i}" class="cp personsel">${personOptions(q.p)}</select></div>`;
+  else mid = `<div class="field span"><label for="ca${i}">The answer</label><input id="ca${i}" class="ca" maxlength="60" autocomplete="off"></div>`;
+  d.innerHTML = `<span class="typechip span">${QTYPES[q.type]}</span><div class="field span"><label for="cq${i}">Question</label><input id="cq${i}" class="cq" maxlength="140" placeholder="${PH[q.type]}" autocomplete="off"></div>${mid}<div class="field span">${storyHTML('')}</div>${rowRemove()}`;
+  round.querySelector('.qrows').appendChild(d);
+  const set = (sel, val) => { const el = d.querySelector(sel); if (el && val != null) el.value = val; };
+  set('.cq', q.q); set('.ca', q.a); set('.cw', q.w); set('.ct', q.t === 'false' ? 'false' : 'true'); set('textarea', q.story);
+  syncStories(d);
+  return d;
+}
+function addPerson(name){
+  const i = uid++, el = document.createElement('input');
+  el.className = 'person'; el.id = 'p' + i; el.maxLength = 24; el.autocomplete = 'off'; el.placeholder = 'Name'; el.setAttribute('aria-label', 'Person’s name'); el.value = name || '';
+  $('peopleBox').appendChild(el);
+}
+function rowRemove(){ return `<button type="button" class="btn tiny rm span" data-rmrow="1">Remove</button>`; }
+function addWhoRow(o){
+  const i = uid++, d = document.createElement('div'); d.className = 'rowbox whorow';
+  d.innerHTML = `<div class="field"><label for="wq${i}">Question</label><input id="wq${i}" class="wq" maxlength="120" placeholder="e.g. Who once got lost in IKEA?" autocomplete="off"></div>
+    <div class="field"><label for="wp${i}">The answer</label><select id="wp${i}" class="wp personsel">${personOptions(o.p)}</select></div>
+    <div class="field span">${storyHTML('')}</div>${rowRemove()}`;
+  $('whoRows').appendChild(d); d.querySelector('.wq').value = o.q || ''; d.querySelector('textarea').value = o.story || ''; syncStories(d);
+}
+function addTfRow(o){
+  const i = uid++, d = document.createElement('div'); d.className = 'rowbox tfrow';
+  d.innerHTML = `<div class="field"><label for="ts${i}">Statement</label><input id="ts${i}" class="ts" maxlength="140" placeholder="${o.t === 'false' ? 'e.g. Pat has never seen the sea' : 'e.g. Pat once met Cliff Richard'}" autocomplete="off"></div>
+    <div class="field"><label for="tt${i}">Is it true?</label><select id="tt${i}" class="tt"><option value="true">True</option><option value="false">A fib</option></select></div>
+    <div class="field span">${storyHTML('')}</div>${rowRemove()}`;
+  $('tfRows').appendChild(d); d.querySelector('.ts').value = o.s || ''; d.querySelector('.tt').value = o.t === 'false' ? 'false' : 'true'; d.querySelector('textarea').value = o.story || ''; syncStories(d);
+}
+function addOwnRow(o){
+  const i = uid++, d = document.createElement('div'); d.className = 'rowbox ownrow';
+  d.innerHTML = `<div class="field"><label for="oq${i}">Question</label><input id="oq${i}" class="oq" maxlength="120" placeholder="e.g. What does Pat call her car?" autocomplete="off"></div>
+    <div class="field"><label for="oa${i}">Right answer</label><input id="oa${i}" class="oa" maxlength="60" placeholder="e.g. Bessie" autocomplete="off"></div>
+    <div class="field span"><label for="ow${i}">Wrong answers (optional)</label><input id="ow${i}" class="ow" maxlength="160" placeholder="e.g. Betty, Bluebell, Old Faithful" autocomplete="off"></div>
+    <div class="field span">${storyHTML('')}</div>${rowRemove()}`;
+  $('ownRows').appendChild(d);
+  d.querySelector('.oq').value = o.q || ''; d.querySelector('.oa').value = o.a || ''; d.querySelector('.ow').value = o.w || ''; d.querySelector('textarea').value = o.story || ''; syncStories(d);
+}
+function people(){ return [...document.querySelectorAll('.person')].map(e => e.value.trim()).filter(Boolean).filter((p, i, a) => a.indexOf(p) === i); }
+function refreshPeople(v){
+  document.querySelectorAll('select.personsel').forEach(s => {
+    const cur = v && s.dataset.k && (s.dataset.k in v) ? v[s.dataset.k] : s.value;
+    s.innerHTML = personOptions(cur);
+  });
+}
+function names(v){ v = v || readForm(); return occ === 'couple' ? [v.n1 || 'Partner one', v.n2 || 'Partner two'] : occ === 'family' ? [v.g || 'The family'] : occ === 'canvas' ? [v.title || 'Our quiz'] : [v.n || 'them']; }
+function refreshPick2(v){
+  const [a, b] = names(v);
+  document.querySelectorAll('select[data-pick2]').forEach(s => {
+    let cur = s.value;
+    if (v && s.dataset.k in v) cur = v[s.dataset.k] === a ? '1' : v[s.dataset.k] === b ? '2' : (v[s.dataset.k] === '1' || v[s.dataset.k] === '2' ? v[s.dataset.k] : '');
+    s.innerHTML = `<option value="">Skip this one</option><option value="1">${esc(a)}</option><option value="2">${esc(b)}</option>`;
+    s.value = cur;
+  });
+}
+function readForm(){
+  const v = {};
+  document.querySelectorAll('#factForm [data-k]').forEach(el => { v[el.dataset.k] = el.value.trim(); });
+  if (occ === 'couple') { const a = v.n1 || 'Partner one', b = v.n2 || 'Partner two'; document.querySelectorAll('select[data-pick2]').forEach(s => { v[s.dataset.k] = s.value === '1' ? a : s.value === '2' ? b : ''; }); }
+  if (occ === 'canvas') {
+    const val = (el, sel) => { const x = el.querySelector(sel); return x ? x.value.trim() : ''; };
+    v.people = [...document.querySelectorAll('.person')].map(e => e.value.trim());
+    v.rounds = [...document.querySelectorAll('.roundbox')].map(r => ({ name:val(r, '.rn'), qs:[...r.querySelectorAll('.qrow')].map(q => ({ type:q.dataset.type, q:val(q, '.cq'), a:val(q, '.ca'), w:val(q, '.cw'), t:val(q, '.ct'), p:val(q, '.cp'), story:val(q, 'textarea') })) }));
+    return v;
+  }
+  if (occ === 'family') {
+    v.people = [...document.querySelectorAll('.person')].map(e => e.value.trim());
+    v.who = [...document.querySelectorAll('.whorow')].map(r => ({ q:r.querySelector('.wq').value.trim(), p:r.querySelector('.wp').value, story:r.querySelector('textarea').value.trim() }));
+  }
+  v.tf = [...document.querySelectorAll('.tfrow')].map(r => ({ s:r.querySelector('.ts').value.trim(), t:r.querySelector('.tt').value, story:r.querySelector('textarea').value.trim() }));
+  v.own = [...document.querySelectorAll('.ownrow')].map(r => ({ q:r.querySelector('.oq').value.trim(), a:r.querySelector('.oa').value.trim(), w:r.querySelector('.ow').value.trim(), story:r.querySelector('textarea').value.trim() }));
+  return v;
+}
+
+/* ---------- the era a quiz should feel like ---------- */
+function eraBase(v){
+  if (occ === 'birthday' && /^\d{1,3}$/.test(v.age || '') && +v.age > 0 && +v.age < 110) return { birth:THIS_YEAR - +v.age };
+  if (occ === 'couple' && /^\d{4}$/.test(v.metYear || '') && +v.metYear > 1930 && +v.metYear <= THIS_YEAR) return { met:+v.metYear };
+  return {};
+}
+function poolItems(pool){ return POOLS[pool].map(x => Array.isArray(x) ? { t:x[0], y:x[1] } : { t:x, y:null }); }
+function poolWrong(ans, pool, centre, spread){
+  const n = norm(ans);
+  const ok = it => { const m = norm(it.t); return m && m !== n && !m.includes(n) && !n.includes(m); };
+  let items = poolItems(pool).filter(ok);
+  if (centre != null) {
+    let s = spread, pick = [];
+    for (let k = 0; k < 6; k++) { pick = items.filter(it => it.y == null || Math.abs(it.y - centre) <= s); if (pick.filter(it => it.y != null).length >= 3 || pick.length >= 6) break; s = Math.round(s * 1.6); }
+    // prefer the dated items closest in time, with a little randomness, so the wrong answers sound like the right decade
+    const dated = shuffle(pick.filter(it => it.y != null)).sort((a, b) => Math.abs(a.y - centre) - Math.abs(b.y - centre));
+    const pool3 = shuffle(dated.slice(0, 6)).concat(shuffle(pick.filter(it => it.y == null)));
+    if (pool3.length >= 3) return pool3.slice(0, 3).map(it => it.t);
+  }
+  return shuffle(items).slice(0, 3).map(it => it.t);
+}
+function numWrong(ans, kind){
+  const a = parseInt(ans, 10), out = new Set();
+  if (kind === 'year') { let tries = 0; while (out.size < 3 && tries++ < 60) { const d = (rnd(5) + 1) * (Math.random() < .5 ? -1 : 1), y = a + d; if (y !== a && y <= THIS_YEAR) out.add(y); } }
+  else if (a <= 6) { let tries = 0; while (out.size < 3 && tries++ < 60) { const y = rnd(a + 5); if (y !== a) out.add(y); } }
+  else { const span = Math.max(3, Math.round(a * .15)); let tries = 0; while (out.size < 3 && tries++ < 80) { const y = a + (rnd(span) + 1) * (Math.random() < .5 ? -1 : 1); if (y !== a && y > 0) out.add(y); } }
+  return [...out].map(String);
+}
+
+/* ---------- making questions ---------- */
+function fillT(t, v){ const nm = names(v); return t.replace(/\{n\}/g, nm[0]).replace(/\{c\}/g, nm.join(' and ')); }
+function makeQ(spec, v, avoidT){
+  const t = spec.qs.length > 1 ? shuffle(spec.qs.filter(x => x !== avoidT))[0] : spec.qs[0];
+  const q = { key:spec.key, spec, text:fillT(t, v), t, answer:spec.answer, kind:spec.kind, story:spec.story || '' };
+  if (spec.kind === 'num' || spec.kind === 'year') { q.options = [spec.answer, ...numWrong(spec.answer, spec.kind)].sort((x, y) => x - y); q.label = 'Numbers'; }
+  else if (spec.kind === 'pick2') { q.options = names(v).slice(); q.label = 'Who’s more likely?'; }
+  else if (spec.kind === 'who') { const ps = people().filter(p => norm(p) !== norm(spec.answer)); q.options = shuffle([spec.answer, ...shuffle(ps).slice(0, 3)]); q.label = occ === 'family' ? 'Who in the family?' : 'Who on the team?'; }
+  else if (spec.kind === 'tf') { q.options = ['True','False']; q.label = 'True or false?'; }
+  else if (spec.kind === 'own') {
+    const w = spec.wrong;
+    if (spec.shout) { q.options = null; q.label = 'Shout it out'; }
+    else if (w.length) { q.options = shuffle([spec.answer, ...w.slice(0, 3)]); q.label = spec.label || 'Your question'; }
+    else if (/^\d{1,7}$/.test(spec.answer)) { const yr = +spec.answer > 1900 && +spec.answer <= THIS_YEAR; q.options = [spec.answer, ...numWrong(spec.answer, yr ? 'year' : 'num')].sort((x, y) => x - y); q.label = spec.numLabel || spec.label || 'Your question'; }
+    else { q.options = null; q.label = 'Shout it out'; }
+  }
+  else {
+    const base = eraBase(v), e = spec.era; let centre = null;
+    if (e && base[e.from] != null) centre = base[e.from] + e.off;
+    q.options = shuffle([spec.answer, ...poolWrong(spec.answer, spec.pool, centre, e ? e.spread : 0)]); q.label = 'Multiple choice';
+  }
+  return q;
+}
+function specs(v){
+  const out = [], O = OCC[occ];
+  if (O.canvas) {
+    const ps = people().length;
+    (v.rounds || []).forEach((r, ri) => (r.qs || []).forEach((c, qi) => {
+      if (!c.q) return;
+      const b = { key:'r' + ri + 'q' + qi, qs:[c.q], story:c.story, round:ri, roundName:r.name || ('Round ' + (ri + 1)) };
+      if (c.type === 'tf') out.push({ ...b, kind:'tf', answer:c.t === 'false' ? 'False' : 'True' });
+      else if (c.type === 'who') { if (c.p && ps >= 2) out.push({ ...b, kind:'who', answer:c.p }); }
+      else if (c.type === 'num') { if (/^\d{1,7}$/.test(c.a)) out.push({ ...b, kind:'own', answer:c.a, wrong:[], numLabel:'Numbers' }); }
+      else if (c.type === 'mc') { if (c.a) out.push({ ...b, kind:'own', answer:c.a, label:'Multiple choice', wrong:(c.w || '').split(',').map(x => x.trim()).filter(x => x && norm(x) !== norm(c.a)) }); }
+      else if (c.type === 'shout') { if (c.a) out.push({ ...b, kind:'own', answer:c.a, wrong:[], shout:true }); }
+    }));
+    return out;
+  }
+  O.groups.forEach(g => g.fields.forEach(f => {
+    const a = v[f.id]; if (!a) return;
+    if ((f.kind === 'num' || f.kind === 'year') && !/^\d{1,4}$/.test(a)) return;
+    if (f.kind === 'who' && people().length < 2) return;
+    out.push({ key:f.id, qs:f.qs, answer:a, kind:f.kind || 'pool', pool:f.pool, era:f.era, story:v[f.id + '_s'] || '' });
+  }));
+  if (occ === 'family' && people().length >= 2) (v.who || []).forEach((w, i) => { if (w.q && w.p) out.push({ key:'w' + i, qs:[w.q], answer:w.p, kind:'who', story:w.story }); });
+  (v.tf || []).forEach((r, i) => { if (r.s) out.push({ key:'tf' + i, qs:[r.s], answer:r.t === 'false' ? 'False' : 'True', kind:'tf', story:r.story }); });
+  (v.own || []).forEach((o, i) => { if (o.q && o.a) out.push({ key:'o' + i, qs:[o.q], answer:o.a, kind:'own', story:o.story, wrong:o.w.split(',').map(x => x.trim()).filter(x => x && norm(x) !== norm(o.a)) }); });
+  return out;
+}
+function arrange(qs){
+  let best = qs, bestRuns = 1e9;
+  for (let k = 0; k < 40; k++) {
+    const s = shuffle(qs); let runs = 0;
+    for (let i = 1; i < s.length; i++) if (s[i].label === s[i - 1].label && s[i].label !== 'Multiple choice') runs++;
+    if (runs < bestRuns) { best = s; bestRuns = runs; if (!runs) break; }
+  }
+  return best;
+}
+function generate(){
+  const v = readForm();
+  if (occ !== 'canvas') { quiz = arrange(specs(v).map(s => makeQ(s, v))).slice(0, 30); return; }
+  const ss = specs(v); quiz = [{ card:'title', title:v.title || 'Our quiz', sub:v.sub || '' }]; let cur = -1, num = 0;
+  ss.forEach(s => {
+    if (s.round !== cur) { cur = s.round; num++; quiz.push({ card:'round', title:s.roundName, num, n:ss.filter(x => x.round === cur).length }); }
+    quiz.push(makeQ(s, v));
+  });
+  const rounds = num; quiz.forEach(q => { if (q.card === 'round') q.of = rounds; });
+}
+const realQs = () => quiz.filter(q => !q.card);
+
+/* ---------- views ---------- */
+function show(id){
+  ['makeView','reviewView','playView','endView'].forEach(x => { $(x).hidden = x !== id; }); window.scrollTo(0, 0);
+  if (id === 'makeView' || id === 'reviewView') document.documentElement.style.removeProperty('--gold');
+}
+function updateCount(){
+  const n = specs(readForm()).length;
+  $('liveCount').innerHTML = n ? `<b>${n}</b> question${n === 1 ? '' : 's'} so far` : 'Add a few facts to begin';
+}
+function setOcc(o, v, example){
+  occ = o; isExample = !!example;
+  document.querySelectorAll('[data-occ]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.occ === o)));
+  buildForm(v);
+  $('exampleBar').hidden = !isExample;
+  $('exampleText').textContent = `This is an example: ${EXAMPLES[o].label}. Clear it to start your own.`;
+  updateCount(); save();
+}
+function quizTitle(v){
+  const nm = names(v);
+  if (occ === 'couple') return `The ${nm[0]} and ${nm[1]} quiz`;
+  if (occ === 'family') return /^the\s/i.test(nm[0]) ? `${nm[0]} quiz` : `The ${nm[0]} quiz`;
+  if (occ === 'canvas') return nm[0];
+  return `The ${nm[0]} quiz`;
+}
+function renderList(){
+  const v = readForm(), base = eraBase(v);
+  $('reviewTitle').textContent = quizTitle(v);
+  const usesEra = quiz.some(q => q.spec && q.spec.era && base[q.spec.era.from] != null);
+  $('reviewLede').innerHTML = occ === 'canvas' ? 'Rounds play in your order. Tap <b>New wording</b> to change the wrong answers on number and team questions, or remove any question.' : 'Each time you make it, the wrong answers and the order change. Tap <b>New wording</b> on any question you don’t like, or remove it.';
+  let qnum = 0;
+  $('eraNote').hidden = !usesEra;
+  if (usesEra) $('eraNote').innerHTML = base.birth != null ? `Wrong answers for cars, films, music and first jobs are picked to suit someone born around <b>${base.birth}</b>.` : `Song choices are picked to suit a couple who met in <b>${base.met}</b>.`;
+  $('qlist').innerHTML = quiz.map((q, i) => {
+    if (q.card) return `<li class="cardli"><span class="kind">${q.card === 'title' ? 'Title screen' : `Round ${q.num} of ${q.of} · ${q.n} question${q.n === 1 ? '' : 's'}`}</span><span class="qt">${esc(q.title)}</span>${q.sub ? `<span class="qa">${esc(q.sub)}</span>` : ''}</li>`;
+    qnum++;
+    const canRe = (q.spec.kind === 'own' && !q.spec.shout && !q.spec.wrong.length && q.options) || q.spec.qs.length > 1 || q.spec.pool || q.spec.kind === 'num' || q.spec.kind === 'year' || (q.spec.kind === 'who' && people().length > 4);
+    return `<li><span class="qn">${qnum}</span>
+    <span class="kind">${q.label}</span><span class="qt">${esc(q.text)}</span>
+    <span class="qa">${q.options ? q.options.map(o => o === q.answer ? `<b>${esc(o)}</b>` : esc(o)).join(' · ') : `Answer: <b>${esc(q.answer)}</b>`}</span>
+    ${q.story ? `<span class="qs">${esc(q.story)}</span>` : ''}
+    <span class="qtools">${canRe ? `<button type="button" class="btn quiet small" data-re="${i}">New wording</button>` : ''}<button type="button" class="btn quiet small" data-rm="${i}">Remove</button></span></li>`;
+  }).join('');
+  renderTeamEdit();
+}
+function renderTeamEdit(){ $('teamEdit').innerHTML = teams.map((t, i) => `<input id="team${i}" data-team="${i}" value="${esc(t)}" maxlength="20" aria-label="Team ${i + 1} name">`).join(''); }
+function renderQ(){
+  const q = quiz[at]; revealed = false; got = new Set();
+  if (q.card) {
+    const logo = brandLogo();
+    $('prog').innerHTML = q.card === 'title' ? `${realQs().length} questions` : `Round <b>${q.num}</b> of ${q.of}`;
+    $('qcard').className = 'qcard';
+    $('qcard').innerHTML = q.card === 'title'
+      ? `${logo ? `<img class="biglogo" src="${logo}" alt="">` : ''}<div class="eyebrow">Welcome to</div><p class="bigq title">${esc(q.title)}</p>${q.sub ? `<p class="roundsub">${esc(q.sub)}</p>` : ''}`
+      : `<div class="eyebrow">Round ${q.num}</div><p class="bigq title">${esc(q.title)}</p><p class="roundsub">${q.n} question${q.n === 1 ? '' : 's'}</p>`;
+    $('nextBtn').textContent = q.card === 'title' ? 'Let’s begin' : 'Start the round'; $('tip').textContent = 'Space or tap to continue';
+    renderTeams(); return;
+  }
+  const done = quiz.slice(0, at).filter(x => !x.card).length;
+  $('prog').innerHTML = `Question <b>${done + 1}</b> of ${realQs().length}`;
+  const letters = 'ABCD';
+  let h = `<div class="eyebrow">${esc(q.label)}</div><p class="bigq">${esc(q.text)}</p>`;
+  if (q.options) h += `<div class="opts">${q.options.map((o, i) => `<div class="opt${o === q.answer ? ' right' : ''}"><span class="L">${letters[i]}</span><span>${esc(o)}</span></div>`).join('')}</div>`;
+  else h += `<div class="shout" data-ans="${esc(q.answer)}">Shout out your answer</div>`;
+  if (q.story) h += `<div class="tale" hidden><div><small>The story</small><p>${esc(q.story)}</p></div></div>`;
+  $('qcard').className = 'qcard'; $('qcard').innerHTML = h;
+  $('nextBtn').textContent = 'Show the answer'; $('tip').textContent = 'Space or tap to continue';
+  renderTeams();
+}
+function renderTeams(){ $('teamBar').innerHTML = teams.map((t, i) => `<button type="button" class="team" data-t="${i}" aria-pressed="${got.has(i)}" ${revealed ? '' : 'disabled'}>${esc(t)} <b>${scores[i]}</b></button>`).join(''); }
+function step(){
+  if (quiz[at].card) { if (at + 1 < quiz.length) { at++; renderQ(); } else finish(); return; }
+  if (!revealed) {
+    revealed = true; $('qcard').classList.add('revealed');
+    const s = $('qcard').querySelector('.shout'); if (s) s.textContent = s.dataset.ans;
+    const tale = $('qcard').querySelector('.tale'); if (tale) tale.hidden = false;
+    $('nextBtn').textContent = at + 1 < quiz.length ? 'Next question' : 'See the scores';
+    $('tip').textContent = 'Tap the teams that got it right';
+    renderTeams();
+  } else {
+    got.forEach(i => scores[i]++);
+    if (at + 1 < quiz.length) { at++; renderQ(); } else finish();
+  }
+}
+function finish(){
+  const order = teams.map((t, i) => ({ t, s:scores[i] })).sort((a, b) => b.s - a.s);
+  const top = order.filter(x => x.s === order[0].s);
+  $('winner').textContent = top.length > 1 ? 'It’s a draw!' : `${top[0].t} wins!`;
+  $('podium').innerHTML = order.map(x => `<li><span>${esc(x.t)}</span><b>${x.s}</b></li>`).join('');
+  $('madeWith').hidden = occ !== 'canvas';
+  show('endView'); exitFs();
+}
+function brandLogo(){ if (occ !== 'canvas') return ''; const el = $('f-logo'); return el ? el.value : ''; }
+function startPlay(){
+  if (!realQs().length) return;
+  const logo = brandLogo(), mark = 'Tier<b>Brain</b>';
+  $('playBrand').innerHTML = logo ? `<img class="plogo" src="${logo}" alt="">` : mark; $('endBrand').innerHTML = logo ? `<img class="plogo" src="${logo}" alt="">` : mark;
+  const acc = occ === 'canvas' && $('f-accent') ? $('f-accent').value : '';
+  if (acc) document.documentElement.style.setProperty('--gold', acc); else document.documentElement.style.removeProperty('--gold');
+  teams = teams.map((t, i) => t.trim() || `Team ${i + 1}`); scores = teams.map(() => 0); at = 0; save();
+  show('playView'); renderQ();
+  try { if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+}
+function exitFs(){ try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {} }
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('[data-occ]').forEach(b => b.addEventListener('click', () => { if (b.dataset.occ !== occ) setOcc(b.dataset.occ, EXAMPLES[b.dataset.occ].v, true); }));
+$('clearBtn').addEventListener('click', () => { setOcc(occ, {}, false); const f = document.querySelector('#factForm input'); if (f) f.focus(); });
+function edited(){ if (isExample) { isExample = false; $('exampleBar').hidden = true; } }
+$('factForm').addEventListener('input', e => {
+  edited();
+  if (e.target.dataset && /^n\d?$/.test(e.target.dataset.k || '')) refreshPick2();
+  if (e.target.classList.contains('person')) refreshPeople();
+  updateCount(); save();
+});
+$('factForm').addEventListener('change', () => { edited(); updateCount(); save(); });
+$('factForm').addEventListener('click', e => {
+  const a = e.target.closest('.addstory');
+  if (a) { const t = a.parentNode.querySelector('textarea'); t.hidden = false; a.hidden = true; t.focus(); return; }
+  const aq = e.target.closest('[data-addq]');
+  if (aq) { const round = aq.closest('.roundbox'); if (round.querySelectorAll('.qrow').length < 20) { const row = addQRow(round, { type:aq.dataset.addq }); row.querySelector('.cq').focus(); edited(); updateCount(); save(); } return; }
+  const rr = e.target.closest('[data-rmround]');
+  if (rr) { rr.closest('.roundbox').remove(); if (!document.querySelector('.roundbox')) addRound({ name:'', qs:[] }); edited(); updateCount(); save(); return; }
+  const r = e.target.closest('[data-rmrow]');
+  if (r) { const row = r.closest('.rowbox'), box = row.parentNode; row.remove(); edited(); updateCount(); save(); const first = box.querySelector('input'); if (first) first.focus(); }
+});
+$('factForm').addEventListener('submit', e => e.preventDefault());
+$('makeBtn').addEventListener('click', () => {
+  const v = readForm(), need = OCC[occ].names.filter(f => !f.optional).map(f => f.id).filter(k => !v[k]);
+  if (need.length) { const el = $('f-' + need[0]); el.focus(); el.scrollIntoView({ block:'center' }); $('liveCount').textContent = 'Add a name first'; return; }
+  if (occ === 'family' && people().length < 2) { const el = document.querySelector('.person'); el.focus(); el.scrollIntoView({ block:'center' }); $('liveCount').textContent = 'Add at least two people'; return; }
+  generate(); if (!realQs().length) { $('liveCount').textContent = occ === 'canvas' ? 'Add a question with its answer first' : 'Add a few facts first'; return; }
+  if (teamsAuto) teams = occ === 'couple' ? ['Team ' + v.n1, 'Team ' + v.n2] : ['Team 1', 'Team 2'];
+  renderList(); show('reviewView');
+});
+$('qlist').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const v = readForm();
+  if (b.dataset.re) { const i = +b.dataset.re; quiz[i] = makeQ(quiz[i].spec, v, quiz[i].t); }
+  if (b.dataset.rm) quiz.splice(+b.dataset.rm, 1);
+  renderList();
+});
+$('teamEdit').addEventListener('input', e => { const i = e.target.dataset.team; if (i != null) { teams[+i] = e.target.value; teamsAuto = false; save(); } });
+$('addTeam').addEventListener('click', () => { if (teams.length < 8) { teams.push(`Team ${teams.length + 1}`); teamsAuto = false; renderTeamEdit(); save(); } });
+$('dropTeam').addEventListener('click', () => { if (teams.length > 1) { teams.pop(); teamsAuto = false; renderTeamEdit(); save(); } });
+$('reshuffle').addEventListener('click', () => { generate(); renderList(); });
+$('backToFacts').addEventListener('click', () => show('makeView'));
+$('playBtn').addEventListener('click', startPlay);
+$('nextBtn').addEventListener('click', step);
+$('teamBar').addEventListener('click', e => { const b = e.target.closest('.team'); if (!b || !revealed) return; const i = +b.dataset.t; got.has(i) ? got.delete(i) : got.add(i); renderTeams(); });
+$('qcard').addEventListener('click', () => { if (!revealed || quiz[at].card) step(); });
+$('quitBtn').addEventListener('click', () => { exitFs(); show('reviewView'); });
+$('fsBtn').addEventListener('click', () => { try { document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {} });
+$('againBtn').addEventListener('click', startPlay);
+$('editBtn').addEventListener('click', () => show('reviewView'));
+document.addEventListener('keydown', e => {
+  if ($('playView').hidden || e.target.closest('input,textarea,select')) return;
+  if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); step(); }
+  else if (revealed && /^[1-8]$/.test(e.key)) { const i = +e.key - 1; if (i < teams.length) { got.has(i) ? got.delete(i) : got.add(i); renderTeams(); } }
+});
+
+/* ---------- send the facts for an Etsy order: copied as text, only when asked. Format: "TBQ1:" + base64url(deflate-raw(JSON)) + "~" ---------- */
+async function orderCode(){
+  const bytes = new TextEncoder().encode(JSON.stringify({ o:occ, v:readForm() }));
+  let body = null, ver = '0';
+  if (window.CompressionStream) { try { body = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); ver = '1'; } catch (e) { body = null; } }
+  if (!body) body = bytes;
+  let bin = ''; for (let i = 0; i < body.length; i++) bin += String.fromCharCode(body[i]);
+  return 'My TierBrain quiz: TBQ' + ver + ':' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') + '~';
+}
+$('sendBtn').addEventListener('click', async () => {
+  const code = await orderCode(), box = $('sendCode'), msg = $('sendMsg');
+  box.value = code; box.hidden = false;
+  let copied = false;
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(code); copied = true; } } catch (e) { copied = false; }
+  if (!copied) { box.focus(); box.select(); }
+  msg.textContent = copied ? 'Copied. Now paste it into an Etsy message to TierBrain about your order.' : 'Select all of the text below, copy it, then paste it into an Etsy message to TierBrain about your order.';
+  msg.hidden = false;
+});
+
+/* ---------- privacy controls ---------- */
+function deleteQuiz(msgId){
+  forget(); quiz = []; scores = []; teams = ['Team 1','Team 2']; teamsAuto = true; at = 0;
+  setOcc('birthday', EXAMPLES.birthday.v, true); show('makeView');
+  ['deleteMsg','endDeleteMsg'].forEach(id => { $(id).hidden = true; });
+  const m = $(msgId === 'endDeleteMsg' ? 'deleteMsg' : msgId); m.textContent = 'Deleted. Nothing from that quiz is kept on this device.'; m.hidden = false;
+  disarm();
+}
+function disarm(){ [['deleteBtn','Delete this quiz'],['endDeleteBtn','Finished? Delete this quiz']].forEach(([id, t]) => { const b = $(id); b.dataset.armed = '0'; b.textContent = t; }); }
+function armOrDelete(btn, msgId){
+  if (btn.dataset.armed === '1') { deleteQuiz(msgId); return; }
+  disarm(); btn.dataset.armed = '1'; btn.textContent = 'Tap again to delete';
+  clearTimeout(armOrDelete.t); armOrDelete.t = setTimeout(disarm, 5000);
+}
+$('deleteBtn').addEventListener('click', () => armOrDelete($('deleteBtn'), 'deleteMsg'));
+$('endDeleteBtn').addEventListener('click', () => armOrDelete($('endDeleteBtn'), 'endDeleteMsg'));
+$('noKeep').checked = noKeep();
+$('noKeep').addEventListener('change', e => {
+  const st = store();
+  try { if (st) { if (e.target.checked) { st.setItem(NOKEEP, '1'); forget(); } else { st.removeItem(NOKEEP); save(); } } } catch (err) {}
+});
+// a quiz left open past its time is cleared from the page too when the tab comes back into view
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const st = store(); let raw = null; try { raw = st && st.getItem(KEY); } catch (e) {}
+  if (raw && !load()) { deleteQuiz('deleteMsg'); $('deleteMsg').textContent = 'Your quiz was cleared after 7 days.'; }
+});
+
+const saved = load();
+if (saved && OCC[saved.occ] && saved.occ !== 'canvas') { if (Array.isArray(saved.teams) && saved.teams.length) teams = saved.teams; teamsAuto = 'teamsAuto' in saved ? !!saved.teamsAuto : (!saved.teams || saved.teams.join() === 'Team 1,Team 2'); setOcc(saved.occ, saved.v, saved.isExample); }
+else setOcc('birthday', EXAMPLES.birthday.v, true);
+})();
+</script>
+<!-- Cloudflare Web Analytics: cookieless, counts page views only, stores nothing on the visitor's device --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4f4cccb5e14a4d8db10a955008b3eecf"}'></script><!-- End Cloudflare Web Analytics -->
+<script src="tb-shell.js" data-tone="dark" data-hide-when="#playView" defer></script>
+</body>
+</html>
+
