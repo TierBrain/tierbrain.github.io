@@ -340,6 +340,7 @@ const POOLS = {
   brew: ['Builder’s tea','Black coffee','Flat white','Green tea','Earl Grey','Latte','Peppermint tea','Hot chocolate','Tea, two sugars','Cappuccino','Decaf with oat milk'],
   phrase: ['Let’s take this offline','Who’s making a brew?','Have you tried turning it off and on again?','Is it Friday yet?','Per my last email','Can I just jump in?','Quick question','Right then','It is what it is','Bear with me'],
   lunch: ['Meal deal','Soup','Jacket potato','Salad','Sandwich from home','Sushi','Leftovers','Pasty','Noodles','Wrap','Beans on toast','Sausage roll'],
+  name: [['Joan', 1935], ['Betty', 1935], ['Doreen', 1938], ['Irene', 1938], ['Margaret', 1940], ['Jean', 1945], ['Patricia', 1945], ['Sheila', 1945], ['Valerie', 1948], ['Brenda', 1950], ['Ruth', 1950], ['Pauline', 1950], ['Susan', 1955], ['Linda', 1955], ['Christine', 1955], ['Gillian', 1960], ['Karen', 1965], ['Julie', 1965], ['Helen', 1965], ['Tracey', 1968], ['Lisa', 1970], ['Michelle', 1972], ['Nicola', 1975], ['Claire', 1975], ['Sarah', 1980], ['Kelly', 1980], ['Emma', 1985], ['Rebecca', 1985], ['Gemma', 1985], ['Laura', 1988], ['Charlotte', 1990], ['Lauren', 1992], ['Hannah', 1995], ['Sophie', 1995], ['Jessica', 1995], ['Chloe', 1997], ['Emily', 2000], ['Olivia', 2008], ['Amelia', 2010], ['Stan', 1935], ['Ron', 1938], ['Derek', 1940], ['John', 1945], ['Brian', 1945], ['Peter', 1950], ['Keith', 1950], ['Alan', 1950], ['Colin', 1950], ['Robert', 1950], ['David', 1955], ['Michael', 1955], ['Barry', 1955], ['Graham', 1958], ['Ian', 1960], ['Paul', 1962], ['Kevin', 1962], ['Gary', 1965], ['Mark', 1965], ['Steven', 1965], ['Andrew', 1965], ['Darren', 1972], ['Wayne', 1972], ['Lee', 1975], ['Craig', 1975], ['James', 1985], ['Daniel', 1985], ['Matthew', 1985], ['Thomas', 1990], ['Ryan', 1990], ['Liam', 1995], ['Jack', 2000], ['Oliver', 2005], ['Harry', 2005]],
   next: ['A new job','Retirement','Travelling the world','Moving abroad','Going back to study','Starting a business','A round-the-world cruise','Running a café']
 };
 
@@ -352,13 +353,14 @@ const OCC = {
         { id:'age', label:'Which birthday is it?', kind:'num', ph:'e.g. 40', qs:['Which birthday is {n} celebrating?','How old is {n} today?'] },
         { id:'born', label:'Where were they born?', pool:'place', ph:'e.g. Swansea', qs:['Where was {n} born?','In which town or city was {n} born?'] },
         { id:'siblings', label:'How many brothers and sisters?', kind:'num', ph:'e.g. 2', qs:['How many brothers and sisters does {n} have?'] },
+        { id:'partner', label:'Partner’s name (optional)', pool:'name', era:{ from:'birth', off:0, spread:10 }, ph:'e.g. Jean', qs:['What is {n}’s partner called?','Who is {n}’s other half?'] },
         { id:'job', label:'First ever job', pool:'job', era:{ from:'birth', off:16, spread:12 }, ph:'e.g. Paper round', qs:['What was {n}’s first ever job?','Which of these was {n}’s first job?'] },
         { id:'car', label:'First car', pool:'car', era:{ from:'birth', off:19, spread:7 }, ph:'e.g. Nissan Micra', qs:['What was {n}’s first car?','Which of these was {n}’s first car?'] },
         { id:'pet', label:'First pet’s name', pool:'pet', ph:'e.g. Biscuit', qs:['What was the name of {n}’s first pet?'] }
       ]},
       { title:'Favourite things', fields:[
         { id:'food', label:'Favourite meal', pool:'food', ph:'e.g. Lasagne', qs:['What is {n}’s favourite meal?','Which dish would {n} choose for a last supper?'] },
-        { id:'drink', label:'Drink of choice', pool:'drink', ph:'e.g. Prosecco', qs:['What is {n}’s drink of choice?','At the bar, what is {n} most likely to order?'] },
+        { id:'drink', label:'Drink of choice', pool:'drink', ph:'e.g. Prosecco', qs:['What is {n}’s drink of choice?','What would {n} choose to drink?'] },
         { id:'film', label:'Favourite film', pool:'film', era:{ from:'birth', off:22, spread:12 }, ph:'e.g. Grease', qs:['Which film could {n} watch again and again?','What is {n}’s favourite film?'] },
         { id:'music', label:'Favourite band or singer', pool:'music', era:{ from:'birth', off:18, spread:10 }, ph:'e.g. ABBA', qs:['Who is {n}’s favourite band or singer?','Whose music does {n} play at full volume?'] },
         { id:'team', label:'Team they support', pool:'team', ph:'e.g. Everton', qs:['Which team does {n} support?','Whose results does {n} check first on a Saturday?'] },
@@ -656,11 +658,26 @@ function eraBase(v){
   if (occ === 'couple' && /^\d{4}$/.test(v.metYear || '') && +v.metYear > 1930 && +v.metYear <= THIS_YEAR) return { met:+v.metYear };
   return {};
 }
+/* Wrong answers come from the same group as the right one when it is known: towns in the same region,
+   the same kind of drink (hot, soft or alcoholic), and first names of the same gender. */
+const GROUPS = {
+  place: [['Leeds', 'Bradford', 'Wakefield', 'York', 'Sheffield', 'Huddersfield', 'Halifax', 'Doncaster', 'Hull', 'Harrogate', 'Rotherham', 'Barnsley', 'Scarborough'], ['Manchester', 'Liverpool', 'Bolton', 'Preston', 'Wigan', 'Stockport', 'Blackpool', 'Oldham', 'Blackburn', 'Warrington', 'Salford', 'Lancaster', 'Chester', 'Birkenhead'], ['Newcastle', 'Sunderland', 'Middlesbrough', 'Durham', 'Gateshead', 'Hartlepool', 'Darlington', 'Carlisle'], ['Birmingham', 'Coventry', 'Wolverhampton', 'Leicester', 'Nottingham', 'Derby', 'Stoke-on-Trent', 'Walsall', 'Northampton', 'Lincoln', 'Worcester', 'Telford'], ['London', 'Brighton', 'Reading', 'Croydon', 'Southampton', 'Portsmouth', 'Oxford', 'Canterbury', 'Guildford', 'Milton Keynes', 'Luton', 'Slough', 'Crawley'], ['Bristol', 'Plymouth', 'Exeter', 'Bath', 'Swindon', 'Gloucester', 'Bournemouth', 'Torquay', 'Taunton', 'Cheltenham', 'Truro'], ['Norwich', 'Ipswich', 'Cambridge', 'Peterborough', 'Colchester', 'Chelmsford', 'Southend'], ['Glasgow', 'Edinburgh', 'Aberdeen', 'Dundee', 'Inverness', 'Stirling', 'Perth', 'Paisley', 'Kilmarnock'], ['Cardiff', 'Swansea', 'Newport', 'Wrexham', 'Bangor', 'Llanelli', 'Aberystwyth', 'Merthyr Tydfil'], ['Belfast', 'Derry', 'Lisburn', 'Newry', 'Armagh', 'Ballymena', 'Coleraine', 'Omagh', 'Enniskillen']],
+  drink: [['Tea', 'Coffee', 'Hot chocolate', 'Builder’s tea', 'Earl Grey', 'Green tea', 'Peppermint tea', 'Latte', 'Cappuccino', 'Flat white', 'Black coffee'], ['Irn-Bru', 'Diet Coke', 'Orange squash', 'Lemonade', 'Ribena', 'Lucozade', 'Ginger beer', 'Dandelion and burdock', 'Vimto', 'Sparkling water'], ['Gin and tonic', 'Lager', 'Red wine', 'White wine', 'Prosecco', 'Cider', 'Whisky', 'Bitter', 'Rum and Coke', 'Brandy', 'Sherry', 'Port', 'Guinness', 'Vodka and orange']],
+  name: [['Joan', 'Betty', 'Doreen', 'Irene', 'Margaret', 'Jean', 'Patricia', 'Sheila', 'Valerie', 'Brenda', 'Ruth', 'Pauline', 'Susan', 'Linda', 'Christine', 'Gillian', 'Karen', 'Julie', 'Helen', 'Tracey', 'Lisa', 'Michelle', 'Nicola', 'Claire', 'Sarah', 'Kelly', 'Emma', 'Rebecca', 'Gemma', 'Laura', 'Charlotte', 'Lauren', 'Hannah', 'Sophie', 'Jessica', 'Chloe', 'Emily', 'Olivia', 'Amelia'], ['Stan', 'Ron', 'Derek', 'John', 'Brian', 'Peter', 'Keith', 'Alan', 'Colin', 'Robert', 'David', 'Michael', 'Barry', 'Graham', 'Ian', 'Paul', 'Kevin', 'Gary', 'Mark', 'Steven', 'Andrew', 'Darren', 'Wayne', 'Lee', 'Craig', 'James', 'Daniel', 'Matthew', 'Thomas', 'Ryan', 'Liam', 'Jack', 'Oliver', 'Harry']]
+};
+function groupItems(ans, pool){
+  const n = norm(ans), groups = GROUPS[pool]; if (!groups || !n) return null;
+  const g = groups.find(list => list.some(t => { const m = norm(t); return m === n || n.startsWith(m) || m.startsWith(n); }));
+  if (!g) return null;
+  const names = new Set(g.map(norm));
+  return poolItems(pool).filter(it => names.has(norm(it.t))).concat(g.filter(t => !poolItems(pool).some(it => norm(it.t) === norm(t))).map(t => ({ t, y:null })));
+}
 function poolItems(pool){ return POOLS[pool].map(x => Array.isArray(x) ? { t:x[0], y:x[1] } : { t:x, y:null }); }
 function poolWrong(ans, pool, centre, spread){
   const n = norm(ans);
   const ok = it => { const m = norm(it.t); return m && m !== n && !m.includes(n) && !n.includes(m); };
   let items = poolItems(pool).filter(ok);
+  const same = groupItems(ans, pool); if (same && same.filter(ok).length >= 3) items = same.filter(ok);
   if (centre != null) {
     let s = spread, pick = [];
     for (let k = 0; k < 6; k++) { pick = items.filter(it => it.y == null || Math.abs(it.y - centre) <= s); if (pick.filter(it => it.y != null).length >= 3 || pick.length >= 6) break; s = Math.round(s * 1.6); }
@@ -672,6 +689,12 @@ function poolWrong(ans, pool, centre, spread){
   return shuffle(items).slice(0, 3).map(it => it.t);
 }
 function numWrong(ans, kind){
+  const a = parseInt(ans, 10);
+  let best = numWrongOnce(ans, kind);
+  for (let k = 0; k < 30 && a > 0; k++) { if (best.some(x => +x < a) && best.some(x => +x > a)) break; best = numWrongOnce(ans, kind); }
+  return best;
+}
+function numWrongOnce(ans, kind){
   const a = parseInt(ans, 10), out = new Set();
   if (kind === 'year') { let tries = 0; while (out.size < 3 && tries++ < 60) { const d = (rnd(5) + 1) * (Math.random() < .5 ? -1 : 1), y = a + d; if (y !== a && y <= THIS_YEAR) out.add(y); } }
   else if (a <= 6) { let tries = 0; while (out.size < 3 && tries++ < 60) { const y = rnd(a + 5); if (y !== a) out.add(y); } }
@@ -687,7 +710,12 @@ function makeQ(spec, v, avoidT){
   if (spec.kind === 'num' || spec.kind === 'year') { q.options = [spec.answer, ...numWrong(spec.answer, spec.kind)].sort((x, y) => x - y); q.label = 'Numbers'; }
   else if (spec.kind === 'pick2') { q.options = names(v).slice(); q.label = 'Who’s more likely?'; }
   else if (spec.kind === 'who') { const ps = people().filter(p => norm(p) !== norm(spec.answer)); q.options = shuffle([spec.answer, ...shuffle(ps).slice(0, 3)]); q.label = occ === 'family' ? 'Who in the family?' : 'Who on the team?'; }
-  else if (spec.kind === 'tf') { q.options = ['True','False']; q.label = 'True or false?'; }
+  else if (spec.kind === 'tf') {
+    const fib = avoidT === 'tf' ? true : avoidT === 'fib' ? false : false;
+    q.t = fib ? 'fib' : 'tf';
+    q.options = fib ? ['Fact','Fib'] : ['True','False']; q.label = fib ? 'Fact or fib?' : 'True or false?';
+    q.answer = fib ? (spec.answer === 'True' ? 'Fact' : 'Fib') : spec.answer;
+  }
   else if (spec.kind === 'own') {
     const w = spec.wrong;
     if (spec.shout) { q.options = null; q.label = 'Shout it out'; }
@@ -784,7 +812,7 @@ function renderList(){
   $('qlist').innerHTML = quiz.map((q, i) => {
     if (q.card) return `<li class="cardli"><span class="kind">${q.card === 'title' ? 'Title screen' : `Round ${q.num} of ${q.of} · ${q.n} question${q.n === 1 ? '' : 's'}`}</span><span class="qt">${esc(q.title)}</span>${q.sub ? `<span class="qa">${esc(q.sub)}</span>` : ''}</li>`;
     qnum++;
-    const canRe = (q.spec.kind === 'own' && !q.spec.shout && !q.spec.wrong.length && q.options) || q.spec.qs.length > 1 || q.spec.pool || q.spec.kind === 'num' || q.spec.kind === 'year' || (q.spec.kind === 'who' && people().length > 4);
+    const canRe = (q.spec.kind === 'own' && !q.spec.shout && !q.spec.wrong.length && q.options) || q.spec.qs.length > 1 || q.spec.pool || q.spec.kind === 'num' || q.spec.kind === 'year' || q.spec.kind === 'tf' || (q.spec.kind === 'who' && people().length > 4);
     return `<li><span class="qn">${qnum}</span>
     <span class="kind">${q.label}</span><span class="qt">${esc(q.text)}</span>
     <span class="qa">${q.options ? q.options.map(o => o === q.answer ? `<b>${esc(o)}</b>` : esc(o)).join(' · ') : `Answer: <b>${esc(q.answer)}</b>`}</span>
