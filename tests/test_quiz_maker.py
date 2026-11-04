@@ -12,6 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PAGE = ROOT / 'quiz-maker.html'
 ETSY = 'https://www.etsy.com/uk/shop/TierBrain'
+LISTING = 'https://www.etsy.com/uk/listing/4609352388/personalised-quiz-custom-birthday-quiz'
+OFFICE = 'https://www.etsy.com/uk/listing/4609363760/custom-office-christmas-party-quiz-with'
 KEY = 'tb-quiz-maker-v1'
 NOKEEP = 'tb-quiz-maker-nokeep'
 
@@ -29,7 +31,8 @@ class QuizMakerPageTests(unittest.TestCase):
         html = page_text()
         self.assertIn('<link rel="canonical" href="https://tierbrain.co/quiz-maker.html">', html)
         self.assertIn('<loc>https://tierbrain.co/quiz-maker.html</loc>', (ROOT / 'sitemap.xml').read_text(encoding='utf-8'))
-        self.assertIn('href="quiz-maker.html"', (ROOT / 'index.html').read_text(encoding='utf-8'))
+        self.assertIn('<a class="hero-new" href="quiz-maker.html">', (ROOT / 'index.html').read_text(encoding='utf-8'))
+        self.assertIn('<a class="tn-chip" href="quiz-maker.html">', (ROOT / 'index.html').read_text(encoding='utf-8'))
         self.assertNotIn('noindex', html.lower())
         self.assertNotIn('Prototype', html)
 
@@ -69,11 +72,20 @@ class QuizMakerPageTests(unittest.TestCase):
         self.assertIn('keep them kind', terms)
 
     def test_made_for_you_links_open_safely(self):
-        links = re.findall(r'<a [^>]*href="' + re.escape(ETSY) + r'"[^>]*>', page_text())
-        self.assertEqual(len(links), 2)
-        for link in links:
-            self.assertIn('target="_blank"', link)
-            self.assertIn('rel="noopener"', link)
+        html = page_text()
+        for url in (LISTING, OFFICE):
+            links = re.findall(r'<a [^>]*href="' + re.escape(url) + r'"[^>]*>', html)
+            self.assertEqual(len(links), 2, url)
+            for link in links:
+                self.assertIn('target="_blank"', link)
+                self.assertIn('rel="noopener"', link)
+
+    def test_order_button_shows_the_price_uk_buyers_pay(self):
+        # Etsy adds 20% VAT for UK buyers: £12.99 shows as £15.59 and £19.99 as £23.99. Change both if an Etsy price changes.
+        buttons = re.findall(r'<a class="btn go" href="' + re.escape(LISTING) + r'"[^>]*>([^<]*)</a>', page_text())
+        self.assertEqual(buttons, ['Order yours: £15.59'] * 2)
+        office = re.findall(r'<a href="' + re.escape(OFFICE) + r'"[^>]*>([^<]*)</a>', page_text())
+        self.assertEqual(office, ['See the office quiz: £23.99'] * 2)
 
 
 try:
@@ -201,7 +213,7 @@ class QuizMakerBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#occ-canvas').count(), 0)
         self.assertEqual(self.page.locator('input[type=file]').count(), 0)
         self.assertEqual(sorted(self.page.eval_on_selector_all('[data-occ]', 'els => els.map(e => e.dataset.occ)')), ['birthday', 'couple', 'family', 'leaving'])
-        self.assertIn('own rounds, logo and colours', self.page.text_content('#ctaT + p'))
+        self.assertIn('own rounds, logo and colours', self.page.text_content('#reviewView .cta .small'))
 
     def test_a_saved_company_quiz_is_not_restored(self):
         import time
