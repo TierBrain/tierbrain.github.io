@@ -95,6 +95,9 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
   .btn-ghost{color:var(--gold);border:1px solid rgba(var(--g),.5);background:rgba(var(--g),.06);}
   .btn-ghost:hover{border-color:var(--gold);background:rgba(var(--g),.12);}
   .hero-note{margin-top:16px;color:var(--mut);font-weight:700;font-size:13.5px;}
+  .hero-new{display:inline-flex;align-items:center;gap:10px;margin-top:18px;min-height:44px;padding:10px 16px;border-radius:14px;border:1px solid rgba(var(--g),.45);background:rgba(var(--g),.08);color:var(--ink);font-weight:800;font-size:14.5px;line-height:1.35;text-decoration:none;transition:border-color .16s ease,background .16s ease;}
+  .hero-new:hover{border-color:var(--gold);background:rgba(var(--g),.14);}
+  .hero-new b{flex:none;background:var(--gold);color:var(--on-gold);border-radius:999px;padding:2px 9px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;}
   .hero-art{width:100%;max-width:300px;height:auto;justify-self:center;}
   .hero-art text{font-family:var(--display);font-weight:800;font-size:17px;fill:var(--rung-ink);text-anchor:middle;}
   .hero-art .rail{fill:var(--wood);} .hero-art .r1{fill:var(--t1);} .hero-art .r2{fill:var(--t2);} .hero-art .r3{fill:var(--t3);} .hero-art .r4{fill:var(--t4);}
@@ -291,6 +294,7 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
         <a class="btn btn-ghost" href="packs.html">Host a game night</a>
       </div>
       <p class="hero-note">Free in your browser. No app, no sign-up.</p>
+      <a class="hero-new" href="quiz-maker.html"><b>New</b><span>Make a quiz all about them, for a birthday, leaving do or family Christmas</span></a>
     </div>
     <svg class="hero-art" viewBox="100 0 240 330" aria-hidden="true">
       <rect x="136" y="34" width="10" height="282" rx="5" class="rail"/>

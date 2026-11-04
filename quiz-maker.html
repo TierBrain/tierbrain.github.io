@@ -172,6 +172,8 @@ input[type=file]{min-height:auto;padding:8px;font-size:14px;width:100%;min-width
 .cta{background:linear-gradient(135deg,rgba(242,210,122,.14),rgba(122,31,43,.3));border:1px solid rgba(242,210,122,.4);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
 .cta p{margin:0;font-weight:700;color:var(--muted)}
 .cta a.btn{align-self:flex-start;text-decoration:none}
+.cta .small{font-size:14px}
+.cta .small a{color:var(--gold)}
 .kind-note{font-size:13px;color:var(--muted);font-weight:700;margin:0}
 .kind-note a,.note a{color:var(--gold)}
 .endtools{display:flex;flex-direction:column;gap:12px;max-width:640px;margin-top:10px}
@@ -243,13 +245,14 @@ input[type=file]{min-height:auto;padding:8px;font-size:14px;width:100%;min-width
     <div class="row"><button type="button" class="btn quiet small" id="addTeam">Add a team</button><button type="button" class="btn quiet small" id="dropTeam">Remove last team</button></div>
   </section>
   <section class="cta" aria-labelledby="ctaT">
-    <h3 id="ctaT">Want it printed, branded or made for you?</h3>
-    <p>We can turn your facts into a printable pack and TV slides. For work or a club, we can make a quiz with your own rounds, logo and colours.</p>
-    <a class="btn go" href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener">See custom quizzes on Etsy</a>
+    <h3 id="ctaT">Want it made for you?</h3>
+    <p>Send us the facts and we’ll make a printable pack and TV slides, checked by hand and ready to download within 2 working days. You order through our Etsy shop.</p>
+    <a class="btn go" href="https://www.etsy.com/uk/listing/4609352388/personalised-quiz-custom-birthday-quiz" target="_blank" rel="noopener">Order yours: £15.59</a>
+    <p class="small">For work or a club, we can make a quiz with your own rounds, logo and colours. <a href="https://www.etsy.com/uk/listing/4609363760/custom-office-christmas-party-quiz-with" target="_blank" rel="noopener">See the office quiz: £23.99</a></p>
   </section>
   <section class="panel" aria-labelledby="sendT">
     <h3 id="sendT">Ordered a custom quiz on Etsy?</h3>
-    <p class="hint">Send us these facts so we can make your printed version. Tap the button, then paste what it copies into an Etsy message to TierBrain about your order. Nothing is sent unless you do.</p>
+    <p class="hint">Send us these facts so we can make your printable version. Tap the button, then paste what it copies into an Etsy message to TierBrain about your order. Nothing is sent unless you do.</p>
     <div class="row"><button type="button" class="btn quiet small" id="sendBtn">Copy for my Etsy order</button></div>
     <p class="done" id="sendMsg" aria-live="polite" hidden></p>
     <textarea id="sendCode" readonly rows="4" aria-label="Your quiz, ready to paste into an Etsy message" hidden></textarea>
@@ -285,9 +288,10 @@ input[type=file]{min-height:auto;padding:8px;font-size:14px;width:100%;min-width
       <button type="button" class="btn quiet danger" id="endDeleteBtn">Finished? Delete this quiz</button>
       <p class="done" id="endDeleteMsg" aria-live="polite" hidden></p>
       <section class="cta" aria-labelledby="ctaEndT">
-    <h3 id="ctaEndT">Want it printed, branded or made for you?</h3>
-    <p>We can turn your facts into a printable pack and TV slides. For work or a club, we can make a quiz with your own rounds, logo and colours.</p>
-    <a class="btn go" href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener">See custom quizzes on Etsy</a>
+    <h3 id="ctaEndT">Want it made for you?</h3>
+    <p>Send us the facts and we’ll make a printable pack and TV slides, checked by hand and ready to download within 2 working days. You order through our Etsy shop.</p>
+    <a class="btn go" href="https://www.etsy.com/uk/listing/4609352388/personalised-quiz-custom-birthday-quiz" target="_blank" rel="noopener">Order yours: £15.59</a>
+    <p class="small">For work or a club, we can make a quiz with your own rounds, logo and colours. <a href="https://www.etsy.com/uk/listing/4609363760/custom-office-christmas-party-quiz-with" target="_blank" rel="noopener">See the office quiz: £23.99</a></p>
   </section>
     </div>
   </div>
