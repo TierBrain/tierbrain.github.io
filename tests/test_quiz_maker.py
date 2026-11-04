@@ -245,6 +245,58 @@ class QuizMakerBrowserTests(unittest.TestCase):
         self.assertEqual(decoded['v']['born'], 'Swansea')
         self.assertFalse(any('Zebedee' in u for u in self.outside), self.outside)
 
+    def options_for(self, words, runs=12):
+        seen = []
+        for i in range(runs):
+            self.page.click('#makeBtn') if self.page.is_visible('#makeView') else self.page.click('#reshuffle')
+            for li in self.page.locator('#qlist li').all():
+                if any(w in li.locator('.qt').text_content() for w in words):
+                    seen.append([o.strip() for o in li.locator('.qa').text_content().split('·')])
+        return seen
+
+    def fill_birthday(self):
+        self.open(); self.page.click('#clearBtn')
+        for field, value in (('#f-n', 'Ken'), ('#f-age', '75'), ('#f-born', 'Leeds'), ('#f-drink', 'Tea'), ('#f-partner', 'Jean'), ('#f-siblings', '2')):
+            self.page.fill(field, value)
+        self.page.locator('.tfrow .ts').first.fill('Ken once met the Queen')
+
+    def test_wrong_answers_come_from_the_same_group(self):
+        self.fill_birthday()
+        yorkshire = {'Leeds', 'Bradford', 'Wakefield', 'York', 'Sheffield', 'Huddersfield', 'Halifax', 'Doncaster', 'Hull', 'Harrogate', 'Rotherham', 'Barnsley', 'Scarborough'}
+        hot = {'Tea', 'Coffee', 'Hot chocolate', 'Earl Grey', 'Latte', 'Cappuccino', 'Flat white', 'Black coffee'}
+        women = {'Joan', 'Betty', 'Doreen', 'Irene', 'Margaret', 'Jean', 'Patricia', 'Sheila', 'Valerie', 'Brenda', 'Ruth', 'Pauline', 'Susan', 'Linda', 'Christine', 'Gillian', 'Karen', 'Julie', 'Helen', 'Tracey'}
+        for words, group in ((['born'], yorkshire), (['drink'], hot), (['partner', 'other half'], women)):
+            seen = self.options_for(words, runs=6)
+            self.assertTrue(seen, words)
+            for opts in seen:
+                self.assertEqual(len(opts), 4, opts)
+                self.assertTrue(set(opts) <= group, (words, opts))
+        self.assertEqual(self.errors, [])
+
+    def test_numbers_always_have_options_above_and_below(self):
+        self.fill_birthday()
+        for words, answer in ((['birthday', 'old'], 75), (['brothers'], 2)):
+            seen = self.options_for(words, runs=15)
+            self.assertTrue(seen, words)
+            for opts in seen:
+                nums = [int(o) for o in opts]
+                self.assertLess(min(nums), answer, opts); self.assertGreater(max(nums), answer, opts)
+
+    def test_drink_question_suits_any_drink(self):
+        self.assertNotIn('At the bar', page_text())
+        self.assertIn("'What is {n}’s drink of choice?','What would {n} choose to drink?'", page_text())
+
+    def test_true_or_false_has_new_wording(self):
+        self.fill_birthday(); self.page.click('#makeBtn')
+        item = lambda: [l for l in self.page.locator('#qlist li').all() if 'met the Queen' in l.locator('.qt').text_content()][0]
+        self.assertEqual(item().locator('.kind').text_content(), 'True or false?')
+        item().locator('[data-re]').click()
+        self.assertEqual(item().locator('.kind').text_content(), 'Fact or fib?')
+        self.assertEqual(item().locator('.qa b').text_content(), 'Fact')
+        item().locator('[data-re]').click()
+        self.assertEqual(item().locator('.kind').text_content(), 'True or false?')
+        self.assertEqual(item().locator('.qa b').text_content(), 'True')
+
     def test_fits_a_phone_screen(self):
         self.open()
         for view in ('makeView', 'reviewView'):
