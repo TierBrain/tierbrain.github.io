@@ -102,6 +102,14 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
   .hn-top b{flex:none;font-family:inherit;background:var(--gold);color:var(--on-gold);border-radius:999px;padding:3px 9px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:1.2;}
   .hn-sub{color:var(--mut);font-weight:700;font-size:14px;line-height:1.4;}
   .hero-new svg{flex:none;width:22px;height:22px;color:var(--gold);transition:transform .16s ease;}
+  .hero-new.xm-offer{border-color:rgba(var(--em),.5);background:rgba(var(--em),.09);}
+  .hero-new.xm-offer:hover{border-color:var(--ember);background:rgba(var(--em),.15);}
+  .hero-new.xm-offer .hn-top b{background:var(--ember);}
+  .hero-new.xm-offer svg{color:var(--ember);}
+  .hero-new + .hero-new,.xm-more + .hero-new{margin-top:10px;}
+  .xm-more{margin-top:8px;padding-left:4px;color:var(--mut);font-weight:700;font-size:13.5px;}
+  .xm-more a{color:var(--ink);text-decoration:underline;text-decoration-color:rgba(var(--em),.6);text-underline-offset:3px;}
+  .hero-new[hidden],.xm-more[hidden]{display:none;}
   .hero-new:hover svg{transform:translateX(3px);}
   .hero-art{width:100%;max-width:300px;height:auto;justify-self:center;}
   .hero-art text{font-family:var(--display);font-weight:800;font-size:17px;fill:var(--rung-ink);text-anchor:middle;}
@@ -299,6 +307,10 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
         <a class="btn btn-ghost" href="packs.html">Host a game night</a>
       </div>
       <p class="hero-note">Free in your browser. No app, no sign-up.</p>
+      <!-- Christmas offer: hides itself from 26 December 2026. Prices are what UK buyers pay on Etsy (£5.99 + VAT). -->
+      <a class="hero-new xm-offer" id="xmasOffer" href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener"><span class="hn-text"><span class="hn-top"><b>Christmas</b>Hosting a quiz night?</span><span class="hn-sub">60 questions on TV slides, with PowerPoint and printable versions. £7.19 on Etsy</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <p class="xm-more" id="xmasMore">Hosting at church? <a href="https://www.etsy.com/uk/shop/TierBrain" target="_blank" rel="noopener">The Bible edition is £7.19 too</a></p>
+      <script>(function(){if(Date.now()>=Date.UTC(2026,11,26)){['xmasOffer','xmasMore'].forEach(function(id){var e=document.getElementById(id);if(e)e.hidden=true;});}})();</script>
       <a class="hero-new" href="quiz-maker.html"><span class="hn-text"><span class="hn-top"><b>New</b>Quiz Maker</span><span class="hn-sub">A quiz all about them, for birthdays, leaving dos and family Christmas</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     </div>
     <svg class="hero-art" viewBox="100 0 240 330" aria-hidden="true">
