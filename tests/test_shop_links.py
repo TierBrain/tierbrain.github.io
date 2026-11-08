@@ -67,7 +67,8 @@ class ShopLinks(unittest.TestCase):
     def test_no_stray_shop_urls(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         for url in re.findall(r'https?://[^"\']*etsy[^"\']*', html):
-            self.assertEqual(url, ETSY)
+            # the shop itself, or one of its listings, with no tracking added on
+            self.assertRegex(url, r'^https://www\.etsy\.com/uk/(shop/TierBrain|listing/\d+/[a-z0-9-]+)$')
 
 
 if __name__ == "__main__":

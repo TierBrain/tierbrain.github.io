@@ -39,6 +39,12 @@ class ChristmasOfferPage(unittest.TestCase):
             self.assertIn('target="_blank"', tag)
             self.assertIn('rel="noopener"', tag)
 
+    def test_each_link_goes_to_its_own_listing(self):
+        html = home()
+        self.assertIn('id="xmasOffer" href="https://www.etsy.com/uk/listing/4607374205/christmas-quiz-powerpoint-and-printable"', html)
+        self.assertIn('Hosting at church? <a href="https://www.etsy.com/uk/listing/4607401238/christmas-bible-quiz-powerpoint-and"', html)
+        self.assertNotIn('logging_key', html)
+
     def test_offer_sits_above_the_quiz_maker_banner(self):
         html = home()
         self.assertLess(html.index('id="xmasOffer"'), html.index('<a class="hero-new" href="quiz-maker.html">'))
