@@ -2,7 +2,7 @@
 
 Every published card is loaded with actual scripts at phone widths. Selected
 solo engines then receive real Tab/Enter input. This is entry-point and first
-interaction coverage, not 69 complete game playthroughs or physical-device QA.
+interaction coverage, not 70 complete game playthroughs or physical-device QA.
 No production destination is contacted: BrowserEnv owns every HTTP/WebSocket
 transport, including anonymous Auth used by existing host lobby pages.
 """
@@ -38,6 +38,7 @@ PRIMARY = {
     'standing-room.html': '#startBtn',
     'quiet-line.html': '#beginBtn',
     'quiet-line-vault.html': '#enterBtn',
+    'lxx.html': '#beginBtn',
     'core.html': '#startBtn',
     'castle.html': '#startBtn',
     'labyrinth.html': '#startBtn',
@@ -217,8 +218,8 @@ def _daily_resume(env):
 
 def run(env):
     catalogue = json.loads((ROOT / 'docs/readiness-catalogue.json').read_text())['entries']
-    env.check('catalogue inventory has 69 distinct destinations',
-              len(catalogue) == 69 and len({row['href'] for row in catalogue}) == 69)
+    env.check('catalogue inventory has 70 distinct destinations',
+              len(catalogue) == 70 and len({row['href'] for row in catalogue}) == 70)
     home = env.new_page('/index.html', 'catalogue-rendered-home', mobile=True)
     home.locator('a[data-title]').first.wait_for(state='visible')
     rendered = home.locator('a[data-title]').evaluate_all('(links) => links.map(link => link.getAttribute("href"))')
@@ -259,6 +260,6 @@ def run(env):
         finally:
             if page is not None:
                 page.context.close()
-    env.check('all 69 bounded catalogue entry checks pass', not failures, failures)
+    env.check('all 70 bounded catalogue entry checks pass', not failures, failures)
     _daily_resume(env)
-    env.note('Catalogue scope: 69 real entry pages and their requested local assets loaded; initial layouts checked at320px and390px. Selected remaining solo games exercised actual Tab/Enter start or first interaction; Daily Ascent completed6 questions with mid-run and completed-result reloads. Existing topic, solo-regression and multiplayer suites provide their own deeper coverage. These checks do not establish complete playthroughs for every card, question accuracy, physical iPhone Safari behaviour, or prize-grade score integrity.')
+    env.note('Catalogue scope: 70 real entry pages and their requested local assets loaded; initial layouts checked at320px and390px. Selected remaining solo games exercised actual Tab/Enter start or first interaction; Daily Ascent completed6 questions with mid-run and completed-result reloads. Existing topic, solo-regression and multiplayer suites provide their own deeper coverage. These checks do not establish complete playthroughs for every card, question accuracy, physical iPhone Safari behaviour, or prize-grade score integrity.')
