@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="TierBrain's 70th game: a Roman campaign in four trials. Race the road to Rome, face the champion of the Arena, win over the Senate and hold Hadrian's Wall. Free to play in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TierBrain">
+<meta property="og:url" content="https://tierbrain.co/lxx.html">
+<meta property="og:title" content="LXX | Free Roman quiz game | TierBrain">
+<meta property="og:description" content="TierBrain's 70th game: a Roman campaign in four trials. Race the road to Rome, face the champion of the Arena, win over the Senate and hold Hadrian's Wall. Free to play in your browser.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LXX | Free Roman quiz game | TierBrain">
+<meta name="twitter:description" content="TierBrain's 70th game: a Roman campaign in four trials. Race the road to Rome, face the champion of the Arena, win over the Senate and hold Hadrian's Wall. Free to play in your browser.">
+<meta name="twitter:image" content="https://tierbrain.co/og-image.png?v=2">
+<link rel="canonical" href="https://tierbrain.co/lxx.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>LXX | Free Roman quiz game | TierBrain</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#f7f2e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+/* Layout: a marble hall. Inscribed capitals for every heading, a red meander band framing each screen, one column that widens for a TV.
+   Motion: a sting opens each level; every answer has its moment (road, strike, stamp, falling stone); the Triumph ends in petals. */
+:root{
+  --marble:#f7f2e8; --marble-2:#ebe2d0; --ink:#2a1f17; --stone:#76665a;
+  --red:#9e2a22; --gold:#b48526; --laurel:#56732f; --lapis:#2d5885;
+  --inscribe:'Cinzel','Trajan Pro','Times New Roman',serif;
+  --deco:'Cinzel Decorative','Cinzel',serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --meander:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cpath d='M0 18H8V6H20V14H14V10' fill='none' stroke='%239e2a22' stroke-width='2.6'/%3E%3Cpath d='M20 18H28V6H40' fill='none' stroke='%239e2a22' stroke-width='2.6'/%3E%3C/svg%3E");
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;overflow-x:hidden;
+  background:
+    linear-gradient(115deg,transparent 0 38%,rgba(118,102,90,.07) 39%,transparent 41% 100%),
+    linear-gradient(62deg,transparent 0 63%,rgba(118,102,90,.06) 64%,transparent 66% 100%),
+    linear-gradient(150deg,transparent 0 17%,rgba(180,133,38,.05) 18%,transparent 21% 100%),
+    radial-gradient(ellipse 90% 60% at 50% 0%,#fffdf8 0%,var(--marble) 55%,var(--marble-2) 100%) fixed,var(--marble);
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.band{height:20px;background:var(--meander) repeat-x center/40px 20px;margin:0 -16px}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.view{max-width:980px;margin:0 auto;padding-top:18px;display:flex;flex-direction:column;gap:20px;animation:viewIn .45s ease both}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-right:170px}
+.brand{font-family:var(--body);font-weight:900;font-size:18px;color:inherit;text-decoration:none}
+.brand b{color:var(--gold)}
+.tag{font-family:var(--inscribe);font-weight:700;font-size:12px;letter-spacing:.22em;color:var(--red);border:1.5px solid var(--red);padding:3px 10px 2px}
+.ctrls{position:absolute;top:30px;right:max(16px,env(safe-area-inset-right,0px));z-index:30;display:flex;gap:8px;align-items:center}
+/* ordinary numbers are set in the body face: Cinzel's 1 is too close to a Roman I */
+.d{font-family:var(--body);font-weight:900;letter-spacing:0}
+.numsw .o.a{font-family:var(--body);font-weight:900}
+.numsw{position:relative;display:grid;grid-template-columns:1fr 1fr;align-items:center;height:44px;padding:4px;border-radius:22px;border:1.5px solid rgba(42,31,23,.3);background:rgba(255,253,248,.9);cursor:pointer;font-family:var(--inscribe);font-weight:800;font-size:15px;letter-spacing:.04em;color:var(--ink)}
+.numsw .o{position:relative;z-index:1;min-width:44px;padding:0 8px;text-align:center;line-height:34px;transition:color .25s}
+.numsw .k{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:18px;background:var(--red);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+.numsw[aria-checked="true"] .k{transform:translateX(100%)}
+.numsw[aria-checked="false"] .o.r,.numsw[aria-checked="true"] .o.a{color:#fff8ec}
+.sound{width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(42,31,23,.3);background:rgba(255,253,248,.9);display:grid;place-items:center;cursor:pointer}
+.sound svg{width:22px;height:22px}
+.sound[aria-pressed="false"] .on,.sound[aria-pressed="true"] .off{display:none}
+h1,h2,h3{font-family:var(--inscribe);margin:0;letter-spacing:.06em;text-wrap:balance}
+h2{font-weight:800;font-size:clamp(28px,5.2vw,46px);line-height:1.05}
+h3{font-weight:700;font-size:20px;color:var(--red)}
+.kicker{font-family:var(--inscribe);font-weight:700;font-size:14px;letter-spacing:.24em;color:var(--gold);text-transform:uppercase;margin:0}
+.lede{margin:0;font-weight:700;color:var(--stone);font-size:18px;max-width:56ch}
+.tablet{background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));border:1px solid rgba(118,102,90,.28);box-shadow:0 1px 0 #fff inset,0 10px 30px rgba(60,40,20,.08);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:14px;position:relative}
+.btn{border:0;border-radius:4px;padding:14px 22px;font-family:var(--inscribe);font-weight:800;letter-spacing:.08em;font-size:17px;cursor:pointer;min-height:50px;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn.go{background:var(--red);color:#fff8ec;box-shadow:0 3px 0 #6d1c16}
+.btn.go:active{transform:translateY(2px);box-shadow:0 1px 0 #6d1c16}
+.btn.quiet{background:transparent;border:1.5px solid rgba(42,31,23,.35)}
+.btn.small{padding:8px 14px;min-height:40px;font-size:14px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hint{margin:0;font-size:14px;font-weight:700;color:var(--stone)}
+
+/* home */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:8px 0 4px}
+.wreath{position:relative;width:min(380px,86vw);aspect-ratio:1.45/1;display:grid;place-items:center}
+.wreath svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.wreath ellipse{transform-box:fill-box;transform-origin:center;animation:leaf .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes leaf{from{opacity:0;scale:.2}to{scale:1}}
+.title{font-family:var(--deco);font-weight:900;font-size:clamp(64px,16vw,118px);line-height:.9;color:var(--ink);letter-spacing:.04em;position:relative;text-shadow:0 2px 0 rgba(180,133,38,.35)}
+.numtag{font-family:var(--inscribe);font-weight:700;letter-spacing:.3em;font-size:14px;color:var(--gold);margin:0}
+.modes,.clocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tog{display:flex;gap:12px;align-items:center;font-weight:700;color:var(--stone);font-size:14px;cursor:pointer}
+.tog b{font-family:var(--inscribe);font-weight:800;font-size:16px;letter-spacing:.06em;color:var(--ink);margin-right:6px}
+.tog input{width:24px;height:24px;accent-color:var(--red);flex:none}
+.mode{border:2px solid rgba(42,31,23,.2);background:rgba(255,255,255,.6);border-radius:6px;padding:16px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:96px;transition:border-color .2s,box-shadow .2s,transform .15s}
+.mode:hover{transform:translateY(-2px)}
+.clocks .mode{min-height:0;padding:12px 14px}
+.mode b{font-family:var(--inscribe);font-weight:800;font-size:20px;letter-spacing:.06em}
+.clocks .mode b{font-size:17px}
+.mode span{font-weight:700;color:var(--stone);font-size:14px}
+.mode[aria-pressed="true"]{border-color:var(--red);background:#fff;box-shadow:0 0 0 3px rgba(158,42,34,.12)}
+.teams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.teams label{display:flex;align-items:center;gap:10px;font-weight:800}
+.teams input{flex:1;min-width:0;border:1.5px solid rgba(42,31,23,.25);background:#fffdf8;border-radius:4px;padding:10px 12px;font-weight:800;min-height:44px}
+.teams input:focus{outline:none;border-color:var(--red)}
+.dot{flex:none;width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
+
+/* campaign map */
+.levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.lvl{position:relative;border-radius:6px;padding:16px 14px 14px;background:rgba(255,255,255,.55);border:1px solid rgba(118,102,90,.3);display:flex;flex-direction:column;gap:6px;min-height:170px;animation:viewIn .5s ease both}
+.lvl .art{display:block;width:90px;height:60px;margin-bottom:2px}.lvl .art svg{width:100%;height:100%}
+.lvl.locked .art{filter:grayscale(1);opacity:.7}
+.lvl .num{font-family:var(--inscribe);font-weight:900;font-size:38px;line-height:1;color:var(--red)}
+.lvl .nm{font-family:var(--inscribe);font-weight:800;font-size:17px;letter-spacing:.05em}
+.lvl .ds{font-size:13.5px;font-weight:700;color:var(--stone)}
+.lvl .st{margin-top:auto;font-family:var(--inscribe);font-weight:700;font-size:13px;letter-spacing:.12em;color:var(--stone)}
+.lvl.now{background:#fff;border:2px solid var(--red);box-shadow:0 8px 24px rgba(158,42,34,.14)}
+.lvl.now .st{color:var(--red);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.lvl.done .st{color:var(--laurel)}
+.lvl.locked{opacity:.55}
+.lvl .seal{position:absolute;top:10px;right:10px;width:38px;height:38px;animation:stamp .5s cubic-bezier(.2,1.6,.4,1) .3s both}
+@keyframes stamp{from{opacity:0;transform:scale(2.2) rotate(-14deg)}to{opacity:1;transform:scale(1) rotate(-8deg)}}
+.board{display:flex;flex-direction:column;gap:8px}
+.brow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 14px;background:rgba(255,255,255,.6);border:1px solid rgba(118,102,90,.25);border-radius:4px}
+.brow .nm{font-weight:900}
+.rn{font-family:var(--inscribe);font-weight:800;font-size:22px;letter-spacing:.06em;text-align:right;line-height:1.1}
+.rn small{display:block;font-family:var(--body);font-size:12px;font-weight:800;color:var(--stone);letter-spacing:0}
+
+/* playing a level */
+.lvlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid rgba(42,31,23,.15);padding-bottom:10px;padding-right:170px}
+.lvlhead .t{display:flex;align-items:baseline;gap:14px}
+.lvlhead .num{font-family:var(--inscribe);font-weight:900;font-size:clamp(34px,6vw,54px);color:var(--red);line-height:1}
+.prog{font-family:var(--inscribe);font-weight:700;letter-spacing:.14em;font-size:14px;color:var(--stone)}
+.glory{display:flex;flex-wrap:wrap;gap:8px}
+.gchip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid rgba(118,102,90,.25);font-weight:900;font-size:14px}
+.gchip{position:relative}
+.fly{position:absolute;right:8px;top:-8px;font-style:normal;font-weight:900;font-family:var(--inscribe);color:var(--laurel);pointer-events:none;animation:fly 1.1s ease-out forwards}
+@keyframes fly{from{opacity:0;transform:translateY(10px)}20%{opacity:1}to{opacity:0;transform:translateY(-30px)}}
+.gchip b{font-family:var(--inscribe);font-weight:800;letter-spacing:.04em;font-size:15px;display:inline-block}
+.gchip.pop b{animation:pop .5s cubic-bezier(.2,1.8,.4,1)}
+@keyframes pop{40%{transform:scale(1.5);color:var(--laurel)}}
+.stage{position:relative;background:rgba(255,255,255,.5);border:1px solid rgba(118,102,90,.25);border-radius:6px;padding:12px;overflow:hidden}
+.stage svg{display:block;width:100%;height:auto}
+.shake{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{20%{transform:translateX(-7px) rotate(-.4deg)}40%{transform:translateX(6px) rotate(.3deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.flash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(closest-side,rgba(158,42,34,.35),transparent);opacity:0}
+.flash.go{animation:flash .5s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.cry{position:absolute;left:50%;top:38%;font-family:var(--inscribe);font-weight:900;font-size:clamp(30px,6vw,56px);letter-spacing:.12em;color:var(--red);text-shadow:0 2px 0 #fff;pointer-events:none;transform:translate(-50%,-50%);white-space:nowrap;animation:cry 1.1s ease-out both}
+@keyframes cry{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+.turn{display:flex;align-items:center;gap:12px;font-family:var(--inscribe);font-weight:800;letter-spacing:.08em;font-size:18px;padding:10px 14px;border-left:6px solid var(--c,var(--red));background:#fff;border-radius:0 4px 4px 0;animation:turnIn .45s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes turnIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+.q{font-weight:900;font-size:clamp(22px,3.4vw,34px);line-height:1.2;margin:0;text-wrap:balance;animation:viewIn .35s ease both}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;border:2px solid rgba(42,31,23,.18);background:#fffdf8;border-radius:4px;padding:14px 16px;font-weight:800;font-size:clamp(17px,2.2vw,22px);cursor:pointer;min-height:64px;transition:border-color .2s,background .2s,opacity .3s,transform .15s;animation:viewIn .35s ease both}
+.opt:nth-child(2){animation-delay:.05s}.opt:nth-child(3){animation-delay:.1s}.opt:nth-child(4){animation-delay:.15s}
+.opt .L{flex:none;font-family:var(--inscribe);font-weight:800;color:var(--red);min-width:34px;font-size:.95em;letter-spacing:.04em}
+.opt:hover:not(:disabled){border-color:var(--red);transform:translateY(-2px)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--laurel);background:#eef3e4;animation:glow .9s ease}
+.opt.right .L{color:var(--laurel)}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(86,115,47,.6)}100%{box-shadow:0 0 0 14px rgba(86,115,47,0)}}
+.opt.wrong{border-color:var(--red);background:#f8e4e0;animation:shake .45s}
+.answered .opt:not(.right):not(.wrong){opacity:.45}
+.verdict{margin:0;font-weight:900;font-size:19px;animation:viewIn .3s ease both}
+.verdict.good{color:var(--laurel)} .verdict.bad{color:var(--red)}
+.clock{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.clock .track{height:10px;background:rgba(42,31,23,.1);border-radius:5px;overflow:hidden}
+.clock i{display:block;height:100%;width:100%;background:var(--gold);transform-origin:left}
+.clock b{font-family:var(--inscribe);font-weight:900;font-size:22px;min-width:2.2em;text-align:right;font-variant-numeric:tabular-nums;display:inline-block}
+.clock.low i{background:var(--red)} .clock.low b{color:var(--red);animation:pop .5s}
+.next{height:4px;border-radius:2px;background:rgba(42,31,23,.1);overflow:hidden;cursor:pointer}
+.next i{display:block;height:100%;width:100%;background:var(--stone);transform-origin:left;animation:drain linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.votes{display:flex;flex-direction:column;gap:8px}
+.vrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 10px;background:#fff;border-radius:4px;border-left:6px solid var(--c)}
+.vrow .nm{font-weight:900}
+.thumb{border:2px solid rgba(42,31,23,.2);background:#fffdf8;border-radius:4px;padding:8px 12px;min-height:48px;font-family:var(--inscribe);font-weight:800;letter-spacing:.06em;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform .15s,border-color .2s}
+.thumb:hover:not(:disabled){transform:translateY(-2px)}
+.thumb svg{width:22px;height:22px}
+.thumb[aria-pressed="true"].aye{border-color:var(--laurel);background:#eef3e4}
+.thumb[aria-pressed="true"].nay{border-color:var(--red);background:#f8e4e0}
+.bigvote{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bigvote .thumb{justify-content:center;font-size:22px;min-height:76px}
+.bigvote .thumb svg{width:30px;height:30px}
+.claim{position:relative}
+.seal-stamp{position:absolute;right:8px;top:-6px;font-family:var(--inscribe);font-weight:900;font-size:clamp(26px,5vw,40px);letter-spacing:.12em;padding:2px 14px;border:4px solid currentColor;border-radius:6px;transform:rotate(-9deg);opacity:.9;animation:stamp .45s cubic-bezier(.2,1.6,.4,1) both;background:rgba(255,253,248,.7)}
+.seal-stamp.t{color:var(--laurel)} .seal-stamp.f{color:var(--red)}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bars.many{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 22px}.bars.many .bar.boss{grid-column:1/-1}
+.bar.out{opacity:.45}
+.votes.many{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.says{margin:8px 0 0;font-weight:800;font-size:clamp(19px,2.8vw,28px);color:var(--stone)}.says b{color:var(--red);font-weight:900}
+/* stage figures and scenery */
+.fig{transform-box:fill-box;transform-origin:50% 100%;animation:idle 2.2s ease-in-out infinite}
+.fig.boss{animation-delay:-1.1s}
+@keyframes idle{50%{transform:translateY(-2.5px)}}
+.fig.lunge{animation:lunge .6s cubic-bezier(.3,0,.3,1)}
+@keyframes lunge{35%,55%{transform:translateX(120px) rotate(7deg)}}
+.fig.boss.lunge{animation:lungeB .6s cubic-bezier(.3,0,.3,1)}
+@keyframes lungeB{35%,55%{transform:translateX(-120px) rotate(-7deg)}}
+.fig.hurt{animation:hurt .6s ease-out}
+@keyframes hurt{20%{transform:translateX(-26px) rotate(-12deg);filter:brightness(1.7)}}
+.fig.boss.hurt{animation:hurtB .6s ease-out}
+@keyframes hurtB{20%{transform:translateX(26px) rotate(12deg);filter:brightness(1.7)}}
+.fig.down{animation:none;transform:translate(30px,6px) rotate(84deg);transition:transform .7s cubic-bezier(.5,0,.8,.4)}
+.ship{animation:bobs 3s ease-in-out infinite}.wave{animation:bobs 4s ease-in-out infinite reverse}
+@keyframes bobs{50%{transform:translateY(3px)}}
+.drift{animation:drift 60s linear infinite alternate}
+@keyframes drift{to{transform:translateX(160px)}}
+.raid .bob{animation:bobs 1.1s ease-in-out infinite}
+.pennant{transform-box:fill-box;transform-origin:0 50%;animation:flap 1.2s ease-in-out infinite}
+@keyframes flap{50%{transform:scaleX(.82) skewY(6deg)}}
+.bar{display:grid;grid-template-columns:minmax(90px,auto) 1fr auto;gap:12px;align-items:center;font-weight:900}
+.segs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.segs i{height:18px;border-radius:2px;background:var(--c);transition:opacity .4s,transform .4s}
+.segs i.off{opacity:.14;transform:scaleY(.6)}
+.segs i.break{animation:smash .6s ease-in forwards}
+@keyframes smash{30%{transform:scale(1.3,1.6);background:#fff}100%{transform:translateY(16px) rotate(30deg) scale(.4);opacity:0}}
+#seats circle{transition:fill .35s ease}
+.puff{transform-box:fill-box;transform-origin:center;animation:puff .7s ease-out forwards}
+@keyframes puff{from{opacity:.7;transform:scale(.4)}to{opacity:0;transform:scale(2.4)}}
+.lit{fill:#f3dc9a}
+.temple.glow{filter:drop-shadow(0 0 10px rgba(180,133,38,.9));animation:pulse 1s ease-in-out 3}
+.stone.fall{transform-box:fill-box;transform-origin:50% 100%;animation:fall .8s cubic-bezier(.5,0,.9,.5) forwards}
+@keyframes fall{to{transform:translateY(70px) rotate(24deg);opacity:0}}
+.raid{transition:transform .7s cubic-bezier(.3,0,.2,1)}
+.summary{display:flex;flex-direction:column;gap:8px}
+.foot{margin:6px 0 0;text-align:center;font-size:13px;font-weight:700;color:var(--stone)}
+
+/* stings: a marble curtain, the numeral slams in, the name rises letter by letter */
+.sting{--d:0s;position:fixed;inset:0;z-index:50;display:grid;place-items:center;cursor:pointer;overflow:hidden;
+  background:radial-gradient(ellipse 80% 70% at 50% 45%,#fffdf8,var(--marble) 55%,var(--marble-2));animation:stIn .3s ease both}
+@keyframes stIn{from{opacity:0}to{opacity:1}}
+.sting.out{animation:stOut .4s ease forwards}
+@keyframes stOut{to{opacity:0;transform:scale(1.04)}}
+.sting .bandT,.sting .bandB{position:absolute;left:0;right:0;height:26px;background:var(--meander) repeat-x center/52px 26px}
+.sting .bandT{top:18px;animation:bandL 1.2s cubic-bezier(.2,.8,.2,1) both}
+.sting .bandB{bottom:18px;animation:bandR 1.2s cubic-bezier(.2,.8,.2,1) both}
+@keyframes bandL{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes bandR{from{transform:translateX(100%)}to{transform:none}}
+.sting .rays{position:absolute;left:50%;top:46%;width:160vmax;height:160vmax;transform:translate(-50%,-50%);opacity:0;
+  background:repeating-conic-gradient(from 0deg,rgba(180,133,38,.12) 0deg 5deg,transparent 5deg 16deg);
+  -webkit-mask:radial-gradient(closest-side,#000 15%,transparent 70%);mask:radial-gradient(closest-side,#000 15%,transparent 70%);
+  animation:stFade 1s ease .5s forwards,stSpin 18s linear .5s infinite}
+@keyframes stFade{to{opacity:1}}
+@keyframes stSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.sting .stage2{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 20px}
+.sting .snum{font-family:var(--deco);font-weight:900;font-size:clamp(90px,24vw,220px);line-height:.9;color:var(--red);text-shadow:0 4px 0 rgba(109,28,22,.25);animation:slam .55s cubic-bezier(.2,1.5,.4,1) calc(var(--d) + .25s) both}
+@keyframes slam{from{opacity:0;transform:scale(2.2)}to{opacity:1;transform:none}}
+.sting .stitle{font-family:var(--inscribe);font-weight:900;font-size:clamp(30px,6.5vw,64px);letter-spacing:.08em;line-height:1.05}
+.sting .stitle .w{white-space:nowrap;font-weight:inherit}
+.sting .snum.plain{font-family:var(--inscribe);font-weight:900}
+.sting .stitle span{display:inline-block;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.sting .srule{width:0;height:3px;background:var(--gold);animation:rule .6s ease calc(var(--d) + 1.25s) forwards}
+@keyframes rule{to{width:min(320px,60vw)}}
+.sting .ssub{font-weight:800;font-size:clamp(16px,2.4vw,22px);color:var(--stone);opacity:0;animation:rise .5s ease calc(var(--d) + 1.45s) forwards}
+.sting .sskip{position:absolute;bottom:58px;font-family:var(--inscribe);font-weight:700;letter-spacing:.2em;font-size:12px;color:var(--stone);opacity:0;animation:stFade .4s ease 1.2s forwards}
+.cinecv{position:absolute;inset:0;width:100%;height:100%}
+.sting.cine{background:var(--marble)}
+.sting .bandT,.sting .bandB,.sting .sskip{z-index:2}
+.sting.cine .stage2{align-self:end;margin-bottom:max(84px,11vh);max-width:min(92vw,860px);padding:16px 34px 20px;border-radius:6px;border:2px solid var(--gold);outline:6px solid rgba(255,253,248,.92);
+  background:linear-gradient(180deg,rgba(255,253,248,.97),rgba(246,238,220,.97));box-shadow:0 18px 50px rgba(40,25,10,.4);opacity:0;animation:plaque .6s cubic-bezier(.2,1.3,.4,1) var(--d) forwards}
+@keyframes plaque{from{opacity:0;transform:translateY(46px) scale(.94)}to{opacity:1;transform:none}}
+.sting.cine .snum{font-size:clamp(54px,11vw,104px)}
+.sting.cine .stitle{font-size:clamp(24px,5vw,50px)}
+.sting.cine .sskip{bottom:50px;background:rgba(255,253,248,.85);padding:4px 12px;border-radius:12px;color:var(--ink);animation-delay:.6s}
+#petals{position:fixed;inset:0;pointer-events:none;z-index:40;width:100vw;height:100vh}
+@media (max-width:760px){.levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.modes{grid-template-columns:minmax(0,1fr)}.mode{min-height:0}}
+@media (max-width:560px){.view{padding-top:74px}.top,.lvlhead{padding-right:0}.opts,.modes,.clocks,.teams,.bars.many,.votes.many{grid-template-columns:minmax(0,1fr)}.seal-stamp{position:static;display:inline-block;margin:10px 0 2px;font-size:24px}.lvl{min-height:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="band" aria-hidden="true"></div>
+<div class="ctrls"><button type="button" class="numsw" id="numBtn" role="switch" aria-checked="false" aria-label="Ordinary numbers instead of Roman numerals"><i class="k" aria-hidden="true"></i><span class="o r" aria-hidden="true">XII</span><span class="o a" aria-hidden="true">12</span></button><button type="button" class="sound" id="soundBtn" aria-pressed="true" aria-label="Sound"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg></button></div>
+<canvas id="petals" hidden></canvas>
+
+<main class="view" id="vHome">
+  <div class="top"><a class="brand" href="index.html" aria-label="TierBrain home">Tier<b>Brain</b></a><span class="tag">GAME LXX</span></div>
+  <div class="hero">
+    <div class="wreath"><svg id="wreath" viewBox="0 0 290 200" aria-hidden="true"></svg><div class="title">LXX</div></div>
+    <p class="numtag">GAME No. LXX · 70</p>
+    <p class="lede" style="text-align:center">Four trials of the Roman world. Race the road to Rome, face the champion of the arena, win over the Senate and hold Hadrian’s Wall.</p>
+  </div>
+  <section class="tablet" aria-labelledby="modeT">
+    <h3 id="modeT">How will you play?</h3>
+    <div class="modes" role="group" aria-label="Mode">
+      <button type="button" class="mode" id="mSolo" aria-pressed="true"><b>Solo</b><span>You against Rome’s finest. One player, one screen.</span></button>
+      <button type="button" class="mode" id="mRivals" aria-pressed="false"><b>Rivals</b><span>Two to eight players, every one for themselves, on one screen.</span></button>
+      <button type="button" class="mode" id="mTeams" aria-pressed="false"><b>Legions</b><span>Two to four teams on one screen, taking turns. Put it on the TV.</span></button>
+    </div>
+    <div id="teamBox" hidden>
+      <div class="teams" id="teamList"></div>
+      <div class="row" style="margin-top:10px"><button type="button" class="btn quiet small" id="addTeam">Add a player</button><button type="button" class="btn quiet small" id="dropTeam">Remove one</button></div>
+    </div>
+    <div id="soloBox" class="teams" style="grid-template-columns:minmax(0,1fr)"><label><span class="dot" style="--c:var(--red)"></span><input id="soloName" maxlength="18" placeholder="Your name" aria-label="Your name" autocomplete="off"></label></div>
+    <h3 id="clockT" style="margin-top:6px">The clock</h3>
+    <div class="clocks" role="group" aria-labelledby="clockT">
+      <button type="button" class="mode" id="cOn" aria-pressed="true"><b>Against the clock</b><span>Every question is timed. The Arena is fastest.</span></button>
+      <button type="button" class="mode" id="cOff" aria-pressed="false"><b>Relaxed</b><span>No clock. Take your time.</span></button>
+    </div>
+    <label class="tog"><input type="checkbox" id="cutsToggle" checked><span><b>Cutscenes</b> Animated scenes open the campaign and each level. Tap to skip any of them.</span></label>
+  </section>
+  <button type="button" class="btn go wide" id="beginBtn">Begin the campaign</button>
+  <p class="foot" id="bankNote"></p>
+  <p class="foot">Scores are kept in Roman numerals, as they should be. N means nulla: nothing. Not sure of your numerals? Flick the XII | 12 switch at the top for ordinary numbers, any time. On a keyboard, keys 1 to 4 answer.</p>
+</main>
+
+<main class="view" id="vMap" hidden>
+  <div class="top"><div class="brand">Tier<b>Brain</b> · LXX</div><span class="tag" id="mapMode">SOLO</span></div>
+  <div><p class="kicker">The campaign</p><h2 id="mapTitle">Your road to glory</h2></div>
+  <div class="levels" id="levels"></div>
+  <section class="tablet" aria-labelledby="gloryT"><h3 id="gloryT">Glory</h3><div class="board" id="board"></div></section>
+  <button type="button" class="btn go wide" id="enterBtn">Enter level I</button>
+  <button type="button" class="btn quiet wide" id="quitBtn">Start again</button>
+</main>
+
+<main class="view" id="vLevel" hidden>
+  <div class="lvlhead"><div class="t"><span class="num" id="lvNum">I</span><div><p class="kicker" id="lvKick">Level I</p><h2 id="lvName">All Roads to Rome</h2></div></div><span class="prog" id="lvProg"></span></div>
+  <div class="glory" id="gloryChips"></div>
+  <div class="stage" id="stage"></div>
+  <div id="turn" class="turn" hidden></div>
+  <section id="qBox" class="tablet" aria-live="polite"></section>
+</main>
+
+<main class="view" id="vLevelEnd" hidden>
+  <p class="kicker" id="leKick">Level I complete</p>
+  <h2 id="leTitle">Rome is reached</h2>
+  <p class="lede" id="leLine"></p>
+  <section class="tablet"><h3>Glory earned</h3><div class="summary" id="leSummary"></div></section>
+  <button type="button" class="btn go wide" id="leNext">Return to the campaign</button>
+</main>
+
+<main class="view" id="vTriumph" hidden>
+  <div class="hero">
+    <p class="kicker">Triumph</p>
+    <div class="wreath"><svg id="wreath2" viewBox="0 0 290 200" aria-hidden="true"></svg><div class="title" id="trGlory" style="font-size:clamp(40px,10vw,84px)">N</div></div>
+    <p class="numtag" id="trArabic">0 GLORY</p>
+    <h2 id="trRank">Centurion</h2>
+    <p class="lede" id="trLine" style="text-align:center"></p>
+  </div>
+  <section class="tablet" id="trBoardBox"><h3>The final reckoning</h3><div class="board" id="trBoard"></div></section>
+  <button type="button" class="btn go wide" id="againBtn">March again</button>
+  <p class="foot">LXX is the seventieth game on TierBrain.</p>
+</main>
+
+<div class="band" aria-hidden="true" style="margin-top:30px"></div>
+
+<script src="questions.js?v=8"></script>
+<script src="lxx-bank.js?v=1"></script>
+<script src="lxx-scenes.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const STILL = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function roman(n){ n = Math.round(n); if (n <= 0) return 'N'; let r = ''; [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']].forEach(([v, s]) => { while (n >= v) { r += s; n -= v; } }); return r; }
+let arabic = false;
+try { arabic = localStorage.getItem('tb-lxx-num') === 'arabic'; } catch (e) {}
+/* every number goes out through these, so the XII | 12 switch can flip them all at once, even mid-question */
+const fmt = (n, alt) => (arabic !== !!alt) ? String(Math.round(n)) : roman(n);
+const isDig = alt => arabic !== !!alt;
+const N = (n, alt) => `<span data-n="${n}"${alt ? ' data-alt=""' : ''}${isDig(alt) ? ' class="d"' : ''}>${fmt(n, alt)}</span>`;
+const T = n => '⟦' + n + '⟧';
+const fill = t => esc(t).replace(/⟦(-?\d+)⟧/g, (_, n) => N(+n));
+function put(el, t){ (typeof el === 'string' ? $(el) : el).innerHTML = fill(t); }
+const COLOURS = ['#9e2a22','#2d5885','#56732f','#b48526','#6f3d86','#c0622c','#2a7f7a','#b8447a'];
+const PER = 10, BONUS = 20;
+const CLOCK = { via:20, arena:12, senate:15, wall:15 };
+const LEVELS = [
+  { key:'via', name:'All Roads to Rome', blurb:'Race along the Via Appia. ' + T(70) + ' miles to Rome.', sub:T(70) + ' miles of road to Rome' },
+  { key:'arena', name:'The Arena', blurb:'Face Spiculus, champion of the Colosseum.', sub:'Spiculus awaits on the sand' },
+  { key:'senate', name:'The Senate', blurb:'True or false? Win ' + T(70) + ' votes.', sub:'Aye or Nay. Win ' + T(70) + ' votes' },
+  { key:'wall', name:'Hold the Wall', blurb:'Defend Hadrian’s Wall, wave after wave.', sub:'Raiders at the Wall. Hold fast' }
+];
+const THUMB = rot => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${rot ? ' style="transform:rotate(180deg)"' : ''}><path d="M7 11v9H4v-9h3zm0 0l4-8c1.7 0 2.5 1 2.2 2.6L12.5 10H19a2 2 0 0 1 2 2.3l-1.2 6A2.2 2.2 0 0 1 17.6 20H7"/></svg>`;
+const SEAL = '<svg class="seal" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#56732f" opacity=".14"/><circle cx="20" cy="20" r="17" fill="none" stroke="#56732f" stroke-width="2"/>' +
+  [0,1,2,3,4,5].map(i => `<ellipse cx="${(13 + i * 0.4).toFixed(1)}" cy="${(28 - i * 3).toFixed(1)}" rx="4" ry="1.6" transform="rotate(${-50 + i * 8} ${(13 + i * 0.4).toFixed(1)} ${(28 - i * 3).toFixed(1)})" fill="#56732f"/><ellipse cx="${(27 - i * 0.4).toFixed(1)}" cy="${(28 - i * 3).toFixed(1)}" rx="4" ry="1.6" transform="rotate(${50 - i * 8} ${(27 - i * 0.4).toFixed(1)} ${(28 - i * 3).toFixed(1)})" fill="#56732f"/>`).join('') + '</svg>';
+
+/* ---------- sound: brass, stone and crowd, all made here ---------- */
+let ac = null, master = null, noiseBuf = null, soundOn = true, bus = null, sfxAt = 0;
+soundOn = !window.tbMuted; /* the site-wide sound switch, shared with every TierBrain game */
+function actx(){
+  if (!soundOn) return null;
+  try { if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = .8; master.connect(ac.destination); } if (ac.state === 'suspended') ac.resume(); } catch (e) { return null; }
+  return ac;
+}
+function tone(f, t, d, type, v, glide){
+  const a = actx(); if (!a) return; const T = a.currentTime + t + sfxAt, o = a.createOscillator(), g = a.createGain();
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, T); if (glide) o.frequency.exponentialRampToValueAtTime(glide, T + d);
+  g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v || .15, T + .02); g.gain.exponentialRampToValueAtTime(.0001, T + d);
+  o.connect(g); g.connect(bus || master); o.start(T); o.stop(T + d + .05);
+}
+function brass(f, t, d, v){
+  const a = actx(); if (!a) return; const T = a.currentTime + t + sfxAt, lp = a.createBiquadFilter(), g = a.createGain();
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(700, T); lp.frequency.linearRampToValueAtTime(2400, T + .08); lp.frequency.linearRampToValueAtTime(1300, T + d);
+  g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v || .12, T + .04); g.gain.setValueAtTime(v || .12, T + d * .7); g.gain.exponentialRampToValueAtTime(.0001, T + d);
+  lp.connect(g); g.connect(bus || master);
+  [1, 1.004, .996].forEach(m => { const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f * m; o.connect(lp); o.start(T); o.stop(T + d + .05); });
+}
+function noise(t, d, f, q, v){
+  const a = actx(); if (!a) return;
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate); const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; }
+  const T = a.currentTime + t + sfxAt, s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf; s.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q || 1;
+  g.gain.setValueAtTime(.0001, T); g.gain.exponentialRampToValueAtTime(v || .2, T + d * .25); g.gain.exponentialRampToValueAtTime(.0001, T + d);
+  s.connect(bp); bp.connect(g); g.connect(bus || master); s.start(T); s.stop(T + d + .05);
+}
+function thud(t, v){ tone(140, t, .45, 'sine', v || .5, 40); }
+const SFX = {
+  right(){ tone(659.25, 0, .18, 'triangle', .14); tone(880, .1, .32, 'triangle', .14); },
+  wrong(){ tone(196, 0, .35, 'square', .07, 110); },
+  tick(){ tone(1400, 0, .04, 'square', .03); },
+  fanfare(){ const G4 = 392, C5 = 523.25, E5 = 659.25, G5 = 783.99; brass(G4, .05, .2); brass(G4, .3, .2); brass(C5, .55, .5, .14); brass(E5, .55, .5, .07); thud(1.05, .55); [261.63, 329.63, 392, C5].forEach(f => brass(f, 1.05, 1.4, .06)); brass(G5, 1.05, 1.3, .04); },
+  triumph(){ const n = [392, 523.25, 659.25, 783.99, 1046.5]; n.forEach((f, i) => brass(f, i * .16, .3, .1)); thud(.8, .6); [523.25, 659.25, 783.99, 1046.5].forEach(f => brass(f, .8, 2.2, .06)); noise(.8, 2.5, 1800, .6, .12); },
+  crash(){ noise(0, .7, 400, .7, .4); thud(0, .7); noise(.08, .5, 1200, 1.2, .12); },
+  cheer(){ noise(0, 1.6, 1500, .5, .22); noise(.1, 1.4, 900, .8, .14); },
+  gavel(){ thud(0, .45); thud(.2, .55); tone(900, 0, .05, 'square', .04); tone(900, .2, .05, 'square', .04); },
+  hoof(){ for (let i = 0; i < 4; i++) { tone(170 + (i % 2) * 40, i * .11, .06, 'triangle', .1); noise(i * .11, .06, 2500, 2, .05); } },
+  clang(){ tone(1250, 0, .5, 'triangle', .1, 1180); tone(1900, 0, .35, 'sine', .05); noise(0, .15, 3000, 1, .1); }
+};
+function paintSound(){ $('soundBtn').setAttribute('aria-pressed', String(soundOn)); $('soundBtn').setAttribute('aria-label', soundOn ? 'Sound on. Turn it off' : 'Sound off. Turn it on'); }
+$('soundBtn').addEventListener('click', () => { soundOn = !soundOn; if (window.tbSetMuted) window.tbSetMuted(!soundOn); if (!soundOn && master) master.gain.value = 0; if (soundOn) { actx(); if (master) master.gain.value = .8; } paintSound(); });
+paintSound();
+function paintNums(){ document.querySelectorAll('[data-n]').forEach(el => { const alt = el.hasAttribute('data-alt'); el.textContent = fmt(+el.dataset.n, alt); el.classList.toggle('d', isDig(alt)); }); $('numBtn').setAttribute('aria-checked', String(arabic)); }
+$('numBtn').addEventListener('click', () => { arabic = !arabic; try { localStorage.setItem('tb-lxx-num', arabic ? 'arabic' : 'roman'); } catch (e) {} tone(arabic ? 880 : 660, 0, .06, 'triangle', .07); paintNums(); });
+paintNums();
+
+/* ---------- cutscenes and stings ---------- */
+let cutsOn = true; try { cutsOn = localStorage.getItem('tb-lxx-cuts') !== 'off'; } catch (e) {}
+const canCine = () => cutsOn && !STILL && !!window.LXXScenes;
+const SCENE_SFX = {
+  opening(){ for (let i = 0; i < 8; i++) thud(.15 + i * .42, .32); brass(130.81, .2, 2.3, .05); },
+  via(){ for (let i = 0; i < 22; i++) { tone(170 + (i % 2) * 40, i * .115, .06, 'triangle', .08); noise(i * .115, .05, 2500, 2, .04); } },
+  arena(){ noise(.3, 1.9, 170, .8, .3); noise(1.9, 2.4, 1500, .5, .16); noise(2, 2.2, 900, .8, .1); },
+  senate(){ noise(0, 2.4, 500, .6, .05); thud(1.3, .4); thud(1.5, .5); },
+  wall(){ noise(0, 5, 300, .5, .09); brass(98, 2.1, 1.5, .09); brass(146.83, 2.1, 1.5, .05); },
+  victory(){ noise(0, 1.8, 1500, .5, .2); },
+  defeat(){ noise(0, 3.2, 2600, .4, .07); tone(196, .2, 1.1, 'sawtooth', .04, 98); tone(146.83, 1.1, 1.4, 'sawtooth', .04, 73); },
+  triumph(){ for (let i = 0; i < 7; i++) thud(.3 + i * .42, .3); noise(.2, 5.5, 1500, .5, .12); }
+};
+/* A sting is the title card. With a scene behind it, it becomes a cutscene: the scene plays, then the title arrives on a marble plaque. */
+function sting(num, title, sub, scene, opts){
+  return new Promise(done => {
+    if (STILL) { done(); return; }
+    const cine = !!scene && canCine();
+    const el = document.createElement('div'); el.className = 'sting' + (cine ? ' cine' : ''); el.setAttribute('role', 'presentation');
+    let i = 0;
+    const letters = title.split(' ').map(w => '<b class="w">' + w.split('').map(ch => `<span style="animation-delay:calc(var(--d) + ${(.65 + (i++) * .04).toFixed(2)}s)">${esc(ch)}</span>`).join('') + '</b>').join(' ');
+    el.innerHTML = (cine ? '' : '<div class="rays"></div>') + '<div class="bandT"></div><div class="bandB"></div><div class="stage2">' + (num ? `<div class="snum${num === 'LXX' ? '' : ' plain'}">${num}</div>` : '') + `<div class="stitle">${letters}</div><div class="srule"></div>` + (sub ? `<div class="ssub">${fill(sub)}</div>` : '') + '</div><div class="sskip">TAP TO SKIP</div>';
+    document.body.appendChild(el);
+    let run = null, dur = 3100, at = .25, myBus = null;
+    const a = actx(); if (a) { myBus = a.createGain(); myBus.connect(master); bus = myBus; }
+    if (cine) { run = LXXScenes.play(scene, el, opts); dur = run.D * 1000; at = run.at; (SCENE_SFX[scene] || (() => {}))(); }
+    el.style.setProperty('--d', (at - .25).toFixed(2) + 's');
+    sfxAt = at - .25; if (scene === 'triumph') SFX.triumph(); else if (scene !== 'defeat') SFX.fanfare(); sfxAt = 0; bus = null;
+    let over = false; const t = setTimeout(end, dur);
+    function end(){ if (over) return; over = true; clearTimeout(t); document.removeEventListener('keydown', end, true); el.classList.add('out');
+      if (myBus && dur - (performance.now() - born) > 300) { try { myBus.gain.setTargetAtTime(0, ac.currentTime, .06); } catch (e) {} }
+      setTimeout(() => { if (run) run.stop(); el.remove(); }, 400); done(); }
+    const born = performance.now();
+    el.addEventListener('click', end); document.addEventListener('keydown', end, true);
+  });
+}
+
+/* ---------- laurel wreath, leaf by leaf ---------- */
+function wreath(svg, colour, slow){
+  let h = ''; const Rx = 128, Ry = 88, cx0 = 145, cy0 = 100;
+  [-1, 1].forEach(side => {
+    for (let i = 0; i < 14; i++) {
+      const th = (-78 + i * 10) * Math.PI / 180, x = cx0 + side * Rx * Math.cos(th), y = cy0 - Ry * Math.sin(th);
+      const rot = Math.atan2(Ry * Math.cos(th), -side * Rx * Math.sin(th)) * 180 / Math.PI + side * 28, sz = 1 - i * .025;
+      h += `<g transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"><ellipse style="animation-delay:${((slow ? .25 : .05) + i * (slow ? .09 : .035)).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(15 * sz).toFixed(1)}" ry="${(5.6 * sz).toFixed(1)}" fill="${colour}" opacity="${(.7 + (i % 2) * .22).toFixed(2)}"/></g>`;
+    }
+  });
+  svg.innerHTML = h + '<path d="M126 190 Q145 180 164 190" stroke="#9e2a22" stroke-width="5" fill="none" stroke-linecap="round"/>';
+}
+wreath($('wreath'), '#56732f');
+
+/* ---------- state ---------- */
+const ROMANS = ['Aurelia','Brutus','Cassia','Decimus','Flavia','Gaius','Helena','Titus'];
+const G = { mode:'solo', clock:true, teamNames:['Legio I','Legio II'], rivalNames:['Aurelia','Brutus'], soloName:'', sides:[], level:0, results:[], used:new Set() };
+const unit = () => G.mode === 'teams' ? 'legion' : 'player';
+const roster = () => G.mode === 'teams' ? G.teamNames : G.rivalNames;
+const rosterMax = () => G.mode === 'teams' ? 4 : 8;
+let advanceT = null, clockT = null;
+function stopTimers(){ clearTimeout(advanceT); clearInterval(clockT); advanceT = null; clockT = null; }
+function show(id){ stopTimers(); document.querySelectorAll('.view').forEach(v => { v.hidden = v.id !== id; }); window.scrollTo(0, 0); const h = document.querySelector('#' + id + ' h2'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll:true }); } }
+
+/* ---------- questions: TierBrain's shared bank for breadth, the Roman set for flavour ---------- */
+const GK = (window.TB && TB.bank && TB.bank('gk')) || null;
+const TIERS = { via:['1','2'], arena:['2','3'], senate:['2','3'], wall:['3'] };
+function drawGK(key){
+  if (!GK) return null; const tiers = TIERS[key].filter(t => GK[t] && GK[t].length); if (!tiers.length) return null;
+  for (let tries = 0; tries < 60; tries++) {
+    const t = tiers[Math.floor(Math.random() * tiers.length)], i = Math.floor(Math.random() * GK[t].length), id = 'gk:' + t + ':' + i, q = GK[t][i];
+    if (G.used.has(id) || !q || !q.q || !q.correct || !Array.isArray(q.wrong) || q.wrong.length < 3) continue;
+    G.used.add(id); return [q.q, q.correct].concat(q.wrong.slice(0, 3));
+  }
+  return null;
+}
+function drawRoman(key){
+  const pools = key === 'senate' ? ['senate'] : [key, 'life', 'via', 'arena', 'wall'];
+  for (const p of pools) { const free = BANK[p].map((q, i) => p + ':' + i).filter(id => !G.used.has(id)); if (free.length) { const id = free[Math.floor(Math.random() * free.length)]; G.used.add(id); return BANK[p][+id.split(':')[1]]; } }
+  [...G.used].filter(id => id.startsWith(pools[0] + ':')).forEach(id => G.used.delete(id)); return drawRoman(key);
+}
+/* one question in three is Roman; the rest come from the shared bank, getting harder level by level */
+function draw(key){ L.qn++; return (L.qn % 3 === 1 ? null : drawGK(key)) || drawRoman(key); }
+function drawClaim(){
+  L.qn++; const g = L.qn % 3 === 1 ? null : drawGK('senate');
+  if (!g) { const c = drawRoman('senate'); return { text:c[0], truth:c[1] }; }
+  const truth = Math.random() < .5; return { q:g[0], shown:truth ? g[1] : g[2 + Math.floor(Math.random() * 3)], truth, right:g[1] };
+}
+/* level lengths bend with the number of sides, so eight rivals do not wait all night */
+function cfg(){
+  const n = G.sides.length, solo = G.mode === 'solo';
+  const rounds = solo ? 12 : Math.max(3, Math.min(10, Math.ceil(24 / n)));
+  const step = solo ? 10 : Math.max(10, Math.ceil(70 / (rounds - 1) / 5) * 5);
+  const hit = n >= 4 ? 5 : 10, loss = n <= 2 ? 10 : n <= 4 ? 20 : 35, waves = n <= 5 ? 10 : 2 * n;
+  const max = solo ? 390 : (Math.ceil(70 / step) * PER + BONUS) + (Math.ceil(70 / hit / n) * PER + BONUS) + 90 + (Math.ceil(waves / n) * PER + BONUS);
+  return { n, rounds, step, hit, loss, waves, max };
+}
+
+/* ---------- home ---------- */
+function setMode(m){ G.mode = m; [['mSolo', 'solo'], ['mRivals', 'rivals'], ['mTeams', 'teams']].forEach(([id, k]) => $(id).setAttribute('aria-pressed', String(m === k))); $('teamBox').hidden = m === 'solo'; $('soloBox').hidden = m !== 'solo'; if (m !== 'solo') paintTeams(); }
+function setClock(on){ G.clock = on; $('cOn').setAttribute('aria-pressed', String(on)); $('cOff').setAttribute('aria-pressed', String(!on)); }
+$('mSolo').addEventListener('click', () => setMode('solo'));
+$('mRivals').addEventListener('click', () => setMode('rivals'));
+$('mTeams').addEventListener('click', () => setMode('teams'));
+$('cOn').addEventListener('click', () => setClock(true));
+$('cOff').addEventListener('click', () => setClock(false));
+$('cutsToggle').checked = cutsOn;
+$('cutsToggle').addEventListener('change', e => { cutsOn = e.target.checked; try { localStorage.setItem('tb-lxx-cuts', cutsOn ? 'on' : 'off'); } catch (err) {} });
+function paintTeams(){
+  const list = roster(), u = unit();
+  $('teamList').innerHTML = list.map((n, i) => `<label><span class="dot" style="--c:${COLOURS[i]}"></span><input id="team${i}" maxlength="18" value="${esc(n)}" aria-label="Name of ${u} ${i + 1}" autocomplete="off"></label>`).join('');
+  list.forEach((_, i) => $('team' + i).addEventListener('input', e => { list[i] = e.target.value; }));
+  $('addTeam').textContent = 'Add a ' + u; $('addTeam').disabled = list.length >= rosterMax(); $('dropTeam').disabled = list.length <= 2;
+}
+$('addTeam').addEventListener('click', () => { const list = roster(); if (list.length < rosterMax()) { list.push(G.mode === 'teams' ? 'Legio ' + roman(list.length + 1) : (ROMANS.find(r => !list.includes(r)) || 'Player ' + (list.length + 1))); paintTeams(); } });
+$('dropTeam').addEventListener('click', () => { const list = roster(); if (list.length > 2) { list.pop(); paintTeams(); } });
+$('soloName').addEventListener('input', e => { G.soloName = e.target.value; });
+$('beginBtn').addEventListener('click', async () => {
+  const names = G.mode === 'solo' ? [(G.soloName || '').trim() || 'You'] : roster().map((n, i) => (n || '').trim() || (G.mode === 'teams' ? 'Legio ' + roman(i + 1) : ROMANS[i]));
+  G.sides = names.map((name, i) => ({ name, colour:COLOURS[i], glory:0 }));
+  G.level = 0; G.results = []; G.used = new Set();
+  await sting('LXX', 'The Campaign Begins', 'Four trials. One triumph.', 'opening');
+  paintMap(); show('vMap');
+});
+if (GK && TB.count) $('bankNote').textContent = 'Questions are drawn from TierBrain’s shared bank of ' + TB.count('gk').toLocaleString('en-GB') + ', with a Roman set on top.';
+
+/* ---------- campaign map ---------- */
+function paintMap(){
+  put('mapMode', G.mode === 'solo' ? 'SOLO' : T(G.sides.length) + (G.mode === 'teams' ? ' LEGIONS' : ' RIVALS'));
+  $('mapTitle').textContent = G.level === 0 ? 'Four trials await' : G.level < 4 ? 'The campaign goes on' : 'The campaign is won';
+  $('levels').innerHTML = LEVELS.map((Lv, i) => {
+    const st = i < G.level ? 'done' : i === G.level ? 'now' : 'locked', res = G.results[i];
+    const status = st === 'done' ? (res.won ? 'WON' : 'FOUGHT') + ' · ' + N(res.total) + ' GLORY' : st === 'now' ? 'NEXT' : 'AHEAD';
+    return `<div class="lvl ${st}" style="animation-delay:${i * .08}s">${st === 'done' && res.won ? SEAL : ''}<span class="art" aria-hidden="true">${ART[Lv.key]}</span><span class="num">${N(i + 1)}</span><span class="nm">${Lv.name}</span><span class="ds">${fill(Lv.blurb)}</span><span class="st">${status}</span></div>`;
+  }).join('');
+  paintBoard($('board'));
+  $('enterBtn').hidden = G.level >= 4; $('enterBtn').innerHTML = '<span>' + fill('Enter level ' + T(G.level + 1) + ': ' + (LEVELS[G.level] || {}).name) + '</span>';
+}
+function paintBoard(el){
+  el.innerHTML = G.sides.slice().sort((a, b) => b.glory - a.glory).map(s => `<div class="brow"><span class="dot" style="--c:${s.colour}"></span><span class="nm">${esc(s.name)}</span><span class="rn">${N(s.glory)}<small>${N(s.glory, true)} glory</small></span></div>`).join('');
+}
+$('enterBtn').addEventListener('click', async () => { const d = LEVELS[G.level]; await sting(N(G.level + 1), d.name, d.sub, d.key); startLevel(G.level); });
+$('quitBtn').addEventListener('click', () => show('vHome'));
+
+/* ---------- glory chips ---------- */
+function paintGlory(pop){
+  $('gloryChips').innerHTML = G.sides.map((s, k) => `<span class="gchip${pop === k ? ' pop' : ''}"><span class="dot" style="--c:${s.colour}"></span>${esc(s.name)} <b>${N(s.glory)}</b></span>`).join('');
+}
+function award(side, n){
+  G.sides[side].glory += n; L.earned[side] += n; paintGlory(side);
+  const chip = $('gloryChips').children[side]; if (chip && !STILL) { const f = document.createElement('i'); f.className = 'fly'; f.innerHTML = '+' + N(n); chip.appendChild(f); }
+}
+function cry(text, colour){ if (STILL) return; const c = document.createElement('div'); c.className = 'cry'; c.textContent = text; if (colour) c.style.color = colour; $('stage').appendChild(c); setTimeout(() => c.remove(), 1200); }
+function shake(){ if (STILL) return; const s = $('stage'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+function flash(){ const f = $('flash'); if (!f) return; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
+function act(id, cls){ const el = $(id); if (!el || STILL) return; el.classList.remove('lunge', 'hurt', 'cheer'); void el.getBoundingClientRect(); el.classList.add(cls); }
+
+/* ---------- shared question flow ---------- */
+let L = null;
+function setTurn(side){
+  if (G.mode === 'solo' || side == null) { $('turn').hidden = true; return; }
+  const s = G.sides[side], t = $('turn'); t.hidden = true; void t.offsetWidth; t.hidden = false; t.style.setProperty('--c', s.colour);
+  t.innerHTML = `<span class="dot" style="--c:${s.colour}"></span>${esc(s.name)}, to you`;
+}
+function clockHTML(){ return G.clock ? '<div class="clock" id="clock"><div class="track"><i></i></div><b id="clockN"></b></div>' : ''; }
+function runClock(seconds, onOut){
+  if (!G.clock) return;
+  const total = seconds * 1000, t0 = Date.now(); let lastS = seconds + 1;
+  const tick = () => {
+    const left = Math.max(0, total - (Date.now() - t0)), s = Math.ceil(left / 1000), c = $('clock'); if (!c) return;
+    c.querySelector('i').style.transform = 'scaleX(' + (left / total).toFixed(3) + ')';
+    if (s !== lastS) { lastS = s; $('clockN').textContent = s; c.classList.toggle('low', s <= 5); if (s <= 5 && s > 0) SFX.tick(); }
+    if (!left) { clearInterval(clockT); clockT = null; onOut(); }
+  };
+  tick(); clockT = setInterval(tick, 100);
+}
+function askMC(q, onAnswer){
+  const opts = shuffle(q.slice(1)), right = q[1];
+  $('qBox').classList.remove('answered');
+  $('qBox').innerHTML = clockHTML() + `<p class="q">${esc(q[0])}</p><div class="opts">` +
+    opts.map((o, i) => `<button type="button" class="opt" data-o="${esc(o)}"><span class="L">${N(i + 1)}</span><span>${esc(o)}</span></button>`).join('') + '</div><p class="verdict" id="verdict" hidden></p><div class="next" id="nextBar" hidden title="Tap to carry on"><i></i></div>';
+  let done = false;
+  const finish = picked => {
+    if (done) return; done = true; clearInterval(clockT); clockT = null; document.removeEventListener('keydown', keys);
+    $('qBox').classList.add('answered');
+    $('qBox').querySelectorAll('.opt').forEach(b => { b.disabled = true; if (b.dataset.o === right) b.classList.add('right'); else if (b.dataset.o === picked) b.classList.add('wrong'); });
+    const ok = picked === right; (ok ? SFX.right : SFX.wrong)(); onAnswer(ok, picked);
+  };
+  const keys = e => { const n = '1234'.indexOf(e.key); if (n >= 0) { const b = $('qBox').querySelectorAll('.opt')[n]; if (b) { e.preventDefault(); b.click(); } } };
+  document.addEventListener('keydown', keys);
+  $('qBox').querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => finish(b.dataset.o)));
+  runClock(CLOCK[L.key], () => finish(null));
+}
+/* after each answer the verdict shows, a thin bar drains, and the game moves on by itself. A tap or the space bar moves on at once. */
+function verdict(text, good, next, slow){
+  const v = $('verdict'); v.hidden = false; v.className = 'verdict ' + (good ? 'good' : 'bad'); put(v, text);
+  const ms = Math.min(4200, Math.max(1900, 900 + text.length * 32)) + (slow ? 900 : 0);
+  const bar = $('nextBar'); bar.hidden = false; bar.firstChild.style.animationDuration = ms + 'ms';
+  let gone = false;
+  const go = () => { if (gone) return; gone = true; clearTimeout(advanceT); document.removeEventListener('keydown', key); bar.removeEventListener('click', go); $('qBox').removeEventListener('click', boxTap); next(); };
+  const key = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); go(); } };
+  const boxTap = e => { if (!e.target.closest('button')) go(); };
+  advanceT = setTimeout(go, ms);
+  setTimeout(() => { if (!gone) { document.addEventListener('keydown', key); $('qBox').addEventListener('click', boxTap); } }, 350);
+  bar.addEventListener('click', go);
+}
+function startLevel(i){
+  const def = LEVELS[i];
+  L = { i, key:def.key, earned:G.sides.map(() => 0), bonus:G.sides.map(() => 0), won:false, turn:0, qn:0, c:cfg() };
+  $('lvNum').innerHTML = N(i + 1); put('lvKick', 'Level ' + T(i + 1)); $('lvName').textContent = def.name;
+  show('vLevel'); paintGlory();
+  ({ via:viaStart, arena:arenaStart, senate:senateStart, wall:wallStart })[def.key]();
+}
+function endLevel(title, line){
+  stopTimers();
+  G.results[L.i] = { won:L.won, total:G.mode === 'solo' ? L.earned[0] : Math.max(...L.earned) };
+  put('leKick', 'Level ' + T(L.i + 1) + ' complete'); $('leTitle').textContent = title; put('leLine', line);
+  $('leSummary').innerHTML = G.sides.map((s, k) => `<div class="brow"><span class="dot" style="--c:${s.colour}"></span><span class="nm">${esc(s.name)}${L.bonus[k] ? ' · bonus ' + N(L.bonus[k]) : ''}</span><span class="rn">+${N(L.earned[k])}<small>${N(L.earned[k], true)} glory this level</small></span></div>`).join('');
+  G.level = L.i + 1; $('leNext').textContent = G.level < 4 ? 'Return to the campaign' : 'Claim your triumph';
+  if (canCine()) sting('', title, '', L.won ? 'victory' : 'defeat').then(() => show('vLevelEnd'));
+  else { show('vLevelEnd'); if (L.won) SFX.fanfare(); }
+}
+$('leNext').addEventListener('click', async () => {
+  if (G.level < 4) { paintMap(); show('vMap'); return; }
+  const best = G.sides.slice().sort((a, b) => b.glory - a.glory)[0], cine = canCine();
+  if (cine) await sting('', 'Triumph', G.mode === 'solo' ? 'Rome turns out to greet you' : 'Rome turns out for ' + best.name, 'triumph', { colour:best.colour });
+  triumph(cine);
+});
+/* names are dropped in where no verb has to agree with them: a name may be You, Livia or The Lions */
+const whom = k => G.mode === 'solo' && G.sides[k].name === 'You' ? 'you' : G.sides[k].name;
+function nextSide(from, alive){ const n = G.sides.length; for (let k = 1; k <= n; k++) { const s = (from + k) % n; if (!alive || alive(s)) return s; } return -1; }
+
+/* little pictures shared by the map tablets and the stages */
+const PINE = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 Q2 -14 0 -26" stroke="#6b4a2f" stroke-width="2.4" fill="none"/><ellipse cx="0" cy="-30" rx="15" ry="6" fill="#557f3a"/><ellipse cx="-7" cy="-27" rx="9" ry="4.5" fill="#6c9a48"/><ellipse cx="6" cy="-33" rx="9" ry="4" fill="#6c9a48"/></g>`;
+const PEAK = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-26 0 L0 -34 L26 0Z" fill="#c9bfae"/><path d="M0 -34 L26 0 H6Z" fill="#b3a892"/><path d="M-7 -25 L0 -34 L7 -25 L2 -22 L-2 -26Z" fill="#fffaf0"/></g>`;
+const ART = {
+  via:'<svg viewBox="0 0 60 40"><path d="M2 34 C18 34 16 12 30 14 S44 30 58 8" fill="none" stroke="#d9cdb6" stroke-width="7" stroke-linecap="round"/><path d="M2 34 C18 34 16 12 30 14 S44 30 58 8" fill="none" stroke="#fffaf0" stroke-width="1" stroke-dasharray="3 3"/><path d="M46 8 l6 -5 l6 5Z" fill="#9e2a22"/></svg>',
+  arena:'<svg viewBox="0 0 60 40"><rect x="4" y="10" width="52" height="26" rx="3" fill="#efe2c2" stroke="#b9a988"/><path d="M10 36 v-12 a5 5 0 0 1 10 0 v12 M25 36 v-12 a5 5 0 0 1 10 0 v12 M40 36 v-12 a5 5 0 0 1 10 0 v12" fill="#8a6a52"/><rect x="2" y="6" width="56" height="5" fill="#d9c7a2"/></svg>',
+  senate:'<svg viewBox="0 0 60 40"><path d="M6 14 L30 2 L54 14Z" fill="#9e2a22"/><rect x="8" y="14" width="44" height="4" fill="#efe6d4" stroke="#b9a988"/><path d="M12 18 v16 M21 18 v16 M30 18 v16 M39 18 v16 M48 18 v16" stroke="#fffaf0" stroke-width="5"/><rect x="6" y="34" width="48" height="4" fill="#efe6d4" stroke="#b9a988"/></svg>',
+  wall:'<svg viewBox="0 0 60 40"><path d="M2 36 V18 h8 v-6 h6 v6 h8 v-6 h6 v6 h8 v-6 h6 v6 h8 v-6 h6 V36Z" fill="#e4d9c2" stroke="#b9a988"/><path d="M2 26 H58 M14 18 v8 M30 18 v8 M46 18 v8 M8 26 v10 M22 26 v10 M38 26 v10 M52 26 v10" stroke="#b9a988" fill="none"/></svg>'
+};
+
+/* ========== LEVEL I: All Roads to Rome ========== */
+const ROAD = 'M40 236 C170 236 190 92 330 96 S520 244 640 196 S820 62 958 70';
+function viaStart(){
+  L.miles = G.sides.map(() => 0); L.shown = G.sides.map(() => 0); L.rival = 0; L.rivalShown = 0; L.rounds = 0; L.maxRounds = L.c.rounds;
+  $('stage').innerHTML = `<svg viewBox="0 0 1000 300" role="img" aria-label="The Via Appia from Brundisium to Rome">
+    <defs><linearGradient id="vLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef2cf"/><stop offset="1" stop-color="#ebdfb6"/></linearGradient></defs>
+    <rect width="1000" height="300" fill="url(#vLand)"/>
+    <ellipse cx="560" cy="60" rx="150" ry="34" fill="#dfe9b6" opacity=".7"/><ellipse cx="220" cy="190" rx="120" ry="30" fill="#dfe9b6" opacity=".7"/><ellipse cx="800" cy="230" rx="150" ry="36" fill="#dfe9b6" opacity=".7"/>
+    <path d="M0 300 V178 Q58 196 84 250 T168 300Z" fill="#a9d3e6"/><path class="wave" d="M8 214 q10 -6 20 0 t20 0 M4 250 q10 -6 20 0 t20 0 t20 0 M14 282 q10 -6 20 0 t20 0 t20 0 t20 0" fill="none" stroke="#fff" stroke-width="2" opacity=".8"/>
+    <g class="ship"><path d="M14 266 h30 l-6 9 h-18Z" fill="#8a5a3a"/><path d="M29 266 V244" stroke="#5b3b22" stroke-width="2"/><path d="M30 246 q12 8 0 18Z" fill="#b9342a"/></g>
+    ${PEAK(470, 62, 1)}${PEAK(512, 70, 1.25)}${PEAK(556, 64, .9)}${PEAK(770, 262, 1.1)}${PEAK(812, 270, .8)}
+    ${[[150, 128, 1], [196, 100, .8], [262, 262, 1.1], [420, 276, .9], [612, 96, 1], [690, 282, 1], [884, 214, 1], [930, 250, .8], [108, 76, .9], [360, 196, .9]].map(p => PINE(p[0], p[1], p[2])).join('')}
+    <path d="${ROAD}" fill="none" stroke="rgba(120,100,60,.18)" stroke-width="38" stroke-linecap="round"/>
+    <path d="${ROAD}" fill="none" stroke="#d9cdb6" stroke-width="30" stroke-linecap="round"/>
+    <path d="${ROAD}" fill="none" stroke="#b9a988" stroke-width="30" stroke-linecap="round" stroke-dasharray="2 14" opacity=".7"/>
+    <path id="roadPath" d="${ROAD}" fill="none" stroke="#fffaf0" stroke-width="2" stroke-dasharray="10 12"/>
+    <g id="stones"></g><g id="rome"></g><g id="dust"></g><g id="tokens"></g></svg><div class="flash" id="flash"></div>`;
+  const path = $('roadPath'), len = path.getTotalLength();
+  L.at = m => path.getPointAtLength(len * Math.min(1, Math.max(0, m) / 70));
+  L.tok = Math.max(1, Math.min(2, 640 / ($('stage').clientWidth || 640)));
+  let st = '';
+  for (let m = 0; m <= 70; m += 10) {
+    const p = L.at(m);
+    if (m === 0) { st += `<text x="${p.x + 22}" y="${p.y + 44}" font-family="Cinzel" font-weight="800" font-size="15" fill="#2a1f17">BRUNDISIUM</text>`; continue; }
+    if (m === 70) continue;
+    st += `<g><rect id="ms${m}" x="${p.x - 9}" y="${p.y - 46}" width="18" height="26" rx="3" fill="#efe6d4" stroke="#76665a" stroke-width="1.5" style="transition:fill .4s"/><text x="${p.x}" y="${p.y - 52}" text-anchor="middle" font-family="Cinzel" font-weight="800" font-size="16" fill="#2a1f17"><tspan data-n="${m}"${isDig() ? ' class="d"' : ''}>${fmt(m)}</tspan></text></g>`;
+  }
+  $('stones').innerHTML = st;
+  const r = L.at(70), house = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f6ead0" stroke="#b9a988"/><path d="M${x - 2} ${y} l${w / 2 + 2} -8 l${w / 2 + 2} 8Z" fill="#b5523a"/>`;
+  $('rome').innerHTML = `<g class="temple" id="temple" transform="translate(${r.x - 48} ${r.y + 24})">${house(-34, 52, 26, 22)}${house(-14, 60, 16, 14)}${house(74, 56, 22, 18)}<path d="M0 34 L34 8 L68 34 Z" fill="#9e2a22"/><rect x="4" y="34" width="60" height="6" fill="#efe6d4" stroke="#76665a"/>${[8,22,36,50].map(x => `<rect x="${x}" y="40" width="7" height="34" fill="#fffaf0" stroke="#76665a"/>`).join('')}<rect x="0" y="74" width="68" height="7" fill="#efe6d4" stroke="#76665a"/><text x="34" y="100" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="18" fill="#9e2a22">ROMA</text></g>`;
+  viaTokens(); viaProg(); viaTurn();
+}
+/* a token shows the initial of the last word (The Lions: L), or the numeral itself (Legio III); clashes fall back to the side's number */
+function initials(){ const t = G.sides.map(s => { const w = s.name.trim().split(/\s+/).pop() || '?'; return /^[IVX]{1,4}$/.test(w) ? w : w.slice(0, 1).toUpperCase(); }); return t.map((x, k) => t.indexOf(x) !== t.lastIndexOf(x) ? fmt(k + 1) : x); }
+function viaRacers(){ const ini = initials(); const r = G.sides.map((s, k) => ({ id:'t' + k, m:L.shown[k], c:s.colour, t:ini[k] })); if (G.mode === 'solo') r.push({ id:'tr', m:L.rivalShown, c:'#76665a', t:'M' }); return r; }
+function viaTokens(){
+  $('tokens').innerHTML = viaRacers().map(r => `<g id="${r.id}"><g transform="scale(${L.tok})"><path d="M0 12 L-5 22 H5Z" fill="${r.c}"/><circle r="13" fill="${r.c}" stroke="#fff" stroke-width="3"/><text y="5" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="${r.t.length > 2 ? 10 : 14}" fill="#fff">${esc(r.t)}</text></g></g>`).join('');
+  viaPlace();
+}
+function viaPlace(){ const rs = viaRacers(); rs.forEach((r, k) => { const p = L.at(r.m), dy = -(k % 4) * 24 * L.tok - 10 * L.tok, dx = -(k >> 2) * 28 * L.tok, el = $(r.id); if (el) el.setAttribute('transform', `translate(${(p.x + dx).toFixed(1)} ${(p.y + dy).toFixed(1)})`); }); }
+function viaMove(key, to){
+  const from = key === 'rival' ? L.rivalShown : L.shown[key], t0 = performance.now(), dur = STILL ? 1 : 900, lvl = L;
+  SFX.hoof();
+  const step = now => {
+    if (L !== lvl || !$('roadPath')) return;
+    const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3), m = from + (to - from) * e;
+    if (key === 'rival') L.rivalShown = m; else L.shown[key] = m;
+    viaPlace();
+    if (Math.random() < .3 && !STILL) { const p = L.at(m); const d = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); d.setAttribute('cx', p.x); d.setAttribute('cy', p.y + 8); d.setAttribute('r', 7); d.setAttribute('fill', '#c9b994'); d.setAttribute('class', 'puff'); $('dust').appendChild(d); setTimeout(() => d.remove(), 750); }
+    if (t < 1) requestAnimationFrame(step);
+    else if (key !== 'rival') { for (let ms = 10; ms < 70; ms += 10) if (to >= ms) { const el = $('ms' + ms); if (el) el.classList.add('lit'); } if (to >= 70) { $('temple').classList.add('glow'); SFX.cheer(); } }
+  };
+  requestAnimationFrame(step);
+}
+function viaProg(){ put('lvProg', G.mode === 'solo' ? 'YOU ' + T(L.miles[0]) + ' · MARCUS ' + T(L.rival) + ' MILES' : 'ROUND ' + T(Math.min(L.rounds + 1, L.maxRounds)) + ' OF ' + T(L.maxRounds)); }
+function viaTurn(){
+  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
+  askMC(draw('via'), (ok, picked) => {
+    let line = ok ? 'Right. ' + T(L.c.step) + ' more miles of road. +' + T(PER) + ' glory.' : (picked == null ? 'Time is up. ' : 'Not this time. ') + 'The road waits.';
+    if (ok) { L.miles[side] = Math.min(70, L.miles[side] + L.c.step); award(side, PER); viaMove(side, L.miles[side]); }
+    let rivalMoves = false;
+    if (G.mode === 'solo' && L.miles[0] < 70) {
+      if (Math.random() < .55) { L.rival = Math.min(70, L.rival + 10); rivalMoves = true; line += ' Marcus the courier gains ten miles.'; } else line += ' Marcus’s horse throws a shoe.';
+      if (rivalMoves) { const lvl = L; setTimeout(() => { if (L === lvl) viaMove('rival', L.rival); }, ok ? 950 : 300); }
+    }
+    viaProg();
+    const winner = L.miles.findIndex(m => m >= 70);
+    const last = G.mode === 'solo' ? ++L.rounds >= L.maxRounds : (L.turn === G.sides.length - 1 && ++L.rounds >= L.maxRounds);
+    if (winner >= 0) { award(winner, BONUS); L.bonus[winner] = BONUS; L.won = true; return verdict(line, ok, () => endLevel('Rome is reached', G.mode === 'solo' ? 'You beat Marcus to the gates. +' + T(BONUS) + ' bonus glory.' : 'First through the gates: ' + G.sides[winner].name + '. +' + T(BONUS) + ' bonus glory.'), true); }
+    if (G.mode === 'solo' && L.rival >= 70) return verdict(line, ok, () => endLevel('Marcus reaches Rome first', 'The courier beats you to the gates. Your glory still counts.'), true);
+    if (last) return verdict(line, ok, () => endLevel('Night falls on the road', 'Nobody reaches Rome in time. Your glory still counts.'), true);
+    if (G.mode !== 'solo') L.turn = (L.turn + 1) % G.sides.length;
+    verdict(line, ok, viaTurn, rivalMoves && !ok);
+  });
+}
+
+/* ========== LEVEL II: The Arena ========== */
+function fighter(boss){
+  return `<g transform="${boss ? 'scale(-1.75 1.75)' : 'scale(1.42)'}"><ellipse cx="0" cy="2" rx="36" ry="6" fill="rgba(70,45,15,.25)"/>
+    <path d="M-13 0 L-9 -36 H1 L-1 0Z M4 0 L5 -36 H15 L18 0Z" fill="#c08f62"/><path d="M-13 0 L-11 -16 H0 L-1 0Z M4 0 L4.5 -16 H16.5 L18 0Z" fill="${boss ? '#b08a3a' : '#8a5a3a'}"/>
+    <path d="M-17 -30 L-13 -52 H17 L21 -30Z" fill="${boss ? '#7a2a22' : 'var(--fc)'}"/><path d="M-15 -48 L-17 -82 H19 L17 -48Z" fill="${boss ? '#c08f62' : '#f1e7d2'}"/><rect x="-16" y="-54" width="34" height="7" fill="#5b3b22"/>
+    <g class="arm"><path d="M15 -78 L36 -66" stroke="#c08f62" stroke-width="8" stroke-linecap="round"/><path d="M36 -66 L72 -86" stroke="#e8edf2" stroke-width="5" stroke-linecap="round"/><path d="M33 -73 l7 11" stroke="#e2b84a" stroke-width="4" stroke-linecap="round"/></g>
+    <circle cx="1" cy="-94" r="11" fill="#d9a77c"/>${boss
+      ? '<path d="M-12 -92 a13 13 0 0 1 26 0 v9 h-26Z" fill="#b08a3a"/><ellipse cx="1" cy="-93" rx="19" ry="4" fill="#8a6a2a"/><path d="M-10 -104 Q1 -128 12 -104 Q1 -112 -10 -104Z" fill="#b9342a"/><path d="M-6 -90 h14 M-6 -86 h14" stroke="#3a2a1a" stroke-width="1.6"/>'
+      : '<path d="M-11 -96 a12 12 0 0 1 24 0Z" fill="#c9ccd2"/><rect x="-12" y="-98" width="26" height="4" fill="#a9adb5"/><path d="M-6 -107 Q1 -118 8 -107Z" fill="var(--fc)"/>'}
+    <rect x="-32" y="-82" width="27" height="52" rx="7" fill="${boss ? '#9e2a22' : 'var(--fc)'}" stroke="#e2b84a" stroke-width="2.5"/><circle cx="-18.5" cy="-56" r="5" fill="#e2b84a"/></g>`;
+}
+function arenaStart(){
+  L.boss = 70; L.hp = G.sides.map(() => 70); L.turn = 0;
+  const narrow = ($('stage').clientWidth || 800) < 560;
+  const arches = Array.from({ length:13 }, (_, k) => `<path d="M${-10 + k * 80} 176 v-58 a28 28 0 0 1 56 0 v58Z" fill="#8a6a52"/><path d="M${-10 + k * 80} 176 v-58 a28 28 0 0 1 56 0" fill="none" stroke="#d9c7a2" stroke-width="4"/>`).join('');
+  const crowd = Array.from({ length:192 }, (_, k) => { const r = k % 3, i = Math.floor(k / 3), cx = 6 + i * 15.7 + (r % 2) * 7, cy = 12 + r * 14; return `<g><circle cx="${cx}" cy="${cy}" r="5" fill="${['#c9a37a','#a87d57','#e0c39b','#8a5a3a'][(i + r) % 4]}"/><rect x="${cx - 5}" y="${cy + 4}" width="10" height="8" rx="2" fill="${['#b9342a','#f6ead0','#2d5885','#b48526','#56732f'][(i * 3 + r) % 5]}"/></g>`; }).join('');
+  $('stage').innerHTML = `<svg viewBox="${narrow ? '230 0 540 300' : '0 0 1000 300'}" role="img" aria-label="The arena: your fighter faces Spiculus">
+    <defs><linearGradient id="aSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3dfa8"/><stop offset="1" stop-color="#dbb872"/></linearGradient></defs>
+    <rect width="1000" height="60" fill="#e6d3ad"/><g id="crowd">${crowd}</g><rect y="54" width="1000" height="8" fill="#d9c7a2"/>
+    <rect y="62" width="1000" height="118" fill="#efe2c2"/>${arches}<rect y="172" width="1000" height="10" fill="#d9c7a2"/>
+    <rect y="180" width="1000" height="120" fill="url(#aSand)"/>${Array.from({ length:14 }, (_, k) => `<ellipse cx="${40 + k * 71}" cy="${200 + (k * 37) % 86}" rx="${26 + (k * 13) % 24}" ry="3" fill="rgba(160,120,60,.22)"/>`).join('')}
+    <g transform="translate(372 280)"><g id="fChal" class="fig">${fighter(false)}</g></g>
+    <g transform="translate(628 280)"><g id="fBoss" class="fig boss">${fighter(true)}</g></g>
+    <text x="628" y="297" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="13" fill="#7a2a22" letter-spacing="2">SPICULUS</text></svg>
+    <div class="bars${G.sides.length > 4 ? ' many' : ''}" style="margin-top:12px" id="arenaBars"></div><div class="flash" id="flash"></div>`;
+  arenaPaint(); arenaTurn();
+}
+function segs(hp, c, id){ return `<div class="segs" id="${id}" style="--c:${c}">${Array.from({ length:7 }, (_, k) => `<i class="${k < hp / 10 ? '' : 'off'}"></i>`).join('')}</div>`; }
+function arenaPaint(){
+  if (!$('arenaBars')) return;
+  $('arenaBars').innerHTML = `<div class="bar boss"><span>Spiculus</span>${segs(L.boss, '#2a1f17', 'segBoss')}<span class="rn" style="font-size:18px">${N(L.boss)}</span></div>` +
+    G.sides.map((s, k) => `<div class="bar${L.hp[k] ? '' : ' out'}"><span>${esc(s.name)}</span>${segs(L.hp[k], s.colour, 'seg' + k)}<span class="rn" style="font-size:18px">${N(L.hp[k])}</span></div>`).join('');
+  put('lvProg', 'SPICULUS ' + T(L.boss) + ' OF ' + T(70));
+}
+function breakSeg(id, before, after){
+  const box = $(id); if (!box || STILL) { arenaPaint(); return; }
+  for (let k = Math.ceil(after / 10); k < Math.ceil(before / 10); k++) if (box.children[k]) box.children[k].classList.add('break');
+  const lvl = L; setTimeout(() => { if (L === lvl) arenaPaint(); }, 600);
+}
+function crowdJump(){ if (STILL || !$('crowd') || !Element.prototype.animate) return; [...$('crowd').children].forEach((c, k) => { c.animate([{ transform:'translateY(0)' }, { transform:'translateY(-6px)' }, { transform:'translateY(0)' }], { duration:400, delay:k % 7 * 40, iterations:2 }); }); }
+function arenaTurn(){
+  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
+  $('fChal').style.setProperty('--fc', G.sides[side].colour);
+  askMC(draw('arena'), (ok, picked) => {
+    let line;
+    if (ok) { const was = L.boss; L.boss = Math.max(0, L.boss - L.c.hit); award(side, PER); line = 'A clean strike on Spiculus. +' + T(PER) + ' glory.'; SFX.clang(); act('fChal', 'lunge'); setTimeout(() => { act('fBoss', 'hurt'); cry('HABET!'); shake(); }, 170); crowdJump(); breakSeg('segBoss', was, L.boss); }
+    else { const was = L.hp[side]; L.hp[side] = Math.max(0, L.hp[side] - L.c.loss); line = (picked == null ? 'Time is up. ' : '') + 'Spiculus strikes back.' + (L.hp[side] ? '' : ' That is the end of the fight for ' + whom(side) + '.'); act('fBoss', 'lunge'); setTimeout(() => { act('fChal', 'hurt'); flash(); SFX.clang(); }, 170); breakSeg('seg' + side, was, L.hp[side]); }
+    if (L.boss <= 0) { award(side, BONUS); L.bonus[side] = BONUS; L.won = true; setTimeout(() => { SFX.cheer(); cry('IO TRIUMPHE!', '#56732f'); const b = $('fBoss'); if (b) b.classList.add('down'); }, 650); return verdict(line, ok, () => endLevel('The crowd rises', 'Spiculus falls to ' + whom(side) + '. Thumbs up from fifty thousand Romans. +' + T(BONUS) + ' bonus glory.'), true); }
+    const alive = k => L.hp[k] > 0;
+    if (!G.sides.some((_, k) => alive(k))) return verdict(line, ok, () => endLevel('Spiculus stands', 'The champion wins this bout, but the crowd spares you. Your glory still counts.'), true);
+    if (G.mode !== 'solo') L.turn = nextSide(L.turn, alive);
+    verdict(line, ok, arenaTurn);
+  });
+}
+
+/* ========== LEVEL III: The Senate ========== */
+function senateStart(){
+  L.votes = G.sides.map(() => 0); L.claims = 0; L.max = 10;
+  const seats = []; let k = 0;
+  [[14, 120], [18, 160], [20, 200], [18, 240]].forEach(([n, r]) => { for (let j = 0; j < n && k < 70; j++, k++) { const a = Math.PI * (j + .5) / n; seats.push([500 - Math.cos(a) * r * 1.5, 270 - Math.sin(a) * r]); } });
+  const col = x => `<rect x="${x - 6}" y="6" width="46" height="14" rx="3" fill="#f6ecd6" stroke="#d9c7a2"/><rect x="${x}" y="20" width="34" height="250" fill="#fbf4e2" stroke="#d9c7a2"/><path d="M${x + 9} 22 v246 M${x + 17} 22 v246 M${x + 25} 22 v246" stroke="rgba(120,96,60,.2)" stroke-width="2"/><rect x="${x - 6}" y="270" width="46" height="12" rx="2" fill="#f6ecd6" stroke="#d9c7a2"/>`;
+  $('stage').innerHTML = `<svg viewBox="0 0 1000 290" role="img" aria-label="70 seats in the Senate">
+    <path d="M40 6 ${Array.from({ length:8 }, (_, i) => `q57.5 34 115 0`).join(' ')} V0 H40Z" fill="#9e2a22"/><path d="M40 6 ${Array.from({ length:8 }, () => 'q57.5 34 115 0').join(' ')}" fill="none" stroke="#e2b84a" stroke-width="2.5"/>
+    ${col(18)}${col(948)}
+    <path d="M250 290 A250 250 0 0 1 750 290" fill="none" stroke="rgba(180,133,38,.18)" stroke-width="60"/>
+    <g id="seats">${seats.map(([x, y], i) => `<circle id="seat${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#e6dccb" stroke="#b9a988" stroke-width="1.5" style="transition-delay:${(i % 10) * 30}ms"/>`).join('')}</g>
+    <path d="M420 290 V246 q80 -14 160 0 V290Z" fill="#efe2c2" stroke="#d9c7a2" stroke-width="2"/><text x="500" y="280" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="30" fill="#9e2a22">SPQR</text></svg>` + (G.mode === 'solo' ? '' : `<div class="bars${G.sides.length > 4 ? ' many' : ''}" id="senBars" style="margin-top:10px"></div>`);
+  senatePaint(); senateAsk();
+}
+function senatePaint(){
+  const fill = [];
+  if (G.mode === 'solo') { for (let n = 0; n < L.votes[0]; n++) fill.push(G.sides[0].colour); }
+  else {
+    G.sides.map((s, k) => ({ c:s.colour, v:L.votes[k] })).sort((a, b) => b.v - a.v).forEach(o => { for (let n = 0; n < Math.floor(o.v / G.sides.length); n++) fill.push(o.c); });
+    $('senBars').innerHTML = G.sides.map((s, k) => `<div class="bar"><span>${esc(s.name)}</span><div class="segs" style="--c:${s.colour}">${Array.from({ length:7 }, (_, n) => `<i class="${n < L.votes[k] / 10 ? '' : 'off'}"></i>`).join('')}</div><span class="rn" style="font-size:18px">${N(L.votes[k])}</span></div>`).join('');
+  }
+  for (let s = 0; s < 70; s++) { const el = $('seat' + s); if (el) el.setAttribute('fill', fill[s] || '#e6dccb'); }
+  put('lvProg', 'CLAIM ' + T(Math.min(L.claims + 1, L.max)) + ' OF ' + T(L.max) + (G.mode === 'solo' ? ' · ' + T(L.votes[0]) + ' VOTES' : ''));
+}
+function senateAsk(){
+  setTurn(null);
+  const c = drawClaim(), truth = c.truth, picks = G.sides.map(() => null), u = unit();
+  let counted = false;
+  const count = () => { if (counted) return; counted = true; clearInterval(clockT); clockT = null; document.removeEventListener('keydown', keys); $('qBox').querySelectorAll('.thumb').forEach(x => x.disabled = true); senateCount(c, truth, picks); };
+  const keys = e => { if (G.mode !== 'solo') return; const k = e.key.toLowerCase(); const b = $('qBox').querySelector(k === '1' || k === 'a' || k === 'y' ? '.thumb.aye' : k === '2' || k === 'n' ? '.thumb.nay' : null); if (b) { e.preventDefault(); b.click(); } };
+  const head = clockHTML() + (c.q
+    ? `<p class="kicker">The Emperor is asked</p><div class="claim" id="claim"><p class="q">${esc(c.q)}</p><p class="says">The Emperor answers: <b>“${esc(c.shown)}”</b></p></div>`
+    : `<p class="kicker">The Emperor declares</p><div class="claim" id="claim"><p class="q">“${esc(c.text)}”</p></div>`);
+  const tail = '<p class="verdict" id="verdict" hidden></p><div class="next" id="nextBar" hidden><i></i></div>';
+  if (G.mode === 'solo') {
+    $('qBox').innerHTML = head + `<div class="bigvote"><button type="button" class="thumb aye" data-v="1">${THUMB(false)}Aye, true</button><button type="button" class="thumb nay" data-v="0">${THUMB(true)}Nay, false</button></div>` + tail;
+    $('qBox').querySelectorAll('.thumb').forEach(b => b.addEventListener('click', () => { if (picks[0] != null || counted) return; picks[0] = b.dataset.v === '1'; b.setAttribute('aria-pressed', 'true'); count(); }));
+    document.addEventListener('keydown', keys);
+  } else {
+    $('qBox').innerHTML = head + `<p class="hint">Each ${u} casts a vote. The votes are counted when every ${u} has voted${G.clock ? ', or when time runs out' : ''}.</p><div class="votes${G.sides.length > 4 ? ' many' : ''}">` +
+      G.sides.map((s, k) => `<div class="vrow" style="--c:${s.colour}"><span class="nm">${esc(s.name)}</span><button type="button" class="thumb aye" data-k="${k}" data-v="1" aria-pressed="false" aria-label="${esc(s.name)}: Aye, true">${THUMB(false)}Aye</button><button type="button" class="thumb nay" data-k="${k}" data-v="0" aria-pressed="false" aria-label="${esc(s.name)}: Nay, false">${THUMB(true)}Nay</button></div>`).join('') + '</div>' + tail;
+    $('qBox').querySelectorAll('.thumb').forEach(b => b.addEventListener('click', () => {
+      if (counted) return; const k = +b.dataset.k; picks[k] = b.dataset.v === '1';
+      $('qBox').querySelectorAll('.thumb[data-k="' + k + '"]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      tone(500 + k * 60, 0, .08, 'triangle', .08);
+      if (picks.every(p => p != null)) setTimeout(count, 450);
+    }));
+  }
+  runClock(CLOCK.senate, count);
+}
+function senateCount(c, truth, picks){
+  SFX.gavel();
+  const st = document.createElement('div'); st.className = 'seal-stamp ' + (truth ? 't' : 'f'); st.textContent = truth ? 'VERUM' : 'FALSUM'; $('claim').appendChild(st);
+  const right = [];
+  picks.forEach((p, k) => { if (p === truth) { L.votes[k] = Math.min(70, L.votes[k] + 10); award(k, PER); right.push(G.sides[k].name); } });
+  setTimeout(() => (right.length ? SFX.right : SFX.wrong)(), 350);
+  L.claims++; senatePaint();
+  let line = (truth ? 'Verum: it is true. ' : 'Falsum: it is false. ') + (!truth && c.right ? 'The answer is ' + c.right + '. ' : '');
+  line += G.mode === 'solo' ? (right.length ? 'The Senate is impressed. +' + T(10) + ' votes and +' + T(PER) + ' glory.' : (picks[0] == null ? 'Time is up. ' : '') + 'The Senate murmurs. No votes this time.') : (right.length === G.sides.length ? 'Everyone is right. +' + T(10) + ' votes and glory each.' : right.length ? 'Right: ' + right.join(', ') + '. +' + T(10) + ' votes and glory each.' : 'Nobody is right.');
+  const won = G.sides.map((_, k) => k).filter(k => L.votes[k] >= 70 && !L.bonus[k]);
+  won.forEach(k => { award(k, BONUS); L.bonus[k] = BONUS; });
+  if (won.length) { L.won = true; return verdict(line, right.length > 0, () => endLevel('The Senate is won', T(70) + ' votes go to ' + (won.length > 3 ? won.length + ' ' + unit() + 's' : won.length > 2 ? won.slice(0, -1).map(whom).join(', ') + ' and ' + whom(won[won.length - 1]) : won.map(whom).join(' and ')) + '. +' + T(BONUS) + ' bonus glory.'), true); }
+  if (L.claims >= L.max) return verdict(line, right.length > 0, () => endLevel('The Senate adjourns', 'Nobody reaches ' + T(70) + ' votes this session. Your glory still counts.'), true);
+  verdict(line, right.length > 0, senateAsk, true);
+}
+
+/* ========== LEVEL IV: Hold the Wall ========== */
+function wallStart(){
+  L.wall = 70; L.wave = 0; L.max = L.c.waves; L.turn = 0;
+  $('stage').innerHTML = `<svg viewBox="0 0 1000 240" role="img" aria-label="Hadrian’s Wall, with raiders beyond it">
+    <defs><linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d3ee"/><stop offset="1" stop-color="#fdf3d8"/></linearGradient></defs>
+    <rect width="1000" height="200" fill="url(#wSky)"/><circle cx="860" cy="46" r="24" fill="#fff6cf"/>
+    <g class="drift" fill="#fff" opacity=".9"><ellipse cx="150" cy="40" rx="46" ry="14"/><ellipse cx="186" cy="30" rx="30" ry="12"/><ellipse cx="560" cy="56" rx="54" ry="15"/><ellipse cx="520" cy="46" rx="30" ry="11"/></g>
+    <path d="M0 150 Q120 96 260 132 T520 112 T800 136 T1000 104 V200 H0Z" fill="#b7bfd6"/><path d="M0 170 Q200 128 420 160 T820 140 T1000 162 V200 H0Z" fill="#a9bf9a"/>
+    <g id="raiders"></g>
+    <rect x="0" y="194" width="1000" height="46" fill="#c9d3a8"/><g id="blocks"></g>
+    <path d="M0 200 Q250 188 500 198 T1000 194 V240 H0Z" fill="#b8c592"/>${Array.from({ length:16 }, (_, k) => `<path d="M${20 + k * 63} ${214 + (k * 7) % 14} l4 -9 l3 9 l4 -11 l3 11" fill="none" stroke="#8fa56a" stroke-width="2"/>`).join('')}</svg><div class="flash" id="flash"></div>`;
+  wallBlocks(); wallRaiders(); wallTurn();
+}
+function wallBlocks(){
+  if (!$('blocks')) return;
+  const up = Math.round(L.wall / 10);
+  $('blocks').innerHTML = Array.from({ length:7 }, (_, k) => {
+    const x = 40 + k * 132;
+    if (k >= up) return `<g opacity=".9"><path d="M${x} 196 l20 -22 l30 10 l28 -16 l34 18 l14 10 Z" fill="#b9a988"/><path d="M${x + 30} 180 l10 -14 l12 8" stroke="#9e2a22" stroke-width="3" fill="none"/></g>`;
+    let b = '';
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) b += `<rect x="${x + c * 31 + (r % 2 ? 8 : 0)}" y="${116 + r * 20}" width="${r % 2 && c === 3 ? 23 : 30}" height="18" fill="${(r + c) % 3 ? '#e4d9c2' : '#dccfb4'}" stroke="#b9a988" stroke-width="1.5"/>`;
+    return `<g class="stone" id="blk${k}">${b}${[0,1,2].map(m => `<rect x="${x + 6 + m * 42}" y="98" width="26" height="18" fill="#e4d9c2" stroke="#b9a988" stroke-width="1.5"/>`).join('')}${k % 3 === 1 ? `<path d="M${x + 61} 98 v-22" stroke="#5b3b22" stroke-width="3"/><path class="pennant" d="M${x + 62} 76 l26 6 l-26 8Z" fill="#9e2a22"/>` : ''}</g>`;
+  }).join('');
+}
+function wallProg(){ put('lvProg', 'WAVE ' + T(Math.min(L.wave + 1, L.max)) + ' OF ' + T(L.max) + ' · WALL ' + T(L.wall)); }
+const RAIDER = (x, y, s, k) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M16 60 L${22 + (k % 3) * 3} -44" stroke="#3a2a1a" stroke-width="3"/><path d="M${22 + (k % 3) * 3} -56 l-5 14 h10Z" fill="#c9ccd2"/><path d="M-14 60 Q-16 14 0 12 Q16 14 14 60Z" fill="${k % 2 ? '#4c6a8a' : '#5b4a3a'}"/><circle cx="0" cy="0" r="10" fill="#d9a77c"/><path d="M-9 -3 Q0 -20 9 -3 Q4 -9 0 -8 Q-4 -9 -9 -3Z" fill="${k % 2 ? '#b5523a' : '#3a2a1a'}"/><path d="M-6 2 h12" stroke="#2d5885" stroke-width="2.5"/><circle cx="-12" cy="30" r="14" fill="#2d5885" stroke="#1f3d60" stroke-width="2"/><circle cx="-12" cy="30" r="4" fill="#e2b84a"/></g>`;
+function wallRaiders(){
+  const n = Math.min(3, Math.max(0, L.max - L.wave));
+  $('raiders').innerHTML = Array.from({ length:n }, (_, k) => `<g class="raid" id="raid${k}" style="transform:translateY(${STILL ? 0 : 80}px)"><g class="bob" style="animation-delay:${k * .3}s">${[0, 1, 2].map(j => RAIDER(130 + k * 330 + j * 42, 92 + (j % 2) * 8, 1 - (j % 2) * .1, k + j)).join('')}</g></g>`).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() => { for (let k = 0; k < n; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(0)'; } }));
+  wallProg();
+}
+function wallTurn(){
+  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
+  askMC(draw('wall'), (ok, picked) => {
+    let line;
+    if (ok) { award(side, PER); line = 'Raiders driven back. +' + T(PER) + ' glory.'; for (let k = 0; k < 3; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(90px)'; } cry('REPULSI!', '#56732f'); noise(0, .5, 3000, 2, .08); }
+    else {
+      const lost = Math.round(L.wall / 10) - 1; L.wall = Math.max(0, L.wall - 10); line = (picked == null ? 'Time is up. ' : '') + 'The raiders break a stretch of the Wall.';
+      SFX.crash(); shake(); flash(); for (let k = 0; k < 3; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(-14px)'; }
+      const blk = $('blk' + lost), lvl = L; if (blk && !STILL) { blk.classList.add('fall'); setTimeout(() => { if (L === lvl) wallBlocks(); }, 800); } else wallBlocks();
+    }
+    L.wave++; wallProg();
+    if (L.wall <= 0) return verdict(line, ok, () => endLevel('The Wall is breached', 'The raiders pour through, but all the glory you have won still counts.'), true);
+    if (L.wave >= L.max) { L.won = true; G.sides.forEach((_, k) => { award(k, BONUS); L.bonus[k] = BONUS; }); setTimeout(SFX.cheer, 400); return verdict(line, ok, () => endLevel('The Wall holds', T(L.max) + ' waves beaten back with ' + T(L.wall) + ' of the Wall still standing. +' + T(BONUS) + ' bonus glory for ' + (G.mode === 'solo' ? 'you' : 'every ' + unit()) + '.'), true); }
+    if (G.mode !== 'solo') L.turn = (L.turn + 1) % G.sides.length;
+    verdict(line, ok, () => { wallRaiders(); wallTurn(); });
+  });
+}
+
+/* ---------- the Triumph: petals fall, the numerals count up ---------- */
+const RANKS = [[.9, 'Emperor', 'Rome is yours. They will carve your name in marble.'], [.75, 'Consul', 'The highest office of the Republic. Rome salutes you.'], [.6, 'Senator', 'A seat in the Senate, and a toga with a purple stripe.'], [.42, 'Tribune', 'A fine officer. The legions trust you.'], [.25, 'Centurion', 'Tough, loyal, and in charge of eighty men.'], [0, 'Legionary', 'Every empire starts with one soldier. March again.']];
+function petals(){
+  if (STILL) return;
+  const cv = $('petals'), cx = cv.getContext('2d'); cv.hidden = false;
+  const W = innerWidth, H = innerHeight, r = Math.min(devicePixelRatio || 1, 1.5); cv.width = W * r; cv.height = H * r; cx.setTransform(r, 0, 0, r, 0, 0);
+  const ps = Array.from({ length:90 }, () => ({ x:Math.random() * W, y:-20 - Math.random() * H, s:5 + Math.random() * 7, vy:.8 + Math.random() * 1.4, vx:(Math.random() - .5) * .8, a:Math.random() * 6.28, va:(Math.random() - .5) * .08, c:['#c2414b','#e07b86','#9e2a22','#f0b4b9','#b48526'][Math.floor(Math.random() * 5)] }));
+  const t0 = performance.now();
+  const frame = now => {
+    cx.clearRect(0, 0, W, H); const age = now - t0;
+    ps.forEach(p => { p.y += p.vy; p.x += p.vx + Math.sin((p.y + p.a * 40) / 60) * .6; p.a += p.va; cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c; cx.globalAlpha = Math.max(0, Math.min(1, (9000 - age) / 2000)); cx.beginPath(); cx.ellipse(0, 0, p.s, p.s * .55, 0, 0, 6.28); cx.fill(); cx.restore(); });
+    if (age < 9000 && !$('vTriumph').hidden) requestAnimationFrame(frame); else { cx.clearRect(0, 0, W, H); cv.hidden = true; }
+  };
+  requestAnimationFrame(frame);
+}
+function triumph(quiet){
+  const best = G.sides.slice().sort((a, b) => b.glory - a.glory)[0], max = cfg().max;
+  const r = RANKS.find(([f]) => best.glory / max >= f);
+  if (G.mode === 'solo') { $('trRank').textContent = r[1]; $('trLine').textContent = r[2]; $('trBoardBox').hidden = true; }
+  else { $('trRank').textContent = best.name + ', ' + r[1]; $('trLine').textContent = 'The laurel goes to ' + best.name + '. ' + r[2]; $('trBoardBox').hidden = false; paintBoard($('trBoard')); }
+  show('vTriumph'); wreath($('wreath2'), '#b48526', true); if (!quiet) SFX.triumph(); petals();
+  const t0 = performance.now(), dur = STILL ? 1 : 1800;
+  const count = now => { const t = Math.min(1, (now - t0) / dur), v = Math.round(best.glory * (1 - Math.pow(1 - t, 3))); if (t < 1) { $('trGlory').innerHTML = N(v); $('trArabic').innerHTML = N(v, true) + ' GLORY'; requestAnimationFrame(count); } else { $('trGlory').innerHTML = N(best.glory); $('trArabic').innerHTML = N(best.glory, true) + ' GLORY'; } };
+  requestAnimationFrame(count);
+}
+$('againBtn').addEventListener('click', () => { setMode(G.mode); show('vHome'); });
+
+setMode('solo'); setClock(true);
+})();
+</script>
+<script src="tb-shell.js" data-tone="light" defer></script>
+</body>
+</html>
