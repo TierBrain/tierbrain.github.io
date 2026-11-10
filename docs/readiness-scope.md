@@ -7,11 +7,11 @@ device has been tested.
 
 ## Catalogue and test coverage
 
-[`readiness-catalogue.json`](readiness-catalogue.json) lists the 69 homepage
+[`readiness-catalogue.json`](readiness-catalogue.json) lists the 70 homepage
 catalogue entries and their baseline coverage. There are 25 topic quiz pages
-with copies of the countdown engine and 44 other entries. One of those entries,
+with copies of the countdown engine and 45 other entries. One of those entries,
 Wall of Fame, is a leaderboard. Shared engines, editions and alternate modes
-must not be presented as 69 independently tested engines.
+must not be presented as 70 independently tested engines.
 
 The previous gameplay suite completed nine multiplayer editions: Big Quiz,
 Throne General/Bible, Creak Shared Climb, Standing Room Together, Circuit Team

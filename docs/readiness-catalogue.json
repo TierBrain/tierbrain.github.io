@@ -3,16 +3,16 @@
   "baseline_commit": "1fdf0b3db415b2f62c315fc2151d0e4403ecdd30",
   "source": "index.html anchors with data-title, parsed by sync-catalogue.py",
   "counts": {
-    "catalogue_entries": 69,
+    "catalogue_entries": 70,
     "topic_quiz_entries": 25,
-    "non_topic_entries": 44,
+    "non_topic_entries": 45,
     "leaderboard_utilities": 1,
     "previous_gameplay_editions": 9,
     "additional_online_editions": 7
   },
   "interpretation": [
     "Baseline inventory, not a claim that this readiness pass is complete",
-    "69 catalogue cards include a leaderboard and copied or shared engines; they are not 69 distinct game engines",
+    "70 catalogue cards include a leaderboard and copied or shared engines; they are not 70 distinct game engines",
     "Only named tests and their documented limits support a coverage claim",
     "Question fact accuracy and physical device testing are not inferred from automated page checks"
   ],
@@ -61,6 +61,17 @@
       "coverage_group": "big_quiz",
       "baseline_evidence": "tests/gameplay_big_quiz.py",
       "baseline_scope": "Complete listed multiplayer edition; Spines also has solo smoke; see suite documentation"
+    },
+    {
+      "href": "lxx.html",
+      "title": "LXX",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Added after the baseline commit. Single-device game with no backend; entry page and layout are checked here, and full playthroughs are covered by tests/test_lxx.py"
     },
     {
       "href": "full-circuit-host.html",
