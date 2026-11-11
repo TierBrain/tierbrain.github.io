@@ -76,6 +76,12 @@ class LxxPageTests(unittest.TestCase):
         rows = re.findall(r"^\s+\[(.+)\],?$", bank, re.M)
         self.assertGreaterEqual(len(rows), 170)
 
+    def test_one_player_is_never_called_nobody(self):
+        html = page_text()
+        self.assertIn("(G.mode === 'solo' ? 'Time runs out before you reach Rome.' : 'Nobody reaches Rome in time.')", html)
+        self.assertIn("(G.mode === 'solo' ? 'You fall short of ' : 'Nobody reaches ')", html)
+        self.assertIn("(L.won ? ' complete' : ' over')", html)
+
     def test_roman_set_is_well_formed(self):
         bank = (ROOT / 'lxx-bank.js').read_text(encoding='utf-8')
         rows = re.findall(r"^\s+\[(.+)\],?$", bank, re.M)
@@ -271,6 +277,40 @@ class LxxBrowserTests(unittest.TestCase):
         self.assertIn('breaks and the raiders are through', goals[3])
         self.assertTrue(all(g.startswith('GOAL') for g in goals.values()), goals)
 
+    def test_solo_road_marcus_always_arrives_and_a_lost_level_is_over(self):
+        pg = self.open()
+        pg.click('#cOff'); pg.uncheck('#cutsToggle'); pg.click('#beginBtn'); pg.click('#enterBtn')
+        self.assertIn('is sure to arrive by question XII', pg.text_content('#lvGoal'))
+        asked = 0
+        while pg.is_visible('#vLevel'):
+            pg.wait_for_selector('#qBox .opt:not(:disabled)', timeout=6000)
+            asked += 1
+            self.assertTrue(pg.text_content('#lvProg').startswith('QUESTION ' + ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][asked - 1] + ' OF XII'))
+            self.answer_as(False)
+            pg.wait_for_selector('#nextBar:not([hidden])', timeout=4000); pg.click('#nextBar'); pg.wait_for_timeout(60)
+        self.assertLessEqual(asked, 12)
+        self.assertEqual(pg.text_content('#leTitle'), 'Marcus reaches Rome first')
+        self.assertEqual(pg.text_content('#leKick'), 'Level I over')
+        self.assertNotIn('Nobody', pg.inner_text('#vLevelEnd'))
+
+    def test_rivals_count_rounds_on_the_road_and_waves_on_the_wall_the_same_way(self):
+        pg = self.open(1280, 800)
+        pg.click('#mRivals'); pg.click('#cOff'); pg.uncheck('#cutsToggle'); pg.click('#beginBtn')
+        for level in range(4):
+            pg.click('#enterBtn')
+            if level in (0, 3):
+                seen = []
+                for turn in range(4):
+                    pg.wait_for_selector('#qBox .opt:not(:disabled)', timeout=6000)
+                    seen.append(pg.text_content('#lvProg').split('·')[0].strip())
+                    self.answer_as(True)
+                    pg.wait_for_selector('#nextBar:not([hidden])', timeout=4000); pg.click('#nextBar'); pg.wait_for_timeout(60)
+                word = 'ROUND' if level == 0 else 'WAVE'
+                self.assertEqual(seen, [word + ' I OF ' + seen[0].split(' OF ')[1]] * 2 + [word + ' II OF ' + seen[0].split(' OF ')[1]] * 2, seen)
+                if level == 3: return
+            self.play_level(2, 1.0)
+            pg.click('#leNext')
+
     def test_tv_size_scales_the_game_up_and_is_remembered(self):
         pg = self.open(1920, 1080)
         self.assertEqual(pg.get_attribute('#tvBtn', 'aria-pressed'), 'false')
@@ -348,9 +388,13 @@ class LxxBrowserTests(unittest.TestCase):
         pg = self.open()
         pg.click('#beginBtn'); pg.wait_for_selector('.sting.cine canvas.cinecv')
         self.assertTrue(self.skip_scene())
-        pg.click('#quitBtn'); pg.uncheck('#cutsToggle'); pg.click('#beginBtn'); pg.wait_for_selector('.sting')
-        self.assertEqual(pg.locator('.sting canvas').count(), 0)
-        self.skip_scene()
+        # unticked, there are no scenes and no title cards: straight to the map, then straight to the questions
+        pg.click('#quitBtn'); pg.uncheck('#cutsToggle'); pg.click('#beginBtn'); pg.wait_for_timeout(300)
+        self.assertEqual(pg.locator('.sting').count(), 0)
+        self.assertTrue(pg.is_visible('#vMap'))
+        pg.click('#enterBtn'); pg.wait_for_timeout(300)
+        self.assertEqual(pg.locator('.sting').count(), 0)
+        self.assertTrue(pg.is_visible('#vLevel'))
         self.ctx.close()
         pg = self.open(motion='reduce')
         pg.click('#beginBtn'); pg.wait_for_timeout(200)
