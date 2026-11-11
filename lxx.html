@@ -345,7 +345,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
       <button type="button" class="mode" id="cOn" aria-pressed="true"><b>Against the clock</b><span>Every question is timed. The Arena is fastest.</span></button>
       <button type="button" class="mode" id="cOff" aria-pressed="false"><b>Relaxed</b><span>No clock. Take your time.</span></button>
     </div>
-    <label class="tog"><input type="checkbox" id="cutsToggle" checked><span><b>Cutscenes</b> Animated scenes open the campaign and each level. Tap to skip any of them.</span></label>
+    <label class="tog"><input type="checkbox" id="cutsToggle" checked><span><b>Cutscenes</b> Animated scenes and title cards open the campaign and each level. Untick to go straight to the questions.</span></label>
   </section>
   <button type="button" class="btn go wide" id="beginBtn">Begin the campaign</button>
   <p class="foot" id="bankNote"></p>
@@ -500,7 +500,7 @@ const SCENE_SFX = {
 /* A sting is the title card. With a scene behind it, it becomes a cutscene: the scene plays, then the title arrives on a marble plaque. */
 function sting(num, title, sub, scene, opts){
   return new Promise(done => {
-    if (STILL) { done(); return; }
+    if (STILL || !cutsOn) { done(); return; }
     const cine = !!scene && canCine();
     const el = document.createElement('div'); el.className = 'sting' + (cine ? ' cine' : ''); el.setAttribute('role', 'presentation');
     let i = 0;
@@ -578,8 +578,8 @@ function cfg(){
   const n = G.sides.length, solo = G.mode === 'solo';
   const rounds = solo ? 12 : Math.max(3, Math.min(10, Math.ceil(24 / n)));
   const step = solo ? 10 : Math.max(10, Math.ceil(70 / (rounds - 1) / 5) * 5);
-  const hit = n >= 4 ? 5 : 10, loss = n <= 2 ? 10 : n <= 4 ? 20 : 35, waves = n <= 5 ? 10 : 2 * n;
-  const max = solo ? 390 : (Math.ceil(70 / step) * PER + BONUS) + (Math.ceil(70 / hit / n) * PER + BONUS) + 90 + (Math.ceil(waves / n) * PER + BONUS);
+  const hit = n >= 4 ? 5 : 10, loss = n <= 2 ? 10 : n <= 4 ? 20 : 35, waves = solo ? 10 : Math.max(2, Math.ceil(12 / n));
+  const max = solo ? 390 : (Math.ceil(70 / step) * PER + BONUS) + (Math.ceil(70 / hit / n) * PER + BONUS) + 90 + (waves * PER + BONUS);
   return { n, rounds, step, hit, loss, waves, max };
 }
 
@@ -702,7 +702,7 @@ function startLevel(i){
 function endLevel(title, line){
   stopTimers();
   G.results[L.i] = { won:L.won, total:G.mode === 'solo' ? L.earned[0] : Math.max(...L.earned) };
-  put('leKick', 'Level ' + T(L.i + 1) + ' complete'); $('leTitle').textContent = title; put('leLine', line);
+  put('leKick', 'Level ' + T(L.i + 1) + (L.won ? ' complete' : ' over')); $('leTitle').textContent = title; put('leLine', line);
   $('leSummary').innerHTML = G.sides.map((s, k) => `<div class="brow"><span class="dot" style="--c:${s.colour}"></span><span class="nm">${esc(s.name)}${L.bonus[k] ? ' · bonus ' + N(L.bonus[k]) : ''}</span><span class="rn">+${N(L.earned[k])}<small>${N(L.earned[k], true)} glory this level</small></span></div>`).join('');
   G.level = L.i + 1; $('leNext').textContent = G.level < 4 ? 'Return to the campaign' : 'Claim your triumph';
   if (canCine()) sting('', title, '', L.won ? 'victory' : 'defeat').then(() => show('vLevelEnd'));
@@ -732,7 +732,7 @@ const ART = {
 const ROAD = 'M40 236 C170 236 190 92 330 96 S520 244 640 196 S820 62 958 70';
 function viaStart(){
   L.miles = G.sides.map(() => 0); L.shown = G.sides.map(() => 0); L.rival = 0; L.rivalShown = 0; L.rounds = 0; L.maxRounds = L.c.rounds;
-  goal(G.mode === 'solo' ? 'Reach Rome, ' + T(70) + ' miles away, before Marcus the courier. Each right answer takes you ' + T(L.c.step) + ' miles.'
+  goal(G.mode === 'solo' ? 'Reach Rome, ' + T(70) + ' miles away, before Marcus the courier. Each right answer takes you ' + T(L.c.step) + ' miles. Marcus rides on most turns and is sure to arrive by question ' + T(L.maxRounds) + '.'
     : 'First to Rome, ' + T(70) + ' miles away, wins a bonus. Each right answer is worth ' + T(L.c.step) + ' miles. ' + T(L.maxRounds) + ' rounds.');
   $('stage').innerHTML = `<svg viewBox="0 0 1000 300" role="img" aria-label="The Via Appia from Brundisium to Rome">
     <defs><linearGradient id="vLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef2cf"/><stop offset="1" stop-color="#ebdfb6"/></linearGradient></defs>
@@ -784,7 +784,7 @@ function viaMove(key, to){
   };
   requestAnimationFrame(step);
 }
-function viaProg(){ put('lvProg', G.mode === 'solo' ? 'YOU ' + T(L.miles[0]) + ' · MARCUS ' + T(L.rival) + ' MILES' : 'ROUND ' + T(Math.min(L.rounds + 1, L.maxRounds)) + ' OF ' + T(L.maxRounds)); }
+function viaProg(){ put('lvProg', G.mode === 'solo' ? 'QUESTION ' + T(Math.min(L.rounds + 1, L.maxRounds)) + ' OF ' + T(L.maxRounds) + ' · YOU ' + T(L.miles[0]) + ' · MARCUS ' + T(L.rival) + ' MILES' : 'ROUND ' + T(Math.min(L.rounds + 1, L.maxRounds)) + ' OF ' + T(L.maxRounds)); }
 function viaTurn(){
   const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side); viaProg();
   askMC(draw('via'), (ok, picked) => {
@@ -792,7 +792,8 @@ function viaTurn(){
     if (ok) { L.miles[side] = Math.min(70, L.miles[side] + L.c.step); award(side, PER); viaMove(side, L.miles[side]); }
     let rivalMoves = false;
     if (G.mode === 'solo' && L.miles[0] < 70) {
-      if (Math.random() < .55) { L.rival = Math.min(70, L.rival + 10); rivalMoves = true; line += ' Meanwhile, Marcus the courier rides on ' + T(10) + ' miles.'; } else line += ' Meanwhile, Marcus loses time fixing a thrown shoe, so he stays where he is.';
+      const left = L.maxRounds - (L.rounds + 1), need = (70 - L.rival) / 10;
+      if (need > left || Math.random() < .55) { L.rival = Math.min(70, L.rival + 10); rivalMoves = true; line += ' Meanwhile, Marcus the courier rides on ' + T(10) + ' miles.'; } else line += ' Meanwhile, Marcus loses time fixing a thrown shoe, so he stays where he is.';
       if (rivalMoves) { const lvl = L; setTimeout(() => { if (L === lvl) viaMove('rival', L.rival); }, ok ? 950 : 300); }
     }
     viaProg();
@@ -800,7 +801,7 @@ function viaTurn(){
     const last = G.mode === 'solo' ? ++L.rounds >= L.maxRounds : (L.turn === G.sides.length - 1 && ++L.rounds >= L.maxRounds);
     if (winner >= 0) { award(winner, BONUS); L.bonus[winner] = BONUS; L.won = true; return verdict(line, ok, () => endLevel('Rome is reached', G.mode === 'solo' ? 'You beat Marcus to the gates. +' + T(BONUS) + ' bonus glory.' : 'First through the gates: ' + G.sides[winner].name + '. +' + T(BONUS) + ' bonus glory.'), true); }
     if (G.mode === 'solo' && L.rival >= 70) return verdict(line, ok, () => endLevel('Marcus reaches Rome first', 'The courier beats you to the gates. Your glory still counts.'), true);
-    if (last) return verdict(line, ok, () => endLevel('Night falls on the road', 'Nobody reaches Rome in time. Your glory still counts.'), true);
+    if (last) return verdict(line, ok, () => endLevel('Night falls on the road', (G.mode === 'solo' ? 'Time runs out before you reach Rome.' : 'Nobody reaches Rome in time.') + ' Your glory still counts.'), true);
     if (G.mode !== 'solo') L.turn = (L.turn + 1) % G.sides.length;
     verdict(line, ok, viaTurn, rivalMoves && !ok);
   });
@@ -926,14 +927,14 @@ function senateCount(c, truth, picks){
   const won = G.sides.map((_, k) => k).filter(k => L.votes[k] >= 70 && !L.bonus[k]);
   won.forEach(k => { award(k, BONUS); L.bonus[k] = BONUS; });
   if (won.length) { L.won = true; return verdict(line, right.length > 0, () => endLevel('The Senate is won', T(70) + ' votes go to ' + (won.length > 3 ? won.length + ' ' + unit() + 's' : won.length > 2 ? won.slice(0, -1).map(whom).join(', ') + ' and ' + whom(won[won.length - 1]) : won.map(whom).join(' and ')) + '. +' + T(BONUS) + ' bonus glory.'), true); }
-  if (L.claims >= L.max) return verdict(line, right.length > 0, () => endLevel('The Senate adjourns', 'Nobody reaches ' + T(70) + ' votes this session. Your glory still counts.'), true);
+  if (L.claims >= L.max) return verdict(line, right.length > 0, () => endLevel('The Senate adjourns', (G.mode === 'solo' ? 'You fall short of ' : 'Nobody reaches ') + T(70) + ' votes this session. Your glory still counts.'), true);
   verdict(line, right.length > 0, senateAsk, true);
 }
 
 /* ========== LEVEL IV: Hold the Wall ========== */
 function wallStart(){
   L.wall = 70; L.wave = 0; L.max = L.c.waves; L.turn = 0;
-  goal('Hold the Wall for ' + T(L.max) + ' waves. Each wrong answer breaks a stretch; ' + T((70 - WALL_FALLS) / 10) + ' breaks and the raiders are through.');
+  goal('Hold the Wall for ' + T(L.max) + ' waves' + (G.mode === 'solo' ? '' : ', with every ' + unit() + ' facing each wave in turn') + '. Each wrong answer breaks a stretch; ' + T((70 - WALL_FALLS) / 10) + ' breaks and the raiders are through.');
   $('stage').innerHTML = `<svg viewBox="0 0 1000 240" role="img" aria-label="Hadrian’s Wall, with raiders beyond it">
     <defs><linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d3ee"/><stop offset="1" stop-color="#fdf3d8"/></linearGradient></defs>
     <rect width="1000" height="200" fill="url(#wSky)"/><circle cx="860" cy="46" r="24" fill="#fff6cf"/>
@@ -965,7 +966,7 @@ function wallRaiders(){
   wallProg(L.wave + 1);
 }
 function wallTurn(){
-  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
+  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side); wallProg(L.wave + 1);
   askMC(draw('wall'), (ok, picked) => {
     let line;
     if (ok) { award(side, PER); line = 'Raiders driven back. +' + T(PER) + ' glory.'; for (let k = 0; k < 3; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(90px)'; } cry('REPULSI!', '#56732f'); noise(0, .5, 3000, 2, .08); }
@@ -974,7 +975,8 @@ function wallTurn(){
       SFX.crash(); shake(); flash(); for (let k = 0; k < 3; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(-14px)'; }
       const blk = $('blk' + lost), lvl = L; if (blk && !STILL) { blk.classList.add('fall'); setTimeout(() => { if (L === lvl) wallBlocks(); }, 800); } else wallBlocks();
     }
-    L.wave++; wallProg(L.wave);
+    wallProg(L.wave + 1);
+    if (G.mode === 'solo' || L.turn === G.sides.length - 1) L.wave++;
     if (L.wall <= WALL_FALLS) return verdict(line, ok, () => endLevel('The Wall is breached', T((70 - L.wall) / 10) + ' stretches have fallen and the raiders pour through. All the glory you have won still counts.'), true);
     if (L.wave >= L.max) { L.won = true; G.sides.forEach((_, k) => { award(k, BONUS); L.bonus[k] = BONUS; }); setTimeout(SFX.cheer, 400); return verdict(line, ok, () => endLevel('The Wall holds', T(L.max) + ' waves beaten back with ' + T(L.wall) + ' of the Wall still standing. +' + T(BONUS) + ' bonus glory for ' + (G.mode === 'solo' ? 'you' : 'every ' + unit()) + '.'), true); }
     if (G.mode !== 'solo') L.turn = (L.turn + 1) % G.sides.length;
