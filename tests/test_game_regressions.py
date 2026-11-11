@@ -653,17 +653,23 @@ class BrowserGameGuards(unittest.TestCase):
         """Bugs: a slip of the thumb onto New board, just below Roll, wiped out a climb; a reload started again."""
         context = self.context(390, 844, {"tb-cutscenes-guide": "0"})
         page = self.creak_solo(context)
-        page.locator("#roll").click()
-        page.wait_for_function("""() => { const o=[...document.querySelectorAll('.qopt:not([disabled])')].find(x => x.offsetParent); if(o) o.click();
-            return !document.getElementById('roll').disabled; }""", polling=300, timeout=30000)
-        self.assertEqual(page.evaluate("turns"), 1)
+        # A rockfall on an early turn can tumble the climber back to square 1, where there is
+        # rightly nothing to resume, so keep climbing until the climber is off the first square.
+        for attempt in range(6):
+            page.locator("#roll").click()
+            page.wait_for_function("""() => { const o=[...document.querySelectorAll('.qopt:not([disabled])')].find(x => x.offsetParent); if(o) o.click();
+                return !document.getElementById('roll').disabled; }""", polling=300, timeout=30000)
+            if page.evaluate("pos") > 1:
+                break
+        turns = page.evaluate("turns")
+        self.assertGreaterEqual(turns, 1)
         page.locator("#newgame").click()
-        self.assertEqual(page.evaluate("turns"), 1, "One tap must not start a new board mid-climb")
+        self.assertEqual(page.evaluate("turns"), turns, "One tap must not start a new board mid-climb")
         self.assertIn("Tap again", page.locator("#newgame").inner_text())
         where = page.evaluate("pos")
         page.reload(wait_until="domcontentloaded")
         page.wait_for_function("document.getElementById('status').innerText.indexOf('Welcome back') >= 0")
-        self.assertEqual(page.evaluate("[turns, pos]"), [1, where])
+        self.assertEqual(page.evaluate("[turns, pos]"), [turns, where])
         page.locator("#newgame").click()
         page.locator("#newgame").click()
         self.assertEqual(page.evaluate("[turns, pos]"), [0, 1])
