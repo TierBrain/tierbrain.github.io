@@ -69,7 +69,7 @@ button,input{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .view{max-width:980px;margin:0 auto;padding-top:18px;display:flex;flex-direction:column;gap:20px;animation:viewIn .45s ease both}
 @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-right:170px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-right:224px}
 .brand{font-family:var(--body);font-weight:900;font-size:18px;color:inherit;text-decoration:none}
 .brand b{color:var(--gold)}
 .tag{font-family:var(--inscribe);font-weight:700;font-size:12px;letter-spacing:.22em;color:var(--red);border:1.5px solid var(--red);padding:3px 10px 2px}
@@ -82,6 +82,25 @@ button,input{font:inherit;color:inherit}
 .numsw .k{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:18px;background:var(--red);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
 .numsw[aria-checked="true"] .k{transform:translateX(100%)}
 .numsw[aria-checked="false"] .o.r,.numsw[aria-checked="true"] .o.a{color:#fff8ec}
+.tvb{height:44px;min-width:52px;padding:0 12px;border-radius:22px;border:1.5px solid rgba(42,31,23,.3);background:rgba(255,253,248,.9);cursor:pointer;font-family:var(--body);font-weight:900;font-size:15px;color:var(--ink)}
+.tvb[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff8ec}
+/* TV size: the whole game scales up to fill a big screen, and a level lays the scene and the question side by side so both fit */
+.view{zoom:var(--tvz,1)}
+@media (min-width:1000px){
+  html.tv .view{max-width:1180px}
+  html.tv #vLevel{max-width:1500px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto auto auto auto 1fr;
+    grid-template-areas:"head head" "goal goal" "chips chips" "stage turn" "stage q";column-gap:24px;row-gap:14px;align-items:start}
+  html.tv #vLevel .lvlhead{grid-area:head} html.tv #lvGoal{grid-area:goal;margin:0} html.tv #gloryChips{grid-area:chips}
+  html.tv #stage{grid-area:stage} html.tv #turn{grid-area:turn} html.tv #qBox{grid-area:q}
+}
+.goal{margin:-6px 0 0;font-weight:800;color:var(--stone);font-size:16px;line-height:1.4}
+.goal b{color:var(--ink);font-family:var(--inscribe);letter-spacing:.06em;font-size:13px;margin-right:6px}
+.seatnote{margin:6px 0 0;text-align:center;font-weight:700;font-size:13px;color:var(--stone)}
+.ladder{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;width:min(360px,100%);margin:10px auto 0;padding:12px 18px;border:1px solid rgba(118,102,90,.28);border-radius:6px;background:rgba(255,255,255,.55);text-align:left}
+.ladder span{font-family:var(--inscribe);font-weight:800;letter-spacing:.06em;color:var(--stone)}
+.ladder span.g{text-align:right;font-weight:700}
+.ladder .me{color:var(--red)}
+@media (min-width:561px){.claim .q{padding-right:230px}}
 .sound{width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(42,31,23,.3);background:rgba(255,253,248,.9);display:grid;place-items:center;cursor:pointer}
 .sound svg{width:22px;height:22px}
 .sound[aria-pressed="false"] .on,.sound[aria-pressed="true"] .off{display:none}
@@ -150,7 +169,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
 .rn small{display:block;font-family:var(--body);font-size:12px;font-weight:800;color:var(--stone);letter-spacing:0}
 
 /* playing a level */
-.lvlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid rgba(42,31,23,.15);padding-bottom:10px;padding-right:170px}
+.lvlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid rgba(42,31,23,.15);padding-bottom:10px;padding-right:224px}
 .lvlhead .t{display:flex;align-items:baseline;gap:14px}
 .lvlhead .num{font-family:var(--inscribe);font-weight:900;font-size:clamp(34px,6vw,54px);color:var(--red);line-height:1}
 .prog{font-family:var(--inscribe);font-weight:700;letter-spacing:.14em;font-size:14px;color:var(--stone)}
@@ -190,7 +209,8 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
 .clock{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
 .clock .track{height:10px;background:rgba(42,31,23,.1);border-radius:5px;overflow:hidden}
 .clock i{display:block;height:100%;width:100%;background:var(--gold);transform-origin:left}
-.clock b{font-family:var(--inscribe);font-weight:900;font-size:22px;min-width:2.2em;text-align:right;font-variant-numeric:tabular-nums;display:inline-block}
+/* the countdown is always plain digits in the body face: Cinzel's 11 reads like a pause sign */
+.clock b{font-family:var(--body);font-weight:900;font-size:22px;min-width:2.2em;text-align:right;font-variant-numeric:tabular-nums;display:inline-block}
 .clock.low i{background:var(--red)} .clock.low b{color:var(--red);animation:pop .5s}
 .next{height:4px;border-radius:2px;background:rgba(42,31,23,.1);overflow:hidden;cursor:pointer}
 .next i{display:block;height:100%;width:100%;background:var(--stone);transform-origin:left;animation:drain linear forwards}
@@ -298,7 +318,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
 </head>
 <body>
 <div class="band" aria-hidden="true"></div>
-<div class="ctrls"><button type="button" class="numsw" id="numBtn" role="switch" aria-checked="false" aria-label="Ordinary numbers instead of Roman numerals"><i class="k" aria-hidden="true"></i><span class="o r" aria-hidden="true">XII</span><span class="o a" aria-hidden="true">12</span></button><button type="button" class="sound" id="soundBtn" aria-pressed="true" aria-label="Sound"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg></button></div>
+<div class="ctrls"><button type="button" class="tvb" id="tvBtn" aria-pressed="false" aria-label="TV size: make everything bigger">TV</button><button type="button" class="numsw" id="numBtn" role="switch" aria-checked="false" aria-label="Ordinary numbers instead of Roman numerals"><i class="k" aria-hidden="true"></i><span class="o r" aria-hidden="true">XII</span><span class="o a" aria-hidden="true">12</span></button><button type="button" class="sound" id="soundBtn" aria-pressed="true" aria-label="Sound"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg></button></div>
 <canvas id="petals" hidden></canvas>
 
 <main class="view" id="vHome">
@@ -329,7 +349,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
   </section>
   <button type="button" class="btn go wide" id="beginBtn">Begin the campaign</button>
   <p class="foot" id="bankNote"></p>
-  <p class="foot">Scores are kept in Roman numerals, as they should be. N means nulla: nothing. Not sure of your numerals? Flick the XII | 12 switch at the top for ordinary numbers, any time. On a keyboard, keys 1 to 4 answer.</p>
+  <p class="foot">Scores are kept in Roman numerals, as they should be. N means nulla: nothing. Not sure of your numerals? Flick the XII | 12 switch at the top for ordinary numbers, any time. On a TV? Tap TV at the top to make everything bigger. On a keyboard, keys 1 to 4 answer.</p>
 </main>
 
 <main class="view" id="vMap" hidden>
@@ -343,6 +363,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
 
 <main class="view" id="vLevel" hidden>
   <div class="lvlhead"><div class="t"><span class="num" id="lvNum">I</span><div><p class="kicker" id="lvKick">Level I</p><h2 id="lvName">All Roads to Rome</h2></div></div><span class="prog" id="lvProg"></span></div>
+  <p class="goal" id="lvGoal"></p>
   <div class="glory" id="gloryChips"></div>
   <div class="stage" id="stage"></div>
   <div id="turn" class="turn" hidden></div>
@@ -364,6 +385,7 @@ h3{font-weight:700;font-size:20px;color:var(--red)}
     <p class="numtag" id="trArabic">0 GLORY</p>
     <h2 id="trRank">Centurion</h2>
     <p class="lede" id="trLine" style="text-align:center"></p>
+    <div class="ladder" id="trLadder" aria-label="The ranks, and the glory each one needs"></div>
   </div>
   <section class="tablet" id="trBoardBox"><h3>The final reckoning</h3><div class="board" id="trBoard"></div></section>
   <button type="button" class="btn go wide" id="againBtn">March again</button>
@@ -453,6 +475,14 @@ paintSound();
 function paintNums(){ document.querySelectorAll('[data-n]').forEach(el => { const alt = el.hasAttribute('data-alt'); el.textContent = fmt(+el.dataset.n, alt); el.classList.toggle('d', isDig(alt)); }); $('numBtn').setAttribute('aria-checked', String(arabic)); }
 $('numBtn').addEventListener('click', () => { arabic = !arabic; try { localStorage.setItem('tb-lxx-num', arabic ? 'arabic' : 'roman'); } catch (e) {} tone(arabic ? 880 : 660, 0, .06, 'triangle', .07); paintNums(); });
 paintNums();
+let tv = false; try { tv = localStorage.getItem('tb-lxx-tv') === 'on'; } catch (e) {}
+function paintTV(){
+  const z = tv ? Math.max(1, Math.min(innerWidth / 1520, innerHeight / 860)) : 1;
+  document.documentElement.classList.toggle('tv', tv);
+  document.documentElement.style.setProperty('--tvz', z.toFixed(3)); $('tvBtn').setAttribute('aria-pressed', String(tv));
+}
+$('tvBtn').addEventListener('click', () => { tv = !tv; try { localStorage.setItem('tb-lxx-tv', tv ? 'on' : 'off'); } catch (e) {} paintTV(); });
+window.addEventListener('resize', paintTV); paintTV();
 
 /* ---------- cutscenes and stings ---------- */
 let cutsOn = true; try { cutsOn = localStorage.getItem('tb-lxx-cuts') !== 'off'; } catch (e) {}
@@ -517,25 +547,29 @@ function show(id){ stopTimers(); document.querySelectorAll('.view').forEach(v =>
 
 /* ---------- questions: TierBrain's shared bank for breadth, the Roman set for flavour ---------- */
 const GK = (window.TB && TB.bank && TB.bank('gk')) || null;
-const TIERS = { via:['1','2'], arena:['2','3'], senate:['2','3'], wall:['3'] };
-function drawGK(key){
-  if (!GK) return null; const tiers = TIERS[key].filter(t => GK[t] && GK[t].length); if (!tiers.length) return null;
-  for (let tries = 0; tries < 60; tries++) {
-    const t = tiers[Math.floor(Math.random() * tiers.length)], i = Math.floor(Math.random() * GK[t].length), id = 'gk:' + t + ':' + i, q = GK[t][i];
-    if (G.used.has(id) || !q || !q.q || !q.correct || !Array.isArray(q.wrong) || q.wrong.length < 3) continue;
-    G.used.add(id); return [q.q, q.correct].concat(q.wrong.slice(0, 3));
-  }
-  return null;
+/* only the middle two tiers, and only questions about history, places and the ancient world, so the difficulty stays steady and the subject stays close to Rome */
+const GK_TIERS = ['2', '3'];
+const GK_FIT = /\b(ancient|empire|emperor|king|queen|kingdom|century|war|battle|army|soldier|castle|cathedral|capital|river|sea|ocean|island|mountain|city|cities|country|countries|greek|greece|egypt|pharaoh|pyramid|viking|norman|tudor|medieval|knight|sword|shield|spear|chariot|myth|god|goddess|olymp|latin|italy|italian|france|spain|britain|england|scotland|wales|ireland|europe|africa|continent|invaded|conquer|explorer|wonder|temple|colosseum|rome|roman|caesar|gladiator|bridge|road|wall|fort|harbour|navy|general|ruled|reign|dynasty|crown|throne|monarch|revolution|treaty|history|historic|museum|monument|landmark|statue)\b/i;
+let GK_POOL = null;
+function gkPool(){
+  if (GK_POOL) return GK_POOL; GK_POOL = [];
+  if (GK) GK_TIERS.forEach(t => (GK[t] || []).forEach((q, i) => { if (q && q.q && q.correct && Array.isArray(q.wrong) && q.wrong.length >= 3 && GK_FIT.test(q.q)) GK_POOL.push('gk:' + t + ':' + i); }));
+  return GK_POOL;
+}
+function drawGK(){
+  const free = gkPool().filter(id => !G.used.has(id)); if (!free.length) return null;
+  const id = free[Math.floor(Math.random() * free.length)], [, t, i] = id.split(':'), q = GK[t][+i];
+  G.used.add(id); return [q.q, q.correct].concat(q.wrong.slice(0, 3));
 }
 function drawRoman(key){
   const pools = key === 'senate' ? ['senate'] : [key, 'life', 'via', 'arena', 'wall'];
   for (const p of pools) { const free = BANK[p].map((q, i) => p + ':' + i).filter(id => !G.used.has(id)); if (free.length) { const id = free[Math.floor(Math.random() * free.length)]; G.used.add(id); return BANK[p][+id.split(':')[1]]; } }
   [...G.used].filter(id => id.startsWith(pools[0] + ':')).forEach(id => G.used.delete(id)); return drawRoman(key);
 }
-/* one question in three is Roman; the rest come from the shared bank, getting harder level by level */
-function draw(key){ L.qn++; return (L.qn % 3 === 1 ? null : drawGK(key)) || drawRoman(key); }
+/* two questions in three are Roman; every third comes from the shared bank */
+function draw(key){ L.qn++; return (L.qn % 3 === 0 ? drawGK() : null) || drawRoman(key); }
 function drawClaim(){
-  L.qn++; const g = L.qn % 3 === 1 ? null : drawGK('senate');
+  L.qn++; const g = L.qn % 3 === 0 ? drawGK() : null;
   if (!g) { const c = drawRoman('senate'); return { text:c[0], truth:c[1] }; }
   const truth = Math.random() < .5; return { q:g[0], shown:truth ? g[1] : g[2 + Math.floor(Math.random() * 3)], truth, right:g[1] };
 }
@@ -601,8 +635,9 @@ function paintGlory(pop){
 }
 function award(side, n){
   G.sides[side].glory += n; L.earned[side] += n; paintGlory(side);
-  const chip = $('gloryChips').children[side]; if (chip && !STILL) { const f = document.createElement('i'); f.className = 'fly'; f.innerHTML = '+' + N(n); chip.appendChild(f); }
+  const chip = $('gloryChips').children[side]; if (chip && !STILL) { const f = document.createElement('i'); f.className = 'fly'; f.innerHTML = '+' + N(n); chip.appendChild(f); f.addEventListener('animationend', () => f.remove()); setTimeout(() => f.remove(), 1300); }
 }
+function goal(text){ put('lvGoal', text); $('lvGoal').insertAdjacentHTML('afterbegin', '<b>GOAL</b>'); }
 function cry(text, colour){ if (STILL) return; const c = document.createElement('div'); c.className = 'cry'; c.textContent = text; if (colour) c.style.color = colour; $('stage').appendChild(c); setTimeout(() => c.remove(), 1200); }
 function shake(){ if (STILL) return; const s = $('stage'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
 function flash(){ const f = $('flash'); if (!f) return; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
@@ -697,6 +732,8 @@ const ART = {
 const ROAD = 'M40 236 C170 236 190 92 330 96 S520 244 640 196 S820 62 958 70';
 function viaStart(){
   L.miles = G.sides.map(() => 0); L.shown = G.sides.map(() => 0); L.rival = 0; L.rivalShown = 0; L.rounds = 0; L.maxRounds = L.c.rounds;
+  goal(G.mode === 'solo' ? 'Reach Rome, ' + T(70) + ' miles away, before Marcus the courier. Each right answer takes you ' + T(L.c.step) + ' miles.'
+    : 'First to Rome, ' + T(70) + ' miles away, wins a bonus. Each right answer is worth ' + T(L.c.step) + ' miles. ' + T(L.maxRounds) + ' rounds.');
   $('stage').innerHTML = `<svg viewBox="0 0 1000 300" role="img" aria-label="The Via Appia from Brundisium to Rome">
     <defs><linearGradient id="vLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef2cf"/><stop offset="1" stop-color="#ebdfb6"/></linearGradient></defs>
     <rect width="1000" height="300" fill="url(#vLand)"/>
@@ -749,13 +786,13 @@ function viaMove(key, to){
 }
 function viaProg(){ put('lvProg', G.mode === 'solo' ? 'YOU ' + T(L.miles[0]) + ' · MARCUS ' + T(L.rival) + ' MILES' : 'ROUND ' + T(Math.min(L.rounds + 1, L.maxRounds)) + ' OF ' + T(L.maxRounds)); }
 function viaTurn(){
-  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
+  const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side); viaProg();
   askMC(draw('via'), (ok, picked) => {
     let line = ok ? 'Right. ' + T(L.c.step) + ' more miles of road. +' + T(PER) + ' glory.' : (picked == null ? 'Time is up. ' : 'Not this time. ') + 'The road waits.';
     if (ok) { L.miles[side] = Math.min(70, L.miles[side] + L.c.step); award(side, PER); viaMove(side, L.miles[side]); }
     let rivalMoves = false;
     if (G.mode === 'solo' && L.miles[0] < 70) {
-      if (Math.random() < .55) { L.rival = Math.min(70, L.rival + 10); rivalMoves = true; line += ' Marcus the courier gains ten miles.'; } else line += ' Marcus’s horse throws a shoe.';
+      if (Math.random() < .55) { L.rival = Math.min(70, L.rival + 10); rivalMoves = true; line += ' Meanwhile, Marcus the courier rides on ' + T(10) + ' miles.'; } else line += ' Meanwhile, Marcus loses time fixing a thrown shoe, so he stays where he is.';
       if (rivalMoves) { const lvl = L; setTimeout(() => { if (L === lvl) viaMove('rival', L.rival); }, ok ? 950 : 300); }
     }
     viaProg();
@@ -782,6 +819,7 @@ function fighter(boss){
 }
 function arenaStart(){
   L.boss = 70; L.hp = G.sides.map(() => 70); L.turn = 0;
+  goal('Bring Spiculus’s strength from ' + T(70) + ' to nothing. A right answer strikes him for ' + T(L.c.hit) + '; a wrong one costs ' + (G.mode === 'solo' ? 'you' : 'that ' + unit()) + ' ' + T(L.c.loss) + ' strength.');
   const narrow = ($('stage').clientWidth || 800) < 560;
   const arches = Array.from({ length:13 }, (_, k) => `<path d="M${-10 + k * 80} 176 v-58 a28 28 0 0 1 56 0 v58Z" fill="#8a6a52"/><path d="M${-10 + k * 80} 176 v-58 a28 28 0 0 1 56 0" fill="none" stroke="#d9c7a2" stroke-width="4"/>`).join('');
   const crowd = Array.from({ length:192 }, (_, k) => { const r = k % 3, i = Math.floor(k / 3), cx = 6 + i * 15.7 + (r % 2) * 7, cy = 12 + r * 14; return `<g><circle cx="${cx}" cy="${cy}" r="5" fill="${['#c9a37a','#a87d57','#e0c39b','#8a5a3a'][(i + r) % 4]}"/><rect x="${cx - 5}" y="${cy + 4}" width="10" height="8" rx="2" fill="${['#b9342a','#f6ead0','#2d5885','#b48526','#56732f'][(i * 3 + r) % 5]}"/></g>`; }).join('');
@@ -801,7 +839,7 @@ function arenaPaint(){
   if (!$('arenaBars')) return;
   $('arenaBars').innerHTML = `<div class="bar boss"><span>Spiculus</span>${segs(L.boss, '#2a1f17', 'segBoss')}<span class="rn" style="font-size:18px">${N(L.boss)}</span></div>` +
     G.sides.map((s, k) => `<div class="bar${L.hp[k] ? '' : ' out'}"><span>${esc(s.name)}</span>${segs(L.hp[k], s.colour, 'seg' + k)}<span class="rn" style="font-size:18px">${N(L.hp[k])}</span></div>`).join('');
-  put('lvProg', 'SPICULUS ' + T(L.boss) + ' OF ' + T(70));
+  put('lvProg', 'SPICULUS’S STRENGTH ' + T(L.boss) + ' OF ' + T(70));
 }
 function breakSeg(id, before, after){
   const box = $(id); if (!box || STILL) { arenaPaint(); return; }
@@ -827,6 +865,7 @@ function arenaTurn(){
 /* ========== LEVEL III: The Senate ========== */
 function senateStart(){
   L.votes = G.sides.map(() => 0); L.claims = 0; L.max = 10;
+  goal('Win ' + T(70) + ' votes in ' + T(L.max) + ' claims. Every right vote earns ' + T(10) + '.');
   const seats = []; let k = 0;
   [[14, 120], [18, 160], [20, 200], [18, 240]].forEach(([n, r]) => { for (let j = 0; j < n && k < 70; j++, k++) { const a = Math.PI * (j + .5) / n; seats.push([500 - Math.cos(a) * r * 1.5, 270 - Math.sin(a) * r]); } });
   const col = x => `<rect x="${x - 6}" y="6" width="46" height="14" rx="3" fill="#f6ecd6" stroke="#d9c7a2"/><rect x="${x}" y="20" width="34" height="250" fill="#fbf4e2" stroke="#d9c7a2"/><path d="M${x + 9} 22 v246 M${x + 17} 22 v246 M${x + 25} 22 v246" stroke="rgba(120,96,60,.2)" stroke-width="2"/><rect x="${x - 6}" y="270" width="46" height="12" rx="2" fill="#f6ecd6" stroke="#d9c7a2"/>`;
@@ -835,7 +874,7 @@ function senateStart(){
     ${col(18)}${col(948)}
     <path d="M250 290 A250 250 0 0 1 750 290" fill="none" stroke="rgba(180,133,38,.18)" stroke-width="60"/>
     <g id="seats">${seats.map(([x, y], i) => `<circle id="seat${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#e6dccb" stroke="#b9a988" stroke-width="1.5" style="transition-delay:${(i % 10) * 30}ms"/>`).join('')}</g>
-    <path d="M420 290 V246 q80 -14 160 0 V290Z" fill="#efe2c2" stroke="#d9c7a2" stroke-width="2"/><text x="500" y="280" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="30" fill="#9e2a22">SPQR</text></svg>` + (G.mode === 'solo' ? '' : `<div class="bars${G.sides.length > 4 ? ' many' : ''}" id="senBars" style="margin-top:10px"></div>`);
+    <path d="M420 290 V246 q80 -14 160 0 V290Z" fill="#efe2c2" stroke="#d9c7a2" stroke-width="2"/><text x="500" y="280" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="30" fill="#9e2a22">SPQR</text></svg><p class="seatnote">${G.mode === 'solo' ? 'One seat for every vote you win' : 'Seats are shared out in proportion to the votes'}</p>` + (G.mode === 'solo' ? '' : `<div class="bars${G.sides.length > 4 ? ' many' : ''}" id="senBars" style="margin-top:10px"></div>`);
   senatePaint(); senateAsk();
 }
 function senatePaint(){
@@ -846,10 +885,11 @@ function senatePaint(){
     $('senBars').innerHTML = G.sides.map((s, k) => `<div class="bar"><span>${esc(s.name)}</span><div class="segs" style="--c:${s.colour}">${Array.from({ length:7 }, (_, n) => `<i class="${n < L.votes[k] / 10 ? '' : 'off'}"></i>`).join('')}</div><span class="rn" style="font-size:18px">${N(L.votes[k])}</span></div>`).join('');
   }
   for (let s = 0; s < 70; s++) { const el = $('seat' + s); if (el) el.setAttribute('fill', fill[s] || '#e6dccb'); }
-  put('lvProg', 'CLAIM ' + T(Math.min(L.claims + 1, L.max)) + ' OF ' + T(L.max) + (G.mode === 'solo' ? ' · ' + T(L.votes[0]) + ' VOTES' : ''));
+  senateProg(Math.min(L.claims + 1, L.max));
 }
+function senateProg(n){ put('lvProg', 'CLAIM ' + T(n) + ' OF ' + T(L.max) + (G.mode === 'solo' ? ' · ' + T(L.votes[0]) + ' VOTES' : '')); }
 function senateAsk(){
-  setTurn(null);
+  setTurn(null); senateProg(Math.min(L.claims + 1, L.max));
   const c = drawClaim(), truth = c.truth, picks = G.sides.map(() => null), u = unit();
   let counted = false;
   const count = () => { if (counted) return; counted = true; clearInterval(clockT); clockT = null; document.removeEventListener('keydown', keys); $('qBox').querySelectorAll('.thumb').forEach(x => x.disabled = true); senateCount(c, truth, picks); };
@@ -880,7 +920,7 @@ function senateCount(c, truth, picks){
   const right = [];
   picks.forEach((p, k) => { if (p === truth) { L.votes[k] = Math.min(70, L.votes[k] + 10); award(k, PER); right.push(G.sides[k].name); } });
   setTimeout(() => (right.length ? SFX.right : SFX.wrong)(), 350);
-  L.claims++; senatePaint();
+  L.claims++; senatePaint(); senateProg(L.claims);
   let line = (truth ? 'Verum: it is true. ' : 'Falsum: it is false. ') + (!truth && c.right ? 'The answer is ' + c.right + '. ' : '');
   line += G.mode === 'solo' ? (right.length ? 'The Senate is impressed. +' + T(10) + ' votes and +' + T(PER) + ' glory.' : (picks[0] == null ? 'Time is up. ' : '') + 'The Senate murmurs. No votes this time.') : (right.length === G.sides.length ? 'Everyone is right. +' + T(10) + ' votes and glory each.' : right.length ? 'Right: ' + right.join(', ') + '. +' + T(10) + ' votes and glory each.' : 'Nobody is right.');
   const won = G.sides.map((_, k) => k).filter(k => L.votes[k] >= 70 && !L.bonus[k]);
@@ -893,6 +933,7 @@ function senateCount(c, truth, picks){
 /* ========== LEVEL IV: Hold the Wall ========== */
 function wallStart(){
   L.wall = 70; L.wave = 0; L.max = L.c.waves; L.turn = 0;
+  goal('Hold the Wall for ' + T(L.max) + ' waves. Each wrong answer breaks a stretch; ' + T((70 - WALL_FALLS) / 10) + ' breaks and the raiders are through.');
   $('stage').innerHTML = `<svg viewBox="0 0 1000 240" role="img" aria-label="Hadrian’s Wall, with raiders beyond it">
     <defs><linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d3ee"/><stop offset="1" stop-color="#fdf3d8"/></linearGradient></defs>
     <rect width="1000" height="200" fill="url(#wSky)"/><circle cx="860" cy="46" r="24" fill="#fff6cf"/>
@@ -914,13 +955,14 @@ function wallBlocks(){
     return `<g class="stone" id="blk${k}">${b}${[0,1,2].map(m => `<rect x="${x + 6 + m * 42}" y="98" width="26" height="18" fill="#e4d9c2" stroke="#b9a988" stroke-width="1.5"/>`).join('')}${k % 3 === 1 ? `<path d="M${x + 61} 98 v-22" stroke="#5b3b22" stroke-width="3"/><path class="pennant" d="M${x + 62} 76 l26 6 l-26 8Z" fill="#9e2a22"/>` : ''}</g>`;
   }).join('');
 }
-function wallProg(){ put('lvProg', 'WAVE ' + T(Math.min(L.wave + 1, L.max)) + ' OF ' + T(L.max) + ' · WALL ' + T(L.wall)); }
+const WALL_FALLS = 20; /* five breaches of ten bring it down */
+function wallProg(n){ put('lvProg', 'WAVE ' + T(Math.min(n, L.max)) + ' OF ' + T(L.max) + ' · WALL ' + T(L.wall) + ' OF ' + T(70)); }
 const RAIDER = (x, y, s, k) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M16 60 L${22 + (k % 3) * 3} -44" stroke="#3a2a1a" stroke-width="3"/><path d="M${22 + (k % 3) * 3} -56 l-5 14 h10Z" fill="#c9ccd2"/><path d="M-14 60 Q-16 14 0 12 Q16 14 14 60Z" fill="${k % 2 ? '#4c6a8a' : '#5b4a3a'}"/><circle cx="0" cy="0" r="10" fill="#d9a77c"/><path d="M-9 -3 Q0 -20 9 -3 Q4 -9 0 -8 Q-4 -9 -9 -3Z" fill="${k % 2 ? '#b5523a' : '#3a2a1a'}"/><path d="M-6 2 h12" stroke="#2d5885" stroke-width="2.5"/><circle cx="-12" cy="30" r="14" fill="#2d5885" stroke="#1f3d60" stroke-width="2"/><circle cx="-12" cy="30" r="4" fill="#e2b84a"/></g>`;
 function wallRaiders(){
   const n = Math.min(3, Math.max(0, L.max - L.wave));
   $('raiders').innerHTML = Array.from({ length:n }, (_, k) => `<g class="raid" id="raid${k}" style="transform:translateY(${STILL ? 0 : 80}px)"><g class="bob" style="animation-delay:${k * .3}s">${[0, 1, 2].map(j => RAIDER(130 + k * 330 + j * 42, 92 + (j % 2) * 8, 1 - (j % 2) * .1, k + j)).join('')}</g></g>`).join('');
   requestAnimationFrame(() => requestAnimationFrame(() => { for (let k = 0; k < n; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(0)'; } }));
-  wallProg();
+  wallProg(L.wave + 1);
 }
 function wallTurn(){
   const side = G.mode === 'solo' ? 0 : L.turn; setTurn(side);
@@ -932,8 +974,8 @@ function wallTurn(){
       SFX.crash(); shake(); flash(); for (let k = 0; k < 3; k++) { const r = $('raid' + k); if (r) r.style.transform = 'translateY(-14px)'; }
       const blk = $('blk' + lost), lvl = L; if (blk && !STILL) { blk.classList.add('fall'); setTimeout(() => { if (L === lvl) wallBlocks(); }, 800); } else wallBlocks();
     }
-    L.wave++; wallProg();
-    if (L.wall <= 0) return verdict(line, ok, () => endLevel('The Wall is breached', 'The raiders pour through, but all the glory you have won still counts.'), true);
+    L.wave++; wallProg(L.wave);
+    if (L.wall <= WALL_FALLS) return verdict(line, ok, () => endLevel('The Wall is breached', T((70 - L.wall) / 10) + ' stretches have fallen and the raiders pour through. All the glory you have won still counts.'), true);
     if (L.wave >= L.max) { L.won = true; G.sides.forEach((_, k) => { award(k, BONUS); L.bonus[k] = BONUS; }); setTimeout(SFX.cheer, 400); return verdict(line, ok, () => endLevel('The Wall holds', T(L.max) + ' waves beaten back with ' + T(L.wall) + ' of the Wall still standing. +' + T(BONUS) + ' bonus glory for ' + (G.mode === 'solo' ? 'you' : 'every ' + unit()) + '.'), true); }
     if (G.mode !== 'solo') L.turn = (L.turn + 1) % G.sides.length;
     verdict(line, ok, () => { wallRaiders(); wallTurn(); });
@@ -958,6 +1000,7 @@ function petals(){
 function triumph(quiet){
   const best = G.sides.slice().sort((a, b) => b.glory - a.glory)[0], max = cfg().max;
   const r = RANKS.find(([f]) => best.glory / max >= f);
+  $('trLadder').innerHTML = RANKS.map(([f, name]) => `<span class="${name === r[1] ? 'me' : ''}">${name}</span><span class="g${name === r[1] ? ' me' : ''}">${f ? N(Math.ceil(f * max)) + ' glory' : 'any glory'}</span>`).join('');
   if (G.mode === 'solo') { $('trRank').textContent = r[1]; $('trLine').textContent = r[2]; $('trBoardBox').hidden = true; }
   else { $('trRank').textContent = best.name + ', ' + r[1]; $('trLine').textContent = 'The laurel goes to ' + best.name + '. ' + r[2]; $('trBoardBox').hidden = false; paintBoard($('trBoard')); }
   show('vTriumph'); wreath($('wreath2'), '#b48526', true); if (!quiet) SFX.triumph(); petals();
