@@ -59,6 +59,23 @@ class LxxPageTests(unittest.TestCase):
         self.assertEqual(re.findall(r"\.name \+ ' (?:reaches|marches|yields|brings|carries|carry|is|wins|holds)\b", script), [])
         self.assertIn("endLevel('Rome is reached'", script)
 
+    def test_rival_courier_lines_say_whose_turn_it_is(self):
+        html = page_text()
+        self.assertIn('Meanwhile, Marcus the courier rides on', html)
+        self.assertIn('Meanwhile, Marcus loses time fixing a thrown shoe, so he stays where he is.', html)
+        self.assertNotIn("line += ' Marcus’s horse throws a shoe.'", html)
+
+    def test_arena_counter_says_what_it_counts(self):
+        self.assertIn("'SPICULUS’S STRENGTH ' + T(L.boss) + ' OF ' + T(70)", page_text())
+
+    def test_roman_questions_are_the_majority_and_the_set_is_large(self):
+        html = page_text()
+        self.assertIn("function draw(key){ L.qn++; return (L.qn % 3 === 0 ? drawGK() : null) || drawRoman(key); }", html)
+        self.assertIn("const GK_TIERS = ['2', '3'];", html)
+        bank = (ROOT / 'lxx-bank.js').read_text(encoding='utf-8')
+        rows = re.findall(r"^\s+\[(.+)\],?$", bank, re.M)
+        self.assertGreaterEqual(len(rows), 170)
+
     def test_roman_set_is_well_formed(self):
         bank = (ROOT / 'lxx-bank.js').read_text(encoding='utf-8')
         rows = re.findall(r"^\s+\[(.+)\],?$", bank, re.M)
@@ -72,7 +89,10 @@ except ImportError:  # pragma: no cover
     sync_playwright = None
 
 ANSWER = """q => { for (const k of ['via','arena','wall','life']) for (const x of BANK[k]) if (x[0] === q) return ['roman', x[1]];
-  for (const t in TB_BANK.gk) for (const x of TB_BANK.gk[t]) if (x.q === q) return ['shared', x.correct]; return null; }"""
+  for (const t in TB_BANK.gk) for (const x of TB_BANK.gk[t]) if (x.q === q) return ['shared', x.correct, t]; return null; }"""
+TRUTH = """() => { const says = document.querySelector('#qBox .says b'); const q = document.querySelector('#qBox .q').textContent;
+  if (says) { const shown = says.textContent.replace(/^“|”$/g, ''); for (const t in TB_BANK.gk) for (const x of TB_BANK.gk[t]) if (x.q === q) return x.correct === shown; }
+  const c = q.replace(/^“|”$/g, ''); const row = BANK.senate.find(x => x[0] === c); return row ? row[1] : null; }"""
 NUMERALS = """digits => [...document.querySelectorAll('[data-n]')].filter(el => { const want = digits !== el.hasAttribute('data-alt'), t = el.textContent.trim();
   return want ? !/^\\d+$/.test(t) : !/^[IVXLCDMN]+$/.test(t); }).map(el => el.textContent + ' for ' + el.dataset.n)"""
 
@@ -111,6 +131,7 @@ class LxxBrowserTests(unittest.TestCase):
         self.missing = []
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.page.on('response', lambda r: self.missing.append(r.url) if r.status >= 400 else None)
+        self.sources = []
         self.page.goto(self.base)
         self.page.wait_for_selector('#beginBtn')
         return self.page
@@ -124,9 +145,8 @@ class LxxBrowserTests(unittest.TestCase):
     def skip_scene(self):
         pg = self.page
         pg.wait_for_timeout(150)
-        had = pg.locator('.sting').count() > 0
+        had = pg.evaluate("() => { const s = document.querySelector('.sting:not(.out)'); if (s) s.click(); return !!s || !!document.querySelector('.sting'); }")
         if had:
-            pg.locator('.sting').click(position={'x': 20, 'y': 120})
             pg.wait_for_selector('.sting', state='detached', timeout=3000)
         return had
 
@@ -141,7 +161,19 @@ class LxxBrowserTests(unittest.TestCase):
         self.assertIn(found[1], texts, question)
         pick = options[texts.index(found[1])] if random.random() < accuracy else options[random.randrange(4)]
         pick.click()
+        self.sources.append(found[0] if found[0] == 'roman' else 'shared' + found[2])
         return found[0]
+
+    def answer_as(self, right):
+        pg = self.page
+        if pg.locator('#qBox .opt').count():
+            found = pg.evaluate(ANSWER, pg.text_content('#qBox .q'))
+            options = pg.locator('#qBox .opt').all()
+            [o for o in options if (o.get_attribute('data-o') == found[1]) == right][0].click()
+        else:
+            truth = pg.evaluate(TRUTH)
+            self.assertIsNotNone(truth)
+            pg.click('#qBox .thumb.' + ('aye' if truth == right else 'nay'))
 
     def play_level(self, sides, accuracy, digits=None):
         pg = self.page; kinds = set(); steps = 0
@@ -179,6 +211,12 @@ class LxxBrowserTests(unittest.TestCase):
         pg = self.open()
         kinds = self.campaign(digits=False)
         self.assertTrue({'roman', 'shared', 'claim-roman', 'claim-shared'} <= kinds, kinds)
+        # two questions in three are Roman, and shared ones come only from the middle tiers
+        self.assertGreaterEqual(self.sources.count('roman') / len(self.sources), .55, self.sources)
+        self.assertEqual({s for s in self.sources if s != 'roman'} - {'shared2', 'shared3'}, set(), self.sources)
+        # the final screen shows every rank and the glory it needs, with yours marked
+        self.assertEqual(pg.locator('#trLadder > span').count(), 12)
+        self.assertEqual(pg.locator('#trLadder > span.me').first.text_content(), pg.text_content('#trRank'))
         pg.wait_for_timeout(2200)
         self.assertRegex(pg.text_content('#trGlory'), r'^[IVXLCDMN]+$')
         self.assertIn(pg.text_content('#trRank'), ('Emperor', 'Consul', 'Senator', 'Tribune', 'Centurion', 'Legionary'))
@@ -193,6 +231,66 @@ class LxxBrowserTests(unittest.TestCase):
         pg.click('#cOff'); pg.uncheck('#cutsToggle')
         self.campaign(sides=8, accuracy=.6)
         self.assertEqual(pg.locator('#trBoard .brow').count(), 8)
+
+    def test_each_level_has_a_goal_counters_wait_and_the_wall_can_fall(self):
+        pg = self.open(1280, 800)
+        pg.click('#cOff'); pg.uncheck('#cutsToggle')
+        pg.click('#beginBtn'); self.skip_scene()
+        goals = {}
+        for level in range(4):
+            pg.click('#enterBtn'); self.skip_scene()
+            goals[level] = pg.text_content('#lvGoal')
+            wrongs = 0
+            while pg.is_visible('#vLevel'):
+                pg.wait_for_selector('#qBox .opt:not(:disabled), #qBox .thumb:not(:disabled)', timeout=6000)
+                before = pg.text_content('#lvProg')
+                right = level != 3 and (level != 2 or random.random() < .6)
+                self.answer_as(right)
+                pg.wait_for_selector('#nextBar:not([hidden])', timeout=4000)
+                after = pg.text_content('#lvProg')
+                if level == 2:
+                    # the claim number holds until the next claim; one seat for every vote in solo
+                    self.assertEqual(before.split('·')[0], after.split('·')[0], (before, after))
+                    votes = pg.evaluate("() => document.getElementById('lvProg').textContent.match(/(\\w+) VOTES/)[1]")
+                    seats = pg.evaluate("() => [...document.querySelectorAll('#seats circle')].filter(c => c.getAttribute('fill') !== '#e6dccb').length")
+                    self.assertEqual(seats, pg.evaluate("r => { const v = {N:0,I:1,V:5,X:10,L:50,C:100}; let n = 0; for (let i = 0; i < r.length; i++) { const a = v[r[i]], b = v[r[i + 1]] || 0; n += a < b ? -a : a; } return n; }", votes))
+                if level == 3:
+                    wrongs += 1
+                    self.assertEqual(before.split('·')[0], after.split('·')[0], (before, after))
+                pg.wait_for_timeout(1500)
+                self.assertEqual(pg.locator('.fly').count(), 0)
+                pg.click('#nextBar'); pg.wait_for_timeout(60)
+            if level == 3:
+                self.assertEqual(wrongs, 5)
+                self.assertEqual(pg.text_content('#leTitle'), 'The Wall is breached')
+                self.assertNotIn('bonus', pg.text_content('#leSummary'))
+            pg.click('#leNext')
+        self.assertIn('before Marcus the courier', goals[0])
+        self.assertIn('Spiculus’s strength', goals[1])
+        self.assertIn('votes in', goals[2])
+        self.assertIn('breaks and the raiders are through', goals[3])
+        self.assertTrue(all(g.startswith('GOAL') for g in goals.values()), goals)
+
+    def test_tv_size_scales_the_game_up_and_is_remembered(self):
+        pg = self.open(1920, 1080)
+        self.assertEqual(pg.get_attribute('#tvBtn', 'aria-pressed'), 'false')
+        small = pg.locator('#beginBtn').bounding_box()['width']
+        pg.click('#tvBtn')
+        self.assertEqual(pg.get_attribute('#tvBtn', 'aria-pressed'), 'true')
+        self.assertGreater(pg.locator('#beginBtn').bounding_box()['width'], small * 1.4)
+        self.assertLessEqual(pg.evaluate('document.documentElement.scrollWidth'), 1920)
+        pg.reload(); pg.wait_for_selector('#beginBtn')
+        self.assertEqual(pg.get_attribute('#tvBtn', 'aria-pressed'), 'true')
+        pg.set_viewport_size({'width': 390, 'height': 844}); pg.wait_for_timeout(100)
+        self.assertLessEqual(pg.evaluate('document.documentElement.scrollWidth'), 391)
+
+    def test_countdown_uses_plain_digits(self):
+        pg = self.open()
+        pg.click('#beginBtn'); self.skip_scene(); pg.click('#enterBtn'); self.skip_scene()
+        pg.wait_for_selector('#clockN')
+        font = pg.evaluate("getComputedStyle(document.getElementById('clockN')).fontFamily")
+        self.assertIn('Nunito', font)
+        self.assertNotIn('Cinzel', font)
 
     def test_teams_stop_at_four_and_rivals_at_eight(self):
         pg = self.open()
