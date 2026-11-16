@@ -82,7 +82,7 @@ button{cursor:pointer}
 h1,h2,h3{font-family:var(--head);font-weight:800;line-height:1.02;margin:0}
 .wrap{max-width:980px;margin:0 auto;padding:22px 18px 10px}
 .btn{border:0;border-radius:999px;padding:14px 28px 12px;font-family:var(--head);font-weight:800;font-size:22px;background:linear-gradient(#f8c765,var(--amber));color:#2a1606;box-shadow:0 6px 0 #b67a22,0 14px 24px rgba(0,0,0,.25);transition:transform .08s,box-shadow .08s,filter .15s}
-.btn:hover{filter:brightness(1.06)}
+@media (hover:hover){.btn:hover{filter:brightness(1.06)}}
 .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b67a22,0 6px 12px rgba(0,0,0,.25)}
 .btn.ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 3px rgba(255,255,255,.5)}
 .btn.small{font-size:17px;padding:9px 18px 7px}
@@ -172,7 +172,7 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 .opt b{display:inline-flex;flex:none;width:clamp(30px,2.5vw,48px);aspect-ratio:1;border-radius:50%;background:var(--ink);color:var(--paper);align-items:center;justify-content:center;font-size:clamp(15px,1.4vw,26px);transition:background .2s}
 .opt:disabled{cursor:default}
 .opts.live .opt:not(.gone){border-color:var(--pc,var(--amber));box-shadow:0 4px 0 var(--pc,var(--amber))}
-.opts.live .opt:not(:disabled):hover{transform:translateY(-3px)}
+@media (hover:hover){.opts.live .opt:not(:disabled):hover{transform:translateY(-3px)}}
 .opts.live .opt:not(:disabled):active{transform:translateY(2px);box-shadow:0 1px 0 var(--pc,var(--amber))}
 .opt.gone{opacity:.4;text-decoration:line-through}
 .opt.right{background:#dff3e3;border-color:#2f9e55;animation:rightPop .5s cubic-bezier(.3,1.6,.5,1)}
@@ -307,6 +307,20 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 .dlg .go{justify-content:center;margin-top:0}
 .dlg .btn.ghost{color:var(--ink);box-shadow:inset 0 0 0 3px #c9b48d}
 
+.modepick{margin:0 0 16px}
+.join{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.join .qr{background:#fff;border-radius:16px;padding:8px;width:150px;height:150px;flex:none}
+.join .qr img{display:block;width:100%;height:100%}
+.join .url{color:#fff;font-weight:900;font-size:20px;overflow-wrap:anywhere}
+.join .code{font-family:var(--head);font-weight:800;font-size:clamp(44px,6vw,64px);letter-spacing:.12em;line-height:1;color:#ffe08a;margin-top:2px}
+.prow.net{padding:5px 12px 5px 5px}
+.prow.net .sw{cursor:default}
+.prow.net .nm{flex:1;font-weight:900;font-size:18px;overflow-wrap:anywhere}
+.prow.net .tag{font-size:13px;font-weight:800;opacity:.75}
+.prow.net.watch{opacity:.55}
+.prow.net.away .nm:after{content:' (lost connection)';font-weight:700;font-size:13px;opacity:.8}
+.net .side .key{display:none}
+.net .side{cursor:default}
 @media (max-width:760px){
   .stage{grid-template-columns:1fr 1fr;grid-template-areas:"card card" "l r";align-items:end}
   .card{grid-area:card;margin-top:6px}
@@ -373,16 +387,34 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
     <div class="hero">
       <div>
         <h1>Ruffled <span>Feathers</span></h1>
-        <p class="tag">A round-robin quiz for 3 to 10 players on one screen. Every robin faces every other robin once, one question a bout. The first correct peck wins 2 points.</p>
+        <p class="tag">A round-robin quiz for 3 to 10 players, on one screen or with phones as buzzers. Every robin faces every other robin once, one question a bout. The first correct peck wins 2 points.</p>
       </div>
       <div class="duo" aria-hidden="true" id="heroBirds"></div>
     </div>
 
     <section class="panel" aria-labelledby="pHead">
+      <div class="field modepick"><span>How will you play?</span>
+        <div class="seg" id="playMode" role="group" aria-label="How will you play?">
+          <button type="button" data-v="one" aria-pressed="true">One screen</button>
+          <button type="button" data-v="phones" aria-pressed="false">Phones as buzzers</button>
+        </div>
+      </div>
       <h2 id="pHead">Who's playing?</h2>
-      <p class="note">Each robin has its own chirp for a buzzer. Tap a robin to hear it.</p>
-      <div class="plist" id="plist"></div>
-      <div class="row"><button class="btn small ghost" id="addBtn" type="button">+ Add a player</button><span class="note" id="countNote"></span></div>
+      <div id="localBox">
+        <p class="note">Each robin has its own chirp for a buzzer. Tap a robin to hear it.</p>
+        <div class="plist" id="plist"></div>
+        <div class="row"><button class="btn small ghost" id="addBtn" type="button">+ Add a player</button><span class="note" id="countNote"></span></div>
+      </div>
+      <div id="lobbyBox" hidden>
+        <p class="note">Everyone joins on their own phone. The first 10 to join play; anyone else can watch along.</p>
+        <div class="join">
+          <div class="qr"><img id="qr" alt="QR code to join this game"></div>
+          <div><div class="note">On your phone, go to</div><a class="url" id="joinUrl" target="_blank" rel="noopener"></a>
+            <div class="note" style="margin-top:10px">Room code</div><div class="code" id="roomCode">·····</div></div>
+        </div>
+        <div class="plist" id="netList"></div>
+        <p class="note" id="lobbyMsg" role="status" style="margin-top:10px"></p>
+      </div>
 
       <label class="field"><span>Questions</span>
         <select id="topic"></select>
@@ -595,7 +627,7 @@ function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { con
 
 /* ---------- setup ---------- */
 let names = ['', '', '', '', ''];
-let cfg = { topic: 'gk', diff: '2', clock: 'timed' };
+let cfg = { topic: 'gk', diff: '2', clock: 'timed', mode: 'one' };
 try { const saved = JSON.parse(localStorage.getItem('tb-ruffled-setup') || 'null'); if (saved && Array.isArray(saved.names)) { names = saved.names.slice(0, MAX); while (names.length < MIN) names.push(''); cfg = Object.assign(cfg, saved.cfg || {}); } } catch (e) {}
 function paintPlayers(){
   $('plist').innerHTML = names.map((n, i) => '<div class="prow"><button class="sw" type="button" data-s="' + i + '" aria-label="Hear the chirp for player ' + (i + 1) + '">' + robin(COLOURS[i]) + '</button>'
@@ -628,6 +660,118 @@ let wake = null;
 function stayAwake(on){ try { if (on && navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {}); if (!on && wake) { wake.release(); wake = null; } } catch (e) {} }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && T && $('setup').hidden) stayAwake(true); });
 
+/* ---------- phones as buzzers ----------
+   The TV opens a room; phones join and peck on their own screens. The server
+   decides who pecked first, runs the windows and keeps the points; the TV follows it. */
+const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+let NET = null, net = { access: null, members: [], lobbyTimer: 0, gameTimer: 0, busy: false, gen: 0 };
+function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => no(new Error('load')); document.head.appendChild(el); }); }
+async function netAccess(){ if (net.access) return net.access; if (!window.RuffledAccess) { if (!window.supabase) await loadScript('vendor/supabase.js'); await loadScript('js/ruffled-access.js'); }
+  net.access = RuffledAccess.create(SB_URL, SB_KEY); return net.access; }
+function netMsg(e){ return net.access ? net.access.message(e) : 'Phone play could not load. Check your connection and try again.'; }
+function paintMode(){ const phones = cfg.mode === 'phones';
+  $('playMode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === cfg.mode)));
+  $('localBox').hidden = phones; $('lobbyBox').hidden = !phones; $('setupErr').textContent = '';
+  if (phones) openLobby(); else stopLobby(); }
+$('playMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === cfg.mode) return; cfg.mode = b.dataset.v; paintMode(); });
+function stopLobby(){ clearInterval(net.lobbyTimer); net.lobbyTimer = 0; }
+async function openLobby(){
+  const g = ++net.gen; $('lobbyMsg').textContent = 'Opening a room…';
+  try {
+    const access = await netAccess(); if (g !== net.gen) return;
+    let room = null; const saved = NET && NET.code || access.savedHostCode();
+    if (saved) { try { room = await access.hostState(saved); if (room.phase !== 'lobby') room = await access.setPhase('lobby'); } catch (e) { access.forgetHost(); room = null; } }
+    if (!room) room = await access.createRoom();
+    if (g !== net.gen) return;
+    NET = NET || {}; NET.code = room.code;
+    const link = (/^https?:/.test(location.protocol) ? location.origin : 'https://tierbrain.co') + '/ruffled-play.html?c=' + room.code;
+    $('roomCode').textContent = room.code; $('joinUrl').textContent = link.replace(/^https?:\/\//, ''); $('joinUrl').href = link;
+    $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(link);
+    $('lobbyMsg').textContent = 'Waiting for players to join…';
+    stopLobby(); lobbyTick(); net.lobbyTimer = setInterval(lobbyTick, 1500);
+  } catch (e) { if (g === net.gen) { $('lobbyMsg').textContent = netMsg(e); $('roomCode').textContent = '·····'; } }
+}
+async function lobbyTick(){
+  if (!NET || !NET.code || net.busy || $('setup').hidden || cfg.mode !== 'phones') return;
+  try { const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby(); }
+  catch (e) { $('lobbyMsg').textContent = netMsg(e); }
+}
+function netPlayers(){ return net.members.filter(m => m.seen).slice(0, MAX); }
+function paintLobby(){
+  const play = netPlayers(), ids = play.map(m => m.id);
+  $('netList').innerHTML = net.members.map(m => { const i = ids.indexOf(m.id);
+    return '<div class="prow net' + (i < 0 ? ' watch' : '') + (m.seen ? '' : ' away') + '"><span class="sw" aria-hidden="true">' + (i < 0 ? '' : robin(COLOURS[i])) + '</span><span class="nm">' + esc(m.name) + '</span><span class="tag">' + (i < 0 ? 'watching' : 'playing') + '</span></div>'; }).join('');
+  const n = play.length;
+  $('lobbyMsg').textContent = n < MIN ? (n ? n + (n === 1 ? ' player' : ' players') + ' so far. ' : '') + 'Waiting for at least ' + MIN + ' players to join…'
+    : n + ' players: ' + n * (n - 1) / 2 + ' bouts, about ' + Math.max(1, Math.round(n * (n - 1) / 4)) + ' minutes. Start when everyone is in.';
+}
+async function netBegin(){
+  if (!NET || !NET.code) { $('setupErr').textContent = 'The room is still opening. Try again in a moment.'; return; }
+  if (!buildPool(cfg.topic, cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
+  net.busy = true; $('beginBtn').disabled = true; $('againBtn').disabled = true;
+  try {
+    const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby();
+    const play = netPlayers();
+    if (play.length < MIN) { $('setupErr').textContent = 'Waiting for at least ' + MIN + ' players to join.'; show('setup'); return; }
+    const t = TOPICS.find(x => x[0] === cfg.topic);
+    const room = await net.access.beginRun({ roster: play.map(m => m.id), timed: cfg.clock === 'timed', topic: t ? t[1] : 'General knowledge' });
+    NET.room = room; $('setupErr').textContent = ''; stopLobby(); actx();
+    start(room.run.roster); netWatch(true);
+  } catch (e) { $('setupErr').textContent = netMsg(e); show('setup'); if (e.code === 'PT412') lobbyTick(); }
+  finally { net.busy = false; $('beginBtn').disabled = false; $('againBtn').disabled = false; }
+}
+function netWatch(on){ clearInterval(net.gameTimer); net.gameTimer = on ? setInterval(netTick, 300) : 0; document.body.classList.toggle('net', !!on); }
+async function netTick(){
+  if (!NET || net.busy || net.ticking) return; net.ticking = true;
+  try { const st = await net.access.hostState(NET.code); NET.room = st; if (B && B.sid && st.bout && st.bout.id === B.sid) netApply(st.bout); }
+  catch (e) { if (B && !B.done) setMsg(netMsg(e)); }
+  finally { net.ticking = false; }
+}
+function sideOf(id){ return B.ids.findIndex(i => T.players[i].id === id); }
+function netApply(sb){
+  if (!B || B.done) return;
+  const now = net.access.now();
+  if (B.phase === 'read' && now >= sb.open_at) openBout();
+  if (B.phase === 'read') return;
+  if (T.clock === 'timed' && sb.peck_deadline) { const before = Math.ceil(B.left / 1000); B.left = Math.max(0, sb.peck_deadline - now); const after = Math.ceil(B.left / 1000); if (after !== before && after <= 3 && after > 0 && !sb.chooser) SFX.tick(); }
+  (sb.locked || []).forEach(id => { const s = sideOf(id); if (s < 0 || B.locked[s] || B.done) return;
+    if (B.chooser !== s) { if (B.phase !== 'open') return; peck(s); }
+    const w = (sb.wrong || []).find(x => x.member === id); choose(w ? w.choice : -1); });
+  if (B.done) return;
+  if (sb.closed) {
+    const s = sb.winner ? sideOf(sb.winner) : -1;
+    if (s >= 0) { if (B.chooser !== s && B.phase === 'open') peck(s); return setTimeout(() => endBout(s, 'right', sb.peck_ms || 0), B.chooser === s ? 0 : 350); }
+    return endBout(-1, sb.reason === 'time' ? 'time' : sb.reason === 'host' ? 'nobody' : 'both');
+  }
+  if (sb.chooser) { const s = sideOf(sb.chooser); if (s >= 0 && B.chooser !== s && B.phase === 'open') peck(s); if (B.chooser === s) B.chooseLeft = Math.max(0, sb.choose_deadline - now); }
+  paintTimer();
+}
+async function netOpenBout(){
+  const opts = B.opts, bt = B.bt, mine = B;
+  try {
+    const room = await net.access.openBout({ a: T.players[bt.a].id, b: T.players[bt.b].id, q: B.q.q, opts, correct: opts.indexOf(B.q.correct) });
+    NET.room = room; if (B === mine) mine.sid = room.bout.id;
+  } catch (e) {
+    if (B !== mine) return;
+    if (e.code === 'PT412' || /already met/.test(e.message || '')) return netSkipGone();
+    mine.done = true; setMsg(netMsg(e)); $('nextBtn').textContent = 'Try again'; $('nextBtn').hidden = false; T.retry = true;
+  }
+}
+/* Players who have left or lost connection: their remaining bouts are skipped. */
+async function netSkipGone(){
+  try { const st = await net.access.hostState(NET.code); NET.room = st; } catch (e) {}
+  const roster = (NET.room && NET.room.run && NET.room.run.roster) || [], gone = roster.filter(m => !m.seen).map(m => m.id);
+  const goneIdx = T.players.map((p, i) => gone.includes(p.id) ? i : -1).filter(i => i >= 0);
+  const before = T.bouts.length;
+  T.bouts = T.bouts.slice(0, T.k).concat(T.bouts.slice(T.k).filter(b => !goneIdx.includes(b.a) && !goneIdx.includes(b.b)));
+  if (B) B.done = true;
+  T.note = goneIdx.length ? goneIdx.map(i => T.players[i].name).join(' and ') + (goneIdx.length === 1 ? ' has' : ' have') + ' left, so ' + (before - T.bouts.length) + ' bouts were skipped.' : '';
+  if (T.k >= T.bouts.length) showFinal(); else showOrder(false);
+}
+function netPhase(phase){ if (!NET || !net.access) return Promise.resolve(); return net.access.setPhase(phase).catch(() => {}); }
+async function netGiveUp(){ if (!B || !B.sid) return; try { await net.access.endBout(B.sid); } catch (e) { setMsg(netMsg(e)); } }
+async function netLeave(){ netWatch(false); try { if (B && B.sid) await net.access.endBout(B.sid).catch(() => {}); await net.access.setPhase('lobby'); } catch (e) {} }
+
 /* ---------- the tournament ---------- */
 let T = null;
 function finalNames(){ const used = {}; return names.map((n, i) => { let s = String(n || '').trim().replace(/\s+/g, ' ').slice(0, 14) || ('Player ' + (i + 1)); const k = s.toLowerCase();
@@ -646,15 +790,17 @@ function scheduleOnce(n){
   }
   return out;
 }
-function start(){
-  const list = finalNames();
-  T = { players: list.map((name, i) => ({ name, colour: COLOURS[i], voice: i, pts: 0, won: 0, lost: 0, nil: 0, times: [] })),
+function start(roster){
+  const list = roster ? roster.map(m => m.name) : finalNames();
+  T = { players: list.map((name, i) => ({ name, id: roster ? roster[i].id : null, colour: COLOURS[i], voice: i, pts: 0, won: 0, lost: 0, nil: 0, times: [] })),
         bouts: schedule(list.length), k: 0, topic: cfg.topic, diff: cfg.diff, clock: cfg.clock, pool: buildPool(cfg.topic, cfg.diff), qi: 0, prevOrder: null, lastBout: null };
   try { localStorage.setItem('tb-ruffled-setup', JSON.stringify({ names, cfg })); } catch (e) {}
+  if (!roster) { NET = NET && NET.code ? Object.assign(NET, { room: null }) : NET; netWatch(false); }
   stayAwake(true);
   showOrder(true);
 }
 $('beginBtn').addEventListener('click', () => {
+  if (cfg.mode === 'phones') return netBegin();
   if (names.length < MIN) { $('setupErr').textContent = 'Add at least ' + MIN + ' players.'; return; }
   if (!buildPool(cfg.topic, cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
   $('setupErr').textContent = ''; actx(); start();
@@ -689,25 +835,26 @@ function startBout(){
   [0, 1].forEach(s => { const p = T.players[B.ids[s]], e = setBird(s);
     e.bird.className = 'bird' + (STILL ? '' : ' fly flap');
     e.name.textContent = p.name; e.score.className = 'sc'; e.score.textContent = points(p.pts) + (T.k ? ' · ' + ord(ranks[B.ids[s]]) : '');
-    e.side.className = 'side' + (s ? ' flip' : ''); e.side.style.setProperty('--pc', p.colour); e.side.disabled = false; e.side.setAttribute('aria-label', 'Peck for ' + p.name);
+    e.side.className = 'side' + (s ? ' flip' : ''); e.side.style.setProperty('--pc', p.colour); e.side.disabled = !!T.players[0].id; e.side.setAttribute('aria-label', 'Peck for ' + p.name);
     e.pill.className = 'pill'; e.pill.textContent = ''; });
   $('nextBtn').hidden = true;
   setMsg('Read the question…');
   paintTimer();
   SFX.arrive();
+  if (T.players[0].id) { $('timer').innerHTML = ''; return netOpenBout(); }
   clearTimeout(B.t1); B.t1 = setTimeout(openBout, READ);
 }
-function openBout(){ if (!B || B.done) return; B.phase = 'open'; B.openedAt = performance.now(); $('opts').classList.remove('deal'); readySides(); setMsg('Peck when you know!', true); SFX.open(); runClock(); }
+function openBout(){ if (!B || B.done) return; B.phase = 'open'; B.openedAt = performance.now(); $('opts').classList.remove('deal'); readySides(); setMsg(T.players[0].id ? 'Peck on your phone when you know!' : 'Peck when you know!', true); SFX.open(); runClock(); }
 function readySides(){ [0, 1].forEach(s => { const e = sideEls(s); const can = !B.locked[s] && B.phase === 'open'; e.side.disabled = !can; e.side.classList.toggle('ready', can); e.side.classList.toggle('locked', B.locked[s]); e.side.classList.remove('chosen'); });
   $('stage').classList.remove('picking'); }
-function runClock(){ clearInterval(clockTimer); if (T.clock !== 'timed') { paintTimer(); return; } let last = performance.now();
+function runClock(){ clearInterval(clockTimer); if (T.clock !== 'timed' || T.players[0].id) { paintTimer(); return; } let last = performance.now();
   clockTimer = setInterval(() => { if (!B || B.done) return clearInterval(clockTimer); const now = performance.now(), dt = now - last; last = now; if (paused) return;
     if (B.phase === 'open') { const before = Math.ceil(B.left / 1000); B.left -= dt; const after = Math.ceil(B.left / 1000); if (after !== before && after <= 3 && after > 0) SFX.tick(); if (B.left <= 0) { B.left = 0; paintTimer(); return endBout(-1, 'time'); } }
     else if (B.phase === 'choose') { B.chooseLeft -= dt; if (B.chooseLeft <= 0) { B.chooseLeft = 0; return choose(-1); } }
     paintTimer(); }, 100); }
 function paintTimer(){ const el = $('timer');
   if (!T || T.clock !== 'timed') { if (!el.dataset.relaxed || !el.firstChild) { el.dataset.relaxed = '1'; el.className = 'timer'; el.innerHTML = '<em style="min-width:0">No clock: take your time</em>'; }
-    if (B && B.phase === 'open' && !B.giveUp) { B.giveUp = setTimeout(() => { if (B && !B.done && B.phase === 'open') { $('timer').innerHTML = '<button class="btn small ghost" id="giveUp" type="button" style="color:var(--ink);box-shadow:inset 0 0 0 3px #c9b48d">Nobody knows: 0–0</button>'; $('giveUp').onclick = () => endBout(-1, 'nobody'); } }, 8000); } return; }
+    if (B && B.phase === 'open' && !B.giveUp) { B.giveUp = setTimeout(() => { if (B && !B.done && B.phase === 'open') { $('timer').innerHTML = '<button class="btn small ghost" id="giveUp" type="button" style="color:var(--ink);box-shadow:inset 0 0 0 3px #c9b48d">Nobody knows: 0–0</button>'; $('giveUp').onclick = () => T.players[0].id ? netGiveUp() : endBout(-1, 'nobody'); } }, 8000); } return; }
   delete el.dataset.relaxed;
   if (el.querySelectorAll('i').length !== BERRIES) el.innerHTML = LEAF + Array.from({ length: BERRIES }, () => '<i></i>').join('') + LEAF.replace('class="leaf"', 'class="leaf r"') + '<em></em>';
   const left = B ? B.left : ASK * 1000, lit = Math.ceil(left / (ASK * 1000 / BERRIES)), s = Math.ceil(left / 1000);
@@ -785,16 +932,16 @@ function endBout(s, why, ms, i){
   $('nextBtn').textContent = T.k >= T.bouts.length ? 'See who rules the roost' : 'See the Pecking Order';
   $('nextBtn').hidden = false; $('nextBtn').focus({ preventScroll: true });
 }
-$('nextBtn').addEventListener('click', () => { if (T.k >= T.bouts.length) showFinal(); else showOrder(false); });
-$('sideL').addEventListener('pointerdown', e => { e.preventDefault(); peck(0); });
-$('sideR').addEventListener('pointerdown', e => { e.preventDefault(); peck(1); });
-$('sideL').addEventListener('click', e => { if (e.detail === 0) peck(0); });
-$('sideR').addEventListener('click', e => { if (e.detail === 0) peck(1); });
-$('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (b && !b.disabled) choose(+b.dataset.i); });
+$('nextBtn').addEventListener('click', () => { if (T.retry) { T.retry = false; return startBout(); } if (T.k >= T.bouts.length) showFinal(); else showOrder(false); });
+$('sideL').addEventListener('pointerdown', e => { e.preventDefault(); if (!NET || !T || !T.players[0].id) peck(0); });
+$('sideR').addEventListener('pointerdown', e => { e.preventDefault(); if (!NET || !T || !T.players[0].id) peck(1); });
+$('sideL').addEventListener('click', e => { if (e.detail === 0 && !(T && T.players[0].id)) peck(0); });
+$('sideR').addEventListener('click', e => { if (e.detail === 0 && !(T && T.players[0].id)) peck(1); });
+$('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (b && !b.disabled && !(T && T.players[0].id)) choose(+b.dataset.i); });
 document.addEventListener('keydown', e => {
   if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
   if (!$('dlg').hidden) { if (e.key === 'Escape') closeDlg(); return; }
-  if ($('game').hidden || e.repeat) return;
+  if ($('game').hidden || e.repeat || (T && T.players[0].id)) return;
   const k = e.key.toLowerCase();
   if (k === 'q') { e.preventDefault(); peck(0); }
   else if (k === 'p') { e.preventDefault(); peck(1); }
@@ -866,6 +1013,7 @@ function talkingPoint(st){
 }
 function showOrder(first){
   const st = standings(), tree = $('tree');
+  if (!first && T.players[0].id) netPhase('table');
   show('order');
   $('orderSub').textContent = first ? 'Before the first bout' : 'After bout ' + T.k + ' of ' + T.bouts.length;
   $('prog').innerHTML = T.bouts.map((_, i) => '<i class="' + (i < T.k ? 'done' : i === T.k ? 'now' : '') + '"></i>').join('');
@@ -879,7 +1027,8 @@ function showOrder(first){
   if (!first && T.prevOrder && st.order.some((p, i) => T.prevOrder.indexOf(p) > i)) setTimeout(SFX.hop, 450);
   $('xt').innerHTML = xtHTML(last);
   const nb = T.bouts[T.k], A = T.players[nb.a], Bp = T.players[nb.b];
-  $('nextBox').innerHTML = '<div>' + esc(first ? T.bouts.length + ' bouts. Everyone faces everyone once.' : talkingPoint(st)) + '</div>'
+  const note = T.note ? T.note + ' ' : ''; T.note = '';
+  $('nextBox').innerHTML = '<div>' + esc(note + (first ? T.bouts.length + ' bouts. Everyone faces everyone once.' : talkingPoint(st))) + '</div>'
     + '<div class="versus" aria-label="Next bout: ' + esc(A.name) + ' v ' + esc(Bp.name) + '"><div class="vb">' + robin(A.colour) + '</div><div class="vn">' + esc(A.name) + '</div><div class="v">v</div><div class="vn">' + esc(Bp.name) + '</div><div class="vb r">' + robin(Bp.colour) + '</div></div>'
     + '<button class="btn" id="boutBtn" type="button">' + (first ? 'First bout' : 'Next bout') + '</button>';
   $('boutBtn').addEventListener('click', startBout); $('boutBtn').focus({ preventScroll: true });
@@ -890,6 +1039,7 @@ function showOrder(first){
 function showFinal(){
   const st = standings(), P = T.players, w = st.order[0];
   show('final'); SFX.chorus(P.map(p => p.voice), P[w].voice);
+  if (P[0].id) { netPhase('final'); netWatch(false); }
   const shared = st.pos[1] === 1;
   $('champBird').className = 'b crowned'; $('champBird').innerHTML = robin(P[w].colour, { crown: true }); restart($('champBird'), 'flap sing');
   $('champName').textContent = shared ? st.order.filter((_, i) => st.pos[i] === 1).map(p => P[p].name).join(' & ') : P[w].name;
@@ -909,19 +1059,20 @@ function showFinal(){
     document.body.appendChild(c); setTimeout(() => c.remove(), 6500); }
   $('againBtn').focus({ preventScroll: true });
 }
-$('againBtn').addEventListener('click', () => start());
-$('changeBtn').addEventListener('click', () => { stayAwake(false); show('setup'); paintPlayers(); });
+$('againBtn').addEventListener('click', () => T && T.players[0].id ? netBegin() : start());
+$('changeBtn').addEventListener('click', () => { stayAwake(false); show('setup'); paintPlayers(); if (cfg.mode === 'phones') { netPhase('lobby'); openLobby(); } });
 
 /* ---------- leaving: an in-page question, and the clock waits while it is open ---------- */
 let dlgBack = null;
-function leave(){ clearInterval(clockTimer); if (B) { B.done = true; clearTimeout(B.t1); clearTimeout(B.giveUp); } B = null; paused = false; $('dlg').hidden = true; stayAwake(false); show('setup'); paintPlayers(); }
+function leave(){ clearInterval(clockTimer); const phones = T && T.players[0].id; if (phones) netLeave().then(() => { if (cfg.mode === 'phones') openLobby(); }); if (B) { B.done = true; clearTimeout(B.t1); clearTimeout(B.giveUp); } B = null; paused = false; $('dlg').hidden = true; stayAwake(false); show('setup'); paintPlayers(); }
 function quit(){ if (!T || T.k === 0 && (!B || B.done) || window.__noConfirm) return leave(); dlgBack = document.activeElement; paused = true; $('dlg').hidden = false; $('stayBtn').focus(); }
 function closeDlg(){ $('dlg').hidden = true; paused = false; if (dlgBack && dlgBack.focus) dlgBack.focus({ preventScroll: true }); }
 $('quitBtn').addEventListener('click', quit); $('quitBtn2').addEventListener('click', quit);
 $('stayBtn').addEventListener('click', closeDlg); $('leaveBtn').addEventListener('click', leave);
 $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) closeDlg(); });
 window.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && $('dlg').hidden && !$('game').hidden && !$('nextBtn').hidden && document.activeElement !== $('nextBtn')) { e.preventDefault(); $('nextBtn').click(); } });
-window.__rf = { get T(){ return T; }, get B(){ return B; }, standings, schedule, backToBack, songOf };
+if (cfg.mode === 'phones') paintMode();
+window.__rf = { get T(){ return T; }, get B(){ return B; }, get NET(){ return NET; }, standings, schedule, backToBack, songOf };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#game,#order,#final" defer></script>
 </body>
