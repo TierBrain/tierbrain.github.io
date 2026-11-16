@@ -147,6 +147,7 @@ input{width:100%;border:0;border-radius:12px;padding:14px;margin-top:6px;backgro
 
 <script src="vendor/supabase.js"></script>
 <script src="js/ruffled-access.js"></script>
+<script src="ruffled-ark.js?v=1"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -156,7 +157,10 @@ const COLOURS = ['#3b82f6', '#22a36a', '#9b59b6', '#e0a21b', '#17a2b8', '#e05297
 const STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 let svgN = 0;
+/* The Ark: the TV's join link carries s=ark, so each phone shows the same Bible bird as the TV */
+const ARK = new URLSearchParams(location.search).get('s') === 'ark' && !!window.RF_ARK;
 function robin(scarf, opts){
+  if (ARK) return RF_ARK.bird(COLOURS.indexOf(scarf), scarf, opts);
   opts = opts || {}; const id = 'rb' + (++svgN), d = (-(svgN * 0.77) % 5).toFixed(2);
   const brow = opts.cross ? '<path d="M122 64 L147 72" stroke="#2a1a12" stroke-width="5.5" stroke-linecap="round"/>' : '';
   const crown = opts.crown ? '<g class="r-crown"><path d="M104 42 L110 12 L125 31 L137 6 L149 31 L164 12 L168 43 Z" fill="#f6c93a" stroke="#b8860b" stroke-width="3" stroke-linejoin="round"/><circle cx="137" cy="12" r="4" fill="#e2582c"/><circle cx="111" cy="17" r="3" fill="#3b82f6"/><circle cx="163" cy="17" r="3" fill="#22a36a"/></g>' : '';
@@ -194,7 +198,7 @@ const SONGS = [
   [[0, 1, 1.9, .17], [.2, 1.85, 1.7, .05], [.27, 1.85, 1.7, .05]],
   [[0, 1.5, 1.1, .06], [.08, 1.5, 1.1, .06], [.16, 1.1, 1.75, .13]]];
 function songOf(i){ return { notes: SONGS[i % 5], base: 2250 + ((i * 410) % 1500) }; }
-function sing(i, t, v){ const s = songOf(i); s.notes.forEach(n => syll((t || 0) + n[0], s.base * n[1], s.base * n[2], n[3], v || .2)); }
+function sing(i, t, v){ if (ARK) return RF_ARK.call(i, { tone, syll, flutter }, t, v); const s = songOf(i); s.notes.forEach(n => syll((t || 0) + n[0], s.base * n[1], s.base * n[2], n[3], v || .2)); }
 const SFX = {
   arrive(){ flutter(.05, 6); flutter(.3, 5); },
   open(){ syll(0, 3100, 3700, .06, .1); syll(.09, 3500, 4300, .08, .1); },

@@ -289,10 +289,13 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 .versus .v{font-family:var(--flour);font-style:italic;color:var(--gold);font-size:1.2em}
 .nextbox .btn{display:block;margin:14px auto 0}
 .champ{display:flex;align-items:flex-end;gap:16px;margin-top:10px}
-.champ .b{width:clamp(110px,14vw,240px);aspect-ratio:1;flex:none;animation:champIn .9s cubic-bezier(.2,1.3,.4,1)}
+.champ .b{width:clamp(90px,10vw,190px);aspect-ratio:1;flex:none;animation:champIn .9s cubic-bezier(.2,1.3,.4,1)}
 @keyframes champIn{from{transform:scale(.2) translateY(60%);opacity:0}}
-.champ .n{font-family:var(--head);font-weight:800;font-size:clamp(40px,5.5vw,100px);line-height:1;color:#ffe08a;text-shadow:0 6px 0 rgba(0,0,0,.2);overflow-wrap:anywhere}
-.ties{margin-top:10px;font-size:clamp(14px,1.3vw,22px);opacity:.9}
+.champ .n{font-family:var(--head);font-weight:800;font-size:clamp(38px,4.6vw,88px);line-height:1;color:#ffe08a;text-shadow:0 6px 0 rgba(0,0,0,.2);overflow-wrap:anywhere}
+.ties{margin-top:12px;font-size:clamp(14px,1.2vw,21px);line-height:1.4;background:rgba(6,16,32,.62);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:10px 16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ties:empty{display:none}
+#finalXt td,#finalXt th{height:clamp(24px,3.5vh,44px)}
+#final .go{margin-top:16px}
 .award{display:inline-flex;align-items:center;gap:10px;margin-top:12px;background:rgba(6,16,32,.5);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:6px 18px 6px 8px;font-weight:800;font-size:clamp(14px,1.3vw,24px)}
 .award .ab{width:clamp(34px,3vw,54px);aspect-ratio:1}
 .confetti{position:fixed;top:-20px;width:10px;height:16px;border-radius:2px;pointer-events:none;animation:drop linear forwards;z-index:5}
@@ -356,6 +359,29 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
   .side .plate .sc{font-size:13px}
   .ground{height:9vh}
 }
+/* ---------- The Ark: the same game at sunset on the flood; the waters go down as the round goes on ---------- */
+.arkname,.ark-only{display:none}
+body.ark{--night:#1c1a3e;--dusk:#6a3f62;--mist:#f0a065;--snow:#9a7450}
+body.ark .arkname{display:inline;font-family:var(--flour);font-style:italic;font-weight:700;color:#ffd9a0;font-size:.5em;margin-left:.45em;letter-spacing:0;white-space:nowrap}
+body.ark .ark-only{display:block}
+body.ark .field.ark-only{display:grid}
+body.ark #snow{display:none}
+body.ark #sky .moon{top:auto;bottom:21vh;right:20vw;width:clamp(80px,9vw,170px);background:radial-gradient(circle at 50% 50%,#fff3c4,#ffc46a 55%,#f08a3c);box-shadow:0 0 0 clamp(14px,2vw,36px) rgba(255,200,120,.12),0 0 0 clamp(34px,4.4vw,80px) rgba(255,190,110,.07),0 0 160px 60px rgba(255,170,90,.35)}
+body.ark #sky .moon:after{display:none}
+body.ark #sky .hills{height:clamp(150px,30vh,340px)}
+#sky .tide{transition:transform 2.4s cubic-bezier(.3,.7,.3,1)}
+#sky .bow{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 2.5s ease;pointer-events:none}
+body.ark #sky .bow.on{opacity:.5}
+body.ark .ground{background:repeating-linear-gradient(90deg,#6e4b2f 0 118px,#5c3d26 118px 122px),#6e4b2f}
+body.ark .ground:before{left:0;right:0;top:-1.6vh;height:3.2vh;border-radius:6px;background:linear-gradient(#9a7450,#7a5636);box-shadow:0 .5vh 0 #4a3220}
+body.ark .ground:after{display:none}
+body.ark .side .post:before{top:-8px;height:18px;border-radius:6px;background:linear-gradient(#a8805a,#86623f);box-shadow:none}
+body.ark .timer i{background:radial-gradient(circle at 35% 30%,#d6e09a,#86a03c 60%,#4f6a1f)}
+body.ark .timer .leaf path:first-child{fill:#6d8f3a}
+body.ark .timer .leaf{transform:scaleY(.6)}
+body.ark .timer .leaf.r{transform:scale(-1,.6)}
+body.ark .prog i.done{background:#86a03c}
+.verse{font-family:var(--flour);font-style:italic;font-weight:500;color:#ffe1b8;font-size:clamp(14px,1.2vw,22px);margin-top:6px}
 @media (prefers-reduced-motion:reduce){
   #snow{display:none}
   *,*:before,*:after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
@@ -386,13 +412,19 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>Ruffled <span>Feathers</span></h1>
+        <h1>Ruffled <span>Feathers</span><span class="arkname">The Ark</span></h1>
         <p class="tag">A round-robin quiz for 3 to 10 players, on one screen or with phones as buzzers. Every robin faces every other robin once, one question a bout. The first correct peck wins 2 points.</p>
       </div>
       <div class="duo" aria-hidden="true" id="heroBirds"></div>
     </div>
 
     <section class="panel" aria-labelledby="pHead">
+      <div class="field modepick"><span>Scene</span>
+        <div class="seg" id="scene" role="group" aria-label="Scene">
+          <button type="button" data-v="garden" aria-pressed="true">Winter garden</button>
+          <button type="button" data-v="ark" aria-pressed="false">The Ark: Bible questions</button>
+        </div>
+      </div>
       <div class="field modepick"><span>How will you play?</span>
         <div class="seg" id="playMode" role="group" aria-label="How will you play?">
           <button type="button" data-v="one" aria-pressed="true">One screen</button>
@@ -416,9 +448,10 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
         <p class="note" id="lobbyMsg" role="status" style="margin-top:10px"></p>
       </div>
 
-      <label class="field"><span>Questions</span>
+      <label class="field" id="topicField"><span>Questions</span>
         <select id="topic"></select>
       </label>
+      <div class="field ark-only"><span>Questions</span><p class="note" id="arkTopic"></p></div>
       <div class="field"><span>Difficulty</span>
         <div class="seg" id="diff" role="group" aria-label="Difficulty">
           <button type="button" data-v="1" aria-pressed="false">Easy</button>
@@ -455,7 +488,7 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 
 <main id="game" hidden>
   <div class="bar">
-    <div class="logo">Ruffled <span>Feathers</span></div>
+    <div class="logo">Ruffled <span>Feathers</span><span class="arkname">The Ark</span></div>
     <div class="info it" id="boutInfo"></div>
     <div class="ctl"><button class="iconbtn fs" type="button" hidden>Full screen</button><button class="iconbtn" id="soundBtn" type="button" aria-pressed="true">Sound on</button><button class="iconbtn" id="quitBtn" type="button">Quit</button></div>
   </div>
@@ -489,7 +522,7 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 
 <main id="order" hidden>
   <div class="bar">
-    <div class="logo">Ruffled <span>Feathers</span></div>
+    <div class="logo">Ruffled <span>Feathers</span><span class="arkname">The Ark</span></div>
     <div class="ctl" style="margin-left:auto"><button class="iconbtn fs" type="button" hidden>Full screen</button><button class="iconbtn" id="quitBtn2" type="button">Quit</button></div>
   </div>
   <div class="board">
@@ -507,18 +540,18 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 </main>
 
 <main id="final" hidden>
-  <div class="bar"><div class="logo">Ruffled <span>Feathers</span></div></div>
+  <div class="bar"><div class="logo">Ruffled <span>Feathers</span><span class="arkname">The Ark</span></div></div>
   <div class="board">
     <div>
       <div class="it" style="font-size:clamp(20px,2.2vw,40px)">Top of the Pecking Order</div>
-      <div class="champ"><div class="b" id="champBird"></div><div><div class="n" id="champName"></div><div class="sub" id="champLine"></div></div></div>
-      <div id="awards"></div>
-      <div class="ties" id="tieNote"></div>
+      <div class="champ"><div class="b" id="champBird"></div><div><div class="n" id="champName"></div><div class="sub" id="champLine"></div><div class="verse ark-only" id="arkVerse"></div></div></div>
       <div class="tree" id="finalTree"></div>
     </div>
     <div>
       <div class="xt" id="finalXt"></div>
       <div class="go"><button class="btn" id="againBtn" type="button">Play again</button><button class="btn ghost" id="changeBtn" type="button">Change players</button></div>
+      <div id="awards"></div>
+      <div class="ties" id="tieNote"></div>
     </div>
   </div>
 </main>
@@ -533,6 +566,8 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 
 <script src="questions.js?v=8"></script>
 <script src="bible-bank.js?v=1"></script>
+<script src="ff-sets-bible.js?v=1"></script>
+<script src="ruffled-ark.js?v=1"></script>
 <script src="ruffled-topics.js?v=1"></script>
 <script>
 'use strict';
@@ -541,10 +576,15 @@ const COLOURS = ['#3b82f6', '#22a36a', '#9b59b6', '#e0a21b', '#17a2b8', '#e05297
 const MIN = 3, MAX = 10, ASK = 15, CHOOSE = 6, BERRIES = 10;
 const STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const READ = STILL ? 700 : 2400;   /* a moment to read the question before pecking opens */
+/* longer questions get longer to read: the card lands, then about 0.15 s a word, from 2.4 s up to 4.8 s */
+function readFor(q){ if (STILL || !q) return READ; const words = [q.q, q.correct].concat((q.wrong || []).slice(0, 3)).join(' ').trim().split(/\s+/).length;
+  return Math.max(READ, Math.min(4800, 1100 + 150 * words)); }
+let beat = 0;   /* a breath after each result before the host can move on */
 
 /* ---------- the robin (an original drawing, built in parts so it can breathe, blink, flap and sing) ---------- */
-let svgN = 0;
+let svgN = 0, SCENE = 'garden';
 function robin(scarf, opts){
+  if (SCENE === 'ark') return RF_ARK.bird(COLOURS.indexOf(scarf), scarf, opts);
   opts = opts || {}; const id = 'rb' + (++svgN), d = (-(svgN * 0.77) % 5).toFixed(2);
   const brow = opts.cross ? '<path d="M122 64 L147 72" stroke="#2a1a12" stroke-width="5.5" stroke-linecap="round"/>' : '';
   const crown = opts.crown ? '<g class="r-crown"><path d="M104 42 L110 12 L125 31 L137 6 L149 31 L164 12 L168 43 Z" fill="#f6c93a" stroke="#b8860b" stroke-width="3" stroke-linejoin="round"/><circle cx="137" cy="12" r="4" fill="#e2582c"/><circle cx="111" cy="17" r="3" fill="#3b82f6"/><circle cx="163" cy="17" r="3" fill="#22a36a"/></g>' : '';
@@ -585,7 +625,7 @@ const SONGS = [
   [[0, 1, 1.9, .17], [.2, 1.85, 1.7, .05], [.27, 1.85, 1.7, .05]],
   [[0, 1.5, 1.1, .06], [.08, 1.5, 1.1, .06], [.16, 1.1, 1.75, .13]]];
 function songOf(i){ return { notes: SONGS[i % 5], base: 2250 + ((i * 410) % 1500) }; }
-function sing(i, t, v){ const s = songOf(i); s.notes.forEach(n => syll((t || 0) + n[0], s.base * n[1], s.base * n[2], n[3], v || .2)); }
+function sing(i, t, v){ if (SCENE === 'ark') return RF_ARK.call(i, { tone, syll, flutter }, t, v); const s = songOf(i); s.notes.forEach(n => syll((t || 0) + n[0], s.base * n[1], s.base * n[2], n[3], v || .2)); }
 const SFX = {
   arrive(){ flutter(.05, 6); flutter(.3, 5); },
   open(){ syll(0, 3100, 3700, .06, .1); syll(.09, 3500, 4300, .08, .1); },
@@ -614,10 +654,13 @@ $('heroBirds').innerHTML = '<div>' + robin(COLOURS[0], { cross: true }) + '</div
 /* ---------- questions ---------- */
 const TOPICS = [['gk', 'General knowledge'], ['bible', 'Bible']].concat(Object.keys(window.RF_TOPICS || {}).map(k => [k, window.RF_TOPICS[k]]));
 $('topic').innerHTML = TOPICS.map(t => '<option value="' + t[0] + '">' + t[1] + '</option>').join('');
-function bankFor(topic){ if (topic === 'gk') return window.TB ? TB.bank('gk') : {}; if (topic === 'bible') return window.TB_BIBLE || {}; return (window.RF_BANK || {})[topic] || {}; }
+function bankFor(topic){ if (topic === 'gk') return window.TB ? TB.bank('gk') : {}; if (topic === 'bible') return window.TB_BIBLE || {}; if (topic === 'ark') return window.RF_ARK ? RF_ARK.bible() : {}; return (window.RF_BANK || {})[topic] || {}; }
 function tiersFor(topic, diff){ const b = bankFor(topic), have = Object.keys(b).filter(k => (b[k] || []).length);
   if (diff === 'mix') return have; const top = have.length ? Math.max.apply(null, have.map(Number)) : 1;
   const want = String(Math.min(Number(diff), top)); return have.includes(want) ? [want] : have; }
+/* The Ark asks Bible questions only, from every Bible game on the site; the winter garden's topics are unchanged */
+function topicNow(){ return SCENE === 'ark' ? 'ark' : cfg.topic; }
+function topicName(id){ if (id === 'ark') return 'Bible'; const t = TOPICS.find(x => x[0] === id); return t ? t[1] : ''; }
 function okQ(q){ return q && q.q && q.correct && Array.isArray(q.wrong) && q.wrong.length >= 3 && new Set([q.correct].concat(q.wrong.slice(0, 3))).size === 4; }
 const seen = new Set();
 function buildPool(topic, diff){ const b = bankFor(topic), pool = [];
@@ -630,7 +673,7 @@ let names = ['', '', '', '', ''];
 let cfg = { topic: 'gk', diff: '2', clock: 'timed', mode: 'one' };
 try { const saved = JSON.parse(localStorage.getItem('tb-ruffled-setup') || 'null'); if (saved && Array.isArray(saved.names)) { names = saved.names.slice(0, MAX); while (names.length < MIN) names.push(''); cfg = Object.assign(cfg, saved.cfg || {}); } } catch (e) {}
 function paintPlayers(){
-  $('plist').innerHTML = names.map((n, i) => '<div class="prow"><button class="sw" type="button" data-s="' + i + '" aria-label="Hear the chirp for player ' + (i + 1) + '">' + robin(COLOURS[i]) + '</button>'
+  $('plist').innerHTML = names.map((n, i) => '<div class="prow"><button class="sw" type="button" data-s="' + i + '" aria-label="' + (SCENE === 'ark' ? 'Hear the ' + RF_ARK.BIRDS[i].name.toLowerCase() + ' for player ' : 'Hear the chirp for player ') + (i + 1) + '">' + robin(COLOURS[i]) + '</button>'
     + '<input maxlength="14" aria-label="Player ' + (i + 1) + ' name" placeholder="Player ' + (i + 1) + '" value="' + esc(n) + '" data-i="' + i + '" enterkeyhint="next">'
     + (names.length > MIN ? '<button class="rm" type="button" data-i="' + i + '" aria-label="Remove player ' + (i + 1) + '">×</button>' : '') + '</div>').join('');
   $('addBtn').hidden = names.length >= MAX;
@@ -648,7 +691,28 @@ function segs(id, key){ const g = $(id); const paint = () => g.querySelectorAll(
 segs('diff', 'diff'); segs('clock', 'clock');
 $('topic').value = TOPICS.some(t => t[0] === cfg.topic) ? cfg.topic : 'gk';
 $('topic').addEventListener('change', () => { cfg.topic = $('topic').value; });
-paintPlayers();
+const GARDEN = { hills: document.querySelector('#sky .hills').innerHTML, tag: document.querySelector('.hero .tag').textContent, note: $('localBox').querySelector('.note').textContent };
+const BOW = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+function tide(f){ const w = document.getElementById('arkWaters'); if (w) w.setAttribute('transform', 'translate(0 ' + Math.round(Math.max(0, Math.min(1, f)) * 70) + ')'); }
+function bow(on){ BOW.classList.toggle('on', !!on); }
+function setScene(v, quiet){
+  SCENE = cfg.scene = v === 'ark' && window.RF_ARK ? 'ark' : 'garden'; const ark = SCENE === 'ark';
+  document.body.classList.toggle('ark', ark);
+  $('scene').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === SCENE)));
+  const hills = document.querySelector('#sky .hills');
+  hills.setAttribute('viewBox', ark ? '0 0 1600 340' : '0 0 1600 300'); hills.innerHTML = ark ? RF_ARK.SCENERY : GARDEN.hills;
+  if (ark && !BOW.parentNode) { BOW.setAttribute('class', 'bow'); BOW.setAttribute('viewBox', '0 0 1600 900'); BOW.setAttribute('preserveAspectRatio', 'xMidYMax slice'); BOW.setAttribute('aria-hidden', 'true'); BOW.innerHTML = RF_ARK.BOW; $('sky').insertBefore(BOW, hills); }
+  tide(0); bow(false);
+  document.querySelector('.hero .tag').textContent = ark ? 'A round-robin Bible quiz for 3 to 10 players, on one screen or with phones as buzzers. Every bird faces every other bird once, one question a bout. The first correct peck wins 2 points.' : GARDEN.tag;
+  $('localBox').querySelector('.note').textContent = ark ? 'Each player is a bird from the King James Bible, with its own call for a buzzer. Tap a bird to hear it.' : GARDEN.note;
+  $('topicField').hidden = ark;
+  if (ark) { const all = Object.values(RF_ARK.bible()).reduce((a, t) => a + t.filter(okQ).length, 0); $('arkTopic').textContent = 'Bible questions only: all ' + all.toLocaleString('en-GB') + ' from across TierBrain\'s Bible games.'; }
+  $('heroBirds').innerHTML = '<div>' + robin(COLOURS[0], { cross: true }) + '</div><div style="transform:scaleX(-1)">' + robin(COLOURS[1]) + '</div>';
+  paintPlayers(); if (!quiet && cfg.mode === 'phones') { paintJoin(); paintLobby(); }
+}
+$('scene').addEventListener('click', e => { const b = e.target.closest('button'); if (b && b.dataset.v !== SCENE) setScene(b.dataset.v); });
+const asked = new URLSearchParams(location.search).get('scene');
+setScene(asked === 'ark' || asked === 'garden' ? asked : cfg.scene, true);
 
 /* ---------- screen helpers: full screen for the TV, and keep the screen awake during a tournament ---------- */
 const root = document.documentElement, canFS = !!(root.requestFullscreen || root.webkitRequestFullscreen);
@@ -674,6 +738,11 @@ function paintMode(){ const phones = cfg.mode === 'phones';
   $('localBox').hidden = phones; $('lobbyBox').hidden = !phones; $('setupErr').textContent = '';
   if (phones) openLobby(); else stopLobby(); }
 $('playMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === cfg.mode) return; cfg.mode = b.dataset.v; paintMode(); });
+function paintJoin(){ if (!NET || !NET.code) return;
+  const link = (/^https?:/.test(location.protocol) ? location.origin : 'https://tierbrain.co') + '/ruffled-play.html?c=' + NET.code + (SCENE === 'ark' ? '&s=ark' : '');
+  if ($('joinUrl').href === link) return;
+  $('roomCode').textContent = NET.code; $('joinUrl').textContent = link.replace(/^https?:\/\//, ''); $('joinUrl').href = link;
+  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(link); }
 function stopLobby(){ clearInterval(net.lobbyTimer); net.lobbyTimer = 0; }
 async function openLobby(){
   const g = ++net.gen; $('lobbyMsg').textContent = 'Opening a room…';
@@ -683,10 +752,7 @@ async function openLobby(){
     if (saved) { try { room = await access.hostState(saved); if (room.phase !== 'lobby') room = await access.setPhase('lobby'); } catch (e) { access.forgetHost(); room = null; } }
     if (!room) room = await access.createRoom();
     if (g !== net.gen) return;
-    NET = NET || {}; NET.code = room.code;
-    const link = (/^https?:/.test(location.protocol) ? location.origin : 'https://tierbrain.co') + '/ruffled-play.html?c=' + room.code;
-    $('roomCode').textContent = room.code; $('joinUrl').textContent = link.replace(/^https?:\/\//, ''); $('joinUrl').href = link;
-    $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=' + encodeURIComponent(link);
+    NET = NET || {}; NET.code = room.code; paintJoin();
     $('lobbyMsg').textContent = 'Waiting for players to join…';
     stopLobby(); lobbyTick(); net.lobbyTimer = setInterval(lobbyTick, 1500);
   } catch (e) { if (g === net.gen) { $('lobbyMsg').textContent = netMsg(e); $('roomCode').textContent = '·····'; } }
@@ -707,14 +773,13 @@ function paintLobby(){
 }
 async function netBegin(){
   if (!NET || !NET.code) { $('setupErr').textContent = 'The room is still opening. Try again in a moment.'; return; }
-  if (!buildPool(cfg.topic, cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
+  if (!buildPool(topicNow(), cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
   net.busy = true; $('beginBtn').disabled = true; $('againBtn').disabled = true;
   try {
     const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby();
     const play = netPlayers();
     if (play.length < MIN) { $('setupErr').textContent = 'Waiting for at least ' + MIN + ' players to join.'; show('setup'); return; }
-    const t = TOPICS.find(x => x[0] === cfg.topic);
-    const room = await net.access.beginRun({ roster: play.map(m => m.id), timed: cfg.clock === 'timed', topic: t ? t[1] : 'General knowledge' });
+        const room = await net.access.beginRun({ roster: play.map(m => m.id), timed: cfg.clock === 'timed', topic: topicName(topicNow()) || 'General knowledge' });
     NET.room = room; $('setupErr').textContent = ''; stopLobby(); actx();
     start(room.run.roster); netWatch(true);
   } catch (e) { $('setupErr').textContent = netMsg(e); show('setup'); if (e.code === 'PT412') lobbyTick(); }
@@ -793,7 +858,7 @@ function scheduleOnce(n){
 function start(roster){
   const list = roster ? roster.map(m => m.name) : finalNames();
   T = { players: list.map((name, i) => ({ name, id: roster ? roster[i].id : null, colour: COLOURS[i], voice: i, pts: 0, won: 0, lost: 0, nil: 0, times: [] })),
-        bouts: schedule(list.length), k: 0, topic: cfg.topic, diff: cfg.diff, clock: cfg.clock, pool: buildPool(cfg.topic, cfg.diff), qi: 0, prevOrder: null, lastBout: null };
+        bouts: schedule(list.length), k: 0, topic: topicNow(), diff: cfg.diff, clock: cfg.clock, pool: buildPool(topicNow(), cfg.diff), qi: 0, prevOrder: null, lastBout: null };
   try { localStorage.setItem('tb-ruffled-setup', JSON.stringify({ names, cfg })); } catch (e) {}
   if (!roster) { NET = NET && NET.code ? Object.assign(NET, { room: null }) : NET; netWatch(false); }
   stayAwake(true);
@@ -802,11 +867,11 @@ function start(roster){
 $('beginBtn').addEventListener('click', () => {
   if (cfg.mode === 'phones') return netBegin();
   if (names.length < MIN) { $('setupErr').textContent = 'Add at least ' + MIN + ' players.'; return; }
-  if (!buildPool(cfg.topic, cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
+  if (!buildPool(topicNow(), cfg.diff).length) { $('setupErr').textContent = 'Those questions did not load. Reload the page to try again.'; return; }
   $('setupErr').textContent = ''; actx(); start();
 });
 
-function show(id){ ['setup', 'game', 'order', 'final'].forEach(s => { const el = $(s); el.hidden = s !== id; el.classList.remove('enter'); });
+function show(id){ if (id === 'setup') { tide(0); bow(false); } ['setup', 'game', 'order', 'final'].forEach(s => { const el = $(s); el.hidden = s !== id; el.classList.remove('enter'); });
   if (!STILL) { void $(id).offsetWidth; $(id).classList.add('enter'); } window.scrollTo(0, 0); }
 function nextQuestion(){ if (T.qi >= T.pool.length) { T.pool = shuffle(T.pool); T.qi = 0; } const q = T.pool[T.qi++]; seen.add(q.q); return q; }
 function restart(el, cls){ if (STILL) return; cls.split(' ').forEach(c => el.classList.remove(c)); void el.offsetWidth; cls.split(' ').forEach(c => el.classList.add(c)); }
@@ -815,7 +880,7 @@ function restart(el, cls){ if (STILL) return; cls.split(' ').forEach(c => el.cla
 let B = null, clockTimer = null, paused = false;
 function sideEls(s){ return s === 0 ? { side: $('sideL'), bird: $('birdL'), pill: $('pillL'), name: $('nameL'), score: $('scoreL') } : { side: $('sideR'), bird: $('birdR'), pill: $('pillR'), name: $('nameR'), score: $('scoreR') }; }
 function ord(n){ const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function topicLabel(){ const t = TOPICS.find(x => x[0] === T.topic); return t ? t[1] : ''; }
+function topicLabel(){ return topicName(T.topic); }
 function points(n){ return n + (n === 1 ? ' point' : ' points'); }
 function setBird(s, opts){ const e = sideEls(s), p = T.players[B.ids[s]]; e.bird.innerHTML = '<span class="f">' + robin(p.colour, opts) + '</span>'; return e; }
 function startBout(){
@@ -837,12 +902,12 @@ function startBout(){
     e.name.textContent = p.name; e.score.className = 'sc'; e.score.textContent = points(p.pts) + (T.k ? ' · ' + ord(ranks[B.ids[s]]) : '');
     e.side.className = 'side' + (s ? ' flip' : ''); e.side.style.setProperty('--pc', p.colour); e.side.disabled = !!T.players[0].id; e.side.setAttribute('aria-label', 'Peck for ' + p.name);
     e.pill.className = 'pill'; e.pill.textContent = ''; });
-  $('nextBtn').hidden = true;
+  clearTimeout(beat); $('nextBtn').hidden = true;
   setMsg('Read the question…');
   paintTimer();
   SFX.arrive();
   if (T.players[0].id) { $('timer').innerHTML = ''; return netOpenBout(); }
-  clearTimeout(B.t1); B.t1 = setTimeout(openBout, READ);
+  clearTimeout(B.t1); B.t1 = setTimeout(openBout, readFor(B.q));
 }
 function openBout(){ if (!B || B.done) return; B.phase = 'open'; B.openedAt = performance.now(); $('opts').classList.remove('deal'); readySides(); setMsg(T.players[0].id ? 'Peck on your phone when you know!' : 'Peck when you know!', true); SFX.open(); runClock(); }
 function readySides(){ [0, 1].forEach(s => { const e = sideEls(s); const can = !B.locked[s] && B.phase === 'open'; e.side.disabled = !can; e.side.classList.toggle('ready', can); e.side.classList.toggle('locked', B.locked[s]); e.side.classList.remove('chosen'); });
@@ -930,7 +995,8 @@ function endBout(s, why, ms, i){
   [0, 1].forEach(x => { const p = T.players[B.ids[x]], sc = sideEls(x).score; sc.textContent = points(p.pts); if (x === s) restart(sc, 'bump'); });
   T.lastBout = bt; T.k++;
   $('nextBtn').textContent = T.k >= T.bouts.length ? 'See who rules the roost' : 'See the Pecking Order';
-  $('nextBtn').hidden = false; $('nextBtn').focus({ preventScroll: true });
+  const reveal = () => { $('nextBtn').hidden = false; $('nextBtn').focus({ preventScroll: true }); };
+  clearTimeout(beat); if (STILL) reveal(); else beat = setTimeout(reveal, 1200);
 }
 $('nextBtn').addEventListener('click', () => { if (T.retry) { T.retry = false; return startBout(); } if (T.k >= T.bouts.length) showFinal(); else showOrder(false); });
 $('sideL').addEventListener('pointerdown', e => { e.preventDefault(); if (!NET || !T || !T.players[0].id) peck(0); });
@@ -973,7 +1039,9 @@ function standings(){
 }
 function sameRank(a, b, notes){ const n = notes.find(x => x.group.includes(a) && x.group.includes(b)); if (!n) return false; const ia = n.group.indexOf(a); return n.group[ia + 1] === b && n.how[ia] === 'shared'; }
 function rankMap(){ const s = standings(), m = {}; s.order.forEach((p, i) => { m[p] = s.pos[i]; }); return m; }
-function sizeTree(el, room){ const n = T.players.length, cap = window.innerWidth > 760 ? 118 : 66; el.style.setProperty('--ph', Math.round(Math.max(44, Math.min(cap, (window.innerHeight - room) / n))) + 'px'); }
+function sizeTree(el, room){ const n = T.players.length, cap = window.innerWidth > 760 ? 118 : 66;
+  const top = el.offsetParent ? el.getBoundingClientRect().top + window.scrollY : room, avail = window.innerHeight - top - 28;
+  el.style.setProperty('--ph', Math.round(Math.max(44, Math.min(cap, window.innerWidth > 760 ? avail / n : (window.innerHeight - room) / n))) + 'px'); }
 function treeHTML(st, prevOrder, crownTop, scored){
   return st.order.map((p, i) => { const pl = T.players[p], pos = st.pos[i], shared = st.pos.filter(x => x === pos).length > 1;
     const was = prevOrder ? prevOrder.indexOf(p) : i, diff = was - i;
@@ -1011,11 +1079,13 @@ function talkingPoint(st){
     else line += ' ' + left + ' bouts left.'; }
   return line;
 }
+function dryLand(){ const n = T.bouts.length - T.k; return n + (n === 1 ? ' bout' : ' bouts') + ' to dry land'; }
 function showOrder(first){
   const st = standings(), tree = $('tree');
   if (!first && T.players[0].id) netPhase('table');
   show('order');
-  $('orderSub').textContent = first ? 'Before the first bout' : 'After bout ' + T.k + ' of ' + T.bouts.length;
+  $('orderSub').textContent = (first ? 'Before the first bout' : 'After bout ' + T.k + ' of ' + T.bouts.length) + (SCENE === 'ark' ? ' · ' + dryLand() : '');
+  tide(T.k / T.bouts.length); bow(false);
   $('prog').innerHTML = T.bouts.map((_, i) => '<i class="' + (i < T.k ? 'done' : i === T.k ? 'now' : '') + '"></i>').join('');
   sizeTree(tree, window.innerWidth > 760 ? 320 : 350);
   const last = first ? null : T.lastBout, scored = last && last.winner >= 0 ? last.winner : -1;
@@ -1038,7 +1108,8 @@ function showOrder(first){
 /* ---------- the end ---------- */
 function showFinal(){
   const st = standings(), P = T.players, w = st.order[0];
-  show('final'); SFX.chorus(P.map(p => p.voice), P[w].voice);
+  show('final'); SFX.chorus(P.map(p => p.voice), P[w].voice); tide(1); bow(true);
+  $('arkVerse').textContent = '\u201cand, lo, in her mouth was an olive leaf pluckt off\u201d Genesis 8:11';
   if (P[0].id) { netPhase('final'); netWatch(false); }
   const shared = st.pos[1] === 1;
   $('champBird').className = 'b crowned'; $('champBird').innerHTML = robin(P[w].colour, { crown: true }); restart($('champBird'), 'flap sing');
@@ -1047,8 +1118,13 @@ function showFinal(){
   const quick = P.map((p, i) => i).filter(i => P[i].times.length).sort((a, b) => avg(P[a]) - avg(P[b]))[0];
   $('awards').innerHTML = quick === undefined ? '' : '<div class="award"><span class="ab">' + robin(P[quick].colour) + '</span><span>Quickest beak: ' + esc(P[quick].name) + ', ' + (avg(P[quick]) / 1000).toFixed(1) + ' seconds on average</span></div>';
   const notes = st.notes.map(n => {
-    const names = n.group.map(p => P[p].name), why = n.how.includes('h2h') ? 'their bouts against each other' : n.how.includes('speed') ? 'the fastest average correct peck' : '';
-    return why ? 'Level on ' + points(P[n.group[0]].pts) + ': ' + names.join(', ') + '. Separated by ' + why + '.' : 'Level on ' + points(P[n.group[0]].pts) + ': ' + names.join(', ') + '. Nothing to separate them.'; });
+    const names = n.group.map(p => P[p].name), pairs = n.how.map((h, i) => [h, P[n.group[i]].name, P[n.group[i + 1]].name]);
+    const quick = pairs.filter(x => x[0] === 'speed').map(x => x[1] + ' ahead of ' + x[2]), same = pairs.filter(x => x[0] === 'shared').map(x => x[1] + ' and ' + x[2]);
+    let line = 'Level on ' + points(P[n.group[0]].pts) + ': ' + names.join(', ') + '.';
+    if (n.how.includes('h2h')) line += ' Their bouts against each other set the order' + (quick.length ? ', with ' + quick.join(' and ') + ' on the fastest average correct peck.' : '.');
+    else if (quick.length) line += ' Decided by the fastest average correct peck.';
+    if (same.length) line += ' Nothing separates ' + same.join(' or ') + '.';
+    return line; });
   $('tieNote').textContent = notes.join(' ');
   sizeTree($('finalTree'), window.innerWidth > 760 ? 590 : 420);
   $('finalTree').className = 'tree' + (STILL ? '' : ' land');
@@ -1072,7 +1148,7 @@ $('stayBtn').addEventListener('click', closeDlg); $('leaveBtn').addEventListener
 $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) closeDlg(); });
 window.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && $('dlg').hidden && !$('game').hidden && !$('nextBtn').hidden && document.activeElement !== $('nextBtn')) { e.preventDefault(); $('nextBtn').click(); } });
 if (cfg.mode === 'phones') paintMode();
-window.__rf = { get T(){ return T; }, get B(){ return B; }, get NET(){ return NET; }, standings, schedule, backToBack, songOf };
+window.__rf = { get T(){ return T; }, get B(){ return B; }, get NET(){ return NET; }, standings, schedule, backToBack, songOf, showFinal, showOrder };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#game,#order,#final" defer></script>
 </body>
