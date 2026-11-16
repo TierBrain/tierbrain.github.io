@@ -39,10 +39,27 @@ class RuffledPageTests(unittest.TestCase):
         self.assertEqual(catalogue['counts']['catalogue_entries'], cards)
         self.assertEqual(sum(1 for row in catalogue['entries'] if row['href'] == 'ruffled-feathers.html'), 1)
 
-    def test_no_backend_and_nothing_sent(self):
-        text = page_text() + TOPICS.read_text(encoding='utf-8')
-        for marker in ('fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'supabase', 'document.cookie'):
-            self.assertNotIn(marker, text, marker)
+    def test_one_screen_play_needs_no_backend(self):
+        html = page_text()
+        # The connection scripts load only when a host chooses phones as buzzers.
+        self.assertNotIn('<script src="vendor/supabase.js"', html)
+        self.assertNotIn('<script src="js/ruffled-access.js"', html)
+        self.assertIn("loadScript('vendor/supabase.js')", html)
+        for marker in ('fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie'):
+            self.assertNotIn(marker, html + TOPICS.read_text(encoding='utf-8'), marker)
+
+    def test_phone_rooms_ship_with_their_database_change_checks_and_undo(self):
+        for name in ('ruffled-play.html', 'js/ruffled-access.js', 'supabase/migrations/20261116100000_secure_ruffled_rooms.sql',
+                     'supabase/rollback/secure_ruffled_rooms.sql', 'supabase/RUFFLED-ACCESS.md', 'tests/check_ruffled_access.py', 'tests/ruffled_phone_checks.py'):
+            self.assertTrue((ROOT / name).is_file(), name)
+        play = (ROOT / 'ruffled-play.html').read_text(encoding='utf-8')
+        self.assertIn('<meta name="robots" content="noindex">', play)
+        self.assertIn('<script src="vendor/supabase.js"></script>\n<script src="js/ruffled-access.js"></script>', play)
+        self.assertNotIn('ruffled-play.html', (ROOT / 'sitemap.xml').read_text(encoding='utf-8'))
+        sql = (ROOT / 'supabase/migrations/20261116100000_secure_ruffled_rooms.sql').read_text(encoding='utf-8')
+        self.assertIn("'correct',CASE WHEN b.closed_at IS NOT NULL THEN b.correct_idx END", sql)
+        self.assertIn("GRANT EXECUTE ON FUNCTION %s TO authenticated", sql)
+        self.assertNotIn('TO anon', sql)
 
     def test_uses_shared_banks_and_the_site_sound_switch(self):
         html = page_text()
@@ -374,6 +391,30 @@ class RuffledBrowserTests(unittest.TestCase):
         self.assertFalse(self.page.locator('#dlg').is_visible())
         self.page.click('#quitBtn'); self.page.click('#leaveBtn')
         self.assertTrue(self.page.locator('#setup').is_visible())
+
+    def test_phones_mode_without_the_database_change_explains_and_one_screen_still_works(self):
+        self.open()
+        # A live site without the database change: sign-in works, the room functions do not exist.
+        stub = ("window.supabase={createClient(){return{auth:{async getSession(){return{data:{session:{}}}},"
+                "async signInAnonymously(){return{data:{}}},async getUser(){return{data:{user:{id:'u'}}}}},"
+                "async rpc(n){return{error:{code:'PGRST202',message:'Could not find the function public.'+n},status:404}}}}};")
+        self.page.route('**/vendor/supabase.js', lambda r: r.fulfill(status=200, content_type='text/javascript', body=stub))
+        self.page.click('#playMode [data-v="phones"]')
+        self.assertTrue(self.page.locator('#lobbyBox').is_visible())
+        self.assertTrue(self.page.locator('#localBox').is_hidden())
+        self.page.wait_for_function("!/Opening/.test(document.getElementById('lobbyMsg').textContent)", timeout=10000)
+        self.assertEqual(self.page.text_content('#lobbyMsg'), 'Phone play is not switched on for this site yet. Play on one screen for now.')
+        self.page.click('#playMode [data-v="one"]')
+        self.assertTrue(self.page.locator('#localBox').is_visible())
+        self.begin(3)
+        self.to_open(); self.peck(0); self.pick(True)
+        self.assertEqual(sum(p[1] for p in self.table()['players']), 2)
+        self.outside = [u for u in self.outside if 'supabase.co' not in u and 'qrserver.com' not in u]
+
+    def test_one_screen_play_never_contacts_the_backend(self):
+        self.open(); self.begin(3)
+        self.to_open(); self.peck(1); self.pick(True); self.page.click('#nextBtn')
+        self.assertFalse(self.page.evaluate("!!window.supabase || !!window.RuffledAccess"))
 
     def test_play_again_keeps_the_players_and_resets_the_scores(self):
         self.open(); self.begin(3)
