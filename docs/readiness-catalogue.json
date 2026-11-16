@@ -71,7 +71,7 @@
       ],
       "entry_type": "other_game_or_utility",
       "coverage_group": "remaining_solo_or_local_game",
-      "baseline_scope": "Added after the baseline commit. Single-device round-robin game with no backend; entry page and layout are checked here, and full tournaments are covered by tests/test_ruffled_feathers.py"
+      "baseline_scope": "Added after the baseline commit. Round-robin game on one screen, or with phones as buzzers through the isolated ruffled_private rooms (supabase/RUFFLED-ACCESS.md); entry page and layout are checked here, full tournaments by tests/test_ruffled_feathers.py, rooms by tests/check_ruffled_access.py and tests/ruffled_phone_checks.py"
     },
     {
       "href": "lxx.html",
