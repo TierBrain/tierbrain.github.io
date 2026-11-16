@@ -86,6 +86,18 @@ class RuffledPageTests(unittest.TestCase):
         home = (ROOT / 'index.html').read_text(encoding='utf-8')
         self.assertNotIn('\u2014', home.split('ruffled-feathers.html')[1].split('</a>')[0])
 
+    def test_the_ark_ships_on_both_pages_and_stays_offline(self):
+        ark = (ROOT / 'ruffled-ark.js').read_text(encoding='utf-8')
+        html, play = page_text(), (ROOT / 'ruffled-play.html').read_text(encoding='utf-8')
+        self.assertIn('<script src="bible-bank.js?v=1"></script>\n<script src="ff-sets-bible.js?v=1"></script>\n<script src="ruffled-ark.js?v=1"></script>', html)
+        self.assertIn('<script src="ruffled-ark.js?v=1"></script>', play)
+        self.assertTrue((ROOT / 'ff-sets-bible.js').is_file())
+        for marker in ('fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie', 'localStorage', '\u2014'):
+            self.assertNotIn(marker, ark, marker)
+        # every bird carries its King James verse
+        for ref in ('Genesis 8:11', 'Genesis 8:7', 'Psalm 84:3', 'Isaiah 40:31', 'Jeremiah 8:7', 'Psalm 102:6', '1 Kings 10:22', 'Exodus 16:13'):
+            self.assertIn("ref: '" + ref + "'", ark)
+
     def test_topic_questions_are_well_formed(self):
         script = "global.window=global;require(process.argv[1]);const o=[];for(const k in RF_BANK)for(const t in RF_BANK[k])for(const q of RF_BANK[k][t])o.push([k,t,q]);console.log(JSON.stringify({labels:RF_TOPICS,rows:o}))"
         try:
@@ -135,7 +147,7 @@ class RuffledBrowserTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.browser.close(); cls.pw.stop(); cls.server.shutdown(); cls.server.server_close()
 
-    def open(self, width=1366, height=768, motion='reduce', clock=False):
+    def open(self, width=1366, height=768, motion='reduce', clock=False, query=''):
         self.ctx = self.browser.new_context(viewport={'width': width, 'height': height}, reduced_motion=motion)
         self.outside = []
 
@@ -150,7 +162,7 @@ class RuffledBrowserTests(unittest.TestCase):
         self.errors, self.missing = [], []
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.page.on('response', lambda r: self.missing.append(r.url) if r.status >= 400 else None)
-        self.page.goto(self.base)
+        self.page.goto(self.base + query)
         self.page.wait_for_selector('#beginBtn')
         self.page.evaluate('window.__noConfirm = true')
         return self.page
@@ -416,6 +428,25 @@ class RuffledBrowserTests(unittest.TestCase):
         self.to_open(); self.peck(1); self.pick(True); self.page.click('#nextBtn')
         self.assertFalse(self.page.evaluate("!!window.supabase || !!window.RuffledAccess"))
 
+    def test_ten_player_tables_fit_a_tv_and_explain_ties_exactly(self):
+        self.open(1920, 1080); self.begin(10)
+        self.page.evaluate("""() => { const T = __rf.T, pts = [10, 10, 10, 10, 8, 8, 6, 6, 4, 4];
+          T.players.forEach((p, i) => { p.pts = pts[i]; p.won = pts[i] / 2; p.times = [[1700], [2800], [1720], [1830], [1400], [2700], [2800], [1750], [2000], [2200]][i]; });
+          T.bouts.forEach(b => { b.winner = -1; });
+          const set = (a, b, w) => { const x = T.bouts.find(z => (z.a === a && z.b === b) || (z.a === b && z.b === a)); x.winner = w; };
+          set(0, 1, 1); set(0, 2, 0); set(0, 3, 0); set(1, 2, 1); set(1, 3, 3); set(2, 3, 2);  // the night's real four-way tie
+          T.k = T.bouts.length; __rf.showFinal(); }""")
+        self.page.wait_for_selector('#final:not([hidden])')
+        bottom = self.page.evaluate("Math.max(...[...document.querySelectorAll('#finalTree .perch')].map(e => e.getBoundingClientRect().bottom))")
+        self.assertLessEqual(bottom, 1080, 'every robin on the final tree is on screen')
+        self.assertEqual(self.page.locator('#finalTree .perch').count(), 10)
+        self.assertLessEqual(self.page.locator('#againBtn').bounding_box()['y'] + self.page.locator('#againBtn').bounding_box()['height'], 1080, 'Play again stays on screen')
+        note = self.page.text_content('#tieNote')
+        self.assertIn('Level on 10 points: ' + ', '.join(NAMES[:4]) + '. Their bouts against each other set the order, with ' + NAMES[0] + ' ahead of ' + NAMES[1] + ' and ' + NAMES[2] + ' ahead of ' + NAMES[3] + ' on the fastest average correct peck.', note)
+        self.page.evaluate("__rf.T.k = 22; __rf.showOrder(false)")
+        bottom = self.page.evaluate("Math.max(...[...document.querySelectorAll('#tree .perch')].map(e => e.getBoundingClientRect().bottom))")
+        self.assertLessEqual(bottom, 1080, 'every robin on the Pecking Order is on screen')
+
     def test_play_again_keeps_the_players_and_resets_the_scores(self):
         self.open(); self.begin(3)
         for _ in range(3):
@@ -425,6 +456,145 @@ class RuffledBrowserTests(unittest.TestCase):
         self.assertEqual([p[0] for p in state['players']], NAMES[:3])
         self.assertEqual(sum(p[1] for p in state['players']), 0)
         self.assertTrue(all(b[2] is None for b in state['bouts']))
+
+    def test_reading_time_fits_the_question_and_each_result_gets_a_moment(self):
+        # With motion on: pecking opens after the card lands plus about 0.15 s a word (2.4 s to 4.8 s),
+        # and the button to move on appears 1.2 s after the result, so nothing is rushed.
+        self.open(1920, 1080, motion='no-preference', clock=True, query='?scene=ark'); self.begin(3)
+        for q, expect in ((['Who built the ark?', 'Noah', 'Moses', 'Abraham', 'David'], 2400),
+                          (['Guess it: I was a leader among the Pharisees. I came to Jesus under cover of night. I was told I must be born again.', 'Nicodemus', 'Joseph of Arimathea', 'Gamaliel', 'Caiaphas'], 4800),
+                          (['Which of these prophets was fed by ravens?', 'Elijah', 'Moses', 'Elisha', 'Jonah'], 1100 + 150 * 12)):
+            with self.subTest(expect=expect):
+                self.page.evaluate("q => { const T = __rf.T; T.pool.splice(T.qi, 0, { q: q[0], correct: q[1], wrong: q.slice(2) }); }", q)
+                self.page.click('#boutBtn')
+                self.page.clock.run_for(expect - 100)
+                self.assertEqual(self.page.evaluate('__rf.B.phase'), 'read')
+                self.page.clock.run_for(200)
+                self.assertEqual(self.page.evaluate('__rf.B.phase'), 'open')
+                self.peck(0); self.pick(True)
+                self.assertTrue(self.page.locator('#nextBtn').is_hidden(), 'a breath before moving on')
+                self.page.clock.run_for(1300)
+                self.assertTrue(self.page.locator('#nextBtn').is_visible())
+                self.page.click('#nextBtn'); self.page.clock.run_for(500)
+
+    # ---------- The Ark: the Bible scene ----------
+    def test_the_ark_asks_bible_questions_only_from_every_bible_game(self):
+        self.open(query='?scene=ark')
+        self.assertTrue(self.page.evaluate("document.body.classList.contains('ark')"))
+        self.assertTrue(self.page.locator('#topicField').is_hidden())
+        check = self.page.evaluate('''() => { const bank = RF_ARK.bible(), all = [].concat(...Object.values(bank)), qs = new Set(all.map(q => q.q));
+          const tb = [].concat(...Object.values(TB_BIBLE)), ff = [].concat(...FF_SETS.map(s => s.q.map(([q, a]) => ({ q, a, set: s.a }))));
+          const key = s => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(), keys = new Set(all.map(q => key(q.q)));
+          const gk = [].concat(...Object.values(TB.bank('gk'))).filter(q => qs.has(q.q)).map(q => q.q);
+          const ffOk = ff.every(x => keys.has(key(x.q)) && all.filter(q => key(q.q) === key(x.q)).every(q => q.correct === x.a || tb.some(t => t.q === q.q)));
+          return { total: all.length, good: all.filter(q => new Set([q.correct].concat(q.wrong)).size === 4 && q.wrong.length === 3).length, unique: keys.size,
+                   tb: tb.every(q => qs.has(q.q)), ff: ffOk, ffCount: ff.length, gk, more: ['Bezalel', 'The Temple', 'The Bible', 'Egypt'].every(a => all.some(q => q.correct === a)),
+                   note: document.getElementById('arkTopic').textContent }; }''')
+        self.assertTrue(check['tb'], 'every bible-bank.js question is in The Ark')
+        self.assertTrue(check['ff'], 'every First Finger Bible question is in The Ark, with its set as the options')
+        self.assertTrue(check['more'], 'the Throne Bible and religion quiz extras are in')
+        self.assertEqual(check['gk'], [], 'no general knowledge questions')
+        self.assertEqual(check['good'], check['total'], 'four different options each')
+        self.assertEqual(check['unique'], check['total'], 'no question appears twice')
+        self.assertGreaterEqual(check['total'], 1000)
+        self.assertEqual(check['note'], 'Bible questions only: all {:,} from across TierBrain\'s Bible games.'.format(check['total']))
+        self.players(3); self.page.click('#diff [data-v="mix"]'); self.page.click('#beginBtn'); self.page.wait_for_selector('#boutBtn')
+        self.assertEqual(self.page.evaluate('__rf.T.topic'), 'ark')
+        self.assertTrue(self.page.evaluate("__rf.T.pool.every(q => [].concat(...Object.values(RF_ARK.bible())).includes(q))"))
+        for _ in range(3):
+            self.to_open()
+            self.assertTrue(self.page.evaluate("[].concat(...Object.values(RF_ARK.bible())).some(q => q.q === __rf.B.q.q)"))
+            self.assertIn('Bible', self.page.text_content('#boutInfo'))
+            self.peck(0); self.pick(True); self.page.click('#nextBtn')
+
+    def test_the_ark_gives_each_player_a_bible_bird_with_its_own_call(self):
+        self.open(query='?scene=ark'); self.players(10)
+        birds = self.page.evaluate("[...document.querySelectorAll('#plist .sw svg')].map(s => s.dataset.bird)")
+        self.assertEqual(birds, ['Dove', 'Raven', 'Sparrow', 'Swallow', 'Eagle', 'Stork', 'Pelican', 'Owl', 'Peacock', 'Quail'])
+        self.assertEqual(self.page.get_attribute('#plist .sw >> nth=7', 'aria-label'), 'Hear the owl for player 8')
+        calls = self.page.evaluate('''() => [...Array(10).keys()].map(i => { const log = [], h = {};
+          ['tone', 'syll', 'flutter'].forEach(k => { h[k] = (...a) => log.push(k + a.map(x => typeof x === 'number' ? x.toFixed(2) : x).join(',')); });
+          RF_ARK.call(i, h, 0, .2); return log.join('|'); })''')
+        self.assertEqual(len(set(calls)), 10, 'no two birds sound alike')
+        self.assertTrue(all(calls), 'every bird makes a sound')
+        self.page.locator('#plist .sw').nth(5).click()  # hearing a call must not error
+        self.begin(10)
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#tree .perch svg')].map(s => s.dataset.bird).length"), 10)
+
+    def test_the_ark_waters_go_down_and_the_bow_comes_out_at_the_end(self):
+        self.open(1920, 1080, query='?scene=ark'); self.begin(10)
+        tide = lambda: self.page.get_attribute('#arkWaters', 'transform')
+        self.assertEqual(self.page.text_content('#orderSub'), 'Before the first bout · 45 bouts to dry land')
+        self.assertEqual(tide(), 'translate(0 0)')
+        self.page.evaluate('__rf.T.k = 23; __rf.showOrder(false)')
+        self.assertEqual(self.page.text_content('#orderSub'), 'After bout 23 of 45 · 22 bouts to dry land')
+        self.assertEqual(tide(), 'translate(0 36)')
+        self.page.evaluate('__rf.T.k = 44; __rf.showOrder(false)')
+        self.assertTrue(self.page.text_content('#orderSub').endswith(' · 1 bout to dry land'))
+        self.assertFalse(self.page.evaluate("document.querySelector('#sky .bow').classList.contains('on')"))
+        self.page.evaluate('''() => { const T = __rf.T, pts = [12, 10, 10, 10, 8, 8, 6, 6, 4, 4];
+          T.players.forEach((p, i) => { p.pts = pts[i]; p.won = pts[i] / 2; p.times = [1500 + i * 100]; }); T.k = T.bouts.length; __rf.showFinal(); }''')
+        self.page.wait_for_selector('#final:not([hidden])')
+        self.assertTrue(self.page.evaluate("document.querySelector('#sky .bow').classList.contains('on')"))
+        self.assertEqual(tide(), 'translate(0 70)')
+        self.assertEqual(self.page.locator('#champBird .r-leaf').count(), 1, 'the winner holds the olive leaf')
+        self.assertEqual(self.page.locator('#champBird .r-crown').count(), 1)
+        self.assertTrue(self.page.locator('#arkVerse').is_visible())
+        self.assertEqual(self.page.text_content('#arkVerse'), '\u201cand, lo, in her mouth was an olive leaf pluckt off\u201d Genesis 8:11')
+        bottom = self.page.evaluate("Math.max(...[...document.querySelectorAll('#finalTree .perch')].map(e => e.getBoundingClientRect().bottom))")
+        self.assertLessEqual(bottom, 1080)
+        self.page.click('#changeBtn')
+        self.assertEqual(tide(), 'translate(0 0)')
+        self.assertFalse(self.page.evaluate("document.querySelector('#sky .bow').classList.contains('on')"))
+
+    def test_the_ark_fits_phones_and_a_tv(self):
+        for width, height in ((320, 640), (1920, 1080)):
+            with self.subTest(width=width):
+                self.open(width, height, query='?scene=ark'); self.begin(10)
+                self.to_open(); self.peck(0); self.pick(True)
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width + 1)
+                self.ctx.close()
+        self.open()
+
+    def test_the_winter_garden_comes_back_unchanged_and_the_scene_is_remembered(self):
+        self.open()
+        garden = self.page.evaluate("document.querySelector('#sky .hills').innerHTML")
+        self.assertFalse(self.page.evaluate("document.body.classList.contains('ark')"))
+        self.assertEqual(self.page.get_attribute('#scene [data-v="garden"]', 'aria-pressed'), 'true')
+        self.assertEqual(self.page.locator('#plist .ark-bird').count(), 0)
+        self.page.click('#scene [data-v="ark"]')
+        self.assertTrue(self.page.evaluate("document.body.classList.contains('ark')"))
+        self.assertGreater(self.page.locator('#plist .ark-bird').count(), 0)
+        self.assertIn('Every bird faces every other bird once', self.page.text_content('.hero .tag'))
+        self.page.click('#scene [data-v="garden"]')
+        self.assertEqual(self.page.evaluate("document.querySelector('#sky .hills').innerHTML"), garden)
+        self.assertEqual(self.page.locator('.ark-bird').count(), 0)
+        self.assertTrue(self.page.locator('#topicField').is_visible())
+        self.assertIn('Every robin faces every other robin once', self.page.text_content('.hero .tag'))
+        self.page.click('#scene [data-v="ark"]'); self.begin(3)
+        self.page.goto(self.base); self.page.wait_for_selector('#beginBtn')
+        self.assertTrue(self.page.evaluate("document.body.classList.contains('ark')"), 'the last scene is remembered')
+        self.page.goto(self.base + '?scene=garden'); self.page.wait_for_selector('#beginBtn')
+        self.assertFalse(self.page.evaluate("document.body.classList.contains('ark')"), 'a link can still ask for the garden')
+
+    def test_phones_join_the_ark_with_the_same_bible_birds(self):
+        self.open(query='?scene=ark')
+        link = self.page.evaluate("NET = { code: 'ABCDE' }; paintJoin(); document.getElementById('joinUrl').getAttribute('href')")
+        self.assertTrue(link.endswith('/ruffled-play.html?c=ABCDE&s=ark'), link)
+        self.page.click('#scene [data-v="garden"]')
+        self.assertTrue(self.page.evaluate("paintJoin(); document.getElementById('joinUrl').getAttribute('href')").endswith('?c=ABCDE'))
+        stub = ("window.supabase={createClient(){return{auth:{async getSession(){return{data:{session:null}}},"
+                "async signInAnonymously(){return{data:{}}},async getUser(){return{data:{user:null}}}},"
+                "async rpc(n){return{error:{code:'PGRST202',message:'Could not find the function public.'+n},status:404}}}}};")
+        play = self.base.replace('ruffled-feathers.html', 'ruffled-play.html')
+        for query, bird in (('?c=ABCDE&s=ark', 'Dove'), ('?c=ABCDE', None)):
+            phone = self.ctx.new_page()
+            phone.on('pageerror', lambda e: self.errors.append(str(e)))
+            phone.route('**/vendor/supabase.js', lambda r: r.fulfill(status=200, content_type='text/javascript', body=stub))
+            phone.goto(play + query); phone.wait_for_selector('#joinBird svg')
+            self.assertEqual(phone.evaluate("document.querySelector('#joinBird svg').dataset.bird || null"), bird)
+            phone.close()
+        self.outside = [u for u in self.outside if 'qrserver.com' not in u]
 
 
 if __name__ == '__main__':
