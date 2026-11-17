@@ -86,6 +86,13 @@ class RuffledPageTests(unittest.TestCase):
         home = (ROOT / 'index.html').read_text(encoding='utf-8')
         self.assertNotIn('\u2014', home.split('ruffled-feathers.html')[1].split('</a>')[0])
 
+    def test_two_questions_reworded_after_feedback(self):
+        q = (ROOT / 'questions.js').read_text(encoding='utf-8'); ff = (ROOT / 'ff-sets-bible.js').read_text(encoding='utf-8')
+        self.assertNotIn('Where in London does the monarch live', q)
+        self.assertIn('{q:"What is the monarch\'s official London residence?", correct:"Buckingham Palace"', q)
+        self.assertNotIn('high priest that year?', ff)
+        self.assertIn('["Which of these men was the high priest the year Jesus was crucified?", "Caiaphas"]', ff)
+
     def test_the_ark_ships_on_both_pages_and_stays_offline(self):
         ark = (ROOT / 'ruffled-ark.js').read_text(encoding='utf-8')
         html, play = page_text(), (ROOT / 'ruffled-play.html').read_text(encoding='utf-8')
@@ -477,6 +484,38 @@ class RuffledBrowserTests(unittest.TestCase):
                 self.assertTrue(self.page.locator('#nextBtn').is_visible())
                 self.page.click('#nextBtn'); self.page.clock.run_for(500)
 
+    def test_an_answer_under_a_resting_mouse_stays_still(self):
+        # the hover lift used to move an answer out from under a pointer resting on its bottom edge, so it flickered
+        self.open(motion='no-preference'); self.begin(3); self.to_open(); self.peck(0)
+        box = self.page.locator('#opts .opt').nth(2).bounding_box()
+        self.page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] - 1.5)
+        self.page.wait_for_timeout(400)
+        seen = set()
+        for _ in range(10):
+            seen.add(self.page.evaluate("getComputedStyle(document.querySelectorAll('#opts .opt')[2]).transform")); self.page.wait_for_timeout(60)
+        self.assertEqual(len(seen), 1, seen)
+        self.pick(True)
+
+    def test_everyone_level_at_the_top_is_named(self):
+        self.open(); self.begin(4)
+        line = lambda: self.page.text_content('#nextBox div').strip()
+        # three level on 2 points: all three are named, in Pecking Order order
+        self.page.evaluate('''() => { const T = __rf.T, P = T.players; [2, 2, 2, 0].forEach((v, i) => { P[i].pts = v; P[i].won = v / 2; });
+          T.k = 3; __rf.showOrder(false); }''')
+        st = self.page.evaluate('__rf.standings().order.slice(0, 3).map(i => __rf.T.players[i].name)')
+        self.assertTrue(line().startswith('Level at the top on 2 points: %s, %s and %s.' % tuple(st)), line())
+        # two level: both named
+        self.page.evaluate('''() => { const T = __rf.T, P = T.players; [4, 4, 2, 0].forEach((v, i) => { P[i].pts = v; P[i].won = v / 2; }); __rf.showOrder(false); }''')
+        st = self.page.evaluate('__rf.standings().order.slice(0, 2).map(i => __rf.T.players[i].name)')
+        self.assertTrue(line().startswith('Level at the top on 4 points: %s and %s.' % tuple(st)), line())
+        # one clear leader
+        self.page.evaluate('''() => { const T = __rf.T, P = T.players; [6, 2, 2, 0].forEach((v, i) => { P[i].pts = v; P[i].won = v / 2; }); __rf.showOrder(false); }''')
+        self.assertTrue(line().startswith('Top of the tree: %s, 4 points clear.' % self.page.evaluate('__rf.T.players[0].name')), line())
+        # a chaser catching a shared lead is "level with the leaders"
+        self.page.evaluate('''() => { const T = __rf.T, P = T.players, nb = T.bouts[T.k]; P.forEach(p => { p.pts = 4; p.won = 2; });
+          P[nb.a].pts = 2; P[nb.a].won = 1; P[nb.b].pts = 0; P[nb.b].won = 0; __rf.showOrder(false); }''')
+        self.assertIn('level with the leaders.', line())
+
     # ---------- The Ark: the Bible scene ----------
     def test_the_ark_asks_bible_questions_only_from_every_bible_game(self):
         self.open(query='?scene=ark')
@@ -536,7 +575,12 @@ class RuffledBrowserTests(unittest.TestCase):
           T.players.forEach((p, i) => { p.pts = pts[i]; p.won = pts[i] / 2; p.times = [1500 + i * 100]; }); T.k = T.bouts.length; __rf.showFinal(); }''')
         self.page.wait_for_selector('#final:not([hidden])')
         self.assertTrue(self.page.evaluate("document.querySelector('#sky .bow').classList.contains('on')"))
-        self.assertEqual(tide(), 'translate(0 70)')
+        # the waters drain to a strip of shore and the ark rests on dry land
+        self.assertEqual(tide(), 'translate(0 125)')
+        self.assertEqual(self.page.get_attribute('#arkFront', 'transform'), 'translate(0 125)')
+        self.assertTrue(self.page.evaluate("document.querySelector('#sky .hills').classList.contains('drained')"))
+        self.assertEqual(self.page.evaluate("document.getElementById('arkBoat').closest('.tide')"), None, 'the ark stays put as the water goes')
+        self.assertEqual(self.page.locator('#arkLand').count(), 1)
         self.assertEqual(self.page.locator('#champBird .r-leaf').count(), 1, 'the winner holds the olive leaf')
         self.assertEqual(self.page.locator('#champBird .r-crown').count(), 1)
         self.assertTrue(self.page.locator('#arkVerse').is_visible())
@@ -545,7 +589,19 @@ class RuffledBrowserTests(unittest.TestCase):
         self.assertLessEqual(bottom, 1080)
         self.page.click('#changeBtn')
         self.assertEqual(tide(), 'translate(0 0)')
+        self.assertFalse(self.page.evaluate("document.querySelector('#sky .hills').classList.contains('drained')"))
         self.assertFalse(self.page.evaluate("document.querySelector('#sky .bow').classList.contains('on')"))
+
+    def test_the_flood_uncovers_the_land_bit_by_bit(self):
+        # the land sits under both water layers, so it shows only as the water goes down
+        self.open(1920, 1080, query='?scene=ark'); self.begin(4)
+        order = self.page.evaluate("[...document.querySelector('#sky .hills').children].map(e => e.id).filter(Boolean)")
+        self.assertEqual(order, ['arkLand', 'arkWaters', 'arkBoat', 'arkFront'])
+        seen = lambda: self.page.evaluate('''() => { const land = document.getElementById('arkLand').getBoundingClientRect(),
+          sea = document.querySelector('#arkWaters path').getBoundingClientRect(); return Math.round(sea.top - land.top); }''')
+        start = seen()
+        self.page.evaluate('__rf.T.k = 3; __rf.showOrder(false)'); self.page.wait_for_timeout(3000)
+        self.assertGreater(seen(), start, 'more land shows as the waters go down')
 
     def test_the_ark_fits_phones_and_a_tv(self):
         for width, height in ((320, 640), (1920, 1080)):
