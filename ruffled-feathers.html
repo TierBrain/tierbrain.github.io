@@ -172,7 +172,10 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 .opt b{display:inline-flex;flex:none;width:clamp(30px,2.5vw,48px);aspect-ratio:1;border-radius:50%;background:var(--ink);color:var(--paper);align-items:center;justify-content:center;font-size:clamp(15px,1.4vw,26px);transition:background .2s}
 .opt:disabled{cursor:default}
 .opts.live .opt:not(.gone){border-color:var(--pc,var(--amber));box-shadow:0 4px 0 var(--pc,var(--amber))}
-@media (hover:hover){.opts.live .opt:not(:disabled):hover{transform:translateY(-3px)}}
+@media (hover:hover){.opts.live .opt:not(:disabled):hover{transform:translateY(-3px)}
+  /* the lifted answer keeps the pointer: without this, a mouse resting on its bottom edge made it flicker up and down */
+  .opts.live .opt:not(:disabled):hover:after{content:'';position:absolute;left:0;right:0;bottom:-6px;height:6px}}
+.opt{position:relative}
 .opts.live .opt:not(:disabled):active{transform:translateY(2px);box-shadow:0 1px 0 var(--pc,var(--amber))}
 .opt.gone{opacity:.4;text-decoration:line-through}
 .opt.right{background:#dff3e3;border-color:#2f9e55;animation:rightPop .5s cubic-bezier(.3,1.6,.5,1)}
@@ -361,7 +364,7 @@ kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:0 6px;fon
 }
 /* ---------- The Ark: the same game at sunset on the flood; the waters go down as the round goes on ---------- */
 .arkname,.ark-only{display:none}
-body.ark{--night:#1c1a3e;--dusk:#6a3f62;--mist:#f0a065;--snow:#9a7450}
+body.ark{--night:#1c1a3e;--dusk:#6a3f62;--mist:#f0a065;--snow:#9a7450;background:#1f2a56}
 body.ark .arkname{display:inline;font-family:var(--flour);font-style:italic;font-weight:700;color:#ffd9a0;font-size:.5em;margin-left:.45em;letter-spacing:0;white-space:nowrap}
 body.ark .ark-only{display:block}
 body.ark .field.ark-only{display:grid}
@@ -370,6 +373,9 @@ body.ark #sky .moon{top:auto;bottom:21vh;right:20vw;width:clamp(80px,9vw,170px);
 body.ark #sky .moon:after{display:none}
 body.ark #sky .hills{height:clamp(150px,30vh,340px)}
 #sky .tide{transition:transform 2.4s cubic-bezier(.3,.7,.3,1)}
+#sky .drained .tide{transition:transform 5s cubic-bezier(.4,0,.2,1) .4s}
+#sky .glint{transition:opacity 2s}
+#sky .drained .glint{opacity:0}
 #sky .bow{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 2.5s ease;pointer-events:none}
 body.ark #sky .bow.on{opacity:.5}
 body.ark .ground{background:repeating-linear-gradient(90deg,#6e4b2f 0 118px,#5c3d26 118px 122px),#6e4b2f}
@@ -693,7 +699,10 @@ $('topic').value = TOPICS.some(t => t[0] === cfg.topic) ? cfg.topic : 'gk';
 $('topic').addEventListener('change', () => { cfg.topic = $('topic').value; });
 const GARDEN = { hills: document.querySelector('#sky .hills').innerHTML, tag: document.querySelector('.hero .tag').textContent, note: $('localBox').querySelector('.note').textContent };
 const BOW = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-function tide(f){ const w = document.getElementById('arkWaters'); if (w) w.setAttribute('transform', 'translate(0 ' + Math.round(Math.max(0, Math.min(1, f)) * 70) + ')'); }
+/* the flood goes down 70 units over the round; at the end it drains to a strip of shore and the ark rests on dry land */
+function tide(f, dry){ const y = dry ? 125 : Math.round(Math.max(0, Math.min(1, f)) * 70), hills = document.querySelector('#sky .hills');
+  hills.classList.toggle('drained', !!dry);
+  ['arkWaters', 'arkFront'].forEach(id => { const w = document.getElementById(id); if (w) w.setAttribute('transform', 'translate(0 ' + y + ')'); }); }
 function bow(on){ BOW.classList.toggle('on', !!on); }
 function setScene(v, quiet){
   SCENE = cfg.scene = v === 'ark' && window.RF_ARK ? 'ark' : 'garden'; const ark = SCENE === 'ark';
@@ -1070,15 +1079,18 @@ function flip(container, before){
 function talkingPoint(st){
   const P = T.players, top = st.order[0], second = st.order[1];
   const left = T.bouts.length - T.k, nb = T.bouts[T.k];
-  const gap = P[top].pts - P[second].pts;
-  let line = gap === 0 ? 'Level at the top: ' + P[top].name + ' and ' + P[second].name + '.' : 'Top of the tree: ' + P[top].name + ', ' + points(gap) + ' clear.';
+  const gap = P[top].pts - P[second].pts, lead = P[top].pts;
+  /* everyone level on the top score is named, not just the first two */
+  const level = st.order.filter(p => P[p].pts === lead), leaders = level.length > 1 ? 'the leaders' : P[top].name;
+  let line = gap === 0 ? 'Level at the top on ' + points(lead) + ': ' + andList(level.map(p => P[p].name)) + '.' : 'Top of the tree: ' + P[top].name + ', ' + points(gap) + ' clear.';
   if (nb) { const a = P[nb.a], b = P[nb.b];
-    const lead = P[top].pts; const chase = [a, b].filter(p => p !== P[top] && p.pts + 2 >= lead && p.pts < lead);
-    if (chase.length) line += ' A win would put ' + chase[0].name + (chase[0].pts + 2 === lead ? ' level with ' : ' above ') + P[top].name + '.';
+    const chase = [a, b].filter(p => p.pts + 2 >= lead && p.pts < lead);
+    if (chase.length) line += ' A win would put ' + chase[0].name + (chase[0].pts + 2 === lead ? ' level with ' : ' above ') + leaders + '.';
     else if (left === 1) line += ' One bout left.';
     else line += ' ' + left + ' bouts left.'; }
   return line;
 }
+function andList(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
 function dryLand(){ const n = T.bouts.length - T.k; return n + (n === 1 ? ' bout' : ' bouts') + ' to dry land'; }
 function showOrder(first){
   const st = standings(), tree = $('tree');
@@ -1108,7 +1120,7 @@ function showOrder(first){
 /* ---------- the end ---------- */
 function showFinal(){
   const st = standings(), P = T.players, w = st.order[0];
-  show('final'); SFX.chorus(P.map(p => p.voice), P[w].voice); tide(1); bow(true);
+  show('final'); SFX.chorus(P.map(p => p.voice), P[w].voice); tide(1, true); bow(true);
   $('arkVerse').textContent = '\u201cand, lo, in her mouth was an olive leaf pluckt off\u201d Genesis 8:11';
   if (P[0].id) { netPhase('final'); netWatch(false); }
   const shared = st.pos[1] === 1;

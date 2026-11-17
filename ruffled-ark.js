@@ -92,21 +92,37 @@ const CALLS = [
   (h, t, v) => { h.syll(t, 2200, 2650, .06, v); h.syll(t + .17, 2450, 2950, .06, v); h.syll(t + .27, 2450, 2950, .06, v); }];                                                 // quail: wet-my-lips
 function call(i, h, t, v){ CALLS[((i % CALLS.length) + CALLS.length) % CALLS.length](h, t || 0, v || .2); }
 
-/* the scenery behind the game: Ararat, the waters and the ark at sunset (viewBox 0 0 1600 340) */
+/* the scenery behind the game: Ararat, the waters and the ark at sunset (viewBox 0 0 1600 340).
+   Layers: the land (hidden by the flood), the sea behind the ark, the ark, the waves in front.
+   The two water layers go down as the round goes on: the olive tree's top breaks the surface first
+   ("the tops of the mountains seen", Genesis 8:5), and at the end the waters drain to a strip of shore
+   and the ark rests on dry ground. */
 const WAVES = (y, step) => { let p = 'M0 ' + y; for (let x = 0; x < 1700; x += step * 2) p += ' Q' + (x + step / 2) + ' ' + (y - 10) + ' ' + (x + step) + ' ' + y + ' T' + (x + step * 2) + ' ' + y; return p; };
+const OLIVE = (x, y, k) => '<g transform="translate(' + x + ' ' + y + ') scale(' + k + ')">'
+  + '<path d="M-4 0 Q-7 -18 -2 -30 Q0 -20 6 -34 Q4 -16 4 0 Z" fill="#5b4330"/>'
+  + '<ellipse cx="0" cy="-42" rx="28" ry="15" fill="#5f7f34"/><ellipse cx="-18" cy="-34" rx="16" ry="10" fill="#6d8f3a"/><ellipse cx="18" cy="-35" rx="17" ry="10" fill="#6d8f3a"/>'
+  + '<ellipse cx="4" cy="-50" rx="18" ry="9" fill="#7a9a44"/>'
+  + '<path d="M-20 -38 l6 -2 M-6 -46 l7 -1 M10 -42 l6 -2 M20 -33 l5 -2 M-12 -30 l6 -1" stroke="#c3cfa8" stroke-width="3" stroke-linecap="round" opacity=".8"/></g>';
+const LANDTOP = 'M0 262 Q200 244 380 252 Q520 258 640 246 Q760 234 850 230 L1290 230 Q1400 238 1500 252 Q1560 260 1600 256';
 const SCENERY = '<defs><linearGradient id="arkSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f4f86"/><stop offset="1" stop-color="#1d2752"/></linearGradient>'
-  + '<linearGradient id="arkGlint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf8a" stop-opacity=".75"/><stop offset="1" stop-color="#ffcf8a" stop-opacity="0"/></linearGradient></defs>'
+  + '<linearGradient id="arkGlint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf8a" stop-opacity=".75"/><stop offset="1" stop-color="#ffcf8a" stop-opacity="0"/></linearGradient>'
+  + '<linearGradient id="arkGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f8c45"/><stop offset="1" stop-color="#3f5a2c"/></linearGradient></defs>'
   + '<path d="M60 210 L250 70 L330 130 L400 90 L620 210 Z" fill="#5a4a74" opacity=".75"/><path d="M250 70 L285 96 L262 100 L240 88 Z M400 90 L425 106 L404 110 Z" fill="#e8dbe6" opacity=".8"/>'
-  + '<g id="arkWaters" class="tide">'
-  + '<path d="' + WAVES(196, 100) + ' V340 H0 Z" fill="url(#arkSea)"/>'
-  + '<g transform="translate(860 112)"><path d="M0 74 Q20 112 70 116 L330 116 Q380 112 400 70 L360 78 L40 78 Z" fill="#4a2f1e"/>'
+  + '<g id="arkLand"><path d="' + LANDTOP + ' V340 H0 Z" fill="url(#arkGrass)"/>'
+  + '<path d="' + LANDTOP + '" stroke="#9cb866" stroke-width="3" fill="none" opacity=".7"/>'
+  + '<path d="M0 292 Q180 278 360 286 Q560 296 760 282 Q980 268 1200 280 Q1420 292 1600 282 V340 H0 Z" fill="#4a6833"/>'
+  + OLIVE(470, 256, 1) + OLIVE(1430, 246, .8) + OLIVE(640, 248, .55)
+  + [[300, 276, '#f3d36b'], [338, 284, '#f6a5a0'], [560, 270, '#f3d36b'], [700, 262, '#fff1c9'], [1340, 262, '#f6a5a0'], [1500, 270, '#f3d36b'], [1050, 300, '#fff1c9'], [180, 300, '#f6a5a0']]
+      .map(([x, y, c]) => '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + c + '"/>').join('') + '</g>'
+  + '<g id="arkWaters" class="tide"><path d="' + WAVES(196, 100) + ' V420 H0 Z" fill="url(#arkSea)"/></g>'
+  + '<g id="arkBoat" transform="translate(860 112)"><path d="M0 74 Q20 112 70 116 L330 116 Q380 112 400 70 L360 78 L40 78 Z" fill="#4a2f1e"/>'
   + '<path d="M10 84 L392 84 M18 96 L384 96 M34 106 L366 106" stroke="#35200f" stroke-width="3"/>'
   + '<rect x="90" y="30" width="220" height="48" fill="#5e3d27"/><path d="M76 34 L200 0 L324 34 Z" fill="#3b2516"/>'
   + [112, 160, 216, 264].map(x => '<rect class="glow" x="' + x + '" y="44" width="22" height="16" rx="2" fill="#ffc96a"/>').join('') + '</g>'
-  + '<path d="' + WAVES(224, 80) + ' V340 H0 Z" fill="#2b386a"/>'
-  + '<path d="M1180 200 L1400 200 L1360 330 L1220 330 Z" fill="url(#arkGlint)" opacity=".5"/>'
-  + '<path d="M1200 214 h60 M1290 236 h80 M1230 262 h50 M1320 284 h70 M1250 306 h40" stroke="#ffd9a0" stroke-width="4" stroke-linecap="round" opacity=".7"/>'
-  + '<path d="' + WAVES(262, 60) + ' V340 H0 Z" fill="#1f2a56"/>'
+  + '<g id="arkFront" class="tide"><path d="' + WAVES(224, 80) + ' V420 H0 Z" fill="#2b386a"/>'
+  + '<g class="glint"><path d="M1180 200 L1400 200 L1360 330 L1220 330 Z" fill="url(#arkGlint)" opacity=".5"/>'
+  + '<path d="M1200 214 h60 M1290 236 h80 M1230 262 h50 M1320 284 h70 M1250 306 h40" stroke="#ffd9a0" stroke-width="4" stroke-linecap="round" opacity=".7"/></g>'
+  + '<path d="' + WAVES(262, 60) + ' V420 H0 Z" fill="#1f2a56"/>'
   + '<path d="' + WAVES(262, 60) + '" stroke="#8ea0d8" stroke-width="3" fill="none" opacity=".35"/></g>';
 /* "I do set my bow in the cloud" (Genesis 9:13): drawn over the whole sky (viewBox 0 0 1600 900) */
 const BOW = ['#e8545a', '#f39a3c', '#f6d24a', '#5cbf6a', '#4a8fe0', '#6a5ad0', '#9a5ac8'].map((c, i) => { const R = 760 - i * 22;

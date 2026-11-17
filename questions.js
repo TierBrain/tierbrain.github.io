@@ -1080,7 +1080,7 @@
         {q:"In Arthurian legend, who is the wizard who advised Arthur?", correct:"Merlin", wrong:["Gandalf", "Morgana", "Lancelot"]},
         {q:"Which legendary outlaw lived in Sherwood Forest?", correct:"Robin Hood", wrong:["Dick Turpin", "Ned Kelly", "William Tell"]},
         {q:"In legend, which Swiss hero shot an apple off his son's head?", correct:"William Tell", wrong:["Robin Hood", "Rob Roy", "El Cid"]},
-        {q:"Where in London does the monarch live in the official London residence?", correct:"Buckingham Palace", wrong:["Kensington Palace", "Windsor Castle", "Hampton Court"]},
+        {q:"What is the monarch's official London residence?", correct:"Buckingham Palace", wrong:["Kensington Palace", "Windsor Castle", "Hampton Court"]},
         {q:"What is the name of the clock tower at the Houses of Parliament, officially renamed in 2012?", correct:"Elizabeth Tower", wrong:["Victoria Tower", "Clock Tower", "Westminster Tower"]},
         {q:"Who traditionally lives at 11 Downing Street?", correct:"The Chancellor", wrong:["The Home Secretary", "The Foreign Secretary", "The Speaker"]},
         {q:"What are the two houses of the UK Parliament?", correct:"The Commons and the Lords", wrong:["The Senate and the House", "The Dáil and the Seanad", "The Assembly and the Council"]},
