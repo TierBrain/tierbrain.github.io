@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PAGE = ROOT / 'ten-lanterns.html'
 ART = ROOT / 'ten-lanterns-art.js'
 WORLDS = ROOT / 'ten-lanterns-worlds.js'
+ROUNDS = ROOT / 'ten-lanterns-rounds.js'
+SOUND = ROOT / 'ten-lanterns-sound.js'
+PLAY = ROOT / 'ten-lanterns-play.html'
 
 
 def page_text():
@@ -30,22 +33,23 @@ class TenLanternsPageTests(unittest.TestCase):
     def test_uses_shared_banks_the_sound_switch_and_no_backend(self):
         html = page_text()
         self.assertRegex(html, r'<script src="questions\.js\?v=\d+"></script>')
-        for name in ('ruffled-topics.js', 'ten-lanterns-art.js', 'ten-lanterns-worlds.js', 'tb-shell.js'):
+        for name in ('ruffled-topics.js', 'ten-lanterns-art.js', 'ten-lanterns-worlds.js', 'ten-lanterns-sound.js', 'ten-lanterns-rounds.js', 'tb-shell.js'):
             self.assertIn('<script src="' + name, html)
             self.assertTrue((ROOT / name).is_file(), name)
         self.assertIn("TB.bank('gk')", html)
         self.assertIn('window.tbSetMuted', html)
         for marker in ('fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'document.cookie'):
-            self.assertNotIn(marker, html + ART.read_text(encoding='utf-8') + WORLDS.read_text(encoding='utf-8'), marker)
+            self.assertNotIn(marker, html + ''.join(p.read_text(encoding='utf-8') for p in (ART, WORLDS, ROUNDS, SOUND)), marker)
 
     def test_house_style(self):
-        for path in (PAGE, ART, WORLDS):
+        for path in (PAGE, ART, WORLDS, ROUNDS, SOUND, PLAY):
             text = path.read_text(encoding='utf-8')
             self.assertNotIn('—', text, path.name)
         html = page_text()
         # Messages put no present-tense verb straight after a name: "Grandad to spin", "Amelia lit the lantern".
-        for bad in ("' wins", "' takes", "' steals", "' lights", "' keeps", "' spins the", "' scores", "' gets"):
-            self.assertNotIn(bad, html, bad)
+        every = html + ROUNDS.read_text(encoding='utf-8') + PLAY.read_text(encoding='utf-8')
+        for bad in ("' wins", "' takes", "' steals", "' lights", "' keeps", "' spins the", "' scores", "' gets", "' is answering", "' is choosing", "' reaches", "' has the last"):
+            self.assertNotIn(bad, every, bad)
         self.assertIn("' to spin'", html.replace('</span>', "'"))
 
     def test_ten_worlds_and_nothing_borrowed(self):
@@ -58,6 +62,33 @@ class TenLanternsPageTests(unittest.TestCase):
         for word in ('crystal', 'zone', 'dome', 'vortex', 'time machine', 'tardis', 'wedge', 'aztec', 'atlantis', 'london', 'paris'):
             self.assertNotIn(word, low, word)
 
+
+    def test_each_world_has_its_own_game_and_the_content_is_sound(self):
+        js = ROUNDS.read_text(encoding='utf-8')
+        for name in ('classic', 'city', 'railway', 'manor', 'flight', 'rome', 'submarine', 'galleon', 'cave', 'balloon', 'bigtop'):
+            self.assertRegex(js, r'\b%s(: \{| = \{)' % name)
+        places = re.findall(r"\['([^']+)', '(Europe|Asia|Africa|Americas|Oceania)', \[([^\]]+)\]\]", js.replace("\\'", ''))
+        self.assertEqual(len(places), 32)
+        for name, continent, clues in places:
+            self.assertEqual(len(re.findall(r"'[^']+'", clues)), 4, name)
+        low = js.lower()
+        for word in ('crystal', 'vortex', 'time machine', 'tardis', 'wedge', 'aztec', 'atlantis', 'cluedo', 'poirot'):
+            self.assertNotIn(word, low, word)
+
+    def test_phone_play_is_secured_and_kept_apart(self):
+        html, play = page_text(), PLAY.read_text(encoding='utf-8')
+        self.assertIn('<meta name="robots" content="noindex">', play)
+        self.assertIn('<script src="vendor/supabase.js"></script>', play)
+        self.assertIn('<script src="js/lantern-access.js"></script>', play)
+        self.assertIn("loadScript('js/lantern-access.js')", html)          # only loaded when phones are chosen
+        self.assertNotIn('<script src="vendor/supabase.js"', html)
+        sql = (ROOT / 'supabase/migrations/20261118210000_secure_lantern_rooms.sql').read_text(encoding='utf-8')
+        self.assertIn("CREATE SCHEMA lantern_private;", sql)
+        self.assertEqual(sql.count('SECURITY DEFINER'), 13)
+        self.assertEqual(sql.count("SET search_path=''"), sql.count('CREATE FUNCTION'))
+        self.assertIn("'correct',CASE WHEN p.closed_at IS NOT NULL THEN p.correct_idx END", sql)
+        self.assertTrue((ROOT / 'supabase/rollback/secure_lantern_rooms.sql').is_file())
+        self.assertTrue((ROOT / 'supabase/LANTERN-ACCESS.md').is_file())
 
     def test_the_worlds_move_only_cheap_properties_and_hold_still_for_reduced_motion(self):
         js = WORLDS.read_text(encoding='utf-8')
@@ -122,7 +153,7 @@ class TenLanternsBrowserTests(unittest.TestCase):
         self.assertEqual([u for u in self.outside if 'fonts.g' not in u], [])
 
     # ---------- helpers ----------
-    def setup(self, mode='versus', names=('Grandad', 'Amelia', 'Tom'), length='standard', relaxed=True):
+    def setup(self, mode='versus', names=('Grandad', 'Amelia', 'Tom'), length='standard', relaxed=True, style='simple', auto='tap'):
         pg = self.page
         pg.click('#mode button[data-v="%s"]' % mode)
         if mode == 'versus':
@@ -134,6 +165,8 @@ class TenLanternsBrowserTests(unittest.TestCase):
                 pg.locator('#plist input').nth(i).fill(n)
         if mode != 'daily':
             pg.click('#length button[data-v="%s"]' % length)
+            pg.click('#style button[data-v="%s"]' % style)
+        pg.click('#auto button[data-v="%s"]' % auto)
         pg.click('#timed button[data-v="%s"]' % ('relaxed' if relaxed else 'timed'))
         pg.click('#beginBtn')
         pg.wait_for_selector('#spinBtn:not([disabled])')
@@ -169,6 +202,39 @@ class TenLanternsBrowserTests(unittest.TestCase):
                 self.pick(steal_right)
         pg.wait_for_selector('#nextBtn:not([hidden])')
         pg.click('#nextBtn')
+
+    def play_round(self, right=True):
+        """Play whatever the world asks, answering right (or wrong) throughout. Returns the lantern's heading."""
+        pg = self.page
+        for _ in range(400):
+            if pg.locator('#roundEnd').is_visible():
+                return pg.inner_text('#reHead')
+            ph = self.S('R && R.phase')
+            if ph == 'intro':
+                pg.click('#round')
+            elif ph in ('ask', 'steal'):
+                self.pick(right)
+            elif ph == 'next':
+                pg.click('#nextBtn')
+            elif ph == 'buzz':
+                pg.locator('#stealBtns button').first.click()
+            elif ph in ('stealpick', 'pickwho'):
+                pg.click('#stealBtns button[data-k="-1"]')
+            elif ph == 'choose':
+                title = pg.inner_text('#qText')
+                opts = [o.strip() for o in pg.locator('#opts .opt span').all_text_contents()]
+                live = [i for i in range(len(opts)) if not pg.locator('#opts .opt').nth(i).is_disabled()]
+                target = None
+                if 'who took the gold watch' in title.lower():
+                    thief = pg.evaluate('(m => m.people[m.thief].name)(TL_ROUNDS.last.mystery)')
+                    target = opts.index(thief) if right else next(i for i in live if opts[i] != thief)
+                elif 'where are we' in title.lower():
+                    place = pg.evaluate('TL_ROUNDS.last.place[0]')
+                    target = opts.index(place) if right else next(i for i in live if opts[i] not in (place, 'Fly on for another clue'))
+                pg.locator('#opts .opt').nth(live[0] if target is None else target).click()
+            else:
+                pg.wait_for_timeout(40)
+        raise AssertionError('the round did not finish')
 
     def round(self, to=None, plan=(True, True, True)):
         self.spin(to); self.go()
@@ -329,9 +395,9 @@ class TenLanternsBrowserTests(unittest.TestCase):
         for k in range(5):
             self.assertEqual(self.spin(), spins[k])
             self.assertTrue(pg.locator('#nudges').is_hidden())
-            self.go()
-            for _ in range(3):
-                self.question(k < 3)
+            pg.click('#goBtn')
+            self.assertEqual(self.S('R.kind'), self.S('__tl.D[S.pos].id'))       # the daily dial plays each world's own game
+            self.play_round(k < 3)
             pg.click('#backBtn')
         pg.wait_for_selector('#end:not([hidden])')
         share = pg.inner_text('#shareText')
@@ -417,6 +483,98 @@ class TenLanternsBrowserTests(unittest.TestCase):
         pg.wait_for_selector('#round', state='hidden')
         pg.wait_for_function("document.querySelector('#board .pt').textContent === '50'")
         self.assertEqual(self.S('S.owner[6]'), 0)
+
+    def test_every_world_plays_its_own_game_to_a_lit_lantern(self):
+        pg = self.open()
+        self.setup('solo', style='worlds')
+        heads = {}
+        for i in range(10):
+            self.spin(i); pg.click('#goBtn')
+            pg.click('#round')
+            kind = self.S('R.kind')
+            self.assertEqual(kind, self.S('__tl.D[S.pos].id'))
+            self.assertIn(pg.evaluate('TL_ROUNDS.types[__tl.R.kind].title'), pg.inner_text('#rRule'))
+            heads[kind] = self.play_round(True)
+            pg.click('#backBtn')
+        self.assertEqual(set(heads.values()), {'Lantern lit'}, heads)
+
+    def test_the_lift_race_candles_and_the_hull(self):
+        pg = self.open()
+        self.setup('versus', style='worlds')
+        self.spin(9); pg.click('#goBtn'); pg.click('#round')                       # Smoke City: open questions
+        pg.wait_for_selector('#stealBtns button[data-k="1"]')
+        self.assertEqual(pg.locator('#stealBtns button').count(), 4)              # three names and Nobody
+        pg.click('#stealBtns button[data-k="1"]'); self.pick(True)
+        pg.wait_for_selector('#nextBtn:not([hidden])')
+        self.assertEqual(pg.evaluate("[...document.querySelectorAll('#rStage .rs-car')].map(c => c.style.getPropertyValue('--f'))"), ['0', '1', '0'])
+        self.play_round(True); pg.click('#backBtn')
+        self.spin(7); pg.click('#goBtn'); pg.click('#round')                       # the manor: Amelia answers first
+        pg.wait_for_selector('#opts.opts-live'); self.pick(False)
+        pg.wait_for_selector('#nextBtn:not([hidden])')
+        self.assertEqual(pg.locator('#rStage .rs-candle.out').count(), 1)
+        self.assertIn('candle went out', pg.inner_text('#rmsg'))
+        pg2 = self.page
+        pg2.evaluate('localStorage.clear()'); pg2.reload(); pg2.wait_for_selector('#beginBtn'); pg2.evaluate('window.__noConfirm = true')
+        self.setup('solo', style='worlds')
+        self.spin(1); pg2.click('#goBtn'); pg2.click('#round')                      # the submarine: one creak, then a flood
+        pg2.wait_for_selector('#opts.opts-live'); self.pick(True); pg2.click('#nextBtn')
+        pg2.wait_for_selector('#opts .opt.choice'); pg2.locator('#opts .opt').first.click()   # dive deeper
+        pg2.wait_for_selector('#opts.opts-live'); self.pick(False)
+        pg2.wait_for_selector('#nextBtn:not([hidden])')
+        self.assertIn('hull creaks', pg2.inner_text('#rmsg'))
+        self.assertIn('Hull creaking', pg2.inner_text('#rStage'))
+        pg2.click('#nextBtn'); pg2.wait_for_selector('#opts .opt.choice')
+        pg2.locator('#opts .opt').nth(1).click()                                     # surface with 8
+        pg2.wait_for_selector('#roundEnd:not([hidden])')
+        self.assertEqual(self.S('S.players[0].pts'), 8)
+
+    def test_the_next_question_can_come_by_itself(self):
+        pg = self.open()
+        self.setup('solo', auto='auto')
+        self.spin(); self.go()
+        self.pick(True)
+        pg.wait_for_selector('#nextBtn.auto')
+        pg.wait_for_function("__tl.R.phase === 'ask' && document.getElementById('qCount').textContent === 'Question 2 of 3'", timeout=6000)
+        self.pick(False)
+        pg.wait_for_selector('#nextBtn.auto')
+        started = pg.evaluate('performance.now()')
+        pg.wait_for_function("document.getElementById('qCount').textContent === 'Question 3 of 3'", timeout=8000)
+        self.assertGreater(pg.evaluate('performance.now()') - started, 3500)      # a miss leaves longer to read the answer
+
+    def test_each_world_has_its_own_sound_which_stops_on_the_way_out(self):
+        pg = self.open()
+        self.setup('solo')
+        self.spin(4); self.go()
+        self.assertTrue(pg.evaluate('!!__tl.amb'))
+        for _ in range(3):
+            self.question(True)
+        pg.click('#backBtn')
+        self.assertFalse(pg.evaluate('!!__tl.amb'))
+        self.assertEqual(sorted(pg.evaluate('TL_SOUND.ids')), sorted(pg.evaluate('__tl.D.map(d => d.id)')))
+
+    def test_with_motion_there_is_an_opening_a_first_visit_and_a_finale(self):
+        pg = self.open(motion='no-preference')
+        self.setup('solo')
+        pg.wait_for_selector('#cut')
+        self.assertIn('Spin the dial to begin', pg.inner_text('#cut'))
+        pg.keyboard.press('Escape')
+        pg.wait_for_selector('#cut', state='detached')
+        self.S('S.spin = S.spins - 1')
+        pg.evaluate('__tl.force(8)'); pg.click('#spinBtn')
+        pg.wait_for_selector('#landBox:not([hidden])', timeout=10000); pg.click('#goBtn')
+        self.assertTrue(pg.evaluate("document.getElementById('round').classList.contains('first')"))
+        self.assertIn('show is about to begin', pg.inner_text('#rTale'))
+        self.assertEqual(self.S('S.seen'), ['bigtop'])
+        pg.click('#round')
+        for _ in range(3):
+            pg.wait_for_selector('#opts.opts-live'); self.pick(True); pg.click('#nextBtn')
+        pg.wait_for_selector('#roundEnd:not([hidden])'); pg.click('#backBtn')
+        pg.wait_for_selector('#finale')
+        self.assertIn('points', pg.inner_text('#finale h2'))
+        self.assertEqual(pg.locator('#finale .fl.lit').count(), 1)
+        pg.click('#finale')
+        pg.wait_for_selector('#finale', state='detached')
+        self.assertTrue(pg.locator('#end').is_visible())
 
     def test_fits_a_phone_and_a_television_without_sideways_scroll(self):
         for w, h in ((320, 640), (1920, 1080)):
