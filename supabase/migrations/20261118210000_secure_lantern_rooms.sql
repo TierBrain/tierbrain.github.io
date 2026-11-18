@@ -59,7 +59,7 @@ CREATE TABLE lantern_private.prompts(
  chooser_id uuid REFERENCES lantern_private.members(id),chosen_at timestamptz,choose_deadline timestamptz,
  locked uuid[] NOT NULL DEFAULT '{}',
  created_at timestamptz NOT NULL DEFAULT pg_catalog.clock_timestamp(),closed_at timestamptz,
- winner_id uuid REFERENCES lantern_private.members(id),choice integer CHECK(choice BETWEEN 0 AND 5),
+ winner_id uuid REFERENCES lantern_private.members(id),choice integer CHECK(choice BETWEEN 0 AND 9),
  reason text CHECK(reason IN ('correct','wrong','all','time','host','chosen','claimed')),
  CHECK((kind IN ('answer','buzz'))=(correct_idx IS NOT NULL)),
  CHECK((closed_at IS NULL)=(reason IS NULL)),
@@ -74,7 +74,7 @@ CREATE TABLE lantern_private.presses(
 );
 CREATE TABLE lantern_private.answers(
  id uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),prompt_id uuid NOT NULL REFERENCES lantern_private.prompts(id),
- member_id uuid NOT NULL REFERENCES lantern_private.members(id),choice integer NOT NULL CHECK(choice BETWEEN 0 AND 5),
+ member_id uuid NOT NULL REFERENCES lantern_private.members(id),choice integer NOT NULL CHECK(choice BETWEEN 0 AND 9),
  created_at timestamptz NOT NULL DEFAULT pg_catalog.clock_timestamp(),UNIQUE(prompt_id,member_id)
 );
 CREATE TABLE lantern_private.requests(
@@ -131,10 +131,12 @@ END $$;
 -- Apply any window that has expired since the last call. Deterministic from the
 -- server clock, so any caller may trigger it without gaining an advantage.
 CREATE FUNCTION lantern_private.settle(p_prompt_id uuid) RETURNS lantern_private.prompts LANGUAGE plpgsql SET search_path='' AS $$
-DECLARE p lantern_private.prompts;stamp timestamptz:=pg_catalog.clock_timestamp();
+DECLARE p lantern_private.prompts;stamp timestamptz;
 BEGIN
  IF p_prompt_id IS NULL THEN RETURN NULL;END IF;
  SELECT * INTO p FROM lantern_private.prompts WHERE id=p_prompt_id FOR UPDATE;
+ -- Waiting for another action's row lock must not preserve a pre-deadline clock.
+ stamp:=pg_catalog.clock_timestamp();
  IF p.id IS NULL OR p.closed_at IS NOT NULL THEN RETURN p;END IF;
  IF p.chooser_id IS NOT NULL AND stamp>=p.choose_deadline THEN
   UPDATE lantern_private.prompts SET locked=pg_catalog.array_append(locked,chooser_id),
@@ -264,7 +266,7 @@ BEGIN
  op:=COALESCE(p_prompt->'opts','[]'::jsonb);
  IF pg_catalog.jsonb_typeof(op) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Invalid options' USING ERRCODE='22023';END IF;
  n:=pg_catalog.jsonb_array_length(op);
- IF (k IN ('answer','buzz') AND n<>4) OR (k='choose' AND n NOT BETWEEN 2 AND 6) OR (k='claim' AND n<>0) THEN RAISE EXCEPTION 'Wrong number of options' USING ERRCODE='22023';END IF;
+ IF (k IN ('answer','buzz') AND n<>4) OR (k='choose' AND n NOT BETWEEN 2 AND 10) OR (k='claim' AND n<>0) THEN RAISE EXCEPTION 'Wrong number of options' USING ERRCODE='22023';END IF;
  FOR v IN SELECT value FROM pg_catalog.jsonb_array_elements(op) LOOP IF pg_catalog.jsonb_typeof(v)<>'string' OR pg_catalog.char_length(v#>>'{}') NOT BETWEEN 1 AND 200 THEN RAISE EXCEPTION 'Invalid option' USING ERRCODE='22023';END IF;END LOOP;
  IF k IN ('answer','buzz') THEN
   IF pg_catalog.jsonb_typeof(p_prompt->'correct') IS DISTINCT FROM 'number' OR (p_prompt->>'correct')!~'^[0-3]$' THEN RAISE EXCEPTION 'Invalid correct option' USING ERRCODE='22023';END IF;
@@ -274,7 +276,7 @@ BEGIN
  IF p_prompt ? 'disabled' THEN
   IF k<>'choose' OR pg_catalog.jsonb_typeof(p_prompt->'disabled')<>'array' THEN RAISE EXCEPTION 'Invalid disabled options' USING ERRCODE='22023';END IF;
   FOR v IN SELECT value FROM pg_catalog.jsonb_array_elements(p_prompt->'disabled') LOOP
-   IF pg_catalog.jsonb_typeof(v)<>'number' OR (v#>>'{}')!~'^[0-5]$' OR (v#>>'{}')::integer>=n OR (v#>>'{}')::integer=ANY(dis) THEN RAISE EXCEPTION 'Invalid disabled options' USING ERRCODE='22023';END IF;
+   IF pg_catalog.jsonb_typeof(v)<>'number' OR (v#>>'{}')!~'^[0-9]$' OR (v#>>'{}')::integer>=n OR (v#>>'{}')::integer=ANY(dis) THEN RAISE EXCEPTION 'Invalid disabled options' USING ERRCODE='22023';END IF;
    dis:=pg_catalog.array_append(dis,(v#>>'{}')::integer);
   END LOOP;
   IF pg_catalog.cardinality(dis)>=n THEN RAISE EXCEPTION 'Leave at least one option open' USING ERRCODE='22023';END IF;
@@ -369,6 +371,7 @@ BEGIN
  IF stamp<p.open_at THEN RAISE EXCEPTION 'Not yet: read the question first' USING ERRCODE='42501';END IF;
  IF m.id=ANY(p.locked) THEN RAISE EXCEPTION 'You are locked out of this question' USING ERRCODE='42501';END IF;
  IF p.chooser_id IS NOT NULL THEN RAISE EXCEPTION 'Beaten to it' USING ERRCODE='42501';END IF;
+ IF p.deadline IS NOT NULL AND stamp>=p.deadline THEN RAISE EXCEPTION 'This question has closed' USING ERRCODE='42501';END IF;
  INSERT INTO lantern_private.presses(prompt_id,member_id,created_at) VALUES(p.id,m.id,stamp) ON CONFLICT(prompt_id,member_id) DO NOTHING;
  IF p.kind='claim' THEN PERFORM lantern_private.close(p,m.id,NULL,'claimed');
  ELSE UPDATE lantern_private.prompts SET chooser_id=m.id,chosen_at=stamp,choose_deadline=stamp+interval '10 seconds' WHERE id=p.id;END IF;
@@ -391,6 +394,7 @@ BEGIN
  stamp:=pg_catalog.clock_timestamp();
  IF NOT(m.id=ANY(p.eligible)) THEN RAISE EXCEPTION 'It is not your turn to answer' USING ERRCODE='42501';END IF;
  IF p.closed_at IS NOT NULL THEN RAISE EXCEPTION 'This question has closed' USING ERRCODE='42501';END IF;
+ IF p.chooser_id IS NULL AND p.deadline IS NOT NULL AND stamp>=p.deadline THEN RAISE EXCEPTION 'This question has closed' USING ERRCODE='42501';END IF;
  IF p.kind='buzz' AND (p.chooser_id IS DISTINCT FROM m.id OR stamp>=p.choose_deadline) THEN RAISE EXCEPTION 'It is not your turn to answer' USING ERRCODE='42501';END IF;
  INSERT INTO lantern_private.answers(prompt_id,member_id,choice,created_at) VALUES(p.id,m.id,p_choice,stamp);
  IF p.kind='choose' THEN PERFORM lantern_private.close(p,m.id,p_choice,'chosen');
@@ -416,3 +420,4 @@ BEGIN
   EXECUTE pg_catalog.format('GRANT EXECUTE ON FUNCTION %s TO authenticated',f.signature);
  END LOOP;
 END $api_grants$;
+

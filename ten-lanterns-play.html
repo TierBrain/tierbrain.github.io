@@ -71,6 +71,7 @@ input{width:100%;padding:12px 14px;border-radius:14px;border:2px solid rgba(255,
 <body>
 <header class="top"><div class="logo">Ten <span>Lanterns</span></div><span class="me" id="meTag" hidden></span><button class="icon" id="soundBtn" type="button" aria-pressed="true">Sound on</button></header>
 <main>
+  <p class="err" id="connectionErr" role="alert" hidden></p>
   <section id="vJoin" class="card">
     <h1>Join the game</h1>
     <label for="code">Room code</label><input id="code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
@@ -97,7 +98,7 @@ const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publisha
 const $ = id => document.getElementById(id), access = LanternAccess.create(SB_URL, SB_KEY);
 const COLOURS = ['#f0b44c', '#56b4e9', '#2fbf8f', '#ef7aa0', '#a98bff', '#ff8a3d', '#ece4cf', '#5fd0c8', '#c9e265', '#ff6b6b'];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-let CODE = '', S = null, ME = null, timer = 0, ticking = false, acting = false, lastPrompt = '', view = '';
+let CODE = '', S = null, ME = null, timer = 0, ticking = false, acting = false, lastPrompt = '', view = '', connectionProblem = false, sessionGen = 0;
 
 /* sound: a tap, a right and a wrong; the site-wide switch applies */
 let soundOn = !window.tbMuted, ac = null;
@@ -119,23 +120,29 @@ async function join(){
   if (!/^[A-Z2-9]{5}$/.test(code)) { $('joinErr').textContent = 'Type the five-letter code from the big screen.'; return; }
   if (!name) { $('joinErr').textContent = 'Type your name.'; return; }
   $('joinBtn').disabled = true;
-  try { ME = await access.join(code, name); CODE = code; access.rememberPlayer(code); afterJoin(); }
+  const g = ++sessionGen;
+  try { const member = await access.join(code, name); if (g !== sessionGen) return; ME = member; CODE = code; access.rememberPlayer(code); afterJoin(); }
   catch (e) { $('joinErr').textContent = access.message(e); }
   finally { $('joinBtn').disabled = false; }
 }
 function afterJoin(){ $('leaveBtn').hidden = false; tick(); clearInterval(timer); timer = setInterval(tick, 450); }
 (async function resume(){ const saved = access.savedPlayerCode(); if (!saved || params.get('c') && params.get('c').toUpperCase() !== saved) return;
   try { const m = await access.membership(saved); if (m) { ME = m; CODE = saved; afterJoin(); } } catch (e) {} })();
-$('leaveBtn').addEventListener('click', async () => { try { await access.leave(CODE); } catch (e) {} access.forgetPlayer(); clearInterval(timer); ME = null; S = null; CODE = ''; $('leaveBtn').hidden = true; $('meTag').hidden = true; show('vJoin'); });
+$('leaveBtn').addEventListener('click', async () => { const code = CODE; sessionGen++; access.forgetPlayer(); clearInterval(timer); ME = null; S = null; CODE = ''; acting = false; clearConnection(); $('leaveBtn').hidden = true; $('meTag').hidden = true; show('vJoin'); try { await access.leave(code); } catch (e) {} });
 
 /* following the game */
 function show(id){ ['vJoin', 'vWait', 'vPrompt'].forEach(v => { $(v).hidden = v !== id; }); view = id; }
 async function tick(){
   if (ticking || !CODE) return; ticking = true;
-  try { S = await access.playerState(CODE); ME = S.me; render(); }
-  catch (e) { if (e && (e.code === '42501' || e.status === 403)) { clearInterval(timer); access.forgetPlayer(); show('vJoin'); $('joinErr').textContent = access.message(e); } }
+  const code = CODE, g = sessionGen;
+  try { const state = await access.playerState(code); if (g !== sessionGen || code !== CODE) return; S = state; ME = S.me; clearConnection(); render(); }
+  catch (e) { if (g !== sessionGen || code !== CODE) return; showConnection(e);
+    if (e && (e.code === '42501' || e.status === 403)) { clearInterval(timer); access.forgetPlayer(); CODE = ''; ME = null; S = null; sessionGen++; $('leaveBtn').hidden = true; $('meTag').hidden = true; show('vJoin'); $('joinErr').textContent = access.message(e); } }
   finally { ticking = false; }
 }
+function showConnection(error){ connectionProblem = true; $('connectionErr').textContent = access.message(error); $('connectionErr').hidden = false;
+  $('press').disabled = true; $('opts').querySelectorAll('.opt').forEach(b => { b.disabled = true; }); }
+function clearConnection(){ connectionProblem = false; $('connectionErr').hidden = true; $('connectionErr').textContent = ''; }
 const roster = () => (S && S.game && S.game.roster) || [];
 const idx = id => roster().findIndex(m => m.id === id);
 const nameOf = id => { const m = roster().find(x => x.id === id); return m ? m.name : ''; };
@@ -145,6 +152,7 @@ function waiting(head, line){ show('vWait'); $('waitHead').textContent = head; $
 function render(){
   paintMe();
   if (!S || !ME) return;
+  if (connectionProblem) { $('press').disabled = true; $('opts').querySelectorAll('.opt').forEach(b => { b.disabled = true; }); return; }
   const p = S.prompt, mine = ME ? idx(ME.id) : -1;
   if (S.phase === 'lobby' || !S.game) return waiting('You\'re in, ' + ME.name + '!', 'Watch the big screen. The game starts soon.');
   if (S.phase === 'final') return waiting('Game over', 'See the big screen for the night\'s results.');
@@ -159,9 +167,9 @@ function promptView(p){
   if (fresh) { lastPrompt = p.id; acting = false; setStatus(''); }
   const named = p.eligible.length === 1 ? nameOf(p.eligible[0]) : '';
   $('q').textContent = p.q;
-  const opts = p.opts || [], letters = p.kind === 'choose' ? '123456' : 'ABCD';
+  const opts = p.opts || [];
   const sig = p.id + ':' + opts.length;
-  if ($('opts').dataset.sig !== sig) { $('opts').dataset.sig = sig; $('opts').innerHTML = opts.map((o, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + letters[i] + '</b><span>' + esc(o) + '</span></button>').join(''); }
+  if ($('opts').dataset.sig !== sig) { $('opts').dataset.sig = sig; $('opts').innerHTML = opts.map((o, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + (p.kind === 'choose' ? String(i + 1) : 'ABCD'[i]) + '</b><span>' + esc(o) + '</span></button>').join(''); }
   const btns = $('opts').querySelectorAll('.opt');
   btns.forEach((b, i) => { b.disabled = true; b.classList.toggle('right', p.closed && p.correct === i); b.classList.toggle('wrong', !!(p.wrong || []).find(w => w.choice === i) || (p.closed && p.kind === 'answer' && p.reason === 'wrong' && p.choice === i)); b.classList.toggle('mine', p.closed && p.kind === 'choose' && p.choice === i); });
   $('opts').classList.remove('live'); $('press').hidden = true;
@@ -191,18 +199,18 @@ function promptView(p){
 $('press').addEventListener('pointerdown', press);
 $('press').addEventListener('click', e => { if (e.detail === 0) press(); });
 async function press(){
-  const p = S && S.prompt; if (!p || acting || $('press').disabled) return; acting = true; $('press').disabled = true; SFX.tap();
-  try { S = await access.press(CODE, p.id); ME = S.me; acting = false; render(); }
-  catch (e) { acting = false; setStatus(access.message(e), 'bad'); }
+  const p = S && S.prompt; if (!p || acting || connectionProblem || $('press').disabled) return; const code = CODE, g = sessionGen; acting = true; $('press').disabled = true; SFX.tap();
+  try { const state = await access.press(code, p.id); if (g !== sessionGen || code !== CODE) return; if (!S || !S.prompt || S.prompt.id === p.id) { S = state; ME = S.me; } acting = false; render(); }
+  catch (e) { if (g !== sessionGen || code !== CODE) return; acting = false; setStatus(access.message(e), 'bad'); tick(); }
 }
 $('opts').addEventListener('click', async e => {
-  const b = e.target.closest('.opt'); const p = S && S.prompt; if (!b || b.disabled || !p || acting) return;
+  const b = e.target.closest('.opt'); const p = S && S.prompt; if (!b || b.disabled || !p || acting || connectionProblem) return; const code = CODE, g = sessionGen;
   acting = true; $('opts').querySelectorAll('.opt').forEach(x => { x.disabled = true; }); b.classList.add('mine'); SFX.tap();
-  try { S = await access.answer(CODE, p.id, +b.dataset.i); ME = S.me; const q = S.prompt; acting = false;
+  try { const state = await access.answer(code, p.id, +b.dataset.i); if (g !== sessionGen || code !== CODE) return; if (!S || !S.prompt || S.prompt.id === p.id) { S = state; ME = S.me; } const q = S.prompt; acting = false;
     if (q && q.closed && q.kind !== 'choose') { if (q.winner === ME.id) SFX.right(); else SFX.wrong(); }
     else if (q && !q.closed && (q.locked || []).includes(ME.id)) SFX.wrong();
     render(); }
-  catch (err) { acting = false; setStatus(access.message(err), 'bad'); }
+  catch (err) { if (g !== sessionGen || code !== CODE) return; acting = false; setStatus(access.message(err), 'bad'); tick(); }
 });
 let wake = null;
 function stayAwake(){ try { if (navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {}); } catch (e) {} }
@@ -212,3 +220,4 @@ window.__lp = { get S(){ return S; }, get ME(){ return ME; } };
 </script>
 </body>
 </html>
+
