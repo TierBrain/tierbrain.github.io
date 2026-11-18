@@ -163,6 +163,8 @@ class TenLanternsBrowserTests(unittest.TestCase):
                 pg.locator('#plist .rm').last.click()
             for i, n in enumerate(names):
                 pg.locator('#plist input').nth(i).fill(n)
+        if pg.locator('#settings').is_hidden():
+            pg.click('#setBtn')
         if mode != 'daily':
             pg.click('#length button[data-v="%s"]' % length)
             pg.click('#style button[data-v="%s"]' % style)
@@ -170,6 +172,45 @@ class TenLanternsBrowserTests(unittest.TestCase):
         pg.click('#timed button[data-v="%s"]' % ('relaxed' if relaxed else 'timed'))
         pg.click('#beginBtn')
         pg.wait_for_selector('#spinBtn:not([disabled])')
+
+    def test_start_screen_keeps_begin_in_view_and_folds_the_settings(self):
+        """Three steps, with Begin on screen at TV and laptop sizes; the rest folded into one line."""
+        for w, h in ((1920, 1080), (1280, 720)):
+            pg = self.open(w, h)
+            self.assertTrue(pg.locator('#settings').is_hidden())
+            self.assertEqual(pg.get_attribute('#setBtn', 'aria-expanded'), 'false')
+            box = pg.locator('#beginBtn').bounding_box()
+            self.assertLessEqual(box['y'] + box['height'], h, 'Begin should be visible without scrolling at %dx%d' % (w, h))
+            self.assertEqual(pg.locator('.step > span i').all_inner_texts(), ['1', '2', '3'])
+            line = pg.inner_text('#summary')
+            for part in ('Standard, 20 min', 'General knowledge', 'Mixed difficulty', 'World games', 'Moves on by itself'):
+                self.assertIn(part, line)
+            self.assertNotIn('\u2014', line)
+            if w == 1920:
+                self.assertEqual(self.errors, []); self.ctx.close()
+        pg.click('#setBtn')
+        self.assertTrue(pg.locator('#settings').is_visible())
+        self.assertEqual(pg.get_attribute('#setBtn', 'aria-expanded'), 'true')
+        pg.click('#diff button[data-v="3"]'); pg.click('#auto button[data-v="tap"]'); pg.click('#timed button[data-v="relaxed"]')
+        pg.click('#length button[data-v="long"]'); pg.click('#style button[data-v="simple"]')
+        self.assertEqual(pg.inner_text('#summary'), 'Long, 40 min \u00b7 General knowledge \u00b7 Hard \u00b7 Simple quiz \u00b7 Relaxed answering \u00b7 Tap to move on')
+        pg.click('#setDone')
+        self.assertTrue(pg.locator('#settings').is_hidden())
+        self.assertEqual(pg.inner_text('#setBtn'), 'Change settings')
+        pg.click('#mode button[data-v="daily"]')
+        self.assertTrue(pg.inner_text('#summary').startswith("Today's five spins"))
+        # the choices are still remembered on the next visit, and stay folded away
+        pg.reload(); pg.wait_for_selector('#beginBtn')
+        self.assertTrue(pg.locator('#settings').is_hidden())
+        pg.click('#mode button[data-v="solo"]')
+        self.assertIn('Hard', pg.inner_text('#summary'))
+        # on a phone the mode cards sit two to a row and Begin fills the width
+        self.assertEqual(self.errors, []); self.ctx.close()
+        pg = self.open(390, 844)
+        cards = pg.locator('#mode button')
+        self.assertAlmostEqual(cards.nth(0).bounding_box()['y'], cards.nth(1).bounding_box()['y'], delta=2)
+        self.assertGreater(pg.locator('#beginBtn').bounding_box()['width'], 300)
+        self.assertLessEqual(pg.evaluate('document.documentElement.scrollWidth'), 390)
 
     def S(self, expr):
         return self.page.evaluate('(() => { const S = __tl.S, R = __tl.R; return ' + expr + '; })()')
