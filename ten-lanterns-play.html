@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Join a game of Ten Lanterns on your phone: answer, buzz in and make your choices on your own screen.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://tierbrain.co/ten-lanterns-play.html">
+<script>
+(function(){ if(location.hostname === 'tierbrain.github.io'){ location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash); } })();
+</script>
+<title>Ten Lanterns: join a game | TierBrain</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b0f2a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,700&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root{--space:#0b0f2a;--deep:#060818;--brass:#d8b25a;--brass-2:#f3d98f;--paper:#fbf4e6;--ink:#21160c;
+  --head:'Baloo 2','Nunito',system-ui,sans-serif;--flour:'Fraunces',Georgia,serif;--body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--body);color:#fff;background:radial-gradient(70% 50% at 20% 10%,rgba(122,72,170,.35),transparent 70%),linear-gradient(var(--space),var(--deep)) fixed;font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button,input{font:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--brass-2);outline-offset:3px}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px 4px}
+.logo{font-family:var(--head);font-weight:800;font-size:20px;line-height:1.05}.logo span{color:var(--brass-2)}
+.me{margin-left:auto;display:flex;align-items:center;gap:6px;font-weight:900}
+.me svg{width:28px;height:28px}
+.icon{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:99px;height:38px;padding:0 12px;font-weight:800;font-size:14px;white-space:nowrap;flex:none}
+main{max-width:520px;margin:0 auto;padding:10px 16px calc(24px + env(safe-area-inset-bottom))}
+.card{background:rgba(10,12,34,.8);border:1px solid rgba(243,217,143,.25);border-radius:22px;padding:18px}
+h1{font-family:var(--head);font-weight:800;font-size:30px;line-height:1.05;margin:4px 0 12px}
+label{display:block;font-weight:800;margin:10px 0 6px;color:var(--brass-2);font-size:14px;letter-spacing:.5px;text-transform:uppercase}
+input{width:100%;padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:20px}
+#code{text-transform:uppercase;letter-spacing:6px;font-family:var(--head)}
+.btn{display:block;width:100%;border:0;border-radius:999px;padding:16px;margin-top:16px;font-family:var(--head);font-weight:800;font-size:22px;background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:0 4px 0 #8a6a2a}
+.btn:disabled{opacity:.5}
+.err{color:#ff9a8a;font-weight:800;min-height:1.4em;margin:10px 0 0}
+.wait{text-align:center;padding:30px 18px}
+.wait svg{width:96px;height:96px}
+.wait h2{font-family:var(--head);font-size:28px;margin:12px 0 6px}
+.wait p{margin:0;color:#e8dcc2}
+#who{font-weight:900;color:var(--brass-2);margin:0 0 6px;font-size:15px;min-height:1.3em}
+#q{font-family:var(--head);font-weight:800;font-size:24px;line-height:1.15;margin:0 0 14px}
+#opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;border:3px solid #e2d3b6;background:#fff;color:var(--ink);border-radius:16px;padding:14px;font-weight:800;font-size:19px;min-height:62px}
+.opt b{display:inline-flex;flex:none;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--paper);align-items:center;justify-content:center;font-family:var(--head)}
+#opts:not(.live) .opt{opacity:.7}
+.opt.right{border-color:#2f9e5b;background:#e3f6e9;opacity:1!important}.opt.wrong{border-color:#c94a3a;background:#fbe4e0}
+.opt.mine{box-shadow:0 0 0 4px var(--brass-2)}
+#press{display:block;width:100%;aspect-ratio:1.6;margin:6px 0 14px;border:0;border-radius:28px;font-family:var(--head);font-weight:800;font-size:40px;color:var(--ink);background:radial-gradient(circle at 50% 35%,#ffe9a8,#e8a83c);box-shadow:0 8px 0 #8a6a2a,0 20px 40px rgba(0,0,0,.4);touch-action:manipulation}
+#press:disabled{filter:grayscale(.7);opacity:.55}
+#press:active:not(:disabled){transform:translateY(4px);box-shadow:0 4px 0 #8a6a2a}
+#status{min-height:1.5em;margin:14px 0 0;font-weight:900;font-size:20px;text-align:center}
+#status.good{color:#5fd08a}#status.bad{color:#ff9a8a}
+.foot{text-align:center;margin-top:16px}
+.foot button{border:0;background:none;color:#9aa3c7;font-weight:800;text-decoration:underline}
+</style>
+</head>
+<body>
+<header class="top"><div class="logo">Ten <span>Lanterns</span></div><span class="me" id="meTag" hidden></span><button class="icon" id="soundBtn" type="button" aria-pressed="true">Sound on</button></header>
+<main>
+  <section id="vJoin" class="card">
+    <h1>Join the game</h1>
+    <label for="code">Room code</label><input id="code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+    <label for="name">Your name</label><input id="name" maxlength="14" autocomplete="nickname">
+    <button class="btn" id="joinBtn" type="button">Join</button>
+    <p class="err" id="joinErr" role="alert"></p>
+  </section>
+  <section id="vWait" class="card wait" hidden><div id="waitSym"></div><h2 id="waitHead"></h2><p id="waitLine"></p></section>
+  <section id="vPrompt" class="card" hidden aria-live="polite">
+    <p id="who"></p>
+    <p id="q"></p>
+    <button id="press" type="button" hidden>I know it!</button>
+    <div id="opts"></div>
+    <p id="status" role="status"></p>
+  </section>
+  <div class="foot"><button id="leaveBtn" type="button" hidden>Leave this game</button></div>
+</main>
+<script src="vendor/supabase.js"></script>
+<script src="js/lantern-access.js"></script>
+<script src="ten-lanterns-art.js?v=1"></script>
+<script>
+'use strict';
+const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+const $ = id => document.getElementById(id), access = LanternAccess.create(SB_URL, SB_KEY);
+const COLOURS = ['#f0b44c', '#56b4e9', '#2fbf8f', '#ef7aa0', '#a98bff', '#ff8a3d', '#ece4cf', '#5fd0c8', '#c9e265', '#ff6b6b'];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+let CODE = '', S = null, ME = null, timer = 0, ticking = false, acting = false, lastPrompt = '', view = '';
+
+/* sound: a tap, a right and a wrong; the site-wide switch applies */
+let soundOn = !window.tbMuted, ac = null;
+function tone(f, t, d, v, f2){ if (!soundOn) return; try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); const o = ac.createOscillator(), g = ac.createGain(), s = ac.currentTime + t; o.frequency.setValueAtTime(f, s); if (f2) o.frequency.exponentialRampToValueAtTime(f2, s + d); g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v, s + .01); g.gain.exponentialRampToValueAtTime(.0001, s + d); o.connect(g); g.connect(ac.destination); o.start(s); o.stop(s + d + .05); } catch (e) {} }
+const SFX = { tap(){ tone(880, 0, .08, .12); }, right(){ [523, 659, 784].forEach((f, k) => tone(f, k * .07, .2, .12)); }, wrong(){ tone(330, 0, .3, .12, 220); } };
+function paintSound(){ $('soundBtn').textContent = soundOn ? 'Sound on' : 'Sound off'; $('soundBtn').setAttribute('aria-pressed', String(soundOn)); }
+$('soundBtn').addEventListener('click', () => { soundOn = !soundOn; if (window.tbSetMuted) window.tbSetMuted(!soundOn); paintSound(); if (soundOn) SFX.tap(); });
+paintSound();
+
+/* joining */
+const params = new URLSearchParams(location.search);
+$('code').value = (params.get('c') || access.savedPlayerCode() || '').toUpperCase().slice(0, 5);
+if ($('code').value) $('name').focus();
+$('joinBtn').addEventListener('click', join);
+$('name').addEventListener('keydown', e => { if (e.key === 'Enter') join(); });
+async function join(){
+  const code = $('code').value.trim().toUpperCase(), name = $('name').value.trim();
+  $('joinErr').textContent = '';
+  if (!/^[A-Z2-9]{5}$/.test(code)) { $('joinErr').textContent = 'Type the five-letter code from the big screen.'; return; }
+  if (!name) { $('joinErr').textContent = 'Type your name.'; return; }
+  $('joinBtn').disabled = true;
+  try { ME = await access.join(code, name); CODE = code; access.rememberPlayer(code); afterJoin(); }
+  catch (e) { $('joinErr').textContent = access.message(e); }
+  finally { $('joinBtn').disabled = false; }
+}
+function afterJoin(){ $('leaveBtn').hidden = false; tick(); clearInterval(timer); timer = setInterval(tick, 450); }
+(async function resume(){ const saved = access.savedPlayerCode(); if (!saved || params.get('c') && params.get('c').toUpperCase() !== saved) return;
+  try { const m = await access.membership(saved); if (m) { ME = m; CODE = saved; afterJoin(); } } catch (e) {} })();
+$('leaveBtn').addEventListener('click', async () => { try { await access.leave(CODE); } catch (e) {} access.forgetPlayer(); clearInterval(timer); ME = null; S = null; CODE = ''; $('leaveBtn').hidden = true; $('meTag').hidden = true; show('vJoin'); });
+
+/* following the game */
+function show(id){ ['vJoin', 'vWait', 'vPrompt'].forEach(v => { $(v).hidden = v !== id; }); view = id; }
+async function tick(){
+  if (ticking || !CODE) return; ticking = true;
+  try { S = await access.playerState(CODE); ME = S.me; render(); }
+  catch (e) { if (e && (e.code === '42501' || e.status === 403)) { clearInterval(timer); access.forgetPlayer(); show('vJoin'); $('joinErr').textContent = access.message(e); } }
+  finally { ticking = false; }
+}
+const roster = () => (S && S.game && S.game.roster) || [];
+const idx = id => roster().findIndex(m => m.id === id);
+const nameOf = id => { const m = roster().find(x => x.id === id); return m ? m.name : ''; };
+function badge(i){ return '<svg viewBox="-10 -10 20 20" aria-hidden="true">' + (window.TL_ART ? TL_ART.symbol(i < 0 ? 0 : i, i < 0 ? '#9aa3c7' : COLOURS[i], '#0b0f2a') : '') + '</svg>'; }
+function paintMe(){ const i = ME ? idx(ME.id) : -1; $('meTag').hidden = !ME; if (ME) $('meTag').innerHTML = badge(i) + esc(ME.name); }
+function waiting(head, line){ show('vWait'); $('waitHead').textContent = head; $('waitLine').textContent = line; $('waitSym').innerHTML = badge(ME ? idx(ME.id) : -1); }
+function render(){
+  paintMe();
+  if (!S || !ME) return;
+  const p = S.prompt, mine = ME ? idx(ME.id) : -1;
+  if (S.phase === 'lobby' || !S.game) return waiting('You\'re in, ' + ME.name + '!', 'Watch the big screen. The game starts soon.');
+  if (S.phase === 'final') return waiting('Game over', 'See the big screen for the night\'s results.');
+  if (mine < 0) return waiting('Watching this game', 'You can play in the next one.');
+  if (!p) return waiting('Get ready', 'Spin the dial on the big screen.');
+  promptView(p);
+}
+function setStatus(t, cls){ const el = $('status'); if (el.textContent !== t) el.textContent = t; el.className = cls || ''; }
+function promptView(p){
+  show('vPrompt');
+  const me = ME.id, eligible = p.eligible.includes(me), now = access.now(), fresh = p.id !== lastPrompt;
+  if (fresh) { lastPrompt = p.id; acting = false; setStatus(''); }
+  const named = p.eligible.length === 1 ? nameOf(p.eligible[0]) : '';
+  $('q').textContent = p.q;
+  const opts = p.opts || [], letters = p.kind === 'choose' ? '123456' : 'ABCD';
+  const sig = p.id + ':' + opts.length;
+  if ($('opts').dataset.sig !== sig) { $('opts').dataset.sig = sig; $('opts').innerHTML = opts.map((o, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + letters[i] + '</b><span>' + esc(o) + '</span></button>').join(''); }
+  const btns = $('opts').querySelectorAll('.opt');
+  btns.forEach((b, i) => { b.disabled = true; b.classList.toggle('right', p.closed && p.correct === i); b.classList.toggle('wrong', !!(p.wrong || []).find(w => w.choice === i) || (p.closed && p.kind === 'answer' && p.reason === 'wrong' && p.choice === i)); b.classList.toggle('mine', p.closed && p.kind === 'choose' && p.choice === i); });
+  $('opts').classList.remove('live'); $('press').hidden = true;
+  if (p.closed) {
+    const won = p.winner === me;
+    if (p.kind === 'claim') setStatus(won ? 'It\'s yours: watch the big screen.' : p.reason === 'claimed' ? nameOf(p.winner) + ' got there first.' : 'Moving on.', won ? 'good' : '');
+    else if (p.kind === 'choose') setStatus(p.winner === me ? 'Chosen.' : (nameOf(p.winner) || 'Someone') + ' chose.', '');
+    else if (won) { setStatus('Correct!', 'good'); }
+    else if (eligible && (p.reason === 'wrong' || (p.wrong || []).some(w => w.member === me))) setStatus('Not this time.', 'bad');
+    else setStatus(p.reason === 'time' ? 'Time\'s up.' : p.reason === 'correct' ? nameOf(p.winner) + ' got it.' : 'Watch the big screen.', '');
+    $('who').textContent = '';
+    return;
+  }
+  if (!eligible) { $('who').textContent = p.kind === 'claim' ? 'Others may claim this one' : named ? named + (p.kind === 'choose' ? ' to choose' : ' to answer') : 'Others to answer'; setStatus('Watch the big screen.'); return; }
+  if (p.kind === 'answer' || p.kind === 'choose') {
+    $('who').textContent = p.kind === 'choose' ? 'Your choice' : 'Your question';
+    btns.forEach((b, i) => { b.disabled = acting || (p.disabled || []).includes(i); }); $('opts').classList.add('live'); return;
+  }
+  if (p.kind === 'claim') { $('who').textContent = 'Quick!'; $('press').hidden = false; $('press').textContent = 'Me!'; $('press').disabled = acting; return; }
+  // an open question: press to win the turn, then answer
+  const locked = (p.locked || []).includes(me);
+  if (locked) { $('who').textContent = 'Locked out of this one'; setStatus('Not this time.', 'bad'); return; }
+  if (p.chooser === me) { $('who').textContent = 'Your turn: answer now!'; btns.forEach(b => { b.disabled = acting; }); $('opts').classList.add('live'); return; }
+  if (p.chooser) { $('who').textContent = nameOf(p.chooser) + ' pressed first'; setStatus('Beaten to it! Wait in case they miss.'); return; }
+  $('who').textContent = 'Open to everyone'; $('press').hidden = false; const ready = now >= p.open_at + 150; $('press').textContent = ready ? 'I know it!' : 'Read…'; $('press').disabled = acting || !ready;
+}
+$('press').addEventListener('pointerdown', press);
+$('press').addEventListener('click', e => { if (e.detail === 0) press(); });
+async function press(){
+  const p = S && S.prompt; if (!p || acting || $('press').disabled) return; acting = true; $('press').disabled = true; SFX.tap();
+  try { S = await access.press(CODE, p.id); ME = S.me; acting = false; render(); }
+  catch (e) { acting = false; setStatus(access.message(e), 'bad'); }
+}
+$('opts').addEventListener('click', async e => {
+  const b = e.target.closest('.opt'); const p = S && S.prompt; if (!b || b.disabled || !p || acting) return;
+  acting = true; $('opts').querySelectorAll('.opt').forEach(x => { x.disabled = true; }); b.classList.add('mine'); SFX.tap();
+  try { S = await access.answer(CODE, p.id, +b.dataset.i); ME = S.me; const q = S.prompt; acting = false;
+    if (q && q.closed && q.kind !== 'choose') { if (q.winner === ME.id) SFX.right(); else SFX.wrong(); }
+    else if (q && !q.closed && (q.locked || []).includes(ME.id)) SFX.wrong();
+    render(); }
+  catch (err) { acting = false; setStatus(access.message(err), 'bad'); }
+});
+let wake = null;
+function stayAwake(){ try { if (navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {}); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && CODE) { stayAwake(); tick(); } });
+document.addEventListener('pointerdown', stayAwake, { once: true });
+window.__lp = { get S(){ return S; }, get ME(){ return ME; } };
+</script>
+</body>
+</html>

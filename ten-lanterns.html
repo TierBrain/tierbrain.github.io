@@ -112,6 +112,18 @@ select option{color:#000}
 .go{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:6px}
 #resumeBox{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(243,217,143,.12);border:1px solid rgba(243,217,143,.4)}
 #resumeBox p{margin:0;flex:1 1 220px;font-weight:700}
+#playOn{margin-bottom:12px}
+.lobby{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px;border-radius:16px;background:rgba(243,217,143,.1);border:1px solid rgba(243,217,143,.35);margin-bottom:10px}
+.lobby>div{flex:1 1 200px;min-width:0}
+.lobby b{display:block;font-family:var(--head);font-size:clamp(40px,5vw,64px);letter-spacing:8px;line-height:1;color:var(--brass-2)}
+.lobby a{color:#fff;font-weight:800;word-break:break-all}
+.lobby img{border-radius:12px;background:#fff;padding:6px}
+#netList{display:flex;flex-wrap:wrap;gap:8px}
+#netList span{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:900}
+#netList span.away{opacity:.45}
+#setupErr{color:#ff9a8a;font-weight:800;min-height:1.2em}
+body.net #opts .opt{cursor:default}
+.rfoot{align-items:center}
 
 /* ---------- the dial screen ---------- */
 #play{min-height:100vh;display:flex;flex-direction:column}
@@ -154,6 +166,34 @@ select option{color:#000}
 @media (max-width:700px){#round{--grow:1.06}}
 #round.intro .bar,#round.intro .qcard{opacity:0;transform:translateY(50px)}
 #round.intro .bar{transform:none}
+#round.intro #rRule,#round.intro #rStage{opacity:0}
+#rTale{display:none;margin:14px auto 0;max-width:30ch;font-family:var(--flour);font-style:italic;font-size:clamp(20px,2.2vw,34px);line-height:1.25;color:#fff;text-shadow:0 3px 18px rgba(0,0,0,.75)}
+#round.intro.first #rTale{display:block;animation:rise 1s .6s cubic-bezier(.2,.8,.2,1) both}
+#cutFlash{position:fixed;inset:0;z-index:6;background:#eef6ff;opacity:0;pointer-events:none}
+/* the opening: the dial assembles and the players take their places */
+#cut{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12vh 16px 7vh;pointer-events:none;background:linear-gradient(rgba(6,8,24,0),rgba(6,8,24,.88) 45%)}
+#cut h2{margin:0;font-family:var(--head);font-weight:800;font-size:clamp(30px,4vw,60px);text-shadow:0 4px 20px rgba(0,0,0,.7);animation:rise .8s 2.6s cubic-bezier(.2,.8,.2,1) both}
+#cut ul{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:14px 0 0;padding:0}
+#cut li{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(10,12,34,.85);border:2px solid var(--c);font-weight:900;font-size:clamp(17px,1.6vw,24px);animation:rise .6s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(3s + var(--k) * .18s)}
+#cut li .sym{width:1.3em;height:1.3em}
+#cut p{margin:14px 0 0;font-weight:800;color:#f6e6c4;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(3.4s + var(--n) * .18s)}
+/* the finale: the lit lanterns rise and gather over the winner */
+#finale{position:fixed;inset:0;z-index:40;overflow:hidden;background:radial-gradient(70% 60% at 50% 40%,#1c2350,#060818);transition:opacity .8s ease}
+#finale.out{opacity:0}
+#finale .fl{position:absolute;width:clamp(70px,9vmin,120px);aspect-ratio:1;margin:calc(clamp(70px,9vmin,120px) / -2) 0 0 calc(clamp(70px,9vmin,120px) / -2);transition:left 1.4s cubic-bezier(.4,0,.2,1),top 1.4s cubic-bezier(.4,0,.2,1),opacity 1s ease,transform 1.4s ease,filter 1s ease}
+#finale .fl svg{width:100%;height:100%;overflow:visible}
+#finale .fl.lit{filter:drop-shadow(0 0 18px var(--c))}
+#finale .fl.dim{opacity:.18;transform:scale(.8)}
+#finale h2{position:absolute;left:0;right:0;top:52%;margin:0;text-align:center;font-family:var(--head);font-weight:800;font-size:clamp(36px,5.5vw,84px);line-height:1;opacity:0;transform:translateY(30px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.8,.2,1);text-shadow:0 4px 24px rgba(0,0,0,.6)}
+#finale p{position:absolute;left:0;right:0;top:calc(52% + clamp(46px,6.5vw,96px));margin:0;text-align:center;font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,28px);color:#f6e6c4;opacity:0;transition:opacity 1s .4s ease}
+#finale.named h2{opacity:1;transform:none}#finale.named p{opacity:1}
+#finale small{position:absolute;bottom:4vh;left:0;right:0;text-align:center;color:#9aa3c7;font-weight:800}
+#rRule,#rStage{transition:opacity .55s ease}
+#nextBtn{position:relative;overflow:hidden}
+#nextBtn.auto::after{content:'';position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(33,22,12,.45);transform-origin:left center;animation:drain var(--auto,3s) linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.opt.choice b{background:#6a5236}
+.opt.picked{border-color:var(--brass);background:#fff6dc}
 #round.intro #introHint{opacity:1;transition-delay:1s}
 .rhead{text-align:center;padding:4px 16px 0}
 .rhead h2{font-family:var(--head);font-weight:800;font-size:clamp(28px,3.4vw,48px);margin:0;line-height:1;text-shadow:0 3px 18px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.5)}
@@ -253,6 +293,7 @@ select option{color:#000}
   .btn,.rhead,#round .bar,.qcard,#roundEnd,#roundShade{transition:none}
   .qin #qText,.qin .opt,.opt.pop,.opt.shake,#stealBox:not([hidden]),#roundEnd.show *,#end.show *,#end.show h1{animation:none!important}
   #lastBanner{animation:none;opacity:0}
+  #cut,#finale,#cutFlash{display:none}
 }
 </style>
 </head>
@@ -283,6 +324,11 @@ select option{color:#000}
     </div>
     <div class="grid2">
       <div class="field" id="whoField"><span id="whoLabel">Players</span>
+        <div class="seg" id="playOn" role="group" aria-label="Play on"><button type="button" data-v="local">One screen</button><button type="button" data-v="phones">Phones as buzzers</button></div>
+        <div id="lobbyBox" hidden>
+          <div class="lobby"><div><span class="label">Join on your phones</span><b id="roomCode">·····</b><a id="joinUrl" href="#" target="_blank" rel="noopener"></a></div><img id="qr" alt="A code to scan with a phone camera" width="150" height="150" hidden></div>
+          <div id="netList"></div><p class="note" id="lobbyMsg" role="status"></p>
+        </div>
         <div id="plist"></div>
         <button class="btn ghost small" id="addBtn" type="button">Add a player</button>
       </div>
@@ -303,6 +349,16 @@ select option{color:#000}
             <button type="button" data-v="1">Easy</button><button type="button" data-v="2">Medium</button><button type="button" data-v="3">Hard</button><button type="button" data-v="mix">Mixed</button>
           </div>
         </div>
+        <div class="field" id="styleField"><span>Rounds</span>
+          <div class="seg" id="style" role="group" aria-label="Rounds">
+            <button type="button" data-v="worlds">Each world's own game</button><button type="button" data-v="simple">Simple quiz</button>
+          </div>
+        </div>
+        <div class="field" id="autoField"><span>Next question</span>
+          <div class="seg" id="auto" role="group" aria-label="Next question">
+            <button type="button" data-v="auto">Moves on by itself</button><button type="button" data-v="tap">When we tap</button>
+          </div>
+        </div>
         <div class="field" id="timerField"><span>Answer time</span>
           <div class="seg" id="timed" role="group" aria-label="Answer time">
             <button type="button" data-v="timed">20 seconds</button><button type="button" data-v="relaxed">Relaxed</button>
@@ -311,6 +367,7 @@ select option{color:#000}
       </div>
     </div>
     <div class="go"><button class="btn" id="beginBtn" type="button">Begin</button><span class="note" id="beginNote"></span></div>
+    <p class="note" id="setupErr" role="alert"></p>
   </section>
 </main>
 
@@ -353,7 +410,9 @@ select option{color:#000}
     <span class="chip last" id="lastChip" hidden>Last spin: double points</span>
     <span class="chip" id="qCount"></span>
   </header>
-  <div class="rhead"><h2 id="rName"></h2><p id="rLine"></p></div>
+  <div class="rhead"><h2 id="rName"></h2><p id="rLine"></p><p id="rTale"></p></div>
+  <p id="rRule"></p>
+  <div id="rStage" aria-live="polite"></div>
   <section class="qcard" id="qBox" aria-live="polite">
     <div class="qmeta"><span class="who" id="rWho"></span><span id="rPts"></span></div>
     <p id="qText"></p>
@@ -361,7 +420,7 @@ select option{color:#000}
     <div id="timer" aria-hidden="true"><i></i></div>
     <p id="rmsg" role="status"></p>
     <div id="stealBox" hidden><span class="label" id="stealLabel">Steal it?</span><div id="stealBtns"></div></div>
-    <div class="rfoot"><button class="btn" id="nextBtn" type="button" hidden>Next question</button></div>
+    <div class="rfoot"><button class="btn ghost small" id="netSkip" type="button" hidden>Phone not answering? Skip</button><button class="btn" id="nextBtn" type="button" hidden>Next question</button></div>
   </section>
   <section id="roundEnd" hidden>
     <svg id="reLantern" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
@@ -384,16 +443,20 @@ select option{color:#000}
   <div class="go"><button class="btn" id="againBtn" type="button">Play again</button><button class="btn ghost" id="changeBtn" type="button">Change the setup</button></div>
 </main>
 <div id="fx" aria-hidden="true"></div>
+<div id="cutFlash" aria-hidden="true"></div>
 
 <script src="questions.js?v=8"></script>
 <script src="ruffled-topics.js?v=1"></script>
 <script src="ten-lanterns-art.js?v=1"></script>
 <script src="ten-lanterns-worlds.js?v=1"></script>
+<script src="ten-lanterns-sound.js?v=1"></script>
+<script src="ten-lanterns-rounds.js?v=1"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
 const STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ART = window.TL_ART, D = ART.DISTRICTS, N = D.length, STEP = 360 / N;
+if (window.TL_ROUNDS) TL_ROUNDS.ensureStyle();
 
 /* ---------- rules ---------- */
 const QPR = 3;                 // questions in a round
@@ -419,7 +482,7 @@ function shuffle(a, rnd){ rnd = rnd || Math.random; a = a.slice(); for (let i = 
 function today(){ try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
 function longDate(iso){ const [y, m, d] = iso.split('-').map(Number); return d + ' ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1] + ' ' + y; }
 const store = { get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, del(k){ try { localStorage.removeItem(k); } catch (e) {} } };
-function show(id){ ['setup', 'play', 'round', 'end'].forEach(s => { $(s).hidden = s !== id; }); if (id !== 'round') $('roundArt').innerHTML = ''; window.scrollTo(0, 0); }
+function show(id){ ['setup', 'play', 'round', 'end'].forEach(s => { $(s).hidden = s !== id; }); if (id !== 'round') { $('roundArt').innerHTML = ''; ambientStop(); } window.scrollTo(0, 0); }
 function confirmLeave(text){ return window.__noConfirm || window.confirm(text); }
 
 /* ---------- sound (the site-wide switch applies) ---------- */
@@ -445,10 +508,23 @@ const SFX = {
   end(){ [523, 659, 784, 1047, 1319].forEach((f, k) => bell(f, k * .16, .11)); bell(1047, 1, .14); },
   enter(){ noise(0, 1.1, 180, .1); tone(220, 0, 1.1, .05, 'sine', 660); bell(988, .75, .09); },
   leave(){ noise(0, .8, 600, .07); tone(660, 0, .8, .04, 'sine', 220); },
-  ignite(){ noise(0, .35, 1400, .06); bell(1568, .08, .1); bell(2093, .2, .07); }
+  ignite(){ noise(0, .35, 1400, .06); bell(1568, .08, .1); bell(2093, .2, .07); },
+  up(){ tone(523, 0, .12, .09, 'triangle', 784); tone(784, .1, .16, .08, 'triangle', 1047); bell(1568, .2, .05); },
+  down(){ tone(523, 0, .3, .08, 'triangle', 262); },
+  snuff(){ noise(0, .5, 2400, .06); tone(300, 0, .3, .03, 'sine', 120); },
+  gallop(){ [0, .09, .25, .34, .5, .59].forEach(t => tone(110, t, .07, .12, 'sine', 70)); },
+  dive(){ tone(220, 0, .9, .06, 'sine', 110); noise(.1, .6, 300, .05); },
+  flood(){ noise(0, 1.4, 200, .14); tone(160, 0, 1.2, .07, 'sawtooth', 50); },
+  coins(){ [0, .07, .13, .2].forEach((t, k) => bell(2093 + k * 120, t, .05)); },
+  plate(){ tone(1319, 0, .5, .05, 'sine', 1568); },
+  smash(){ noise(0, .4, 3200, .12); noise(.05, .3, 1500, .08); },
+  creak(){ tone(120, 0, .9, .06, 'sawtooth', 70); noise(.2, .5, 500, .04); },
+  thunder(){ noise(.25, 2.4, 120, .22); noise(.5, 1.8, 80, .14); }
 };
 function paintSound(){ $('soundBtn').textContent = soundOn ? 'Sound on' : 'Sound off'; $('soundBtn').setAttribute('aria-pressed', String(soundOn)); }
 $('soundBtn').addEventListener('click', () => { soundOn = !soundOn; if (window.tbSetMuted) window.tbSetMuted(!soundOn); if (soundOn) SFX.nudge(); paintSound(); });
+/* the world's own sound stops with the switch and with the round */
+function worldSound(){ if (!soundOn) ambientStop(); else if (R && !$('round').hidden && !amb) ambientStart(D[R.d].id); }
 paintSound();
 
 /* ---------- the sky ---------- */
@@ -543,25 +619,27 @@ function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(top
 /* today's dial: the same spins, questions and answer order on every device */
 function dailyPlan(date){ const rnd = rngFrom(hash('ten-lanterns:' + date));
   const pool = poolFor('gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
-  const qs = shuffle(pool, rnd).slice(0, 5 * QPR).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
+  const qs = shuffle(pool, rnd).slice(0, 60).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
   const spins = []; let left = [];
   for (let s = 0; s < 5; s++) { if (!left.length) left = Array.from({ length: N }, (_, i) => i); const k = Math.floor(rnd() * left.length); spins.push(left[k]); left.splice(k, 1); }
   return { qs, spins }; }
 
 /* ---------- setup ---------- */
-let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-ten-lanterns-setup', {}));
+let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-ten-lanterns-setup', {}));
 function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 function paintSetup(){
-  setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); $('topic').value = cfg.topic;
+  setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); $('topic').value = cfg.topic;
   $('modeNote').textContent = MODES[cfg.mode];
   $('lengthNote').textContent = LENGTHS[cfg.length].note;
   const daily = cfg.mode === 'daily';
-  ['lengthField', 'topicField', 'diffField'].forEach(id => { $(id).hidden = daily; });
+  ['lengthField', 'topicField', 'diffField', 'styleField'].forEach(id => { $(id).hidden = daily; });
   paintWho(); paintDaily();
 }
 function paintWho(){
-  const m = cfg.mode, list = $('plist');
-  $('addBtn').hidden = m !== 'versus';
+  const m = cfg.mode, list = $('plist'), phones = m === 'versus' && cfg.playOn === 'phones';
+  $('playOn').hidden = m !== 'versus'; setSeg('playOn', cfg.playOn); list.hidden = phones; $('lobbyBox').hidden = !phones; $('setupErr').textContent = '';
+  if (phones) openLobby(); else stopLobby();
+  $('addBtn').hidden = m !== 'versus' || phones;
   if (m === 'versus') {
     $('whoLabel').textContent = 'Players (2 to 10)';
     list.innerHTML = cfg.names.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#0b0f2a') + '</svg><input aria-label="Player ' + (i + 1) + '" maxlength="14" placeholder="Player ' + (i + 1) + '" value="' + esc(n) + '" data-i="' + i + '"><button class="rm" type="button" aria-label="Remove player ' + (i + 1) + '" data-rm="' + i + '"' + (cfg.names.length <= 2 ? ' hidden' : '') + '>×</button></div>').join('');
@@ -582,7 +660,7 @@ function paintDaily(){
   if (done && done.date === d) { note.textContent = 'You have played today\'s dial: ' + done.score + ' points. Practise it again, or come back tomorrow for a new one.'; $('beginBtn').textContent = 'Practise today\'s dial'; }
   else { note.textContent = 'Today\'s dial: ' + longDate(d) + '.'; $('beginBtn').textContent = 'Spin today\'s dial'; }
 }
-['mode', 'length', 'diff', 'timed'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
+['mode', 'length', 'diff', 'timed', 'style', 'auto', 'playOn'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
 $('topic').addEventListener('change', () => { cfg.topic = $('topic').value; saveSetup(); });
 $('plist').addEventListener('input', e => { const t = e.target; if (t.dataset.i !== undefined) cfg.names[+t.dataset.i] = t.value; else if (t.dataset.t !== undefined) cfg.teams[+t.dataset.t] = t.value; else if (t.dataset.one) { if (cfg.mode === 'coop') cfg.group = t.value; else cfg.solo = t.value; } saveSetup(); });
 $('plist').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; cfg.names.splice(+b.dataset.rm, 1); saveSetup(); paintWho(); });
@@ -593,29 +671,45 @@ function saveSetup(){ store.set('tb-ten-lanterns-setup', cfg); }
 let S = null, R = null, forced = null, busy = false, timerT = 0, timerEnd = 0, timerRaf = 0;
 const SAVE = 'tb-ten-lanterns-game';
 function spinners(){ return S.mode === 'versus' || S.mode === 'team' ? S.players.length : 1; }
-function newGame(){
+function newGame(roster){
   shown = {};
-  const m = cfg.mode, players = [];
-  const add = (name, k) => players.push({ name: name, colour: k, sym: k, pts: 0 });
-  if (m === 'versus') cfg.names.forEach((n, i) => add((n || '').trim() || 'Player ' + (i + 1), i));
+  const m = roster ? 'versus' : cfg.mode, players = [];
+  const add = (name, k, mid) => players.push(Object.assign({ name: name, colour: k, sym: k, pts: 0 }, mid ? { mid } : {}));
+  if (roster) roster.forEach((r, i) => add(r.name, i, r.id));
+  else if (m === 'versus') cfg.names.forEach((n, i) => add((n || '').trim() || 'Player ' + (i + 1), i));
   else if (m === 'team') cfg.teams.forEach((n, i) => add((n || '').trim() || ['Gold team', 'Blue team'][i], i));
   else if (m === 'coop') add(cfg.group.trim() || 'All of us', 0);
   else add(cfg.solo.trim() || 'You', 0);
   const base = m === 'daily' ? 5 : LENGTHS[cfg.length].spins + (m === 'coop' ? 4 : 0), n = (m === 'versus' || m === 'team') ? players.length : 1;
-  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed',
+  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
         date: m === 'daily' ? today() : null, practice: false, players, spins: Math.ceil(base / n) * n, spin: 0, turn: 0,
-        owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [] };
+        owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [], phones: !!roster };
   if (m === 'daily') { const done = store.get('tb-ten-lanterns-daily', null); S.practice = !!(done && done.date === S.date); }
-  startPlay();
+  startPlay(true);
 }
 let pool = [], plan = null;
 function preparePool(){ if (S.mode === 'daily') { plan = dailyPlan(S.date); return; } const used = new Set(S.used); pool = shuffle(poolFor(S.topic, S.diff)).filter(q => !used.has(q.q)); if (pool.length < QPR * 2) pool = shuffle(poolFor(S.topic, S.diff)); }
-function drawQ(){ if (S.mode === 'daily') { const q = plan.qs[S.spin * QPR + R.k]; return { q: q.q, correct: q.correct, opts: q.opts.slice() }; }
+function drawQ(){ if (S.mode === 'daily') { const q = plan.qs[(S.spin * 12 + (R.qn++)) % plan.qs.length]; return { q: q.q, correct: q.correct, opts: q.opts.slice() }; }
   if (!pool.length) preparePool(); const q = pool.shift(); S.used.push(q.q); if (S.used.length > 400) S.used.shift();
   return { q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3))) }; }
 function save(){ if (S && S.phase !== 'over' && !S.practice) store.set(SAVE, S); }
-function startPlay(){
-  preparePool(); show('play'); setRot(-S.pos * STEP); paintAll();
+/* the opening: the dial gathers itself out of the stars, its windows open one by one, and the players are named */
+let cutT = [];
+function opening(){
+  if (STILL || !$('dial').animate) return;
+  const svg = $('dial'), lans = Array.from(svg.querySelectorAll('.lan .pop')), anims = [];
+  anims.push(svg.animate([{ transform: 'scale(.35) rotate(-120deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 1500, easing: 'cubic-bezier(.2,.8,.2,1)' }));
+  lans.forEach((g, i) => { anims.push(g.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 650, delay: 1000 + i * 170, fill: 'backwards', easing: 'cubic-bezier(.3,1.4,.5,1)' }));
+    cutT.push(setTimeout(() => bell(784 * Math.pow(2, i / 12 * 1.2), 0, .05), 1000 + i * 170)); });
+  const multi = multiMode(), c = document.createElement('div'); c.id = 'cut';
+  c.innerHTML = '<h2>' + (multi ? 'Tonight' : S.mode === 'coop' ? 'Together tonight' : S.mode === 'daily' ? 'Today\'s dial' : 'Tonight') + '</h2><ul>' + S.players.map((p, k) => '<li style="--k:' + k + ';--c:' + COLOURS[p.colour] + '">' + symSvg(p.sym, COLOURS[p.colour]) + esc(p.name) + '</li>').join('') + '</ul><p style="--n:' + S.players.length + '">' + (multi ? esc(S.players[0].name) + ' to spin first' : 'Spin the dial to begin') + '</p>';
+  document.body.appendChild(c); SFX.enter();
+  const end = () => { cutT.forEach(clearTimeout); cutT = []; anims.forEach(a => { try { a.finish(); } catch (e) {} }); if (c.parentNode) c.remove(); window.removeEventListener('keydown', end, true); svg.removeEventListener('click', end, true); };
+  cutT.push(setTimeout(() => { if (c.animate) c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: 'forwards' }).onfinish = end; else end(); }, 6200));
+  window.addEventListener('keydown', end, true); svg.addEventListener('click', end, true);
+}
+function startPlay(fresh){
+  preparePool(); show('play'); setRot(-S.pos * STEP); paintAll(); if (fresh) opening();
   if (S.phase !== 'spin') { S.phase = 'spin'; }
   promptSpin(); save();
 }
@@ -729,113 +823,346 @@ function goIn(){
   startIntro();
 }
 
-/* ---------- a round: three questions; the spinner answers, and in Teams and Versus a miss can be stolen ---------- */
+/* ---------- phones as buzzers ----------
+   The TV opens a room; phones join and answer, press, choose and claim on their own screens. The server keeps
+   each answer hidden until its question closes, decides who pressed first and lets only the named players act;
+   the TV follows it and keeps the score. If a phone cannot be reached, that moment falls back to the big screen. */
+const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
+let NET = null; const net = { access: null, members: [], lobbyTimer: 0, gameTimer: 0, gen: 0, busy: false, ticking: false };
+function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => no(new Error('load')); document.head.appendChild(el); }); }
+async function netAccess(){ if (net.access) return net.access; if (!window.LanternAccess) { if (!window.supabase) await loadScript('vendor/supabase.js'); await loadScript('js/lantern-access.js'); }
+  net.access = LanternAccess.create(SB_URL, SB_KEY); return net.access; }
+function netMsg(e){ return net.access ? net.access.message(e) : 'Phone play could not load. Check your connection and try again.'; }
+const mid = i => S.players[i].mid;
+const phonesLive = () => !!(S && S.phones && R && !R.netLocal && (R.pid || R.opening));
+function paintJoin(){ if (!NET || !NET.code) return;
+  const link = (/^https?:/.test(location.protocol) ? location.origin : 'https://tierbrain.co') + '/ten-lanterns-play.html?c=' + NET.code;
+  if ($('joinUrl').href === link) return;
+  $('roomCode').textContent = NET.code; $('joinUrl').textContent = link.replace(/^https?:\/\//, ''); $('joinUrl').href = link;
+  $('qr').hidden = false; $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(link); }
+function stopLobby(){ clearInterval(net.lobbyTimer); net.lobbyTimer = 0; net.gen++; }
+async function openLobby(){
+  if (net.lobbyTimer) return; const g = ++net.gen; $('lobbyMsg').textContent = 'Opening a room…';
+  try {
+    const access = await netAccess(); if (g !== net.gen) return;
+    let room = null; const saved = NET && NET.code || access.savedHostCode();
+    if (saved) { try { room = await access.hostState(saved); if (room.phase !== 'lobby') room = await access.setPhase('lobby'); } catch (e) { access.forgetHost(); room = null; } }
+    if (!room) room = await access.createRoom();
+    if (g !== net.gen) return;
+    NET = NET || {}; NET.code = room.code; paintJoin();
+    $('lobbyMsg').textContent = 'Waiting for players to join…';
+    lobbyTick(); net.lobbyTimer = setInterval(lobbyTick, 1500);
+  } catch (e) { if (g === net.gen) { $('lobbyMsg').textContent = netMsg(e); $('roomCode').textContent = '·····'; } }
+}
+async function lobbyTick(){
+  if (!NET || !NET.code || net.busy || $('setup').hidden) return;
+  try { const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby(); }
+  catch (e) { $('lobbyMsg').textContent = netMsg(e); }
+}
+const netPlayers = () => net.members.filter(m => m.seen).slice(0, MAXP);
+function paintLobby(){
+  const play = netPlayers(), ids = play.map(m => m.id);
+  $('netList').innerHTML = net.members.map(m => { const i = ids.indexOf(m.id); return '<span class="' + (m.seen ? '' : 'away') + '">' + (i < 0 ? '' : symSvg(i, COLOURS[i])) + esc(m.name) + (i < 0 ? ' (watching)' : '') + '</span>'; }).join('');
+  const n = play.length;
+  $('lobbyMsg').textContent = n < 2 ? (n ? '1 player so far. ' : '') + 'Waiting for at least 2 players to join…' : n + ' players are in. Begin when everyone has joined.';
+}
+async function netBegin(){
+  if (!NET || !NET.code) { $('setupErr').textContent = 'The room is still opening. Try again in a moment.'; return; }
+  net.busy = true; $('beginBtn').disabled = true;
+  try {
+    const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby();
+    const play = netPlayers();
+    if (play.length < 2) { $('setupErr').textContent = 'Waiting for at least 2 players to join.'; return; }
+    const room = await net.access.beginGame({ roster: play.map(m => m.id) });
+    NET.room = room; $('setupErr').textContent = ''; stopLobby(); actx();
+    newGame(room.game.roster); netWatch(true);
+  } catch (e) { $('setupErr').textContent = netMsg(e); if (e.code === 'PT412') lobbyTick(); }
+  finally { net.busy = false; $('beginBtn').disabled = false; }
+}
+function netWatch(on){ clearInterval(net.gameTimer); net.gameTimer = on ? setInterval(netTick, 300) : 0; document.body.classList.toggle('net', !!on); }
+async function netTick(){
+  if (!NET || net.ticking || !R || !R.pid) return; net.ticking = true;
+  try { const st = await net.access.hostState(NET.code); NET.room = st; if (st.prompt && R && st.prompt.id === R.pid) netApply(st.prompt); }
+  catch (e) { $('rmsg').textContent = netMsg(e); }
+  finally { net.ticking = false; }
+}
+/* open a moment on the phones; if they cannot be reached, it falls back to the big screen */
+function netOpen(spec, ms){
+  if (!S || !S.phones) return;
+  if (S.timed && ms && spec.kind !== 'choose' && spec.window_ms === undefined) spec.window_ms = Math.round(ms);
+  if (spec.disabled === undefined) delete spec.disabled;
+  const mine = R; R.pid = null; R.pkind = spec.kind; R.netWrong = 0; R.netLocal = false; R.opening = true; $('netSkip').hidden = true;
+  net.access.openPrompt(spec).then(st => { if (R !== mine) return; R.opening = false; R.pid = st.prompt.id; NET.room = st; $('netSkip').hidden = !(spec.kind === 'answer' || spec.kind === 'choose'); },
+    e => { if (R !== mine) return; R.opening = false; R.netLocal = true; $('rmsg').textContent = netMsg(e) + ' Use the big screen for this one.';
+      if (R.phase === 'ask' || R.phase === 'steal' || R.phase === 'choose') { $('opts').className = 'opts-live'; focusFirst(); }
+      if (R.phase === 'buzz') openBuzz(); else if (R.phase === 'stealpick') $('stealBtns').innerHTML = S.players.map((p, k) => k).filter(k => !R.tried.includes(k)).map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('') + '<button type="button" data-k="-1">No steal</button>';
+      else if (R.phase === 'pickwho') { R.phase = 'x'; R.res(-1); } });
+}
+function netEnd(){ const id = R && R.pid; if (!id) return; R.pid = null; $('netSkip').hidden = true; net.access.endPrompt(id).catch(() => {}); }
+$('netSkip').addEventListener('click', () => { if (!R || !R.pid) return; const kind = R.pkind; netEnd();
+  if (kind === 'answer') { $('rmsg').textContent = 'Skipped.'; answer(-1); } else { R.netLocal = true; $('rmsg').textContent = 'Choose on the big screen.'; } });
+function netApply(p){
+  if (!R || R.pid !== p.id) return;
+  const at = id => S.players.findIndex(x => x.mid === id);
+  if (R.pkind === 'buzz') {
+    const wrong = p.wrong || [];
+    while (R.netWrong < wrong.length) { const w = wrong[R.netWrong++]; R.active = at(w.member); R.phase = 'ask'; answer(w.choice); if (!R.pid) return; }
+    if (p.closed) { R.pid = null; $('netSkip').hidden = true;
+      if (p.reason === 'correct') { R.active = at(p.winner); R.phase = 'ask'; answer(p.correct); }
+      else if (R.phase === 'buzz' || R.phase === 'ask') { $('rmsg').textContent = (p.reason === 'time' ? 'Time\'s up.' : 'Nobody knew.') + ' The answer: ' + R.q.correct + '.'; settle(false, -1, false); }
+      return; }
+    if (p.chooser && R.phase === 'buzz') { R.active = at(p.chooser); R.phase = 'ask'; $('stealBox').hidden = true; paintWho2(); $('rmsg').textContent = S.players[R.active].name + ' pressed first: answer on your phone.'; SFX.nudge(); }
+    if (!p.chooser && R.phase === 'ask' && R.open) { openBuzz(); }
+    return;
+  }
+  if (!p.closed) return;
+  R.pid = null; $('netSkip').hidden = true;
+  if (R.pkind === 'answer') { if (p.reason === 'correct') answer(p.correct); else if (p.reason === 'wrong') answer(p.choice); else if (p.reason === 'time') answer(-1); }
+  else if (R.pkind === 'choose') { if (p.reason === 'chosen') chosen(p.choice); }
+  else if (R.pkind === 'claim') pickName(p.reason === 'claimed' ? at(p.winner) : -1);
+}
+function netFinish(){ netWatch(false); if (net.access && NET && NET.code) net.access.setPhase('final').catch(() => {}); }
+
+/* ---------- a round: each world plays its own game, built from a few shared pieces ---------- */
+const AUTO = { right: 2600, miss: 4000 };
+let amb = null;
+function ambientStart(id){ ambientStop(); if (!soundOn || !window.TL_SOUND) return; const c = actx(); if (c) amb = TL_SOUND.start(id, c, master); }
+function ambientStop(){ if (amb) { amb.stop(); amb = null; } }
+function ambientLevel(v){ if (amb) amb.level(v); }
 function prepareRound(){
   const d = D[S.pos]; busy = false;
-  R = { d: S.pos, k: 0, got: {}, correct: 0, q: null, active: S.players.indexOf(spinner()), tried: [], phase: 'intro' };
+  R = { d: S.pos, got: {}, phase: 'intro', q: null, qo: {}, kind: S.style === 'simple' ? 'classic' : d.id, qn: 0, tried: [], active: -1,
+        rng: S.mode === 'daily' ? rngFrom(hash('ten-lanterns-round:' + S.date + ':' + S.spin)) : Math.random };
   $('roundArt').innerHTML = window.TL_WORLDS ? TL_WORLDS.scene(d.id) : '';
   $('rName').textContent = d.name; $('rLine').textContent = d.line;
-  $('lastChip').hidden = !isLast(); $('qCount').textContent = '';
+  $('lastChip').hidden = !isLast(); $('qCount').textContent = ''; $('rRule').textContent = ''; $('rStage').innerHTML = '';
   $('qBox').hidden = false; $('roundEnd').hidden = true; $('roundEnd').classList.remove('show');
   $('qText').textContent = ''; $('opts').innerHTML = ''; $('rWho').innerHTML = ''; $('rPts').textContent = ''; $('rmsg').textContent = ''; $('stealBox').hidden = true; $('nextBtn').hidden = true; $('timer').hidden = true;
+  ambientStart(d.id);
 }
-/* a moment to take in the world before the first question; a tap or a key skips it */
-function startIntro(){ R.phase = 'intro'; $('round').classList.add('intro'); clearTimeout(introT); introT = setTimeout(endIntro, STILL ? 700 : 2700); }
-function endIntro(){ if (!R || R.phase !== 'intro') return; clearTimeout(introT); $('round').classList.remove('intro'); ask(); }
-$('round').addEventListener('click', () => { if (R && R.phase === 'intro') endIntro(); });
-function ask(){
-  R.q = drawQ(); R.tried = []; R.active = S.players.indexOf(spinner()); R.phase = 'ask';
-  $('qCount').textContent = 'Question ' + (R.k + 1) + ' of ' + QPR;
-  $('qText').textContent = R.q.q;
-  $('opts').innerHTML = R.q.opts.map((o, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(o) + '</span></button>').join('');
-  $('opts').className = 'opts-live';
-  const qb = $('qBox'); qb.classList.remove('qin'); void qb.offsetWidth; qb.classList.add('qin');
-  $('stealBox').hidden = true; $('nextBtn').hidden = true; $('rmsg').textContent = '';
-  paintWho2(); startTimer(TIME);
-  setTimeout(() => { const b = $('opts').querySelector('.opt'); if (b) b.focus({ preventScroll: true }); }, 30);
+/* a moment to take in the world before the game starts; on its first visit in a game the camera drifts in from
+   a close-up and a line sets the scene. A tap or a key skips it. */
+const ARRIVE = {
+  rome: ['18% 88%', 'The crowd is on its feet as the chariots come round.'],
+  submarine: ['48% 70%', 'Down, down into the dark. The sonar is listening.'],
+  flight: ['38% 74%', 'Above the clouds, the night is clear and the engines are steady.'],
+  railway: ['60% 80%', 'Something has gone missing on the night train.'],
+  galleon: ['36% 62%', 'The storm is up, and there is treasure in the hold.', 1300],
+  cave: ['48% 90%', 'Firelight flickers over pictures older than memory.'],
+  balloon: ['22% 30%', 'The burner roars, and the countryside opens out below.'],
+  manor: ['80% 58%', 'The candles are lit. The clock is about to strike twelve.', 2200],
+  bigtop: ['50% 86%', 'Roll up, roll up: the show is about to begin.'],
+  city: ['28% 18%', 'Searchlights sweep the sky. The lifts are waiting.']
+};
+function startIntro(){
+  R.phase = 'intro'; const id = D[R.d].id, a = ARRIVE[id], first = !STILL && !(S.seen || []).includes(id);
+  S.seen = (S.seen || []).concat(first ? [id] : []);
+  $('round').classList.add('intro'); $('round').classList.toggle('first', first); $('rTale').textContent = a ? a[1] : '';
+  const svg = $('roundArt').querySelector('svg');
+  if (first && svg && svg.animate) { R.cam = svg.animate([{ transform: 'scale(1.9)', transformOrigin: a[0] }, { transform: 'scale(1)', transformOrigin: a[0] }], { duration: 5000, easing: 'cubic-bezier(.3,0,.2,1)' });
+    if (a[2]) R.flashT = setTimeout(() => { $('cutFlash').animate([{ opacity: 0 }, { opacity: .85, offset: .1 }, { opacity: 0, offset: .3 }, { opacity: .5, offset: .4 }, { opacity: 0 }], { duration: 900 }); SFX.thunder(); }, a[2]); }
+  clearTimeout(introT); introT = setTimeout(endIntro, STILL ? 700 : first ? 5200 : 2700);
 }
-function paintWho2(){ const p = S.players[R.active], multi = S.mode === 'versus' || S.mode === 'team';
-  $('rWho').innerHTML = multi ? symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + (R.phase === 'steal' ? ' to steal' : ' to answer') + '</span>' : '<span>' + (S.mode === 'coop' ? 'Together' : esc(p.name)) + '</span>';
-  $('rPts').textContent = (isLast() ? 'Double points: ' : '') + (R.phase === 'steal' ? STEAL : PTS) * mult() + ' points'; }
+function endIntro(){ if (!R || R.phase !== 'intro') return; clearTimeout(introT); clearTimeout(R.flashT); if (R.cam) { try { R.cam.finish(); } catch (e) {} } $('round').classList.remove('intro', 'first'); ambientLevel(.28); runRound(); }
+$('round').addEventListener('click', e => { if (R && R.phase === 'intro') endIntro(); });
+async function runRound(){
+  const mine = R, type = TL_ROUNDS.types[R.kind] || TL_ROUNDS.types.classic;
+  $('rRule').innerHTML = '<b>' + esc(type.title) + (/[?!.]$/.test(type.title) ? '' : '.') + '</b> ' + esc(type.rule(C));
+  const res = await type.play(C);
+  if (R === mine) endRound(res || {});
+}
+/* what each round can use */
+const C = {
+  get multi(){ return multiMode(); }, get mode(){ return S.mode; }, get me(){ return S.players.indexOf(spinner()); },
+  get n(){ return S.players.length; }, get mult(){ return mult(); }, get timed(){ return S.timed; },
+  rng: () => R.rng(),
+  name: i => S.players[i].name, colour: i => COLOURS[S.players[i].colour], symbol: i => symSvg(S.players[i].sym, COLOURS[S.players[i].colour]), pts: i => S.players[i].pts,
+  order(){ const me = this.me, n = S.players.length; return multiMode() ? Array.from({ length: n }, (_, k) => (me + k) % n) : [0]; },
+  drawQ(){ return drawQ(); },
+  stage(h){ $('rStage').innerHTML = h; return $('rStage'); },
+  count(t){ $('qCount').textContent = t; }, status(t){ $('rmsg').textContent = t; },
+  award(i, p){ const v = p * mult(); S.players[i].pts += v; R.got[i] = (R.got[i] || 0) + v; return v; },
+  sfx(n){ (SFX[n] || SFX.nudge)(); },
+  question: (q, o) => question(q, o), choose: o => choose(o), buzz: o => buzz(o), next: (l, k) => next(l, k), watch: (ms, l) => watch(ms, l)
+};
+function freshCard(torch){ const qb = $('qBox'); qb.classList.remove('qin', 'qtorch'); void qb.offsetWidth; qb.classList.add('qin'); if (torch) qb.classList.add('qtorch');
+  $('stealBox').hidden = true; $('nextBtn').hidden = true; $('nextBtn').classList.remove('auto'); $('rmsg').textContent = ''; }
+function focusFirst(){ setTimeout(() => { const b = $('opts').querySelector('.opt:not(:disabled)'); if (b) b.focus({ preventScroll: true }); }, 30); }
+
+/* a question: for one player (with a steal for the others in Teams and Versus), or open to anyone who taps their name */
+function question(q, o){
+  o = o || {};
+  return new Promise(resolve => {
+    const open = !!o.open && multiMode();
+    R.q = q; R.qo = o; R.res = resolve; R.tried = []; R.open = open; R.pool = open ? (o.players || C.order()) : null;
+    R.active = open ? -1 : (o.who === undefined || !multiMode() ? (multiMode() ? C.me : 0) : o.who);
+    if (R.words) clearInterval(R.words.t); R.words = null;
+    freshCard(o.reveal === 'words');
+    if (o.reveal === 'words') { const ws = q.q.split(/\s+/); $('qText').innerHTML = ws.map(w => '<span class="w">' + esc(w) + '</span>').join(' '); R.words = { n: ws.length, shown: 0, t: setInterval(torchStep, STILL ? 260 : 430) }; torchStep(); }
+    else $('qText').textContent = q.q;
+    $('opts').innerHTML = q.opts.map((t, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(t) + '</span></button>').join('');
+    if (S.phones) netOpen(open ? { kind: 'buzz', eligible: R.pool.map(mid), q: q.q, opts: q.opts, correct: q.opts.indexOf(q.correct) } : { kind: 'answer', eligible: [mid(R.active)], q: q.q, opts: q.opts, correct: q.opts.indexOf(q.correct) }, o.time || TIME);
+    if (open) openBuzz(); else { R.phase = 'ask'; $('opts').className = S.phones ? '' : 'opts-live'; if (!S.phones) focusFirst(); }
+    paintWho2(); startTimer(o.time || TIME);
+  });
+}
+function torchStep(){ const w = R && R.words; if (!w) return; const spans = $('qText').querySelectorAll('.w'); if (w.shown < w.n && spans[w.shown]) { spans[w.shown].classList.add('lit'); w.shown++; } if (w.shown >= w.n) clearInterval(w.t); paintWho2(); }
+function valueNow(stealing){ const o = R.qo;
+  if (stealing) return o.stealPts === undefined ? STEAL : o.stealPts;
+  if (o.reveal === 'words' && R.words) { const f = R.words.n > 1 ? (R.words.shown - 1) / (R.words.n - 1) : 1; return Math.round(o.ptsFrom - (o.ptsFrom - o.ptsTo) * Math.max(0, Math.min(1, f))); }
+  return o.pts === undefined ? PTS : o.pts; }
+function openBuzz(){
+  R.phase = 'buzz'; R.active = -1; $('opts').className = '';
+  const left = R.pool.filter(k => !R.tried.includes(k));
+  $('stealLabel').textContent = R.tried.length ? 'Anyone else? Tap your name.' : 'Who knows it? Tap your name.';
+  $('stealBtns').innerHTML = (phonesLive() ? '' : left.map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('')) + '<button type="button" data-k="-1">Nobody</button>';
+  if (phonesLive()) $('stealLabel').textContent = R.tried.length ? 'Anyone else? Press on your phone.' : 'Who knows it? Press on your phone.';
+  $('stealBox').hidden = false; paintWho2();
+  setTimeout(() => { const b = $('stealBtns').querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 30);
+}
+function paintWho2(){
+  if (!R || !S) return; const multi = multiMode(), o = R.qo || {};
+  if (R.phase === 'buzz') $('rWho').innerHTML = '<span>Open to everyone</span>';
+  else if (R.active >= 0 && multi) { const p = S.players[R.active]; $('rWho').innerHTML = symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + (R.phase === 'steal' ? ' to steal' : R.phase === 'choose' ? ' to choose' : ' to answer') + '</span>'; }
+  else $('rWho').innerHTML = '<span>' + (S.mode === 'coop' ? 'Together' : esc(S.players[0].name)) + '</span>';
+  if (R.phase === 'choose') return;
+  const v = valueNow(R.phase === 'steal');
+  $('rPts').textContent = o.label && R.phase !== 'steal' ? o.label : (isLast() && v ? 'Double points: ' : '') + (v * mult()) + ' points';
+}
 function startTimer(ms){ stopTimer(); const bar = $('timer').firstElementChild; $('timer').hidden = !S.timed; if (!S.timed) return;
   timerEnd = performance.now() + ms; $('timer').classList.remove('low'); const tick = () => { const left = Math.max(0, timerEnd - performance.now()); bar.style.transform = 'scaleX(' + (left / ms) + ')'; $('timer').classList.toggle('low', left < 5000); if (left <= 0) { timeUp(); return; } timerRaf = requestAnimationFrame(tick); }; timerRaf = requestAnimationFrame(tick); }
 function stopTimer(){ cancelAnimationFrame(timerRaf); timerRaf = 0; $('timer').classList.remove('low'); }
-function timeUp(){ if (R.phase !== 'ask' && R.phase !== 'steal') return; answer(-1); }
-$('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.i); });
+function timeUp(){ if (!R || phonesLive()) return; if (R.phase === 'ask' || R.phase === 'steal') answer(-1); else if (R.phase === 'buzz') { $('rmsg').textContent = 'Time\'s up. The answer: ' + R.q.correct + '.'; settle(false, -1, false); } }
+$('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b || b.disabled || !R || phonesLive()) return;
+  if (R.phase === 'ask' || R.phase === 'steal') answer(+b.dataset.i); else if (R.phase === 'choose') chosen(+b.dataset.i); });
 function answer(i){
-  if (R.phase !== 'ask' && R.phase !== 'steal') return; stopTimer();
-  const right = i >= 0 && R.q.opts[i] === R.q.correct, btns = $('opts').querySelectorAll('.opt'), p = S.players[R.active], stealing = R.phase === 'steal';
-  R.tried.push(R.active);
+  if (R.phase !== 'ask' && R.phase !== 'steal') return;
+  const stealing = R.phase === 'steal', right = i >= 0 && R.q.opts[i] === R.q.correct, btns = $('opts').querySelectorAll('.opt'), who = R.active;
+  if (who >= 0 && !R.tried.includes(who)) R.tried.push(who);
   if (right) {
-    const pts = (stealing ? STEAL : PTS) * mult(); p.pts += pts; R.got[R.active] = (R.got[R.active] || 0) + pts; if (!stealing || S.mode === 'coop') R.correct++;
-    btns[i].classList.add('right', 'pop'); SFX[stealing ? 'steal' : 'right'](); cheer(btns[i], pts, COLOURS[p.colour]);
-    $('rmsg').textContent = 'Correct! ' + pts + ' points to ' + ((S.mode === 'versus' || S.mode === 'team') ? p.name : (S.mode === 'coop' ? 'the group' : 'you')) + '.';
-    return reveal();
+    stopTimer(); const v = valueNow(stealing), p = S.players[who]; let pts = 0;
+    if (!R.qo.noAward && v) pts = C.award(who, v);
+    btns[i].classList.add('right', 'pop'); SFX[stealing ? 'steal' : 'right'](); if (pts) cheer(btns[i], pts, COLOURS[p.colour]);
+    $('rmsg').textContent = 'Correct!' + (pts ? ' ' + pts + ' points to ' + (multiMode() ? p.name : (S.mode === 'coop' ? 'the group' : 'you')) + '.' : '');
+    return settle(true, who, stealing);
   }
   if (i >= 0) { btns[i].classList.add('wrong', 'shake'); btns[i].disabled = true; }
-  SFX.wrong();
+  SFX.wrong(); if (R.qo.onWrong && who >= 0) R.qo.onWrong(who);
+  if (R.open) { const left = R.pool.filter(k => !R.tried.includes(k));
+    if (i >= 0 && left.length) { $('rmsg').textContent = 'Not ' + R.q.opts[i] + '.'; return openBuzz(); }
+    $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
   const others = S.players.map((x, k) => k).filter(k => !R.tried.includes(k));
-  if (!stealing && (S.mode === 'versus' || S.mode === 'team') && others.length) {
-    R.phase = 'stealpick'; $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' Anyone else know it?';
+  if (!stealing && R.qo.steal !== false && multiMode() && others.length) {
+    stopTimer(); R.phase = 'stealpick'; $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' Anyone else know it?';
     $('stealLabel').textContent = S.mode === 'team' ? 'Steal it for the other team?' : 'Steal it? Tap your name.';
-    $('stealBtns').innerHTML = others.map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('') + '<button type="button" data-k="-1">No steal</button>';
+    $('stealBtns').innerHTML = (S.phones ? '' : others.map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('')) + '<button type="button" data-k="-1">No steal</button>';
     $('stealBox').hidden = false; $('opts').className = '';
+    if (S.phones) { $('stealLabel').textContent = 'Steal it? Press Me! on your phone.'; netOpen({ kind: 'claim', eligible: others.map(mid), q: 'Steal it? ' + R.q.q, opts: [], window_ms: 10000 }); }
     setTimeout(() => { const b = $('stealBtns').querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 30);
     return;
   }
+  stopTimer();
   $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : (stealing ? 'Missed the steal.' : 'Not this time.')) + ' The answer: ' + R.q.correct + '.';
-  reveal();
+  settle(false, who, stealing);
 }
-$('stealBtns').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || R.phase !== 'stealpick') return; const k = +b.dataset.k; $('stealBox').hidden = true;
-  if (k < 0) { $('rmsg').textContent = 'No steal. The answer: ' + R.q.correct + '.'; return reveal(); }
-  R.active = k; R.phase = 'steal'; $('opts').className = 'opts-live'; $('rmsg').textContent = ''; paintWho2(); startTimer(STEAL_TIME);
-  setTimeout(() => { const o = $('opts').querySelector('.opt:not(:disabled)'); if (o) o.focus({ preventScroll: true }); }, 30); });
+$('stealBtns').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !R) return; const k = +b.dataset.k;
+  if (phonesLive()) { if (k >= 0) return; netEnd(); }
+  pickName(k); });
+function pickName(k){
+  if (R.phase === 'stealpick') { $('stealBox').hidden = true;
+    if (k < 0) { $('rmsg').textContent = 'No steal. The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
+    R.active = k; R.phase = 'steal'; $('opts').className = 'opts-live'; $('rmsg').textContent = ''; paintWho2(); startTimer(STEAL_TIME); focusFirst();
+    if (S.phones) netOpen({ kind: 'answer', eligible: [mid(k)], q: R.q.q, opts: R.q.opts, correct: R.q.opts.indexOf(R.q.correct) }, STEAL_TIME); }
+  else if (R.phase === 'buzz') { $('stealBox').hidden = true;
+    if (k < 0) { stopTimer(); $('rmsg').textContent = 'Nobody knew. The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
+    R.active = k; R.phase = 'ask'; $('opts').className = 'opts-live'; paintWho2(); focusFirst(); }
+  else if (R.phase === 'pickwho') { $('stealBox').hidden = true; R.phase = 'x'; R.res(k); }
+}
+function settle(right, by, stealing){
+  stopTimer(); if (R.words) { clearInterval(R.words.t); $('qText').querySelectorAll('.w').forEach(w => w.classList.add('lit')); }
+  R.phase = 'reveal'; $('opts').className = ''; $('stealBox').hidden = true;
+  $('opts').querySelectorAll('.opt').forEach((b, i) => { b.disabled = true; if (R.q.opts[i] === R.q.correct) b.classList.add('right'); });
+  R.res({ right, by, stolen: !!stealing });
+}
+/* a choice: what to do next, or whom to name */
+function choose(o){
+  return new Promise(resolve => {
+    stopTimer(); R.res = resolve; R.phase = 'choose'; R.active = multiMode() && o.who >= 0 ? o.who : -1; freshCard(false);
+    $('qText').textContent = o.title; $('timer').hidden = true; $('rPts').textContent = o.note || '';
+    $('opts').innerHTML = o.options.map((t, i) => '<button class="opt choice" type="button" data-i="' + i + '"' + (o.disabled && o.disabled.includes(i) ? ' disabled' : '') + '><b>' + (i + 1) + '</b><span>' + esc(t) + '</span></button>').join('');
+    $('opts').className = 'opts-live'; paintWho2(); focusFirst();
+    if (S.phones && R.active >= 0) netOpen({ kind: 'choose', eligible: [mid(R.active)], q: o.title.slice(0, 1000), opts: o.options.map(t => String(t).slice(0, 200)), disabled: o.disabled && o.disabled.length ? o.disabled : undefined });
+  });
+}
+function chosen(i){ if (R.phase !== 'choose') return; R.phase = 'x'; $('opts').className = ''; const b = $('opts').querySelectorAll('.opt')[i]; if (b) b.classList.add('picked'); SFX.nudge(); R.res(i); }
+/* someone claims a turn by tapping their name */
+function buzz(o){
+  return new Promise(resolve => {
+    R.res = resolve; R.phase = 'pickwho'; $('stealLabel').textContent = S.phones ? o.label.replace('Tap your name.', 'Press Me! on your phone.') : o.label;
+    if (S.phones) netOpen({ kind: 'claim', eligible: o.players.map(mid), q: o.label.slice(0, 1000), opts: [], window_ms: 15000 });
+    $('stealBtns').innerHTML = (S.phones ? [] : o.players).map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('') + (o.none ? '<button type="button" data-k="-1">' + esc(o.none) + '</button>' : '');
+    $('stealBox').hidden = false; $('opts').className = '';
+    setTimeout(() => { const b = $('stealBtns').querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 30);
+  });
+}
+/* moving on: a tap, or on its own after a pause long enough to read the answer */
+function next(label, kind){
+  return new Promise(resolve => {
+    R.phase = 'next'; R.res = resolve; const b = $('nextBtn'); b.textContent = label; b.hidden = false; b.classList.remove('auto'); clearTimeout(R.autoT);
+    if (S.auto && kind) { const long = R.q && R.q.correct ? Math.max(0, String(R.q.correct).length - 18) * 60 : 0, ms = AUTO[kind] + (kind === 'miss' ? Math.min(2000, long) : 0);
+      b.style.setProperty('--auto', ms + 'ms'); void b.offsetWidth; b.classList.add('auto'); R.autoT = setTimeout(goNext, ms); }
+    setTimeout(() => { if (!b.hidden) b.focus({ preventScroll: true }); }, 30);
+  });
+}
+/* a set time to look at something, which a tap can cut short */
+function watch(ms, label){
+  return new Promise(resolve => { R.phase = 'next'; R.res = resolve; freshCard(false); $('qText').textContent = 'Look closely…'; $('opts').innerHTML = ''; $('timer').hidden = true; $('rWho').innerHTML = ''; $('rPts').textContent = '';
+    const b = $('nextBtn'); b.textContent = label; b.hidden = false; b.style.setProperty('--auto', ms + 'ms'); void b.offsetWidth; b.classList.add('auto'); clearTimeout(R.autoT); R.autoT = setTimeout(goNext, ms);
+    setTimeout(() => b.focus({ preventScroll: true }), 30); });
+}
+function goNext(){ if (!R || R.phase !== 'next') return; clearTimeout(R.autoT); $('nextBtn').hidden = true; $('nextBtn').classList.remove('auto'); R.phase = 'x'; R.res(); }
+$('nextBtn').addEventListener('click', goNext);
 /* a right answer: sparks fly from the button and the points float up */
 function cheer(el, pts, colour){ if (STILL) return; const r = el.getBoundingClientRect(), fx = $('fx'), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   const plus = document.createElement('span'); plus.className = 'plus'; plus.textContent = '+' + pts; plus.style.left = cx + 'px'; plus.style.top = cy + 'px'; fx.appendChild(plus);
   for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + Math.random() * .3, d = 60 + Math.random() * 70, sp = document.createElement('i'); sp.className = 'spark';
     sp.style.cssText = 'left:' + (cx + Math.cos(a) * r.width * .3) + 'px;top:' + (cy + Math.sin(a) * r.height * .3) + 'px;background:' + ['#f0b44c', '#2fbf8f', colour, '#ffd96a'][k % 4] + ';--x:' + (Math.cos(a) * d).toFixed(0) + 'px;--y:' + (Math.sin(a) * d).toFixed(0) + 'px'; fx.appendChild(sp); }
   setTimeout(() => { fx.querySelectorAll('.spark,.plus').forEach(n => n.remove()); }, 1200); }
-function reveal(){
-  R.phase = 'reveal'; stopTimer(); $('opts').className = ''; $('stealBox').hidden = true;
-  $('opts').querySelectorAll('.opt').forEach((b, i) => { b.disabled = true; if (R.q.opts[i] === R.q.correct) b.classList.add('right'); });
-  $('nextBtn').textContent = R.k + 1 < QPR ? 'Next question' : 'See the lantern'; $('nextBtn').hidden = false;
-  setTimeout(() => $('nextBtn').focus({ preventScroll: true }), 30); paintWho2();
-}
-$('nextBtn').addEventListener('click', () => { if (R.phase !== 'reveal') return; R.k++; if (R.k < QPR) ask(); else endRound(); });
-
 function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o].colour] : '#5a5f86';
   $('reLantern').setAttribute('class', lit ? 'lit' : 'dark');
   $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><circle r="70"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
     + '<circle class="halo" r="108" fill="url(#q-halo)"/><g class="rays">' + Array.from({ length: 16 }, (_, k) => { const [x1, y1] = at(k * 22.5, 84), [x2, y2] = at(k * 22.5, k % 2 ? 100 : 108); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="5" stroke-linecap="round"/>'; }).join('') + '</g>'
     + '<g clip-path="url(#q-win)"><g transform="scale(1.17)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<circle r="70" fill="#060818" opacity=".6"/>') + '</g>'
     + '<circle r="72" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(54 54)"><circle r="24" fill="#0b0f2a" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
-/* who takes the lantern: the most points in the round; an owner keeps it on a tie, then the spinner */
-function endRound(){
-  R.phase = 'done'; stopTimer();
-  const i = R.d, before = S.owner[i], me = S.players.indexOf(spinner()), m = mult(); let head, line, taker = -1;
-  if (S.mode === 'versus' || S.mode === 'team') {
-    const best = Math.max(0, ...Object.values(R.got)), leaders = Object.keys(R.got).map(Number).filter(k => R.got[k] === best);
-    if (best > 0) taker = leaders.includes(before) ? before : leaders.includes(me) ? me : leaders.length === 1 ? leaders[0] : -1;
-  } else if (R.correct >= 2) taker = 0;
+/* who takes the lantern. In Teams and Versus a round may name a winner; otherwise the most points in the round
+   (with the round's minimum) takes it, an owner keeps it on a tie, then the spinner. Alone or together, the round
+   says whether it was lit. */
+function endRound(res){
+  R.phase = 'done'; stopTimer(); ambientLevel(.45);
+  const i = R.d, before = S.owner[i], me = S.players.indexOf(spinner()), m = mult(), multi = multiMode(); let head, line, taker = -1;
+  if (multi) {
+    if (res.taker !== undefined) taker = res.taker;
+    else { const pool = Object.keys(R.got).map(Number).filter(k => !res.among || res.among.includes(k)), best = Math.max(0, ...pool.map(k => R.got[k])), leaders = pool.filter(k => R.got[k] === best);
+      if (best > 0 && best >= (res.min || 1) * m) taker = leaders.includes(before) ? before : leaders.includes(me) ? me : leaders.length === 1 ? leaders[0] : -1; }
+  } else taker = res.lit ? 0 : -1;
   let bonus = 0;
   if (taker >= 0 && taker !== before) { bonus = LANTERN * m; S.players[taker].pts += bonus; S.owner[i] = taker; }
-  const name = taker >= 0 ? S.players[taker].name : '';
-  if (S.mode === 'versus' || S.mode === 'team') {
-    if (taker < 0) { head = before >= 0 ? S.players[before].name + ' kept the lantern' : 'The lantern stays dark'; line = before >= 0 ? 'Nobody outscored its owner.' : 'Nobody scored enough to light it.'; }
-    else if (taker === before) { head = name + ' kept the lantern'; line = 'Defended, with the most points in the round.'; }
-    else if (before >= 0) { head = name + ' stole the lantern'; line = 'Taken from ' + S.players[before].name + ': ' + bonus + ' bonus points.'; }
-    else { head = name + ' lit the lantern'; line = 'The most points in the round, and ' + bonus + ' bonus points.'; }
-  } else if (taker >= 0) { head = before >= 0 ? 'Lit again' : 'Lantern lit'; line = R.correct + ' of ' + QPR + ' right' + (bonus ? ', and ' + bonus + ' bonus points.' : '.'); }
-  else { head = 'The lantern stays dark'; line = R.correct + ' of ' + QPR + ' right: two lights it.'; }
+  const name = taker >= 0 ? S.players[taker].name : '', said = res.line ? res.line + '. ' : '';
+  if (multi) {
+    if (taker < 0) { head = before >= 0 ? S.players[before].name + ' kept the lantern' : 'The lantern stays dark'; line = said + (before >= 0 ? 'Nobody took it from its owner.' : 'Nobody earned it this time.'); }
+    else if (taker === before) { head = name + ' kept the lantern'; line = said + 'Defended.'; }
+    else if (before >= 0) { head = name + ' stole the lantern'; line = said + 'Taken from ' + S.players[before].name + ': ' + bonus + ' bonus points.'; }
+    else { head = name + ' lit the lantern'; line = said + bonus + ' bonus points.'; }
+  } else if (taker >= 0) { head = before >= 0 ? 'Lit again' : 'Lantern lit'; line = (res.line || 'Done') + (bonus ? ', and ' + bonus + ' bonus points.' : '.'); }
+  else { head = 'The lantern stays dark'; line = (res.line || 'Not this time') + (res.need ? ': ' + res.need + '.' : '.'); }
   if (taker >= 0 && taker !== before) SFX.light();
-  S.history.push({ d: i, taker, before, correct: R.correct, got: R.got });
+  S.history.push({ d: i, taker, before, kind: R.kind, got: R.got });
   $('reHead').textContent = head; $('reLine').textContent = line;
   $('roundTally').innerHTML = Object.keys(R.got).length ? Object.keys(R.got).map(k => { const p = S.players[k]; return '<li>' + symSvg(p.sym, COLOURS[p.colour]) + esc(p.name) + ': +' + R.got[k] + '</li>'; }).join('') : '<li>No points this round</li>';
   paintReLantern(i, taker >= 0 ? taker : before);
   $('qCount').textContent = 'Round over'; $('qBox').hidden = true; $('roundEnd').hidden = false; $('roundEnd').classList.remove('show'); void $('roundEnd').offsetWidth; $('roundEnd').classList.add('show'); $('backBtn').textContent = S.spin + 1 >= S.spins || (S.mode === 'coop' && S.owner.every(o => o >= 0)) ? 'See the night\'s results' : 'Back to the dial';
   S.spin++; S.phase = 'between';
-  if (S.mode === 'versus' || S.mode === 'team') S.turn = (S.turn + 1) % S.players.length;
+  if (multi) S.turn = (S.turn + 1) % S.players.length;
   save(); setTimeout(() => $('backBtn').focus({ preventScroll: true }), 30);
 }
 $('backBtn').addEventListener('click', () => {
@@ -844,13 +1171,31 @@ $('backBtn').addEventListener('click', () => {
   const h = S.history[S.history.length - 1], won = h && h.taker >= 0 && h.taker !== h.before, d = R.d;
   $('play').hidden = false; promptSpin(); save();
   const c = STILL ? null : lanternCircle(d);
+  ambientStop();
   if (c && $('round').animate) { SFX.leave(); R.phase = 'leaving'; const a = iris(c, false); a.onfinish = () => { if (R && R.phase === 'leaving') show('play'); if (won) ignite(d); }; }
   else show('play');
 });
 
 /* ---------- the end ---------- */
+/* the finale: the ten lanterns sit in their ring; the lit ones rise and gather in an arc over the night's result */
+function finale(head, line){
+  if (STILL) return;
+  const P = S.players, el = document.createElement('div'); el.id = 'finale'; el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66', [x, y] = at(i * STEP, 30);
+    return '<div class="fl' + (o >= 0 ? ' lit' : '') + '" data-i="' + i + '" style="left:' + (50 + x * .9) + '%;top:' + (40 + y) + '%;--c:' + c + '"><svg viewBox="-80 -80 160 160"><defs>' + (i === 0 ? ART.defs('f') : '') + '<clipPath id="f-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#f-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'f') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/></svg></div>'; }).join('')
+    + '<h2>' + esc(head) + '</h2><p>' + esc(line) + '</p><small>Tap to carry on</small>';
+  document.body.appendChild(el);
+  const lit = D.map((d, i) => i).filter(i => S.owner[i] >= 0), T = [];
+  T.push(setTimeout(() => { el.querySelectorAll('.fl:not(.lit)').forEach(n => n.classList.add('dim'));
+    lit.forEach((i, k) => T.push(setTimeout(() => { const n = el.querySelector('.fl[data-i="' + i + '"]'), t = lit.length > 1 ? k / (lit.length - 1) : .5;
+      n.style.left = (50 + (t - .5) * Math.min(80, 9 * lit.length)) + '%'; n.style.top = (36 - Math.sin(t * Math.PI) * 12) + '%'; bell(659 * Math.pow(2, k / 10), 0, .06); }, k * 260))); }, 900));
+  T.push(setTimeout(() => { el.classList.add('named'); SFX.end(); }, 1300 + lit.length * 260));
+  const done = () => { T.forEach(clearTimeout); el.classList.add('out'); setTimeout(() => el.remove(), 800); $('end').classList.remove('show'); void $('end').offsetWidth; $('end').classList.add('show'); window.removeEventListener('keydown', done, true); };
+  T.push(setTimeout(done, 3600 + lit.length * 260));
+  el.addEventListener('click', done); window.addEventListener('keydown', done, true);
+}
 function finish(){
-  S.phase = 'over'; store.del(SAVE); SFX.end(); show('end');
+  S.phase = 'over'; store.del(SAVE); if (STILL) SFX.end(); show('end'); if (S.phones) netFinish();
   const P = S.players, multi = S.mode === 'versus' || S.mode === 'team';
   let head = '', line = '';
   if (multi) {
@@ -881,24 +1226,26 @@ function finish(){
     $('shareNote').textContent = '';
   }
   $('end').classList.remove('show'); void $('end').offsetWidth; $('end').classList.add('show');
+  finale(head, line);
   setTimeout(() => $('againBtn').focus({ preventScroll: true }), 30);
 }
 $('shareBtn').addEventListener('click', () => { const t = $('shareText').textContent, done = () => { $('shareNote').textContent = 'Copied. Paste it anywhere.'; };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => { $('shareNote').textContent = 'Select the text above to copy it.'; });
   else $('shareNote').textContent = 'Select the text above to copy it.'; });
-$('againBtn').addEventListener('click', () => newGame());
+$('againBtn').addEventListener('click', () => { if (S && S.phones) { netWatch(false); S = null; show('setup'); paintSetup(); paintResume(); return; } newGame(); });
 $('changeBtn').addEventListener('click', () => { S = null; show('setup'); paintSetup(); paintResume(); });
 $('beginBtn').addEventListener('click', () => {
+  if (cfg.mode === 'versus' && cfg.playOn === 'phones') return netBegin();
   if (cfg.mode === 'versus' && cfg.names.length < 2) return;
   if (store.get(SAVE, null) && !confirmLeave('Start a new game? The one in progress will be lost.')) return;
   store.del(SAVE); newGame(); });
-$('quitBtn').addEventListener('click', () => { if (!confirmLeave('Leave this game? You can carry on later from the start screen.')) return; stopTimer(); S = null; show('setup'); paintSetup(); paintResume(); });
+$('quitBtn').addEventListener('click', () => { if (!confirmLeave('Leave this game? You can carry on later from the start screen.')) return; stopTimer(); if (S && S.phones) netWatch(false); S = null; show('setup'); paintSetup(); paintResume(); });
 $('fsBtn').addEventListener('click', () => { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => {}); });
 
 /* carrying on after a refresh: a game resumes at the start of the spin it was on */
 function paintResume(){ const g = store.get(SAVE, null); $('resumeBox').hidden = !g;
   if (g) $('resumeText').textContent = 'A game is in progress: spin ' + Math.min(g.spin + 1, g.spins) + ' of ' + g.spins + ' (' + { solo: 'Solo', daily: 'Daily Dial', team: 'Teams', versus: 'Versus', coop: 'Together' }[g.mode] + ').'; }
-$('resumeBtn').addEventListener('click', () => { const g = store.get(SAVE, null); if (!g) return; S = g; shown = {}; if (S.mode === 'daily') plan = dailyPlan(S.date);
+$('resumeBtn').addEventListener('click', () => { const g = store.get(SAVE, null); if (!g) return; S = g; shown = {}; S.phones = false; /* a phone game carries on, on one screen */ if (S.mode === 'daily') plan = dailyPlan(S.date);
   if (S.phase === 'between') { if (S.spin >= S.spins) return finish(); }
   else if (S.phase === 'round' || S.phase === 'landed' || S.phase === 'spinning') S.phase = 'spin';
   startPlay(); });
@@ -906,11 +1253,12 @@ $('discardBtn').addEventListener('click', () => { store.del(SAVE); paintResume()
 
 window.addEventListener('keydown', e => {
   if (R && R.phase === 'intro' && !$('round').hidden && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); endIntro(); return; }
-  if (!$('round').hidden && (R && (R.phase === 'ask' || R.phase === 'steal'))) { const k = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 }[e.key.toLowerCase()]; if (k !== undefined) { const b = $('opts').querySelectorAll('.opt')[k]; if (b && !b.disabled) { e.preventDefault(); answer(k); } } }
+  if (!$('round').hidden && R && !phonesLive() && (R.phase === 'ask' || R.phase === 'steal')) { const k = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 }[e.key.toLowerCase()]; if (k !== undefined) { const b = $('opts').querySelectorAll('.opt')[k]; if (b && !b.disabled) { e.preventDefault(); answer(k); } } }
+  else if (!$('round').hidden && R && R.phase === 'choose' && !phonesLive() && /^[1-9]$/.test(e.key)) { const b = $('opts').querySelectorAll('.opt')[+e.key - 1]; if (b && !b.disabled) { e.preventDefault(); chosen(+e.key - 1); } }
 });
 
 paintSetup(); paintResume();
-window.__tl = { get S(){ return S; }, get R(){ return R; }, force(i){ forced = i; }, today, dailyPlan, D, rules: { QPR, PTS, STEAL, LANTERN, NUDGE } };
+window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LANTERN, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
 </body>
