@@ -105,7 +105,7 @@ def run(pgbin, shots=None):
 
             tv = page(1600, 900)
             tv.goto(base + '/ten-lanterns.html'); tv.evaluate('window.__noConfirm = true')
-            tv.click('#mode [data-v="versus"]'); tv.click('#auto [data-v="tap"]'); tv.click('#timed [data-v="relaxed"]'); tv.click('#style [data-v="worlds"]')
+            tv.click('#mode [data-v="versus"]'); tv.click('#setBtn'); tv.click('#auto [data-v="tap"]'); tv.click('#timed [data-v="relaxed"]'); tv.click('#style [data-v="worlds"]')
             tv.click('#playOn [data-v="phones"]')
             tv.wait_for_function("/^[A-Z2-9]{5}$/.test(document.getElementById('roomCode').textContent.trim())", timeout=15000)
             code = tv.text_content('#roomCode').strip()
@@ -189,10 +189,14 @@ def run(pgbin, shots=None):
                     ph.wait_for_selector('#press:not([hidden]):not([disabled])', timeout=5000)
                     if 'claim' not in checked and len(eligible) > 1:
                         checked.add('claim')
+                        cid = ph.evaluate('__lp.S.prompt.id')
                         ph.dispatch_event('#press', 'pointerdown')
                         other = eligible[0]
-                        other.wait_for_function("__lp.S.prompt && __lp.S.prompt.closed", timeout=5000)
-                        ok('the first to press Me! takes the steal; the next is too late', other.locator('#press').is_hidden() and 'got there first' in other.text_content('#status'))
+                        # the other phone either sees the claim close, or (if the TV has already moved on) the next question
+                        other.wait_for_function("__lp.S.prompt && (__lp.S.prompt.closed || __lp.S.prompt.id !== %s)" % json.dumps(cid), timeout=8000)
+                        moved = other.evaluate('__lp.S.prompt.id') != cid
+                        ok('the first to press Me! takes the steal; the next is too late', other.locator('#press').is_hidden()
+                           and (moved or 'got there first' in other.text_content('#status')))
                     else:
                         ph.dispatch_event('#press', 'pointerdown')
                 elif kind == 'buzz':
