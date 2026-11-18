@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<script>
+/* TierBrain standards: one sound switch for every game, remembered across the site */
+(function(){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; var all = [];
+  try{ window.tbMuted = localStorage.getItem('tb_muted') === '1'; }catch(e){ window.tbMuted = false; }
+  var W = function(){ var c = new AC(); all.push(c); if(window.tbMuted) try{ c.suspend(); }catch(e){} return c; }; W.prototype = AC.prototype;
+  window.AudioContext = W; window.webkitAudioContext = W;
+  window.tbSetMuted = function(m){ window.tbMuted = m; try{ localStorage.setItem('tb_muted', m ? '1' : '0'); }catch(e){} all.forEach(function(c){ try{ m ? c.suspend() : c.resume(); }catch(e){} }); };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="Spin the great dial, land on one of ten lantern worlds and play its round. Solo, in teams, head to head or all together. Free to play in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TierBrain">
+<meta property="og:url" content="https://tierbrain.co/ten-lanterns.html">
+<meta property="og:title" content="Ten Lanterns | Free quiz game | TierBrain">
+<meta property="og:description" content="Spin the great dial, land on one of ten lantern worlds and play its round. Solo, in teams, head to head or all together.">
+<meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tierbrain.co/ten-lanterns.html">
+<script>
+/* Anyone arriving on the old github.io address is moved to the real domain,
+   keeping whatever page they asked for. Canonical tags alone are only a hint. */
+(function(){
+  if(location.hostname === 'tierbrain.github.io'){
+    location.replace('https://tierbrain.co' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<title>Ten Lanterns | Free quiz game | TierBrain</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b0f2a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,700&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+/* Layout: a brass astrolabe drifts through a nebula. Ten lit windows are set into its face, each a tiny world.
+   Spin it, it whirls and clicks, and the window that comes to rest under the pointer brightens; the camera
+   sinks into it and that world becomes the backdrop of the round. Lanterns won glow in the winner's colour
+   and carry their symbol, so colour is never the only difference. */
+:root{
+  --space:#0b0f2a; --deep:#060818; --brass:#d8b25a; --brass-2:#f3d98f; --brass-3:#8a6a2a; --ink:#21160c; --paper:#fbf4e6;
+  --glow:#ffd98a; --good:#5fd08a; --bad:#ff7a6a;
+  --head:'Baloo 2','Nunito',system-ui,sans-serif; --flour:'Fraunces',Georgia,serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--body);color:#fff;background:var(--deep);font-size:17px;line-height:1.45;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:default}
+:focus-visible{outline:3px solid var(--brass-2);outline-offset:3px;border-radius:10px}
+
+/* ---------- the sky ---------- */
+#sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(#0b0f2a,#060818)}
+#sky::before{content:'';position:absolute;inset:-12%;animation:nebula 70s ease-in-out infinite alternate;
+  background:radial-gradient(60% 50% at 18% 22%,rgba(122,72,170,.38),transparent 70%),radial-gradient(55% 45% at 82% 70%,rgba(30,120,150,.32),transparent 70%),
+    radial-gradient(40% 35% at 70% 18%,rgba(190,90,120,.22),transparent 70%)}
+@keyframes nebula{to{transform:translate(-4%,3%) scale(1.08) rotate(2deg)}}
+#sky b{position:absolute;width:150px;height:2px;border-radius:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0));opacity:0;animation:shoot 17s linear infinite}
+@keyframes shoot{0%,91%{opacity:0;transform:rotate(-24deg) translateX(0)}92%{opacity:.9}97%{opacity:0;transform:rotate(-24deg) translateX(-360px)}100%{opacity:0}}
+#sky i{position:absolute;border-radius:50%;background:#fff;animation:twinkle 4s ease-in-out infinite}
+@keyframes twinkle{50%{opacity:.25}}
+.screen{position:relative;z-index:1}
+
+/* ---------- shared pieces ---------- */
+.btn{border:0;border-radius:999px;padding:14px 28px;font-family:var(--head);font-weight:800;font-size:20px;line-height:1.1;
+  background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:0 4px 0 var(--brass-3),0 10px 24px rgba(0,0,0,.35);transition:transform .12s ease,filter .12s ease}
+.btn:active{transform:translateY(2px)}
+.btn.ghost{background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 0 0 0 2px rgba(243,217,143,.55)}
+.btn.small{font-size:16px;padding:10px 18px}
+@media (hover:hover){.btn:not(:disabled):hover{filter:brightness(1.07)}}
+.btn:disabled{opacity:.45}
+.bar{display:flex;align-items:center;gap:12px;padding:14px clamp(14px,2.4vw,32px)}
+.logo{font-family:var(--head);font-weight:800;font-size:clamp(20px,2vw,28px);letter-spacing:.3px;margin-right:auto}
+.logo span{color:var(--brass-2)}
+.chip{font-family:var(--head);font-weight:700;font-size:15px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(243,217,143,.35)}
+.chip.last{background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);border-color:transparent}
+.sym{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;flex:none}
+
+/* ---------- setup ---------- */
+#setup{max-width:1100px;margin:0 auto;padding:clamp(16px,3vw,40px) 16px 24px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;margin-bottom:22px}
+.hero h1{font-family:var(--head);font-weight:800;font-size:clamp(46px,7vw,92px);line-height:.95;margin:0}
+.hero h1 span{color:var(--brass-2)}
+.hero .tag{font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,24px);color:#f6e6c4;margin:12px 0 0;max-width:34ch}
+#heroDial{width:clamp(150px,22vw,250px)}
+.panel{background:rgba(10,12,34,.72);border:1px solid rgba(243,217,143,.22);border-radius:22px;padding:clamp(16px,2.4vw,28px);backdrop-filter:blur(6px)}
+.field{margin:0 0 20px}
+.field>span,.label{display:block;font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:.6px;text-transform:uppercase;color:var(--brass-2);margin-bottom:8px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{border:0;border-radius:14px;padding:10px 16px;background:rgba(255,255,255,.07);font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,255,255,.1)}
+.seg button[aria-pressed="true"]{background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:none}
+.modes button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:150px;flex:1 1 150px}
+.modes small{font-weight:700;font-size:13px;opacity:.82;margin-top:3px;line-height:1.3}
+.note{margin:8px 0 0;color:#e8dcc2;font-size:15px}
+.prow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prow input,select{flex:1;min-width:0;font:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px}
+select option{color:#000}
+.prow .rm{border:0;background:transparent;font-size:22px;width:40px;height:40px;border-radius:10px;color:#f6e6c4}
+.prow .badge{width:34px;height:34px;flex:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px}
+.go{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:6px}
+#resumeBox{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(243,217,143,.12);border:1px solid rgba(243,217,143,.4)}
+#resumeBox p{margin:0;flex:1 1 220px;font-weight:700}
+
+/* ---------- the dial screen ---------- */
+#play{min-height:100vh;display:flex;flex-direction:column}
+.stage{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,440px);gap:clamp(12px,2vw,32px);align-items:center;padding:0 clamp(14px,2.4vw,32px) 24px}
+#dialWrap{position:relative;width:min(100%,86vh);margin:0 auto;aspect-ratio:1}
+#dial{width:100%;height:100%;display:block;overflow:visible}
+#dial .lan .shade{transition:opacity .6s ease}
+#dial .lan .glowc{transition:opacity .8s ease}
+#dial .hub{cursor:pointer}
+#dial .pop,#dial .burst{transform-box:fill-box;transform-origin:50% 50%}
+#dial .chosen .ring{animation:chosen 1.8s ease-in-out infinite}
+@keyframes chosen{50%{stroke-opacity:.35}}
+#inner{transform-origin:0 0;animation:drift 90s linear infinite}
+@keyframes drift{to{transform:rotate(-360deg)}}
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:rgba(10,12,34,.78);border:1px solid rgba(243,217,143,.24);border-radius:20px;padding:18px 20px}
+#turn{font-family:var(--head);font-weight:800;font-size:clamp(24px,2.4vw,34px);line-height:1.1;display:flex;align-items:center;gap:10px}
+#turnNote{margin:6px 0 14px;color:#e8dcc2}
+#landBox h2{font-family:var(--head);font-weight:800;font-size:clamp(24px,2.4vw,34px);line-height:1.05;margin:0}
+#landBox p{margin:6px 0 14px;font-family:var(--flour);font-style:italic;color:#f6e6c4}
+.nudges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#board li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.05);font-weight:800}
+#board li.now{box-shadow:inset 0 0 0 2px var(--brass-2)}
+#board .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#board .lt{font-family:var(--head);font-size:15px;color:#f6e6c4;font-weight:700}
+#board .pt{font-family:var(--head);font-size:22px;min-width:3ch;text-align:right}
+#msg{min-height:1.4em;margin:0;font-weight:800;color:#f6e6c4}
+
+/* ---------- a round: a full-screen layer that opens out of the lantern ---------- */
+#round{position:fixed;inset:0;z-index:5;overflow:hidden;background:#060818}
+#roundArt{position:absolute;inset:0;will-change:transform;contain:strict}
+#roundShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(6,8,24,.62),rgba(6,8,24,.1) 24%,rgba(6,8,24,.08) 62%,rgba(6,8,24,.3));transition:opacity .9s ease}
+#roundBody{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;padding-bottom:28px}
+#round .bar,.qcard,#roundEnd{transition:opacity .55s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.rhead{transition:transform 1s cubic-bezier(.3,.7,.2,1)}
+#introHint{position:absolute;left:0;right:0;bottom:6vh;text-align:center;font-weight:800;color:#fbeed0;text-shadow:0 2px 10px rgba(0,0,0,.7);opacity:0;transition:opacity .5s;pointer-events:none}
+#round.intro #roundShade{opacity:.25}
+#round.intro .rhead{transform:translateY(calc(42vh - 120px)) scale(var(--grow,1.55))}
+@media (max-width:700px){#round{--grow:1.06}}
+#round.intro .bar,#round.intro .qcard{opacity:0;transform:translateY(50px)}
+#round.intro .bar{transform:none}
+#round.intro #introHint{opacity:1;transition-delay:1s}
+.rhead{text-align:center;padding:4px 16px 0}
+.rhead h2{font-family:var(--head);font-weight:800;font-size:clamp(28px,3.4vw,48px);margin:0;line-height:1;text-shadow:0 3px 18px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.5)}
+.rhead p{font-family:var(--flour);font-style:italic;margin:6px 0 0;color:#fbeed0;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.qcard{width:min(980px,calc(100% - 28px));margin:clamp(14px,3vh,34px) auto 0;background:var(--paper);color:var(--ink);border-radius:22px;padding:clamp(16px,2.6vw,30px);box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.qmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-weight:900;font-size:15px;color:#6a5236;margin-bottom:8px}
+.qmeta .who{display:flex;align-items:center;gap:6px;color:var(--ink);font-family:var(--head);font-size:20px}
+#qText{font-family:var(--head);font-weight:800;font-size:clamp(24px,2.7vw,40px);line-height:1.15;margin:0 0 16px}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;border:3px solid #e2d3b6;background:#fff;color:var(--ink);border-radius:16px;padding:12px 14px;font-weight:800;font-size:clamp(17px,1.6vw,24px);position:relative}
+.opt b{display:inline-flex;flex:none;width:clamp(30px,2.4vw,42px);aspect-ratio:1;border-radius:50%;background:var(--ink);color:var(--paper);align-items:center;justify-content:center;font-family:var(--head)}
+@media (hover:hover){.opts-live .opt:not(:disabled):hover{border-color:var(--brass)}}
+.opt.right{border-color:#2f9e5b;background:#e3f6e9}
+.qin #qText{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.qin .opt{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.qin .opt:nth-child(1){animation-delay:.12s}.qin .opt:nth-child(2){animation-delay:.19s}.qin .opt:nth-child(3){animation-delay:.26s}.qin .opt:nth-child(4){animation-delay:.33s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+.opt.pop{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{40%{transform:scale(1.06)}}
+.opt.shake{animation:shake .45s ease}
+@keyframes shake{20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+#timer.low i{background:linear-gradient(90deg,#e0603e,#f08a4c);animation:low .5s ease-in-out infinite alternate}
+@keyframes low{to{opacity:.55}}
+#stealBox:not([hidden]){animation:rise .4s cubic-bezier(.2,.8,.2,1) both}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden}
+#fx .spark{position:absolute;width:9px;height:9px;border-radius:50%;margin:-4.5px;animation:spark .8s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes spark{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+#fx .plus{position:absolute;transform:translate(-50%,-50%);font-family:var(--head);font-weight:800;font-size:clamp(26px,2.6vw,40px);color:#2f9e5b;text-shadow:0 2px 0 #fff,0 4px 14px rgba(0,0,0,.25);animation:plus 1.1s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes plus{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}20%{opacity:1;transform:translate(-50%,-70%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-190%) scale(1)}}
+.opt.right b{background:#2f9e5b}
+.opt.wrong{border-color:#c94a3a;background:#fbe4e0;opacity:.8}
+.opt:disabled{cursor:default}
+#timer{height:8px;border-radius:99px;background:#eadfca;margin:14px 0 0;overflow:hidden}
+#timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c9a24a,#f0b44c);transform-origin:left center}
+#rmsg{min-height:1.5em;margin:12px 0 0;font-weight:900;font-size:clamp(17px,1.5vw,22px)}
+#stealBox{margin-top:12px}
+#stealBox .label{color:#6a5236}
+#stealBtns{display:flex;flex-wrap:wrap;gap:8px}
+#stealBtns button{display:flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:9px 14px;font-weight:900;background:#efe3c9;color:var(--ink)}
+.rfoot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:14px}
+#roundEnd{width:min(760px,calc(100% - 28px));margin:clamp(20px,6vh,60px) auto 0;text-align:center;background:rgba(10,12,34,.86);border:1px solid rgba(243,217,143,.4);border-radius:24px;padding:clamp(20px,3vw,36px)}
+#reLantern{display:block;width:clamp(120px,15vw,180px);height:auto;margin:-6px auto 6px;overflow:visible}
+#reLantern .rays{transform-box:fill-box;transform-origin:50% 50%;animation:rays 14s linear infinite}
+#reLantern .halo{animation:halo 2.4s ease-in-out infinite}
+#reLantern.dark .rays,#reLantern.dark .halo{display:none}
+#roundEnd.show #reLantern{animation:lanternIn .9s cubic-bezier(.3,1.4,.5,1) both}
+#roundEnd.show h3,#roundEnd.show p,#roundEnd.show ul,#roundEnd.show .btn{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+#roundEnd.show h3{animation-delay:.25s}#roundEnd.show p{animation-delay:.35s}#roundEnd.show ul{animation-delay:.45s}#roundEnd.show .btn{animation-delay:.6s}
+@keyframes rays{to{transform:rotate(360deg)}}
+@keyframes halo{50%{opacity:.55}}
+@keyframes lanternIn{from{opacity:0;transform:scale(.4)}}
+#roundEnd h3{font-family:var(--head);font-weight:800;font-size:clamp(28px,3.2vw,44px);margin:0 0 6px;line-height:1.05}
+#roundEnd p{margin:0 0 18px;color:#f6e6c4;font-size:clamp(17px,1.6vw,22px)}
+#roundTally{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+#roundTally li{display:flex;align-items:center;gap:6px;font-weight:900;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08)}
+
+/* ---------- the end ---------- */
+#end{max-width:1000px;margin:0 auto;padding:clamp(16px,3vw,40px) 16px 24px}
+#end h1{font-family:var(--head);font-weight:800;font-size:clamp(40px,6vw,80px);line-height:.95;margin:0 0 6px}
+#endLine{font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,26px);color:#f6e6c4;margin:0 0 20px}
+#endList{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-direction:column;gap:8px}
+#endList li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;background:rgba(10,12,34,.72);border:1px solid rgba(243,217,143,.2);font-weight:900;font-size:20px}
+#endList .pos{font-family:var(--flour);font-style:italic;font-size:26px;min-width:2.2ch;color:var(--brass-2)}
+#endList .nm{flex:1}
+#endList small{font-family:var(--head);font-weight:700;color:#f6e6c4}
+#endLanterns{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+#endLanterns span{display:flex;flex-direction:column;align-items:center;gap:4px;width:clamp(84px,8.4vw,128px);font-size:clamp(12px,1vw,15px);font-weight:800;text-align:center;line-height:1.15;color:#e8dcc2}
+#endLanterns svg{width:clamp(64px,6.6vw,104px);height:auto;aspect-ratio:1;overflow:visible}
+#end.show #endLanterns span{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k) * .12s + .4s)}
+#end.show #endLanterns .lit svg{animation:litUp 1s ease both;animation-delay:calc(var(--k) * .12s + .7s)}
+@keyframes litUp{0%{filter:brightness(.4)}50%{filter:brightness(1.6) drop-shadow(0 0 14px var(--c))}100%{filter:brightness(1) drop-shadow(0 0 8px var(--c))}}
+#end.show h1{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+#end.show #endLine{animation:rise .7s .15s cubic-bezier(.2,.8,.2,1) both}
+#end.show #endList li{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k) * .08s + .25s)}
+#lastBanner{position:fixed;left:50%;top:42%;z-index:12;transform:translate(-50%,-50%);pointer-events:none;text-align:center;font-family:var(--head);font-weight:800;font-size:clamp(34px,5vw,72px);line-height:1;color:var(--ink);background:linear-gradient(#f6dc8e,#c9a24a);padding:.35em .8em;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:banner 2.6s cubic-bezier(.2,.8,.2,1) forwards}
+#lastBanner small{display:block;font-size:.42em;margin-top:.25em}
+@keyframes banner{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
+#board li .pt.up{color:var(--good)}
+#shareBox{margin:0 0 20px}
+#shareText{white-space:pre-wrap;font-family:var(--body);font-weight:800;background:rgba(255,255,255,.06);border-radius:14px;padding:14px 16px;margin:0 0 12px}
+
+@media (max-width:900px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  #dialWrap{width:min(100%,560px)}
+  .hero{grid-template-columns:1fr}
+  #heroDial{display:none}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  #opts{grid-template-columns:1fr}
+  .bar{flex-wrap:wrap}
+  .modes button{min-width:0;flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  #sky i,#sky::before,#inner,#dial .chosen .ring,#reLantern .rays,#reLantern .halo,#timer.low i{animation:none}
+  #sky b,#fx,#introHint{display:none}
+  .btn,.rhead,#round .bar,.qcard,#roundEnd,#roundShade{transition:none}
+  .qin #qText,.qin .opt,.opt.pop,.opt.shake,#stealBox:not([hidden]),#roundEnd.show *,#end.show *,#end.show h1{animation:none!important}
+  #lastBanner{animation:none;opacity:0}
+}
+</style>
+</head>
+<body>
+<div id="sky" aria-hidden="true"></div>
+
+<!-- ============ setup ============ -->
+<main id="setup" class="screen">
+  <section class="hero">
+    <div>
+      <h1>Ten <span>Lanterns</span></h1>
+      <p class="tag">Spin the great dial, land on one of ten lantern worlds, and play its round.</p>
+    </div>
+    <svg id="heroDial" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
+  </section>
+  <section class="panel" aria-labelledby="pHead">
+    <h2 id="pHead" hidden>Set up a game</h2>
+    <div id="resumeBox" hidden><p id="resumeText"></p><button class="btn small" id="resumeBtn" type="button">Carry on</button><button class="btn ghost small" id="discardBtn" type="button">Start afresh</button></div>
+    <div class="field"><span>How will you play?</span>
+      <div class="seg modes" id="mode" role="group" aria-label="Mode">
+        <button type="button" data-v="solo">Solo<small>Light as many lanterns as you can</small></button>
+        <button type="button" data-v="daily">Daily Dial<small>The same five spins for everyone today</small></button>
+        <button type="button" data-v="team">Teams<small>Two teams take turns; wrong answers can be stolen</small></button>
+        <button type="button" data-v="versus">Versus<small>2 to 10 players; light and steal lanterns</small></button>
+        <button type="button" data-v="coop">Together<small>Everyone against the dial</small></button>
+      </div>
+      <p class="note" id="modeNote"></p>
+    </div>
+    <div class="grid2">
+      <div class="field" id="whoField"><span id="whoLabel">Players</span>
+        <div id="plist"></div>
+        <button class="btn ghost small" id="addBtn" type="button">Add a player</button>
+      </div>
+      <div>
+        <div class="field" id="lengthField"><span>Length</span>
+          <div class="seg" id="length" role="group" aria-label="Length">
+            <button type="button" data-v="standard">Standard</button>
+            <button type="button" data-v="long">Long</button>
+            <button type="button" data-v="evening">A whole evening</button>
+          </div>
+          <p class="note" id="lengthNote"></p>
+        </div>
+        <div class="field" id="topicField"><span>Questions</span>
+          <select id="topic" aria-label="Questions"></select>
+        </div>
+        <div class="field" id="diffField"><span>Difficulty</span>
+          <div class="seg" id="diff" role="group" aria-label="Difficulty">
+            <button type="button" data-v="1">Easy</button><button type="button" data-v="2">Medium</button><button type="button" data-v="3">Hard</button><button type="button" data-v="mix">Mixed</button>
+          </div>
+        </div>
+        <div class="field" id="timerField"><span>Answer time</span>
+          <div class="seg" id="timed" role="group" aria-label="Answer time">
+            <button type="button" data-v="timed">20 seconds</button><button type="button" data-v="relaxed">Relaxed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="go"><button class="btn" id="beginBtn" type="button">Begin</button><span class="note" id="beginNote"></span></div>
+  </section>
+</main>
+
+<!-- ============ the dial ============ -->
+<main id="play" class="screen" hidden>
+  <header class="bar">
+    <div class="logo">Ten <span>Lanterns</span></div>
+    <span class="chip" id="spinCount"></span>
+    <button class="btn ghost small" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+    <button class="btn ghost small" id="fsBtn" type="button">Full screen</button>
+    <button class="btn ghost small" id="quitBtn" type="button">Quit</button>
+  </header>
+  <div class="stage">
+    <div id="dialWrap"><svg id="dial" viewBox="-500 -500 1000 1000" role="img" aria-label="The dial with ten lantern worlds"></svg></div>
+    <div class="side">
+      <div class="card" id="turnBox">
+        <div id="turn"></div>
+        <p id="turnNote"></p>
+        <button class="btn" id="spinBtn" type="button">Spin the dial</button>
+      </div>
+      <div class="card" id="landBox" hidden>
+        <h2 id="landName"></h2>
+        <p id="landLine"></p>
+        <div class="nudges" id="nudges"><button class="btn ghost small" id="nudgeL" type="button">Nudge back</button><button class="btn ghost small" id="nudgeR" type="button">Nudge on</button></div>
+        <button class="btn" id="goBtn" type="button">Go in</button>
+      </div>
+      <p id="msg" role="status" aria-live="polite"></p>
+      <div class="card"><ol id="board" aria-label="Scores"></ol></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ a round ============ -->
+<main id="round" class="screen" hidden>
+  <div id="roundArt" aria-hidden="true"></div>
+  <div id="roundShade" aria-hidden="true"></div>
+  <div id="roundBody">
+  <header class="bar">
+    <div class="logo">Ten <span>Lanterns</span></div>
+    <span class="chip last" id="lastChip" hidden>Last spin: double points</span>
+    <span class="chip" id="qCount"></span>
+  </header>
+  <div class="rhead"><h2 id="rName"></h2><p id="rLine"></p></div>
+  <section class="qcard" id="qBox" aria-live="polite">
+    <div class="qmeta"><span class="who" id="rWho"></span><span id="rPts"></span></div>
+    <p id="qText"></p>
+    <div id="opts"></div>
+    <div id="timer" aria-hidden="true"><i></i></div>
+    <p id="rmsg" role="status"></p>
+    <div id="stealBox" hidden><span class="label" id="stealLabel">Steal it?</span><div id="stealBtns"></div></div>
+    <div class="rfoot"><button class="btn" id="nextBtn" type="button" hidden>Next question</button></div>
+  </section>
+  <section id="roundEnd" hidden>
+    <svg id="reLantern" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+    <h3 id="reHead"></h3>
+    <p id="reLine"></p>
+    <ul id="roundTally"></ul>
+    <button class="btn" id="backBtn" type="button">Back to the dial</button>
+  </section>
+  </div>
+  <p id="introHint">Tap or press any key to begin</p>
+</main>
+
+<!-- ============ the end ============ -->
+<main id="end" class="screen" hidden>
+  <h1 id="endHead"></h1>
+  <p id="endLine"></p>
+  <ol id="endList"></ol>
+  <div id="endLanterns" aria-label="The lanterns at the end"></div>
+  <div id="shareBox" hidden><span class="label">Share today's dial</span><p id="shareText"></p><button class="btn small" id="shareBtn" type="button">Copy to share</button> <span class="note" id="shareNote" role="status"></span></div>
+  <div class="go"><button class="btn" id="againBtn" type="button">Play again</button><button class="btn ghost" id="changeBtn" type="button">Change the setup</button></div>
+</main>
+<div id="fx" aria-hidden="true"></div>
+
+<script src="questions.js?v=8"></script>
+<script src="ruffled-topics.js?v=1"></script>
+<script src="ten-lanterns-art.js?v=1"></script>
+<script src="ten-lanterns-worlds.js?v=1"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ART = window.TL_ART, D = ART.DISTRICTS, N = D.length, STEP = 360 / N;
+
+/* ---------- rules ---------- */
+const QPR = 3;                 // questions in a round
+const PTS = 10, STEAL = 10, LANTERN = 20, NUDGE = 10;
+const TIME = 20000, STEAL_TIME = 12000;
+const LENGTHS = { standard: { spins: 10, note: 'About 20 minutes.' }, long: { spins: 20, note: 'About 40 minutes.' }, evening: { spins: 40, note: 'About 90 minutes: a whole evening.' } };
+const MODES = {
+  solo: 'Light a lantern by getting two of its three questions right. Beat your best score.',
+  daily: 'Five spins, the same for everyone today, with no nudges. Light lanterns, then share your score.',
+  team: 'Teams take turns to spin. A wrong answer can be stolen by the other team. The team with more points in a round takes its lantern.',
+  versus: 'Take turns to spin. Win a round to light its lantern in your colour; land on a rival\'s lantern to try to steal it.',
+  coop: 'Everyone plays as one. Light all ten lanterns before the night runs out.'
+};
+const COLOURS = ['#f0b44c', '#56b4e9', '#2fbf8f', '#ef7aa0', '#a98bff', '#ff8a3d', '#ece4cf', '#5fd0c8', '#c9e265', '#ff6b6b'];
+const MAXP = 10;
+
+/* ---------- small helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const symSvg = (i, colour) => '<svg class="sym" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, colour, '#0b0f2a') + '</svg>';
+function rngFrom(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function hash(s){ let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function shuffle(a, rnd){ rnd = rnd || Math.random; a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function today(){ try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
+function longDate(iso){ const [y, m, d] = iso.split('-').map(Number); return d + ' ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1] + ' ' + y; }
+const store = { get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, del(k){ try { localStorage.removeItem(k); } catch (e) {} } };
+function show(id){ ['setup', 'play', 'round', 'end'].forEach(s => { $(s).hidden = s !== id; }); if (id !== 'round') $('roundArt').innerHTML = ''; window.scrollTo(0, 0); }
+function confirmLeave(text){ return window.__noConfirm || window.confirm(text); }
+
+/* ---------- sound (the site-wide switch applies) ---------- */
+let soundOn = !window.tbMuted, ac = null, master = null, noiseBuf = null;
+function actx(){ if (!soundOn) return null; try { if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = .7; master.connect(ac.destination); } if (ac.state === 'suspended') ac.resume(); } catch (e) { return null; } return ac; }
+function tone(f, t, d, v, type, f2){ const c = actx(); if (!c) return; const o = c.createOscillator(), g = c.createGain(), s = c.currentTime + t; o.type = type || 'sine';
+  o.frequency.setValueAtTime(f, s); if (f2) o.frequency.exponentialRampToValueAtTime(f2, s + d); g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v, s + Math.min(.015, d / 3)); g.gain.exponentialRampToValueAtTime(.0001, s + d);
+  o.connect(g); g.connect(master); o.start(s); o.stop(s + d + .05); }
+function noise(t, d, f, v){ const c = actx(); if (!c) return; if (!noiseBuf) { noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; }
+  const s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(), at = c.currentTime + t; s.buffer = noiseBuf; fl.type = 'bandpass'; fl.frequency.setValueAtTime(f, at); fl.frequency.exponentialRampToValueAtTime(f * 3, at + d); fl.Q.value = .9;
+  g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(v, at + d * .3); g.gain.exponentialRampToValueAtTime(.0001, at + d); s.connect(fl); fl.connect(g); g.connect(master); s.start(at, 0, d + .05); }
+const bell = (f, t, v) => { tone(f, t, 1.4, v || .12, 'sine'); tone(f * 2.76, t, .6, (v || .12) * .25, 'sine'); tone(f * 5.4, t, .25, (v || .12) * .1, 'sine'); };
+const SFX = {
+  whoosh(){ noise(0, .9, 300, .12); },
+  tick(){ tone(2400, 0, .03, .07, 'square', 1800); },
+  land(){ bell(784, 0, .14); bell(1175, .12, .1); },
+  nudge(){ tone(900, 0, .06, .08, 'triangle', 1300); },
+  right(){ [523, 659, 784, 1047].forEach((f, k) => tone(f, k * .07, .22, .12, 'triangle')); },
+  wrong(){ tone(330, 0, .32, .12, 'triangle', 220); tone(247, .16, .4, .1, 'triangle', 165); },
+  steal(){ noise(0, .25, 900, .08); tone(660, .05, .2, .1, 'triangle', 990); },
+  light(){ bell(1047, 0, .12); bell(1319, .1, .1); bell(1568, .2, .1); },
+  last(){ [392, 523, 659, 784].forEach((f, k) => bell(f, k * .12, .1)); },
+  end(){ [523, 659, 784, 1047, 1319].forEach((f, k) => bell(f, k * .16, .11)); bell(1047, 1, .14); },
+  enter(){ noise(0, 1.1, 180, .1); tone(220, 0, 1.1, .05, 'sine', 660); bell(988, .75, .09); },
+  leave(){ noise(0, .8, 600, .07); tone(660, 0, .8, .04, 'sine', 220); },
+  ignite(){ noise(0, .35, 1400, .06); bell(1568, .08, .1); bell(2093, .2, .07); }
+};
+function paintSound(){ $('soundBtn').textContent = soundOn ? 'Sound on' : 'Sound off'; $('soundBtn').setAttribute('aria-pressed', String(soundOn)); }
+$('soundBtn').addEventListener('click', () => { soundOn = !soundOn; if (window.tbSetMuted) window.tbSetMuted(!soundOn); if (soundOn) SFX.nudge(); paintSound(); });
+paintSound();
+
+/* ---------- the sky ---------- */
+(function(){ const sky = $('sky'), r = rngFrom(7); for (let i = 0; i < 90; i++) { const s = document.createElement('i'), z = .8 + r() * 2.2;
+  s.style.cssText = 'left:' + (r() * 100) + '%;top:' + (r() * 100) + '%;width:' + z + 'px;height:' + z + 'px;opacity:' + (.3 + r() * .6) + ';animation-delay:' + (-r() * 4) + 's;animation-duration:' + (3 + r() * 4) + 's'; sky.appendChild(s); }
+  for (let i = 0; i < 3; i++) { const b = document.createElement('b'); b.style.cssText = 'left:' + (35 + r() * 60) + '%;top:' + (4 + r() * 40) + '%;animation-delay:' + (-r() * 17 + i * 5) + 's;animation-duration:' + (15 + i * 4) + 's'; sky.appendChild(b); } })();
+
+/* ---------- the dial ---------- */
+const at = (deg, r) => [r * Math.sin(deg * Math.PI / 180), -r * Math.cos(deg * Math.PI / 180)];
+function dialSvg(p, interactive){
+  let h = '<defs>' + ART.defs(p)
+    + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset=".5" stop-color="#c9a24a"/><stop offset="1" stop-color="#7d5d22"/></linearGradient>'
+    + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1c2350"/><stop offset=".7" stop-color="#11163a"/><stop offset="1" stop-color="#0a0d26"/></radialGradient>'
+    + COLOURS.map((c, k) => '<radialGradient id="' + p + '-glow-' + k + '"><stop offset=".55" stop-color="' + c + '" stop-opacity=".9"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>').join('')
+    + '<clipPath id="' + p + '-win"><circle r="70"/></clipPath></defs>';
+  // the fixed outer ring, its ticks and the pointer
+  h += '<circle r="482" fill="none" stroke="url(#' + p + '-brass)" stroke-width="16"/><circle r="460" fill="#0a0d26" stroke="#8a6a2a" stroke-width="2"/>';
+  for (let k = 0; k < 120; k++) { const long = k % 12 === 0, [x1, y1] = at(k * 3, 458), [x2, y2] = at(k * 3, long ? 432 : 446); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="' + (long ? 3 : 1.4) + '" opacity=".8"/>'; }
+  // the turning face: ten lantern windows, Roman numerals, a star map
+  h += '<g id="' + p + '-wheel" class="wheel"><circle r="428" fill="url(#' + p + '-face)" stroke="#c9a24a" stroke-width="3"/><circle r="292" fill="none" stroke="#c9a24a" stroke-width="2" opacity=".6"/>';
+  const r = rngFrom(11); for (let k = 0; k < 70; k++) { const [x, y] = at(r() * 360, 120 + r() * 300); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (.8 + r() * 1.8).toFixed(1) + '" fill="#fff" opacity="' + (.25 + r() * .5).toFixed(2) + '"/>'; }
+  D.forEach((d, i) => { const [x, y] = at(i * STEP, 360), [nx, ny] = at(i * STEP, 252);
+    // each window and numeral sits in an "up" group that turns against the face, so every world stays the right way up
+    h += '<g class="lan" data-i="' + i + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"><g class="up"><g class="pop">'
+      + '<circle class="glowc" r="104" fill="url(#' + p + '-glow-0)" opacity="0"/>'
+      + '<g clip-path="url(#' + p + '-win)"><g transform="scale(1.17)">' + ART.mini(d.id, p) + '</g><circle class="shade" r="70" fill="#060818" opacity=".55"/></g>'
+      + '<circle class="ring" r="72" fill="none" stroke="url(#' + p + '-brass)" stroke-width="7"/>'
+      + '<g class="own" transform="translate(52 52)" opacity="0"></g></g></g></g>'
+      + '<g transform="translate(' + nx.toFixed(1) + ' ' + ny.toFixed(1) + ')"><g class="up"><text y="9" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-style="italic" font-weight="700" font-size="26" fill="#d8b25a" opacity=".85">' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][i] + '</text></g></g>'; });
+  h += '</g>';
+  // the inner rings drift the other way; the hub is a button
+  h += '<g id="' + p + '-inner"' + (interactive ? ' class="inner"' : '') + '><circle r="200" fill="none" stroke="#c9a24a" stroke-width="2" stroke-dasharray="4 10" opacity=".7"/><circle r="168" fill="none" stroke="#c9a24a" stroke-width="1.5" opacity=".5"/>';
+  for (let k = 0; k < 12; k++) { const [x1, y1] = at(k * 30, 168), [x2, y2] = at(k * 30, 200); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="2" opacity=".6"/>'; }
+  h += '</g>';
+  const star = Array.from({ length: 16 }, (_, k) => at(k * 22.5, k % 2 ? 46 : 112).map(v => v.toFixed(1)).join(' ')).join(' L');
+  h += '<g class="hub"' + (interactive ? ' id="hub" role="button" tabindex="0" aria-label="Spin the dial"' : '') + '><circle r="132" fill="#0d1130" stroke="url(#' + p + '-brass)" stroke-width="6"/><g id="' + p + '-star"><path d="M' + star + 'Z" fill="url(#' + p + '-brass)"/></g><circle r="22" fill="#0d1130" stroke="#f6dc8e" stroke-width="3"/>'
+    + (interactive ? '<text id="hubText" y="168" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="0" fill="#f6dc8e"> </text>' : '') + '</g>';
+  h += '<g id="' + p + '-ptr" transform="translate(0 -492)"><path d="M0 60 L-26 -4 L26 -4Z" fill="url(#' + p + '-brass)" stroke="#5a4214" stroke-width="3"/><circle r="9" fill="#f6dc8e"/></g>';
+  return h;
+}
+$('heroDial').innerHTML = dialSvg('h', false);
+$('dial').innerHTML = dialSvg('d', true);
+if (!STILL) document.querySelector('#d-inner').style.cssText = 'animation:drift 90s linear infinite';
+const WHEEL = document.querySelector('#d-wheel');
+let rot = 0;                     // the face's turn, in degrees; lantern i is at the pointer when rot = -i * STEP (mod 360)
+const UPS = Array.from(WHEEL.querySelectorAll('.up'));
+const STAR = document.querySelector('#d-star'), PTR = document.querySelector('#d-ptr');
+function setRot(a){ rot = a; WHEEL.setAttribute('transform', 'rotate(' + a.toFixed(2) + ')'); const u = 'rotate(' + (-a).toFixed(2) + ')'; UPS.forEach(g => g.setAttribute('transform', u)); STAR.setAttribute('transform', 'rotate(' + (-a * .35).toFixed(2) + ')'); }
+/* the pointer is hinged at the top: each window that passes flicks it, and it springs back */
+let ptrA = 0, ptrV = 0, ptrRaf = 0, ptrLast = 0;
+function kick(){ if (STILL) return; ptrA = Math.max(-24, ptrA - 13); if (!ptrRaf) { ptrLast = 0; ptrRaf = requestAnimationFrame(ptrStep); } }
+function ptrStep(now){ const dt = Math.min(32, ptrLast ? now - ptrLast : 16) / 1000; ptrLast = now;
+  ptrV += (-ptrA * 320 - ptrV * 16) * dt; ptrA += ptrV * dt;
+  if (Math.abs(ptrA) < .05 && Math.abs(ptrV) < .5) { ptrA = 0; ptrV = 0; ptrRaf = 0; }
+  PTR.setAttribute('transform', 'translate(0 -492) rotate(' + ptrA.toFixed(2) + ')');
+  if (ptrRaf) ptrRaf = requestAnimationFrame(ptrStep); }
+/* the window passing under the pointer glints */
+function glint(i){ if (STILL || !S || S.owner[i] >= 0) return; const g = document.querySelector('#dial .lan[data-i="' + i + '"] .glowc'); if (g && g.animate) g.animate([{ opacity: .9 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' }); }
+function swell(i, big){ if (STILL) return; const g = document.querySelector('#dial .lan[data-i="' + i + '"] .pop'); if (g && g.animate) g.animate([{ transform: 'scale(1)' }, { transform: 'scale(' + (big ? 1.22 : 1.12) + ')' }, { transform: 'scale(1)' }], { duration: big ? 900 : 600, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }
+/* a lantern catching light: rays burst out in its owner's colour */
+function ignite(i){ const lan = document.querySelector('#dial .lan[data-i="' + i + '"] .pop'); if (!lan || STILL || !S || S.owner[i] < 0) return;
+  const c = COLOURS[S.players[S.owner[i]].colour], ns = 'http://www.w3.org/2000/svg', b = document.createElementNS(ns, 'g'); b.setAttribute('class', 'burst');
+  b.innerHTML = '<circle r="76" fill="none" stroke="' + c + '" stroke-width="10"/>' + Array.from({ length: 12 }, (_, k) => { const [x1, y1] = at(k * 30, 84), [x2, y2] = at(k * 30, 128); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="7" stroke-linecap="round"/>'; }).join('');
+  lan.appendChild(b); SFX.ignite(); swell(i, true);
+  const a = b.animate([{ transform: 'scale(.7)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 1100, easing: 'cubic-bezier(.2,.7,.3,1)' }); a.onfinish = () => b.remove(); }
+/* on the start screen the little dial turns slowly, its worlds kept upright */
+(function(){ if (STILL) return; const hw = document.querySelector('#h-wheel'), hu = Array.from(hw.querySelectorAll('.up')), hs = document.querySelector('#h-star'); let a = 0, last = 0;
+  const step = now => { if (!$('setup').hidden) { a += Math.min(50, last ? now - last : 16) * .006; hw.setAttribute('transform', 'rotate(' + a.toFixed(2) + ')'); const u = 'rotate(' + (-a).toFixed(2) + ')'; hu.forEach(g => g.setAttribute('transform', u)); hs.setAttribute('transform', 'rotate(' + (-a * .5).toFixed(2) + ')'); }
+    last = now; requestAnimationFrame(step); }; requestAnimationFrame(step); })();
+const topIndex = () => ((Math.round(-rot / STEP) % N) + N) % N;
+function paintLanterns(){
+  if (!S) return;
+  document.querySelectorAll('#dial .lan').forEach(g => { const i = +g.dataset.i, o = S.owner[i], lit = o >= 0, chosen = S.phase === 'landed' && S.pos === i;
+    g.classList.toggle('chosen', chosen);
+    g.querySelector('.shade').setAttribute('opacity', lit || chosen ? '0' : '.55');
+    const glow = g.querySelector('.glowc'); glow.setAttribute('fill', 'url(#d-glow-' + (lit ? S.players[o].colour : 0) + ')'); glow.setAttribute('opacity', lit ? '1' : '0');
+    g.querySelector('.ring').setAttribute('stroke', lit ? COLOURS[S.players[o].colour] : 'url(#d-brass)'); });
+  document.querySelectorAll('#dial .lan').forEach(lan => { const i = +lan.dataset.i, o = S.owner[i], g = lan.querySelector('.own');
+    if (o < 0) { g.setAttribute('opacity', '0'); g.innerHTML = ''; return; }
+    const p = S.players[o]; g.setAttribute('opacity', '1');
+    g.innerHTML = '<circle r="24" fill="#0b0f2a" stroke="' + COLOURS[p.colour] + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(p.sym, COLOURS[p.colour]) + '</g>'; });
+}
+
+/* ---------- questions ---------- */
+const TOPICS = [['gk', 'General knowledge']].concat(Object.keys(window.RF_TOPICS || {}).map(k => [k, window.RF_TOPICS[k]]));
+$('topic').innerHTML = TOPICS.map(t => '<option value="' + t[0] + '">' + esc(t[1]) + '</option>').join('');
+function bankFor(topic){ if (topic === 'gk') return window.TB ? TB.bank('gk') : {}; return (window.RF_BANK || {})[topic] || {}; }
+function okQ(q){ return q && q.q && q.correct && Array.isArray(q.wrong) && q.wrong.length >= 3 && new Set([q.correct].concat(q.wrong.slice(0, 3))).size === 4; }
+function tiersFor(topic, diff){ const b = bankFor(topic), have = Object.keys(b).filter(k => (b[k] || []).length);
+  if (diff === 'mix') return have; const want = String(Math.min(Number(diff), Math.max.apply(null, have.map(Number).concat([1])))); return have.includes(want) ? [want] : have; }
+function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(topic, diff).forEach(t => (b[t] || []).forEach(q => { if (okQ(q)) pool.push(q); })); return pool; }
+/* today's dial: the same spins, questions and answer order on every device */
+function dailyPlan(date){ const rnd = rngFrom(hash('ten-lanterns:' + date));
+  const pool = poolFor('gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
+  const qs = shuffle(pool, rnd).slice(0, 5 * QPR).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
+  const spins = []; let left = [];
+  for (let s = 0; s < 5; s++) { if (!left.length) left = Array.from({ length: N }, (_, i) => i); const k = Math.floor(rnd() * left.length); spins.push(left[k]); left.splice(k, 1); }
+  return { qs, spins }; }
+
+/* ---------- setup ---------- */
+let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-ten-lanterns-setup', {}));
+function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
+function paintSetup(){
+  setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); $('topic').value = cfg.topic;
+  $('modeNote').textContent = MODES[cfg.mode];
+  $('lengthNote').textContent = LENGTHS[cfg.length].note;
+  const daily = cfg.mode === 'daily';
+  ['lengthField', 'topicField', 'diffField'].forEach(id => { $(id).hidden = daily; });
+  paintWho(); paintDaily();
+}
+function paintWho(){
+  const m = cfg.mode, list = $('plist');
+  $('addBtn').hidden = m !== 'versus';
+  if (m === 'versus') {
+    $('whoLabel').textContent = 'Players (2 to 10)';
+    list.innerHTML = cfg.names.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#0b0f2a') + '</svg><input aria-label="Player ' + (i + 1) + '" maxlength="14" placeholder="Player ' + (i + 1) + '" value="' + esc(n) + '" data-i="' + i + '"><button class="rm" type="button" aria-label="Remove player ' + (i + 1) + '" data-rm="' + i + '"' + (cfg.names.length <= 2 ? ' hidden' : '') + '>×</button></div>').join('');
+    $('addBtn').disabled = cfg.names.length >= MAXP;
+  } else if (m === 'team') {
+    $('whoLabel').textContent = 'Teams';
+    list.innerHTML = cfg.teams.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#0b0f2a') + '</svg><input aria-label="Team ' + (i + 1) + '" maxlength="16" value="' + esc(n) + '" data-t="' + i + '"></div>').join('');
+  } else {
+    const coop = m === 'coop';
+    $('whoLabel').textContent = coop ? 'Your group' : 'Your name';
+    list.innerHTML = '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(0, COLOURS[0], '#0b0f2a') + '</svg><input aria-label="' + (coop ? 'Your group' : 'Your name') + '" maxlength="16" placeholder="' + (coop ? 'All of us' : 'You') + '" value="' + esc(coop ? cfg.group : cfg.solo) + '" data-one="1"></div>';
+  }
+}
+function paintDaily(){
+  const note = $('beginNote');
+  if (cfg.mode !== 'daily') { note.textContent = ''; $('beginBtn').textContent = 'Begin'; return; }
+  const done = store.get('tb-ten-lanterns-daily', null), d = today();
+  if (done && done.date === d) { note.textContent = 'You have played today\'s dial: ' + done.score + ' points. Practise it again, or come back tomorrow for a new one.'; $('beginBtn').textContent = 'Practise today\'s dial'; }
+  else { note.textContent = 'Today\'s dial: ' + longDate(d) + '.'; $('beginBtn').textContent = 'Spin today\'s dial'; }
+}
+['mode', 'length', 'diff', 'timed'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
+$('topic').addEventListener('change', () => { cfg.topic = $('topic').value; saveSetup(); });
+$('plist').addEventListener('input', e => { const t = e.target; if (t.dataset.i !== undefined) cfg.names[+t.dataset.i] = t.value; else if (t.dataset.t !== undefined) cfg.teams[+t.dataset.t] = t.value; else if (t.dataset.one) { if (cfg.mode === 'coop') cfg.group = t.value; else cfg.solo = t.value; } saveSetup(); });
+$('plist').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; cfg.names.splice(+b.dataset.rm, 1); saveSetup(); paintWho(); });
+$('addBtn').addEventListener('click', () => { if (cfg.names.length < MAXP) { cfg.names.push(''); saveSetup(); paintWho(); const ins = $('plist').querySelectorAll('input'); ins[ins.length - 1].focus(); } });
+function saveSetup(){ store.set('tb-ten-lanterns-setup', cfg); }
+
+/* ---------- the game ---------- */
+let S = null, R = null, forced = null, busy = false, timerT = 0, timerEnd = 0, timerRaf = 0;
+const SAVE = 'tb-ten-lanterns-game';
+function spinners(){ return S.mode === 'versus' || S.mode === 'team' ? S.players.length : 1; }
+function newGame(){
+  shown = {};
+  const m = cfg.mode, players = [];
+  const add = (name, k) => players.push({ name: name, colour: k, sym: k, pts: 0 });
+  if (m === 'versus') cfg.names.forEach((n, i) => add((n || '').trim() || 'Player ' + (i + 1), i));
+  else if (m === 'team') cfg.teams.forEach((n, i) => add((n || '').trim() || ['Gold team', 'Blue team'][i], i));
+  else if (m === 'coop') add(cfg.group.trim() || 'All of us', 0);
+  else add(cfg.solo.trim() || 'You', 0);
+  const base = m === 'daily' ? 5 : LENGTHS[cfg.length].spins + (m === 'coop' ? 4 : 0), n = (m === 'versus' || m === 'team') ? players.length : 1;
+  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed',
+        date: m === 'daily' ? today() : null, practice: false, players, spins: Math.ceil(base / n) * n, spin: 0, turn: 0,
+        owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [] };
+  if (m === 'daily') { const done = store.get('tb-ten-lanterns-daily', null); S.practice = !!(done && done.date === S.date); }
+  startPlay();
+}
+let pool = [], plan = null;
+function preparePool(){ if (S.mode === 'daily') { plan = dailyPlan(S.date); return; } const used = new Set(S.used); pool = shuffle(poolFor(S.topic, S.diff)).filter(q => !used.has(q.q)); if (pool.length < QPR * 2) pool = shuffle(poolFor(S.topic, S.diff)); }
+function drawQ(){ if (S.mode === 'daily') { const q = plan.qs[S.spin * QPR + R.k]; return { q: q.q, correct: q.correct, opts: q.opts.slice() }; }
+  if (!pool.length) preparePool(); const q = pool.shift(); S.used.push(q.q); if (S.used.length > 400) S.used.shift();
+  return { q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3))) }; }
+function save(){ if (S && S.phase !== 'over' && !S.practice) store.set(SAVE, S); }
+function startPlay(){
+  preparePool(); show('play'); setRot(-S.pos * STEP); paintAll();
+  if (S.phase !== 'spin') { S.phase = 'spin'; }
+  promptSpin(); save();
+}
+const spinner = () => S.players[S.mode === 'versus' || S.mode === 'team' ? S.turn : 0];
+const isLast = () => S.spin === S.spins - 1;
+const mult = () => isLast() ? 2 : 1;
+function paintAll(){ paintLanterns(); paintBoard(); $('spinCount').textContent = 'Spin ' + Math.min(S.spin + 1, S.spins) + ' of ' + S.spins; $('spinCount').classList.toggle('last', isLast()); }
+let shown = {};
+function paintBoard(){
+  const order = S.players.map((p, i) => i), board = $('board');
+  if (S.mode === 'versus' || S.mode === 'team') order.sort((a, b) => S.players[b].pts - S.players[a].pts || lanternsOf(b) - lanternsOf(a) || a - b);
+  const before = {}; board.querySelectorAll('li').forEach(li => { before[li.dataset.i] = li.getBoundingClientRect().top; });
+  board.innerHTML = order.map(i => { const p = S.players[i], now = (S.mode === 'versus' || S.mode === 'team') && i === S.turn, from = shown[i] === undefined ? p.pts : shown[i];
+    return '<li data-i="' + i + '"' + (now ? ' class="now"' : '') + '>' + symSvg(p.sym, COLOURS[p.colour]) + '<span class="nm">' + esc(p.name) + '</span><span class="lt">' + lanternsOf(i) + (lanternsOf(i) === 1 ? ' lantern' : ' lanterns') + '</span><span class="pt" data-to="' + p.pts + '">' + (STILL ? p.pts : from) + '</span></li>'; }).join('');
+  board.querySelectorAll('li').forEach(li => { const i = li.dataset.i, el = li.querySelector('.pt'), to = +el.dataset.to, from = shown[i] === undefined ? to : shown[i]; shown[i] = to;
+    if (!STILL && before[i] !== undefined && li.animate) { const dy = before[i] - li.getBoundingClientRect().top; if (Math.abs(dy) > 1) li.animate([{ transform: 'translateY(' + dy + 'px)' }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
+    if (!STILL && from !== to) { const t0 = performance.now(); el.classList.add('up'); const step = now => { const k = Math.min(1, (now - t0) / 900); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); else el.classList.remove('up'); }; requestAnimationFrame(step); } });
+}
+const lanternsOf = i => S.owner.filter(o => o === i).length;
+function trailing(i){ if (S.mode !== 'versus' && S.mode !== 'team') return false; const pts = S.players.map(p => p.pts), lo = Math.min.apply(null, pts); return pts[i] === lo && pts.filter(x => x === lo).length < pts.length; }
+function promptSpin(){
+  S.phase = 'spin'; S.nudged = false; busy = false;
+  const p = spinner(), multi = S.mode === 'versus' || S.mode === 'team';
+  $('turn').innerHTML = multi ? symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + ' to spin</span>' : '<span>' + (S.mode === 'coop' ? 'Your spin' : 'Your spin') + '</span>';
+  const left = S.spins - S.spin;
+  $('turnNote').textContent = isLast() ? 'The last spin: every point in this round counts double.' : (S.mode === 'coop' ? (N - S.owner.filter(o => o >= 0).length) + ' lanterns still dark, ' + left + ' spins left.' : left + (left === 1 ? ' spin' : ' spins') + ' left.');
+  $('turnBox').hidden = false; $('landBox').hidden = true; $('spinBtn').disabled = false; $('msg').textContent = '';
+  paintAll(); if (isLast()) { SFX.last(); if (!STILL && !$('play').hidden) { const b = document.createElement('div'); b.id = 'lastBanner'; b.innerHTML = 'The last spin<small>Every point counts double</small>'; document.body.appendChild(b); setTimeout(() => b.remove(), 2700); } }
+  setTimeout(() => { if (!$('play').hidden && !$('spinBtn').disabled) $('spinBtn').focus({ preventScroll: true }); }, 50);
+}
+/* where the dial may land: a world not yet visited this cycle (so every world comes round), and in Teams and
+   Versus also any lit lantern, so lanterns can be defended and stolen; never the window just played */
+const multiMode = () => S.mode === 'versus' || S.mode === 'team';
+function candidates(){
+  if (S.visited.length >= N) S.visited = [];
+  const prev = S.history.length ? S.history[S.history.length - 1].d : -1;
+  let c = Array.from({ length: N }, (_, i) => i).filter(i => !S.visited.includes(i) || (multiMode() && S.owner[i] >= 0));
+  if (c.length > 1) c = c.filter(i => i !== prev);
+  return c;
+}
+function chooseTarget(){
+  if (S.mode === 'daily') return plan.spins[S.spin];
+  const c = candidates();
+  if (forced !== null && c.includes(forced)) { const f = forced; forced = null; return f; }
+  forced = null; return c[Math.floor(Math.random() * c.length)];
+}
+function spin(){
+  if (busy || S.phase !== 'spin') return; busy = true; $('spinBtn').disabled = true; actx();
+  const target = chooseTarget(); S.phase = 'spinning';
+  const want = -target * STEP, turns = STILL ? 0 : 3 + Math.floor(Math.random() * 2);
+  let end = rot + turns * 360 + ((((want - rot) % 360) + 360) % 360); if (!STILL && end - rot < 360) end += 360;
+  const start = rot, dur = STILL ? 0 : 4200 + Math.random() * 600, t0 = performance.now(); let lastSeg = Math.floor((rot + STEP / 2) / STEP);
+  if (!STILL) SFX.whoosh();
+  const ease = x => 1 - Math.pow(1 - x, 4);
+  const frame = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1; setRot(start + (end - start) * ease(k));
+    const seg = Math.floor((rot + STEP / 2) / STEP); if (seg !== lastSeg) { lastSeg = seg; SFX.tick(); kick(); glint(topIndex()); }
+    if (k < 1) requestAnimationFrame(frame); else landed(target); };
+  if (STILL) frame(t0); else requestAnimationFrame(frame);
+}
+function landed(i){ S.pos = i; S.phase = 'landed'; busy = false; SFX.land(); showLanding(); swell(i, true); save(); }
+function showLanding(){
+  const d = D[S.pos], o = S.owner[S.pos], me = S.players.indexOf(spinner());
+  $('turnBox').hidden = true; $('landBox').hidden = false;
+  $('landName').textContent = d.name;
+  let line = d.line + '.';
+  if ((S.mode === 'versus' || S.mode === 'team') && o >= 0) line = o === me ? 'Your own lantern: hold on to it.' : 'This lantern belongs to ' + S.players[o].name + ': win the round to steal it.';
+  else if (o >= 0) line = 'Already lit. Light it again for the points.';
+  $('landLine').textContent = line;
+  const canNudge = S.mode !== 'daily' && !S.nudged, free = trailing(me), cost = free ? 0 : NUDGE, afford = spinner().pts >= cost;
+  $('nudges').hidden = !canNudge;
+  ['nudgeL', 'nudgeR'].forEach(id => { $(id).disabled = !afford; });
+  $('nudgeL').textContent = 'Nudge back' + (free ? ' (free)' : ' (' + NUDGE + ' points)');
+  $('nudgeR').textContent = 'Nudge on' + (free ? ' (free)' : ' (' + NUDGE + ' points)');
+  $('msg').textContent = !canNudge ? '' : free ? 'Catching up: a free nudge this turn.' : afford ? 'Not keen? Nudge the dial one window, once.' : 'A nudge costs ' + NUDGE + ' points. Score some to unlock it.';
+  paintLanterns(); setTimeout(() => { if (!$('landBox').hidden) $('goBtn').focus({ preventScroll: true }); }, 50);
+}
+function nudge(dir){
+  if (busy || S.phase !== 'landed' || S.nudged || S.mode === 'daily') return;
+  const me = S.players.indexOf(spinner()), cost = trailing(me) ? 0 : NUDGE; if (spinner().pts < cost) return;
+  const c = candidates();
+  let j = S.pos; for (let k = 0; k < N; k++) { j = (j + dir + N) % N; if (c.includes(j)) break; }
+  if (j === S.pos) return;
+  spinner().pts -= cost; S.nudged = true; busy = true; SFX.nudge();
+  const start = rot, end = rot - dir * STEP * (((j - S.pos) * dir + N) % N || N), dur = STILL ? 0 : 650, t0 = performance.now();
+  let nSeg = Math.floor((rot + STEP / 2) / STEP);
+  const frame = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1; setRot(start + (end - start) * (1 - Math.pow(1 - k, 3))); const sg = Math.floor((rot + STEP / 2) / STEP); if (sg !== nSeg) { nSeg = sg; SFX.tick(); kick(); } if (k < 1) requestAnimationFrame(frame); else { S.pos = j; busy = false; SFX.land(); showLanding(); swell(j); paintBoard(); save(); } };
+  if (STILL) frame(t0); else requestAnimationFrame(frame);
+}
+$('spinBtn').addEventListener('click', spin);
+$('hub').addEventListener('click', () => { if (S && S.phase === 'spin') spin(); });
+$('hub').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && S && S.phase === 'spin') { e.preventDefault(); spin(); } });
+$('nudgeL').addEventListener('click', () => nudge(-1));
+$('nudgeR').addEventListener('click', () => nudge(1));
+$('goBtn').addEventListener('click', goIn);
+
+/* going in: the lantern opens out into its world, which keeps moving behind the round */
+function lanternCircle(i){ const w = document.querySelector('#dial .lan[data-i="' + i + '"] .ring'); if (!w || $('play').hidden) return null;
+  const r = w.getBoundingClientRect(); if (!r.width) return null; return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 }; }
+function iris(c, open){ const far = Math.hypot(Math.max(c.x, innerWidth - c.x), Math.max(c.y, innerHeight - c.y)) + 20,
+  small = 'circle(' + c.r.toFixed(0) + 'px at ' + c.x.toFixed(0) + 'px ' + c.y.toFixed(0) + 'px)', big = 'circle(' + far.toFixed(0) + 'px at ' + c.x.toFixed(0) + 'px ' + c.y.toFixed(0) + 'px)';
+  return $('round').animate([{ clipPath: open ? small : big }, { clipPath: open ? big : small }], { duration: open ? 1050 : 800, easing: open ? 'cubic-bezier(.65,0,.25,1)' : 'cubic-bezier(.5,0,.75,0)' }); }
+let introT = 0;
+function goIn(){
+  if (busy || S.phase !== 'landed') return; busy = true; S.phase = 'round';
+  if (!S.visited.includes(S.pos)) S.visited.push(S.pos);
+  const c = STILL ? null : lanternCircle(S.pos);
+  prepareRound();
+  $('round').hidden = false; $('roundBody').scrollTop = 0;
+  if (c && $('round').animate) { SFX.enter(); const a = iris(c, true); a.onfinish = () => { if (!$('round').hidden) $('play').hidden = true; }; }
+  else $('play').hidden = true;
+  startIntro();
+}
+
+/* ---------- a round: three questions; the spinner answers, and in Teams and Versus a miss can be stolen ---------- */
+function prepareRound(){
+  const d = D[S.pos]; busy = false;
+  R = { d: S.pos, k: 0, got: {}, correct: 0, q: null, active: S.players.indexOf(spinner()), tried: [], phase: 'intro' };
+  $('roundArt').innerHTML = window.TL_WORLDS ? TL_WORLDS.scene(d.id) : '';
+  $('rName').textContent = d.name; $('rLine').textContent = d.line;
+  $('lastChip').hidden = !isLast(); $('qCount').textContent = '';
+  $('qBox').hidden = false; $('roundEnd').hidden = true; $('roundEnd').classList.remove('show');
+  $('qText').textContent = ''; $('opts').innerHTML = ''; $('rWho').innerHTML = ''; $('rPts').textContent = ''; $('rmsg').textContent = ''; $('stealBox').hidden = true; $('nextBtn').hidden = true; $('timer').hidden = true;
+}
+/* a moment to take in the world before the first question; a tap or a key skips it */
+function startIntro(){ R.phase = 'intro'; $('round').classList.add('intro'); clearTimeout(introT); introT = setTimeout(endIntro, STILL ? 700 : 2700); }
+function endIntro(){ if (!R || R.phase !== 'intro') return; clearTimeout(introT); $('round').classList.remove('intro'); ask(); }
+$('round').addEventListener('click', () => { if (R && R.phase === 'intro') endIntro(); });
+function ask(){
+  R.q = drawQ(); R.tried = []; R.active = S.players.indexOf(spinner()); R.phase = 'ask';
+  $('qCount').textContent = 'Question ' + (R.k + 1) + ' of ' + QPR;
+  $('qText').textContent = R.q.q;
+  $('opts').innerHTML = R.q.opts.map((o, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(o) + '</span></button>').join('');
+  $('opts').className = 'opts-live';
+  const qb = $('qBox'); qb.classList.remove('qin'); void qb.offsetWidth; qb.classList.add('qin');
+  $('stealBox').hidden = true; $('nextBtn').hidden = true; $('rmsg').textContent = '';
+  paintWho2(); startTimer(TIME);
+  setTimeout(() => { const b = $('opts').querySelector('.opt'); if (b) b.focus({ preventScroll: true }); }, 30);
+}
+function paintWho2(){ const p = S.players[R.active], multi = S.mode === 'versus' || S.mode === 'team';
+  $('rWho').innerHTML = multi ? symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + (R.phase === 'steal' ? ' to steal' : ' to answer') + '</span>' : '<span>' + (S.mode === 'coop' ? 'Together' : esc(p.name)) + '</span>';
+  $('rPts').textContent = (isLast() ? 'Double points: ' : '') + (R.phase === 'steal' ? STEAL : PTS) * mult() + ' points'; }
+function startTimer(ms){ stopTimer(); const bar = $('timer').firstElementChild; $('timer').hidden = !S.timed; if (!S.timed) return;
+  timerEnd = performance.now() + ms; $('timer').classList.remove('low'); const tick = () => { const left = Math.max(0, timerEnd - performance.now()); bar.style.transform = 'scaleX(' + (left / ms) + ')'; $('timer').classList.toggle('low', left < 5000); if (left <= 0) { timeUp(); return; } timerRaf = requestAnimationFrame(tick); }; timerRaf = requestAnimationFrame(tick); }
+function stopTimer(){ cancelAnimationFrame(timerRaf); timerRaf = 0; $('timer').classList.remove('low'); }
+function timeUp(){ if (R.phase !== 'ask' && R.phase !== 'steal') return; answer(-1); }
+$('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.i); });
+function answer(i){
+  if (R.phase !== 'ask' && R.phase !== 'steal') return; stopTimer();
+  const right = i >= 0 && R.q.opts[i] === R.q.correct, btns = $('opts').querySelectorAll('.opt'), p = S.players[R.active], stealing = R.phase === 'steal';
+  R.tried.push(R.active);
+  if (right) {
+    const pts = (stealing ? STEAL : PTS) * mult(); p.pts += pts; R.got[R.active] = (R.got[R.active] || 0) + pts; if (!stealing || S.mode === 'coop') R.correct++;
+    btns[i].classList.add('right', 'pop'); SFX[stealing ? 'steal' : 'right'](); cheer(btns[i], pts, COLOURS[p.colour]);
+    $('rmsg').textContent = 'Correct! ' + pts + ' points to ' + ((S.mode === 'versus' || S.mode === 'team') ? p.name : (S.mode === 'coop' ? 'the group' : 'you')) + '.';
+    return reveal();
+  }
+  if (i >= 0) { btns[i].classList.add('wrong', 'shake'); btns[i].disabled = true; }
+  SFX.wrong();
+  const others = S.players.map((x, k) => k).filter(k => !R.tried.includes(k));
+  if (!stealing && (S.mode === 'versus' || S.mode === 'team') && others.length) {
+    R.phase = 'stealpick'; $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' Anyone else know it?';
+    $('stealLabel').textContent = S.mode === 'team' ? 'Steal it for the other team?' : 'Steal it? Tap your name.';
+    $('stealBtns').innerHTML = others.map(k => '<button type="button" data-k="' + k + '">' + symSvg(S.players[k].sym, COLOURS[S.players[k].colour]) + esc(S.players[k].name) + '</button>').join('') + '<button type="button" data-k="-1">No steal</button>';
+    $('stealBox').hidden = false; $('opts').className = '';
+    setTimeout(() => { const b = $('stealBtns').querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 30);
+    return;
+  }
+  $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : (stealing ? 'Missed the steal.' : 'Not this time.')) + ' The answer: ' + R.q.correct + '.';
+  reveal();
+}
+$('stealBtns').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || R.phase !== 'stealpick') return; const k = +b.dataset.k; $('stealBox').hidden = true;
+  if (k < 0) { $('rmsg').textContent = 'No steal. The answer: ' + R.q.correct + '.'; return reveal(); }
+  R.active = k; R.phase = 'steal'; $('opts').className = 'opts-live'; $('rmsg').textContent = ''; paintWho2(); startTimer(STEAL_TIME);
+  setTimeout(() => { const o = $('opts').querySelector('.opt:not(:disabled)'); if (o) o.focus({ preventScroll: true }); }, 30); });
+/* a right answer: sparks fly from the button and the points float up */
+function cheer(el, pts, colour){ if (STILL) return; const r = el.getBoundingClientRect(), fx = $('fx'), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const plus = document.createElement('span'); plus.className = 'plus'; plus.textContent = '+' + pts; plus.style.left = cx + 'px'; plus.style.top = cy + 'px'; fx.appendChild(plus);
+  for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + Math.random() * .3, d = 60 + Math.random() * 70, sp = document.createElement('i'); sp.className = 'spark';
+    sp.style.cssText = 'left:' + (cx + Math.cos(a) * r.width * .3) + 'px;top:' + (cy + Math.sin(a) * r.height * .3) + 'px;background:' + ['#f0b44c', '#2fbf8f', colour, '#ffd96a'][k % 4] + ';--x:' + (Math.cos(a) * d).toFixed(0) + 'px;--y:' + (Math.sin(a) * d).toFixed(0) + 'px'; fx.appendChild(sp); }
+  setTimeout(() => { fx.querySelectorAll('.spark,.plus').forEach(n => n.remove()); }, 1200); }
+function reveal(){
+  R.phase = 'reveal'; stopTimer(); $('opts').className = ''; $('stealBox').hidden = true;
+  $('opts').querySelectorAll('.opt').forEach((b, i) => { b.disabled = true; if (R.q.opts[i] === R.q.correct) b.classList.add('right'); });
+  $('nextBtn').textContent = R.k + 1 < QPR ? 'Next question' : 'See the lantern'; $('nextBtn').hidden = false;
+  setTimeout(() => $('nextBtn').focus({ preventScroll: true }), 30); paintWho2();
+}
+$('nextBtn').addEventListener('click', () => { if (R.phase !== 'reveal') return; R.k++; if (R.k < QPR) ask(); else endRound(); });
+
+function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o].colour] : '#5a5f86';
+  $('reLantern').setAttribute('class', lit ? 'lit' : 'dark');
+  $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><circle r="70"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
+    + '<circle class="halo" r="108" fill="url(#q-halo)"/><g class="rays">' + Array.from({ length: 16 }, (_, k) => { const [x1, y1] = at(k * 22.5, 84), [x2, y2] = at(k * 22.5, k % 2 ? 100 : 108); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="5" stroke-linecap="round"/>'; }).join('') + '</g>'
+    + '<g clip-path="url(#q-win)"><g transform="scale(1.17)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<circle r="70" fill="#060818" opacity=".6"/>') + '</g>'
+    + '<circle r="72" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(54 54)"><circle r="24" fill="#0b0f2a" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
+/* who takes the lantern: the most points in the round; an owner keeps it on a tie, then the spinner */
+function endRound(){
+  R.phase = 'done'; stopTimer();
+  const i = R.d, before = S.owner[i], me = S.players.indexOf(spinner()), m = mult(); let head, line, taker = -1;
+  if (S.mode === 'versus' || S.mode === 'team') {
+    const best = Math.max(0, ...Object.values(R.got)), leaders = Object.keys(R.got).map(Number).filter(k => R.got[k] === best);
+    if (best > 0) taker = leaders.includes(before) ? before : leaders.includes(me) ? me : leaders.length === 1 ? leaders[0] : -1;
+  } else if (R.correct >= 2) taker = 0;
+  let bonus = 0;
+  if (taker >= 0 && taker !== before) { bonus = LANTERN * m; S.players[taker].pts += bonus; S.owner[i] = taker; }
+  const name = taker >= 0 ? S.players[taker].name : '';
+  if (S.mode === 'versus' || S.mode === 'team') {
+    if (taker < 0) { head = before >= 0 ? S.players[before].name + ' kept the lantern' : 'The lantern stays dark'; line = before >= 0 ? 'Nobody outscored its owner.' : 'Nobody scored enough to light it.'; }
+    else if (taker === before) { head = name + ' kept the lantern'; line = 'Defended, with the most points in the round.'; }
+    else if (before >= 0) { head = name + ' stole the lantern'; line = 'Taken from ' + S.players[before].name + ': ' + bonus + ' bonus points.'; }
+    else { head = name + ' lit the lantern'; line = 'The most points in the round, and ' + bonus + ' bonus points.'; }
+  } else if (taker >= 0) { head = before >= 0 ? 'Lit again' : 'Lantern lit'; line = R.correct + ' of ' + QPR + ' right' + (bonus ? ', and ' + bonus + ' bonus points.' : '.'); }
+  else { head = 'The lantern stays dark'; line = R.correct + ' of ' + QPR + ' right: two lights it.'; }
+  if (taker >= 0 && taker !== before) SFX.light();
+  S.history.push({ d: i, taker, before, correct: R.correct, got: R.got });
+  $('reHead').textContent = head; $('reLine').textContent = line;
+  $('roundTally').innerHTML = Object.keys(R.got).length ? Object.keys(R.got).map(k => { const p = S.players[k]; return '<li>' + symSvg(p.sym, COLOURS[p.colour]) + esc(p.name) + ': +' + R.got[k] + '</li>'; }).join('') : '<li>No points this round</li>';
+  paintReLantern(i, taker >= 0 ? taker : before);
+  $('qCount').textContent = 'Round over'; $('qBox').hidden = true; $('roundEnd').hidden = false; $('roundEnd').classList.remove('show'); void $('roundEnd').offsetWidth; $('roundEnd').classList.add('show'); $('backBtn').textContent = S.spin + 1 >= S.spins || (S.mode === 'coop' && S.owner.every(o => o >= 0)) ? 'See the night\'s results' : 'Back to the dial';
+  S.spin++; S.phase = 'between';
+  if (S.mode === 'versus' || S.mode === 'team') S.turn = (S.turn + 1) % S.players.length;
+  save(); setTimeout(() => $('backBtn').focus({ preventScroll: true }), 30);
+}
+$('backBtn').addEventListener('click', () => {
+  if (S.phase !== 'between') return;
+  if (S.spin >= S.spins || (S.mode === 'coop' && S.owner.every(o => o >= 0))) return finish();
+  const h = S.history[S.history.length - 1], won = h && h.taker >= 0 && h.taker !== h.before, d = R.d;
+  $('play').hidden = false; promptSpin(); save();
+  const c = STILL ? null : lanternCircle(d);
+  if (c && $('round').animate) { SFX.leave(); R.phase = 'leaving'; const a = iris(c, false); a.onfinish = () => { if (R && R.phase === 'leaving') show('play'); if (won) ignite(d); }; }
+  else show('play');
+});
+
+/* ---------- the end ---------- */
+function finish(){
+  S.phase = 'over'; store.del(SAVE); SFX.end(); show('end');
+  const P = S.players, multi = S.mode === 'versus' || S.mode === 'team';
+  let head = '', line = '';
+  if (multi) {
+    const order = P.map((p, i) => i).sort((a, b) => P[b].pts - P[a].pts || lanternsOf(b) - lanternsOf(a) || a - b), first = order[0];
+    const level = order.filter(i => P[i].pts === P[first].pts && lanternsOf(i) === lanternsOf(first));
+    head = level.length > 1 ? 'Level at the top' : 'Top of the night: ' + P[first].name;
+    line = level.length > 1 ? level.map(i => P[i].name).join(' and ') + ', on ' + P[first].pts + ' points and ' + lanternsOf(first) + ' lanterns each.' : P[first].pts + ' points and ' + lanternsOf(first) + (lanternsOf(first) === 1 ? ' lantern.' : ' lanterns.');
+    let pos = 0, prev = null;
+    $('endList').innerHTML = order.map((i, k) => { const key = P[i].pts + ':' + lanternsOf(i); if (key !== prev) { pos = k + 1; prev = key; }
+      return '<li><span class="pos">' + pos + '</span>' + symSvg(P[i].sym, COLOURS[P[i].colour]) + '<span class="nm">' + esc(P[i].name) + '</span><small>' + lanternsOf(i) + (lanternsOf(i) === 1 ? ' lantern' : ' lanterns') + '</small><span>' + P[i].pts + '</span></li>'; }).join('');
+  } else {
+    const lit = S.owner.filter(o => o >= 0).length, pts = P[0].pts;
+    if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lantern lit' : lit + ' of ' + N + ' lanterns lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Ten lights the whole dial.'; }
+    else { head = pts + ' points'; const key = 'tb-ten-lanterns-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
+      if (!S.practice) store.set(key, Math.max(best, pts));
+      line = lit + (lit === 1 ? ' lantern lit. ' : ' lanterns lit. ') + (S.practice ? 'Practice: not counted.' : pts > best ? 'A new best!' : 'Your best: ' + best + '.'); }
+    $('endList').innerHTML = '';
+  }
+  $('endHead').textContent = head; $('endLine').textContent = line;
+  $('endList').querySelectorAll('li').forEach((li, k) => li.style.setProperty('--k', k));
+  $('endLanterns').innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66';
+    return '<span' + (o >= 0 ? ' class="lit"' : '') + ' style="--k:' + i + ';--c:' + c + '"><svg viewBox="-80 -80 160 160" aria-hidden="true"><defs>' + (i === 0 ? ART.defs('e') : '') + '<clipPath id="e-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#e-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'e') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/>' + (o >= 0 ? '<g transform="translate(46 -46) scale(1.5)"><circle r="11" fill="#0b0f2a"/>' + ART.symbol(P[o].sym, c) + '</g>' : '') + '</svg>' + esc(d.name) + '</span>'; }).join('');
+  $('shareBox').hidden = S.mode !== 'daily';
+  if (S.mode === 'daily') {
+    const marks = S.history.map(h => h.taker >= 0 ? '🏮' : '⚫').join('');
+    $('shareText').textContent = 'Ten Lanterns · Daily Dial · ' + longDate(S.date) + '\n' + marks + '  ' + P[0].pts + ' points\ntierbrain.co/ten-lanterns.html';
+    if (!S.practice) store.set('tb-ten-lanterns-daily', { date: S.date, score: P[0].pts, marks });
+    $('shareNote').textContent = '';
+  }
+  $('end').classList.remove('show'); void $('end').offsetWidth; $('end').classList.add('show');
+  setTimeout(() => $('againBtn').focus({ preventScroll: true }), 30);
+}
+$('shareBtn').addEventListener('click', () => { const t = $('shareText').textContent, done = () => { $('shareNote').textContent = 'Copied. Paste it anywhere.'; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => { $('shareNote').textContent = 'Select the text above to copy it.'; });
+  else $('shareNote').textContent = 'Select the text above to copy it.'; });
+$('againBtn').addEventListener('click', () => newGame());
+$('changeBtn').addEventListener('click', () => { S = null; show('setup'); paintSetup(); paintResume(); });
+$('beginBtn').addEventListener('click', () => {
+  if (cfg.mode === 'versus' && cfg.names.length < 2) return;
+  if (store.get(SAVE, null) && !confirmLeave('Start a new game? The one in progress will be lost.')) return;
+  store.del(SAVE); newGame(); });
+$('quitBtn').addEventListener('click', () => { if (!confirmLeave('Leave this game? You can carry on later from the start screen.')) return; stopTimer(); S = null; show('setup'); paintSetup(); paintResume(); });
+$('fsBtn').addEventListener('click', () => { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => {}); });
+
+/* carrying on after a refresh: a game resumes at the start of the spin it was on */
+function paintResume(){ const g = store.get(SAVE, null); $('resumeBox').hidden = !g;
+  if (g) $('resumeText').textContent = 'A game is in progress: spin ' + Math.min(g.spin + 1, g.spins) + ' of ' + g.spins + ' (' + { solo: 'Solo', daily: 'Daily Dial', team: 'Teams', versus: 'Versus', coop: 'Together' }[g.mode] + ').'; }
+$('resumeBtn').addEventListener('click', () => { const g = store.get(SAVE, null); if (!g) return; S = g; shown = {}; if (S.mode === 'daily') plan = dailyPlan(S.date);
+  if (S.phase === 'between') { if (S.spin >= S.spins) return finish(); }
+  else if (S.phase === 'round' || S.phase === 'landed' || S.phase === 'spinning') S.phase = 'spin';
+  startPlay(); });
+$('discardBtn').addEventListener('click', () => { store.del(SAVE); paintResume(); });
+
+window.addEventListener('keydown', e => {
+  if (R && R.phase === 'intro' && !$('round').hidden && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); endIntro(); return; }
+  if (!$('round').hidden && (R && (R.phase === 'ask' || R.phase === 'steal'))) { const k = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 }[e.key.toLowerCase()]; if (k !== undefined) { const b = $('opts').querySelectorAll('.opt')[k]; if (b && !b.disabled) { e.preventDefault(); answer(k); } } }
+});
+
+paintSetup(); paintResume();
+window.__tl = { get S(){ return S; }, get R(){ return R; }, force(i){ forced = i; }, today, dailyPlan, D, rules: { QPR, PTS, STEAL, LANTERN, NUDGE } };
+</script>
+<script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
+</body>
+</html>
