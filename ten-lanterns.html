@@ -89,27 +89,38 @@ button:disabled{cursor:default}
 
 /* ---------- setup ---------- */
 #setup{max-width:1100px;margin:0 auto;padding:clamp(16px,3vw,40px) 16px 24px}
-.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;margin-bottom:22px}
-.hero h1{font-family:var(--head);font-weight:800;font-size:clamp(46px,7vw,92px);line-height:.95;margin:0}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;margin-bottom:clamp(10px,2vh,22px)}
+.hero h1{font-family:var(--head);font-weight:800;font-size:clamp(44px,min(7vw,10vh),96px);line-height:.95;margin:0;text-shadow:0 6px 30px rgba(0,0,0,.45)}
 .hero h1 span{color:var(--brass-2)}
 .hero .tag{font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,24px);color:#f6e6c4;margin:12px 0 0;max-width:34ch}
-#heroDial{width:clamp(150px,22vw,250px)}
+#heroDial{width:clamp(110px,min(24vw,30vh),300px);filter:drop-shadow(0 10px 40px rgba(240,180,76,.25))}
 .panel{background:rgba(10,12,34,.72);border:1px solid rgba(243,217,143,.22);border-radius:22px;padding:clamp(16px,2.4vw,28px);backdrop-filter:blur(6px)}
 .field{margin:0 0 20px}
 .field>span,.label{display:block;font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:.6px;text-transform:uppercase;color:var(--brass-2);margin-bottom:8px}
 .seg{display:flex;flex-wrap:wrap;gap:8px}
 .seg button{border:0;border-radius:14px;padding:10px 16px;background:rgba(255,255,255,.07);font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,255,255,.1)}
 .seg button[aria-pressed="true"]{background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:none}
-.modes button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:150px;flex:1 1 150px}
-.modes small{font-weight:700;font-size:13px;opacity:.82;margin-top:3px;line-height:1.3}
+.modes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.modes button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;padding:12px 14px;font-family:var(--head);font-size:clamp(17px,1.5vw,21px);line-height:1.1}
+.modes small{font-family:var(--body);font-weight:700;font-size:13px;opacity:.82;margin-top:4px;line-height:1.3}
+.step>span{display:flex;align-items:center;gap:8px}
+.step>span i{display:inline-flex;flex:none;width:26px;height:26px;border-radius:50%;background:var(--brass-2);color:var(--ink);align-items:center;justify-content:center;font-style:normal;font-size:15px;letter-spacing:0}
+.step>span b{font-weight:inherit}
+.steps{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:0 clamp(18px,3vw,40px);align-items:start}
+.rules{margin:0 0 12px;font-family:var(--flour);font-style:italic;font-size:clamp(16px,1.3vw,19px);color:#f6e6c4}
+.summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(243,217,143,.2)}
+.summary p{margin:0;flex:1 1 220px;font-weight:700;font-size:15px;line-height:1.45;color:#e8dcc2}
+.btn.begin{font-size:clamp(24px,2vw,30px);padding:16px clamp(40px,4vw,64px)}
+#settings{margin-top:6px;padding-top:18px;border-top:1px solid rgba(243,217,143,.2)}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px}
+@media (max-height:800px) and (min-width:901px){.field{margin-bottom:14px}.go{margin-top:12px}.hero{margin-bottom:6px}}
 .note{margin:8px 0 0;color:#e8dcc2;font-size:15px}
 .prow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .prow input,select{flex:1;min-width:0;font:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px}
 select option{color:#000}
 .prow .rm{border:0;background:transparent;font-size:22px;width:40px;height:40px;border-radius:10px;color:#f6e6c4}
 .prow .badge{width:34px;height:34px;flex:none}
-.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px}
-.go{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:6px}
+.go{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:16px}
 #resumeBox{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(243,217,143,.12);border:1px solid rgba(243,217,143,.4)}
 #resumeBox p{margin:0;flex:1 1 220px;font-weight:700}
 #playOn{margin-bottom:12px}
@@ -121,7 +132,9 @@ select option{color:#000}
 #netList{display:flex;flex-wrap:wrap;gap:8px}
 #netList span{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:900}
 #netList span.away{opacity:.45}
-#setupErr{color:#ff9a8a;font-weight:800;min-height:1.2em}
+#setupErr{color:#ff9a8a;font-weight:800;min-height:1.2em;margin:8px 0 0}
+.go .note:empty{display:none}
+#goField{margin-bottom:0}
 body.net #opts .opt{cursor:default}
 .rfoot{align-items:center}
 
@@ -278,14 +291,17 @@ body.net #opts .opt{cursor:default}
 @media (max-width:900px){
   .stage{grid-template-columns:minmax(0,1fr)}
   #dialWrap{width:min(100%,560px)}
-  .hero{grid-template-columns:1fr}
-  #heroDial{display:none}
-  .grid2{grid-template-columns:minmax(0,1fr)}
+  .steps,.sgrid{grid-template-columns:minmax(0,1fr)}
+  .modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modes button:last-child{grid-column:1 / -1}
 }
 @media (max-width:560px){
   #opts{grid-template-columns:1fr}
   .bar{flex-wrap:wrap}
-  .modes button{min-width:0;flex:1 1 100%}
+  .hero{gap:12px}
+  #heroDial{width:96px}
+  .modes small{font-size:12px}
+  .btn.begin{width:100%}
 }
 @media (prefers-reduced-motion:reduce){
   #sky i,#sky::before,#inner,#dial .chosen .ring,#reLantern .rays,#reLantern .halo,#timer.low i{animation:none}
@@ -305,14 +321,14 @@ body.net #opts .opt{cursor:default}
   <section class="hero">
     <div>
       <h1>Ten <span>Lanterns</span></h1>
-      <p class="tag">Spin the great dial, land on one of ten lantern worlds, and play its round.</p>
+      <p class="tag">Spin the great dial, land on one of ten lantern worlds, and play its game.</p>
     </div>
     <svg id="heroDial" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
   </section>
   <section class="panel" aria-labelledby="pHead">
     <h2 id="pHead" hidden>Set up a game</h2>
     <div id="resumeBox" hidden><p id="resumeText"></p><button class="btn small" id="resumeBtn" type="button">Carry on</button><button class="btn ghost small" id="discardBtn" type="button">Start afresh</button></div>
-    <div class="field"><span>How will you play?</span>
+    <div class="field step"><span><i>1</i>How will you play?</span>
       <div class="seg modes" id="mode" role="group" aria-label="Mode">
         <button type="button" data-v="solo">Solo<small>Light as many lanterns as you can</small></button>
         <button type="button" data-v="daily">Daily Dial<small>The same five spins for everyone today</small></button>
@@ -320,10 +336,9 @@ body.net #opts .opt{cursor:default}
         <button type="button" data-v="versus">Versus<small>2 to 10 players; light and steal lanterns</small></button>
         <button type="button" data-v="coop">Together<small>Everyone against the dial</small></button>
       </div>
-      <p class="note" id="modeNote"></p>
     </div>
-    <div class="grid2">
-      <div class="field" id="whoField"><span id="whoLabel">Players</span>
+    <div class="steps">
+      <div class="field step" id="whoField"><span><i>2</i><b id="whoLabel">Players</b></span>
         <div class="seg" id="playOn" role="group" aria-label="Play on"><button type="button" data-v="local">One screen</button><button type="button" data-v="phones">Phones as buzzers</button></div>
         <div id="lobbyBox" hidden>
           <div class="lobby"><div><span class="label">Join on your phones</span><b id="roomCode">·····</b><a id="joinUrl" href="#" target="_blank" rel="noopener"></a></div><img id="qr" alt="A code to scan with a phone camera" width="150" height="150" hidden></div>
@@ -332,7 +347,15 @@ body.net #opts .opt{cursor:default}
         <div id="plist"></div>
         <button class="btn ghost small" id="addBtn" type="button">Add a player</button>
       </div>
-      <div>
+      <div class="field step" id="goField"><span><i>3</i>Ready?</span>
+        <p class="note rules" id="modeNote"></p>
+        <div class="summary"><p id="summary"></p><button class="btn ghost small" id="setBtn" type="button" aria-expanded="false" aria-controls="settings">Change settings</button></div>
+        <div class="go"><button class="btn begin" id="beginBtn" type="button">Begin</button><span class="note" id="beginNote"></span></div>
+        <p class="note" id="setupErr" role="alert"></p>
+      </div>
+    </div>
+    <div id="settings" hidden>
+      <div class="sgrid">
         <div class="field" id="lengthField"><span>Length</span>
           <div class="seg" id="length" role="group" aria-label="Length">
             <button type="button" data-v="standard">Standard</button>
@@ -365,9 +388,8 @@ body.net #opts .opt{cursor:default}
           </div>
         </div>
       </div>
+      <button class="btn small" id="setDone" type="button">Done</button>
     </div>
-    <div class="go"><button class="btn" id="beginBtn" type="button">Begin</button><span class="note" id="beginNote"></span></div>
-    <p class="note" id="setupErr" role="alert"></p>
   </section>
 </main>
 
@@ -629,7 +651,7 @@ let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff:
 function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 function paintSetup(){
   setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); $('topic').value = cfg.topic;
-  $('modeNote').textContent = MODES[cfg.mode];
+  $('modeNote').textContent = MODES[cfg.mode]; paintSummary();
   $('lengthNote').textContent = LENGTHS[cfg.length].note;
   const daily = cfg.mode === 'daily';
   ['lengthField', 'topicField', 'diffField', 'styleField'].forEach(id => { $(id).hidden = daily; });
@@ -661,7 +683,19 @@ function paintDaily(){
   else { note.textContent = 'Today\'s dial: ' + longDate(d) + '.'; $('beginBtn').textContent = 'Spin today\'s dial'; }
 }
 ['mode', 'length', 'diff', 'timed', 'style', 'auto', 'playOn'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
-$('topic').addEventListener('change', () => { cfg.topic = $('topic').value; saveSetup(); });
+$('topic').addEventListener('change', () => { cfg.topic = $('topic').value; saveSetup(); paintSummary(); });
+/* everything most people leave alone, in one line; Change settings opens the full list */
+function paintSummary(){
+  const daily = cfg.mode === 'daily', topic = (TOPICS.find(t => t[0] === cfg.topic) || TOPICS[0])[1];
+  const parts = daily ? ['Today\'s five spins', 'World games'] : [{ standard: 'Standard, 20 min', long: 'Long, 40 min', evening: 'Whole evening, 90 min' }[cfg.length], topic,
+    { 1: 'Easy', 2: 'Medium', 3: 'Hard', mix: 'Mixed difficulty' }[cfg.diff], cfg.style === 'simple' ? 'Simple quiz' : 'World games'];
+  parts.push(cfg.timed === 'timed' ? '20 seconds to answer' : 'Relaxed answering', cfg.auto === 'tap' ? 'Tap to move on' : 'Moves on by itself');
+  $('summary').textContent = parts.join(' · ');
+}
+function openSettings(on){ $('settings').hidden = !on; $('setBtn').setAttribute('aria-expanded', String(on)); $('setBtn').textContent = on ? 'Hide settings' : 'Change settings';
+  if (on) setTimeout(() => $('settings').scrollIntoView({ behavior: STILL ? 'auto' : 'smooth', block: 'nearest' }), 30); }
+$('setBtn').addEventListener('click', () => openSettings($('settings').hidden));
+$('setDone').addEventListener('click', () => { openSettings(false); $('beginBtn').focus({ preventScroll: true }); $('goField').scrollIntoView({ behavior: STILL ? 'auto' : 'smooth', block: 'nearest' }); });
 $('plist').addEventListener('input', e => { const t = e.target; if (t.dataset.i !== undefined) cfg.names[+t.dataset.i] = t.value; else if (t.dataset.t !== undefined) cfg.teams[+t.dataset.t] = t.value; else if (t.dataset.one) { if (cfg.mode === 'coop') cfg.group = t.value; else cfg.solo = t.value; } saveSetup(); });
 $('plist').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; cfg.names.splice(+b.dataset.rm, 1); saveSetup(); paintWho(); });
 $('addBtn').addEventListener('click', () => { if (cfg.names.length < MAXP) { cfg.names.push(''); saveSetup(); paintWho(); const ins = $('plist').querySelectorAll('input'); ins[ins.length - 1].focus(); } });
