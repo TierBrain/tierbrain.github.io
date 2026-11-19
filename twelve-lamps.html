@@ -40,7 +40,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,700&family=Nunito:wght@600;700;800;900&display=swap">
 <style>
-/* Layout: a brass astrolabe drifts through a nebula. Ten lit windows are set into its face, each a tiny world.
+/* Layout: a brass astrolabe drifts through a nebula. Twelve lit windows are set into its face, each a tiny world.
    Spin it, it whirls and clicks, and the window that comes to rest under the pointer brightens; the camera
    sinks into it and that world becomes the backdrop of the round. Lamps won glow in the winner's colour
    and carry their symbol, so colour is never the only difference. */
@@ -326,7 +326,7 @@ body.net #opts .opt{cursor:default}
 <main id="setup" class="screen">
   <section class="hero">
     <div>
-      <h1>Ten <span>Lamps</span></h1>
+      <h1>Twelve <span>Lamps</span></h1>
       <p class="tag">Spin the great dial, land on one of twelve lamp worlds, and play its game.</p>
     </div>
     <svg id="heroDial" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
@@ -402,7 +402,7 @@ body.net #opts .opt{cursor:default}
 <!-- ============ the dial ============ -->
 <main id="play" class="screen" hidden>
   <header class="bar">
-    <div class="logo">Ten <span>Lamps</span></div>
+    <div class="logo">Twelve <span>Lamps</span></div>
     <span class="chip" id="spinCount"></span>
     <button class="btn ghost small" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
     <button class="btn ghost small" id="fsBtn" type="button">Full screen</button>
@@ -434,7 +434,7 @@ body.net #opts .opt{cursor:default}
   <div id="roundShade" aria-hidden="true"></div>
   <div id="roundBody">
   <header class="bar">
-    <div class="logo">Ten <span>Lamps</span></div>
+    <div class="logo">Twelve <span>Lamps</span></div>
     <span class="chip last" id="lastChip" hidden>Last spin: double points</span>
     <span class="chip" id="qCount"></span>
   </header>
@@ -480,6 +480,7 @@ body.net #opts .opt{cursor:default}
 <script src="ten-lanterns-worlds.js?v=1"></script>
 <script src="ten-lanterns-sound.js?v=1"></script>
 <script src="twelve-lamps-rounds.js?v=1"></script>
+<script src="twelve-lamps-scenes.js?v=1"></script>
 <script src="twelve-lamps-worlds.js?v=1"></script>
 <script>
 'use strict';
@@ -492,7 +493,7 @@ if (window.TL_ROUNDS) TL_ROUNDS.ensureStyle();
 const QPR = 3;                 // questions in a round
 const PTS = 10, STEAL = 10, LAMP = 20, NUDGE = 10;
 const TIME = 20000, STEAL_TIME = 12000;
-const LENGTHS = { standard: { spins: 10, note: 'About 20 minutes.' }, long: { spins: 20, note: 'About 40 minutes.' }, evening: { spins: 40, note: 'About 90 minutes: a whole evening.' } };
+const LENGTHS = { standard: { spins: 12, note: 'About 20 minutes.' }, long: { spins: 24, note: 'About 40 minutes.' }, evening: { spins: 48, note: 'About 90 minutes: a whole evening.' } };
 const MODES = {
   solo: 'Light a lamp by getting two of its three questions right. Beat your best score.',
   daily: 'Five spins, the same for everyone today, with no nudges. Light lamps, then share your score.',
@@ -1270,7 +1271,7 @@ function finish(){
       return '<li><span class="pos">' + pos + '</span>' + symSvg(P[i].sym, COLOURS[P[i].colour]) + '<span class="nm">' + esc(P[i].name) + '</span><small>' + lanternsOf(i) + (lanternsOf(i) === 1 ? ' lamp' : ' lamps') + '</small><span>' + P[i].pts + '</span></li>'; }).join('');
   } else {
     const lit = S.owner.filter(o => o >= 0).length, pts = P[0].pts;
-    if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lamp lit' : lit + ' of ' + N + ' lamps lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Ten lights the whole dial.'; }
+    if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lamp lit' : lit + ' of ' + N + ' lamps lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Twelve lights the whole dial.'; }
     else { head = pts + ' points'; const key = 'tb-ten-lanterns-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
       if (!S.practice) store.set(key, Math.max(best, pts));
       line = lit + (lit === 1 ? ' lamp lit. ' : ' lamps lit. ') + (S.practice ? 'Practice: not counted.' : pts > best ? 'A new best!' : 'Your best: ' + best + '.'); }

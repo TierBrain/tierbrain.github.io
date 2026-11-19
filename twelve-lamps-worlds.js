@@ -43,7 +43,8 @@ const st=document.createElement('style');
 st.textContent='.tlb-drift{animation:tlbd 40s ease-in-out infinite alternate}@keyframes tlbd{to{transform:scale(1.07)}}@media (prefers-reduced-motion:reduce){.tlb-drift{animation:none}}';
 document.head.appendChild(st);
 const scene=Wd.scene;
-Wd.scene=id=>M[id]?'<svg class="tlw tlb" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs>'+A.defs('tlb')+'</defs><g transform="translate(800 450)"><g class="tlb-drift"><g transform="scale(15)">'+A.mini(id,'tlb')+'</g></g></g></svg>':scene(id);
+const B=window.TL_BIBLE_SCENES||{};
+Wd.scene=id=>B[id]?(scene('rome'),(w=>'<svg class="tlw tlw-'+id+'" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs>'+w.defs+'</defs>'+w.body+'</svg>')(B[id]())):M[id]?'<svg class="tlw tlb" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs>'+A.defs('tlb')+'</defs><g transform="translate(800 450)"><g class="tlb-drift"><g transform="scale(15)">'+A.mini(id,'tlb')+'</g></g></g></svg>':scene(id);
 
 const SM={redsea:'rome',jonah:'submarine',paul:'flight',joseph:'railway',galilee:'galleon',scroll:'cave',ark:'balloon',lamps:'manor',nehemiah:'bigtop',jacob:'city',sinai:'cave',daniel:'cave'};
 const start0=S.start; S.start=(id,ac,out)=>start0(SM[id]||id,ac,out);
