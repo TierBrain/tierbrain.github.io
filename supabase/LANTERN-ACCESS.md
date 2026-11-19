@@ -42,7 +42,9 @@ one as a **prompt**:
   or a lapsed turn locks that player out and reopens the question, extending
   its clock by the time spent; when every named player is locked out it closes.
 - **choose**: a decision with no right answer (dive or surface, name the thief).
-  Options the TV marks disabled cannot be chosen.
+  It allows 2–10 options, including rival selection in a ten-player game.
+  Options the TV marks disabled cannot be chosen. Graded answer and buzz
+  questions still require exactly four options.
 - **claim**: a "tap your name" moment such as a steal. The first press closes it.
 
 The TV host remains the **trusted question author and scorekeeper**, as in the
@@ -60,6 +62,9 @@ The server enforces:
   returns the current state, a changed answer is refused. Presses are idempotent.
 - Optional windows (3–120 s) are applied by a deterministic `settle()` on the next
   read or action, from the server clock only, so any caller may trigger it.
+  The clock is read after acquiring the prompt row lock, and actions recheck
+  their deadline before recording a press or answer. A request queued before
+  expiry cannot win after its deadline passes while it waits for another call.
 - One prompt at a time: a new prompt cannot open over a live one.
 - The host can close an unfinished prompt with **no** winner ("No steal",
   "Nobody", or a phone that has stopped answering). It cannot answer, choose or
@@ -85,10 +90,11 @@ retention deletion: no cron job or data deletion is introduced. Add
 
 ## Verification
 
-- `tests/check_lantern_access.py`: 79 checks against a disposable PostgreSQL:
+- `tests/check_lantern_access.py`: acceptance checks against a disposable PostgreSQL:
   privileges, identity, every prompt kind and window, the three-way press race,
-  replays, leaving, untouched neighbours (including `ruffled_private`), and
-  rollback. Runs in the pinned cached Docker image like the other room checks,
+  replays, leaving, ten-option ungraded decisions, deadline contention across
+  all four prompt kinds and chooser turns, untouched neighbours (including
+  `ruffled_private`), and rollback. Runs in the pinned cached Docker image like the other room checks,
   or with `--local-pgbin` (non-root).
 - `tests/lantern_phone_checks.py --local-pgbin …`: a TV page and three phones in
   real browsers against the same SQL through a local stand-in for the HTTP layer,
@@ -102,3 +108,4 @@ of rollout, as for the other room types.
 
 `supabase/rollback/secure_lantern_rooms.sql` removes all client execution and
 keeps every record. One-screen play is unaffected.
+

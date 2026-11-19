@@ -2,8 +2,9 @@
 """Disposable PostgreSQL acceptance for Ten Lanterns phone rooms.
 
 No live project or HTTP is contacted. Like the other room checks, a driver-set
-auth.uid() subject stands in for verified guest sessions, and windows are tested
-by moving stored timestamps rather than sleeping. Real JWT/PostgREST and phone
+auth.uid() subject stands in for verified guest sessions. Most windows move
+stored timestamps; contention cases wait across actual server deadlines.
+Real JWT/PostgREST and phone
 browser checks remain separate.
 
 Runs in the pinned, cached Docker image like the other room checks, or against
@@ -16,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
+import secrets
+import time
 from uuid import uuid4
 
 from check_show_access import LEGACY_AUDIT_SQL, literal
@@ -34,7 +37,7 @@ RPCS = ('lantern_create_room', 'lantern_host_state', 'lantern_begin_game', 'lant
 def run_checks(report_path: str, pgbin: str | None) -> dict:
     actors = {a: str(uuid4()) for a in ('H', 'P1', 'P2', 'P3', 'P4', 'X')}
     report = {'tests': [], 'limits': ['Driver-set auth.uid() subject; no GoTrue JWT validation',
-                                      'Windows moved by editing timestamps, not by waiting']}
+                                      'Most windows moved by editing timestamps; contention crosses real deadlines']}
     with Database(pgbin) as db:
         def context(actor, statement, role='authenticated'):
             subject = actors[actor] if actor else ''
@@ -246,6 +249,16 @@ def run_checks(report_path: str, pgbin: str | None) -> dict:
         s = call('P2', 'lantern_answer', code=code, prompt_id=c1, choice=3)
         record('a choice closes with what was chosen', s['prompt']['reason'] == 'chosen' and s['prompt']['choice'] == 3 and s['prompt']['winner'] == members['P2'] and s['prompt']['correct'] is None)
         bad('every option disabled is refused', {'kind': 'choose', 'eligible': [members['P1']], 'q': 'Pick', 'opts': ['a', 'b'], 'disabled': [0, 1]})
+        ten_options = ['Player ' + str(i + 1) for i in range(10)]
+        bad('a choice cannot offer eleven options', {'kind':'choose', 'eligible':[members['P2']], 'q':'Pick', 'opts':ten_options + ['Extra']})
+        bad('a graded question still cannot offer seven options', {'kind':'answer', 'eligible':[members['P2']], 'q':'Pick', 'opts':ten_options[:7], 'correct':0})
+        bad('a disabled index outside ten options is refused', {'kind':'choose', 'eligible':[members['P2']], 'q':'Pick', 'opts':ten_options, 'disabled':[10]})
+        s = prompt({'kind':'choose', 'eligible':[members['P2']], 'q':'Which rival?', 'opts':ten_options, 'disabled':[8]})
+        c10 = s['prompt']['id']
+        denied('the ninth option may be disabled in a ten-option decision', '22023', 'P2', 'lantern_answer', code=code, prompt_id=c10, choice=8)
+        denied('an answer index beyond ten options is refused', '22023', 'P2', 'lantern_answer', code=code, prompt_id=c10, choice=10)
+        s = call('P2', 'lantern_answer', code=code, prompt_id=c10, choice=9)
+        record('a ten-option decision accepts and records its tenth option', s['prompt']['reason'] == 'chosen' and s['prompt']['choice'] == 9 and s['prompt']['winner'] == members['P2'])
         s = prompt({'kind': 'claim', 'eligible': [members['P2'], members['P3']], 'q': 'Steal it? Tap your name.', 'opts': [], 'window_ms': 8000})
         k1 = s['prompt']['id']
         denied('a player not offered the claim cannot take it', '42501', 'P1', 'lantern_press', code=code, prompt_id=k1)
@@ -254,6 +267,100 @@ def run_checks(report_path: str, pgbin: str | None) -> dict:
         record('the first to claim takes it', s['prompt']['closed'] and s['prompt']['reason'] == 'claimed' and s['prompt']['winner'] == members['P3'])
         denied('the second claim is beaten to it', '42501', 'P2', 'lantern_press', contains='Beaten to it', code=code, prompt_id=k1)
         record('claiming again is harmless', call('P3', 'lantern_press', code=code, prompt_id=k1)['prompt']['winner'] == members['P3'])
+
+        # ---------- queued calls must use the clock after acquiring the row ----------
+        def keep_present():
+            # Real phones poll while these wall-clock contention cases run.
+            for actor in ('P1', 'P2', 'P3'):
+                call(actor, 'lantern_player_state', code=code)
+
+        def wait_for_sql(statement):
+            until = time.monotonic() + 8
+            while time.monotonic() < until:
+                if db.sql(statement) == 't':
+                    return True
+                time.sleep(0.05)
+            return False
+
+        def blocked_call(prompt_id, actor, statement, deadline_column='deadline'):
+            # The holder never modifies the row: the waiter's pre-lock snapshot
+            # is otherwise valid. Only wall-clock expiry makes the action late.
+            holder_name = 'lantern-holder-' + secrets.token_hex(6)
+            waiter_name = 'lantern-waiter-' + secrets.token_hex(6)
+            db.sql("UPDATE lantern_private.prompts SET " + deadline_column
+                   + "=clock_timestamp()+interval '5 seconds' WHERE id=" + literal(prompt_id) + ';')
+            holder_sql = ("BEGIN; SET LOCAL application_name=" + literal(holder_name) + ";"
+                          "SELECT id FROM lantern_private.prompts WHERE id=" + literal(prompt_id) + " FOR UPDATE;"
+                          "SELECT pg_sleep(GREATEST(0,extract(epoch FROM (" + deadline_column + "-clock_timestamp())))+0.3) "
+                          "FROM lantern_private.prompts WHERE id=" + literal(prompt_id) + ";"
+                          "SELECT clock_timestamp()>=" + deadline_column + " FROM lantern_private.prompts WHERE id="
+                          + literal(prompt_id) + ";COMMIT;")
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                holder = pool.submit(db.run, holder_sql)
+                assert wait_for_sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=" + literal(holder_name)
+                                    + " AND wait_event='PgSleep');"), 'row-lock holder did not become ready'
+                waiter = pool.submit(db.run, context(actor, "SET LOCAL application_name=" + literal(waiter_name)
+                                     + ";\n\\set VERBOSITY verbose\n" + statement))
+                assert wait_for_sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity w CROSS JOIN lantern_private.prompts p "
+                                    "WHERE w.application_name=" + literal(waiter_name) + " AND p.id=" + literal(prompt_id)
+                                    + " AND w.wait_event_type='Lock' AND w.query_start<p." + deadline_column
+                                    + " AND clock_timestamp()<p." + deadline_column
+                                    + " AND EXISTS(SELECT 1 FROM pg_stat_activity h WHERE h.application_name=" + literal(holder_name)
+                                    + " AND h.pid=ANY(pg_blocking_pids(w.pid))));"), 'call did not queue before its deadline'
+                held, waited = holder.result(), waiter.result()
+            assert held.returncode == 0 and held.stdout.strip().splitlines()[-1] == 't', 'holder did not cross the deadline'
+            return waited
+
+        for kind in ('answer', 'choose', 'buzz', 'claim'):
+            keep_present()
+            if kind == 'choose':
+                spec = {'kind':kind, 'eligible':[members['P1']], 'q':'Dive?', 'opts':['Dive','Surface'], 'window_ms':10000}
+            elif kind == 'claim':
+                spec = {'kind':kind, 'eligible':roster, 'q':'Steal?', 'opts':[], 'window_ms':10000}
+            else:
+                spec = dict(Q, kind=kind, eligible=roster, correct=0, window_ms=10000)
+            s = prompt(spec)
+            pid = s['prompt']['id']
+            db.sql("UPDATE lantern_private.prompts SET open_at=clock_timestamp()-interval '1 second' WHERE id=" + literal(pid) + ';')
+            function = 'lantern_press' if kind in ('buzz', 'claim') else 'lantern_answer'
+            statement = "SELECT public." + function + '(' + literal(code) + ',' + literal(pid) + (',0' if function == 'lantern_answer' else '') + ');'
+            late = blocked_call(pid, 'P1', statement)
+            record(kind + ': an action queued before expiry is refused after the row lock releases',
+                   late.returncode != 0 and '42501' in late.stderr
+                   and ('Beaten to it' if kind == 'claim' else 'This question has closed') in late.stderr)
+            unchanged = json.loads(db.sql("SELECT json_build_object('chooser',p.chooser_id,'winner',p.winner_id,"
+                "'presses',(SELECT count(*) FROM lantern_private.presses WHERE prompt_id=p.id),"
+                "'answers',(SELECT count(*) FROM lantern_private.answers WHERE prompt_id=p.id)) "
+                "FROM lantern_private.prompts p WHERE p.id=" + literal(pid) + ';'))
+            record(kind + ': the late action records no press, answer, chooser or winner',
+                   unchanged == {'chooser':None,'winner':None,'presses':0,'answers':0})
+            s = call('H', 'lantern_host_state', code=code)
+            record(kind + ': the next poll resolves expiry with no winner',
+                   s['prompt']['closed'] and s['prompt']['reason'] == 'time' and s['prompt']['winner'] is None)
+
+        keep_present()
+        s = prompt(dict(Q, kind='buzz', eligible=roster, correct=0, window_ms=30000))
+        pid = s['prompt']['id']
+        shift(pid, 2)
+        call('P1', 'lantern_press', code=code, prompt_id=pid)
+        late = blocked_call(pid, 'P1', "SELECT public.lantern_answer(" + literal(code) + ',' + literal(pid) + ',0);', 'choose_deadline')
+        record('a buzz chooser cannot answer after a deadline crossed while queued',
+               late.returncode != 0 and '42501' in late.stderr)
+        s = call('H', 'lantern_host_state', code=code)
+        record('the expired queued chooser is locked out without an answer',
+               s['prompt']['locked'] == [members['P1']] and s['prompt']['chooser'] is None and not s['prompt']['closed']
+               and db.sql("SELECT count(*) FROM lantern_private.answers WHERE prompt_id=" + literal(pid) + ';') == '0')
+        s = call('H', 'lantern_end_prompt', code=code, prompt_id=pid, expected_version=version, request_id=str(uuid4()))
+        version = s['version']
+
+        keep_present()
+        s = prompt(dict(Q, kind='answer', eligible=[members['P1']], correct=0, window_ms=10000))
+        pid = s['prompt']['id']
+        polled = blocked_call(pid, 'H', "SELECT public.lantern_host_state(" + literal(code) + ');')
+        polled_state = json.loads(polled.stdout.strip()) if polled.returncode == 0 else {}
+        record('a host poll queued before expiry returns the settled state after acquiring the row',
+               polled_state.get('prompt', {}).get('closed') is True
+               and polled_state['prompt']['reason'] == 'time' and polled_state['prompt']['winner'] is None)
 
         # ---------- leaving and finishing ----------
         call('P3', 'lantern_leave', code=code)
@@ -296,3 +403,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

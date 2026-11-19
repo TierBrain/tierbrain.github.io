@@ -311,10 +311,17 @@ body.net #opts .opt{cursor:default}
   #lastBanner{animation:none;opacity:0}
   #cut,#finale,#cutFlash{display:none}
 }
+.net-issue{position:fixed;left:16px;right:16px;bottom:16px;z-index:100;background:#fff0d6;color:#241d11;border:3px solid #b77920;border-radius:16px;padding:14px;box-shadow:0 8px 28px #0008}
+.net-issue p{margin:0 0 10px;font-weight:800}.net-issue button{margin-right:8px}
 </style>
 </head>
 <body>
 <div id="sky" aria-hidden="true"></div>
+<aside class="net-issue" id="netIssue" role="alert" hidden>
+  <p id="netIssueText"></p>
+  <button class="btn" id="netRetry" type="button" hidden>Retry last request</button>
+  <button class="btn" id="netReload" type="button">Reload</button>
+</aside>
 
 <!-- ============ setup ============ -->
 <main id="setup" class="screen">
@@ -862,11 +869,23 @@ function goIn(){
    each answer hidden until its question closes, decides who pressed first and lets only the named players act;
    the TV follows it and keeps the score. If a phone cannot be reached, that moment falls back to the big screen. */
 const SB_URL = 'https://cgrbwtcydgfkbqhseeap.supabase.co', SB_KEY = 'sb_publishable_YHNDjX8gcSYJYJVWo_TmMw_8z6BBVAU';
-let NET = null; const net = { access: null, members: [], lobbyTimer: 0, gameTimer: 0, gen: 0, busy: false, ticking: false };
+let NET = null; const net = { access: null, members: [], lobbyTimer: 0, gameTimer: 0, gen: 0, busy: false, ticking: false, lobbyTicking: false, issue: null };
 function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => no(new Error('load')); document.head.appendChild(el); }); }
 async function netAccess(){ if (net.access) return net.access; if (!window.LanternAccess) { if (!window.supabase) await loadScript('vendor/supabase.js'); await loadScript('js/lantern-access.js'); }
-  net.access = LanternAccess.create(SB_URL, SB_KEY); return net.access; }
+  net.access = LanternAccess.create(SB_URL, SB_KEY);
+  net.access.onIssue(detail => { if (detail.recovered) clearNetIssue('pending');
+    else showNetIssue(detail.error, 'pending', detail.canRetry); });
+  return net.access; }
 function netMsg(e){ return net.access ? net.access.message(e) : 'Phone play could not load. Check your connection and try again.'; }
+function clearNetIssue(source){ if (source && (!net.issue || net.issue.source !== source)) return; net.issue = null; $('netIssue').hidden = true; }
+function showNetIssue(error, source, canRetry){
+  if (net.issue && net.issue.source === 'pending' && source !== 'pending') return;
+  if (net.issue && source === 'poll' && net.issue.source !== 'poll') return;
+  net.issue = { error, source }; $('netIssueText').textContent = netMsg(error);
+  $('netRetry').hidden = !canRetry; $('netRetry').disabled = false; $('netRetry').textContent = 'Retry last request'; $('netIssue').hidden = false;
+}
+$('netRetry').addEventListener('click', () => { if (!net.access || $('netRetry').disabled) return; $('netRetry').disabled = true; $('netRetry').textContent = 'Retrying…'; net.access.retry(); });
+$('netReload').addEventListener('click', () => location.reload());
 const mid = i => S.players[i].mid;
 const phonesLive = () => !!(S && S.phones && R && !R.netLocal && (R.pid || R.opening));
 function paintJoin(){ if (!NET || !NET.code) return;
@@ -880,18 +899,21 @@ async function openLobby(){
   try {
     const access = await netAccess(); if (g !== net.gen) return;
     let room = null; const saved = NET && NET.code || access.savedHostCode();
-    if (saved) { try { room = await access.hostState(saved); if (room.phase !== 'lobby') room = await access.setPhase('lobby'); } catch (e) { access.forgetHost(); room = null; } }
+    if (saved) { try { room = await access.hostState(saved); if (room.phase !== 'lobby') room = await access.setPhase('lobby'); }
+      catch (e) { if (e.code === '42501' || e.status === 403 || access.unavailable(e)) { access.forgetHost(); room = null; } else throw e; } }
     if (!room) room = await access.createRoom();
     if (g !== net.gen) return;
     NET = NET || {}; NET.code = room.code; paintJoin();
-    $('lobbyMsg').textContent = 'Waiting for players to join…';
+    clearNetIssue('lobby'); $('lobbyMsg').textContent = 'Waiting for players to join…';
     lobbyTick(); net.lobbyTimer = setInterval(lobbyTick, 1500);
-  } catch (e) { if (g === net.gen) { $('lobbyMsg').textContent = netMsg(e); $('roomCode').textContent = '·····'; } }
+  } catch (e) { if (g === net.gen) { showNetIssue(e, 'lobby'); $('lobbyMsg').textContent = netMsg(e); $('roomCode').textContent = '·····'; } }
 }
 async function lobbyTick(){
-  if (!NET || !NET.code || net.busy || $('setup').hidden) return;
-  try { const st = await net.access.hostState(NET.code); net.members = st.members || []; paintLobby(); }
-  catch (e) { $('lobbyMsg').textContent = netMsg(e); }
+  if (!NET || !NET.code || net.busy || net.lobbyTicking || $('setup').hidden) return;
+  const g = net.gen; net.lobbyTicking = true;
+  try { const st = await net.access.hostState(NET.code); if (g !== net.gen || $('setup').hidden) return; clearNetIssue('poll'); net.members = st.members || []; paintLobby(); }
+  catch (e) { if (g === net.gen) { showNetIssue(e, 'poll'); $('lobbyMsg').textContent = netMsg(e); } }
+  finally { net.lobbyTicking = false; }
 }
 const netPlayers = () => net.members.filter(m => m.seen).slice(0, MAXP);
 function paintLobby(){
@@ -916,8 +938,8 @@ async function netBegin(){
 function netWatch(on){ clearInterval(net.gameTimer); net.gameTimer = on ? setInterval(netTick, 300) : 0; document.body.classList.toggle('net', !!on); }
 async function netTick(){
   if (!NET || net.ticking || !R || !R.pid) return; net.ticking = true;
-  try { const st = await net.access.hostState(NET.code); NET.room = st; if (st.prompt && R && st.prompt.id === R.pid) netApply(st.prompt); }
-  catch (e) { $('rmsg').textContent = netMsg(e); }
+  try { const st = await net.access.hostState(NET.code); clearNetIssue('poll'); NET.room = st; if (st.prompt && R && st.prompt.id === R.pid) netApply(st.prompt); }
+  catch (e) { showNetIssue(e, 'poll'); $('rmsg').textContent = netMsg(e); }
   finally { net.ticking = false; }
 }
 /* open a moment on the phones; if they cannot be reached, it falls back to the big screen */
@@ -955,7 +977,10 @@ function netApply(p){
   else if (R.pkind === 'choose') { if (p.reason === 'chosen') chosen(p.choice); }
   else if (R.pkind === 'claim') pickName(p.reason === 'claimed' ? at(p.winner) : -1);
 }
-function netFinish(){ netWatch(false); if (net.access && NET && NET.code) net.access.setPhase('final').catch(() => {}); }
+function netFinish(){
+  if (!net.access || !NET || !NET.code) { netWatch(false); return; }
+  net.access.setPhase('final').then(() => netWatch(false), e => showNetIssue(e, 'final'));
+}
 
 /* ---------- a round: each world plays its own game, built from a few shared pieces ---------- */
 const AUTO = { right: 2600, miss: 4000 };
@@ -1035,7 +1060,8 @@ function question(q, o){
     if (o.reveal === 'words') { const ws = q.q.split(/\s+/); $('qText').innerHTML = ws.map(w => '<span class="w">' + esc(w) + '</span>').join(' '); R.words = { n: ws.length, shown: 0, t: setInterval(torchStep, STILL ? 260 : 430) }; torchStep(); }
     else $('qText').textContent = q.q;
     $('opts').innerHTML = q.opts.map((t, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(t) + '</span></button>').join('');
-    if (S.phones) netOpen(open ? { kind: 'buzz', eligible: R.pool.map(mid), q: q.q, opts: q.opts, correct: q.opts.indexOf(q.correct) } : { kind: 'answer', eligible: [mid(R.active)], q: q.q, opts: q.opts, correct: q.opts.indexOf(q.correct) }, o.time || TIME);
+    const phoneQ = o.reveal === 'words' ? 'Watch the words appear on the big screen.' : q.q;
+    if (S.phones) netOpen(open ? { kind: 'buzz', eligible: R.pool.map(mid), q: phoneQ, opts: q.opts, correct: q.opts.indexOf(q.correct) } : { kind: 'answer', eligible: [mid(R.active)], q: phoneQ, opts: q.opts, correct: q.opts.indexOf(q.correct) }, o.time || TIME);
     if (open) openBuzz(); else { R.phase = 'ask'; $('opts').className = S.phones ? '' : 'opts-live'; if (!S.phones) focusFirst(); }
     paintWho2(); startTimer(o.time || TIME);
   });
@@ -1297,3 +1323,4 @@ window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NE
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
 </body>
 </html>
+

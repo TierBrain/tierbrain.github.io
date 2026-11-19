@@ -21,6 +21,7 @@ import tempfile
 import traceback
 
 from browser_env import BrowserEnv
+from migration_order import reviewed_migrations
 
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ROOT/'tests/big_quiz_stack'
@@ -87,13 +88,11 @@ def run(family, report_path, *, module_path=None, env_class=BrowserEnv, browser_
         browser_env = None
         bridge = None
         try:
-            migrations = sorted((ROOT/'supabase/migrations').glob('*.sql'))
-            if len(migrations) != 10:
-                raise AssertionError('Review fixture order when migration set changes')
+            migrations = reviewed_migrations(ROOT/'supabase/migrations')
             inputs = [*migrations,SHARED/'compose.yaml',SHARED/'bootstrap.sql',SHARED/'auth-claims.sql',
                       ROOT/'tests/fixtures/show_auth_baseline.sql',ROOT/'tests/fixtures/legacy_retirement_baseline.sql',
                       ROOT/'tests/fixtures/scores_baseline.sql',Path(__file__),Path(__file__).with_name('browser_env.py'),
-                      module_path,ROOT/'vendor/supabase.js']
+                      module_path,ROOT/'vendor/supabase.js',Path(__file__).with_name('migration_order.py')]
             inputs += list(extra_inputs)
             inputs += list(ROOT.glob('js/*.js'))
             inputs += list(ROOT.glob('*.js'))
@@ -217,3 +216,4 @@ if __name__ == '__main__':
     result = run(args.family,args.report.resolve())
     print(json.dumps({key:result[key] for key in ('passed','cleanup_completed')}))
     raise SystemExit(0 if result['passed'] else 1)
+

@@ -33,7 +33,8 @@
     if(error&&/locked out/.test(error.message))return 'You are locked out of this question.';
     if(error&&/not your turn|closed|not in this one|Nothing to/.test(error.message))return 'This has moved on. Watch the big screen.';
     if(error&&/Name must/.test(error.message))return 'Choose a name of 1 to 14 characters.';
-    if(error&&/limit reached/.test(error.message))return 'This room is full.';
+    if(error&&/Room player limit reached/.test(error.message))return 'This room is full.';
+    if(error&&error.code==='54000')return 'The game limit has been reached. Try again later or play on one screen.';
     if(error&&(error.code==='42501'||error.status===403))return 'That room is no longer available. Check the code on the big screen.';
     return 'Could not reach the game. Check your connection and try again.';
   }
@@ -105,7 +106,7 @@
             adopt(result);pending=null;notify({recovered:true});return result;
           }catch(error){
             // Refusals that rolled back completely go straight to the caller.
-            if(unavailable(error)||error.code==='PT412'||error.code==='22023'||error.code==='42501')throw error;
+            if(unavailable(error)||error.code==='PT412'||error.code==='22023'||error.code==='42501'||error.code==='54000')throw error;
             uncertain=true;
             // Keep the exact request/version/UUID until its outcome is known.
             await new Promise(resolve=>{
@@ -147,3 +148,4 @@
   }
   global.LanternAccess=Object.freeze({create});
 })(window);
+

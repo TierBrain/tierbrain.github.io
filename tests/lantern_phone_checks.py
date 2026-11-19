@@ -15,6 +15,7 @@ import argparse
 import functools
 import http.server
 import json
+import os
 from pathlib import Path
 import re
 import socketserver
@@ -94,7 +95,8 @@ def run(pgbin, shots=None):
         server = serve(db)
         base = 'http://127.0.0.1:%d' % server.server_address[1]
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            executable = os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE')
+            browser = p.chromium.launch(**({'executable_path': executable} if executable else {}))
             errors = []
 
             def page(w, h, mobile=False):
@@ -282,3 +284,4 @@ if __name__ == '__main__':
     ap.add_argument('--shots')
     a = ap.parse_args()
     run(a.local_pgbin, a.shots)
+
