@@ -1,7 +1,8 @@
-"""Ten Lanterns: spin the great dial, land on one of ten lantern worlds and play its round (stage 1, one screen)."""
+"""Ten Lanterns: spin the great dial, land on one of ten lantern worlds and play its game."""
 import functools
 import http.server
 import os
+import json
 import re
 import socketserver
 import threading
@@ -22,13 +23,20 @@ def page_text():
 
 
 class TenLanternsPageTests(unittest.TestCase):
-    def test_page_stays_unlisted_while_it_is_built(self):
+    def test_page_is_published_and_listed_once(self):
         html = page_text()
-        self.assertIn('<meta name="robots" content="noindex">', html)
+        self.assertNotIn('noindex', html.lower())
         self.assertIn('<link rel="canonical" href="https://tierbrain.co/ten-lanterns.html">', html)
         self.assertIn('<title>Ten Lanterns | Free quiz game | TierBrain</title>', html)
-        self.assertNotIn('ten-lanterns.html', (ROOT / 'index.html').read_text(encoding='utf-8'))
-        self.assertNotIn('ten-lanterns.html', (ROOT / 'sitemap.xml').read_text(encoding='utf-8'))
+        self.assertEqual((ROOT / 'sitemap.xml').read_text(encoding='utf-8').count('<loc>https://tierbrain.co/ten-lanterns.html</loc>'), 1)
+        home = (ROOT / 'index.html').read_text(encoding='utf-8')
+        self.assertEqual(home.count('<a class="tc" href="ten-lanterns.html" data-cat="game multiplayer" data-title="Ten Lanterns"'), 1)
+        self.assertEqual(home.count('data-title="Ten Lanterns"'), 1)
+        catalogue = json.loads((ROOT / 'docs/readiness-catalogue.json').read_text(encoding='utf-8'))
+        self.assertEqual(sum(1 for row in catalogue['entries'] if row['href'] == 'ten-lanterns.html'), 1)
+        self.assertNotIn('\u2014', home.split('href="ten-lanterns.html" data-cat')[1].split('</a>')[0])
+        # the phone page stays out of search and out of the sitemap
+        self.assertNotIn('ten-lanterns-play.html', (ROOT / 'sitemap.xml').read_text(encoding='utf-8'))
 
     def test_uses_shared_banks_the_sound_switch_and_no_backend(self):
         html = page_text()
