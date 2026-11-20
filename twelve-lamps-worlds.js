@@ -56,7 +56,7 @@ const B=window.TL_BIBLE_SCENES||{};
 Wd.scene=id=>B[id]?(scene('rome'),(w=>'<svg class="tlw tlw-'+id+'" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs>'+w.defs+'</defs>'+w.body+'</svg>')(B[id]())):M[id]?'<svg class="tlw tlb" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs>'+A.defs('tlb')+'</defs><g transform="translate(800 450)"><g class="tlb-drift"><g transform="scale(15)">'+A.mini(id,'tlb')+'</g></g></g></svg>':scene(id);
 
 const SM={redsea:'rome',jonah:'submarine',paul:'flight',joseph:'railway',galilee:'galleon',scroll:'cave',ark:'balloon',lamps:'manor',nehemiah:'bigtop',jacob:'city',sinai:'cave',daniel:'cave'};
-const start0=S.start; S.start=(id,ac,out)=>start0(SM[id]||id,ac,out);
+/* each biblical world now has its own soundscape in twelve-lamps-sound.js */
 
 const T=R.types, al=(id,from,o)=>{T[id]=Object.assign({},T[from],o||{});};
 al('redsea','rome',{title:'Race through the sea',rule:c=>c.multi?'Two parties cross the sea bed, with Pharaoh\u2019s chariots behind. Each question is open to both: tap your name to answer. Three right answers reach the far shore.':'Cross the sea bed with Pharaoh\u2019s chariots behind you. Every right answer pulls you ahead; every miss lets them gain. First to three wins.'});
