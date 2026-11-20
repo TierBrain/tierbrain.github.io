@@ -37,7 +37,16 @@ const M={
  sinai:p=>s(p,'sinai')+stars('#dcd6ff')+pa('M-60 60L-14 -34L12 -6L26 -22L60 60Z','#4b3f5e')+pa('M-14 -34L-6 -20L-14 -22L-20 -16Z','#e8e4f2',.8)+pa('M-30 -36Q-14 -52 4 -38Q22 -50 38 -34Q20 -26 2 -30Q-18 -22 -30 -36Z','#9a92b8',.7)+pa('M8 -30L2 -14H8L2 4L14 -16H8L13 -30Z','#ffe680')+rc(-22,26,13,20,'#e8dfc8')+rc(-6,26,13,20,'#e8dfc8'),
  daniel:p=>s(p,'daniel')+pa('M-60 -60H60V-40L-60 -40Z','#2a1f18')+pa('M-8 -60H8L26 20H-26Z','#ffe6a0',.12)+rc(-60,44,120,16,'#6b5238')+[[-38,18],[-30,18],[32,22],[40,22]].map(a=>ci(a[0],a[1],1.8,'#ffd27a')).join('')+pa('M-40 44L-30 24L-20 44Z','#8a6a46')+pa('M20 44L32 26L44 44Z','#8a6a46')+ci(0,22,5,'#e2b98a')+pa('M-8 44L-6 29H6L8 44Z','#5a7ec4')
 };
-const mini=A.mini; A.mini=(id,p)=>M[id]?M[id](p||'tl'):mini(id,p);
+const mini=A.mini, CROP={redsea:350,jonah:120,paul:500,joseph:350,galilee:300,scroll:200,ark:100,lamps:350,nehemiah:350,jacob:250,sinai:400,daniel:350}, MC={};
+/* dial windows are the real scenes, frozen and cropped to a square: no animation, no moving sparks */
+function still(id,p){ const B=window.TL_BIBLE_SCENES||{}; if(!B[id]) return null;
+  if(!MC[id]){ const w=B[id](), body=w.body.replace(/<circle class="fx"[^>]*\/>/g,'').replace(/ style="animation:[^"]*"/g,'').replace(/<rect width="1600" height="900" fill="url\(#[a-z]+-v\)"\/>/g,'');
+    MC[id]='<defs>'+w.defs+'</defs><g transform="translate(-60 -60) scale(.1333) translate('+(-(CROP[id]||350))+' 0)">'+body+'</g>'; }
+  /* every use gets its own gradient and clip ids, so no two windows ever share a definition */
+  const pre=(p||'tl')+'-'+id+'-'; let out=MC[id]; const ids=[...out.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+  ids.forEach(i=>{ out=out.split('id="'+i+'"').join('id="'+pre+i+'"').split('#'+i+')').join('#'+pre+i+')'); });
+  return out; }
+A.mini=(id,p)=>still(id,p)||(M[id]?M[id](p||'tl'):mini(id,p));
 
 const st=document.createElement('style');
 st.textContent='.tlb-drift{animation:tlbd 40s ease-in-out infinite alternate}@keyframes tlbd{to{transform:scale(1.07)}}@media (prefers-reduced-motion:reduce){.tlb-drift{animation:none}}';
