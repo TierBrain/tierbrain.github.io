@@ -477,8 +477,8 @@ body.net #opts .opt{cursor:default}
 <script src="questions.js?v=8"></script>
 <script src="ruffled-topics.js?v=1"></script>
 <script src="twelve-lamps-bible.js?v=1"></script>
-<script src="ten-lanterns-art.js?v=1"></script>
-<script src="ten-lanterns-worlds.js?v=1"></script>
+<script src="twelve-lamps-art.js?v=1"></script>
+<script src="twelve-lamps-base-worlds.js?v=1"></script>
 <script src="twelve-lamps-sound.js?v=1"></script>
 <script src="twelve-lamps-rounds.js?v=1"></script>
 <script src="twelve-lamps-scenes.js?v=1"></script>
@@ -651,7 +651,7 @@ function tiersFor(topic, diff){ const b = bankFor(topic), have = Object.keys(b).
   if (diff === 'mix') return have; const want = String(Math.min(Number(diff), Math.max.apply(null, have.map(Number).concat([1])))); return have.includes(want) ? [want] : have; }
 function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(topic, diff).forEach(t => (b[t] || []).forEach(q => { if (okQ(q)) pool.push(q); })); return pool; }
 /* today's dial: the same spins, questions and answer order on every device */
-function dailyPlan(date){ const rnd = rngFrom(hash('ten-lanterns:' + date));
+function dailyPlan(date){ const rnd = rngFrom(hash('twelve-lamps:' + date));
   const pool = poolFor('gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
   const qs = shuffle(pool, rnd).slice(0, 60).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
   const spins = []; let left = [];
@@ -659,7 +659,7 @@ function dailyPlan(date){ const rnd = rngFrom(hash('ten-lanterns:' + date));
   return { qs, spins }; }
 
 /* ---------- setup ---------- */
-let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-ten-lanterns-setup', {}));
+let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-twelve-lamps-setup', {}));
 function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 function paintSetup(){
   setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); $('topic').value = cfg.topic;
@@ -690,7 +690,7 @@ function paintWho(){
 function paintDaily(){
   const note = $('beginNote');
   if (cfg.mode !== 'daily') { note.textContent = ''; $('beginBtn').textContent = 'Begin'; return; }
-  const done = store.get('tb-ten-lanterns-daily', null), d = today();
+  const done = store.get('tb-twelve-lamps-daily', null), d = today();
   if (done && done.date === d) { note.textContent = 'You have played today\'s dial: ' + done.score + ' points. Practise it again, or come back tomorrow for a new one.'; $('beginBtn').textContent = 'Practise today\'s dial'; }
   else { note.textContent = 'Today\'s dial: ' + longDate(d) + '.'; $('beginBtn').textContent = 'Spin today\'s dial'; }
 }
@@ -711,11 +711,11 @@ $('setDone').addEventListener('click', () => { openSettings(false); $('beginBtn'
 $('plist').addEventListener('input', e => { const t = e.target; if (t.dataset.i !== undefined) cfg.names[+t.dataset.i] = t.value; else if (t.dataset.t !== undefined) cfg.teams[+t.dataset.t] = t.value; else if (t.dataset.one) { if (cfg.mode === 'coop') cfg.group = t.value; else cfg.solo = t.value; } saveSetup(); });
 $('plist').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; cfg.names.splice(+b.dataset.rm, 1); saveSetup(); paintWho(); });
 $('addBtn').addEventListener('click', () => { if (cfg.names.length < MAXP) { cfg.names.push(''); saveSetup(); paintWho(); const ins = $('plist').querySelectorAll('input'); ins[ins.length - 1].focus(); } });
-function saveSetup(){ store.set('tb-ten-lanterns-setup', cfg); }
+function saveSetup(){ store.set('tb-twelve-lamps-setup', cfg); }
 
 /* ---------- the game ---------- */
 let S = null, R = null, forced = null, busy = false, timerT = 0, timerEnd = 0, timerRaf = 0;
-const SAVE = 'tb-ten-lanterns-game';
+const SAVE = 'tb-twelve-lamps-game';
 function spinners(){ return S.mode === 'versus' || S.mode === 'team' ? S.players.length : 1; }
 function newGame(roster){
   shown = {};
@@ -730,7 +730,7 @@ function newGame(roster){
   S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
         date: m === 'daily' ? today() : null, practice: false, players, spins: Math.ceil(base / n) * n, spin: 0, turn: 0,
         owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [], phones: !!roster };
-  if (m === 'daily') { const done = store.get('tb-ten-lanterns-daily', null); S.practice = !!(done && done.date === S.date); }
+  if (m === 'daily') { const done = store.get('tb-twelve-lamps-daily', null); S.practice = !!(done && done.date === S.date); }
   startPlay(true);
 }
 let pool = [], plan = null;
@@ -1275,7 +1275,7 @@ function finish(){
   } else {
     const lit = S.owner.filter(o => o >= 0).length, pts = P[0].pts;
     if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lamp lit' : lit + ' of ' + N + ' lamps lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Twelve lights the whole dial.'; }
-    else { head = pts + ' points'; const key = 'tb-ten-lanterns-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
+    else { head = pts + ' points'; const key = 'tb-twelve-lamps-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
       if (!S.practice) store.set(key, Math.max(best, pts));
       line = lit + (lit === 1 ? ' lamp lit. ' : ' lamps lit. ') + (S.practice ? 'Practice: not counted.' : pts > best ? 'A new best!' : 'Your best: ' + best + '.'); }
     $('endList').innerHTML = '';
@@ -1288,7 +1288,7 @@ function finish(){
   if (S.mode === 'daily') {
     const marks = S.history.map(h => h.taker >= 0 ? '🏮' : '⚫').join('');
     $('shareText').textContent = 'Twelve Lamps · Daily Dial · ' + longDate(S.date) + '\n' + marks + '  ' + P[0].pts + ' points\ntierbrain.co/twelve-lamps.html';
-    if (!S.practice) store.set('tb-ten-lanterns-daily', { date: S.date, score: P[0].pts, marks });
+    if (!S.practice) store.set('tb-twelve-lamps-daily', { date: S.date, score: P[0].pts, marks });
     $('shareNote').textContent = '';
   }
   $('end').classList.remove('show'); void $('end').offsetWidth; $('end').classList.add('show');
