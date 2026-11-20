@@ -83,4 +83,116 @@ T.jacob={title:'The ladder race',
    return {min:10,line:Math.max(...pos)?'Nobody reached the top':'Nobody left the ground'};}
   return {lit:winner===0,line:winner===0?'Up to the top, before the dawn':winner===1?'The dawn broke first':'Stopped at rung '+pos[0],need:'reach the top before the dawn to light it'};
  }};
+
+/* ---------- Shared helpers ---------- */
+const plural=(n,w)=>n+' '+(n===1||w==='fish'?w:w+'s');
+const pickOne=(a,r)=>a[Math.floor(r()*a.length)];
+const st2=document.createElement('style');
+st2.textContent='.nw{display:flex;flex-direction:column-reverse;gap:3px;max-width:360px;margin:6px auto}.nw-r{display:flex;gap:3px}.nw-r:nth-child(even){margin-left:20px}.nw-r i{flex:1;height:22px;border-radius:3px;background:#b8946a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}.nw-r.off i{background:transparent;border:1px dashed rgba(232,212,154,.3);box-shadow:none}.nw-r.new i{animation:nwp .5s ease-out}@keyframes nwp{from{transform:translateY(-14px);opacity:0}}'
++'.gc{text-align:center}.gc svg{width:min(100%,420px);height:auto}.gc p{margin:6px 0 0;font-weight:800}'
++'@media (prefers-reduced-motion:reduce){.nw-r.new i{animation:none}}';
+document.head.appendChild(st2);
+
+/* ---------- Nehemiah's wall ---------- */
+function wallStage(n,max,fresh){
+  let h='<div class="nw">';for(let k=1;k<=max;k++)h+='<div class="nw-r'+(k<=n?'':' off')+(k===fresh&&k<=n?' new':'')+'">'+'<i></i>'.repeat(6)+'</div>';
+  return h+'</div>';
+}
+T.nehemiah={title:'Keep building',
+ rule:()=>'Six quick questions. Two courses of the wall already stand. Every right answer adds a course; every miss brings one down. Six points for each course still standing at the end.',
+ async play(c){
+  const me=c.multi?c.me:0;let n=2;const MAX=8;
+  c.stage(wallStage(n,MAX));
+  for(let k=0;k<6;k++){c.count('Wall question '+(k+1)+' of 6');
+   const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,time:12000,label:plural(n,'course')+' standing'});
+   n=r.right?Math.min(MAX,n+1):Math.max(0,n-1);c.sfx(r.right?'plate':'smash');
+   c.stage(wallStage(n,MAX,r.right?n:0));await c.next(k<5?'Next question':'See the lamp',r.right?'right':'miss',r);}
+  if(n)c.award(me,n*6);
+  const ok=n>=4;
+  if(c.multi)return {taker:ok?me:-1,line:plural(n,'course')+' still standing'};
+  return {lit:ok,line:plural(n,'course')+' still standing',need:'keep four courses standing to light it'};
+ }};
+
+/* ---------- Galilee: the great catch ---------- */
+function netStage(fish,note){
+  let f='';for(let i=0;i<Math.min(fish,12);i++){const x=178+(i%4)*24+(Math.floor(i/4)%2)*8,y=112+Math.floor(i/4)*12;f+='<g transform="translate('+x+' '+y+')"><path d="M-8 0q6-6 12 0q-6 6-12 0M4 0l6-5v10z" fill="#9fd0e0"/></g>';}
+  return '<div class="gc"><svg viewBox="0 0 320 170" aria-hidden="true"><path d="M0 120q20-8 40 0t40 0t40 0t40 0t40 0t40 0t40 0t40 0V170H0Z" fill="#1f6a82"/><path d="M30 96Q70 118 130 100H150Q132 112 100 112H60Z" fill="#6a4426"/><path d="M80 98V50" stroke="#3a2412" stroke-width="3"/><path d="M80 52Q110 62 118 96H80Z" fill="#e8dcc0"/><path d="M150 96Q196 90 262 94Q272 130 236 148Q190 156 168 136Q152 120 150 96Z" fill="#cfe6f0" fill-opacity=".18" stroke="#e8d49a" stroke-width="2"/><path d="M170 98L236 150M190 94L252 140M214 92L266 130M160 116L214 152M258 98L190 150" stroke="#e8d49a" stroke-width="1" opacity=".5"/>'+f+'</svg><p>'+note+'</p></div>';
+}
+T.galilee={title:'The great catch',
+ rule:c=>c.multi?'Fill the net with three questions. Then a rival boat decides: share the catch, or try to take the lot with one question.':'Fill the net with three questions. Then ride out the storm to double the catch, or make for shore and keep it.',
+ async play(c){
+  const me=c.multi?c.me:0;let gold=0;const fishN=g=>Math.round(g*c.mult/10);
+  c.stage(netStage(0,'The net is empty.'));
+  for(let k=0;k<3;k++){c.count('Cast '+(k+1)+' of 3');
+   const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,label:'10 points of fish for the net'});
+   if(r.right){gold+=10;c.sfx('coins');}
+   c.stage(netStage(fishN(gold),gold?plural(fishN(gold),'fish')+' in the net.':'The net is empty.'));
+   await c.next(k<2?'Next question':'The storm',r.right?'right':'miss',r);}
+  if(!gold){c.status('Nothing to share.');return c.multi?{taker:-1,line:'The net stayed empty'}:{lit:false,line:'The net stayed empty',need:'bring home 20 or more to light it'};}
+  if(!c.multi){
+   const w=await c.choose({who:-1,title:plural(fishN(gold),'fish')+' in the net. Ride out the storm to double the catch (one question), or make for shore?',options:['Ride out the storm','Make for shore']});
+   if(w===0){c.count('The storm');const r=await c.question(c.drawQ(),{who:0,pts:0,steal:false,noAward:true,label:'Double or half'});
+    gold=r.right?gold*2:Math.floor(gold/2);c.stage(netStage(fishN(gold),r.right?'The catch is doubled!':'Half the catch is lost overboard.'));await c.next('See the lamp',r.right?'right':'miss',r);}
+   c.award(0,gold);return {lit:gold>=20,line:'Home with '+plural(fishN(gold),'fish'),need:'bring home 20 or more to light it'};}
+  const others=c.order().filter(x=>x!==me),rival=others.slice().sort((a,b)=>c.pts(a)-c.pts(b))[0];
+  const w=await c.choose({who:rival,title:c.name(rival)+', you are the rival boat. Share the catch of '+plural(fishN(gold),'fish')+', or try to take it all with one question?',options:['Share it','Take it all']});
+  if(w===0){const half=Math.ceil(gold/2);c.award(me,half);c.award(rival,gold-half);c.status('Shared.');c.stage(netStage(fishN(gold),'Shared between '+c.name(me)+' and '+c.name(rival)+'.'));await c.next('See the lamp','right');return {min:10,line:'The catch was shared'};}
+  c.count('The wager');const r=await c.question(c.drawQ(),{who:rival,pts:0,steal:false,noAward:true,label:'Everything, or nothing'});
+  if(r.right){c.award(rival,gold);c.stage(netStage(fishN(gold),c.name(rival)+' took the whole catch.'));await c.next('See the lamp','right',r);return {taker:gold>=20?rival:-1,line:c.name(rival)+' took the catch'};}
+  c.award(me,gold+10);c.stage(netStage(fishN(gold+10),c.name(me)+' kept the catch, with 10 more for holding firm.'));await c.next('See the lamp','miss',r);
+  return {taker:gold>=20?me:-1,line:c.name(me)+' kept the catch'};
+ }};
+
+/* ---------- Joseph's cup ---------- */
+const BROTHERS=['Reuben','Simeon','Levi','Judah','Dan','Issachar','Zebulun','Gad','Asher','Naphtali'];
+const DIMS=[
+ {pairs:[['a staff','a water jar'],['a young lamb','a basket of figs']],clue:v=>'The brother with the cup was holding '+v+'.'},
+ {pairs:[['a blue cloak','a red cloak'],['a striped cloak','a plain cloak']],clue:v=>'The cup was in the sack of the one in '+v+'.'},
+ {pairs:[['a white headcloth','a dark headcloth'],['a bare head','a hooded head']],clue:v=>'He was wearing '+v+'.'}
+];
+function makeCup(r){
+  const combos=shuffle([[0,0,0],[0,1,1],[1,0,1],[1,1,0]],r),names=shuffle(BROTHERS,r).slice(0,4),dims=DIMS.map(d=>pickOne(d.pairs,r));
+  const people=names.map((n,k)=>({name:n,v:combos[k],text:dims.map((p,d)=>p[combos[k][d]])}));
+  const thief=Math.floor(r()*4),order=shuffle([0,1,2],r);
+  return {people,thief,clues:order.map(d=>DIMS[d].clue(dims[d][people[thief].v[d]]))};
+}
+function brother(p){
+  const t=p.text.join(' '),cloak=/blue/.test(t)?'#3a64a8':/red/.test(t)?'#a8392e':'#8a6a46',stripe=/striped/.test(t)?'<path d="M-18 4V22M-6 2V22M6 2V22M18 4V22" stroke="#e8d49a" stroke-width="3"/>':'';
+  const head=/white head/.test(t)?'<path d="M-16 -14Q0 -36 16 -14L18 2H-18Z" fill="#f2ecd8"/>':/dark head/.test(t)?'<path d="M-16 -14Q0 -36 16 -14L18 2H-18Z" fill="#2a2230"/>':/hooded/.test(t)?'<path d="M-17 -10Q0 -40 17 -10L14 6H-14Z" fill="#6a5a46"/>':'<path d="M-12 -16Q0 -28 12 -16" stroke="#3a2412" stroke-width="5" fill="none"/>';
+  return '<svg viewBox="-30 -42 60 64" aria-hidden="true"><path d="M-24 22 q0 -22 24 -22 q24 0 24 22z" fill="'+cloak+'"/>'+stripe+'<circle cy="-12" r="14" fill="#d8b088"/>'+head+'<circle cx="-5" cy="-11" r="1.6" fill="#222"/><circle cx="5" cy="-11" r="1.6" fill="#222"/></svg>';
+}
+function cupStage(m,seen,lost,out){
+  return '<div class="rs-mys"><div class="rs-sus">'+m.people.map((p,k)=>'<div class="rs-card'+(out.includes(k)?' out':'')+'" data-k="'+k+'">'+brother(p)+'<b>'+p.name+'</b><small>'+p.text.join('<br>')+'</small></div>').join('')+'</div>'
+   +'<ol class="rs-clues">'+[0,1,2].map(k=>'<li class="'+(k<seen.length?(lost.includes(k)?'lost':'got'):'')+'"><span>Sack '+(k+1)+'</span>'+(k<seen.length?(lost.includes(k)?'The clue was lost in the dust.':m.clues[k]):'Not yet opened')+'</li>').join('')+'</ol></div>';
+}
+T.joseph={title:'Whose sack holds the cup?',
+ rule:()=>'Joseph\u2019s steward has hidden the silver cup in one brother\u2019s sack. Each right answer opens a sack and turns up a clue. Name the brother early for more points: two clues are enough to be sure.',
+ async play(c){
+  const m=makeCup(c.rng),seen=[],lost=[],out=[],me=c.me;const paint=()=>c.stage(cupStage(m,seen,lost,out));paint();const VALUE=[30,20,10];
+  for(let k=0;k<3;k++){
+   c.count('Sack '+(k+1)+' of 3');
+   const r=await c.question(c.drawQ(),{who:me,pts:5,steal:true,stealPts:5});
+   seen.push(k);if(!r.right)lost.push(k);paint();
+   c.status(r.right?'A clue: '+m.clues[k]:'No clue from this sack.');
+   const got=seen.length-lost.length,last=k===2;
+   if(!last){await c.next('Open the next sack',r.right?'right':'miss',r);
+    if(!got)continue;
+    const w=await c.choose({who:c.multi?me:-1,title:'Name the brother now for '+VALUE[k]*c.mult+' points, or open the next sack?',options:['Name him now','Open the next sack']});
+    if(w===1)continue;}
+   else await c.next('Name the brother',r.right?'right':'miss',r);
+   const value=VALUE[k];
+   const guess=await c.choose({who:c.multi?me:-1,title:'Whose sack holds the silver cup?',options:m.people.map(p=>p.name)});
+   if(guess===m.thief){c.sfx('right');c.award(c.multi?me:0,value);out.push(...[0,1,2,3].filter(x=>x!==m.thief));paint();c.status('Right: it was in '+m.people[m.thief].name+'\u2019s sack.');
+    await c.next('See the lamp','right');return c.multi?{taker:me,line:c.name(me)+' found the cup'}:{lit:true,line:'You found the cup'};}
+   c.sfx('wrong');out.push(guess);paint();
+   if(c.multi){const others=c.order().filter(x=>x!==me);
+    const who=await c.buzz({players:others,label:'Not '+m.people[guess].name+'. Does anyone else know? Tap your name.',none:'Nobody'});
+    if(who>=0){const g2=await c.choose({who,title:c.name(who)+': whose sack holds the cup?',options:m.people.map(p=>p.name),disabled:out});
+     if(g2===m.thief){c.sfx('steal');c.award(who,value);c.status('Right: it was in '+m.people[m.thief].name+'\u2019s sack.');out.push(...[0,1,2,3].filter(x=>x!==m.thief&&!out.includes(x)));paint();
+      await c.next('See the lamp','right');return {taker:who,line:c.name(who)+' found the cup'};}
+     out.push(g2);paint();}}
+   c.status('The cup was in '+m.people[m.thief].name+'\u2019s sack.');await c.next('See the lamp','miss');
+   return c.multi?{taker:-1,line:'The cup stayed hidden'}:{lit:false,line:'The cup stayed hidden',need:'find the cup to light it'};
+  }
+ }};
 })();
