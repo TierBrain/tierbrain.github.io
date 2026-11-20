@@ -142,6 +142,7 @@ body.net #opts .opt{cursor:default}
 .stage{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,440px);gap:clamp(12px,2vw,32px);align-items:center;padding:0 clamp(14px,2.4vw,32px) 24px}
 #dialWrap{position:relative;width:min(100%,86vh);margin:0 auto;aspect-ratio:1}
 #dial{width:100%;height:100%;display:block;overflow:visible}
+.lampflame{transform-box:fill-box;transform-origin:50% 100%;animation:lampf 1.6s ease-in-out infinite}@keyframes lampf{50%{transform:scale(1.07,1.16) skewX(2deg)}}
 #dial .lan .shade{transition:opacity .6s ease}
 #dial .lan .glowc{transition:opacity .8s ease}
 #dial .hub{cursor:pointer}
@@ -303,7 +304,7 @@ body.net #opts .opt{cursor:default}
   .btn.begin{width:100%}
 }
 @media (prefers-reduced-motion:reduce){
-  #sky i,#sky::before,#inner,#dial .chosen .ring,#reLantern .rays,#reLantern .halo,#timer.low i{animation:none}
+  #sky i,#sky::before,#inner,.lampflame,#dial .chosen .ring,#reLantern .rays,#reLantern .halo,#timer.low i{animation:none}
   #sky b,#fx,#introHint{display:none}
   .btn,.rhead,#round .bar,.qcard,#roundEnd,#roundShade{transition:none}
   .qin #qText,.qin .opt,.opt.pop,.opt.shake,#stealBox:not([hidden]),#roundEnd.show *,#end.show *,#end.show h1{animation:none!important}
@@ -482,6 +483,7 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-rounds.js?v=1"></script>
 <script src="twelve-lamps-scenes.js?v=1"></script>
 <script src="twelve-lamps-worlds.js?v=1"></script>
+<script src="twelve-lamps-games.js?v=1"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -565,25 +567,26 @@ paintSound();
 
 /* ---------- the dial ---------- */
 const at = (deg, r) => [r * Math.sin(deg * Math.PI / 180), -r * Math.cos(deg * Math.PI / 180)];
+const LAMP_ART = p => '<g transform="translate(-10 30) scale(1.75)"><ellipse cx="0" cy="8" rx="42" ry="22" fill="url(#' + p + '-brass)"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="url(#' + p + '-brass)"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="url(#' + p + '-brass)"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f0cf7a"/><g class="lampflame"><path d="M0 -12Q-16 -34 0 -62Q6 -46 14 -36Q18 -22 0 -12Z" fill="#ff9a3c"/><path d="M0 -14Q-8 -28 0 -42Q5 -34 6 -28Q7 -20 0 -14Z" fill="#fff0b0"/></g></g>';
 function dialSvg(p, interactive){
   let h = '<defs>' + ART.defs(p)
     + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset=".5" stop-color="#c9a24a"/><stop offset="1" stop-color="#7d5d22"/></linearGradient>'
     + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1c2350"/><stop offset=".7" stop-color="#11163a"/><stop offset="1" stop-color="#0a0d26"/></radialGradient>'
     + COLOURS.map((c, k) => '<radialGradient id="' + p + '-glow-' + k + '"><stop offset=".55" stop-color="' + c + '" stop-opacity=".9"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>').join('')
-    + '<clipPath id="' + p + '-win"><circle r="70"/></clipPath></defs>';
+    + '<clipPath id="' + p + '-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="' + p + '-lg"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>';
   // the fixed outer ring, its ticks and the pointer
-  h += '<circle r="482" fill="none" stroke="url(#' + p + '-brass)" stroke-width="16"/><circle r="460" fill="#0a0d26" stroke="#8a6a2a" stroke-width="2"/>';
+  h += '<circle r="482" fill="none" stroke="url(#' + p + '-brass)" stroke-width="16"/><circle r="470" fill="none" stroke="#f3ecd8" stroke-width="1.5" opacity=".45"/><circle r="460" fill="#0a0d26" stroke="#8a6a2a" stroke-width="2"/>';
   for (let k = 0; k < 120; k++) { const long = k % 12 === 0, [x1, y1] = at(k * 3, 458), [x2, y2] = at(k * 3, long ? 432 : 446); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="' + (long ? 3 : 1.4) + '" opacity=".8"/>'; }
-  // the turning face: ten lamp windows, Roman numerals, a star map
+  // the turning face: twelve gates, Roman numerals, a star map
   h += '<g id="' + p + '-wheel" class="wheel"><circle r="428" fill="url(#' + p + '-face)" stroke="#c9a24a" stroke-width="3"/><circle r="292" fill="none" stroke="#c9a24a" stroke-width="2" opacity=".6"/>';
   const r = rngFrom(11); for (let k = 0; k < 70; k++) { const [x, y] = at(r() * 360, 120 + r() * 300); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (.8 + r() * 1.8).toFixed(1) + '" fill="#fff" opacity="' + (.25 + r() * .5).toFixed(2) + '"/>'; }
-  D.forEach((d, i) => { const [x, y] = at(i * STEP, 360), [nx, ny] = at(i * STEP, 252);
+  D.forEach((d, i) => { const [x, y] = at(i * STEP, 360), [nx, ny] = at(i * STEP, 234);
     // each window and numeral sits in an "up" group that turns against the face, so every world stays the right way up
     h += '<g class="lan" data-i="' + i + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"><g class="up"><g class="pop">'
       + '<circle class="glowc" r="104" fill="url(#' + p + '-glow-0)" opacity="0"/>'
-      + '<g clip-path="url(#' + p + '-win)"><g transform="scale(1.17)">' + ART.mini(d.id, p) + '</g><circle class="shade" r="70" fill="#060818" opacity=".55"/></g>'
-      + '<circle class="ring" r="72" fill="none" stroke="url(#' + p + '-brass)" stroke-width="7"/>'
-      + '<g class="own" transform="translate(52 52)" opacity="0"></g></g></g></g>'
+      + '<g clip-path="url(#' + p + '-win)"><g transform="scale(1.4)">' + ART.mini(d.id, p) + '</g><path class="shade" d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#060818" opacity=".55"/></g>'
+      + '<path class="ring" d="M-68 84V-14A68 68 0 0 1 68 -14V84Z" fill="none" stroke="url(#' + p + '-brass)" stroke-width="7"/><path d="M-58 74V-14A58 58 0 0 1 58 -14V74Z" fill="none" stroke="#f3ecd8" stroke-width="2" opacity=".6"/><circle cy="-84" r="5" fill="#f3ecd8"/>'
+      + '<g class="own" transform="translate(46 62)" opacity="0"></g></g></g></g>'
       + '<g transform="translate(' + nx.toFixed(1) + ' ' + ny.toFixed(1) + ')"><g class="up"><text y="9" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-style="italic" font-weight="700" font-size="26" fill="#d8b25a" opacity=".85">' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][i] + '</text></g></g>'; });
   h += '</g>';
   // the inner rings drift the other way; the hub is a button
@@ -591,7 +594,7 @@ function dialSvg(p, interactive){
   for (let k = 0; k < 12; k++) { const [x1, y1] = at(k * 30, 168), [x2, y2] = at(k * 30, 200); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="2" opacity=".6"/>'; }
   h += '</g>';
   const star = Array.from({ length: 16 }, (_, k) => at(k * 22.5, k % 2 ? 46 : 112).map(v => v.toFixed(1)).join(' ')).join(' L');
-  h += '<g class="hub"' + (interactive ? ' id="hub" role="button" tabindex="0" aria-label="Spin the dial"' : '') + '><circle r="132" fill="#0d1130" stroke="url(#' + p + '-brass)" stroke-width="6"/><g id="' + p + '-star"><path d="M' + star + 'Z" fill="url(#' + p + '-brass)"/></g><circle r="22" fill="#0d1130" stroke="#f6dc8e" stroke-width="3"/>'
+  h += '<g class="hub"' + (interactive ? ' id="hub" role="button" tabindex="0" aria-label="Spin the dial"' : '') + '><circle r="132" fill="#0d1130" stroke="url(#' + p + '-brass)" stroke-width="6"/><circle r="112" fill="url(#' + p + '-lg)"/><g id="' + p + '-star">' + LAMP_ART(p) + '</g>'
     + (interactive ? '<text id="hubText" y="168" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="0" fill="#f6dc8e"> </text>' : '') + '</g>';
   h += '<g id="' + p + '-ptr" transform="translate(0 -492)"><path d="M0 60 L-26 -4 L26 -4Z" fill="url(#' + p + '-brass)" stroke="#5a4214" stroke-width="3"/><circle r="9" fill="#f6dc8e"/></g>';
   return h;
@@ -603,7 +606,7 @@ const WHEEL = document.querySelector('#d-wheel');
 let rot = 0;                     // the face's turn, in degrees; lamp i is at the pointer when rot = -i * STEP (mod 360)
 const UPS = Array.from(WHEEL.querySelectorAll('.up'));
 const STAR = document.querySelector('#d-star'), PTR = document.querySelector('#d-ptr');
-function setRot(a){ rot = a; WHEEL.setAttribute('transform', 'rotate(' + a.toFixed(2) + ')'); const u = 'rotate(' + (-a).toFixed(2) + ')'; UPS.forEach(g => g.setAttribute('transform', u)); STAR.setAttribute('transform', 'rotate(' + (-a * .35).toFixed(2) + ')'); }
+function setRot(a){ rot = a; WHEEL.setAttribute('transform', 'rotate(' + a.toFixed(2) + ')'); const u = 'rotate(' + (-a).toFixed(2) + ')'; UPS.forEach(g => g.setAttribute('transform', u));  }
 /* the pointer is hinged at the top: each window that passes flicks it, and it springs back */
 let ptrA = 0, ptrV = 0, ptrRaf = 0, ptrLast = 0;
 function kick(){ if (STILL) return; ptrA = Math.max(-24, ptrA - 13); if (!ptrRaf) { ptrLast = 0; ptrRaf = requestAnimationFrame(ptrStep); } }
@@ -1193,10 +1196,10 @@ function cheer(el, pts, colour){ if (STILL) return; const r = el.getBoundingClie
   setTimeout(() => { fx.querySelectorAll('.spark,.plus').forEach(n => n.remove()); }, 1200); }
 function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o].colour] : '#5a5f86';
   $('reLantern').setAttribute('class', lit ? 'lit' : 'dark');
-  $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><circle r="70"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
+  $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
     + '<circle class="halo" r="108" fill="url(#q-halo)"/><g class="rays">' + Array.from({ length: 16 }, (_, k) => { const [x1, y1] = at(k * 22.5, 84), [x2, y2] = at(k * 22.5, k % 2 ? 100 : 108); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="5" stroke-linecap="round"/>'; }).join('') + '</g>'
-    + '<g clip-path="url(#q-win)"><g transform="scale(1.17)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<circle r="70" fill="#060818" opacity=".6"/>') + '</g>'
-    + '<circle r="72" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(54 54)"><circle r="24" fill="#0b0f2a" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
+    + '<g clip-path="url(#q-win)"><g transform="scale(1.4)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#060818" opacity=".6"/>') + '</g>'
+    + '<path d="M-68 84V-14A68 68 0 0 1 68 -14V84Z" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(48 64)"><circle r="24" fill="#0b0f2a" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
 /* who takes the lamp. In Teams and Versus a round may name a winner; otherwise the most points in the round
    (with the round's minimum) takes it, an owner keeps it on a tie, then the spinner. Alone or together, the round
    says whether it was lit. */
