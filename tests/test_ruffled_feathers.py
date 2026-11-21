@@ -7,6 +7,7 @@ import os
 import re
 import socketserver
 import subprocess
+import sys
 import threading
 import unittest
 from pathlib import Path
@@ -30,11 +31,14 @@ class RuffledPageTests(unittest.TestCase):
         self.assertEqual(home.count('<a class="tc" href="ruffled-feathers.html" data-cat="game multiplayer" data-title="Ruffled Feathers"'), 1)
         self.assertNotIn('noindex', html.lower())
 
-    def test_catalogue_counts_include_it(self):
+    def test_catalogue_inventory_includes_it(self):
         home = (ROOT / 'index.html').read_text(encoding='utf-8')
         cards = len(re.findall(r'<a\b[^>]*\bdata-title="', home))
         self.assertGreaterEqual(cards, 71)
-        self.assertIn('id="count" role="status" aria-live="polite">%d games<' % cards, home)
+        # Published counts are generated during the build; source labels may lag.
+        result = subprocess.run([sys.executable, str(ROOT / 'sync-catalogue.py'), '--validate-only'],
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
         catalogue = json.loads((ROOT / 'docs/readiness-catalogue.json').read_text(encoding='utf-8'))
         self.assertEqual(catalogue['counts']['catalogue_entries'], cards)
         self.assertEqual(sum(1 for row in catalogue['entries'] if row['href'] == 'ruffled-feathers.html'), 1)

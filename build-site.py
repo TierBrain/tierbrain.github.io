@@ -76,7 +76,9 @@ def main(argv=None):
                         default=os.environ.get('TIERBRAIN_PREVIEW') == '1',
                         help='Block backend connections and forms (also TIERBRAIN_PREVIEW=1).')
     args = parser.parse_args(argv)
-    subprocess.run([sys.executable, str(ROOT / 'sync-catalogue.py'), '--check'], check=True)
+    catalogue_command = [sys.executable, str(ROOT / 'sync-catalogue.py')]
+    # Source cards and markers must be valid; derived labels are generated below.
+    subprocess.run([*catalogue_command, '--validate-only'], check=True)
     files = []
     for path in ROOT.rglob('*'):
         if path.is_symlink() or not path.is_file():
@@ -107,6 +109,9 @@ def main(argv=None):
                 html, count=1, flags=re.IGNORECASE)
             if replacements:
                 target.write_text(html, encoding='utf-8')
+    # Update only generated assets, leaving uploaded source files untouched.
+    subprocess.run([*catalogue_command, '--root', str(DIST)], check=True)
+    subprocess.run([*catalogue_command, '--root', str(DIST), '--check'], check=True)
     if args.preview:
         headers = preview_headers((ROOT / '_headers').read_text(encoding='utf-8'))
         (DIST / '_headers').write_text(headers, encoding='utf-8')

@@ -36,8 +36,8 @@ jobs:
           fi
       - name: Validate pages, scripts, data and sitemap targets
         run: python scripts/check_site.py
-      - name: Validate catalogue totals and targets
-        run: python sync-catalogue.py --check
+      - name: Validate source catalogue targets and count markers
+        run: python sync-catalogue.py --validate-only
       - name: Verify validators and preview build isolation
         run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Run browser regressions with synthetic data and blocked external requests
@@ -82,6 +82,8 @@ jobs:
       - name: Build and validate preview and production hosting assets
         run: |
           python build-site.py --preview
+          python sync-catalogue.py --check --root dist
           python scripts/check_site.py --root dist
           python build-site.py
+          python sync-catalogue.py --check --root dist
           python scripts/check_site.py --root dist

@@ -82,6 +82,29 @@ Wrangler has no custom build hook, so it serves the existing `dist/` without res
 
 Production uses dashboard build command `python3 build-site.py`. This preserves source pages and normal backend behaviour. If using optional `TIERBRAIN_PREVIEW=1` locally, unset it before a production build. Host permission/scoring repairs still need separate verification.
 
+### Catalogue counts and routine uploads
+
+The homepage's catalogue cards determine the game total. Every preview and
+production build validates catalogue targets, pack links and count markers,
+then generates the current labels in `dist/index.html` and `dist/packs.html`.
+Source files stay unchanged. An older count label uploaded with a homepage no
+longer blocks publication; an ordinary game-file update on `main` can publish
+through the existing automatic Cloudflare build.
+
+Use `python3 sync-catalogue.py --validate-only` to validate source structure
+without requiring current labels or changing files. Use
+`python3 sync-catalogue.py --check --root dist` after a build to require exact
+published totals. Running `python3 sync-catalogue.py` without either flag still
+updates source labels for a manual tidy-up; source `--check` remains available
+when checking those labels deliberately.
+
+Missing assets, invalid or duplicate catalogue targets, pack links to unlisted
+games and missing or duplicate count markers still fail validation. Adding or
+removing a catalogue entry also needs a deliberate update to the reviewed
+readiness inventory and its tests; generated labels do not register new games
+or bypass those checks. GitHub Site checks validate source structure and both
+generated build modes, including their exact totals.
+
 ## Rollback
 
 Retain the previous verified build/version and DNS export. Revert to that [Worker version](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/) for a code regression. If necessary, detach the Worker domain and restore the prior web-hosting records; allow DNS caches to expire. A nameserver rollback additionally needs matching DNSSEC/DS settings. Hosting rollback does not reverse database changes; handle those separately with tested migrations/backups.
