@@ -125,17 +125,17 @@ T.daniel=survive({title:'A night in the den',goal:5,limit:3,cap:10,pts:10,paint:
   rightLine:'Dawn draws nearer.',wrongLine:'A lion stirs.',winLine:'Dawn came, and Daniel is unharmed',loseLine:'The lions woke before dawn',need:'five right answers before three lions wake'});
 
 window.TL_ARRIVE={
- redsea:['50% 80%','The waters stand like walls, and the dust of chariots rises behind.'],
- jonah:['48% 60%','Down, down into the deep. It is dark and very quiet.'],
- paul:['40% 60%','Another harbour, another city, another letter to deliver.'],
+ redsea:['50% 80%','The waters stand like walls, and Pharaoh’s chariots are close behind. Three right answers carry you to the far shore, and every miss lets them gain.'],
+ jonah:['48% 60%','Down you go, into the dark and the quiet. Each right answer takes you deeper for more points, but the deep rumbles at the first mistake and takes everything at the second.'],
+ paul:['40% 60%','Another harbour, another letter to deliver. Clues come one at a time over the sea, so name the city early for more points.'],
  joseph:['50% 70%','Four brothers have stopped on the road. Somewhere among their sacks is a silver cup. How much evidence will you need before you name a name?'],
- galilee:['40% 60%','The wind is rising, and the boat is small.',1300],
- scroll:['40% 60%','Torchlight falls on words older than memory.'],
+ galilee:['40% 60%','The wind is rising and the boat is small. Fill the net with three questions, then decide: ride out the storm to double the catch, or make for shore.',1300],
+ scroll:['40% 60%','Torchlight falls on words older than memory, and each line appears a word at a time. Answer early for more points.'],
  ark:['50% 70%','The ramp is coming up. Watch the last few animals carefully. Once that door shuts, somebody will ask what you saw.'],
- lamps:['50% 40%','Midnight draws near, and the lamps burn low.'],
- nehemiah:['50% 80%','The wall is half built, and the dusk is coming.'],
- jacob:['50% 30%','A stairway of light under the open stars.'],
- sinai:['50% 40%','Thunder rolls down the mountain.'],
+ lamps:['50% 40%','Midnight draws near and the lamps burn low. Each wrong answer lets one go out, so keep a single flame alive.'],
+ nehemiah:['50% 80%','The wall is half built and the dusk is coming. Add a course with each right answer, lose one with each miss, and keep four standing.'],
+ jacob:['50% 30%','A stairway of light stands under the open stars. Climb a rung with each right answer, slip back with each miss, and reach the top before the dawn.'],
+ sinai:['50% 40%','Thunder rolls down the mountain, and two tablets wait to be carved. Each right answer carves a line, and three cracks break the stone.'],
  daniel:['50% 50%','You can hear one of them breathing. Get the next answer right and it settles. Wake three at once and it will be a very long night.']
 };
 })();
