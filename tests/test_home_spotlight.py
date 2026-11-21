@@ -159,7 +159,7 @@ class SpotlightBrowserTests(unittest.TestCase):
 
     def test_searching_hides_the_spotlight_and_finds_the_games(self):
         pg = self.open()
-        self.assertEqual(pg.inner_text('#count'), '72 games')
+        self.assertEqual(pg.inner_text('#count'), '73 games')
         pg.fill('#q', 'ten lanterns')
         self.assertTrue(pg.locator('#start').is_hidden())
         self.assertEqual(pg.inner_text('#count'), '1 game')
