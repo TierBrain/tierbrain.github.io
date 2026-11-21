@@ -485,7 +485,7 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=2"></script>
 <script src="twelve-lamps-games.js?v=5"></script>
-<script src="twelve-lamps-carry.js?v=6"></script>
+<script src="twelve-lamps-carry.js?v=8"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -1251,9 +1251,9 @@ $('backBtn').addEventListener('click', () => {
 /* the finale: the twelve lamps sit in their ring; the lit ones rise and gather in an arc over the night's result */
 function finale(head, line){
   if (STILL) return;
-  const P = S.players, el = document.createElement('div'); el.id = 'finale'; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66', [x, y] = at(i * STEP, 30);
-    return '<div class="fl' + (o >= 0 ? ' lit' : '') + '" data-i="' + i + '" style="left:' + (50 + x * .9) + '%;top:' + (40 + y) + '%;--c:' + c + '"><svg viewBox="-80 -80 160 160"><defs>' + (i === 0 ? ART.defs('f') : '') + '<clipPath id="f-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#f-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'f') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/></svg></div>'; }).join('')
+  const P = S.players, IDX = S.carry && S.carry.targets.length ? S.carry.targets : D.map((d, i) => i), el = document.createElement('div'); el.id = 'finale'; el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = IDX.map((i, k) => { const d = D[i], o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66', [x, y] = at(k * (360 / IDX.length), 30);
+    return '<div class="fl' + (o >= 0 ? ' lit' : '') + '" data-i="' + i + '" style="left:' + (50 + x * .9) + '%;top:' + (40 + y) + '%;--c:' + c + '"><svg viewBox="-80 -80 160 160"><defs>' + (k === 0 ? ART.defs('f') : '') + '<clipPath id="f-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#f-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'f') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/></svg></div>'; }).join('')
     + '<h2>' + esc(head) + '</h2><p>' + esc(line) + '</p><small>Tap to carry on</small>';
   document.body.appendChild(el);
   const lit = D.map((d, i) => i).filter(i => S.owner[i] >= 0), T = [];
