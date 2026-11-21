@@ -485,7 +485,7 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=2"></script>
 <script src="twelve-lamps-games.js?v=5"></script>
-<script src="twelve-lamps-carry.js?v=5"></script>
+<script src="twelve-lamps-carry.js?v=6"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -786,7 +786,7 @@ function promptSpin(){
   $('turn').innerHTML = multi ? symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + ' to spin</span>' : '<span>' + (S.mode === 'coop' ? 'Your spin' : 'Your spin') + '</span>';
   const left = S.spins - S.spin;
   $('turnNote').textContent = isLast() ? 'The last spin: every point in this round counts double.' : (S.mode === 'coop' ? (N - S.owner.filter(o => o >= 0).length) + ' lamps still dark, ' + left + ' spins left.' : left + (left === 1 ? ' spin' : ' spins') + ' left.');
-  $('turnBox').hidden = false; $('landBox').hidden = true; $('spinBtn').disabled = false; $('msg').textContent = ''; if (S.carry && window.TL_CARRY) TL_CARRY.turn(S);
+  $('turnBox').hidden = false; $('landBox').hidden = true; $('spinBtn').disabled = false; $('msg').textContent = ''; if (window.TL_CARRY) { if (S.carry) TL_CARRY.turn(S); else TL_CARRY.off(); }
   paintAll(); if (isLast()) { SFX.last(); if (!STILL && !$('play').hidden) { const b = document.createElement('div'); b.id = 'lastBanner'; b.innerHTML = 'The last spin<small>Every point counts double</small>'; document.body.appendChild(b); setTimeout(() => b.remove(), 2700); } }
   setTimeout(() => { if (!$('play').hidden && !$('spinBtn').disabled) $('spinBtn').focus({ preventScroll: true }); }, 50);
 }
