@@ -3,16 +3,16 @@
   "baseline_commit": "1fdf0b3db415b2f62c315fc2151d0e4403ecdd30",
   "source": "index.html anchors with data-title, parsed by sync-catalogue.py",
   "counts": {
-    "catalogue_entries": 72,
+    "catalogue_entries": 73,
     "topic_quiz_entries": 25,
-    "non_topic_entries": 47,
+    "non_topic_entries": 48,
     "leaderboard_utilities": 1,
     "previous_gameplay_editions": 9,
     "additional_online_editions": 7
   },
   "interpretation": [
     "Baseline inventory, not a claim that this readiness pass is complete",
-    "72 catalogue cards include a leaderboard and copied or shared engines; they are not 72 distinct game engines",
+    "73 catalogue cards include a leaderboard and copied or shared engines; they are not 73 distinct game engines",
     "Only named tests and their documented limits support a coverage claim",
     "Question fact accuracy and physical device testing are not inferred from automated page checks"
   ],
@@ -72,6 +72,17 @@
       "entry_type": "other_game_or_utility",
       "coverage_group": "remaining_solo_or_local_game",
       "baseline_scope": "Added after the baseline commit. Dial-and-worlds game on one screen, or with phones as buzzers through the isolated lantern_private rooms (supabase/LANTERN-ACCESS.md); entry page and layout are checked here, full games by tests/test_ten_lanterns.py, rooms by tests/check_lantern_access.py and tests/lantern_phone_checks.py"
+    },
+    {
+      "href": "twelve-lamps.html",
+      "title": "Twelve Lamps",
+      "catalogue_categories": [
+        "game",
+        "multiplayer"
+      ],
+      "entry_type": "other_game_or_utility",
+      "coverage_group": "remaining_solo_or_local_game",
+      "baseline_scope": "Added after the baseline commit. Bible dial-and-worlds game on one screen or with phones through the existing Lantern room API (supabase/LANTERN-ACCESS.md); this catalogue suite checks its real entry page and initial mobile layout, not a full Twelve Lamps playthrough or dedicated phone-game verification"
     },
     {
       "href": "ruffled-feathers.html",
