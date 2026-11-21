@@ -202,10 +202,17 @@ T.joseph={title:'Whose sack holds the cup?',
   }
  }};
 
-/* In Carry the Light, the bearer answers and makes each round's key call; everyone else advises. */
+/* In Carry the Light, the bearer answers and makes each round's key call; everyone else advises.
+   Before every world except the Ark (which has its own jobs), the bearer picks the person they will lean on. */
+const ADVISER={redsea:'Who keeps time for you?',jacob:'Who keeps time for you?',jonah:'Who do you trust to judge how deep to go?',galilee:'Who do you trust to judge this storm?',
+ paul:'Who is your detective?',joseph:'Who is your detective?',scroll:'Who is your spotter?',nehemiah:'Who keeps you steady?',sinai:'Who keeps you steady?',lamps:'Who keeps watch with you?',daniel:'Who keeps watch with you?'};
 ['redsea','jonah','paul','joseph','galilee','scroll','ark','lamps','nehemiah','jacob','sinai','daniel'].forEach(id=>{const t=T[id]; if(!t)return; const play=t.play;
-  t.play=function(c){ const who=window.TL_CARRY&&window.TL_CARRY.bearerName(); if(!who)return play.call(this,c);
-    const c2=Object.create(c); c2.count=x=>c.count(x+' \u00b7 '+who+' answers');
+  t.play=async function(c){ const who=window.TL_CARRY&&window.TL_CARRY.bearerName(); if(!who)return play.call(this,c);
+    let adv='';
+    if(ADVISER[id]&&window.TL_CARRY.others){const others=shuffle(window.TL_CARRY.others(),c.rng).slice(0,4);
+      if(others.length>1){c.count('Who do you lean on?');adv=others[await c.choose({who:-1,title:who+' carries the lamp. '+ADVISER[id],options:others})];}
+      else if(others.length===1)adv=others[0];}
+    const c2=Object.create(c); c2.count=x=>c.count(x+' \u00b7 '+who+' answers'+(adv?', '+adv+' advises':''));
     if(c.choose)c2.choose=o=>c.choose(Object.assign({},o,{title:who+' carries the lamp. '+(o.title||'')}));
     return play.call(this,c2); }; });
 })();

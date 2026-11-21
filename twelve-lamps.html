@@ -13,12 +13,12 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Spin the great dial, land on one of twelve Bible worlds and play its game. Solo, in teams, head to head or all together. Free to play in your browser.">
+<meta name="description" content="Carry a light through Bible stories together, or spin the great dial of twelve gates and play its game. Solo, in teams, head to head or all together. Free to play in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TierBrain">
 <meta property="og:url" content="https://tierbrain.co/twelve-lamps.html">
 <meta property="og:title" content="Twelve Lamps | Free quiz game | TierBrain">
-<meta property="og:description" content="Spin the great dial, land on one of twelve Bible worlds and play its game. Solo, in teams, head to head or all together.">
+<meta property="og:description" content="Carry a light through Bible stories together, or spin the great dial of twelve gates and play its game. Solo, in teams, head to head or all together.">
 <meta property="og:image" content="https://tierbrain.co/og-image.png?v=2">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tierbrain.co/twelve-lamps.html">
@@ -328,7 +328,7 @@ body.net #opts .opt{cursor:default}
   <section class="hero">
     <div>
       <h1>Twelve <span>Lamps</span></h1>
-      <p class="tag">Spin the great dial, land on one of twelve Bible worlds, and play its game.</p>
+      <p class="tag">Carry a light through Bible stories together, or spin the great dial of twelve gates and play its game.</p>
     </div>
     <svg id="heroDial" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
   </section>
@@ -337,12 +337,12 @@ body.net #opts .opt{cursor:default}
     <div id="resumeBox" hidden><p id="resumeText"></p><button class="btn small" id="resumeBtn" type="button">Carry on</button><button class="btn ghost small" id="discardBtn" type="button">Start afresh</button></div>
     <div class="field step"><span><i>1</i>How will you play?</span>
       <div class="seg modes" id="mode" role="group" aria-label="Mode">
+        <button type="button" data-v="carry">Carry the Light<small>Three to five stories, one lamp, passed round the room</small></button>
         <button type="button" data-v="solo">Solo<small>Light as many lamps as you can</small></button>
         <button type="button" data-v="daily">Daily Dial<small>The same five spins for everyone today</small></button>
         <button type="button" data-v="team">Teams<small>Two teams take turns; wrong answers can be stolen</small></button>
         <button type="button" data-v="versus">Versus<small>2 to 10 players; light and steal lamps</small></button>
         <button type="button" data-v="coop">Together<small>Everyone against the dial</small></button>
-        <button type="button" data-v="carry">Carry the Light<small>Three to five stories, one lamp, passed round the room</small></button>
       </div>
     </div>
     <div class="steps">
@@ -484,8 +484,8 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-rounds.js?v=2"></script>
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=2"></script>
-<script src="twelve-lamps-games.js?v=4"></script>
-<script src="twelve-lamps-carry.js?v=4"></script>
+<script src="twelve-lamps-games.js?v=5"></script>
+<script src="twelve-lamps-carry.js?v=5"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -662,7 +662,7 @@ function dailyPlan(date){ const rnd = rngFrom(hash('twelve-lamps:' + date));
   return { qs, spins }; }
 
 /* ---------- setup ---------- */
-let cfg = Object.assign({ mode: 'versus', length: 'standard', topic: 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-twelve-lamps-setup', {}));
+let cfg = Object.assign({ mode: 'carry', length: 'standard', topic: (window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-twelve-lamps-setup', {}));
 function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 function paintSetup(){
   setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); $('topic').value = cfg.topic;
@@ -730,7 +730,7 @@ function newGame(roster){
   else if (m === 'coop') add(carry ? 'All of us' : (cfg.group.trim() || 'All of us'), 0);
   else add(cfg.solo.trim() || 'You', 0);
   const base = carry ? 6 : m === 'daily' ? 5 : LENGTHS[cfg.length].spins + (m === 'coop' ? 4 : 0), n = (m === 'versus' || m === 'team') ? players.length : 1;
-  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : (carry && cfg.topic === 'gk' && window.RF_BANK && window.RF_BANK.bible ? 'bible' : cfg.topic), diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
+  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
         date: m === 'daily' ? today() : null, practice: false, players, spins: Math.ceil(base / n) * n, spin: 0, turn: 0,
         owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [], phones: !!roster };
   if (carry && window.TL_CARRY) S.carry = TL_CARRY.init(D, cfg.group.split(',').map(x => x.trim()).filter(Boolean));
@@ -766,7 +766,7 @@ function startPlay(fresh){
 const spinner = () => S.players[S.mode === 'versus' || S.mode === 'team' ? S.turn : 0];
 const isLast = () => !S.carry && S.spin === S.spins - 1;
 const mult = () => isLast() ? 2 : 1;
-function paintAll(){ paintLanterns(); paintBoard(); $('spinCount').textContent = 'Spin ' + Math.min(S.spin + 1, S.spins) + ' of ' + S.spins; $('spinCount').classList.toggle('last', isLast()); }
+function paintAll(){ paintLanterns(); paintBoard(); $('spinCount').textContent = S.carry ? (S.carry.targets.length ? S.carry.targets.filter(t => S.owner[t] >= 0).length + ' of tonight\'s ' + S.carry.targets.length + ' lamps lit' : 'Carry the Light') : 'Spin ' + Math.min(S.spin + 1, S.spins) + ' of ' + S.spins; $('spinCount').classList.toggle('last', isLast()); }
 let shown = {};
 function paintBoard(){
   const order = S.players.map((p, i) => i), board = $('board');

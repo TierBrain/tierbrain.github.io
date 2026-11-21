@@ -21,9 +21,9 @@ st.textContent='#carryBox{display:grid;gap:10px;margin-top:8px}#carryBox h3{marg
 document.head.appendChild(st);
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-let recent=[];try{recent=JSON.parse(localStorage.getItem(RK)||'[]');}catch(e){}
 /* three different primary skills for a three-lamp night; a five-lamp night still gets five different skills; worlds seen last time are avoided */
 function draw(n){
+  let recent=[];try{recent=JSON.parse(localStorage.getItem(RK)||'[]');}catch(e){}
   const bySkill={};Object.keys(W).forEach(id=>(bySkill[W[id][1]]=bySkill[W[id][1]]||[]).push(id));
   const picks=shuffle(Object.keys(bySkill)).slice(0,n).map(sk=>{const all=shuffle(bySkill[sk]),fresh=all.filter(i=>!recent.includes(i));return (fresh.length?fresh:all)[0];});
   try{localStorage.setItem(RK,JSON.stringify(picks));}catch(e){}
@@ -36,10 +36,11 @@ const TL=window.TL_CARRY={
   done(S){ return S.carry.targets.length>0&&TL.options(S).length===0; },
   others(){ const S=window.__tl&&window.__tl.S; return S&&S.carry?S.carry.names.filter(n=>n!==S.carry.bearer):[]; },
   bearerName(){ const S=window.__tl&&window.__tl.S; return S&&S.carry?S.carry.bearer:''; },
+  chip(S){ const c=S.carry,el=$('spinCount'); if(el&&c.targets.length)el.textContent=c.targets.filter(t=>S.owner[t]>=0).length+' of tonight\u2019s '+c.targets.length+' lamps lit'; },
   dim(S){ const t=S.carry.targets; document.querySelectorAll('#dial .lan').forEach(w=>{ w.style.opacity=!t.length||t.includes(+w.dataset.i)?'1':'.22'; }); },
   turn(S){
     const c=S.carry,D=window.__tl.D,name=t=>D[t].name,inv=t=>W[D[t].id][0];
-    $('spinBtn').hidden=true; $('turn').innerHTML='<span>Carry the Light</span>'; const old=$('carryBox'); if(old)old.remove();
+    $('spinBtn').hidden=true; $('turn').innerHTML='<span>Carry the Light</span>'; TL.chip(S); const old=$('carryBox'); if(old)old.remove();
     const box=document.createElement('div'); box.id='carryBox'; $('turnBox').appendChild(box); TL.dim(S);
     const mins=n=>'about '+(n*7)+' minutes';
     const go=t=>{ c.tried[t]=(c.tried[t]||0)+1; c.bearers[t]=c.bearer; if(c.targets.every(x=>c.tried[x]))c.final=c.targets.some(x=>c.tried[x]>1)||c.final; c.next=t; box.remove(); $('spinBtn').hidden=false; $('spinBtn').click(); $('spinBtn').hidden=true; };
@@ -52,21 +53,21 @@ const TL=window.TL_CARRY={
       box.innerHTML='<h3>'+(dark?(opts.length===1?'One lamp is still dark. Go back for it?':opts.length+' lamps are still dark. Which one shall we go back for, and who\u2019s carrying?'):'Where does the light go next?')+'</h3>'
         +opts.map(t=>'<button type="button" class="btn ghost" data-t="'+t+'">'+esc(inv(t))+'<small>'+esc(name(t))+' \u00b7 '+SKILL[W[D[t].id][1]]+'</small></button>').join('');
       box.onclick=e=>{ const b=e.target.closest('button'); if(b)pickBearer(+b.dataset.t); }; };
-    const reveal=()=>{ c.revealed=true; TL.dim(S);
-      box.innerHTML='<h3>Tonight\u2019s lamps</h3><p>'+c.targets.length+' lamps \u00b7 '+mins(c.targets.length)+' \u00b7 '+(S.topic==='bible'?'Bible questions':'General knowledge')+' \u00b7 '+c.names.map(esc).join(', ')+'</p>'
+    const reveal=()=>{ c.revealed=true; TL.dim(S); TL.chip(S);
+      box.innerHTML='<h3>Tonight\u2019s lamps</h3><p>'+c.targets.length+' lamps \u00b7 '+mins(c.targets.length)+' \u00b7 '+(S.topic==='gk'?'General knowledge':(window.RF_TOPICS&&window.RF_TOPICS[S.topic])||S.topic)+' \u00b7 '+c.names.map(esc).join(', ')+'</p>'
         +c.targets.map(t=>'<div class="card2"><b>'+esc(inv(t))+'</b><small>'+esc(name(t))+' \u00b7 the bearer will '+SKILL[W[D[t].id][1]].toLowerCase()+'</small></div>').join('')
         +'<button type="button" class="btn" id="carryGo">Begin the journey</button>';
       box.onclick=e=>{ if(e.target.closest('#carryGo'))route(); }; };
     if(!c.targets.length){ $('turnNote').textContent='Everyone can advise. One person carries the lamp.';
       const sug=c.names.length>=5?5:3;
-      box.innerHTML='<h3>How many lamps tonight?</h3><p>'+(c.names.length>=5?'With '+c.names.length+' players, five lamps gives everybody a first turn.':'Three is the shortest complete evening.')+'</p><div class="row">'
+      box.innerHTML='<h3>How many lamps tonight?</h3><p>'+(c.names.length>=5?(c.names.length===5?'With 5 players, five lamps gives everybody a first turn.':'With '+c.names.length+' players, five lamps gives more people a turn to carry.'):'Three is the shortest complete evening.')+'</p><div class="row">'
         +[3,4,5].map(n=>'<button type="button" class="btn'+(n===sug?'':' ghost')+'" data-n="'+n+'">'+n+' lamps<small>'+mins(n)+'</small></button>').join('')+'</div>';
       box.onclick=e=>{ const b=e.target.closest('button'); if(!b)return; const n=+b.dataset.n; c.targets=draw(n).map(id=>c.ids.indexOf(id)); S.spins=n+1; reveal(); }; return; }
     if(!c.revealed)reveal(); else route();
   },
   landing(S){ const c=S.carry,D=window.__tl.D,id=D[S.pos].id,again=(c.tried[S.pos]||1)>1,arr=window.TL_ARRIVE&&window.TL_ARRIVE[id];
     const line=again?(BACK[id]||'Back in '+D[S.pos].name+'. Another go.'):(FIRST[id]||(arr?arr[1]:''));
-    $('landLine').textContent=line+' '+c.bearer+' carries the lamp: everyone can advise, '+c.bearer+' gives the answers.'; TL.dim(S); },
+    $('landLine').textContent=line+' '+c.bearer+' carries the lamp: everyone can advise, '+c.bearer+' gives the answers.'; TL.dim(S); TL.chip(S); },
   ending(S){ const c=S.carry,D=window.__tl.D; ['carryEnd','carryAgain'].forEach(i=>{const o=$(i);if(o)o.remove();});
     const ul=document.createElement('ul'); ul.id='carryEnd';
     ul.innerHTML=c.targets.map(t=>S.owner[t]>=0?'<li>\u2728 <b>'+esc(D[t].name)+'</b>: brought home by '+esc(c.bearers[t]||'the group')+'</li>':'<li class="dark">\u25cb <b>'+esc(D[t].name)+'</b>: still dark</li>').join('');
