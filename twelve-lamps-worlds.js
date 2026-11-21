@@ -128,14 +128,14 @@ window.TL_ARRIVE={
  redsea:['50% 80%','The waters stand like walls, and the dust of chariots rises behind.'],
  jonah:['48% 60%','Down, down into the deep. It is dark and very quiet.'],
  paul:['40% 60%','Another harbour, another city, another letter to deliver.'],
- joseph:['50% 70%','A silver cup, a sack, and eleven brothers holding their breath.'],
+ joseph:['50% 70%','Four brothers have stopped on the road. Somewhere among their sacks is a silver cup. How much evidence will you need before you name a name?'],
  galilee:['40% 60%','The wind is rising, and the boat is small.',1300],
  scroll:['40% 60%','Torchlight falls on words older than memory.'],
- ark:['50% 70%','The rain has stopped. Two by two, they are waiting on deck.'],
+ ark:['50% 70%','The ramp is coming up. Watch the last few animals carefully. Once that door shuts, somebody will ask what you saw.'],
  lamps:['50% 40%','Midnight draws near, and the lamps burn low.'],
  nehemiah:['50% 80%','The wall is half built, and the dusk is coming.'],
  jacob:['50% 30%','A stairway of light under the open stars.'],
  sinai:['50% 40%','Thunder rolls down the mountain.'],
- daniel:['50% 50%','The den is dark, but the night is calm.']
+ daniel:['50% 50%','You can hear one of them breathing. Get the next answer right and it settles. Wake three at once and it will be a very long night.']
 };
 })();

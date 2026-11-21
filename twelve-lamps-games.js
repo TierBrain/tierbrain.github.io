@@ -195,4 +195,11 @@ T.joseph={title:'Whose sack holds the cup?',
    return c.multi?{taker:-1,line:'The cup stayed hidden'}:{lit:false,line:'The cup stayed hidden',need:'find the cup to light it'};
   }
  }};
+
+/* In Carry the Light, the bearer answers and makes each round's key call; everyone else advises. */
+['ark','joseph','daniel','galilee'].forEach(id=>{const t=T[id]; if(!t)return; const play=t.play;
+  t.play=function(c){ const who=window.TL_CARRY&&window.TL_CARRY.bearerName(); if(!who)return play.call(this,c);
+    const c2=Object.create(c); c2.count=x=>c.count(x+' \u00b7 '+who+' answers');
+    if(c.choose)c2.choose=o=>c.choose(Object.assign({},o,{title:who+' carries the lamp. '+(o.title||'')}));
+    return play.call(this,c2); }; });
 })();
