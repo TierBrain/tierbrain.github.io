@@ -18,7 +18,14 @@ class BuildSiteTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         shutil.copyfile(ROOT / 'build-site.py', self.root / 'build-site.py')
         self.sources = {
-            'index.html': '<!doctype html><html><body class="home">Home</body></html>\n',
+            'index.html': '<!doctype html><html><body class="home">'
+                          '<span id="count">1 game</span>'
+                          '<a data-title="Creak" href="creak-multi%205.html">Creak</a>'
+                          '</body></html>\n',
+            'packs.html': '<html><body><span id="packCount">1</span>'
+                          '<span id="catalogueCount">1</span>'
+                          '<a class="g" href="creak-multi%205.html">Creak</a>'
+                          '</body></html>\n',
             '404.html': '<html><BODY>Missing</BODY></html>\n',
             'creak-multi 5.html': '<html><body>Game</body></html>\n',
             'q/A+B #1.html': '<html><body>Question</body></html>\n',
@@ -34,20 +41,23 @@ class BuildSiteTests(unittest.TestCase):
             'vendor/supabase.provenance.json': '{"version":"synthetic"}\n',
             'docs/private.html': '<html><body>Internal documentation</body></html>\n',
             'CNAME': 'tierbrain.co\n',
-            'sync-catalogue.py': 'import sys\nassert sys.argv[1:] == ["--check"]\n',
+            'sync-catalogue.py': (ROOT / 'sync-catalogue.py').read_text(encoding='utf-8'),
         }
         for relative, content in self.sources.items():
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding='utf-8')
 
-    def build(self, *args, preview_env=False):
+    def run_build(self, *args, preview_env=False):
         environment = os.environ.copy()
         environment.pop('TIERBRAIN_PREVIEW', None)
         if preview_env:
             environment['TIERBRAIN_PREVIEW'] = '1'
-        result = subprocess.run([sys.executable, str(self.root / 'build-site.py'), *args],
-                                cwd=self.root, env=environment, capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(self.root / 'build-site.py'), *args],
+                              cwd=self.root, env=environment, capture_output=True, text=True)
+
+    def build(self, *args, preview_env=False):
+        result = self.run_build(*args, preview_env=preview_env)
         self.assertEqual(result.returncode, 0, result.stderr)
         return self.root / 'dist'
 
@@ -57,12 +67,53 @@ class BuildSiteTests(unittest.TestCase):
 
     def test_production_is_unmodified_and_internal_files_are_excluded(self):
         dist = self.build()
-        for relative in ('index.html', '404.html', 'site.js', '_headers', 'robots.txt',
+        for relative in ('index.html', 'packs.html', '404.html', 'site.js', '_headers', 'robots.txt',
                          'js/show-access.js', 'vendor/supabase.js', 'vendor/supabase.LICENSE'):
             self.assertEqual((dist / relative).read_bytes(), (self.root / relative).read_bytes())
         for relative in ('build-site.py', 'sync-catalogue.py', 'docs/private.html', 'CNAME',
                          'vendor/supabase.provenance.json'):
             self.assertFalse((dist / relative).exists(), relative)
+        self.assert_sources_unchanged()
+
+    def test_stale_counts_are_generated_without_modifying_sources(self):
+        self.sources['index.html'] = self.sources['index.html'].replace('1 game', '72 games')
+        self.sources['packs.html'] = self.sources['packs.html'].replace('>1</span>', '>72</span>')
+        for relative in ('index.html', 'packs.html'):
+            (self.root / relative).write_text(self.sources[relative], encoding='utf-8')
+        for args in ((), ('--preview',)):
+            with self.subTest(args=args):
+                dist = self.build(*args)
+                self.assertIn('<span id="count">1 game</span>',
+                              (dist / 'index.html').read_text(encoding='utf-8'))
+                packs = (dist / 'packs.html').read_text(encoding='utf-8')
+                self.assertIn('<span id="packCount">1</span>', packs)
+                self.assertIn('<span id="catalogueCount">1</span>', packs)
+                if args:
+                    self.assertIn('data-tierbrain-preview', packs)
+                self.assert_sources_unchanged()
+
+    def test_invalid_catalogue_prevents_replacing_existing_build(self):
+        dist = self.build()
+        published_index = (dist / 'index.html').read_bytes()
+        self.sources['index.html'] = self.sources['index.html'].replace(
+            'creak-multi%205.html', 'missing-game.html')
+        (self.root / 'index.html').write_text(self.sources['index.html'], encoding='utf-8')
+        result = self.run_build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Invalid catalogue target: missing-game.html', result.stderr)
+        self.assertEqual((dist / 'index.html').read_bytes(), published_index)
+        self.assert_sources_unchanged()
+
+    def test_catalogue_target_excluded_from_public_assets_prevents_build(self):
+        self.sources['index.html'] = self.sources['index.html'].replace(
+            'creak-multi%205.html', 'docs/private.html')
+        self.sources['packs.html'] = self.sources['packs.html'].replace(
+            'creak-multi%205.html', 'docs/private.html')
+        for relative in ('index.html', 'packs.html'):
+            (self.root / relative).write_text(self.sources[relative], encoding='utf-8')
+        result = self.run_build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Invalid catalogue target: docs/private.html', result.stderr)
         self.assert_sources_unchanged()
 
     def test_preview_blocks_backend_and_forms_without_modifying_sources(self):

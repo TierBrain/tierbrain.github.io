@@ -1,7 +1,8 @@
 """Keep published counts in sync with the homepage's existing game catalogue.
 
-Run after adding/removing a game: python sync-catalogue.py
-Validate without writing:        python sync-catalogue.py --check
+Optionally refresh source labels: python sync-catalogue.py
+Check generated totals strictly:  python sync-catalogue.py --check --root dist
+Validate source links/markers:    python sync-catalogue.py --validate-only
 The index.html data-title cards remain the single catalogue source.
 """
 import argparse
@@ -55,7 +56,9 @@ def replace_count(text, element_id, value):
     return result
 
 
-def synchronise(root, check=False):
+def synchronise(root, check=False, validate_only=False):
+    if check and validate_only:
+        raise ValueError('Choose either check or validate_only')
     games = read_catalogue(root)
     packs = CatalogueParser()
     packs_text = (root / 'packs.html').read_text(encoding='utf-8')
@@ -72,7 +75,7 @@ def synchronise(root, check=False):
         path = root / name
         if path.read_text(encoding='utf-8') != text:
             stale.append(name)
-            if not check:
+            if not (check or validate_only):
                 path.write_text(text, encoding='utf-8')
     if check and stale:
         raise ValueError('Catalogue counts are stale in ' + ', '.join(stale) + '; run python sync-catalogue.py')
@@ -81,15 +84,20 @@ def synchronise(root, check=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--check', action='store_true')
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--check', action='store_true',
+                       help='Validate links, markers and exact counts without writing.')
+    modes.add_argument('--validate-only', action='store_true',
+                       help='Validate links and count markers without writing; allow stale counts.')
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     try:
-        total, featured = synchronise(args.root, args.check)
+        total, featured = synchronise(args.root, args.check, args.validate_only)
     except (OSError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    print(f'Catalogue: {total} games; {featured} unique games in packs. Counts are current.')
+    status = 'Links and count markers are valid.' if args.validate_only else 'Counts are current.'
+    print(f'Catalogue: {total} games; {featured} unique games in packs. {status}')
     return 0
 
 

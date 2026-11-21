@@ -24,15 +24,16 @@ Use Python 3.12+ and Node.js 22+.
 python -m pip install -r requirements-dev.txt
 python -m playwright install chromium
 python scripts/check_site.py
-python sync-catalogue.py --check
+python sync-catalogue.py --validate-only
 python -m unittest discover -s tests -p 'test_*.py'
 python tests/browser_checks.py
 python build-site.py
+python sync-catalogue.py --check --root dist
 ```
 
 If Chromium is already installed, the browser suite accepts `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium`. It intercepts all page HTTP requests and WebSockets. Score/room changes in these tests use fabricated responses in memory; no live backend receives them. Some tests exercise normal submission functions under this interception.
 
-After adding/removing a catalogue game, run `python sync-catalogue.py` and commit the updated counts. Pack links must point to games present in the catalogue. The legacy `#football` pack anchor is retained so existing links continue to work.
+Published totals are generated automatically in `dist/` from the homepage cards. After adding or removing a catalogue game, update the reviewed readiness inventory and relevant entry checks. Running `python sync-catalogue.py` is an optional way to refresh source fallback labels; stale labels do not block a valid build. Missing or duplicate catalogue targets, invalid pack links and missing or duplicate count markers still fail validation. The legacy `#football` pack anchor is retained so existing links continue to work.
 
 ## Local visual preview
 
