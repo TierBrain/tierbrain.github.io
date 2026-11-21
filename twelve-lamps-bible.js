@@ -133,7 +133,7 @@ const U={
  ['In which city were believers first called Christians?','Antioch','Jerusalem','Rome','Corinth'],
  ['Which prophet watched the widow of Nain\u2019s... no','','','','']].slice(0,23)
 };
-window.RF_TOPICS=Object.assign(window.RF_TOPICS||{},{bible:'The Bible'});
+window.RF_TOPICS=window.RF_TOPICS||{}; if(!window.RF_TOPICS.bible) window.RF_TOPICS.bible='The Bible';
 /* If TierBrain already has a 'bible' topic loaded, add to it rather than replace it, and skip any question it already has. */
 window.RF_BANK=window.RF_BANK||{};
 const bank=window.RF_BANK.bible=window.RF_BANK.bible||{};
