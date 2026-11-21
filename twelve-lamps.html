@@ -35,35 +35,35 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#0b0f2a">
+<meta name="theme-color" content="#1c0f09">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,700&family=Nunito:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Alegreya+Sans:wght@500;700;800&display=swap">
 <style>
 /* Layout: a brass astrolabe drifts through a nebula. Twelve lit windows are set into its face, each a tiny world.
    Spin it, it whirls and clicks, and the window that comes to rest under the pointer brightens; the camera
    sinks into it and that world becomes the backdrop of the round. Lamps won glow in the winner's colour
    and carry their symbol, so colour is never the only difference. */
 :root{
-  --space:#0b0f2a; --deep:#060818; --brass:#d8b25a; --brass-2:#f3d98f; --brass-3:#8a6a2a; --ink:#21160c; --paper:#fbf4e6;
+  --space:#1c0f09; --deep:#0e0805; --brass:#e8a455; --brass-2:#ffdca8; --brass-3:#8a4e1c; --ink:#21160c; --paper:#fbf4e6;
   --glow:#ffd98a; --good:#5fd08a; --bad:#ff7a6a;
-  --head:'Baloo 2','Nunito',system-ui,sans-serif; --flour:'Fraunces',Georgia,serif;
-  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --head:'Cinzel',Georgia,serif; --flour:'Cormorant Garamond',Georgia,serif;
+  --body:'Alegreya Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
-body{font-family:var(--body);color:#fff;background:var(--deep);font-size:17px;line-height:1.45;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--body);color:#fff;background:var(--deep);font-size:19px;line-height:1.42;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 button:disabled{cursor:default}
 :focus-visible{outline:3px solid var(--brass-2);outline-offset:3px;border-radius:10px}
 
 /* ---------- the sky ---------- */
-#sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(#0b0f2a,#060818)}
+#sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(#1c0f09,#0e0805)}
 #sky::before{content:'';position:absolute;inset:-12%;animation:nebula 70s ease-in-out infinite alternate;
-  background:radial-gradient(60% 50% at 18% 22%,rgba(122,72,170,.38),transparent 70%),radial-gradient(55% 45% at 82% 70%,rgba(30,120,150,.32),transparent 70%),
-    radial-gradient(40% 35% at 70% 18%,rgba(190,90,120,.22),transparent 70%)}
+  background:radial-gradient(60% 50% at 18% 22%,rgba(176,84,40,.42),transparent 70%),radial-gradient(55% 45% at 82% 70%,rgba(214,140,60,.30),transparent 70%),
+    radial-gradient(40% 35% at 70% 18%,rgba(120,60,70,.28),transparent 70%)}
 @keyframes nebula{to{transform:translate(-4%,3%) scale(1.08) rotate(2deg)}}
 #sky b{position:absolute;width:150px;height:2px;border-radius:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0));opacity:0;animation:shoot 17s linear infinite}
 @keyframes shoot{0%,91%{opacity:0;transform:rotate(-24deg) translateX(0)}92%{opacity:.9}97%{opacity:0;transform:rotate(-24deg) translateX(-360px)}100%{opacity:0}}
@@ -73,17 +73,17 @@ button:disabled{cursor:default}
 
 /* ---------- shared pieces ---------- */
 .btn{border:0;border-radius:999px;padding:14px 28px;font-family:var(--head);font-weight:800;font-size:20px;line-height:1.1;
-  background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:0 4px 0 var(--brass-3),0 10px 24px rgba(0,0,0,.35);transition:transform .12s ease,filter .12s ease}
+  background:linear-gradient(#ffd9a0,#d58a3c);color:var(--ink);box-shadow:0 4px 0 var(--brass-3),0 10px 24px rgba(0,0,0,.35);transition:transform .12s ease,filter .12s ease}
 .btn:active{transform:translateY(2px)}
-.btn.ghost{background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 0 0 0 2px rgba(243,217,143,.55)}
+.btn.ghost{background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,205,140,.55)}
 .btn.small{font-size:16px;padding:10px 18px}
 @media (hover:hover){.btn:not(:disabled):hover{filter:brightness(1.07)}}
 .btn:disabled{opacity:.45}
 .bar{display:flex;align-items:center;gap:12px;padding:14px clamp(14px,2.4vw,32px)}
 .logo{font-family:var(--head);font-weight:800;font-size:clamp(20px,2vw,28px);letter-spacing:.3px;margin-right:auto}
 .logo span{color:var(--brass-2)}
-.chip{font-family:var(--head);font-weight:700;font-size:15px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(243,217,143,.35)}
-.chip.last{background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);border-color:transparent}
+.chip{font-family:var(--head);font-weight:700;font-size:15px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,205,140,.35)}
+.chip.last{background:linear-gradient(#ffd9a0,#d58a3c);color:var(--ink);border-color:transparent}
 .sym{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;flex:none}
 
 /* ---------- setup ---------- */
@@ -93,12 +93,12 @@ button:disabled{cursor:default}
 .hero h1 span{color:var(--brass-2)}
 .hero .tag{font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,24px);color:#f6e6c4;margin:12px 0 0;max-width:34ch}
 #heroDial{width:clamp(110px,min(24vw,30vh),300px);filter:drop-shadow(0 10px 40px rgba(240,180,76,.25))}
-.panel{background:rgba(10,12,34,.72);border:1px solid rgba(243,217,143,.22);border-radius:22px;padding:clamp(16px,2.4vw,28px);backdrop-filter:blur(6px)}
+.panel{background:rgba(24,13,8,.72);border:1px solid rgba(255,205,140,.22);border-radius:22px;padding:clamp(16px,2.4vw,28px);backdrop-filter:blur(6px)}
 .field{margin:0 0 20px}
 .field>span,.label{display:block;font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:.6px;text-transform:uppercase;color:var(--brass-2);margin-bottom:8px}
 .seg{display:flex;flex-wrap:wrap;gap:8px}
 .seg button{border:0;border-radius:14px;padding:10px 16px;background:rgba(255,255,255,.07);font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,255,255,.1)}
-.seg button[aria-pressed="true"]{background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:none}
+.seg button[aria-pressed="true"]{background:linear-gradient(#ffd9a0,#d58a3c);color:var(--ink);box-shadow:none}
 .modes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
 .modes button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;padding:12px 14px;font-family:var(--head);font-size:clamp(17px,1.5vw,21px);line-height:1.1}
 .modes small{font-family:var(--body);font-weight:700;font-size:13px;opacity:.82;margin-top:4px;line-height:1.3}
@@ -107,10 +107,10 @@ button:disabled{cursor:default}
 .step>span b{font-weight:inherit}
 .steps{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:0 clamp(18px,3vw,40px);align-items:start}
 .rules{margin:0 0 12px;font-family:var(--flour);font-style:italic;font-size:clamp(16px,1.3vw,19px);color:#f6e6c4}
-.summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(243,217,143,.2)}
+.summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,205,140,.2)}
 .summary p{margin:0;flex:1 1 220px;font-weight:700;font-size:15px;line-height:1.45;color:#e8dcc2}
 .btn.begin{font-size:clamp(24px,2vw,30px);padding:16px clamp(40px,4vw,64px)}
-#settings{margin-top:6px;padding-top:18px;border-top:1px solid rgba(243,217,143,.2)}
+#settings{margin-top:6px;padding-top:18px;border-top:1px solid rgba(255,205,140,.2)}
 .sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px}
 @media (max-height:800px) and (min-width:901px){.field{margin-bottom:14px}.go{margin-top:12px}.hero{margin-bottom:6px}}
 .note{margin:8px 0 0;color:#e8dcc2;font-size:15px}
@@ -120,10 +120,10 @@ select option{color:#000}
 .prow .rm{border:0;background:transparent;font-size:22px;width:40px;height:40px;border-radius:10px;color:#f6e6c4}
 .prow .badge{width:34px;height:34px;flex:none}
 .go{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:16px}
-#resumeBox{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(243,217,143,.12);border:1px solid rgba(243,217,143,.4)}
+#resumeBox{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:rgba(255,205,140,.12);border:1px solid rgba(255,205,140,.4)}
 #resumeBox p{margin:0;flex:1 1 220px;font-weight:700}
 #playOn{margin-bottom:12px}
-.lobby{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px;border-radius:16px;background:rgba(243,217,143,.1);border:1px solid rgba(243,217,143,.35);margin-bottom:10px}
+.lobby{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px;border-radius:16px;background:rgba(255,205,140,.1);border:1px solid rgba(255,205,140,.35);margin-bottom:10px}
 .lobby>div{flex:1 1 200px;min-width:0}
 .lobby b{display:block;font-family:var(--head);font-size:clamp(40px,5vw,64px);letter-spacing:8px;line-height:1;color:var(--brass-2)}
 .lobby a{color:#fff;font-weight:800;word-break:break-all}
@@ -152,7 +152,7 @@ body.net #opts .opt{cursor:default}
 #inner{transform-origin:0 0;animation:drift 90s linear infinite}
 @keyframes drift{to{transform:rotate(-360deg)}}
 .side{display:flex;flex-direction:column;gap:16px}
-.card{background:rgba(10,12,34,.78);border:1px solid rgba(243,217,143,.24);border-radius:20px;padding:18px 20px}
+.card{background:rgba(24,13,8,.78);border:1px solid rgba(255,205,140,.24);border-radius:20px;padding:18px 20px}
 #turn{font-family:var(--head);font-weight:800;font-size:clamp(24px,2.4vw,34px);line-height:1.1;display:flex;align-items:center;gap:10px}
 #turnNote{margin:6px 0 14px;color:#e8dcc2}
 #landBox h2{font-family:var(--head);font-weight:800;font-size:clamp(24px,2.4vw,34px);line-height:1.05;margin:0}
@@ -167,9 +167,9 @@ body.net #opts .opt{cursor:default}
 #msg{min-height:1.4em;margin:0;font-weight:800;color:#f6e6c4}
 
 /* ---------- a round: a full-screen layer that opens out of the lamp ---------- */
-#round{position:fixed;inset:0;z-index:5;overflow:hidden;background:#060818}
+#round{position:fixed;inset:0;z-index:5;overflow:hidden;background:#0e0805}
 #roundArt{position:absolute;inset:0;will-change:transform;contain:strict}
-#roundShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(6,8,24,.62),rgba(6,8,24,.1) 24%,rgba(6,8,24,.08) 62%,rgba(6,8,24,.3));transition:opacity .9s ease}
+#roundShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(14,8,5,.62),rgba(14,8,5,.1) 24%,rgba(14,8,5,.08) 62%,rgba(14,8,5,.3));transition:opacity .9s ease}
 #roundBody{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;padding-bottom:28px}
 #round .bar,.qcard,#roundEnd{transition:opacity .55s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
 .rhead{transition:transform 1s cubic-bezier(.3,.7,.2,1)}
@@ -184,14 +184,14 @@ body.net #opts .opt{cursor:default}
 #round.intro.first #rTale{display:block;animation:rise 1s .6s cubic-bezier(.2,.8,.2,1) both}
 #cutFlash{position:fixed;inset:0;z-index:6;background:#eef6ff;opacity:0;pointer-events:none}
 /* the opening: the dial assembles and the players take their places */
-#cut{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12vh 16px 7vh;pointer-events:none;background:linear-gradient(rgba(6,8,24,0),rgba(6,8,24,.88) 45%)}
+#cut{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12vh 16px 7vh;pointer-events:none;background:linear-gradient(rgba(14,8,5,0),rgba(14,8,5,.88) 45%)}
 #cut h2{margin:0;font-family:var(--head);font-weight:800;font-size:clamp(30px,4vw,60px);text-shadow:0 4px 20px rgba(0,0,0,.7);animation:rise .8s 2.6s cubic-bezier(.2,.8,.2,1) both}
 #cut ul{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:14px 0 0;padding:0}
-#cut li{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(10,12,34,.85);border:2px solid var(--c);font-weight:900;font-size:clamp(17px,1.6vw,24px);animation:rise .6s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(3s + var(--k) * .18s)}
+#cut li{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(24,13,8,.85);border:2px solid var(--c);font-weight:900;font-size:clamp(17px,1.6vw,24px);animation:rise .6s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(3s + var(--k) * .18s)}
 #cut li .sym{width:1.3em;height:1.3em}
 #cut p{margin:14px 0 0;font-weight:800;color:#f6e6c4;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(3.4s + var(--n) * .18s)}
 /* the finale: the lit lamps rise and gather over the winner */
-#finale{position:fixed;inset:0;z-index:40;overflow:hidden;background:radial-gradient(70% 60% at 50% 40%,#1c2350,#060818);transition:opacity .8s ease}
+#finale{position:fixed;inset:0;z-index:40;overflow:hidden;background:radial-gradient(70% 60% at 50% 40%,#3a2414,#0e0805);transition:opacity .8s ease}
 #finale.out{opacity:0}
 #finale .fl{position:absolute;width:clamp(70px,9vmin,120px);aspect-ratio:1;margin:calc(clamp(70px,9vmin,120px) / -2) 0 0 calc(clamp(70px,9vmin,120px) / -2);transition:left 1.4s cubic-bezier(.4,0,.2,1),top 1.4s cubic-bezier(.4,0,.2,1),opacity 1s ease,transform 1.4s ease,filter 1s ease}
 #finale .fl svg{width:100%;height:100%;overflow:visible}
@@ -200,7 +200,7 @@ body.net #opts .opt{cursor:default}
 #finale h2{position:absolute;left:0;right:0;top:52%;margin:0;text-align:center;font-family:var(--head);font-weight:800;font-size:clamp(36px,5.5vw,84px);line-height:1;opacity:0;transform:translateY(30px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.8,.2,1);text-shadow:0 4px 24px rgba(0,0,0,.6)}
 #finale p{position:absolute;left:0;right:0;top:calc(52% + clamp(46px,6.5vw,96px));margin:0;text-align:center;font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,28px);color:#f6e6c4;opacity:0;transition:opacity 1s .4s ease}
 #finale.named h2{opacity:1;transform:none}#finale.named p{opacity:1}
-#finale small{position:absolute;bottom:4vh;left:0;right:0;text-align:center;color:#9aa3c7;font-weight:800}
+#finale small{position:absolute;bottom:4vh;left:0;right:0;text-align:center;color:#c9b49a;font-weight:800}
 #rRule,#rStage{transition:opacity .55s ease}
 #nextBtn{position:relative;overflow:hidden}
 #nextBtn.auto::after{content:'';position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(33,22,12,.45);transform-origin:left center;animation:drain var(--auto,3s) linear forwards}
@@ -240,14 +240,14 @@ body.net #opts .opt{cursor:default}
 .opt.wrong{border-color:#c94a3a;background:#fbe4e0;opacity:.8}
 .opt:disabled{cursor:default}
 #timer{height:8px;border-radius:99px;background:#eadfca;margin:14px 0 0;overflow:hidden}
-#timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c9a24a,#f0b44c);transform-origin:left center}
+#timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#d58a3c,#f0b44c);transform-origin:left center}
 #rmsg{min-height:1.5em;margin:12px 0 0;font-weight:900;font-size:clamp(17px,1.5vw,22px)}
 #stealBox{margin-top:12px}
 #stealBox .label{color:#6a5236}
 #stealBtns{display:flex;flex-wrap:wrap;gap:8px}
 #stealBtns button{display:flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:9px 14px;font-weight:900;background:#efe3c9;color:var(--ink)}
 .rfoot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:14px}
-#roundEnd{width:min(760px,calc(100% - 28px));margin:clamp(20px,6vh,60px) auto 0;text-align:center;background:rgba(10,12,34,.86);border:1px solid rgba(243,217,143,.4);border-radius:24px;padding:clamp(20px,3vw,36px)}
+#roundEnd{width:min(760px,calc(100% - 28px));margin:clamp(20px,6vh,60px) auto 0;text-align:center;background:rgba(24,13,8,.86);border:1px solid rgba(255,205,140,.4);border-radius:24px;padding:clamp(20px,3vw,36px)}
 #reLantern{display:block;width:clamp(120px,15vw,180px);height:auto;margin:-6px auto 6px;overflow:visible}
 #reLantern .rays{transform-box:fill-box;transform-origin:50% 50%;animation:rays 14s linear infinite}
 #reLantern .halo{animation:halo 2.4s ease-in-out infinite}
@@ -268,7 +268,7 @@ body.net #opts .opt{cursor:default}
 #end h1{font-family:var(--head);font-weight:800;font-size:clamp(40px,6vw,80px);line-height:.95;margin:0 0 6px}
 #endLine{font-family:var(--flour);font-style:italic;font-size:clamp(18px,2vw,26px);color:#f6e6c4;margin:0 0 20px}
 #endList{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-direction:column;gap:8px}
-#endList li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;background:rgba(10,12,34,.72);border:1px solid rgba(243,217,143,.2);font-weight:900;font-size:20px}
+#endList li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;background:rgba(24,13,8,.72);border:1px solid rgba(255,205,140,.2);font-weight:900;font-size:20px}
 #endList .pos{font-family:var(--flour);font-style:italic;font-size:26px;min-width:2.2ch;color:var(--brass-2)}
 #endList .nm{flex:1}
 #endList small{font-family:var(--head);font-weight:700;color:#f6e6c4}
@@ -281,7 +281,7 @@ body.net #opts .opt{cursor:default}
 #end.show h1{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
 #end.show #endLine{animation:rise .7s .15s cubic-bezier(.2,.8,.2,1) both}
 #end.show #endList li{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k) * .08s + .25s)}
-#lastBanner{position:fixed;left:50%;top:42%;z-index:12;transform:translate(-50%,-50%);pointer-events:none;text-align:center;font-family:var(--head);font-weight:800;font-size:clamp(34px,5vw,72px);line-height:1;color:var(--ink);background:linear-gradient(#f6dc8e,#c9a24a);padding:.35em .8em;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:banner 2.6s cubic-bezier(.2,.8,.2,1) forwards}
+#lastBanner{position:fixed;left:50%;top:42%;z-index:12;transform:translate(-50%,-50%);pointer-events:none;text-align:center;font-family:var(--head);font-weight:800;font-size:clamp(34px,5vw,72px);line-height:1;color:var(--ink);background:linear-gradient(#ffd9a0,#d58a3c);padding:.35em .8em;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:banner 2.6s cubic-bezier(.2,.8,.2,1) forwards}
 #lastBanner small{display:block;font-size:.42em;margin-top:.25em}
 @keyframes banner{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
 #board li .pt.up{color:var(--good)}
@@ -485,7 +485,7 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=3"></script>
 <script src="twelve-lamps-games.js?v=5"></script>
-<script src="twelve-lamps-carry.js?v=9"></script>
+<script src="twelve-lamps-carry.js?v=10"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -511,7 +511,7 @@ const MAXP = 10;
 
 /* ---------- small helpers ---------- */
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const symSvg = (i, colour) => '<svg class="sym" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, colour, '#0b0f2a') + '</svg>';
+const symSvg = (i, colour) => '<svg class="sym" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, colour, '#1c0f09') + '</svg>';
 function rngFrom(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function hash(s){ let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function shuffle(a, rnd){ rnd = rnd || Math.random; a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -570,36 +570,36 @@ paintSound();
 
 /* ---------- the dial ---------- */
 const at = (deg, r) => [r * Math.sin(deg * Math.PI / 180), -r * Math.cos(deg * Math.PI / 180)];
-const LAMP_ART = p => '<g transform="translate(-10 30) scale(1.75)"><ellipse cx="0" cy="8" rx="42" ry="22" fill="url(#' + p + '-brass)"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="url(#' + p + '-brass)"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="url(#' + p + '-brass)"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f0cf7a"/><g class="lampflame"><path d="M0 -12Q-16 -34 0 -62Q6 -46 14 -36Q18 -22 0 -12Z" fill="#ff9a3c"/><path d="M0 -14Q-8 -28 0 -42Q5 -34 6 -28Q7 -20 0 -14Z" fill="#fff0b0"/></g></g>';
+const LAMP_ART = p => '<g transform="translate(-10 30) scale(1.75)"><ellipse cx="0" cy="8" rx="42" ry="22" fill="url(#' + p + '-brass)"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="url(#' + p + '-brass)"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="url(#' + p + '-brass)"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f5c98a"/><g class="lampflame"><path d="M0 -12Q-16 -34 0 -62Q6 -46 14 -36Q18 -22 0 -12Z" fill="#ff9a3c"/><path d="M0 -14Q-8 -28 0 -42Q5 -34 6 -28Q7 -20 0 -14Z" fill="#fff0b0"/></g></g>';
 function dialSvg(p, interactive){
   let h = '<defs>' + ART.defs(p)
-    + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset=".5" stop-color="#c9a24a"/><stop offset="1" stop-color="#7d5d22"/></linearGradient>'
-    + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1c2350"/><stop offset=".7" stop-color="#11163a"/><stop offset="1" stop-color="#0a0d26"/></radialGradient>'
+    + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#d58a3c"/><stop offset="1" stop-color="#7a4418"/></linearGradient>'
+    + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a2414"/><stop offset=".7" stop-color="#11163a"/><stop offset="1" stop-color="#150c07"/></radialGradient>'
     + COLOURS.map((c, k) => '<radialGradient id="' + p + '-glow-' + k + '"><stop offset=".55" stop-color="' + c + '" stop-opacity=".9"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>').join('')
     + '<clipPath id="' + p + '-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="' + p + '-lg"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>';
   // the fixed outer ring, its ticks and the pointer
-  h += '<circle r="482" fill="none" stroke="url(#' + p + '-brass)" stroke-width="16"/><circle r="470" fill="none" stroke="#f3ecd8" stroke-width="1.5" opacity=".45"/><circle r="460" fill="#0a0d26" stroke="#8a6a2a" stroke-width="2"/>';
-  for (let k = 0; k < 120; k++) { const long = k % 12 === 0, [x1, y1] = at(k * 3, 458), [x2, y2] = at(k * 3, long ? 432 : 446); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="' + (long ? 3 : 1.4) + '" opacity=".8"/>'; }
+  h += '<circle r="482" fill="none" stroke="url(#' + p + '-brass)" stroke-width="16"/><circle r="470" fill="none" stroke="#f3ecd8" stroke-width="1.5" opacity=".45"/><circle r="460" fill="#150c07" stroke="#8a4e1c" stroke-width="2"/>';
+  for (let k = 0; k < 120; k++) { const long = k % 12 === 0, [x1, y1] = at(k * 3, 458), [x2, y2] = at(k * 3, long ? 432 : 446); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#d58a3c" stroke-width="' + (long ? 3 : 1.4) + '" opacity=".8"/>'; }
   // the turning face: twelve gates, Roman numerals, a star map
-  h += '<g id="' + p + '-wheel" class="wheel"><circle r="428" fill="url(#' + p + '-face)" stroke="#c9a24a" stroke-width="3"/><circle r="292" fill="none" stroke="#c9a24a" stroke-width="2" opacity=".6"/>';
+  h += '<g id="' + p + '-wheel" class="wheel"><circle r="428" fill="url(#' + p + '-face)" stroke="#d58a3c" stroke-width="3"/><circle r="292" fill="none" stroke="#d58a3c" stroke-width="2" opacity=".6"/>';
   const r = rngFrom(11); for (let k = 0; k < 70; k++) { const [x, y] = at(r() * 360, 120 + r() * 300); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (.8 + r() * 1.8).toFixed(1) + '" fill="#fff" opacity="' + (.25 + r() * .5).toFixed(2) + '"/>'; }
   D.forEach((d, i) => { const [x, y] = at(i * STEP, 360), [nx, ny] = at(i * STEP, 234);
     // each window and numeral sits in an "up" group that turns against the face, so every world stays the right way up
     h += '<g class="lan" data-i="' + i + '" transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"><g class="up"><g class="pop">'
       + '<circle class="glowc" r="104" fill="url(#' + p + '-glow-0)" opacity="0"/>'
-      + '<g clip-path="url(#' + p + '-win)"><g transform="scale(1.4)">' + ART.mini(d.id, p) + '</g><path class="shade" d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#060818" opacity=".55"/></g>'
+      + '<g clip-path="url(#' + p + '-win)"><g transform="scale(1.4)">' + ART.mini(d.id, p) + '</g><path class="shade" d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#0e0805" opacity=".55"/></g>'
       + '<path class="ring" d="M-68 84V-14A68 68 0 0 1 68 -14V84Z" fill="none" stroke="url(#' + p + '-brass)" stroke-width="7"/><path d="M-58 74V-14A58 58 0 0 1 58 -14V74Z" fill="none" stroke="#f3ecd8" stroke-width="2" opacity=".6"/><circle cy="-84" r="5" fill="#f3ecd8"/>'
       + '<g class="own" transform="translate(46 62)" opacity="0"></g></g></g></g>'
-      + '<g transform="translate(' + nx.toFixed(1) + ' ' + ny.toFixed(1) + ')"><g class="up"><text y="9" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-style="italic" font-weight="700" font-size="26" fill="#d8b25a" opacity=".85">' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][i] + '</text></g></g>'; });
+      + '<g transform="translate(' + nx.toFixed(1) + ' ' + ny.toFixed(1) + ')"><g class="up"><text y="9" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif" font-style="italic" font-weight="700" font-size="26" fill="#e8a455" opacity=".85">' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][i] + '</text></g></g>'; });
   h += '</g>';
   // the inner rings drift the other way; the hub is a button
-  h += '<g id="' + p + '-inner"' + (interactive ? ' class="inner"' : '') + '><circle r="200" fill="none" stroke="#c9a24a" stroke-width="2" stroke-dasharray="4 10" opacity=".7"/><circle r="168" fill="none" stroke="#c9a24a" stroke-width="1.5" opacity=".5"/>';
-  for (let k = 0; k < 12; k++) { const [x1, y1] = at(k * 30, 168), [x2, y2] = at(k * 30, 200); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#c9a24a" stroke-width="2" opacity=".6"/>'; }
+  h += '<g id="' + p + '-inner"' + (interactive ? ' class="inner"' : '') + '><circle r="200" fill="none" stroke="#d58a3c" stroke-width="2" stroke-dasharray="4 10" opacity=".7"/><circle r="168" fill="none" stroke="#d58a3c" stroke-width="1.5" opacity=".5"/>';
+  for (let k = 0; k < 12; k++) { const [x1, y1] = at(k * 30, 168), [x2, y2] = at(k * 30, 200); h += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#d58a3c" stroke-width="2" opacity=".6"/>'; }
   h += '</g>';
   const star = Array.from({ length: 16 }, (_, k) => at(k * 22.5, k % 2 ? 46 : 112).map(v => v.toFixed(1)).join(' ')).join(' L');
-  h += '<g class="hub"' + (interactive ? ' id="hub" role="button" tabindex="0" aria-label="Spin the dial"' : '') + '><circle r="132" fill="#0d1130" stroke="url(#' + p + '-brass)" stroke-width="6"/><circle r="112" fill="url(#' + p + '-lg)"/><g id="' + p + '-star">' + LAMP_ART(p) + '</g>'
-    + (interactive ? '<text id="hubText" y="168" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="0" fill="#f6dc8e"> </text>' : '') + '</g>';
-  h += '<g id="' + p + '-ptr" transform="translate(0 -492)"><path d="M0 60 L-26 -4 L26 -4Z" fill="url(#' + p + '-brass)" stroke="#5a4214" stroke-width="3"/><circle r="9" fill="#f6dc8e"/></g>';
+  h += '<g class="hub"' + (interactive ? ' id="hub" role="button" tabindex="0" aria-label="Spin the dial"' : '') + '><circle r="132" fill="#1b100a" stroke="url(#' + p + '-brass)" stroke-width="6"/><circle r="112" fill="url(#' + p + '-lg)"/><g id="' + p + '-star">' + LAMP_ART(p) + '</g>'
+    + (interactive ? '<text id="hubText" y="168" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="800" font-size="0" fill="#ffd9a0"> </text>' : '') + '</g>';
+  h += '<g id="' + p + '-ptr" transform="translate(0 -492)"><path d="M0 60 L-26 -4 L26 -4Z" fill="url(#' + p + '-brass)" stroke="#5a4214" stroke-width="3"/><circle r="9" fill="#ffd9a0"/></g>';
   return h;
 }
 $('heroDial').innerHTML = dialSvg('h', false);
@@ -642,7 +642,7 @@ function paintLanterns(){
   document.querySelectorAll('#dial .lan').forEach(lan => { const i = +lan.dataset.i, o = S.owner[i], g = lan.querySelector('.own');
     if (o < 0) { g.setAttribute('opacity', '0'); g.innerHTML = ''; return; }
     const p = S.players[o]; g.setAttribute('opacity', '1');
-    g.innerHTML = '<circle r="24" fill="#0b0f2a" stroke="' + COLOURS[p.colour] + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(p.sym, COLOURS[p.colour]) + '</g>'; });
+    g.innerHTML = '<circle r="24" fill="#1c0f09" stroke="' + COLOURS[p.colour] + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(p.sym, COLOURS[p.colour]) + '</g>'; });
 }
 
 /* ---------- questions ---------- */
@@ -679,15 +679,15 @@ function paintWho(){
   $('addBtn').hidden = m !== 'versus' || phones;
   if (m === 'versus') {
     $('whoLabel').textContent = 'Players (2 to 10)';
-    list.innerHTML = cfg.names.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#0b0f2a') + '</svg><input aria-label="Player ' + (i + 1) + '" maxlength="14" placeholder="Player ' + (i + 1) + '" value="' + esc(n) + '" data-i="' + i + '"><button class="rm" type="button" aria-label="Remove player ' + (i + 1) + '" data-rm="' + i + '"' + (cfg.names.length <= 2 ? ' hidden' : '') + '>×</button></div>').join('');
+    list.innerHTML = cfg.names.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#1c0f09') + '</svg><input aria-label="Player ' + (i + 1) + '" maxlength="14" placeholder="Player ' + (i + 1) + '" value="' + esc(n) + '" data-i="' + i + '"><button class="rm" type="button" aria-label="Remove player ' + (i + 1) + '" data-rm="' + i + '"' + (cfg.names.length <= 2 ? ' hidden' : '') + '>×</button></div>').join('');
     $('addBtn').disabled = cfg.names.length >= MAXP;
   } else if (m === 'team') {
     $('whoLabel').textContent = 'Teams';
-    list.innerHTML = cfg.teams.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#0b0f2a') + '</svg><input aria-label="Team ' + (i + 1) + '" maxlength="16" value="' + esc(n) + '" data-t="' + i + '"></div>').join('');
+    list.innerHTML = cfg.teams.map((n, i) => '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(i, COLOURS[i], '#1c0f09') + '</svg><input aria-label="Team ' + (i + 1) + '" maxlength="16" value="' + esc(n) + '" data-t="' + i + '"></div>').join('');
   } else {
     const coop = m === 'coop' || m === 'carry';
     $('whoLabel').textContent = m === 'carry' ? 'Who is playing? Names, separated by commas' : coop ? 'Your group' : 'Your name';
-    list.innerHTML = '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(0, COLOURS[0], '#0b0f2a') + '</svg><input aria-label="' + (coop ? 'Your group' : 'Your name') + '" maxlength="' + (m === 'carry' ? 80 : 16) + '" placeholder="' + (m === 'carry' ? 'Abi, Dad, Sam' : coop ? 'All of us' : 'You') + '" value="' + esc(coop ? cfg.group : cfg.solo) + '" data-one="1"></div>';
+    list.innerHTML = '<div class="prow"><svg class="badge" viewBox="-10 -10 20 20" aria-hidden="true">' + ART.symbol(0, COLOURS[0], '#1c0f09') + '</svg><input aria-label="' + (coop ? 'Your group' : 'Your name') + '" maxlength="' + (m === 'carry' ? 80 : 16) + '" placeholder="' + (m === 'carry' ? 'Abi, Dad, Sam' : coop ? 'All of us' : 'You') + '" value="' + esc(coop ? cfg.group : cfg.solo) + '" data-one="1"></div>';
   }
 }
 function paintDaily(){
@@ -1203,8 +1203,8 @@ function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o
   $('reLantern').setAttribute('class', lit ? 'lit' : 'dark');
   $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
     + '<circle class="halo" r="108" fill="url(#q-halo)"/><g class="rays">' + Array.from({ length: 16 }, (_, k) => { const [x1, y1] = at(k * 22.5, 84), [x2, y2] = at(k * 22.5, k % 2 ? 100 : 108); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="5" stroke-linecap="round"/>'; }).join('') + '</g>'
-    + '<g clip-path="url(#q-win)"><g transform="scale(1.4)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#060818" opacity=".6"/>') + '</g>'
-    + '<path d="M-68 84V-14A68 68 0 0 1 68 -14V84Z" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(48 64)"><circle r="24" fill="#0b0f2a" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
+    + '<g clip-path="url(#q-win)"><g transform="scale(1.4)">' + ART.mini(D[i].id, 'q') + '</g>' + (lit ? '' : '<path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z" fill="#0e0805" opacity=".6"/>') + '</g>'
+    + '<path d="M-68 84V-14A68 68 0 0 1 68 -14V84Z" fill="none" stroke="' + c + '" stroke-width="8"/>' + (lit ? '<g transform="translate(48 64)"><circle r="24" fill="#1c0f09" stroke="' + c + '" stroke-width="4"/><g transform="scale(1.6)">' + ART.symbol(S.players[o].sym, c) + '</g></g>' : ''); }
 /* who takes the lamp. In Teams and Versus a round may name a winner; otherwise the most points in the round
    (with the round's minimum) takes it, an owner keeps it on a tie, then the spinner. Alone or together, the round
    says whether it was lit. */
@@ -1252,8 +1252,8 @@ $('backBtn').addEventListener('click', () => {
 function finale(head, line){
   if (STILL) return;
   const P = S.players, IDX = S.carry && S.carry.targets.length ? S.carry.targets : D.map((d, i) => i), el = document.createElement('div'); el.id = 'finale'; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = IDX.map((i, k) => { const d = D[i], o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66', [x, y] = at(k * (360 / IDX.length), 30);
-    return '<div class="fl' + (o >= 0 ? ' lit' : '') + '" data-i="' + i + '" style="left:' + (50 + x * .9) + '%;top:' + (40 + y) + '%;--c:' + c + '"><svg viewBox="-80 -80 160 160"><defs>' + (k === 0 ? ART.defs('f') : '') + '<clipPath id="f-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#f-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'f') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/></svg></div>'; }).join('')
+  el.innerHTML = IDX.map((i, k) => { const d = D[i], o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#5a4636', [x, y] = at(k * (360 / IDX.length), 30);
+    return '<div class="fl' + (o >= 0 ? ' lit' : '') + '" data-i="' + i + '" style="left:' + (50 + x * .9) + '%;top:' + (40 + y) + '%;--c:' + c + '"><svg viewBox="-80 -80 160 160"><defs>' + (k === 0 ? ART.defs('f') : '') + '<clipPath id="f-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#f-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'f') + '</g>' + (o < 0 ? '<circle r="64" fill="#0e0805" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/></svg></div>'; }).join('')
     + '<h2>' + esc(head) + '</h2><p>' + esc(line) + '</p><small>Tap to carry on</small>';
   document.body.appendChild(el);
   const lit = D.map((d, i) => i).filter(i => S.owner[i] >= 0), T = [];
@@ -1288,8 +1288,8 @@ function finish(){
   }
   $('endHead').textContent = head; $('endLine').textContent = line; if (S.carry && window.TL_CARRY) TL_CARRY.ending(S);
   $('endList').querySelectorAll('li').forEach((li, k) => li.style.setProperty('--k', k));
-  $('endLanterns').innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66';
-    return '<span' + (o >= 0 ? ' class="lit"' : '') + ' style="--k:' + i + ';--c:' + c + '"><svg viewBox="-80 -80 160 160" aria-hidden="true"><defs>' + (i === 0 ? ART.defs('e') : '') + '<clipPath id="e-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#e-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'e') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/>' + (o >= 0 ? '<g transform="translate(46 -46) scale(1.5)"><circle r="11" fill="#0b0f2a"/>' + ART.symbol(P[o].sym, c) + '</g>' : '') + '</svg>' + esc(d.name) + '</span>'; }).join('');
+  $('endLanterns').innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#5a4636';
+    return '<span' + (o >= 0 ? ' class="lit"' : '') + ' style="--k:' + i + ';--c:' + c + '"><svg viewBox="-80 -80 160 160" aria-hidden="true"><defs>' + (i === 0 ? ART.defs('e') : '') + '<clipPath id="e-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#e-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'e') + '</g>' + (o < 0 ? '<circle r="64" fill="#0e0805" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/>' + (o >= 0 ? '<g transform="translate(46 -46) scale(1.5)"><circle r="11" fill="#1c0f09"/>' + ART.symbol(P[o].sym, c) + '</g>' : '') + '</svg>' + esc(d.name) + '</span>'; }).join('');
   $('shareBox').hidden = S.mode !== 'daily';
   if (S.mode === 'daily') {
     const marks = S.history.map(h => h.taker >= 0 ? '🏮' : '⚫').join('');

@@ -21,16 +21,16 @@
 <title>Twelve Lamps: join a game | TierBrain</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#0b0f2a">
+<meta name="theme-color" content="#1c0f09">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,700&family=Nunito:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Alegreya+Sans:wght@500;700;800&display=swap">
 <style>
-:root{--space:#0b0f2a;--deep:#060818;--brass:#d8b25a;--brass-2:#f3d98f;--paper:#fbf4e6;--ink:#21160c;
-  --head:'Baloo 2','Nunito',system-ui,sans-serif;--flour:'Fraunces',Georgia,serif;--body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:dark}
+:root{--space:#1c0f09;--deep:#0e0805;--brass:#e8a455;--brass-2:#ffdca8;--paper:#fbf4e6;--ink:#21160c;
+  --head:'Cinzel',Georgia,serif;--flour:'Cormorant Garamond',Georgia,serif;--body:'Alegreya Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:dark}
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
-body{font-family:var(--body);color:#fff;background:radial-gradient(70% 50% at 20% 10%,rgba(122,72,170,.35),transparent 70%),linear-gradient(var(--space),var(--deep)) fixed;font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body{font-family:var(--body);color:#fff;background:radial-gradient(70% 50% at 20% 10%,rgba(176,84,40,.38),transparent 70%),linear-gradient(var(--space),var(--deep)) fixed;font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button,input{font:inherit}button{cursor:pointer}
 :focus-visible{outline:3px solid var(--brass-2);outline-offset:3px}
 .top{display:flex;align-items:center;gap:10px;padding:12px 16px 4px}
@@ -39,12 +39,12 @@ button,input{font:inherit}button{cursor:pointer}
 .me svg{width:28px;height:28px}
 .icon{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:99px;height:38px;padding:0 12px;font-weight:800;font-size:14px;white-space:nowrap;flex:none}
 main{max-width:520px;margin:0 auto;padding:10px 16px calc(24px + env(safe-area-inset-bottom))}
-.card{background:rgba(10,12,34,.8);border:1px solid rgba(243,217,143,.25);border-radius:22px;padding:18px}
+.card{background:rgba(24,13,8,.8);border:1px solid rgba(255,205,140,.25);border-radius:22px;padding:18px}
 h1{font-family:var(--head);font-weight:800;font-size:30px;line-height:1.05;margin:4px 0 12px}
 label{display:block;font-weight:800;margin:10px 0 6px;color:var(--brass-2);font-size:14px;letter-spacing:.5px;text-transform:uppercase}
 input{width:100%;padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:20px}
 #code{text-transform:uppercase;letter-spacing:6px;font-family:var(--head)}
-.btn{display:block;width:100%;border:0;border-radius:999px;padding:16px;margin-top:16px;font-family:var(--head);font-weight:800;font-size:22px;background:linear-gradient(#f6dc8e,#c9a24a);color:var(--ink);box-shadow:0 4px 0 #8a6a2a}
+.btn{display:block;width:100%;border:0;border-radius:999px;padding:16px;margin-top:16px;font-family:var(--head);font-weight:800;font-size:22px;background:linear-gradient(#ffd9a0,#d58a3c);color:var(--ink);box-shadow:0 4px 0 #8a4e1c}
 .btn:disabled{opacity:.5}
 .err{color:#ff9a8a;font-weight:800;min-height:1.4em;margin:10px 0 0}
 .wait{text-align:center;padding:30px 18px}
@@ -59,13 +59,13 @@ input{width:100%;padding:12px 14px;border-radius:14px;border:2px solid rgba(255,
 #opts:not(.live) .opt{opacity:.7}
 .opt.right{border-color:#2f9e5b;background:#e3f6e9;opacity:1!important}.opt.wrong{border-color:#c94a3a;background:#fbe4e0}
 .opt.mine{box-shadow:0 0 0 4px var(--brass-2)}
-#press{display:block;width:100%;aspect-ratio:1.6;margin:6px 0 14px;border:0;border-radius:28px;font-family:var(--head);font-weight:800;font-size:40px;color:var(--ink);background:radial-gradient(circle at 50% 35%,#ffe9a8,#e8a83c);box-shadow:0 8px 0 #8a6a2a,0 20px 40px rgba(0,0,0,.4);touch-action:manipulation}
+#press{display:block;width:100%;aspect-ratio:1.6;margin:6px 0 14px;border:0;border-radius:28px;font-family:var(--head);font-weight:800;font-size:40px;color:var(--ink);background:radial-gradient(circle at 50% 35%,#ffe9a8,#e8a83c);box-shadow:0 8px 0 #8a4e1c,0 20px 40px rgba(0,0,0,.4);touch-action:manipulation}
 #press:disabled{filter:grayscale(.7);opacity:.55}
-#press:active:not(:disabled){transform:translateY(4px);box-shadow:0 4px 0 #8a6a2a}
+#press:active:not(:disabled){transform:translateY(4px);box-shadow:0 4px 0 #8a4e1c}
 #status{min-height:1.5em;margin:14px 0 0;font-weight:900;font-size:20px;text-align:center}
 #status.good{color:#5fd08a}#status.bad{color:#ff9a8a}
 .foot{text-align:center;margin-top:16px}
-.foot button{border:0;background:none;color:#9aa3c7;font-weight:800;text-decoration:underline}
+.foot button{border:0;background:none;color:#c9b49a;font-weight:800;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -139,7 +139,7 @@ async function tick(){
 const roster = () => (S && S.game && S.game.roster) || [];
 const idx = id => roster().findIndex(m => m.id === id);
 const nameOf = id => { const m = roster().find(x => x.id === id); return m ? m.name : ''; };
-function badge(i){ return '<svg viewBox="-10 -10 20 20" aria-hidden="true">' + (window.TL_ART ? TL_ART.symbol(i < 0 ? 0 : i, i < 0 ? '#9aa3c7' : COLOURS[i], '#0b0f2a') : '') + '</svg>'; }
+function badge(i){ return '<svg viewBox="-10 -10 20 20" aria-hidden="true">' + (window.TL_ART ? TL_ART.symbol(i < 0 ? 0 : i, i < 0 ? '#c9b49a' : COLOURS[i], '#1c0f09') : '') + '</svg>'; }
 function paintMe(){ const i = ME ? idx(ME.id) : -1; $('meTag').hidden = !ME; if (ME) $('meTag').innerHTML = badge(i) + esc(ME.name); }
 function waiting(head, line){ show('vWait'); $('waitHead').textContent = head; $('waitLine').textContent = line; $('waitSym').innerHTML = badge(ME ? idx(ME.id) : -1); }
 function render(){

@@ -17,7 +17,7 @@ const FIRST={ark:'The ramp is coming up. Watch the last few animals carefully. O
 const BACK={redsea:'Back at the sea. This time, stay ahead of the chariots.',jonah:'Back in the deep. This time, know when to surface.',paul:'Back on the road. More cities to find.',scroll:'Back by torchlight. Read a little faster this time.',lamps:'Back at midnight. This time, keep one flame burning.',nehemiah:'Back on the wall. Build it higher this time.',jacob:'Back at the ladder. This time, reach the top before dawn.',sinai:'Back at the mountain. Carve all six lines this time.',galilee:'Back on the lake. Weigh the storm more carefully this time.',ark:'Back on the ramp. Look harder this time.',joseph:'Back at the sacks. Take your time, and trust the clues.',daniel:'Back in the den. This time, let\u2019s get Daniel to dawn.'};
 const RK='tb-twelve-lamps-recent';
 const st=document.createElement('style');
-st.textContent='#carryBox{display:grid;gap:10px;margin-top:8px}#carryBox h3{margin:0;font-size:18px}#carryBox p{margin:0;opacity:.8;font-size:14px}#carryBox .btn{width:100%;text-align:left;font-size:17px;padding:12px 20px}#carryBox small{display:block;font-weight:600;opacity:.75;font-size:13px;margin-top:2px}#carryBox .row{display:flex;flex-wrap:wrap;gap:8px}#carryBox .row .btn{width:auto;text-align:center}#carryBox .card2{display:grid;gap:6px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(243,217,143,.3)}#carryEnd{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:6px;font-size:clamp(16px,1.8vw,22px)}#carryEnd .dark{opacity:.55}#carryAgain{font-family:var(--flour);font-style:italic;margin:0 0 18px;color:#f6e6c4}';
+st.textContent='#carryBox{display:grid;gap:10px;margin-top:8px}#carryBox h3{margin:0;font-size:18px}#carryBox p{margin:0;opacity:.8;font-size:14px}#carryBox .btn{width:100%;text-align:left;font-size:17px;padding:12px 20px}#carryBox small{display:block;font-weight:600;opacity:.75;font-size:13px;margin-top:2px}#carryBox .row{display:flex;flex-wrap:wrap;gap:8px}#carryBox .row .btn{width:auto;text-align:center}#carryBox .card2{display:grid;gap:6px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,205,140,.3)}#carryEnd{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:6px;font-size:clamp(16px,1.8vw,22px)}#carryEnd .dark{opacity:.55}#carryAgain{font-family:var(--flour);font-style:italic;margin:0 0 18px;color:#f6e6c4}';
 document.head.appendChild(st);
 
 /* ---------- The lamp shelf: twelve oil lamps on dark boards, each engraved with its world's emblem ---------- */
@@ -34,7 +34,7 @@ function lampSVG(id,x,y,state,label,active){
   let g='<g transform="translate('+x+' '+y+') scale('+s+')" opacity="'+op+'">';
   if(lit)g+='<circle cy="-40" r="130" fill="url(#'+SHC+'g)" class="sh-glow"/><g transform="translate(0 -170) scale(5.2) translate(-12 -12)" fill="none" stroke="#ffd27a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".28"><path d="'+EMB[id]+'"/></g>';
   if(active)g+='<circle cy="-4" r="86" fill="none" stroke="#fff6d2" stroke-width="2.5" stroke-dasharray="5 7" class="sh-ring"/>';
-  g+='<ellipse cx="0" cy="8" rx="42" ry="22" fill="'+brass+'"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="'+brass+'"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="'+brass+'"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f0cf7a"/>'
+  g+='<ellipse cx="0" cy="8" rx="42" ry="22" fill="'+brass+'"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="'+brass+'"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="'+brass+'"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f5c98a"/>'
     +'<g transform="translate(-10.5 -4) scale(.88)" fill="none" stroke="#5a3a10" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity=".8"><path d="'+EMB[id]+'"/></g>';
   g+=lit?'<g class="sh-flame"><path d="M0 -12Q-16 -34 0 -62Q6 -46 14 -36Q18 -22 0 -12Z" fill="#ff9a3c"/><path d="M0 -14Q-8 -28 0 -42Q5 -34 6 -28Q7 -20 0 -14Z" fill="#fff0b0"/></g>':'<circle cy="-12" r="3" fill="#2a1a10"/>';
   g+='</g>';
@@ -43,8 +43,8 @@ function lampSVG(id,x,y,state,label,active){
 }
 function shelfHTML(S){
   const c=S.carry,D=window.__tl.D,T=c.targets,pos=[[150,250],[383,250],[617,250],[850,250]];
-  let g='<defs><linearGradient id="'+SHC+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset=".55" stop-color="#b8862f"/><stop offset="1" stop-color="#7a5420"/></linearGradient><radialGradient id="'+SHC+'g"><stop offset="0" stop-color="#ffb347" stop-opacity=".6"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>'
-   +'<rect x="20" y="20" width="960" height="960" rx="30" fill="#0b0a22" fill-opacity=".72" stroke="#d8b25a" stroke-opacity=".5" stroke-width="3"/>';
+  let g='<defs><linearGradient id="'+SHC+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".55" stop-color="#b8862f"/><stop offset="1" stop-color="#7a5420"/></linearGradient><radialGradient id="'+SHC+'g"><stop offset="0" stop-color="#ffb347" stop-opacity=".6"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>'
+   +'<rect x="20" y="20" width="960" height="960" rx="30" fill="#0b0a22" fill-opacity=".72" stroke="#e8a455" stroke-opacity=".5" stroke-width="3"/>';
   [0,1,2].forEach(r=>{ const by=300+r*310; g+='<rect x="50" y="'+by+'" width="900" height="26" rx="7" fill="#3a2514"/><rect x="50" y="'+by+'" width="900" height="6" rx="3" fill="#6a4426"/>'; });
   D.forEach((d,i)=>{ const r=Math.floor(i/4),k=i%4,x=pos[k][0],y=pos[k][1]+r*310,on=T.includes(i),lit=on&&S.owner[i]>=0;
     g+=lampSVG(d.id,x,y,lit?'lit':on?'tonight':'rest',on?d.name:'',S.pos===i&&S.phase&&S.phase!=='between'&&on&&!lit); });
@@ -87,7 +87,7 @@ function nicheSvg(i,S,D){
   let s='<g transform="translate('+cellX(i)+' '+cellY(i)+')" opacity="'+(!drawn||tonight?1:.45)+'"><clipPath id="sf-n'+i+'"><path d="'+ARCH+'"/></clipPath><path d="'+ARCH+'" fill="url(#sf-niche)"/>';
   if(lit)s+='<g clip-path="url(#sf-n'+i+')"><rect x="-96" y="-200" width="192" height="200" fill="url(#sf-nw)" class="sf-glow"/><g transform="translate(0 -96) scale(7) translate(-12 -12)" fill="#ffd27a" opacity=".3"><path d="'+GLYPH[id]+'"/></g></g>';
   else if(cur)s+='<g clip-path="url(#sf-n'+i+')"><rect x="-96" y="-200" width="192" height="200" fill="url(#sf-nw)" opacity=".28" class="sf-glow"/></g>';
-  s+='<path d="'+ARCH+'" fill="none" stroke="'+(lit?'#f3d98f':tonight?'#d8b25a':'#3a3560')+'" stroke-width="'+(tonight?6:3)+'"/><path d="M-88 0V-104A88 88 0 0 1 88 -104V0" fill="none" stroke="#f3ecd8" stroke-width="1.5" opacity=".22"/><circle cy="-202" r="5" fill="#f3ecd8" opacity=".6"/></g>';
+  s+='<path d="'+ARCH+'" fill="none" stroke="'+(lit?'#ffdca8':tonight?'#e8a455':'#5a3f2a')+'" stroke-width="'+(tonight?6:3)+'"/><path d="M-88 0V-104A88 88 0 0 1 88 -104V0" fill="none" stroke="#f3ecd8" stroke-width="1.5" opacity=".22"/><circle cy="-202" r="5" fill="#f3ecd8" opacity=".6"/></g>';
   return s;
 }
 /* a Herodian-style clay lamp in brass: disc body, pinched spout, ring handle, filling hole, banded rim, the world's emblem engraved on the front */
@@ -98,7 +98,7 @@ function lampSvg(t,S,D){
   const fill=lit?'url(#sf-lit)':(cur||(tonight&&!tried))?'url(#sf-brass)':'url(#sf-dim)',edge=lit?'#fff0b0':'#c8a060';
   let s='<g transform="translate('+x+' '+y+') scale('+sc+')" opacity="'+op+'">';
   s+='<path d="M-26 0h52l-8 -12h-36z" fill="#3a2a18"/>';
-  s+='<path d="M-58 -22Q-92 -22 -90 -48Q-88 -66 -62 -56" fill="none" stroke="'+(lit?'#d8b25a':'#8a6a3a')+'" stroke-width="9" stroke-linecap="round"/>';
+  s+='<path d="M-58 -22Q-92 -22 -90 -48Q-88 -66 -62 -56" fill="none" stroke="'+(lit?'#e8a455':'#8a6a3a')+'" stroke-width="9" stroke-linecap="round"/>';
   s+='<path d="M-60 -20Q-60 -46 -22 -50Q14 -52 44 -40L88 -52Q100 -54 102 -44Q100 -34 86 -30L52 -16Q42 6 0 6Q-60 6 -60 -20Z" fill="'+fill+'" stroke="'+edge+'" stroke-width="2"/>';
   s+='<ellipse cx="-6" cy="-40" rx="26" ry="9" fill="#2a1a0a" stroke="'+edge+'" stroke-width="2"/><path d="M-50 -14Q0 -2 48 -14" fill="none" stroke="'+edge+'" stroke-width="2.5" opacity=".7" stroke-dasharray="1 6" stroke-linecap="round"/>';
   s+='<path d="M-48 -36Q-24 -48 6 -48" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="'+(lit?.55:.3)+'"/>';
@@ -111,7 +111,7 @@ function lampSvg(t,S,D){
   else if(tried)s+='<path class="sf-smoke" d="M84 -54q-8 -14 0 -26q8 -12 0 -24" fill="none" stroke="#9a9aaa" stroke-width="5" stroke-linecap="round"/>';
   s+='</g>';
   if(tonight){const who=lit?'carried by '+(c.bearers[i]||'the group'):cur?c.bearer+' carries':tried?'still dark':'';
-    s+='<text x="6" y="48" text-anchor="middle" font-size="26" font-weight="700" fill="#f6e6c4">'+esc(SHORT[id])+'</text>'+(who?'<text x="6" y="76" text-anchor="middle" font-size="22" fill="'+(lit?'#f3d98f':'#b8b0c8')+'">'+esc(who)+'</text>':'');}
+    s+='<text x="6" y="48" text-anchor="middle" font-size="26" font-weight="700" fill="#f6e6c4">'+esc(SHORT[id])+'</text>'+(who?'<text x="6" y="76" text-anchor="middle" font-size="22" fill="'+(lit?'#ffdca8':'#c9b49a')+'">'+esc(who)+'</text>':'');}
   return s+'</g>';
 }
 const TL=window.TL_CARRY={
@@ -127,9 +127,9 @@ const TL=window.TL_CARRY={
     let niches='',lamps='',planks='';D.forEach((d,i)=>{niches+=nicheSvg(i,S,D);lamps+=lampSvg(i,S,D);});
     [0,1,2].forEach(r=>{const y=250+r*300;planks+='<rect x="20" y="'+y+'" width="960" height="26" rx="4" fill="url(#sf-ledge)"/><rect x="20" y="'+y+'" width="960" height="4" rx="2" fill="#a8845a" opacity=".7"/>';});
     el.innerHTML='<svg viewBox="0 0 1000 1000" role="img" aria-label="Twelve lamps in stone niches. Tonight\u2019s lamps are outlined in gold."><defs>'
-      +'<linearGradient id="sf-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1a4a"/><stop offset="1" stop-color="#0a0a22"/></linearGradient>'
-      +'<pattern id="sf-stone" width="160" height="100" patternUnits="userSpaceOnUse"><path d="M0 0H160M0 50H160M0 100H160M80 0V50M0 50V100M160 50V100" fill="none" stroke="#2a2a60" stroke-width="2"/></pattern>'
-      +'<linearGradient id="sf-niche" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07071c"/><stop offset="1" stop-color="#16163e"/></linearGradient>'
+      +'<linearGradient id="sf-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c1b11"/><stop offset="1" stop-color="#120a06"/></linearGradient>'
+      +'<pattern id="sf-stone" width="160" height="100" patternUnits="userSpaceOnUse"><path d="M0 0H160M0 50H160M0 100H160M80 0V50M0 50V100M160 50V100" fill="none" stroke="#4a2f1c" stroke-width="2"/></pattern>'
+      +'<linearGradient id="sf-niche" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0604"/><stop offset="1" stop-color="#22140c"/></linearGradient>'
       +'<linearGradient id="sf-nw" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffb347" stop-opacity=".6"/><stop offset="1" stop-color="#ffb347" stop-opacity=".05"/></linearGradient>'
       +'<linearGradient id="sf-ledge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5a38"/><stop offset="1" stop-color="#3a2614"/></linearGradient>'
       +'<linearGradient id="sf-lit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2b8"/><stop offset=".5" stop-color="#e8c060"/><stop offset="1" stop-color="#b8873a"/></linearGradient>'
