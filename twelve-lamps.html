@@ -342,7 +342,7 @@ body.net #opts .opt{cursor:default}
         <button type="button" data-v="team">Teams<small>Two teams take turns; wrong answers can be stolen</small></button>
         <button type="button" data-v="versus">Versus<small>2 to 10 players; light and steal lamps</small></button>
         <button type="button" data-v="coop">Together<small>Everyone against the dial</small></button>
-        <button type="button" data-v="carry">Carry the Light<small>One lamp, three stories, passed round the room</small></button>
+        <button type="button" data-v="carry">Carry the Light<small>Three to five stories, one lamp, passed round the room</small></button>
       </div>
     </div>
     <div class="steps">
@@ -484,8 +484,8 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-rounds.js?v=2"></script>
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=2"></script>
-<script src="twelve-lamps-games.js?v=2"></script>
-<script src="twelve-lamps-carry.js?v=2"></script>
+<script src="twelve-lamps-games.js?v=4"></script>
+<script src="twelve-lamps-carry.js?v=4"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -504,7 +504,7 @@ const MODES = {
   team: 'Teams take turns to spin. A wrong answer can be stolen by the other team. The team with more points in a round takes its lamp.',
   versus: 'Take turns to spin. Win a round to light its lamp in your colour; land on a rival\'s lamp to try to steal it.',
   coop: 'Everyone plays as one. Light all twelve lamps before the night runs out.',
-  carry: 'The whole room carries one light through three Bible stories. Choose where to go, pass the lamp to someone new each time, and go back for any lamp that stays dark.'
+  carry: 'The whole room carries one light through three to five Bible stories, drawn from all twelve. Choose where to go, pass the lamp to someone new each time, and go back for a lamp that stays dark.'
 };
 const COLOURS = ['#f0b44c', '#56b4e9', '#2fbf8f', '#ef7aa0', '#a98bff', '#ff8a3d', '#ece4cf', '#5fd0c8', '#c9e265', '#ff6b6b'];
 const MAXP = 10;
@@ -1279,14 +1279,14 @@ function finish(){
       return '<li><span class="pos">' + pos + '</span>' + symSvg(P[i].sym, COLOURS[P[i].colour]) + '<span class="nm">' + esc(P[i].name) + '</span><small>' + lanternsOf(i) + (lanternsOf(i) === 1 ? ' lamp' : ' lamps') + '</small><span>' + P[i].pts + '</span></li>'; }).join('');
   } else {
     const lit = S.owner.filter(o => o >= 0).length, pts = P[0].pts;
-    if (S.mode === 'coop' && S.carry) { const n3 = S.carry.targets.filter(t => S.owner[t] >= 0).length; head = n3 === 3 ? 'The light got through' : n3 + ' of 3 lamps lit'; line = n3 === 3 ? 'Carried by all of you.' : 'A lamp stayed dark. Come back and carry it again.'; }
+    if (S.mode === 'coop' && S.carry) { const n3 = S.carry.targets.filter(t => S.owner[t] >= 0).length, tot = S.carry.targets.length; head = n3 === tot ? 'The light got through' : n3 + ' of ' + tot + ' lamps lit'; line = n3 === tot ? 'Carried by all of you.' : 'A lamp stayed dark. Come back and carry it again.'; }
     else if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lamp lit' : lit + ' of ' + N + ' lamps lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Twelve lights the whole dial.'; }
     else { head = pts + ' points'; const key = 'tb-twelve-lamps-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
       if (!S.practice) store.set(key, Math.max(best, pts));
       line = lit + (lit === 1 ? ' lamp lit. ' : ' lamps lit. ') + (S.practice ? 'Practice: not counted.' : pts > best ? 'A new best!' : 'Your best: ' + best + '.'); }
     $('endList').innerHTML = '';
   }
-  $('endHead').textContent = head; $('endLine').textContent = line;
+  $('endHead').textContent = head; $('endLine').textContent = line; if (S.carry && window.TL_CARRY) TL_CARRY.ending(S);
   $('endList').querySelectorAll('li').forEach((li, k) => li.style.setProperty('--k', k));
   $('endLanterns').innerHTML = D.map((d, i) => { const o = S.owner[i], c = o >= 0 ? COLOURS[P[o].colour] : '#3a3f66';
     return '<span' + (o >= 0 ? ' class="lit"' : '') + ' style="--k:' + i + ';--c:' + c + '"><svg viewBox="-80 -80 160 160" aria-hidden="true"><defs>' + (i === 0 ? ART.defs('e') : '') + '<clipPath id="e-c' + i + '"><circle r="64"/></clipPath></defs><g clip-path="url(#e-c' + i + ')"><g transform="scale(1.07)">' + ART.mini(d.id, 'e') + '</g>' + (o < 0 ? '<circle r="64" fill="#060818" opacity=".6"/>' : '') + '</g><circle r="66" fill="none" stroke="' + c + '" stroke-width="9"/>' + (o >= 0 ? '<g transform="translate(46 -46) scale(1.5)"><circle r="11" fill="#0b0f2a"/>' + ART.symbol(P[o].sym, c) + '</g>' : '') + '</svg>' + esc(d.name) + '</span>'; }).join('');

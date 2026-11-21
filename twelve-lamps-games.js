@@ -3,7 +3,7 @@
 (function(){'use strict';
 const R=window.TL_ROUNDS; if(!R||!R.types) return; const T=R.types;
 const st=document.createElement('style');
-st.textContent='.rs-land.ark{background:linear-gradient(#f6dca6,#e3bd80 56%,#3d2714 56%)}'
+st.textContent='.ark-roles{margin:0 0 8px;text-align:center;font-weight:700;font-size:15px;color:#f6e6c4}.rs-land.ark{background:linear-gradient(#f6dca6,#e3bd80 56%,#3d2714 56%)}'
 +'.jl{display:flex;gap:16px;justify-content:center;align-items:flex-end;padding:8px 0 4px}.jl-col{flex:1 1 0;max-width:120px;text-align:center}'
 +'.jl-lad{position:relative;height:250px;width:64px;margin:0 auto 6px;border-left:5px solid #e8d49a;border-right:5px solid #e8d49a;border-radius:3px;background:repeating-linear-gradient(to top,#e8d49a 0 5px,transparent 5px 48px)}'
 +'.jl-top{position:absolute;left:50%;top:-16px;width:30px;height:30px;margin-left:-15px;background:radial-gradient(circle,#fff6d2 0,#ffd27a 40%,transparent 72%);animation:jlg 2.4s ease-in-out infinite}'
@@ -33,22 +33,28 @@ function arkQuestions(scene,r){
   const qs=[],seen=scene.map(t=>t.kind),unseen=Object.keys(ANI).filter(k=>!seen.includes(k)),nm=k=>ANI[k].one;
   const counted=shuffle(scene.filter(t=>t.n>1),r);
   counted.slice(0,2).forEach(t=>{const d=ANI[t.kind],opts=[t.n,t.n+2,t.n+4,t.n-2].filter(x=>x>=2);while(opts.length>4)opts.pop();
-    if(!opts.includes(t.n))opts[0]=t.n; qs.push({q:'How many '+(d.many||d.one+'s')+' did you see?',correct:String(t.n),opts:shuffle(opts,r).map(String)});});
-  if(unseen.length){const w=shuffle(unseen,r)[0];qs.push({q:'Which of these did NOT board the ark?',correct:'a '+nm(w),opts:shuffle(shuffle(seen,r).slice(0,3).concat(w),r).map(k=>'a '+nm(k))});}
+    if(!opts.includes(t.n))opts[0]=t.n; qs.push({cat:'count',q:'How many '+(d.many||d.one+'s')+' did you see?',correct:String(t.n),opts:shuffle(opts,r).map(String)});});
+  if(unseen.length){const w=shuffle(unseen,r)[0];qs.push({cat:'missing',q:'Which of these did NOT board the ark?',correct:'a '+nm(w),opts:shuffle(shuffle(seen,r).slice(0,3).concat(w),r).map(k=>'a '+nm(k))});}
   const four=shuffle(seen,r).slice(0,4),first=seen.find(k=>four.includes(k));
-  qs.push({q:'Which of these boarded first?',correct:'the '+nm(first),opts:four.map(k=>'the '+nm(k))});
+  qs.push({cat:'order',q:'Which of these boarded first?',correct:'the '+nm(first),opts:four.map(k=>'the '+nm(k))});
   return shuffle(qs,r).slice(0,3);
 }
 T.ark={title:'Two by two',
  rule:c=>'The animals walk up the ramp, two by two. Look hard: then three questions about what you saw.'+(c.multi?' A miss can be stolen.':''),
  async play(c){
   const scene=makeBoarding(c.rng),qs=arkQuestions(scene,c.rng);let right=0;
+  /* Carry the Light: before the animals board, the bearer decides who watches for what */
+  const car=window.TL_CARRY&&window.TL_CARRY.bearerName&&window.TL_CARRY.bearerName(),roles={},JOBS=[['count','count the pairs'],['order','remember who boards first'],['missing','spot who never boards']];
+  if(car&&window.TL_CARRY.others){const others=shuffle(window.TL_CARRY.others(),c.rng).slice(0,4);
+    if(others.length){c.count('Who watches for what?');
+      for(const j of JOBS){roles[j[0]]=others.length>1?others[await c.choose({who:-1,title:'Who watches to '+j[1]+'?',options:others})]:others[0];}}}
+  const banner=Object.keys(roles).length?'<p class="ark-roles">'+JOBS.map(j=>roles[j[0]]+' will '+j[1]).join(' \u00b7 ')+'</p>':'';
   c.count('Look closely');
-  c.stage('<div class="rs-land ark"><div class="rs-strip">'+scene.map(draw).join('')+'</div></div>');
+  c.stage(banner+'<div class="rs-land ark"><div class="rs-strip">'+scene.map(draw).join('')+'</div></div>');
   await c.watch(12000,'I\'m ready');
   c.stage('<div class="rs-land ark gone"><p>The door is shut and the rain begins.</p></div>');
   for(let k=0;k<qs.length;k++){c.count('Question '+(k+1)+' of '+qs.length);
-   const r=await c.question(qs[k],{who:c.me,pts:10,steal:true});
+   const r=await c.question(qs[k],{who:c.me,pts:10,steal:true,label:roles[qs[k].cat]?roles[qs[k].cat]+' was watching for this: ask them.':undefined});
    if(r.right&&!r.stolen)right++;
    await c.next(k<qs.length-1?'Next question':'See the lamp',r.right?'right':'miss',r);}
   c.stage('<div class="rs-land ark"><div class="rs-strip still">'+scene.map(draw).join('')+'</div></div>');
@@ -197,7 +203,7 @@ T.joseph={title:'Whose sack holds the cup?',
  }};
 
 /* In Carry the Light, the bearer answers and makes each round's key call; everyone else advises. */
-['ark','joseph','daniel','galilee'].forEach(id=>{const t=T[id]; if(!t)return; const play=t.play;
+['redsea','jonah','paul','joseph','galilee','scroll','ark','lamps','nehemiah','jacob','sinai','daniel'].forEach(id=>{const t=T[id]; if(!t)return; const play=t.play;
   t.play=function(c){ const who=window.TL_CARRY&&window.TL_CARRY.bearerName(); if(!who)return play.call(this,c);
     const c2=Object.create(c); c2.count=x=>c.count(x+' \u00b7 '+who+' answers');
     if(c.choose)c2.choose=o=>c.choose(Object.assign({},o,{title:who+' carries the lamp. '+(o.title||'')}));
