@@ -1,6 +1,6 @@
-/* Ten Lanterns: the game inside each world.
+/* Ten Lamps: the game inside each world.
    Every world plays its own way, built from a few shared pieces the page provides (c): a question for one
-   player, an open question anyone may claim, a choice, and a pause. Each round returns who earned the lantern:
+   player, an open question anyone may claim, a choice, and a pause. Each round returns who earned the lamp:
    in Solo, Daily Dial and Together, whether it was lit; in Teams and Versus, either the round's top scorer
    (with a minimum) or a named winner. Content is invented: no real people, brands or landmarks drawn. */
 (function(){
@@ -15,12 +15,12 @@ const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'))
 /* ======================================================================= the classic round (Simple quiz) */
 const classic = {
   title: 'Three questions',
-  rule: c => c.multi ? 'Three questions. A miss can be stolen. The most points in the round takes the lantern.' : 'Three questions. Two right lights the lantern.',
+  rule: c => c.multi ? 'Three questions. A miss can be stolen. The most points in the round takes the lamp.' : 'Three questions. Two right lights the lamp.',
   async play(c){ let right = 0;
     for (let k = 0; k < 3; k++) { c.count('Question ' + (k + 1) + ' of 3');
       const r = await c.question(c.drawQ(), { who: c.me, pts: 10, steal: true });
       if (r.right && !r.stolen) right++;
-      await c.next(k < 2 ? 'Next question' : 'See the lantern', r.right ? 'right' : 'miss', r); }
+      await c.next(k < 2 ? 'Next question' : 'See the lamp', r.right ? 'right' : 'miss', r); }
     return { lit: right >= 2, line: right + ' of 3 right', need: 'two lights it', min: 1 }; }
 };
 
@@ -48,7 +48,7 @@ const city = {
       if (!multi && k >= 3 && k % 2 === 1 && winner < 0) { lifts[1]++; if (lifts[1] >= ROOF) winner = 1; }
       paint();
       c.status(winner >= 0 ? labels[winner].name + ' reached the roof!' : r.right ? labels[multi ? who.indexOf(r.by) : 0].name + ' went up a floor.' : 'Going down.');
-      await c.next(winner >= 0 || k === cap - 1 ? 'See the lantern' : 'Next question', r.right ? 'right' : 'miss', r);
+      await c.next(winner >= 0 || k === cap - 1 ? 'See the lamp' : 'Next question', r.right ? 'right' : 'miss', r);
     }
     // points: 5 a floor, and 15 for the roof
     who.forEach((i, s) => { const p = lifts[s] * 5 + (lifts[s] >= ROOF ? 15 : 0); if (p) c.award(i, p); });
@@ -104,26 +104,26 @@ const railway = {
       const value = VALUE[k];
       const guess = await c.choose({ who: c.multi ? me : -1, title: 'Who took the gold watch?', options: m.people.map(p => p.name) });
       if (guess === m.thief) { c.sfx('right'); c.award(c.multi ? me : 0, value); out.push(...[0, 1, 2, 3].filter(x => x !== m.thief)); paint(); c.status('Right: ' + m.people[m.thief].name + ' took it.');
-        await c.next('See the lantern', 'right'); return c.multi ? { taker: me, line: c.name(me) + ' caught the thief' } : { lit: true, line: 'You caught the thief' }; }
+        await c.next('See the lamp', 'right'); return c.multi ? { taker: me, line: c.name(me) + ' caught the thief' } : { lit: true, line: 'You caught the thief' }; }
       c.sfx('wrong'); out.push(guess); paint();
       if (c.multi) { const others = c.order().filter(x => x !== me);
         const who = await c.buzz({ players: others, label: 'Not ' + m.people[guess].name + '. Does anyone else know? Tap your name.', none: 'Nobody' });
         if (who >= 0) { const g2 = await c.choose({ who, title: c.name(who) + ': who took the gold watch?', options: m.people.map(p => p.name), disabled: out });
           if (g2 === m.thief) { c.sfx('steal'); c.award(who, value); c.status('Right: ' + m.people[m.thief].name + ' took it.'); out.push(...[0, 1, 2, 3].filter(x => x !== m.thief && !out.includes(x))); paint();
-            await c.next('See the lantern', 'right'); return { taker: who, line: c.name(who) + ' caught the thief' }; }
+            await c.next('See the lamp', 'right'); return { taker: who, line: c.name(who) + ' caught the thief' }; }
           out.push(g2); paint(); } }
-      c.status('The thief was ' + m.people[m.thief].name + '.'); await c.next('See the lantern', 'miss');
+      c.status('The thief was ' + m.people[m.thief].name + '.'); await c.next('See the lamp', 'miss');
       return c.multi ? { taker: -1, line: 'The thief got away' } : { lit: false, line: 'The thief got away', need: 'name the thief to light it' };
     }
   }
 };
 
-/* ======================================================================= The manor at midnight: the last candle */
+/* ======================================================================= The manor at midnight: the last lamp */
 function candleStage(c, list){
   return '<div class="rs-candles">' + list.map(x => '<div class="rs-candle' + (x.lit ? '' : ' out') + (x.now ? ' now' : '') + '"><div class="rs-wax" style="--c:' + x.colour + '"><i class="rs-flame"></i><i class="rs-smoke"></i></div><b>' + x.badge + esc(x.name) + '</b></div>').join('') + '</div>'; }
 const manor = {
-  title: 'The last candle',
-  rule: c => c.multi ? 'Questions go round in turn. A wrong answer snuffs your candle. The last flame burning takes the lantern.' : 'Three candles. Six questions. Each wrong answer snuffs a candle. Keep one burning to light the lantern.',
+  title: 'The last lamp',
+  rule: c => c.multi ? 'Questions go round in turn. A wrong answer puts out your lamp. The last flame burning takes the lamp.' : 'Three lamps. Six questions. Each wrong answer puts out a lamp. Keep one burning to light the lamp.',
   async play(c){
     if (!c.multi) {
       let lit = 3, right = 0; const paint = () => c.stage(candleStage(c, [0, 1, 2].map(k => ({ lit: k < lit, colour: '#f3e6c8', badge: '', name: '' }))));
@@ -131,9 +131,9 @@ const manor = {
       for (let k = 0; k < 6 && lit > 0; k++) { c.count('Question ' + (k + 1) + ' of 6');
         const r = await c.question(c.drawQ(), { who: 0, pts: 5, steal: false });
         if (r.right) right++; else { lit--; c.sfx('snuff'); }
-        paint(); await c.next(k < 5 && lit > 0 ? 'Next question' : 'See the lantern', r.right ? 'right' : 'miss', r); }
+        paint(); await c.next(k < 5 && lit > 0 ? 'Next question' : 'See the lamp', r.right ? 'right' : 'miss', r); }
       if (lit > 0) c.award(0, 15);
-      return { lit: lit > 0, line: lit > 0 ? plural(lit, 'candle') + ' still burning' : 'Every candle snuffed', need: 'keep one burning to light it' };
+      return { lit: lit > 0, line: lit > 0 ? plural(lit, 'lamp') + ' still burning' : 'Every lamp went out', need: 'keep one burning to light it' };
     }
     const order = c.order(), alive = order.slice(), cap = Math.max(8, order.length + 4);
     const paint = now => c.stage(candleStage(c, order.map(i => ({ lit: alive.includes(i), now: i === now, colour: c.colour(i), badge: c.symbol(i), name: c.name(i) }))));
@@ -141,11 +141,11 @@ const manor = {
     while (alive.length > 1 && q < cap) {
       const who = alive[turn % alive.length]; paint(who); c.count('Question ' + (q + 1));
       const r = await c.question(c.drawQ(), { who, pts: 5, steal: false });
-      if (!r.right) { alive.splice(alive.indexOf(who), 1); c.sfx('snuff'); c.status(c.name(who) + '\'s candle went out.'); } else turn++;
-      q++; paint(-1); await c.next(alive.length > 1 && q < cap ? 'Next question' : 'See the lantern', r.right ? 'right' : 'miss', r);
+      if (!r.right) { alive.splice(alive.indexOf(who), 1); c.sfx('snuff'); c.status(c.name(who) + '\'s lamp went out.'); } else turn++;
+      q++; paint(-1); await c.next(alive.length > 1 && q < cap ? 'Next question' : 'See the lamp', r.right ? 'right' : 'miss', r);
     }
     if (alive.length === 1) { c.award(alive[0], 15); return { taker: alive[0], line: c.name(alive[0]) + ' had the last flame' }; }
-    return { min: 5, among: alive, line: alive.length ? 'Still burning: ' + alive.map(i => c.name(i)).join(', ') : 'Every candle went out' };
+    return { min: 5, among: alive, line: alive.length ? 'Still burning: ' + alive.map(i => c.name(i)).join(', ') : 'Every lamp went out' };
   }
 };
 
@@ -165,9 +165,9 @@ const PLACES = [
 ];
 
 function flightStage(place, shown, value){
-  return '<div class="rs-fly"><div class="rs-window"><span class="rs-plane">⛵</span><b>Where are we?</b><small>' + value + ' points if you land now</small></div><ol class="rs-hints">' + place[2].map((h, k) => '<li class="' + (k < shown ? 'on' : '') + '">' + (k < shown ? esc(h) : 'Clue ' + (k + 1)) + '</li>').join('') + '</ol></div>'; }
+  return '<div class="rs-fly"><div class="rs-window"><span class="rs-plane">⛵</span><b>Which city?</b><small>' + value + ' points if you land now</small></div><ol class="rs-hints">' + place[2].map((h, k) => '<li class="' + (k < shown ? 'on' : '') + '">' + (k < shown ? esc(h) : 'Clue ' + (k + 1)) + '</li>').join('') + '</ol></div>'; }
 const flight = {
-  title: 'Where are we?',
+  title: 'Which city?',
   rule: c => 'Two legs of Paul\'s journey. Clues come one by one over the sea. Name the right city early for more points.' + (c.multi ? ' A wrong landing can be stolen.' : ''),
   async play(c){
     const VALUE = [20, 15, 10, 5], me = c.me, legs = shuffle(PLACES, c.rng).slice(0, 2); let right = 0; LAST.legs = legs;
@@ -178,15 +178,15 @@ const flight = {
       while (!done) {
         c.count('Leg ' + (leg + 1) + ' of 2: clue ' + shown + ' of 4');
         c.stage(flightStage(place, shown, VALUE[shown - 1] * c.mult));
-        const can = shown < 4, w = await c.choose({ who: c.multi ? me : -1, title: 'Where are we?', options: opts.concat(can ? ['Fly on for another clue'] : []), keyed: true });
+        const can = shown < 4, w = await c.choose({ who: c.multi ? me : -1, title: 'Which city?', options: opts.concat(can ? ['Sail on for another clue'] : []), keyed: true });
         if (w === 4) { shown++; c.sfx('nudge'); continue; }
         done = true;
-        if (opts[w] === place[0]) { right++; c.award(c.multi ? me : 0, VALUE[shown - 1]); c.sfx('right'); c.status('Yes: ' + place[0] + '.'); await c.next(leg ? 'See the lantern' : 'On to the next leg', 'right'); }
+        if (opts[w] === place[0]) { right++; c.award(c.multi ? me : 0, VALUE[shown - 1]); c.sfx('right'); c.status('Yes: ' + place[0] + '.'); await c.next(leg ? 'See the lamp' : 'On to the next leg', 'right'); }
         else { c.sfx('wrong');
           if (c.multi) { const who = await c.buzz({ players: c.order().filter(x => x !== me), label: 'Not ' + opts[w] + '. Does anyone else know? Tap your name.', none: 'Nobody' });
             if (who >= 0) { const g = await c.choose({ who, title: c.name(who) + ': where are we?', options: opts, disabled: [w] });
-              if (opts[g] === place[0]) { c.sfx('steal'); c.award(who, 5); c.status('Stolen: ' + place[0] + '.'); await c.next(leg ? 'See the lantern' : 'On to the next leg', 'right'); continue; } } }
-          c.status('We were over ' + place[0] + '.'); await c.next(leg ? 'See the lantern' : 'On to the next leg', 'miss'); }
+              if (opts[g] === place[0]) { c.sfx('steal'); c.award(who, 5); c.status('Stolen: ' + place[0] + '.'); await c.next(leg ? 'See the lamp' : 'On to the next leg', 'right'); continue; } } }
+          c.status('We were over ' + place[0] + '.'); await c.next(leg ? 'See the lamp' : 'On to the next leg', 'miss'); }
       }
     }
     return { lit: right === 2, min: 15, line: right + ' of 2 cities found', need: 'find both to light it' };
@@ -199,31 +199,31 @@ function trackStage(c, a, b, labels){
   return '<div class="rs-track">' + lane(a, labels[0]) + lane(b, labels[1]) + '</div>'; }
 const rome = {
   title: 'The chariot duel',
-  rule: c => c.multi ? 'Two chariots, one track. Each question is open to both drivers: tap your name to answer. Three right answers win the race.' : 'Race the Blues round the track. Every right answer pulls you ahead; every miss lets the Blues gain. First to three wins.',
+  rule: c => c.multi ? 'Two chariots, one track. Each question is open to both drivers: tap your name to answer. Three right answers win the race.' : 'Race Pharaoh\'s chariots across the sea bed. Every right answer pulls you ahead; every miss lets them gain. First to three wins.',
   async play(c){
     const me = c.me; let rival = -1;
     if (c.multi) { const others = c.order().filter(x => x !== me);
       rival = others.length === 1 ? others[0] : others[await c.choose({ who: me, title: c.name(me) + ', who will you race?', options: others.map(i => c.name(i)) })]; }
-    const pos = [0, 0], labels = [{ name: c.name(me), colour: c.colour(me), badge: c.symbol(me) }, c.multi ? { name: c.name(rival), colour: c.colour(rival), badge: c.symbol(rival) } : { name: 'The Blues', colour: '#56b4e9', badge: '' }];
+    const pos = [0, 0], labels = [{ name: c.name(me), colour: c.colour(me), badge: c.symbol(me) }, c.multi ? { name: c.name(rival), colour: c.colour(rival), badge: c.symbol(rival) } : { name: 'Pharaoh\'s chariots', colour: '#56b4e9', badge: '' }];
     const paint = () => c.stage(trackStage(c, pos[0], pos[1], labels)); paint();
     for (let k = 0; k < 7 && pos[0] < 3 && pos[1] < 3; k++) {
-      c.count('Lap ' + (k + 1));
+      c.count('Stride ' + (k + 1));
       const r = await c.question(c.drawQ(), c.multi ? { open: true, players: [me, rival], pts: 10, steal: false } : { who: 0, pts: 10, steal: false });
       if (r.right) pos[c.multi ? (r.by === me ? 0 : 1) : 0]++; else if (!c.multi) pos[1]++;
       c.sfx(r.right ? 'gallop' : 'wrong'); paint();
-      await c.next(pos[0] >= 3 || pos[1] >= 3 ? 'See the lantern' : 'Next lap', r.right ? 'right' : 'miss', r);
+      await c.next(pos[0] >= 3 || pos[1] >= 3 ? 'See the lamp' : 'Next stride', r.right ? 'right' : 'miss', r);
     }
     const won = pos[0] > pos[1] ? 0 : pos[1] > pos[0] ? 1 : -1;
     if (c.multi) return won < 0 ? { taker: -1, line: 'A dead heat' } : { taker: won ? rival : me, line: labels[won].name + ' won the race' };
-    return { lit: won === 0, line: won === 0 ? 'You beat the Blues' : won === 1 ? 'The Blues won the race' : 'A dead heat', need: 'win the race to light it' };
+    return { lit: won === 0, line: won === 0 ? 'You crossed ahead of Pharaoh' : won === 1 ? 'Pharaoh\'s chariots caught up' : 'A dead heat', need: 'win the race to light it' };
   }
 };
 
 /* ======================================================================= The submarine: how deep dare you go? */
 const POT = [8, 18, 30, 45, 62];
 function depthStage(depth, pot, flooded, creaked){
-  return '<div class="rs-depth"><div class="rs-gauge">' + POT.map((v, k) => '<i class="' + (k < depth ? 'done' : '') + (k === depth ? ' next' : '') + '"><span>' + ((k + 1) * 100) + ' m</span><b>' + v + '</b></i>').join('') + '</div>'
-    + '<div class="rs-pot">In the hold: <b>' + pot + '</b><small class="rs-hull' + (flooded ? ' gone' : creaked ? ' creak' : '') + '">' + (flooded ? 'Flooded' : creaked ? 'Hull creaking' : 'Hull sound') + '</small></div></div>'; }
+  return '<div class="rs-depth"><div class="rs-gauge">' + POT.map((v, k) => '<i class="' + (k < depth ? 'done' : '') + (k === depth ? ' next' : '') + '"><span>' + ((k + 1) * 100) + ' fm</span><b>' + v + '</b></i>').join('') + '</div>'
+    + '<div class="rs-pot">Banked: <b>' + pot + '</b><small class="rs-hull' + (flooded ? ' gone' : creaked ? ' creak' : '') + '">' + (flooded ? 'Lost' : creaked ? 'The deep rumbles' : 'All quiet') + '</small></div></div>'; }
 const submarine = {
   title: 'How deep dare you go?',
   rule: c => 'Each right answer takes the boat deeper and fills the hold with more points. Surface whenever you like to keep them. The first wrong answer makes the hull creak; a second floods the hold and loses the lot.',
@@ -231,18 +231,18 @@ const submarine = {
     const me = c.multi ? c.me : 0; let depth = 0, pot = 0, creaked = false, tries = 0;
     const paint = f => c.stage(depthStage(depth, pot, f, creaked)); paint();
     while (depth < POT.length && tries < 8) {
-      tries++; c.count('Dive ' + (depth + 1) + ': ' + ((depth + 1) * 100) + ' metres');
-      const r = await c.question(c.drawQ(), { who: me, pts: 0, steal: false, noAward: true, label: 'For ' + POT[depth] * c.mult + ' in the hold' });
-      if (!r.right && !creaked) { creaked = true; paint(); c.sfx('creak'); c.status('The hull creaks. One more wrong answer and it gives way.');
+      tries++; c.count('Down ' + (depth + 1) + ': ' + ((depth + 1) * 100) + ' fathoms');
+      const r = await c.question(c.drawQ(), { who: me, pts: 0, steal: false, noAward: true, label: 'For ' + POT[depth] * c.mult + ' banked' });
+      if (!r.right && !creaked) { creaked = true; paint(); c.sfx('creak'); c.status('The deep rumbles. One more wrong answer and it takes everything.');
         await c.next('Decide', 'miss', r);
-        if (pot) { const w = await c.choose({ who: c.multi ? me : -1, title: 'The hull is creaking. You have ' + pot * c.mult + ' in the hold. Try again for ' + POT[depth] * c.mult + ', or surface?', options: ['Try again', 'Surface now'] });
+        if (pot) { const w = await c.choose({ who: c.multi ? me : -1, title: 'The deep is rumbling. You have ' + pot * c.mult + ' banked. Try again for ' + POT[depth] * c.mult + ', or surface?', options: ['Try again', 'Surface now'] });
           if (w === 1) { c.status('Surfaced safely.'); break; } }
         continue; }
-      if (!r.right) { pot = 0; paint(true); c.sfx('flood'); c.status('The hull gave way. The hold is lost.'); await c.next('See the lantern', 'miss', r); break; }
+      if (!r.right) { pot = 0; paint(true); c.sfx('flood'); c.status('The deep took it all. What you had banked is lost.'); await c.next('See the lamp', 'miss', r); break; }
       pot = POT[depth]; depth++; paint(); c.sfx('dive');
-      if (depth === POT.length) { c.status('The deepest trench! Surfacing with ' + pot * c.mult + '.'); await c.next('See the lantern', 'right', r); break; }
+      if (depth === POT.length) { c.status('The deepest dark! Surfacing with ' + pot * c.mult + '.'); await c.next('See the lamp', 'right', r); break; }
       await c.next('Decide', 'right', r);
-      const w = await c.choose({ who: c.multi ? me : -1, title: 'You have ' + pot * c.mult + ' in the hold. Dive to ' + ((depth + 1) * 100) + ' metres for ' + POT[depth] * c.mult + ', or surface?', options: ['Dive deeper', 'Surface now'] });
+      const w = await c.choose({ who: c.multi ? me : -1, title: 'You have ' + pot * c.mult + ' banked. Go down to ' + ((depth + 1) * 100) + ' fathoms for ' + POT[depth] * c.mult + ', or surface?', options: ['Go deeper', 'Surface now'] });
       if (w === 1) { c.status('Surfaced safely.'); break; }
     }
     if (pot) c.award(me, pot);
@@ -269,16 +269,16 @@ const galleon = {
     if (!c.multi) {
       const w = await c.choose({ who: -1, title: gold * c.mult + ' gold in the chest. Ride out the storm to double it (one question), or make for harbour?', options: ['Ride out the storm', 'Make for harbour'] });
       if (w === 0) { c.count('The storm'); const r = await c.question(c.drawQ(), { who: 0, pts: 0, steal: false, noAward: true, label: 'Double or half' });
-        gold = r.right ? gold * 2 : Math.floor(gold / 2); c.stage(chestStage(gold * c.mult, r.right ? 'Doubled!' : 'Half washed overboard.')); await c.next('See the lantern', r.right ? 'right' : 'miss', r); }
+        gold = r.right ? gold * 2 : Math.floor(gold / 2); c.stage(chestStage(gold * c.mult, r.right ? 'Doubled!' : 'Half washed overboard.')); await c.next('See the lamp', r.right ? 'right' : 'miss', r); }
       c.award(0, gold); return { lit: gold >= 20, line: 'Home with ' + gold * c.mult + ' gold', need: 'bring home 20 or more to light it' }; }
     // the pirate: the other team, or the lowest scorer who did not spin
     const others = c.order().filter(x => x !== me), pirate = others.slice().sort((a, b) => c.pts(a) - c.pts(b))[0];
     const w = await c.choose({ who: pirate, title: c.name(pirate) + ', you are the pirate. Share the ' + gold * c.mult + ' gold, or try to steal it all with one question?', options: ['Share it', 'Steal it all'] });
-    if (w === 0) { const half = Math.ceil(gold / 2); c.award(me, half); c.award(pirate, gold - half); c.status('Shared.'); c.stage(chestStage(gold * c.mult, 'Shared between ' + c.name(me) + ' and ' + c.name(pirate) + '.')); await c.next('See the lantern', 'right');
+    if (w === 0) { const half = Math.ceil(gold / 2); c.award(me, half); c.award(pirate, gold - half); c.status('Shared.'); c.stage(chestStage(gold * c.mult, 'Shared between ' + c.name(me) + ' and ' + c.name(pirate) + '.')); await c.next('See the lamp', 'right');
       return { min: 10, line: 'The treasure was shared' }; }
     c.count('The steal'); const r = await c.question(c.drawQ(), { who: pirate, pts: 0, steal: false, noAward: true, label: 'Everything, or nothing' });
-    if (r.right) { c.award(pirate, gold); c.stage(chestStage(gold * c.mult, c.name(pirate) + ' stole the lot.')); await c.next('See the lantern', 'right', r); return { taker: gold >= 20 ? pirate : -1, line: c.name(pirate) + ' stole the treasure' }; }
-    c.award(me, gold + 10); c.stage(chestStage((gold + 10) * c.mult, c.name(me) + ' kept it, with 10 more for holding firm.')); await c.next('See the lantern', 'miss', r);
+    if (r.right) { c.award(pirate, gold); c.stage(chestStage(gold * c.mult, c.name(pirate) + ' stole the lot.')); await c.next('See the lamp', 'right', r); return { taker: gold >= 20 ? pirate : -1, line: c.name(pirate) + ' stole the treasure' }; }
+    c.award(me, gold + 10); c.stage(chestStage((gold + 10) * c.mult, c.name(me) + ' kept it, with 10 more for holding firm.')); await c.next('See the lamp', 'miss', r);
     return { taker: gold >= 20 ? me : -1, line: c.name(me) + ' kept the treasure' };
   }
 };
@@ -289,10 +289,10 @@ const cave = {
   rule: c => 'The torch reveals each question a word at a time. Answer early for more points: ' + (c.multi ? 'tap your name as soon as you know it.' : 'up to 15 a question.'),
   async play(c){ let right = 0;
     c.stage('<div class="rs-torch"><span>🔥</span><small>The torch moves along the wall…</small></div>');
-    for (let k = 0; k < 3; k++) { c.count('Painting ' + (k + 1) + ' of 3');
+    for (let k = 0; k < 3; k++) { c.count('Passage ' + (k + 1) + ' of 3');
       const r = await c.question(c.drawQ(), { open: c.multi, players: c.order(), who: 0, reveal: 'words', ptsFrom: 15, ptsTo: 5, steal: false });
       if (r.right) right++;
-      await c.next(k < 2 ? 'Next painting' : 'See the lantern', r.right ? 'right' : 'miss', r); }
+      await c.next(k < 2 ? 'Next passage' : 'See the lamp', r.right ? 'right' : 'miss', r); }
     return { lit: right >= 2, min: 15, line: right + ' of 3 right', need: 'two right lights it' }; }
 };
 
@@ -346,7 +346,7 @@ const balloon = {
     for (let k = 0; k < qs.length; k++) { c.count('Question ' + (k + 1) + ' of ' + qs.length);
       const r = await c.question(qs[k], { who: c.me, pts: 10, steal: true });
       if (r.right && !r.stolen) right++;
-      await c.next(k < qs.length - 1 ? 'Next question' : 'See the lantern', r.right ? 'right' : 'miss', r); }
+      await c.next(k < qs.length - 1 ? 'Next question' : 'See the lamp', r.right ? 'right' : 'miss', r); }
     c.stage('<div class="rs-land"><div class="rs-strip still">' + scene.map(drawThing).join('') + '</div></div>');
     return { lit: right >= 2, min: 1, line: right + ' of ' + qs.length + ' remembered', need: 'two right lights it' };
   }
@@ -363,7 +363,7 @@ const bigtop = {
     for (let k = 0; k < 6; k++) { c.count('Plate question ' + (k + 1) + ' of 6');
       const r = await c.question(c.drawQ(), { who: me, pts: 0, steal: false, noAward: true, time: 12000, label: plural(plates, 'plate') + ' spinning' });
       plates = r.right ? Math.min(MAX, plates + 1) : Math.max(0, plates - 1); c.sfx(r.right ? 'plate' : 'smash');
-      c.stage(platesStage(plates, MAX)); await c.next(k < 5 ? 'Next question' : 'See the lantern', r.right ? 'right' : 'miss', r); }
+      c.stage(platesStage(plates, MAX)); await c.next(k < 5 ? 'Next question' : 'See the lamp', r.right ? 'right' : 'miss', r); }
     if (plates) c.award(me, plates * 6);
     const ok = plates >= 4;
     if (c.multi) return { taker: ok ? me : -1, line: plural(plates, 'plate') + ' still spinning' };
@@ -397,10 +397,12 @@ const CSS = `
 .rs-clues span{display:block;font-size:11px;color:#f3d98f;text-transform:uppercase;letter-spacing:.5px}
 .rs-clues li{color:#7d84a8}.rs-clues li.got{color:#fff}.rs-clues li.lost{color:#ff9a8a}
 .rs-candles{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,2vw,22px);background:rgba(10,8,20,.7);border-radius:18px;padding:16px 12px 10px}
-.rs-candle{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:56px}
-.rs-wax{position:relative;width:clamp(16px,1.4vw,22px);height:clamp(56px,8vh,84px);border-radius:3px;background:linear-gradient(90deg,#efe6d2,#cfc3a8);box-shadow:inset 0 -6px 0 var(--c)}
-.rs-flame{position:absolute;left:50%;top:-26px;width:14px;height:24px;margin-left:-7px;border-radius:50% 50% 40% 40%;background:radial-gradient(circle at 50% 70%,#fff2b0,#ffb347 55%,rgba(255,120,40,0) 75%);animation:rsFlick .3s ease-in-out infinite alternate;transform-origin:50% 100%}
-.rs-smoke{position:absolute;left:50%;top:-20px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#bbb;opacity:0}
+.rs-candle{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:84px;padding-top:22px}
+.rs-wax{position:relative;width:clamp(46px,5vw,66px);height:clamp(22px,3.4vh,32px);border-radius:50% 50% 46% 46%/62% 62% 38% 38%;background:linear-gradient(180deg,#e8c88a,#b8874a);box-shadow:inset 0 -5px 0 var(--c)}
+.rs-wax::after{content:'';position:absolute;right:-12px;top:2px;width:18px;height:10px;background:linear-gradient(180deg,#e8c88a,#b8874a);clip-path:polygon(0 0,100% 40%,0 100%)}
+.rs-wax::before{content:'';position:absolute;left:-9px;top:3px;width:12px;height:12px;border:3px solid #b8874a;border-right:0;border-radius:8px 0 0 8px}
+.rs-flame{position:absolute;left:calc(100% + 2px);top:-22px;width:14px;height:24px;margin-left:-7px;border-radius:50% 50% 40% 40%;background:radial-gradient(circle at 50% 70%,#fff2b0,#ffb347 55%,rgba(255,120,40,0) 75%);animation:rsFlick .3s ease-in-out infinite alternate;transform-origin:50% 100%}
+.rs-smoke{position:absolute;left:calc(100% + 2px);top:-20px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#bbb;opacity:0}
 .rs-candle.out .rs-flame{display:none}
 .rs-candle.out .rs-smoke{animation:rsSmoke 1.6s ease-out 1}
 .rs-candle.now .rs-wax{outline:3px solid #f3d98f;outline-offset:6px;border-radius:4px}

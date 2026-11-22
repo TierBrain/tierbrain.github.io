@@ -60,7 +60,7 @@ const SM={redsea:'rome',jonah:'submarine',paul:'flight',joseph:'railway',galilee
 
 const T=R.types, al=(id,from,o)=>{T[id]=Object.assign({},T[from],o||{});};
 al('redsea','rome',{title:'Race through the sea',rule:c=>c.multi?'Two parties cross the sea bed, with Pharaoh\u2019s chariots behind. Each question is open to both: tap your name to answer. Three right answers reach the far shore.':'Cross the sea bed with Pharaoh\u2019s chariots behind you. Every right answer pulls you ahead; every miss lets them gain. First to three wins.'});
-al('jonah','submarine',{title:'How deep dare you go?',rule:c=>'Each right answer carries you deeper and fills the hold with more points. Come up whenever you like to keep them. The first wrong answer makes the deep rumble; a second loses the lot.'});
+al('jonah','submarine',{title:'How deep dare you go?',rule:c=>'Each right answer takes you deeper and adds to what you have banked. Come up whenever you like to keep it. The first wrong answer makes the deep rumble; a second takes everything.'});
 al('paul','flight',{title:'Which city?'});
 al('joseph','railway',{/*title:'Whose sack held the cup?'*/});
 al('galilee','galleon',{/*title:'Calm the storm'*/});
@@ -81,7 +81,7 @@ css.textContent='.tb,.dn{display:flex;gap:14px;justify-content:center;align-item
 +'.dn-l{width:64px;text-align:center;font-size:12px;opacity:.85}.dn-l svg{width:56px;height:56px}.dn-l.on{opacity:1}'
 +'.dn{flex-wrap:wrap}';
 document.head.appendChild(css);
-const NUM=['I','II','III','IV','V','VI'];
+const NUM=['\u2014','\u2014','\u2014','\u2014','\u2014','\u2014'];
 function sinaiPaint(st,c,who,multi){
   const slot=k=>'<div class="tb-s">'+(k<st.owners.length?'<i style="--c:'+(multi?c.colour(who[st.owners[k]]):'#d8b25a')+'"></i>':'')+'<span>'+NUM[k]+'</span></div>';
   return '<div class="tb"><div class="tb-t">'+[0,1,2].map(slot).join('')+'</div><div class="tb-t">'+[3,4,5].map(slot).join('')+'</div>'
@@ -91,7 +91,7 @@ function denPaint(st){
   const lion=on=>'<div class="dn-l'+(on?' on':'')+'"><svg viewBox="0 0 56 56"><circle cx="28" cy="30" r="22" fill="#a8742f"/><circle cx="28" cy="31" r="14" fill="#e0b060"/>'
     +(on?'<circle cx="22" cy="28" r="3.2" fill="#ffe680"/><circle cx="34" cy="28" r="3.2" fill="#ffe680"/>':'<path d="M18 29q4 3 8 0M30 29q4 3 8 0" stroke="#5a3a1a" stroke-width="2" fill="none"/>')
     +'<path d="M24 38q4 3 8 0" stroke="#5a3a1a" stroke-width="2" fill="none"/></svg>'+(on?'Awake':'Asleep')+'</div>';
-  return '<div class="dn">'+[0,1,2].map(k=>lion(k<st.strikes)).join('')+'<div class="dn-d">'+[0,1,2,3,4].map(k=>'<i class="'+(k<st.owners.length?'on':'')+'"></i>').join('')+'</div></div>';
+  return '<div class="dn"><p class="dn-info">Lions awake: '+st.strikes+' of 3 \u00b7 Dawn: '+st.owners.length+' of 5 answers</p>'+[0,1,2].map(k=>lion(k<st.strikes)).join('')+'<div class="dn-d">'+[0,1,2,3,4].map(k=>'<i class="'+(k<st.owners.length?'on':'')+'"></i>').join('')+'</div></div>';
 }
 function survive(cfg){ return {
   title:cfg.title, rule:c=>c.multi?cfg.ruleMulti:cfg.ruleSolo,

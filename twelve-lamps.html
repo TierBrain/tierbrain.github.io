@@ -360,7 +360,7 @@ body.net #opts .opt{cursor:default}
         <button type="button" data-v="daily">Daily Dial<small>The same five spins for everyone today</small></button>
         <button type="button" data-v="team">Teams<small>Two teams take turns; wrong answers can be stolen</small></button>
         <button type="button" data-v="versus">Versus<small>2 to 10 players; light and steal lamps</small></button>
-        <button type="button" data-v="coop">Together<small>Everyone against the dial</small></button>
+        <button type="button" data-v="coop">Together<small>The twelve-lamp challenge</small></button>
       </div>
     </div>
     <div class="steps">
@@ -401,6 +401,11 @@ body.net #opts .opt{cursor:default}
         <div class="field" id="styleField"><span>Rounds</span>
           <div class="seg" id="style" role="group" aria-label="Rounds">
             <button type="button" data-v="worlds">Each world's own game</button><button type="button" data-v="simple">Simple quiz</button>
+          </div>
+        </div>
+        <div class="field" id="speedField"><span>Spin speed</span>
+          <div class="seg" id="speed" role="group" aria-label="Spin speed">
+            <button type="button" data-v="full">Full ceremony</button><button type="button" data-v="quick">Quick spins</button>
           </div>
         </div>
         <div class="field" id="autoField"><span>Next question</span>
@@ -499,15 +504,15 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-art.js?v=2"></script>
 <script src="twelve-lamps-base-worlds.js?v=2"></script>
 <script src="twelve-lamps-sound.js?v=2"></script>
-<script src="twelve-lamps-rounds.js?v=2"></script>
+<script src="twelve-lamps-rounds.js?v=3"></script>
 <script src="twelve-lamps-scenes.js?v=2"></script>
-<script src="twelve-lamps-worlds.js?v=3"></script>
-<script src="twelve-lamps-games.js?v=5"></script>
+<script src="twelve-lamps-worlds.js?v=5"></script>
+<script src="twelve-lamps-games.js?v=6"></script>
 <script src="twelve-lamps-carry.js?v=10"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
-const STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; let STILL = REDUCED;
 const ART = window.TL_ART, D = ART.DISTRICTS, N = D.length, STEP = 360 / N;
 if (window.TL_ROUNDS) TL_ROUNDS.ensureStyle();
 
@@ -517,11 +522,11 @@ const PTS = 10, STEAL = 10, LAMP = 20, NUDGE = 10;
 const TIME = 20000, STEAL_TIME = 12000;
 const LENGTHS = { standard: { spins: 12, note: 'About 20 minutes.' }, long: { spins: 24, note: 'About 40 minutes.' }, evening: { spins: 48, note: 'About 90 minutes: a whole evening.' } };
 const MODES = {
-  solo: 'Light a lamp by getting two of its three questions right. Beat your best score.',
-  daily: 'Five spins, the same for everyone today, with no nudges. Light lamps, then share your score.',
-  team: 'Teams take turns to spin. A wrong answer can be stolen by the other team. The team with more points in a round takes its lamp.',
-  versus: 'Take turns to spin. Win a round to light its lamp in your colour; land on a rival\'s lamp to try to steal it.',
-  coop: 'Everyone plays as one. Light all twelve lamps before the night runs out.',
+  solo: 'Light as many lamps as you can. Each world sets its own challenge, so read its rule on the way in. Beat your best score.',
+  daily: 'Five spins of Bible questions, the same for everyone today, with no nudges. Light lamps, then share your score.',
+  team: 'Teams take turns to spin. A wrong answer can be stolen by the other team. The team with more points in a round takes its lamp. Most points wins; lamps earn bonuses and break ties.',
+  versus: 'Take turns to spin. Win a round to light its lamp in your colour; land on a rival\'s lamp to try to steal it. Most points wins; lamps earn bonuses and break ties.',
+  coop: 'The twelve-lamp challenge: everyone plays as one against the dial. Light all twelve lamps before the night runs out.',
   carry: 'The whole room carries one light through three to five Bible stories, drawn from all twelve. Choose where to go, pass the lamp to someone new each time, and go back for a lamp that stays dark.'
 };
 const COLOURS = ['#f0b44c', '#56b4e9', '#2fbf8f', '#ef7aa0', '#a98bff', '#ff8a3d', '#ece4cf', '#5fd0c8', '#c9e265', '#ff6b6b'];
@@ -673,17 +678,17 @@ function tiersFor(topic, diff){ const b = bankFor(topic), have = Object.keys(b).
 function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(topic, diff).forEach(t => (b[t] || []).forEach(q => { if (okQ(q)) pool.push(q); })); return pool; }
 /* today's dial: the same spins, questions and answer order on every device */
 function dailyPlan(date){ const rnd = rngFrom(hash('twelve-lamps:' + date));
-  const pool = poolFor('gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
+  const pool = poolFor((window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
   const qs = shuffle(pool, rnd).slice(0, 60).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
   const spins = []; let left = [];
   for (let s = 0; s < 5; s++) { if (!left.length) left = Array.from({ length: N }, (_, i) => i); const k = Math.floor(rnd() * left.length); spins.push(left[k]); left.splice(k, 1); }
   return { qs, spins }; }
 
 /* ---------- setup ---------- */
-let cfg = Object.assign({ mode: 'carry', length: 'standard', topic: (window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-twelve-lamps-setup', {}));
+let cfg = Object.assign({ mode: 'carry', length: 'standard', topic: (window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk', diff: 'mix', timed: 'timed', style: 'worlds', auto: 'auto', speed: 'full', playOn: 'local', names: ['', '', ''], teams: ['Gold team', 'Blue team'], solo: '', group: '' }, store.get('tb-twelve-lamps-setup', {}));
 function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 function paintSetup(){
-  setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); $('topic').value = cfg.topic;
+  setSeg('mode', cfg.mode); setSeg('length', cfg.length); setSeg('diff', cfg.diff); setSeg('timed', cfg.timed); setSeg('style', cfg.style); setSeg('auto', cfg.auto); setSeg('speed', cfg.speed); $('topic').value = cfg.topic;
   $('modeNote').textContent = MODES[cfg.mode]; paintSummary();
   $('lengthNote').textContent = LENGTHS[cfg.length].note;
   const daily = cfg.mode === 'daily';
@@ -715,7 +720,7 @@ function paintDaily(){
   if (done && done.date === d) { note.textContent = 'You have played today\'s dial: ' + done.score + ' points. Practise it again, or come back tomorrow for a new one.'; $('beginBtn').textContent = 'Practise today\'s dial'; }
   else { note.textContent = 'Today\'s dial: ' + longDate(d) + '.'; $('beginBtn').textContent = 'Spin today\'s dial'; }
 }
-['mode', 'length', 'diff', 'timed', 'style', 'auto', 'playOn'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
+['mode', 'length', 'diff', 'timed', 'style', 'auto', 'speed', 'playOn'].forEach(id => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[id] = b.dataset.v; saveSetup(); paintSetup(); }));
 $('topic').addEventListener('change', () => { cfg.topic = $('topic').value; saveSetup(); paintSummary(); });
 /* everything most people leave alone, in one line; Change settings opens the full list */
 function paintSummary(){
@@ -740,7 +745,7 @@ const SAVE = 'tb-twelve-lamps-game';
 function spinners(){ return S.mode === 'versus' || S.mode === 'team' ? S.players.length : 1; }
 function newGame(roster){
   shown = {};
-  const carry = !roster && cfg.mode === 'carry', m = roster ? 'versus' : carry ? 'coop' : cfg.mode, players = [];
+  const carry = !roster && cfg.mode === 'carry', m = roster ? 'versus' : carry ? 'coop' : cfg.mode, players = []; STILL = REDUCED || cfg.speed === 'quick';
   const add = (name, k, mid) => players.push(Object.assign({ name: name, colour: k, sym: k, pts: 0 }, mid ? { mid } : {}));
   if (roster) roster.forEach((r, i) => add(r.name, i, r.id));
   else if (m === 'versus') cfg.names.forEach((n, i) => add((n || '').trim() || 'Player ' + (i + 1), i));
@@ -748,7 +753,7 @@ function newGame(roster){
   else if (m === 'coop') add(carry ? 'All of us' : (cfg.group.trim() || 'All of us'), 0);
   else add(cfg.solo.trim() || 'You', 0);
   const base = carry ? 6 : m === 'daily' ? 5 : LENGTHS[cfg.length].spins + (m === 'coop' ? 4 : 0), n = (m === 'versus' || m === 'team') ? players.length : 1;
-  S = { mode: m, length: cfg.length, topic: m === 'daily' ? 'gk' : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
+  S = { mode: m, length: cfg.length, topic: m === 'daily' ? ((window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk') : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
         date: m === 'daily' ? today() : null, practice: false, players, spins: Math.ceil(base / n) * n, spin: 0, turn: 0,
         owner: Array(N).fill(-1), visited: [], pos: 0, phase: 'spin', nudged: false, used: [], history: [], phones: !!roster };
   if (carry && window.TL_CARRY) S.carry = TL_CARRY.init(D, cfg.group.split(',').map(x => x.trim()).filter(Boolean));
@@ -782,7 +787,7 @@ function startPlay(fresh){
   promptSpin(); save();
 }
 const spinner = () => S.players[S.mode === 'versus' || S.mode === 'team' ? S.turn : 0];
-const isLast = () => !S.carry && S.spin === S.spins - 1;
+const isLast = () => !S.carry && S.spin >= S.spins - Math.max(1, S.players.length);
 const mult = () => isLast() ? 2 : 1;
 function paintAll(){ paintLanterns(); paintBoard(); $('spinCount').textContent = S.carry ? (S.carry.targets.length ? S.carry.targets.filter(t => S.owner[t] >= 0).length + ' of tonight\'s ' + S.carry.targets.length + ' lamps lit' : 'Carry the Light') : 'Spin ' + Math.min(S.spin + 1, S.spins) + ' of ' + S.spins; $('spinCount').classList.toggle('last', isLast()); }
 let shown = {};
@@ -803,9 +808,9 @@ function promptSpin(){
   const p = spinner(), multi = S.mode === 'versus' || S.mode === 'team';
   $('turn').innerHTML = multi ? symSvg(p.sym, COLOURS[p.colour]) + '<span>' + esc(p.name) + ' to spin</span>' : '<span>' + (S.mode === 'coop' ? 'Your spin' : 'Your spin') + '</span>';
   const left = S.spins - S.spin;
-  $('turnNote').textContent = isLast() ? 'The last spin: every point in this round counts double.' : (S.mode === 'coop' ? (N - S.owner.filter(o => o >= 0).length) + ' lamps still dark, ' + left + ' spins left.' : left + (left === 1 ? ' spin' : ' spins') + ' left.');
+  $('turnNote').textContent = isLast() ? 'The final round: every point counts double, for everyone.' : (S.mode === 'coop' ? (N - S.owner.filter(o => o >= 0).length) + ' lamps still dark, ' + left + ' spins left.' : left + (left === 1 ? ' spin' : ' spins') + ' left.');
   $('turnBox').hidden = false; $('landBox').hidden = true; $('spinBtn').disabled = false; $('msg').textContent = ''; if (window.TL_CARRY) { if (S.carry) TL_CARRY.turn(S); else TL_CARRY.off(); }
-  paintAll(); if (isLast()) { SFX.last(); if (!STILL && !$('play').hidden) { const b = document.createElement('div'); b.id = 'lastBanner'; b.innerHTML = 'The last spin<small>Every point counts double</small>'; document.body.appendChild(b); setTimeout(() => b.remove(), 2700); } }
+  paintAll(); if (isLast()) { SFX.last(); if (!STILL && !$('play').hidden) { const b = document.createElement('div'); b.id = 'lastBanner'; b.innerHTML = 'The final round<small>Every point counts double</small>'; document.body.appendChild(b); setTimeout(() => b.remove(), 2700); } }
   setTimeout(() => { if (!$('play').hidden && !$('spinBtn').disabled) $('spinBtn').focus({ preventScroll: true }); }, 50);
 }
 /* where the dial may land: a world not yet visited this cycle (so every world comes round), and in Teams and
@@ -850,8 +855,9 @@ function showLanding(){
   const canNudge = S.mode !== 'daily' && !S.nudged && !S.carry, free = trailing(me), cost = free ? 0 : NUDGE, afford = spinner().pts >= cost;
   $('nudges').hidden = !canNudge;
   ['nudgeL', 'nudgeR'].forEach(id => { $(id).disabled = !afford; });
-  $('nudgeL').textContent = 'Nudge back' + (free ? ' (free)' : ' (' + NUDGE + ' points)');
-  $('nudgeR').textContent = 'Nudge on' + (free ? ' (free)' : ' (' + NUDGE + ' points)');
+  const tgt = dir => { const c = candidates(); let j = S.pos; for (let k = 0; k < N; k++) { j = (j + dir + N) % N; if (c.includes(j)) break; } return j; }, cost2 = free ? ' (free)' : ' (' + NUDGE + ' points)';
+  $('nudgeL').textContent = (tgt(-1) === S.pos ? 'Nudge back' : 'Nudge to ' + D[tgt(-1)].name) + cost2;
+  $('nudgeR').textContent = (tgt(1) === S.pos ? 'Nudge on' : 'Nudge to ' + D[tgt(1)].name) + cost2;
   $('msg').textContent = !canNudge ? '' : free ? 'Catching up: a free nudge this turn.' : afford ? 'Not keen? Nudge the dial one window, once.' : 'A nudge costs ' + NUDGE + ' points. Score some to unlock it.';
   paintLanterns(); setTimeout(() => { if (!$('landBox').hidden) $('goBtn').focus({ preventScroll: true }); }, 50);
 }

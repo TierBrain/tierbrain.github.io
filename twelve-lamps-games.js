@@ -11,6 +11,7 @@ st.textContent='.ark-roles{margin:0 0 8px;text-align:center;font-weight:700;font
 +'.jl-sun{font-size:20px;line-height:1}.jl-col b{display:block;font-size:14px}@keyframes jlg{50%{opacity:.5;transform:scale(1.3)}}'
 +'@media (prefers-reduced-motion:reduce){.jl-top{animation:none}}';
 document.head.appendChild(st);
+const st3=document.createElement('style');st3.textContent='.dn-info,.jl-note,.nw-note{flex-basis:100%;text-align:center;margin:4px 0 0;font-weight:700;font-size:15px;color:#f6e6c4}';document.head.appendChild(st3);
 
 /* ---------- Noah's Ark ---------- */
 const sv=(b)=>'<svg viewBox="0 0 80 80" aria-hidden="true">'+b+'</svg>';
@@ -48,7 +49,7 @@ T.ark={title:'Two by two',
   if(car&&window.TL_CARRY.others){const others=shuffle(window.TL_CARRY.others(),c.rng).slice(0,4);
     if(others.length){c.count('Who watches for what?');
       for(const j of JOBS){roles[j[0]]=others.length>1?others[await c.choose({who:-1,title:'Who watches to '+j[1]+'?',options:others})]:others[0];}}}
-  const banner=Object.keys(roles).length?'<p class="ark-roles">'+JOBS.map(j=>roles[j[0]]+' will '+j[1]).join(' \u00b7 ')+'</p>':'';
+  const banner=Object.keys(roles).length?'<p class="ark-roles">'+JOBS.map(j=>roles[j[0]]+' will '+j[1]).join(' \u00b7 ')+'</p>':'<p class="ark-roles">Watch closely: the questions are about this boarding.</p>';
   c.count('Look closely');
   c.stage(banner+'<div class="rs-land ark"><div class="rs-strip">'+scene.map(draw).join('')+'</div></div>');
   await c.watch(12000,'I\'m ready');
@@ -64,7 +65,7 @@ T.ark={title:'Two by two',
 /* ---------- Jacob's ladder ---------- */
 const TOP=4;
 function ladderStage(pos,labels){
-  return '<div class="jl">'+pos.map((f,k)=>'<div class="jl-col"><div class="jl-lad"><i class="jl-top"></i><div class="jl-pc" style="--f:'+f+';--c:'+labels[k].colour+'">'+labels[k].badge+'</div></div><b>'+labels[k].name+'</b></div>').join('')+'</div>';
+  return '<div class="jl">'+pos.map((f,k)=>'<div class="jl-col"><div class="jl-lad"><i class="jl-top"></i><div class="jl-pc" style="--f:'+f+';--c:'+labels[k].colour+'">'+labels[k].badge+'</div></div><b>'+labels[k].name+'</b></div>').join('')+'</div>'+(labels.some(l=>l.name==='The dawn')?'<p class="jl-note">The dawn climbs a rung on every second question, after the third.</p>':'');
 }
 T.jacob={title:'The ladder race',
  rule:c=>c.multi?'Every question is open: tap your name to answer. Right takes you up a rung, wrong takes you down. First to the top wins.':'Right answers take you up a rung, wrong ones down. Reach the top before the dawn, which breaks after three questions and rises every second one.',
@@ -102,7 +103,7 @@ document.head.appendChild(st2);
 /* ---------- Nehemiah's wall ---------- */
 function wallStage(n,max,fresh){
   let h='<div class="nw">';for(let k=1;k<=max;k++)h+='<div class="nw-r'+(k<=n?'':' off')+(k===fresh&&k<=n?' new':'')+'">'+'<i></i>'.repeat(6)+'</div>';
-  return h+'</div>';
+  return h+'</div><p class="nw-note">Keep four courses standing to light this lamp.</p>';
 }
 T.nehemiah={title:'Keep building',
  rule:()=>'Six quick questions. Two courses of the wall already stand. Every right answer adds a course; every miss brings one down. Six points for each course still standing at the end.',
@@ -172,7 +173,7 @@ function cupStage(m,seen,lost,out){
    +'<ol class="rs-clues">'+[0,1,2].map(k=>'<li class="'+(k<seen.length?(lost.includes(k)?'lost':'got'):'')+'"><span>Sack '+(k+1)+'</span>'+(k<seen.length?(lost.includes(k)?'The clue was lost in the dust.':m.clues[k]):'Not yet opened')+'</li>').join('')+'</ol></div>';
 }
 T.joseph={title:'Whose sack holds the cup?',
- rule:()=>'Joseph\u2019s steward has hidden the silver cup in one brother\u2019s sack. Each right answer opens a sack and turns up a clue. Name the brother early for more points: two clues are enough to be sure.',
+ rule:()=>'A puzzle inspired by Joseph\u2019s story: the hiding place changes every game. His steward has hidden the silver cup in one brother\u2019s sack. Each right answer opens a sack and turns up a clue. Name the brother early for more points: two clues are enough to be sure.',
  async play(c){
   const m=makeCup(c.rng),seen=[],lost=[],out=[],me=c.me;const paint=()=>c.stage(cupStage(m,seen,lost,out));paint();const VALUE=[30,20,10];
   for(let k=0;k<3;k++){
