@@ -314,6 +314,24 @@ body.net #opts .opt{cursor:default}
 .net-issue{position:fixed;left:16px;right:16px;bottom:16px;z-index:100;background:#fff0d6;color:#241d11;border:3px solid #b77920;border-radius:16px;padding:14px;box-shadow:0 8px 28px #0008}
 .net-issue p{margin:0 0 10px;font-weight:800}.net-issue button{margin-right:8px}
 </style>
+<style id="skin">
+/* Twelve Lamps skin: gentle stone on the cards, and an arched, carved header */
+:root{--grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 .95  0 0 0 0 .8  0 0 0 0 .62  0 0 0 .16 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+ --slab:linear-gradient(180deg,rgba(255,222,176,.07),rgba(255,222,176,0) 32%,rgba(0,0,0,.22))}
+.panel,.card{background-image:var(--grain),var(--slab);box-shadow:inset 0 1px 0 rgba(255,222,176,.16),inset 0 -2px 0 rgba(0,0,0,.45),inset 1px 0 0 rgba(255,222,176,.05),0 12px 30px rgba(0,0,0,.35)}
+.seg button:not([aria-pressed="true"]){background-image:var(--grain);box-shadow:inset 0 1px 0 rgba(255,222,176,.14),inset 0 -2px 0 rgba(0,0,0,.4)}
+#carryBox .card2{background-image:var(--grain);box-shadow:inset 0 1px 0 rgba(255,222,176,.14),inset 0 -2px 0 rgba(0,0,0,.4)}
+.hero{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0;max-width:760px;margin:clamp(34px,6vw,60px) auto clamp(16px,3vw,28px);
+ padding:clamp(54px,9vw,84px) clamp(18px,4vw,56px) clamp(22px,3.4vw,36px);border:3px solid rgba(255,205,140,.5);border-radius:50% 50% 22px 22px / 52% 52% 22px 22px;
+ background-color:rgba(28,16,10,.72);background-image:var(--grain),var(--slab);
+ box-shadow:inset 0 2px 0 rgba(255,222,176,.2),inset 0 -3px 0 rgba(0,0,0,.5),0 18px 44px rgba(0,0,0,.45),0 0 60px rgba(214,140,60,.12)}
+.hero::before{content:"";position:absolute;inset:11px;border:1.5px solid rgba(255,225,180,.2);border-radius:inherit;pointer-events:none}
+#heroDial{order:-1;position:absolute;top:0;left:50%;transform:translate(-50%,-52%);width:clamp(92px,15vw,138px);z-index:1}
+.hero h1{color:#ecd9b4;text-shadow:0 -1px 0 rgba(0,0,0,.7),0 1px 0 rgba(255,225,180,.3),0 8px 22px rgba(0,0,0,.5)}
+.hero h1 span{color:var(--brass-2);text-shadow:0 -1px 0 rgba(0,0,0,.7),0 1px 0 rgba(255,200,130,.35),0 8px 22px rgba(0,0,0,.5)}
+.hero .tag{margin:12px auto 0}
+.hero .tag::after{content:"";display:block;width:110px;height:2px;margin:16px auto 0;background:linear-gradient(90deg,transparent,rgba(255,205,140,.65),transparent)}
+</style>
 </head>
 <body>
 <div id="sky" aria-hidden="true"></div>
