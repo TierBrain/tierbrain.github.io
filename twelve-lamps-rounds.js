@@ -158,7 +158,7 @@ const PLACES = [
   ['Capernaum', 'Holy Land', ['Peter’s mother-in-law was healed here.', 'A centurion’s servant was healed here.', 'Jesus made it his base in Galilee.', 'It stands on the shore of the Sea of Galilee.']],
   ['Ephesus', 'Greece and Asia Minor', ['Timothy led its church.', 'A New Testament letter is addressed to its church.', 'Its silversmiths made shrines of the goddess Artemis.', 'Paul stayed here for about three years.']],
   ['Corinth', 'Greece and Asia Minor', ['It sits on a narrow strip of land in Greece.', 'Paul lived here with Aquila and Priscilla.', 'Two New Testament letters are addressed to its church.', 'Paul wrote his great chapter on love to its church.']],
-  ['Philippi', 'Greece and Asia Minor', ['A seller of purple cloth named Lydia lived here.', 'A jailer here asked what he must do to be saved.', 'Paul and Silas sang in its prison.', 'A letter of joy was sent to its church.']],
+  ['Philippi', 'Greece and Asia Minor', ['Paul met Lydia, a seller of purple cloth, by a river outside it.', 'A jailer here asked what he must do to be saved.', 'Paul and Silas sang in its prison.', 'A letter of joy was sent to its church.']],
   ['Athens', 'Greece and Asia Minor', ['Its people loved to hear something new.', 'It had an altar to an unknown god.', 'Paul preached here on Mars Hill.', 'The Parthenon stands here.']],
   ['Damascus', 'Syria and Rome', ['It lies north of Jerusalem.', 'Ananias healed Saul here.', 'Saul escaped over its wall in a basket.', 'Saul was blinded by a light on the road to it.']],
   ['Rome', 'Syria and Rome', ['Nero ruled from here.', 'It was the capital of the empire.', 'Paul was brought here as a prisoner.', 'Paul’s longest letter was sent to its church.']]

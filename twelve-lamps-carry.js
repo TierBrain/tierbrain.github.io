@@ -111,11 +111,12 @@ function lampSvg(t,S,D){
   else if(tried)s+='<path class="sf-smoke" d="M84 -54q-8 -14 0 -26q8 -12 0 -24" fill="none" stroke="#9a9aaa" stroke-width="5" stroke-linecap="round"/>';
   s+='</g>';
   if(tonight){const who=lit?'carried by '+(c.bearers[i]||'the group'):cur?c.bearer+' carries':tried?'still dark':'';
-    s+='<text x="6" y="48" text-anchor="middle" font-size="26" font-weight="700" fill="#f6e6c4">'+esc(SHORT[id])+'</text>'+(who?'<text x="6" y="76" text-anchor="middle" font-size="22" fill="'+(lit?'#ffdca8':'#c9b49a')+'">'+esc(who)+'</text>':'');}
+    const note=tried&&c.notes&&c.notes[i]?c.notes[i]:'';
+    s+='<text x="6" y="48" text-anchor="middle" font-size="26" font-weight="700" fill="#f6e6c4">'+esc(SHORT[id])+'</text>'+(who?'<text x="6" y="76" text-anchor="middle" font-size="22" fill="'+(lit?'#ffdca8':'#c9b49a')+'">'+esc(who)+'</text>':'')+(note?'<text x="6" y="100" text-anchor="middle" font-size="18" fill="#c9b49a">'+esc(note)+'</text>':'');}
   return s+'</g>';
 }
 const TL=window.TL_CARRY={
-  init(D,names){ return {ids:D.map(d=>d.id),targets:[],names:names.length?names:['Player 1','Player 2','Player 3'],used:[],bearer:'',bearers:{},next:-1,tried:{},final:false,revealed:false}; },
+  init(D,names){ return {ids:D.map(d=>d.id),targets:[],names:names.length?names:['Player 1','Player 2','Player 3'],used:[],bearer:'',bearers:{},pts:{},notes:{},next:-1,tried:{},final:false,revealed:false}; },
   options(S){ const c=S.carry; const fresh=c.targets.filter(t=>!c.tried[t]); if(fresh.length)return fresh;
     if(!c.final)return c.targets.filter(t=>S.owner[t]<0); return []; },
   done(S){ return S.carry.targets.length>0&&TL.options(S).length===0; },
@@ -138,12 +139,13 @@ const TL=window.TL_CARRY={
       +'<radialGradient id="sf-glow"><stop offset="0" stop-color="#ffb347" stop-opacity=".7"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>'
       +'<rect width="1000" height="1000" rx="40" fill="url(#sf-wall)"/><rect width="1000" height="1000" rx="40" fill="url(#sf-stone)" opacity=".55"/>'+niches+planks+lamps+'</svg>'; },
   off(){ const w=$('dialWrap'); if(w)w.classList.remove('shelf-on'); const e=$('carryShelf'); if(e)e.remove(); const b=$('carryBox'); if(b)b.remove(); if($('spinBtn'))$('spinBtn').hidden=false; },
+  settle(S){ const c=S.carry; if(c.base!==undefined&&c.last>=0){c.pts[c.last]=(c.pts[c.last]||0)+S.players[0].pts-c.base; c.base=undefined;} },
   turn(S){
-    const c=S.carry,D=window.__tl.D,name=t=>D[t].name,inv=t=>W[D[t].id][0];
+    TL.settle(S); const c=S.carry,D=window.__tl.D,name=t=>D[t].name,inv=t=>W[D[t].id][0];
     c.current=-1; c.igniting=-1; $('spinBtn').hidden=true; $('turn').innerHTML='<span>Carry the Light</span>'; TL.chip(S); const old=$('carryBox'); if(old)old.remove();
     const box=document.createElement('div'); box.id='carryBox'; $('turnBox').appendChild(box); TL.dim(S);
     const mins=n=>'about '+(n*7)+' minutes';
-    const go=t=>{ c.tried[t]=(c.tried[t]||0)+1; c.bearers[t]=c.bearer; if(c.targets.every(x=>c.tried[x]))c.final=c.targets.some(x=>c.tried[x]>1)||c.final; c.next=t; c.current=t; c.igniting=t; TL.shelf(S); box.remove(); $('spinBtn').hidden=false; $('spinBtn').click(); $('spinBtn').hidden=true; };
+    const go=t=>{ c.tried[t]=(c.tried[t]||0)+1; c.bearers[t]=c.bearer; if(c.targets.every(x=>c.tried[x]))c.final=c.targets.some(x=>c.tried[x]>1)||c.final; c.base=S.players[0].pts; c.last=t; c.next=t; c.current=t; c.igniting=t; TL.shelf(S); box.remove(); $('spinBtn').hidden=false; $('spinBtn').click(); $('spinBtn').hidden=true; };
     const wasFinal=()=>c.targets.every(x=>c.tried[x]);
     const pickBearer=t=>{ const fresh=c.names.filter(n=>!c.used.includes(n)); const pool=fresh.length?fresh:(c.used=[],c.names);
       box.innerHTML='<h3>Who carries the lamp into '+esc(name(t))+'?</h3><p>Everyone can advise. The bearer gives the answers and makes the key call.</p><div class="row">'+pool.map(n=>'<button type="button" class="btn ghost" data-n="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div>';
@@ -168,10 +170,12 @@ const TL=window.TL_CARRY={
   landing(S){ const c=S.carry,D=window.__tl.D,id=D[S.pos].id,again=(c.tried[S.pos]||1)>1,arr=window.TL_ARRIVE&&window.TL_ARRIVE[id];
     const line=again?(BACK[id]||'Back in '+D[S.pos].name+'. Another go.'):(FIRST[id]||(arr?arr[1]:''));
     $('landLine').textContent=line+' '+c.bearer+' carries the lamp: everyone can advise, '+c.bearer+' gives the answers.'; c.igniting=-1; TL.dim(S); TL.chip(S); },
-  ending(S){ const c=S.carry,D=window.__tl.D; c.current=-1; TL.shelf(S); ['carryEnd','carryAgain'].forEach(i=>{const o=$(i);if(o)o.remove();});
+  ending(S){ TL.settle(S); const c=S.carry,D=window.__tl.D; c.current=-1; TL.shelf(S); ['carryPts'].forEach(i=>{const o=$(i);if(o)o.remove();}); ['carryEnd','carryAgain'].forEach(i=>{const o=$(i);if(o)o.remove();});
     const ul=document.createElement('ul'); ul.id='carryEnd';
-    ul.innerHTML=c.targets.map(t=>S.owner[t]>=0?'<li>\u2728 <b>'+esc(D[t].name)+'</b>: brought home by '+esc(c.bearers[t]||'the group')+'</li>':'<li class="dark">\u25cb <b>'+esc(D[t].name)+'</b>: still dark</li>').join('');
+    const pts=t=>c.pts[t]?' \u00b7 '+c.pts[t]+' points':'';
+    ul.innerHTML=c.targets.map(t=>S.owner[t]>=0?'<li>\u2728 <b>'+esc(D[t].name)+'</b>: brought home by '+esc(c.bearers[t]||'the group')+pts(t)+'</li>':'<li class="dark">\u25cb <b>'+esc(D[t].name)+'</b>: still dark'+(c.notes&&c.notes[t]?' ('+esc(c.notes[t])+')':'')+pts(t)+'</li>').join('');
     const p=document.createElement('p'); p.id='carryAgain'; p.textContent='Shall we see which lamps we get next time?';
-    $('endLine').insertAdjacentElement('afterend',ul); ul.insertAdjacentElement('afterend',p); }
+    const tp=document.createElement('p'); tp.id='carryPts'; tp.style.cssText='font-weight:800;font-size:clamp(18px,2vw,26px);margin:0 0 12px;color:#ffdca8'; tp.textContent=S.players[0].pts+' points earned';
+    $('endLine').insertAdjacentElement('afterend',tp); tp.insertAdjacentElement('afterend',ul); ul.insertAdjacentElement('afterend',p); }
 };
 })();

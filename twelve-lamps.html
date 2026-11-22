@@ -331,6 +331,9 @@ body.net #opts .opt{cursor:default}
 .hero h1 span{color:var(--brass-2);text-shadow:0 -1px 0 rgba(0,0,0,.7),0 1px 0 rgba(255,200,130,.35),0 8px 22px rgba(0,0,0,.5)}
 .hero .tag{margin:12px auto 0}
 .hero .tag::after{content:"";display:block;width:110px;height:2px;margin:16px auto 0;background:linear-gradient(90deg,transparent,rgba(255,205,140,.65),transparent)}
+.modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+button#introHint{display:inline-block;white-space:nowrap;pointer-events:auto;left:50%;right:auto;transform:translateX(-50%);bottom:7vh;width:auto;font-size:22px;padding:14px 40px;color:var(--ink);text-shadow:none}
+@media (max-width:900px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.modes button:last-child{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -483,7 +486,7 @@ body.net #opts .opt{cursor:default}
     <button class="btn" id="backBtn" type="button">Back to the dial</button>
   </section>
   </div>
-  <p id="introHint">Tap or press any key to begin</p>
+  <button type="button" class="btn" id="introHint">Tap to begin</button>
 </main>
 
 <!-- ============ the end ============ -->
@@ -504,11 +507,11 @@ body.net #opts .opt{cursor:default}
 <script src="twelve-lamps-art.js?v=2"></script>
 <script src="twelve-lamps-base-worlds.js?v=2"></script>
 <script src="twelve-lamps-sound.js?v=2"></script>
-<script src="twelve-lamps-rounds.js?v=3"></script>
+<script src="twelve-lamps-rounds.js?v=4"></script>
 <script src="twelve-lamps-scenes.js?v=2"></script>
 <script src="twelve-lamps-worlds.js?v=5"></script>
 <script src="twelve-lamps-games.js?v=6"></script>
-<script src="twelve-lamps-carry.js?v=10"></script>
+<script src="twelve-lamps-carry.js?v=11"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -523,7 +526,7 @@ const TIME = 20000, STEAL_TIME = 12000;
 const LENGTHS = { standard: { spins: 12, note: 'About 20 minutes.' }, long: { spins: 24, note: 'About 40 minutes.' }, evening: { spins: 48, note: 'About 90 minutes: a whole evening.' } };
 const MODES = {
   solo: 'Light as many lamps as you can. Each world sets its own challenge, so read its rule on the way in. Beat your best score.',
-  daily: 'Five spins of Bible questions, the same for everyone today, with no nudges. Light lamps, then share your score.',
+  daily: 'Five spins of Bible questions, the same for everyone today, with no nudges. Light lamps, then share your score: the result says whether you played timed or relaxed, so scores compare fairly.',
   team: 'Teams take turns to spin. A wrong answer can be stolen by the other team. The team with more points in a round takes its lamp. Most points wins; lamps earn bonuses and break ties.',
   versus: 'Take turns to spin. Win a round to light its lamp in your colour; land on a rival\'s lamp to try to steal it. Most points wins; lamps earn bonuses and break ties.',
   coop: 'The twelve-lamp challenge: everyone plays as one against the dial. Light all twelve lamps before the night runs out.',
@@ -594,6 +597,7 @@ paintSound();
 /* ---------- the dial ---------- */
 const at = (deg, r) => [r * Math.sin(deg * Math.PI / 180), -r * Math.cos(deg * Math.PI / 180)];
 const LAMP_ART = p => '<g transform="translate(-10 30) scale(1.75)"><ellipse cx="0" cy="8" rx="42" ry="22" fill="url(#' + p + '-brass)"/><path d="M36 4Q62 0 70 -14Q58 -16 40 -8Z" fill="url(#' + p + '-brass)"/><path d="M-40 2Q-58 -4 -56 -22Q-46 -22 -36 -12Z" fill="url(#' + p + '-brass)"/><ellipse cx="0" cy="-8" rx="26" ry="8" fill="#f5c98a"/><g class="lampflame"><path d="M0 -12Q-16 -34 0 -62Q6 -46 14 -36Q18 -22 0 -12Z" fill="#ff9a3c"/><path d="M0 -14Q-8 -28 0 -42Q5 -34 6 -28Q7 -20 0 -14Z" fill="#fff0b0"/></g></g>';
+function groupName(t){ const g = (t || '').split(',').map(x => x.trim()).filter(Boolean); return !g.length ? 'All of us' : g.length <= 3 ? (g.length === 1 ? g[0] : g.slice(0, -1).join(', ') + ' and ' + g[g.length - 1]) : g.slice(0, 2).join(', ') + ' and ' + (g.length - 2) + ' more'; }
 function dialSvg(p, interactive){
   let h = '<defs>' + ART.defs(p)
     + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#d58a3c"/><stop offset="1" stop-color="#7a4418"/></linearGradient>'
@@ -748,9 +752,9 @@ function newGame(roster){
   const carry = !roster && cfg.mode === 'carry', m = roster ? 'versus' : carry ? 'coop' : cfg.mode, players = []; STILL = REDUCED || cfg.speed === 'quick';
   const add = (name, k, mid) => players.push(Object.assign({ name: name, colour: k, sym: k, pts: 0 }, mid ? { mid } : {}));
   if (roster) roster.forEach((r, i) => add(r.name, i, r.id));
-  else if (m === 'versus') cfg.names.forEach((n, i) => add((n || '').trim() || 'Player ' + (i + 1), i));
+  else if (m === 'versus') { const nm = cfg.names.map(n => (n || '').trim()), kept = nm.map((n, i) => [n, i]).filter(x => x[0]); (kept.length >= 2 ? kept : nm.slice(0, 2).map((n, i) => [n || 'Player ' + (i + 1), i])).forEach(x => add(x[0], x[1])); }
   else if (m === 'team') cfg.teams.forEach((n, i) => add((n || '').trim() || ['Gold team', 'Blue team'][i], i));
-  else if (m === 'coop') add(carry ? 'All of us' : (cfg.group.trim() || 'All of us'), 0);
+  else if (m === 'coop') add(carry ? groupName(cfg.group) : (cfg.group.trim() || 'All of us'), 0);
   else add(cfg.solo.trim() || 'You', 0);
   const base = carry ? 6 : m === 'daily' ? 5 : LENGTHS[cfg.length].spins + (m === 'coop' ? 4 : 0), n = (m === 'versus' || m === 'team') ? players.length : 1;
   S = { mode: m, length: cfg.length, topic: m === 'daily' ? ((window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk') : cfg.topic, diff: m === 'daily' ? 'mix' : cfg.diff, timed: cfg.timed === 'timed', style: m === 'daily' ? 'worlds' : cfg.style, auto: cfg.auto !== 'tap',
@@ -1243,6 +1247,7 @@ function endRound(res){
   let bonus = 0;
   if (taker >= 0 && taker !== before) { bonus = LAMP * m; S.players[taker].pts += bonus; S.owner[i] = taker; }
   const name = taker >= 0 ? S.players[taker].name : '', said = res.line ? res.line + '. ' : '';
+  if (S.carry) { S.carry.notes = S.carry.notes || {}; S.carry.notes[i] = res.line || ''; }
   if (multi) {
     if (taker < 0) { head = before >= 0 ? S.players[before].name + ' kept the lamp' : 'The lamp stays dark'; line = said + (before >= 0 ? 'Nobody took it from its owner.' : 'Nobody earned it this time.'); }
     else if (taker === before) { head = name + ' kept the lamp'; line = said + 'Defended.'; }
@@ -1303,7 +1308,7 @@ function finish(){
       return '<li><span class="pos">' + pos + '</span>' + symSvg(P[i].sym, COLOURS[P[i].colour]) + '<span class="nm">' + esc(P[i].name) + '</span><small>' + lanternsOf(i) + (lanternsOf(i) === 1 ? ' lamp' : ' lamps') + '</small><span>' + P[i].pts + '</span></li>'; }).join('');
   } else {
     const lit = S.owner.filter(o => o >= 0).length, pts = P[0].pts;
-    if (S.mode === 'coop' && S.carry) { const n3 = S.carry.targets.filter(t => S.owner[t] >= 0).length, tot = S.carry.targets.length; head = n3 === tot ? 'The light got through' : n3 + ' of ' + tot + ' lamps lit'; line = n3 === tot ? 'Carried by all of you.' : 'A lamp stayed dark. Come back and carry it again.'; }
+    if (S.mode === 'coop' && S.carry) { const n3 = S.carry.targets.filter(t => S.owner[t] >= 0).length, tot = S.carry.targets.length; const dk = tot - n3; head = n3 === tot ? 'The light got through' : n3 + ' of ' + tot + ' lamps lit'; line = n3 === tot ? 'Carried by all of you.' : dk === 1 ? 'A lamp stayed dark. Come back and carry it again.' : n3 === 0 ? 'Every lamp stayed dark. Come back and carry the light again.' : dk + ' lamps stayed dark. Come back and carry them again.'; }
     else if (S.mode === 'coop') { const won = lit === N; head = won ? 'Every lamp lit' : lit + ' of ' + N + ' lamps lit'; line = won ? 'With ' + (S.spins - S.spin) + ' spins to spare.' : 'The night ran out. Twelve lights the whole dial.'; }
     else { head = pts + ' points'; const key = 'tb-twelve-lamps-best-' + (S.mode === 'daily' ? 'daily' : S.length), best = store.get(key, 0);
       if (!S.practice) store.set(key, Math.max(best, pts));
@@ -1317,8 +1322,8 @@ function finish(){
   $('shareBox').hidden = S.mode !== 'daily';
   if (S.mode === 'daily') {
     const marks = S.history.map(h => h.taker >= 0 ? '🏮' : '⚫').join('');
-    $('shareText').textContent = 'Twelve Lamps · Daily Dial · ' + longDate(S.date) + '\n' + marks + '  ' + P[0].pts + ' points\ntierbrain.co/twelve-lamps.html';
-    if (!S.practice) store.set('tb-twelve-lamps-daily', { date: S.date, score: P[0].pts, marks });
+    $('shareText').textContent = 'Twelve Lamps · Daily Dial · ' + longDate(S.date) + ' · ' + (S.timed ? 'Timed' : 'Relaxed') + '\n' + marks + '  ' + P[0].pts + ' points\ntierbrain.co/twelve-lamps.html';
+    if (!S.practice) store.set('tb-twelve-lamps-daily', { date: S.date, score: P[0].pts, marks, timed: S.timed });
     $('shareNote').textContent = '';
   }
   $('end').classList.remove('show'); void $('end').offsetWidth; $('end').classList.add('show');
