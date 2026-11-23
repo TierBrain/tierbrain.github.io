@@ -332,7 +332,8 @@ body.net #opts .opt{cursor:default}
 .hero .tag{margin:12px auto 0}
 .hero .tag::after{content:"";display:block;width:110px;height:2px;margin:16px auto 0;background:linear-gradient(90deg,transparent,rgba(255,205,140,.65),transparent)}
 .modes{grid-template-columns:repeat(3,minmax(0,1fr))}
-button#introHint{display:inline-block;white-space:nowrap;pointer-events:auto;left:50%;right:auto;transform:translateX(-50%);bottom:7vh;width:auto;font-size:22px;padding:14px 40px;color:var(--ink);text-shadow:none}
+button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;left:50%;right:auto;transform:translateX(-50%);bottom:7vh;width:auto;font-size:22px;padding:14px 40px;color:var(--ink);text-shadow:none}
+#round.intro button#introHint{pointer-events:auto}
 @media (max-width:900px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.modes button:last-child{grid-column:auto}}
 </style>
 </head>
