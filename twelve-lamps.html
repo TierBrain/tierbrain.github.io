@@ -336,6 +336,8 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
 #round.intro button#introHint{pointer-events:auto}
 #round:not(.intro) #introHint{display:none!important}
 #backBtn,#roundEnd .btn{position:relative;z-index:5;touch-action:manipulation}
+#rref{margin:2px 0 0;font-family:var(--flour);font-style:italic;font-size:clamp(14px,1.8vw,18px);opacity:.9}
+#reStory{font-family:var(--flour);font-style:italic;opacity:.85;margin:4px 0 14px;font-size:clamp(15px,1.9vw,20px)}
 #buildTag{position:fixed;left:10px;bottom:6px;font-size:11px;opacity:.5;pointer-events:none;z-index:1;color:#f6e6c4}
 @media (max-width:900px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.modes button:last-child{grid-column:auto}}
 </style>
@@ -476,6 +478,7 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
   <section class="qcard" id="qBox" aria-live="polite">
     <div class="qmeta"><span class="who" id="rWho"></span><span id="rPts"></span></div>
     <p id="qText"></p>
+    <p id="rref"></p>
     <div id="opts"></div>
     <div id="timer" aria-hidden="true"><i></i></div>
     <p id="rmsg" role="status"></p>
@@ -486,6 +489,7 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
     <svg id="reLantern" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
     <h3 id="reHead"></h3>
     <p id="reLine"></p>
+    <p id="reStory"></p>
     <ul id="roundTally"></ul>
     <button class="btn" id="backBtn" type="button">Back to the dial</button>
   </section>
@@ -507,7 +511,7 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
 
 <script src="questions.js?v=8"></script>
 <script src="ruffled-topics.js?v=1"></script>
-<script src="twelve-lamps-bible.js?v=2"></script>
+<script src="twelve-lamps-bible.js?v=3"></script>
 <script src="twelve-lamps-art.js?v=2"></script>
 <script src="twelve-lamps-base-worlds.js?v=2"></script>
 <script src="twelve-lamps-sound.js?v=2"></script>
@@ -527,6 +531,7 @@ if (window.TL_ROUNDS) TL_ROUNDS.ensureStyle();
 const QPR = 3;                 // questions in a round
 const PTS = 10, STEAL = 10, LAMP = 20, NUDGE = 10;
 const TIME = 20000, STEAL_TIME = 12000;
+const STORY = { redsea: 'Exodus 14', jonah: 'Jonah 1\u20132', paul: 'Acts 13\u201328', joseph: 'Genesis 42\u201344 (this puzzle is inspired by the story)', galilee: 'Mark 4:35\u201341', scroll: 'Luke 4:16\u201321', ark: 'Genesis 6\u20139', lamps: 'Matthew 25:1\u201313', nehemiah: 'Nehemiah 2\u20134', jacob: 'Genesis 28:10\u201322', sinai: 'Exodus 19\u201320; 31:18', daniel: 'Daniel 6' };
 const LENGTHS = { standard: { spins: 12, note: 'About 20 minutes.' }, long: { spins: 24, note: 'About 40 minutes.' }, evening: { spins: 48, note: 'About 90 minutes: a whole evening.' } };
 const MODES = {
   solo: 'Light as many lamps as you can. Each world sets its own challenge, so read its rule on the way in. Beat your best score.',
@@ -687,7 +692,7 @@ function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(top
 /* today's dial: the same spins, questions and answer order on every device */
 function dailyPlan(date){ const rnd = rngFrom(hash('twelve-lamps:' + date));
   const pool = poolFor((window.RF_BANK && window.RF_BANK.bible) ? 'bible' : 'gk', 'mix').slice().sort((a, b) => a.q < b.q ? -1 : a.q > b.q ? 1 : 0);
-  const qs = shuffle(pool, rnd).slice(0, 60).map(q => ({ q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
+  const qs = shuffle(pool, rnd).slice(0, 60).map(q => ({ q: q.q, correct: q.correct, ref: q.ref, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3)), rnd) }));
   const spins = []; let left = [];
   for (let s = 0; s < 5; s++) { if (!left.length) left = Array.from({ length: N }, (_, i) => i); const k = Math.floor(rnd() * left.length); spins.push(left[k]); left.splice(k, 1); }
   return { qs, spins }; }
@@ -770,9 +775,10 @@ function newGame(roster){
 }
 let pool = [], plan = null;
 function preparePool(){ if (S.mode === 'daily') { plan = dailyPlan(S.date); return; } const used = new Set(S.used); pool = shuffle(poolFor(S.topic, S.diff)).filter(q => !used.has(q.q)); if (pool.length < QPR * 2) pool = shuffle(poolFor(S.topic, S.diff)); }
-function drawQ(){ if (S.mode === 'daily') { const q = plan.qs[(S.spin * 12 + (R.qn++)) % plan.qs.length]; return { q: q.q, correct: q.correct, opts: q.opts.slice() }; }
+function drawQ(){ if (S.mode === 'daily') { const q = plan.qs[(S.spin * 12 + (R.qn++)) % plan.qs.length]; return { q: q.q, correct: q.correct, ref: q.ref, opts: q.opts.slice() }; }
   if (!pool.length) preparePool(); const q = pool.shift(); S.used.push(q.q); if (S.used.length > 400) S.used.shift();
-  return { q: q.q, correct: q.correct, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3))) }; }
+  return { q: q.q, correct: q.correct, ref: q.ref, opts: shuffle([q.correct].concat(q.wrong.slice(0, 3))) }; }
+function refTxt(){ return ''; } /* the verse reference now shows on its own line (#rref) so every round type keeps it */
 function save(){ if (S && S.phase !== 'over' && !S.practice) store.set(SAVE, S); }
 /* the opening: the dial gathers itself out of the stars, its windows open one by one, and the players are named */
 let cutT = [];
@@ -1007,7 +1013,7 @@ function netApply(p){
     while (R.netWrong < wrong.length) { const w = wrong[R.netWrong++]; R.active = at(w.member); R.phase = 'ask'; answer(w.choice); if (!R.pid) return; }
     if (p.closed) { R.pid = null; $('netSkip').hidden = true;
       if (p.reason === 'correct') { R.active = at(p.winner); R.phase = 'ask'; answer(p.correct); }
-      else if (R.phase === 'buzz' || R.phase === 'ask') { $('rmsg').textContent = (p.reason === 'time' ? 'Time\'s up.' : 'Nobody knew.') + ' The answer: ' + R.q.correct + '.'; settle(false, -1, false); }
+      else if (R.phase === 'buzz' || R.phase === 'ask') { $('rmsg').textContent = (p.reason === 'time' ? 'Time\'s up.' : 'Nobody knew.') + ' The answer: ' + R.q.correct + refTxt() + '.'; settle(false, -1, false); }
       return; }
     if (p.chooser && R.phase === 'buzz') { R.active = at(p.chooser); R.phase = 'ask'; $('stealBox').hidden = true; paintWho2(); $('rmsg').textContent = S.players[R.active].name + ' pressed first: answer on your phone.'; SFX.nudge(); }
     if (!p.chooser && R.phase === 'ask' && R.open) { openBuzz(); }
@@ -1038,7 +1044,7 @@ function prepareRound(){
   $('rName').textContent = d.name; $('rLine').textContent = d.line;
   $('lastChip').hidden = !isLast(); $('qCount').textContent = ''; $('rRule').textContent = ''; $('rStage').innerHTML = '';
   $('qBox').hidden = false; $('roundEnd').hidden = true; $('roundEnd').classList.remove('show');
-  $('qText').textContent = ''; $('opts').innerHTML = ''; $('rWho').innerHTML = ''; $('rPts').textContent = ''; $('rmsg').textContent = ''; $('stealBox').hidden = true; $('nextBtn').hidden = true; $('timer').hidden = true;
+  $('qText').textContent = ''; $('opts').innerHTML = ''; $('rWho').innerHTML = ''; $('rPts').textContent = ''; $('rmsg').textContent = ''; $('rref').textContent = ''; $('stealBox').hidden = true; $('nextBtn').hidden = true; $('timer').hidden = true;
   ambientStart(d.id);
 }
 /* a moment to take in the world before the game starts; on its first visit in a game the camera drifts in from
@@ -1102,7 +1108,7 @@ function question(q, o){
     freshCard(o.reveal === 'words');
     if (o.reveal === 'words') { const ws = q.q.split(/\s+/); $('qText').innerHTML = ws.map(w => '<span class="w">' + esc(w) + '</span>').join(' '); R.words = { n: ws.length, shown: 0, t: setInterval(torchStep, STILL ? 260 : 430) }; torchStep(); }
     else $('qText').textContent = q.q;
-    $('opts').innerHTML = q.opts.map((t, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(t) + '</span></button>').join('');
+    $('rref').textContent = ''; $('opts').innerHTML = q.opts.map((t, i) => '<button class="opt" type="button" data-i="' + i + '"><b>' + 'ABCD'[i] + '</b><span>' + esc(t) + '</span></button>').join('');
     const phoneQ = o.reveal === 'words' ? 'Watch the words appear on the big screen.' : q.q;
     if (S.phones) netOpen(open ? { kind: 'buzz', eligible: R.pool.map(mid), q: phoneQ, opts: q.opts, correct: q.opts.indexOf(q.correct) } : { kind: 'answer', eligible: [mid(R.active)], q: phoneQ, opts: q.opts, correct: q.opts.indexOf(q.correct) }, o.time || TIME);
     if (open) openBuzz(); else { R.phase = 'ask'; $('opts').className = S.phones ? '' : 'opts-live'; if (!S.phones) focusFirst(); }
@@ -1135,7 +1141,7 @@ function paintWho2(){
 function startTimer(ms){ stopTimer(); const bar = $('timer').firstElementChild; $('timer').hidden = !S.timed; if (!S.timed) return;
   timerEnd = performance.now() + ms; $('timer').classList.remove('low'); const tick = () => { const left = Math.max(0, timerEnd - performance.now()); bar.style.transform = 'scaleX(' + (left / ms) + ')'; $('timer').classList.toggle('low', left < 5000); if (left <= 0) { timeUp(); return; } timerRaf = requestAnimationFrame(tick); }; timerRaf = requestAnimationFrame(tick); }
 function stopTimer(){ cancelAnimationFrame(timerRaf); timerRaf = 0; $('timer').classList.remove('low'); }
-function timeUp(){ if (!R || phonesLive()) return; if (R.phase === 'ask' || R.phase === 'steal') answer(-1); else if (R.phase === 'buzz') { $('rmsg').textContent = 'Time\'s up. The answer: ' + R.q.correct + '.'; settle(false, -1, false); } }
+function timeUp(){ if (!R || phonesLive()) return; if (R.phase === 'ask' || R.phase === 'steal') answer(-1); else if (R.phase === 'buzz') { $('rmsg').textContent = 'Time\'s up. The answer: ' + R.q.correct + refTxt() + '.'; settle(false, -1, false); } }
 $('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b || b.disabled || !R || phonesLive()) return;
   if (R.phase === 'ask' || R.phase === 'steal') answer(+b.dataset.i); else if (R.phase === 'choose') chosen(+b.dataset.i); });
 function answer(i){
@@ -1146,14 +1152,14 @@ function answer(i){
     stopTimer(); const v = valueNow(stealing), p = S.players[who]; let pts = 0;
     if (!R.qo.noAward && v) pts = C.award(who, v);
     btns[i].classList.add('right', 'pop'); SFX[stealing ? 'steal' : 'right'](); if (pts) cheer(btns[i], pts, COLOURS[p.colour]);
-    $('rmsg').textContent = 'Correct!' + (pts ? ' ' + pts + ' points to ' + (multiMode() ? p.name : (S.mode === 'coop' ? 'the group' : 'you')) + '.' : '');
+    $('rmsg').textContent = 'Correct!' + (pts ? ' ' + pts + ' points to ' + (multiMode() ? p.name : (S.mode === 'coop' ? 'the group' : 'you')) + '.' : '') + refTxt();
     return settle(true, who, stealing);
   }
   if (i >= 0) { btns[i].classList.add('wrong', 'shake'); btns[i].disabled = true; }
   SFX.wrong(); if (R.qo.onWrong && who >= 0) R.qo.onWrong(who);
   if (R.open) { const left = R.pool.filter(k => !R.tried.includes(k));
     if (i >= 0 && left.length) { $('rmsg').textContent = 'Not ' + R.q.opts[i] + '.'; return openBuzz(); }
-    $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
+    $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' The answer: ' + R.q.correct + refTxt() + '.'; return settle(false, -1, false); }
   const others = S.players.map((x, k) => k).filter(k => !R.tried.includes(k));
   if (!stealing && R.qo.steal !== false && multiMode() && others.length) {
     stopTimer(); R.phase = 'stealpick'; $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : 'Not this time.') + ' Anyone else know it?';
@@ -1165,7 +1171,7 @@ function answer(i){
     return;
   }
   stopTimer();
-  $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : (stealing ? 'Missed the steal.' : 'Not this time.')) + ' The answer: ' + R.q.correct + '.';
+  $('rmsg').textContent = (i < 0 ? 'Time\'s up.' : (stealing ? 'Missed the steal.' : 'Not this time.')) + ' The answer: ' + R.q.correct + refTxt() + '.';
   settle(false, who, stealing);
 }
 $('stealBtns').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !R) return; const k = +b.dataset.k;
@@ -1173,16 +1179,16 @@ $('stealBtns').addEventListener('click', e => { const b = e.target.closest('butt
   pickName(k); });
 function pickName(k){
   if (R.phase === 'stealpick') { $('stealBox').hidden = true;
-    if (k < 0) { $('rmsg').textContent = 'No steal. The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
+    if (k < 0) { $('rmsg').textContent = 'No steal. The answer: ' + R.q.correct + refTxt() + '.'; return settle(false, -1, false); }
     R.active = k; R.phase = 'steal'; $('opts').className = 'opts-live'; $('rmsg').textContent = ''; paintWho2(); startTimer(STEAL_TIME); focusFirst();
     if (S.phones) netOpen({ kind: 'answer', eligible: [mid(k)], q: R.q.q, opts: R.q.opts, correct: R.q.opts.indexOf(R.q.correct) }, STEAL_TIME); }
   else if (R.phase === 'buzz') { $('stealBox').hidden = true;
-    if (k < 0) { stopTimer(); $('rmsg').textContent = 'Nobody knew. The answer: ' + R.q.correct + '.'; return settle(false, -1, false); }
+    if (k < 0) { stopTimer(); $('rmsg').textContent = 'Nobody knew. The answer: ' + R.q.correct + refTxt() + '.'; return settle(false, -1, false); }
     R.active = k; R.phase = 'ask'; $('opts').className = 'opts-live'; paintWho2(); focusFirst(); }
   else if (R.phase === 'pickwho') { $('stealBox').hidden = true; R.phase = 'x'; R.res(k); }
 }
 function settle(right, by, stealing){
-  stopTimer(); if (R.words) { clearInterval(R.words.t); $('qText').querySelectorAll('.w').forEach(w => w.classList.add('lit')); }
+  stopTimer(); $('rref').textContent = R.q && R.q.ref ? 'Answer: ' + R.q.correct + ' \u00b7 ' + R.q.ref : ''; if (R.words) { clearInterval(R.words.t); $('qText').querySelectorAll('.w').forEach(w => w.classList.add('lit')); }
   R.phase = 'reveal'; $('opts').className = ''; $('stealBox').hidden = true;
   $('opts').querySelectorAll('.opt').forEach((b, i) => { b.disabled = true; if (R.q.opts[i] === R.q.correct) b.classList.add('right'); });
   R.res({ right, by, stolen: !!stealing });
@@ -1261,7 +1267,7 @@ function endRound(res){
   else { head = 'The lamp stays dark'; line = (res.line || 'Not this time') + (res.need ? ': ' + res.need + '.' : '.'); }
   if (taker >= 0 && taker !== before) SFX.light();
   S.history.push({ d: i, taker, before, kind: R.kind, got: R.got });
-  $('reHead').textContent = head; $('reLine').textContent = line;
+  $('reHead').textContent = head; $('reLine').textContent = line; $('reStory').textContent = STORY[D[S.pos].id] ? 'Read the story: ' + STORY[D[S.pos].id] : '';
   $('roundTally').innerHTML = Object.keys(R.got).length ? Object.keys(R.got).map(k => { const p = S.players[k]; return '<li>' + symSvg(p.sym, COLOURS[p.colour]) + esc(p.name) + ': +' + R.got[k] + '</li>'; }).join('') : '<li>No points this round</li>';
   paintReLantern(i, taker >= 0 ? taker : before);
   $('qCount').textContent = 'Round over'; $('qBox').hidden = true; $('roundEnd').hidden = false; $('roundEnd').classList.remove('show'); void $('roundEnd').offsetWidth; $('roundEnd').classList.add('show'); $('backBtn').textContent = S.spin + 1 >= S.spins || (S.mode === 'coop' && (S.carry ? (window.TL_CARRY && TL_CARRY.done(S)) : S.owner.every(o => o >= 0))) ? 'See the night\'s results' : 'Back to the dial';
@@ -1366,7 +1372,7 @@ paintSetup(); paintResume();
 window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LAMP, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
-<div id="buildTag">Build 12</div>
+<div id="buildTag">Build 13</div>
 </body>
 </html>
 

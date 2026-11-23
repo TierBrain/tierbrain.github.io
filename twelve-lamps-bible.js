@@ -133,12 +133,109 @@ const U={
  ['In which city were believers first called Christians?','Antioch','Jerusalem','Rome','Corinth'],
  ['Which prophet watched the widow of Nain\u2019s... no','','','','']].slice(0,23)
 };
+
+/* ---------- New questions with verse references: [question, correct, three wrong answers, reference] ---------- */
+const V={
+1:[['How many days did God spend creating before he rested?','Six','Seven','Five','Ten','Genesis 1:31\u20132:2'],
+ ['Which creature tempted Eve in the garden?','A serpent','A lion','A raven','A fox','Genesis 3:1\u20135'],
+ ['What did Adam and Eve sew together to cover themselves?','Fig leaves','Palm leaves','Linen cloth','Wool','Genesis 3:7'],
+ ['What sign did God give Noah as a promise after the flood?','A rainbow','A star','A dove','A fire','Genesis 9:12\u201313'],
+ ['What new name did God give Abram?','Abraham','Isaac','Israel','Ephraim','Genesis 17:5'],
+ ['Who was Jacob\u2019s twin brother?','Esau','Reuben','Ishmael','Laban','Genesis 25:24\u201326'],
+ ['How many brothers did Joseph have?','Eleven','Ten','Twelve','Nine','Genesis 35:22\u201326'],
+ ['What did Jacob give Joseph that made his brothers jealous?','A long, richly coloured coat','A sword','A flock of sheep','A golden ring','Genesis 37:3\u20134'],
+ ['Who found baby Moses among the reeds?','Pharaoh\u2019s daughter','Miriam','Aaron','Jethro','Exodus 2:5\u20136'],
+ ['What was the last of the ten plagues on Egypt?','The death of the firstborn','Frogs','Darkness','Locusts','Exodus 12:29\u201330'],
+ ['What did the Israelites put on their doorposts at the first Passover?','The blood of a lamb','Oil','Water','Salt','Exodus 12:7, 13'],
+ ['Which instrument did David play for King Saul?','A harp','A trumpet','A drum','A flute','1 Samuel 16:23'],
+ ['Which queen travelled to test Solomon with hard questions?','The Queen of Sheba','Esther','Jezebel','Athaliah','1 Kings 10:1\u20132'],
+ ['Who was Mary\u2019s husband?','Joseph','Zechariah','Simeon','Joachim','Matthew 1:18\u201320'],
+ ['Where did Mary lay the newborn Jesus?','In a manger','In a basket','In a tent','In a boat','Luke 2:7'],
+ ['Who were the first to hear the angels announce Jesus\u2019s birth?','Shepherds','Kings','Priests','Fishermen','Luke 2:8\u201314'],
+ ['Jesus told Peter and Andrew he would make them fishers of what?','People','Fish','Boats','Nets','Matthew 4:19'],
+ ['On which day after his death did Jesus rise?','The third day','The second day','The fourth day','The seventh day','Luke 24:7, 46'],
+ ['What was found rolled away from Jesus\u2019s tomb?','The stone','The door','The curtain','The gate','Luke 24:2']],
+2:[['Which two cities were destroyed by fire from heaven?','Sodom and Gomorrah','Babel and Ur','Tyre and Sidon','Ai and Bethel','Genesis 19:24\u201325'],
+ ['What happened to Lot\u2019s wife when she looked back?','She became a pillar of salt','She fell into a well','She was taken to Egypt','She was struck deaf','Genesis 19:26'],
+ ['Who wrestled with a man until daybreak at the Jabbok?','Jacob','Esau','Isaac','Laban','Genesis 32:24\u201328'],
+ ['Which wife of Jacob was the mother of Joseph?','Rachel','Leah','Bilhah','Zilpah','Genesis 30:22\u201324'],
+ ['In which part of Egypt did Jacob\u2019s family settle?','Goshen','Moab','Gilead','Sinai','Genesis 47:27'],
+ ['What guided the Israelites by night in the wilderness?','A pillar of fire','A star','A rainbow','A trumpet','Exodus 13:21'],
+ ['Who held up Moses\u2019 arms during the battle with Amalek?','Aaron and Hur','Joshua and Caleb','Miriam and Aaron','Eleazar and Ithamar','Exodus 17:10\u201312'],
+ ['Who was called by an angel while threshing wheat, and later led Israel against Midian?','Gideon','Samson','Ehud','Jephthah','Judges 6:11\u201314'],
+ ['Which woman betrayed Samson to the Philistines?','Delilah','Jael','Rahab','Deborah','Judges 16:4\u201319'],
+ ['Which relative of Naomi married Ruth in Bethlehem?','Boaz','Elimelech','Obed','Jesse','Ruth 4:13'],
+ ['Who became David\u2019s closest friend, the son of King Saul?','Jonathan','Joab','Abner','Nathan','1 Samuel 18:1\u20133'],
+ ['In Nebuchadnezzar\u2019s dream, what was the head of the statue made of?','Gold','Silver','Bronze','Iron','Daniel 2:31\u201332'],
+ ['Who was the cousin who raised Esther?','Mordecai','Haman','Ezra','Nehemiah','Esther 2:7'],
+ ['Which official plotted to destroy the Jews in Persia?','Haman','Mordecai','Hegai','Nehemiah','Esther 3:8\u20139'],
+ ['Which sister of Lazarus anointed Jesus\u2019s feet with perfume?','Mary','Martha','Salome','Joanna','John 12:1\u20133'],
+ ['Which sister was distracted by all the serving?','Martha','Mary','Lydia','Rhoda','Luke 10:38\u201342'],
+ ['Which Pharisee came to Jesus by night?','Nicodemus','Gamaliel','Caiaphas','Zacchaeus','John 3:1\u20132'],
+ ['Who was the first to see the risen Jesus, according to John\u2019s Gospel?','Mary Magdalene','Peter','John','Thomas','John 20:11\u201316'],
+ ['Who was struck blind on the road to Damascus?','Saul','Ananias','Barnabas','Silas','Acts 9:3\u20139'],
+ ['What appeared on each believer at Pentecost?','Tongues of fire','Doves','Stars','Crowns','Acts 2:3'],
+ ['What was Paul\u2019s trade?','Making tents','Fishing','Carpentry','Collecting taxes','Acts 18:3']],
+3:[['Who heard God calling in the night as a boy in the temple?','Samuel','Jeremiah','Solomon','Josiah','1 Samuel 3:2\u201310'],
+ ['Which king had seven hundred wives?','Solomon','David','Ahab','Herod','1 Kings 11:3'],
+ ['Which queen threatened Elijah\u2019s life?','Jezebel','Athaliah','Esther','Vashti','1 Kings 19:1\u20132'],
+ ['Which king of Israel was Jezebel\u2019s husband?','Ahab','Jehu','Omri','Jeroboam','1 Kings 16:30\u201331'],
+ ['Who took over as prophet when Elijah was taken up?','Elisha','Gehazi','Isaiah','Samuel','2 Kings 2:9\u201315'],
+ ['Which Syrian commander was healed of leprosy?','Naaman','Sisera','Abner','Joab','2 Kings 5:1\u201314'],
+ ['In which river was Naaman told to wash seven times?','The Jordan','The Nile','The Euphrates','The Kishon','2 Kings 5:10, 14'],
+ ['To which city was Jonah sent to preach?','Nineveh','Babylon','Damascus','Tyre','Jonah 1:1\u20132'],
+ ['Which Babylonian king destroyed Jerusalem and its Temple?','Nebuchadnezzar','Belshazzar','Cyrus','Darius','2 Kings 25:8\u20139'],
+ ['Which king ruled when Daniel was thrown to the lions?','Darius the Mede','Cyrus','Xerxes','Artaxerxes','Daniel 6:1\u201316'],
+ ['In whose field did Ruth glean?','Boaz','Elimelech','Jesse','Obed','Ruth 2:1\u20133'],
+ ['Who was Isaac\u2019s wife?','Rebekah','Leah','Rachel','Sarah','Genesis 24:67'],
+ ['Who was Jacob\u2019s father-in-law?','Laban','Esau','Isaac','Jethro','Genesis 29:18\u201325'],
+ ['How many years did Jacob first work to win Rachel?','Seven','Three','Ten','Fourteen','Genesis 29:18\u201320'],
+ ['Which Roman emperor called for the census when Jesus was born?','Caesar Augustus','Nero','Tiberius','Claudius','Luke 2:1'],
+ ['What did Jesus make from spit to heal a man born blind?','Mud','Oil','A paste of herbs','A bandage','John 9:6'],
+ ['Which disciple was called the Zealot?','Simon','Thomas','Philip','Thaddaeus','Luke 6:15'],
+ ['Which two brothers did Jesus call the Sons of Thunder?','James and John','Peter and Andrew','Philip and Nathanael','Matthew and Thomas','Mark 3:17'],
+ ['Who carried Jesus\u2019s cross?','Simon of Cyrene','Joseph of Arimathea','Nicodemus','Barabbas','Mark 15:21'],
+ ['Who gave his own tomb for Jesus\u2019s burial?','Joseph of Arimathea','Nicodemus','Caiaphas','Pilate','Matthew 27:57\u201360'],
+ ['Which Gospel writer was a doctor?','Luke','Mark','Matthew','John','Colossians 4:14'],
+ ['Which young companion of Paul received two letters from him?','Timothy','Titus','Silas','Mark','1 Timothy 1:2; 2 Timothy 1:2'],
+ ['Which runaway slave did Paul send back to Philemon?','Onesimus','Epaphras','Tychicus','Archippus','Philemon 10\u201312']],
+4:[['Which prophet was a shepherd and fig farmer from Tekoa?','Amos','Micah','Hosea','Joel','Amos 1:1; 7:14'],
+ ['Which one-chapter prophetic book is about Edom?','Obadiah','Nahum','Habakkuk','Zephaniah','Obadiah 1'],
+ ['Who were Job\u2019s three friends who came to comfort him?','Eliphaz, Bildad and Zophar','Elihu, Reuel and Jethro','Eli, Hophni and Phinehas','Shadrach, Meshach and Abednego','Job 2:11'],
+ ['Which book says there is a time to be born and a time to die?','Ecclesiastes','Proverbs','Psalms','Job','Ecclesiastes 3:1\u20132'],
+ ['Who was king of Judea when Jesus was born?','Herod','Pilate','Caesar Augustus','Agrippa','Matthew 2:1'],
+ ['Which teacher of the law had Paul trained under?','Gamaliel','Nicodemus','Caiaphas','Annas','Acts 22:3'],
+ ['Before which Roman governor did Paul appeal to Caesar?','Festus','Felix','Pilate','Gallio','Acts 25:9\u201312'],
+ ['On which island was Paul shipwrecked?','Malta','Crete','Cyprus','Patmos','Acts 28:1'],
+ ['Which sermon of Jesus begins with the Beatitudes?','The Sermon on the Mount','The Farewell Discourse','The Olivet Discourse','The Sermon at Nazareth','Matthew 5:1\u201312'],
+ ['Which two figures appeared with Jesus at the Transfiguration?','Moses and Elijah','Enoch and Elijah','Abraham and Moses','Isaiah and Daniel','Matthew 17:1\u20133'],
+ ['Which three disciples went up the mountain with Jesus at the Transfiguration?','Peter, James and John','Peter, Andrew and John','James, John and Thomas','Peter, Philip and Matthew','Matthew 17:1'],
+ ['Which Psalm is David\u2019s prayer of repentance after Bathsheba?','Psalm 51','Psalm 23','Psalm 1','Psalm 100','Psalm 51, title'],
+ ['Which prophet was told to name a son Maher-shalal-hash-baz?','Isaiah','Jeremiah','Ezekiel','Hosea','Isaiah 8:1\u20133'],
+ ['Which judge killed the fat king Eglon?','Ehud','Gideon','Samson','Jephthah','Judges 3:15\u201323'],
+ ['Which two women were Naomi\u2019s daughters-in-law?','Ruth and Orpah','Rachel and Leah','Martha and Mary','Hannah and Peninnah','Ruth 1:4'],
+ ['What did Hannah promise to do with her son Samuel?','Give him to serve the Lord','Make him a king','Send him to Egypt','Raise him as a soldier','1 Samuel 1:11, 27\u201328'],
+ ['Which king of Judah was struck with leprosy for burning incense in the Temple?','Uzziah','Hezekiah','Josiah','Ahaz','2 Chronicles 26:16\u201321'],
+ ['What did Jesus promise the repentant thief on the cross?','That he would be with him in paradise','That he would be set free','That he would rule a city','That he would be healed','Luke 23:42\u201343'],
+ ['Which parable ends with a servant who buried his talent being called wicked and lazy?','The parable of the talents','The parable of the sower','The parable of the lost sheep','The parable of the wedding banquet','Matthew 25:24\u201330'],
+ ['Which parable features five wise and five foolish bridesmaids waiting with lamps?','The parable of the ten virgins','The parable of the talents','The parable of the sower','The parable of the prodigal son','Matthew 25:1\u201313']]
+};
+/* verse references for the earlier questions, matched on a distinctive phrase */
+const REFS=[['rain fall in Noah','Genesis 7:12'],['swallowed by a great fish','Jonah 1:17'],['In which town was Jesus born','Luke 2:4\u20137'],['Who built the ark','Genesis 6:13\u201322'],['defeat Goliath','1 Samuel 17:49'],['How many disciples did Jesus choose','Mark 3:13\u201319'],['thrown into the lions','Daniel 6:16'],
+ ['What did God create on the first day','Genesis 1:3\u20135'],['first man created','Genesis 2:7'],['first woman created','Genesis 2:21\u201322'],['Which brother did Cain kill','Genesis 4:8'],['olive leaf','Genesis 8:11'],['led the Israelites out of Egypt','Exodus 3:10; 12:51'],['name of the garden','Genesis 2:8'],['name of Jesus','Luke 1:30\u201331'],['Who baptised Jesus','Matthew 3:13\u201317'],['How many commandments','Exodus 20:1\u201317'],['Which giant did David defeat','1 Samuel 17:4, 49\u201350'],['Which disciple betrayed','Matthew 26:14\u201316'],['wedding in Cana','John 2:1\u201311'],['fast in the wilderness','Matthew 4:1\u20132'],['great strength lie','Judges 16:17'],['spoke to Balaam','Numbers 22:28'],['burning without being burnt','Exodus 3:2'],['Pharaoh\u2019s dreams','Genesis 41:14\u201336'],['On which sea did Jesus walk','Matthew 14:25'],['first Temple','1 Kings 6:1'],['five loaves','Matthew 14:17\u201321'],['sycamore','Luke 19:1\u20136'],['shepherd boy became king','1 Samuel 16:11\u201313'],['NOT brought by the wise men','Matthew 2:11'],['first murderer','Genesis 4:8'],
+ ['Which sea did Moses part','Exodus 14:21\u201322'],['sold into slavery by his brothers','Genesis 37:28'],['first in the Bible','Genesis 1:1'],['first king of Israel','1 Samuel 10:1'],['before his conversion','Acts 9:1\u20134; 13:9'],['three times','Luke 22:54\u201362'],['On which mountain did Moses receive','Exodus 19:20; 31:18'],['plagues struck Egypt','Exodus 7\u201312'],
+ ['Who was Abraham\u2019s wife','Genesis 17:15\u201316'],['did God ask him to offer','Genesis 22:1\u201314'],['birthright','Genesis 25:29\u201334'],['How many sons did Jacob have','Genesis 35:22\u201326'],['took over leadership of Israel after Moses','Joshua 1:1\u20132'],['walls fell','Joshua 6:20'],['hid the Israelite spies','Joshua 2:1\u20136'],['mother-in-law','Ruth 1:4, 16'],['anointed David as king','1 Samuel 16:13'],['took Bathsheba','2 Samuel 11:2\u201327'],['whirlwind','2 Kings 2:11'],['with Shadrach and Meshach','Daniel 3:12\u201323'],['most of the Psalms','Psalm 3, title'],['cousin','Luke 1:36, 57\u201360'],['out of the boat','Matthew 14:28\u201329'],['raise from the dead in Bethany','John 11:43\u201344'],['until he touched','John 20:24\u201329'],['did God rest','Genesis 2:2'],['staff become','Exodus 7:10'],['fell from heaven','Exodus 16:14\u201315, 31'],['shortest of the four Gospels','Mark 1\u201316'],['most of the New Testament letters','Romans\u2013Philemon'],['In which town did Jesus turn','John 2:1'],['first missionary journey','Acts 13:2\u20133'],
+ ['Gomer','Hosea 1:2\u20133'],['golden image','Daniel 3:1'],['write on the wall','Daniel 5:1\u20135'],['tent peg','Judges 4:21'],['Which king did Esther appear before','Esther 5:1\u20132; 7:1\u20136'],['parents of John the Baptist','Luke 1:5\u201313'],['Which angel told Mary','Luke 1:26\u201331'],['Good Samaritan','Luke 10:25\u201337'],['son who left home','Luke 15:11\u201332'],['name before Jesus called him Peter','John 1:42'],['Philip baptised','Acts 8:26\u201338'],['Roman centurion was visited by Peter','Acts 10:1\u201348'],['On which island did John receive','Revelation 1:9'],['last in the Bible','Revelation 22:21'],['raised the young Samuel','1 Samuel 2:11; 3:1'],['confronted David','2 Samuel 12:1\u20137'],['led a rebellion against him','2 Samuel 15:10\u201314'],['new name was given to Jacob','Genesis 32:28'],['brother and spokesman','Exodus 4:14\u201316'],['seraphim','Isaiah 6:1\u20133'],['boy king of Judah','2 Kings 22:1\u201313'],['ark come to rest','Genesis 8:4'],['first fishermen Jesus called','Matthew 4:18\u201320'],['tent-making couple','Acts 18:2\u20133'],['Mount Carmel','1 Kings 18:20\u201340'],['cupbearer','Nehemiah 1:11; 2:1'],['queen of Persia','Esther 2:17; 4:14'],['had been a tax collector','Matthew 9:9'],['books are in the New Testament','Matthew\u2013Revelation'],['garden did Jesus pray','Matthew 26:36'],['asked God for wisdom','1 Kings 3:5\u201312'],['Paul meet Lydia','Acts 16:13\u201315'],
+ ['mother of the prophet Samuel','1 Samuel 1:20'],['went to battle with Barak','Judges 4:4\u201310'],['nephew, who lived in Sodom','Genesis 13:8\u201312; 19:1'],['sentenced Jesus to be crucified','Matthew 27:24\u201326'],['without dying','Genesis 5:24; 2 Kings 2:11'],['genealogy beginning at Abraham','Matthew 1:1\u20132'],['first Christian martyr','Acts 7:59\u201360'],['dry bones','Ezekiel 37:1\u201310'],
+ ['armour of God','Ephesians 6:10\u201318'],['faith, hope and love','1 Corinthians 13:13'],['Persian king allowed','Ezra 1:1\u20133'],['lowered into a cistern','Jeremiah 38:6'],['shadow went back','2 Kings 20:8\u201311'],['woman in Joppa','Acts 9:36\u201341'],['lying about the price','Acts 5:1\u201310'],['almost persuaded','Acts 26:28'],['released instead of Jesus','Matthew 27:15\u201321'],['take Judas','Acts 1:23\u201326'],['directly after Acts','Romans 1:1'],['fed by ravens','1 Kings 17:4\u20136'],['flour and oil never ran out','1 Kings 17:8\u201316'],['ancestor of King David','Matthew 1:2\u20136'],['served as priests','Numbers 3:5\u201310'],['longest chapter','Psalm 119'],['The Lord is my shepherd','Psalm 23:1'],['Gideon have left','Judges 7:7'],['riddle at his wedding','Judges 14:12\u201314'],['lost his family and wealth','Job 1:13\u201322'],['Who wrote the book of Acts','Acts 1:1; Luke 1:3'],['hometown','Acts 21:39'],['first called Christians','Acts 11:26']];
+const refFor=q=>{const r=REFS.find(x=>q.indexOf(x[0])>=0&&true);return r?r[1]:'';};
 window.RF_TOPICS=window.RF_TOPICS||{}; if(!window.RF_TOPICS.bible) window.RF_TOPICS.bible='The Bible';
 /* If TierBrain already has a 'bible' topic loaded, add to it rather than replace it, and skip any question it already has. */
 window.RF_BANK=window.RF_BANK||{};
 const bank=window.RF_BANK.bible=window.RF_BANK.bible||{};
 Object.keys(T).forEach(t=>{
   const have=new Set((bank[t]||[]).map(x=>x.q.toLowerCase().trim()));
-  bank[t]=(bank[t]||[]).concat(T[t].concat(U[t]||[]).filter(a=>!have.has(a[0].toLowerCase().trim())).map(a=>({q:a[0],correct:a[1],wrong:a.slice(2)})));
+  const rows=T[t].concat(U[t]||[]).concat(V[t]||[]);
+  bank[t]=(bank[t]||[]).concat(rows.filter(a=>!have.has(a[0].toLowerCase().trim())).map(a=>({q:a[0],correct:a[1],wrong:a.slice(2,5),ref:a[5]||refFor(a[0])})));
 });
 })();
