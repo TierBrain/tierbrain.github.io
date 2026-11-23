@@ -334,6 +334,9 @@ body.net #opts .opt{cursor:default}
 .modes{grid-template-columns:repeat(3,minmax(0,1fr))}
 button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;left:50%;right:auto;transform:translateX(-50%);bottom:7vh;width:auto;font-size:22px;padding:14px 40px;color:var(--ink);text-shadow:none}
 #round.intro button#introHint{pointer-events:auto}
+#round:not(.intro) #introHint{display:none!important}
+#backBtn,#roundEnd .btn{position:relative;z-index:5;touch-action:manipulation}
+#buildTag{position:fixed;left:10px;bottom:6px;font-size:11px;opacity:.5;pointer-events:none;z-index:1;color:#f6e6c4}
 @media (max-width:900px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}.modes button:last-child{grid-column:auto}}
 </style>
 </head>
@@ -1363,6 +1366,7 @@ paintSetup(); paintResume();
 window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LAMP, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
+<div id="buildTag">Build 12</div>
 </body>
 </html>
 
