@@ -580,6 +580,7 @@ const SFX = {
   enter(){ noise(0, 1.1, 180, .1); tone(220, 0, 1.1, .05, 'sine', 660); bell(988, .75, .09); },
   leave(){ noise(0, .8, 600, .07); tone(660, 0, .8, .04, 'sine', 220); },
   ignite(){ noise(0, .35, 1400, .06); bell(1568, .08, .1); bell(2093, .2, .07); },
+  flame(){ noise(0, .45, 280, .1); noise(.05, 1.3, 1000, .035); tone(196, 0, 1.5, .035, 'sine', 330); [.35, .6, .85, 1.1].forEach(t => noise(t, .07, 2800, .035)); },
   up(){ tone(523, 0, .12, .09, 'triangle', 784); tone(784, .1, .16, .08, 'triangle', 1047); bell(1568, .2, .05); },
   down(){ tone(523, 0, .3, .08, 'triangle', 262); },
   snuff(){ noise(0, .5, 2400, .06); tone(300, 0, .3, .03, 'sine', 120); },
@@ -850,10 +851,10 @@ function spin(){
   const want = -target * STEP, turns = STILL ? 0 : 3 + Math.floor(Math.random() * 2);
   let end = rot + turns * 360 + ((((want - rot) % 360) + 360) % 360); if (!STILL && end - rot < 360) end += 360;
   const start = rot, dur = STILL ? 0 : 4200 + Math.random() * 600, t0 = performance.now(); let lastSeg = Math.floor((rot + STEP / 2) / STEP);
-  if (!STILL) SFX.whoosh();
+  if (S.carry) SFX.flame(); else if (!STILL) SFX.whoosh();
   const ease = x => 1 - Math.pow(1 - x, 4);
   const frame = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1; setRot(start + (end - start) * ease(k));
-    const seg = Math.floor((rot + STEP / 2) / STEP); if (seg !== lastSeg) { lastSeg = seg; SFX.tick(); kick(); glint(topIndex()); }
+    const seg = Math.floor((rot + STEP / 2) / STEP); if (seg !== lastSeg) { lastSeg = seg; if (!S.carry) SFX.tick(); kick(); glint(topIndex()); }
     if (k < 1) requestAnimationFrame(frame); else landed(target); };
   if (STILL) frame(t0); else requestAnimationFrame(frame);
 }
@@ -884,7 +885,7 @@ function nudge(dir){
   spinner().pts -= cost; S.nudged = true; busy = true; SFX.nudge();
   const start = rot, end = rot - dir * STEP * (((j - S.pos) * dir + N) % N || N), dur = STILL ? 0 : 650, t0 = performance.now();
   let nSeg = Math.floor((rot + STEP / 2) / STEP);
-  const frame = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1; setRot(start + (end - start) * (1 - Math.pow(1 - k, 3))); const sg = Math.floor((rot + STEP / 2) / STEP); if (sg !== nSeg) { nSeg = sg; SFX.tick(); kick(); } if (k < 1) requestAnimationFrame(frame); else { S.pos = j; busy = false; SFX.land(); showLanding(); swell(j); paintBoard(); save(); } };
+  const frame = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1; setRot(start + (end - start) * (1 - Math.pow(1 - k, 3))); const sg = Math.floor((rot + STEP / 2) / STEP); if (sg !== nSeg) { nSeg = sg; if (!S.carry) SFX.tick(); kick(); } if (k < 1) requestAnimationFrame(frame); else { S.pos = j; busy = false; SFX.land(); showLanding(); swell(j); paintBoard(); save(); } };
   if (STILL) frame(t0); else requestAnimationFrame(frame);
 }
 $('spinBtn').addEventListener('click', spin);
@@ -1372,7 +1373,7 @@ paintSetup(); paintResume();
 window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LAMP, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
-<div id="buildTag">Build 13</div>
+<div id="buildTag">Build 14</div>
 </body>
 </html>
 
