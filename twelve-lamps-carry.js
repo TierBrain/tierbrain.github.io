@@ -10,6 +10,8 @@ const W={
  ark:['Watch the animals board','notice'],lamps:['Keep one lamp burning','endure'],
  nehemiah:['Keep the wall going up','steady'],jacob:['Climb the ladder before the dawn','speed'],
  sinai:['Carve the two tablets','steady'],daniel:['Bring Daniel through the night','endure']};
+/* pacing: how long each world tends to run, so a night is not made of long, question-by-question rounds back to back */
+const LEN={redsea:'short',scroll:'short',jonah:'medium',paul:'medium',joseph:'medium',galilee:'medium',ark:'medium',lamps:'long',nehemiah:'long',jacob:'long',sinai:'long',daniel:'long'},MIN={short:5,medium:7,long:9};
 const SKILL={notice:'Notice',deduce:'Deduce',risk:'Judge a risk',steady:'Stay steady',endure:'Hold on',speed:'Move fast'};
 const FIRST={ark:'The ramp is coming up. Watch the last few animals carefully. Once that door shuts, somebody will ask what you saw.',
  joseph:'Four brothers have stopped on the road. Somewhere among their sacks is a silver cup. How much evidence will you need before you name a name?',
@@ -60,7 +62,11 @@ const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'
 function draw(n){
   let recent=[];try{recent=JSON.parse(localStorage.getItem(RK)||'[]');}catch(e){}
   const bySkill={};Object.keys(W).forEach(id=>(bySkill[W[id][1]]=bySkill[W[id][1]]||[]).push(id));
-  const picks=shuffle(Object.keys(bySkill)).slice(0,n).map(sk=>{const all=shuffle(bySkill[sk]),fresh=all.filter(i=>!recent.includes(i));return (fresh.length?fresh:all)[0];});
+  const limit=n<=3?1:2; let longs=0; const picks=[];
+  for(const sk of shuffle(Object.keys(bySkill))){ if(picks.length>=n)break;
+    const all=shuffle(bySkill[sk]),fresh=all.filter(i=>!recent.includes(i)),order=fresh.concat(all.filter(i=>!fresh.includes(i)));
+    const pick=order.find(i=>LEN[i]!=='long'||longs<limit); if(!pick)continue; if(LEN[pick]==='long')longs++; picks.push(pick); }
+  for(const sk of Object.keys(bySkill)){ if(picks.length>=n)break; if(picks.some(i=>W[i][1]===sk))continue; picks.push(shuffle(bySkill[sk])[0]); }
   try{localStorage.setItem(RK,JSON.stringify(picks));}catch(e){}
   return picks;
 }
@@ -116,6 +122,7 @@ function lampSvg(t,S,D){
   return s+'</g>';
 }
 const TL=window.TL_CARRY={
+  draw,
   init(D,names){ return {ids:D.map(d=>d.id),targets:[],names:names.length?names:['Player 1','Player 2','Player 3'],used:[],bearer:'',bearers:{},pts:{},notes:{},next:-1,tried:{},final:false,revealed:false}; },
   options(S){ const c=S.carry; const fresh=c.targets.filter(t=>!c.tried[t]); if(fresh.length)return fresh;
     if(!c.final)return c.targets.filter(t=>S.owner[t]<0); return []; },
@@ -150,13 +157,15 @@ const TL=window.TL_CARRY={
     const pickBearer=t=>{ const fresh=c.names.filter(n=>!c.used.includes(n)); const pool=fresh.length?fresh:(c.used=[],c.names);
       box.innerHTML='<h3>Who carries the lamp into '+esc(name(t))+'?</h3><p>Everyone can advise. The bearer gives the answers and makes the key call.</p><div class="row">'+pool.map(n=>'<button type="button" class="btn ghost" data-n="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div>';
       box.onclick=e=>{ const b=e.target.closest('button'); if(!b)return; c.bearer=b.dataset.n; c.used.push(c.bearer); if(wasFinal())c.final=true; go(t); }; };
-    const route=()=>{ const opts=TL.options(S),lit=c.targets.filter(t=>S.owner[t]>=0).length,dark=opts.length&&c.targets.every(x=>c.tried[x]);
+    const route=()=>{ const opts=TL.options(S).slice(),lastLong=c.last>=0&&LEN[D[c.last].id]==='long'&&!c.targets.every(x=>c.tried[x]);
+      if(lastLong)opts.sort((a,b)=>(LEN[D[a].id]==='long')-(LEN[D[b].id]==='long'));
+      const lit=c.targets.filter(t=>S.owner[t]>=0).length,dark=opts.length&&c.targets.every(x=>c.tried[x]);
       $('turnNote').textContent=lit+' of '+c.targets.length+' lamps lit.';
-      box.innerHTML='<h3>'+(dark?(opts.length===1?'One lamp is still dark. Go back for it?':opts.length+' lamps are still dark. Which one shall we go back for, and who\u2019s carrying?'):'Where does the light go next?')+'</h3>'+(dark?'<p>A second chance: three easier questions, and two right answers light the lamp.</p>':'')
-        +opts.map(t=>'<button type="button" class="btn ghost" data-t="'+t+'">'+esc(inv(t))+'<small>'+esc(name(t))+' \u00b7 '+SKILL[W[D[t].id][1]]+'</small></button>').join('');
+      box.innerHTML='<h3>'+(dark?(opts.length===1?'One lamp is still dark. Go back for it?':opts.length+' lamps are still dark. Which one shall we go back for, and who\u2019s carrying?'):'Where does the light go next?')+'</h3>'+(dark?'<p>A second chance: three easier questions, and two right answers light the lamp.</p>':'')+(lastLong&&opts.some(t=>LEN[D[t].id]!=='long')?'<p>You have just played a long one. A shorter story next keeps the evening moving.</p>':'')
+        +opts.map(t=>'<button type="button" class="btn ghost" data-t="'+t+'">'+esc(inv(t))+'<small>'+esc(name(t))+' \u00b7 '+SKILL[W[D[t].id][1]]+' \u00b7 '+(dark?'about 4 min':'about '+MIN[LEN[D[t].id]]+' min'+(LEN[D[t].id]==='long'?', a long one':''))+'</small></button>').join('');
       box.onclick=e=>{ const b=e.target.closest('button'); if(b)pickBearer(+b.dataset.t); }; };
     const reveal=()=>{ c.revealed=true; TL.dim(S); TL.chip(S);
-      box.innerHTML='<h3>Tonight\u2019s lamps</h3><p>'+c.targets.length+' lamps \u00b7 '+mins(c.targets.length)+' \u00b7 '+(S.topic==='gk'?'General knowledge':(window.RF_TOPICS&&window.RF_TOPICS[S.topic])||S.topic)+' \u00b7 '+c.names.map(esc).join(', ')+'</p>'
+      box.innerHTML='<h3>Tonight\u2019s lamps</h3><p>'+c.targets.length+' lamps \u00b7 about '+c.targets.reduce((a,t)=>a+MIN[LEN[D[t].id]],0)+' minutes \u00b7 '+(S.topic==='gk'?'General knowledge':(window.RF_TOPICS&&window.RF_TOPICS[S.topic])||S.topic)+' \u00b7 '+c.names.map(esc).join(', ')+'</p>'
         +c.targets.map(t=>'<div class="card2"><b>'+esc(inv(t))+'</b><small>'+esc(name(t))+' \u00b7 the bearer will '+SKILL[W[D[t].id][1]].toLowerCase()+'</small></div>').join('')
         +'<button type="button" class="btn" id="carryGo">Begin the journey</button>';
       box.onclick=e=>{ if(e.target.closest('#carryGo'))route(); }; };
