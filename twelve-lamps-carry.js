@@ -152,7 +152,7 @@ const TL=window.TL_CARRY={
       box.onclick=e=>{ const b=e.target.closest('button'); if(!b)return; c.bearer=b.dataset.n; c.used.push(c.bearer); if(wasFinal())c.final=true; go(t); }; };
     const route=()=>{ const opts=TL.options(S),lit=c.targets.filter(t=>S.owner[t]>=0).length,dark=opts.length&&c.targets.every(x=>c.tried[x]);
       $('turnNote').textContent=lit+' of '+c.targets.length+' lamps lit.';
-      box.innerHTML='<h3>'+(dark?(opts.length===1?'One lamp is still dark. Go back for it?':opts.length+' lamps are still dark. Which one shall we go back for, and who\u2019s carrying?'):'Where does the light go next?')+'</h3>'
+      box.innerHTML='<h3>'+(dark?(opts.length===1?'One lamp is still dark. Go back for it?':opts.length+' lamps are still dark. Which one shall we go back for, and who\u2019s carrying?'):'Where does the light go next?')+'</h3>'+(dark?'<p>A second chance: three easier questions, and two right answers light the lamp.</p>':'')
         +opts.map(t=>'<button type="button" class="btn ghost" data-t="'+t+'">'+esc(inv(t))+'<small>'+esc(name(t))+' \u00b7 '+SKILL[W[D[t].id][1]]+'</small></button>').join('');
       box.onclick=e=>{ const b=e.target.closest('button'); if(b)pickBearer(+b.dataset.t); }; };
     const reveal=()=>{ c.revealed=true; TL.dim(S); TL.chip(S);
@@ -168,7 +168,7 @@ const TL=window.TL_CARRY={
     if(!c.revealed)reveal(); else route();
   },
   landing(S){ const c=S.carry,D=window.__tl.D,id=D[S.pos].id,again=(c.tried[S.pos]||1)>1,arr=window.TL_ARRIVE&&window.TL_ARRIVE[id];
-    const line=again?(BACK[id]||'Back in '+D[S.pos].name+'. Another go.'):(FIRST[id]||(arr?arr[1]:''));
+    const line=again?(BACK[id]||'Back in '+D[S.pos].name+'. Another go.')+' This is a second chance: three easier questions, and two right answers light the lamp.':(FIRST[id]||(arr?arr[1]:''));
     $('landLine').textContent=line+' '+c.bearer+' carries the lamp: everyone can advise, '+c.bearer+' gives the answers.'; c.igniting=-1; TL.dim(S); TL.chip(S); },
   ending(S){ TL.settle(S); const c=S.carry,D=window.__tl.D; c.current=-1; TL.shelf(S); ['carryPts'].forEach(i=>{const o=$(i);if(o)o.remove();}); ['carryEnd','carryAgain'].forEach(i=>{const o=$(i);if(o)o.remove();});
     const ul=document.createElement('ul'); ul.id='carryEnd';
