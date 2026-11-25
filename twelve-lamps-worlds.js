@@ -66,7 +66,7 @@ al('joseph','railway',{/*title:'Whose sack held the cup?'*/});
 al('galilee','galleon',{/*title:'Calm the storm'*/});
 al('scroll','cave',{title:'By torchlight',rule:c=>'The torch reveals each line of the scroll a word at a time. Answer early for more points: '+(c.multi?'tap your name as soon as you know it.':'up to 15 a question.')});
 al('ark','balloon',{/*title:'Two by two'*/});
-al('lamps','manor',{title:'The last lamp',rule:c=>c.multi?'Questions go round in turn. A wrong answer lets your lamp go out. The last flame burning takes the lantern.':'Three lamps. Six questions. Each wrong answer lets a lamp go out. Keep one burning to light the lantern.'});
+al('lamps','manor',{title:'The last lamp',rule:c=>c.multi?'Questions go round in turn. A wrong answer lets your lamp go out. The last flame burning takes the lamp.':'Three lamps. Six questions. Each wrong answer lets a lamp go out. Keep one burning to light the lamp.'});
 al('nehemiah','bigtop',{/*title:'Keep building'*/});
 al('jacob','city',{/*title:'The ladder race'*/});
 
@@ -108,7 +108,7 @@ function survive(cfg){ return {
       paint();
       const done=st.owners.length>=cfg.goal||st.strikes>=cfg.limit;
       c.status(r.right?cfg.rightLine:cfg.wrongLine);
-      await c.next(done||k>=cfg.cap?'See the lantern':'Next question',r.right?'right':'miss',r);
+      await c.next(done||k>=cfg.cap?'See the lamp':'Next question',r.right?'right':'miss',r);
     }
     const ok=st.owners.length>=cfg.goal, mine=who.map((_,s)=>st.owners.filter(o=>o===s).length);
     who.forEach((i,s)=>{ if(mine[s]) c.award(i,mine[s]*cfg.pts); });
@@ -117,11 +117,11 @@ function survive(cfg){ return {
   }}; }
 T.sinai=survive({title:'The two tablets',goal:6,limit:3,cap:9,pts:5,paint:sinaiPaint,calm:false,label:'Right: carve a line. Wrong: a crack.',
   ruleSolo:'Carve six lines into the two tablets. Each right answer carves one. Three cracks and the stone breaks.',
-  ruleMulti:'Every question is open: tap your name to answer. Right carves a line in your colour, wrong cracks the shared stone. Carve all six before three cracks, and the most lines takes the lantern.',
+  ruleMulti:'Every question is open: tap your name to answer. Right carves a line in your colour, wrong cracks the shared stone. Carve all six before three cracks, and the most lines takes the lamp.',
   rightLine:'A line is carved.',wrongLine:'The stone cracks.',winLine:'The tablets are finished',loseLine:'The stone broke',need:'carve all six lines before three cracks'});
 T.daniel=survive({title:'A night in the den',goal:5,limit:3,cap:10,pts:10,paint:denPaint,calm:true,label:'Right: dawn draws near. Wrong: a lion wakes.',
   ruleSolo:'Reach dawn with five right answers. A wrong answer wakes a lion, but the next right answer settles one back to sleep. Three lions awake at once and the night is lost.',
-  ruleMulti:'Every question is open: tap your name to answer. Five right answers bring dawn. A wrong answer wakes a lion, and the next right one settles it. Three awake at once and the night is lost. The most right answers takes the lantern.',
+  ruleMulti:'Every question is open: tap your name to answer. Five right answers bring dawn. A wrong answer wakes a lion, and the next right one settles it. Three awake at once and the night is lost. The most right answers takes the lamp.',
   rightLine:'Dawn draws nearer.',wrongLine:'A lion stirs.',winLine:'Dawn came, and Daniel is unharmed',loseLine:'The lions woke before dawn',need:'five right answers before three lions wake'});
 
 window.TL_ARRIVE={

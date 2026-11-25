@@ -46,7 +46,7 @@ function lampSVG(id,x,y,state,label,active){
 function shelfHTML(S){
   const c=S.carry,D=window.__tl.D,T=c.targets,pos=[[150,250],[383,250],[617,250],[850,250]];
   let g='<defs><linearGradient id="'+SHC+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".55" stop-color="#b8862f"/><stop offset="1" stop-color="#7a5420"/></linearGradient><radialGradient id="'+SHC+'g"><stop offset="0" stop-color="#ffb347" stop-opacity=".6"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>'
-   +'<rect x="20" y="20" width="960" height="960" rx="30" fill="#0b0a22" fill-opacity=".72" stroke="#e8a455" stroke-opacity=".5" stroke-width="3"/>';
+   +'<rect x="20" y="20" width="960" height="960" rx="30" fill="#120a06" fill-opacity=".72" stroke="#e8a455" stroke-opacity=".5" stroke-width="3"/>';
   [0,1,2].forEach(r=>{ const by=300+r*310; g+='<rect x="50" y="'+by+'" width="900" height="26" rx="7" fill="#3a2514"/><rect x="50" y="'+by+'" width="900" height="6" rx="3" fill="#6a4426"/>'; });
   D.forEach((d,i)=>{ const r=Math.floor(i/4),k=i%4,x=pos[k][0],y=pos[k][1]+r*310,on=T.includes(i),lit=on&&S.owner[i]>=0;
     g+=lampSVG(d.id,x,y,lit?'lit':on?'tonight':'rest',on?d.name:'',S.pos===i&&S.phase&&S.phase!=='between'&&on&&!lit); });

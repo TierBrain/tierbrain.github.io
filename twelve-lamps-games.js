@@ -7,7 +7,7 @@ st.textContent='.ark-roles{margin:0 0 8px;text-align:center;font-weight:700;font
 +'.jl{display:flex;gap:16px;justify-content:center;align-items:flex-end;padding:8px 0 4px}.jl-col{flex:1 1 0;max-width:120px;text-align:center}'
 +'.jl-lad{position:relative;height:250px;width:64px;margin:0 auto 6px;border-left:5px solid #e8d49a;border-right:5px solid #e8d49a;border-radius:3px;background:repeating-linear-gradient(to top,#e8d49a 0 5px,transparent 5px 48px)}'
 +'.jl-top{position:absolute;left:50%;top:-16px;width:30px;height:30px;margin-left:-15px;background:radial-gradient(circle,#fff6d2 0,#ffd27a 40%,transparent 72%);animation:jlg 2.4s ease-in-out infinite}'
-+'.jl-pc{position:absolute;left:50%;bottom:calc(var(--f)*48px);margin-left:-20px;width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;font-weight:800;color:#14143c;box-shadow:0 0 0 3px #fff6d2,0 0 18px var(--c)}'
++'.jl-pc{position:absolute;left:50%;bottom:calc(var(--f)*48px);margin-left:-20px;width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;font-weight:800;color:#1c0f09;box-shadow:0 0 0 3px #fff6d2,0 0 18px var(--c)}'
 +'.jl-sun{font-size:20px;line-height:1}.jl-col b{display:block;font-size:14px}@keyframes jlg{50%{opacity:.5;transform:scale(1.3)}}'
 +'@media (prefers-reduced-motion:reduce){.jl-top{animation:none}}';
 document.head.appendChild(st);

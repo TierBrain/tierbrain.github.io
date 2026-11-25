@@ -36,7 +36,7 @@ const city = {
   async play(c){
     const multi = c.multi, who = multi ? c.order() : [0], lifts = who.map(() => 0);
     const labels = who.map(i => ({ name: c.name(i), colour: c.colour(i), badge: c.symbol(i) }));
-    if (!multi) { lifts.push(0); labels.push({ name: 'Night porter', colour: '#9aa3c7', badge: '<span class="rs-porter">NP</span>' }); }
+    if (!multi) { lifts.push(0); labels.push({ name: 'Night porter', colour: '#c9b49a', badge: '<span class="rs-porter">NP</span>' }); }
     const paint = () => c.stage(liftStage(c, lifts, labels));
     paint();
     const cap = 10; let winner = -1;
@@ -377,14 +377,14 @@ const CSS = `
 #rStage{width:min(980px,calc(100% - 28px));margin:clamp(10px,2vh,20px) auto 0;color:#fff}
 #rStage:empty{display:none}
 #rRule{width:min(980px,calc(100% - 28px));margin:8px auto 0;text-align:center;font-weight:800;color:#fbeed0;text-shadow:0 2px 10px rgba(0,0,0,.7);font-size:clamp(15px,1.3vw,19px)}
-.rs-lifts{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px;background:rgba(10,12,34,.78);border:1px solid rgba(243,217,143,.3);border-radius:18px;padding:12px}
+.rs-lifts{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px;background:rgba(24,13,8,.78);border:1px solid rgba(243,217,143,.3);border-radius:18px;padding:12px}
 .rs-shaft{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
-.rs-floors{position:relative;display:flex;flex-direction:column;width:100%;border-left:2px solid #5a5f86;border-right:2px solid #5a5f86}
-.rs-floors i{height:24px;font-style:normal;font-size:11px;color:#9aa3c7;border-bottom:1px dashed rgba(154,163,199,.4);padding-left:4px}
+.rs-floors{position:relative;display:flex;flex-direction:column;width:100%;border-left:2px solid #6a5240;border-right:2px solid #6a5240}
+.rs-floors i{height:24px;font-style:normal;font-size:11px;color:#c9b49a;border-bottom:1px dashed rgba(201,180,154,.4);padding-left:4px}
 .rs-floors i.roof{color:#f3d98f;font-weight:900}
 .rs-car{position:absolute;left:50%;width:min(44px,80%);height:22px;border-radius:5px;background:var(--c);display:flex;align-items:center;justify-content:center;transform:translateX(-50%);bottom:calc(var(--f) * 24px + 1px);transition:bottom .7s cubic-bezier(.3,1.4,.5,1);box-shadow:0 0 12px var(--c)}
 .rs-car .sym{width:16px;height:16px}
-.rs-porter{font-size:10px;font-weight:900;color:#0b0f2a}
+.rs-porter{font-size:10px;font-weight:900;color:#1c0f09}
 .rs-shaft b{font-size:12px;margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rs-mys{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:10px}
 .rs-sus{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -393,10 +393,10 @@ const CSS = `
 .rs-card b{display:block;font-family:var(--head);font-size:clamp(14px,1.2vw,18px);line-height:1.05}
 .rs-card small{display:block;font-size:12px;line-height:1.25;color:#5a4630;margin-top:4px;font-weight:700}
 .rs-card.out{opacity:.35;filter:grayscale(1)}
-.rs-clues{list-style:none;margin:0;padding:10px;background:rgba(10,12,34,.82);border-radius:14px;font-weight:800;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.rs-clues{list-style:none;margin:0;padding:10px;background:rgba(24,13,8,.82);border-radius:14px;font-weight:800;font-size:14px;display:flex;flex-direction:column;gap:6px}
 .rs-clues span{display:block;font-size:11px;color:#f3d98f;text-transform:uppercase;letter-spacing:.5px}
-.rs-clues li{color:#7d84a8}.rs-clues li.got{color:#fff}.rs-clues li.lost{color:#ff9a8a}
-.rs-candles{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,2vw,22px);background:rgba(10,8,20,.7);border-radius:18px;padding:16px 12px 10px}
+.rs-clues li{color:#a8967e}.rs-clues li.got{color:#fff}.rs-clues li.lost{color:#ff9a8a}
+.rs-candles{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,2vw,22px);background:rgba(22,11,7,.7);border-radius:18px;padding:16px 12px 10px}
 .rs-candle{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:84px;padding-top:22px}
 .rs-wax{position:relative;width:clamp(46px,5vw,66px);height:clamp(22px,3.4vh,32px);border-radius:50% 50% 46% 46%/62% 62% 38% 38%;background:linear-gradient(180deg,#e8c88a,#b8874a);box-shadow:inset 0 -5px 0 var(--c)}
 .rs-wax::after{content:'';position:absolute;right:-12px;top:2px;width:18px;height:10px;background:linear-gradient(180deg,#e8c88a,#b8874a);clip-path:polygon(0 0,100% 40%,0 100%)}
@@ -410,12 +410,12 @@ const CSS = `
 @keyframes rsFlick{to{transform:scale(.9,1.08) rotate(3deg)}}
 @keyframes rsSmoke{from{opacity:.8;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-40px) scale(3)}}
 .rs-fly{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.6fr);gap:10px}
-.rs-window{background:radial-gradient(circle at 50% 40%,#2b3f78,#0b1740);border:6px solid #b9c5da;border-radius:40px;padding:14px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.rs-window{background:radial-gradient(circle at 50% 40%,#8a5a3a,#2a140c);border:6px solid #d8b88a;border-radius:40px;padding:14px;text-align:center;display:flex;flex-direction:column;justify-content:center}
 .rs-plane{font-size:30px;animation:rsBob 3s ease-in-out infinite}
 .rs-window b{font-family:var(--head);font-size:clamp(20px,2vw,28px)}
 .rs-window small{color:#f3d98f;font-weight:800}
-.rs-hints{margin:0;padding:10px 12px 10px 30px;background:rgba(10,12,34,.85);border-radius:16px;font-weight:800;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.3vw,19px)}
-.rs-hints li{color:#5a6088}.rs-hints li.on{color:#fff;animation:rise .5s both}
+.rs-hints{margin:0;padding:10px 12px 10px 30px;background:rgba(24,13,8,.85);border-radius:16px;font-weight:800;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.3vw,19px)}
+.rs-hints li{color:#8a7860}.rs-hints li.on{color:#fff;animation:rise .5s both}
 @keyframes rsBob{50%{transform:translateY(-4px)}}
 .rs-track{background:linear-gradient(#e8c48c,#c99a62);border-radius:18px;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
 .rs-lane{position:relative;height:46px;border-bottom:3px dashed rgba(90,48,32,.35)}

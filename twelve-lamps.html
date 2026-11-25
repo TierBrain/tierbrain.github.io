@@ -515,11 +515,11 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
 <script src="twelve-lamps-art.js?v=2"></script>
 <script src="twelve-lamps-base-worlds.js?v=2"></script>
 <script src="twelve-lamps-sound.js?v=2"></script>
-<script src="twelve-lamps-rounds.js?v=4"></script>
+<script src="twelve-lamps-rounds.js?v=5"></script>
 <script src="twelve-lamps-scenes.js?v=2"></script>
-<script src="twelve-lamps-worlds.js?v=5"></script>
-<script src="twelve-lamps-games.js?v=7"></script>
-<script src="twelve-lamps-carry.js?v=13"></script>
+<script src="twelve-lamps-worlds.js?v=6"></script>
+<script src="twelve-lamps-games.js?v=8"></script>
+<script src="twelve-lamps-carry.js?v=14"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -611,7 +611,7 @@ function groupName(t){ const g = (t || '').split(',').map(x => x.trim()).filter(
 function dialSvg(p, interactive){
   let h = '<defs>' + ART.defs(p)
     + '<linearGradient id="' + p + '-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#d58a3c"/><stop offset="1" stop-color="#7a4418"/></linearGradient>'
-    + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a2414"/><stop offset=".7" stop-color="#11163a"/><stop offset="1" stop-color="#150c07"/></radialGradient>'
+    + '<radialGradient id="' + p + '-face" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a2414"/><stop offset=".7" stop-color="#2a160d"/><stop offset="1" stop-color="#150c07"/></radialGradient>'
     + COLOURS.map((c, k) => '<radialGradient id="' + p + '-glow-' + k + '"><stop offset=".55" stop-color="' + c + '" stop-opacity=".9"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>').join('')
     + '<clipPath id="' + p + '-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="' + p + '-lg"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>';
   // the fixed outer ring, its ticks and the pointer
@@ -1238,7 +1238,7 @@ function cheer(el, pts, colour){ if (STILL) return; const r = el.getBoundingClie
   for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + Math.random() * .3, d = 60 + Math.random() * 70, sp = document.createElement('i'); sp.className = 'spark';
     sp.style.cssText = 'left:' + (cx + Math.cos(a) * r.width * .3) + 'px;top:' + (cy + Math.sin(a) * r.height * .3) + 'px;background:' + ['#f0b44c', '#2fbf8f', colour, '#ffd96a'][k % 4] + ';--x:' + (Math.cos(a) * d).toFixed(0) + 'px;--y:' + (Math.sin(a) * d).toFixed(0) + 'px'; fx.appendChild(sp); }
   setTimeout(() => { fx.querySelectorAll('.spark,.plus').forEach(n => n.remove()); }, 1200); }
-function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o].colour] : '#5a5f86';
+function paintReLantern(i, o){ const lit = o >= 0, c = lit ? COLOURS[S.players[o].colour] : '#6a5240';
   $('reLantern').setAttribute('class', lit ? 'lit' : 'dark');
   $('reLantern').innerHTML = '<defs>' + ART.defs('q') + '<clipPath id="q-win"><path d="M-64 80V-14A64 64 0 0 1 64 -14V80Z"/></clipPath><radialGradient id="q-halo"><stop offset=".5" stop-color="' + c + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient></defs>'
     + '<circle class="halo" r="108" fill="url(#q-halo)"/><g class="rays">' + Array.from({ length: 16 }, (_, k) => { const [x1, y1] = at(k * 22.5, 84), [x2, y2] = at(k * 22.5, k % 2 ? 100 : 108); return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="5" stroke-linecap="round"/>'; }).join('') + '</g>'
@@ -1373,7 +1373,7 @@ paintSetup(); paintResume();
 window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LAMP, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
-<div id="buildTag">Build 16</div>
+<div id="buildTag">Build 17</div>
 </body>
 </html>
 
