@@ -38,7 +38,15 @@ function start(id, ac, out){
   function every(period, first, fn){ let n = 0; const tick = () => { const now = ac.currentTime - t0; while (first + n * period < now + 1.2) { const at = t0 + first + n * period; if (at > ac.currentTime - .02) fn(Math.max(at, ac.currentTime)); n++; } }; tick(); timers.push(setInterval(tick, 400)); }
   function now_and_then(min, max, fn){ let next = ac.currentTime + min * Math.random(); const tick = () => { while (next < ac.currentTime + 1.2) { fn(Math.max(next, ac.currentTime)); next += min + Math.random() * (max - min); } }; tick(); timers.push(setInterval(tick, 400)); }
 
-  WORLDS[id]({ ac, bed, drone, tone, burst, bell, every, now_and_then, t0 });
+  /* follows the lightning on screen: calls fn(at) just after each flash begins, so thunder arrives with the light, not on a separate clock.
+     If no flash can be found on the page after 1.5 s, falls back to a steady period. */
+  function onFlash(sel, pct, fn, fallback){ let last = null, found = false;
+    const poll = () => { const el = document.querySelector(sel); if (!el || !el.getAnimations) return; const an = el.getAnimations().find(x => x.animationName === 'tlb-flash'); if (!an || !an.effect) return; found = true;
+      const p = an.effect.getComputedTiming().progress; if (p == null) return; if (last !== null && last < pct && p >= pct) fn(ac.currentTime); last = p; };
+    timers.push(setInterval(poll, 50));
+    if (fallback) timers.push(setTimeout(() => { if (!found) every(fallback, 0, fn); }, 1500)); }
+
+  WORLDS[id]({ ac, bed, drone, tone, burst, bell, every, now_and_then, onFlash, t0 });
   return {
     level(v, secs){ try { bus.gain.cancelScheduledValues(ac.currentTime); bus.gain.setTargetAtTime(v, ac.currentTime, (secs || .6) / 3); } catch (e) {} },
     stop(){ timers.forEach(clearInterval); try { bus.gain.cancelScheduledValues(ac.currentTime); bus.gain.setTargetAtTime(0, ac.currentTime, .15); } catch (e) {}
@@ -114,7 +122,8 @@ const WORLDS = {
     a.every(11, 5, at => { a.tone(at, 2093, 0, 1.4, .018); a.tone(at + .15, 2637, 0, 1.2, .012); }); },
   /* the storm on Galilee: rain, wind, swell, thunder and creaking wood */
   galilee(a){ a.bed('bandpass', 3000, .5, .06, .3, .4); a.bed('bandpass', 600, .5, .06, .2, .6); a.bed('lowpass', 260, .7, .07, .15, .5);
-    a.every(7, 6.5, at => a.burst(at, 'lowpass', 160, 50, 3.4, .16, .25));
+    /* thunder follows each lightning flash in the scene: a crack, then a long roll */
+    a.onFlash('.tlw-galilee [style*="tlb-flash"]', .91, at => { const d = .35 + Math.random() * .4; a.burst(at + d, 'highpass', 2400, 0, .1, .08, .01); a.burst(at + d + .05, 'lowpass', 160, 50, 3.4, .17, .2); a.burst(at + d + .6, 'lowpass', 120, 45, 2.2, .1, .3); }, 7);
     a.now_and_then(2, 5, at => a.tone(at, 110, 90, .8, .04, 'sawtooth', 300)); },
   /* the scroll cave: drips, a hollow hum, the torch, and a scroll rustling now and then */
   scroll(a){ a.drone('triangle', 70, .04, 200); a.bed('lowpass', 300, .7, .02);
@@ -139,7 +148,9 @@ const WORLDS = {
     const pent = [784, 988, 1175, 1568]; a.now_and_then(2, 5, at => a.bell(at, pent[Math.floor(Math.random() * pent.length)], .02)); },
   /* Mount Sinai: rolling thunder, a rising horn, crackling fire, wind */
   sinai(a){ a.bed('lowpass', 140, .7, .09, .1, .4); a.bed('bandpass', 900, .5, .04, .09, .6); a.drone('sine', 44, .04, 150);
-    a.now_and_then(6, 12, at => a.burst(at, 'lowpass', 150, 50, 3.6, .14, .3));
+    /* thunder follows each flash of lightning on the mountain, and a lower rumble rolls between */
+    a.onFlash('.tlw-sinai [style*="tlb-flash"]', .91, at => { const d = .3 + Math.random() * .35; a.burst(at + d, 'highpass', 2200, 0, .12, .09, .01); a.burst(at + d + .05, 'lowpass', 150, 48, 3.8, .18, .25); a.burst(at + d + .7, 'lowpass', 110, 42, 2.6, .1, .35); }, 8);
+    a.now_and_then(9, 16, at => a.burst(at, 'lowpass', 100, 45, 3, .06, .5));
     a.every(22, 4, at => { a.tone(at, 180, 186, 4.6, .05, 'sawtooth', 600); a.tone(at, 270, 279, 4.6, .02, 'sawtooth', 600); });
     a.now_and_then(.2, .6, at => a.burst(at, 'highpass', 3000, 0, .03, .03)); },
   /* the lions' den: a deep hush, slow breathing, a drip, a rare growl, and a soft bell from the light above */

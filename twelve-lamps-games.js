@@ -216,7 +216,7 @@ const ADVISER={redsea:'Who keeps time for you?',jacob:'Who keeps time for you?',
     /* going back for a dark lamp is a second chance: three easier questions, and two right answers light it */
     const S0=window.__tl&&window.__tl.S, ret=!!(S0&&S0.carry&&(S0.carry.tried[S0.pos]||0)>1&&T.classic), seen=new Set();
     const c2=Object.create(c); c2.count=x=>c.count((ret?'Second chance \u00b7 ':'')+x+' \u00b7 '+who+' answers'+(adv?', '+adv+' advises':''));
-    if(ret){const bank=window.RF_BANK&&window.RF_BANK[S0.topic],pool=bank?[].concat(bank[1]||[],bank[2]||[]):[];
+    if(ret){const bank=window.RF_BANK&&window.RF_BANK[S0.topic],pool=bank?(S0.diff==='kids'&&bank.K?[].concat(bank.K):[].concat(bank[1]||[],bank[2]||[])):[];
       c2.drawQ=()=>{ if(!pool.length)return c.drawQ(); let q=null; for(let k=0;k<8;k++){q=pool[Math.floor(c.rng()*pool.length)]; if(!seen.has(q.q))break;} seen.add(q.q);
         return {q:q.q,correct:q.correct,ref:q.ref,opts:shuffle([q.correct].concat(q.wrong.slice(0,3)),c.rng)}; }; }
     if(c.choose)c2.choose=o=>c.choose(Object.assign({},o,{title:who+' carries the lamp. '+(o.title||'')}));

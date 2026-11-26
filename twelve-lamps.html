@@ -404,7 +404,7 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
         </div>
         <div class="field" id="diffField"><span>Difficulty</span>
           <div class="seg" id="diff" role="group" aria-label="Difficulty">
-            <button type="button" data-v="1">Easy</button><button type="button" data-v="2">Medium</button><button type="button" data-v="3">Hard</button><button type="button" data-v="mix">Mixed</button>
+            <button type="button" data-v="1">Easy</button><button type="button" data-v="2">Medium</button><button type="button" data-v="3">Hard</button><button type="button" data-v="mix">Mixed</button><button type="button" data-v="kids">Kids</button>
           </div>
         </div>
         <div class="field" id="styleField"><span>Rounds</span>
@@ -511,14 +511,14 @@ button#introHint{display:inline-block;white-space:nowrap;pointer-events:none;lef
 
 <script src="questions.js?v=8"></script>
 <script src="ruffled-topics.js?v=1"></script>
-<script src="twelve-lamps-bible.js?v=3"></script>
+<script src="twelve-lamps-bible.js?v=4"></script>
 <script src="twelve-lamps-art.js?v=2"></script>
 <script src="twelve-lamps-base-worlds.js?v=2"></script>
-<script src="twelve-lamps-sound.js?v=2"></script>
+<script src="twelve-lamps-sound.js?v=3"></script>
 <script src="twelve-lamps-rounds.js?v=5"></script>
-<script src="twelve-lamps-scenes.js?v=2"></script>
+<script src="twelve-lamps-scenes.js?v=3"></script>
 <script src="twelve-lamps-worlds.js?v=6"></script>
-<script src="twelve-lamps-games.js?v=8"></script>
+<script src="twelve-lamps-games.js?v=9"></script>
 <script src="twelve-lamps-carry.js?v=14"></script>
 <script>
 'use strict';
@@ -688,7 +688,9 @@ $('topic').innerHTML = TOPICS.map(t => '<option value="' + t[0] + '">' + esc(t[1
 function bankFor(topic){ if (topic === 'gk') return window.TB ? TB.bank('gk') : {}; return (window.RF_BANK || {})[topic] || {}; }
 function okQ(q){ return q && q.q && q.correct && Array.isArray(q.wrong) && q.wrong.length >= 3 && new Set([q.correct].concat(q.wrong.slice(0, 3))).size === 4; }
 function tiersFor(topic, diff){ const b = bankFor(topic), have = Object.keys(b).filter(k => (b[k] || []).length);
-  if (diff === 'mix') return have; const want = String(Math.min(Number(diff), Math.max.apply(null, have.map(Number).concat([1])))); return have.includes(want) ? [want] : have; }
+  if (diff === 'mix') return have.filter(k => k !== 'K');
+  if (diff === 'kids') return have.includes('K') ? ['K'] : have.filter(k => k === '1');
+  const want = String(Math.min(Number(diff), Math.max.apply(null, have.map(Number).concat([1])))); return have.includes(want) ? [want] : have; }
 function poolFor(topic, diff){ const b = bankFor(topic), pool = []; tiersFor(topic, diff).forEach(t => (b[t] || []).forEach(q => { if (okQ(q)) pool.push(q); })); return pool; }
 /* today's dial: the same spins, questions and answer order on every device */
 function dailyPlan(date){ const rnd = rngFrom(hash('twelve-lamps:' + date));
@@ -740,7 +742,7 @@ $('topic').addEventListener('change', () => { cfg.topic = $('topic').value; save
 function paintSummary(){
   const daily = cfg.mode === 'daily', topic = (TOPICS.find(t => t[0] === cfg.topic) || TOPICS[0])[1];
   const parts = daily ? ['Today\'s five spins', 'World games'] : [{ standard: 'Standard, 20 min', long: 'Long, 40 min', evening: 'Whole evening, 90 min' }[cfg.length], topic,
-    { 1: 'Easy', 2: 'Medium', 3: 'Hard', mix: 'Mixed difficulty' }[cfg.diff], cfg.style === 'simple' ? 'Simple quiz' : 'World games'];
+    { 1: 'Easy', 2: 'Medium', 3: 'Hard', mix: 'Mixed difficulty', kids: 'Kids questions' }[cfg.diff], cfg.style === 'simple' ? 'Simple quiz' : 'World games'];
   parts.push(cfg.timed === 'timed' ? '20 seconds to answer' : 'Relaxed answering', cfg.auto === 'tap' ? 'Tap to move on' : 'Moves on by itself');
   $('summary').textContent = parts.join(' · ');
 }
@@ -1373,7 +1375,7 @@ paintSetup(); paintResume();
 window.__tl = { get S(){ return S; }, get R(){ return R; }, get NET(){ return NET; }, force(i){ forced = i; }, today, dailyPlan, D, C, rules: { QPR, PTS, STEAL, LAMP, NUDGE }, get amb(){ return amb; } };
 </script>
 <script src="tb-shell.js" data-tone="dark" data-hide-when="#play,#round,#end" defer></script>
-<div id="buildTag">Build 17</div>
+<div id="buildTag">Build 19</div>
 </body>
 </html>
 

@@ -229,6 +229,65 @@ const REFS=[['rain fall in Noah','Genesis 7:12'],['swallowed by a great fish','J
  ['mother of the prophet Samuel','1 Samuel 1:20'],['went to battle with Barak','Judges 4:4\u201310'],['nephew, who lived in Sodom','Genesis 13:8\u201312; 19:1'],['sentenced Jesus to be crucified','Matthew 27:24\u201326'],['without dying','Genesis 5:24; 2 Kings 2:11'],['genealogy beginning at Abraham','Matthew 1:1\u20132'],['first Christian martyr','Acts 7:59\u201360'],['dry bones','Ezekiel 37:1\u201310'],
  ['armour of God','Ephesians 6:10\u201318'],['faith, hope and love','1 Corinthians 13:13'],['Persian king allowed','Ezra 1:1\u20133'],['lowered into a cistern','Jeremiah 38:6'],['shadow went back','2 Kings 20:8\u201311'],['woman in Joppa','Acts 9:36\u201341'],['lying about the price','Acts 5:1\u201310'],['almost persuaded','Acts 26:28'],['released instead of Jesus','Matthew 27:15\u201321'],['take Judas','Acts 1:23\u201326'],['directly after Acts','Romans 1:1'],['fed by ravens','1 Kings 17:4\u20136'],['flour and oil never ran out','1 Kings 17:8\u201316'],['ancestor of King David','Matthew 1:2\u20136'],['served as priests','Numbers 3:5\u201310'],['longest chapter','Psalm 119'],['The Lord is my shepherd','Psalm 23:1'],['Gideon have left','Judges 7:7'],['riddle at his wedding','Judges 14:12\u201314'],['lost his family and wealth','Job 1:13\u201322'],['Who wrote the book of Acts','Acts 1:1; Luke 1:3'],['hometown','Acts 21:39'],['first called Christians','Acts 11:26']];
 const refFor=q=>{const r=REFS.find(x=>q.indexOf(x[0])>=0&&true);return r?r[1]:'';};
+
+/* ---------- Kids tier (difficulty "Kids"): short, friendly questions about the best-loved stories ---------- */
+const KIDS=[
+['Who built a big boat to save the animals?','Noah','Moses','David','Jonah','Genesis 6:13\u201322'],
+['How many days did it rain?','Forty','Seven','Ten','One hundred','Genesis 7:12'],
+['What bird did Noah send out to look for dry land?','A dove','An owl','A parrot','A duck','Genesis 8:8\u201312'],
+['What did God put in the sky as a promise to Noah?','A rainbow','A snowflake','A kite','A balloon','Genesis 9:13'],
+['What was the big boat called?','The ark','The castle','The raft','The tower','Genesis 6:14'],
+['Who was swallowed by a big fish?','Jonah','Daniel','Peter','Noah','Jonah 1:17'],
+['Which city was Jonah sent to?','Nineveh','Bethlehem','Egypt','Jericho','Jonah 1:2'],
+['Who was thrown into a den of lions but kept safe?','Daniel','David','Samson','Joseph','Daniel 6:16\u201322'],
+['What did David use to beat the giant Goliath?','A sling and a stone','A big sword','A bow and arrow','A net','1 Samuel 17:49'],
+['Who was the shepherd boy who became king?','David','Saul','Joseph','Jonah','1 Samuel 16:11\u201313'],
+['Which instrument did David play?','A harp','A trumpet','A drum','A violin','1 Samuel 16:23'],
+['Where was baby Jesus born?','Bethlehem','Egypt','Jericho','Rome','Luke 2:4\u20137'],
+['Where did Mary lay baby Jesus to sleep?','In a manger','In a boat','In a basket','In a tent','Luke 2:7'],
+['Who followed a star to find baby Jesus?','Wise men','Soldiers','Fishermen','Farmers','Matthew 2:1\u20132, 9\u201311'],
+['Who told the shepherds that Jesus had been born?','Angels','Birds','Kings','Camels','Luke 2:8\u201311'],
+['What did the angels tell the shepherds not to be?','Afraid','Late','Hungry','Sad','Luke 2:10'],
+['Who was Jesus\u2019s mother?','Mary','Eve','Sarah','Ruth','Luke 1:30\u201331'],
+['Who baptised Jesus in the river Jordan?','John the Baptist','Peter','Moses','David','Matthew 3:13\u201317'],
+['How many close friends did Jesus choose to follow him?','Twelve','Two','Five','Twenty','Mark 3:14'],
+['What was Peter\u2019s job before he followed Jesus?','A fisherman','A baker','A soldier','A shepherd','Matthew 4:18'],
+['What did Jesus turn water into at a wedding?','Wine','Milk','Honey','Oil','John 2:1\u201311'],
+['What did a boy share so that Jesus could feed five thousand people?','Five loaves and two fish','Three apples','A bag of rice','Ten melons','John 6:9'],
+['Who climbed a tree to see Jesus?','Zacchaeus','Peter','Matthew','Paul','Luke 19:1\u20134'],
+['Who walked on the water toward Jesus?','Peter','John','Paul','Andrew','Matthew 14:29'],
+['Which sea did Jesus calm with his words?','The Sea of Galilee','The Red Sea','The Dead Sea','The Black Sea','Mark 4:39'],
+['What did Jesus say we should do to our neighbours?','Love them','Ignore them','Argue with them','Hide from them','Mark 12:31'],
+['What did Jesus do with the little children who came to him?','He blessed them','He sent them home','He told them to be quiet','He ignored them','Mark 10:13\u201316'],
+['In the story of the lost sheep, how many sheep did the shepherd leave behind to find the one?','Ninety-nine','Ten','Five','Two','Luke 15:4'],
+['What did the father do when his son came home?','He hugged him and threw a party','He shut the door','He sent him away','He ignored him','Luke 15:20\u201324'],
+['Which story is about a man who helped someone hurt on the road?','The Good Samaritan','The Big Fish','The Lost Crown','The Tall Tower','Luke 10:25\u201337'],
+['What did the wise man build his house on?','Rock','Sand','Mud','Ice','Matthew 7:24'],
+['What did the foolish man build his house on?','Sand','Rock','A hill','A tree','Matthew 7:26'],
+['On which day did Jesus rise from the dead?','The third day','The first day','The tenth day','The seventh day','Luke 24:7'],
+['What was rolled away from Jesus\u2019s tomb?','The stone','The door','The gate','The cart','Luke 24:2'],
+['What are the first words of the Lord\u2019s Prayer: \u201cOur ___ in heaven\u201d?','Father','King','Friend','Shepherd','Matthew 6:9'],
+['Who was the first man?','Adam','Noah','Abraham','Moses','Genesis 2:7'],
+['What was the first woman called?','Eve','Ruth','Mary','Sarah','Genesis 3:20'],
+['Where did Adam and Eve live?','In a garden','In a castle','In a cave','In a boat','Genesis 2:8'],
+['On which day did God rest?','The seventh day','The first day','The third day','The tenth day','Genesis 2:2'],
+['What did God make on the first day?','Light','Fish','Mountains','Birds','Genesis 1:3\u20135'],
+['Which book is the first in the Bible?','Genesis','Psalms','Matthew','Exodus','Genesis 1:1'],
+['Who led God\u2019s people out of Egypt?','Moses','Noah','Samson','Joshua','Exodus 3:10'],
+['What did Moses see burning without burning up?','A bush','A tree','A hut','A house','Exodus 3:2'],
+['Who found baby Moses in a basket by the river?','Pharaoh\u2019s daughter','A shepherd','A soldier','A fisherman','Exodus 2:5\u20136'],
+['What did God send to feed his people in the desert?','Manna','Apples','Fish','Eggs','Exodus 16:14\u201315'],
+['How many commandments did God give Moses?','Ten','Three','Twenty','One','Exodus 20:1\u201317'],
+['What fell down at Jericho when God\u2019s people marched round?','The walls','The roof','A tree','A tower','Joshua 6:20'],
+['What did the priests blow as they marched round Jericho?','Trumpets','Whistles','Guitars','Drums','Joshua 6:4'],
+['Who was the strong man whose strength was in his hair?','Samson','Goliath','Daniel','Moses','Judges 16:17'],
+['Who was thrown into a pit by his brothers?','Joseph','Moses','Daniel','Jacob','Genesis 37:23\u201328'],
+['What special thing did Jacob give his son Joseph?','A coloured coat','A gold crown','A horse','A boat','Genesis 37:3'],
+['Who was the wise king who built the Temple?','Solomon','Saul','Goliath','Herod','1 Kings 3:12; 6:1'],
+['Who was the brave queen who saved her people?','Esther','Eve','Ruth','Mary','Esther 4:14\u201316; 7:3\u20134'],
+['Which animal spoke to Balaam?','A donkey','A cat','A dog','A horse','Numbers 22:28'],
+['Who prayed three times a day, even when it was dangerous?','Daniel','Noah','Peter','David','Daniel 6:10']
+];
 window.RF_TOPICS=window.RF_TOPICS||{}; if(!window.RF_TOPICS.bible) window.RF_TOPICS.bible='The Bible';
 /* If TierBrain already has a 'bible' topic loaded, add to it rather than replace it, and skip any question it already has. */
 window.RF_BANK=window.RF_BANK||{};
@@ -238,4 +297,6 @@ Object.keys(T).forEach(t=>{
   const rows=T[t].concat(U[t]||[]).concat(V[t]||[]);
   bank[t]=(bank[t]||[]).concat(rows.filter(a=>!have.has(a[0].toLowerCase().trim())).map(a=>({q:a[0],correct:a[1],wrong:a.slice(2,5),ref:a[5]||refFor(a[0])})));
 });
+const kh=new Set((bank.K||[]).map(x=>x.q.toLowerCase().trim()));
+bank.K=(bank.K||[]).concat(KIDS.filter(a=>!kh.has(a[0].toLowerCase().trim())).map(a=>({q:a[0],correct:a[1],wrong:a.slice(2,5),ref:a[5]})));
 })();
