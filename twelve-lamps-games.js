@@ -100,24 +100,34 @@ st2.textContent='.nw{display:flex;flex-direction:column-reverse;gap:3px;max-widt
 +'@media (prefers-reduced-motion:reduce){.nw-r.new i{animation:none}}';
 document.head.appendChild(st2);
 
-/* ---------- Nehemiah's wall ---------- */
-function wallStage(n,max,fresh){
-  let h='<div class="nw">';for(let k=1;k<=max;k++)h+='<div class="nw-r'+(k<=n?'':' off')+(k===fresh&&k<=n?' new':'')+'">'+'<i></i>'.repeat(6)+'</div>';
-  return h+'</div><p class="nw-note">Keep four courses standing to light this lamp.</p>';
+/* ---------- Nehemiah's wall: close three gaps before dusk ---------- */
+const GAPS=[{n:'The gate',need:3},{n:'The tower',need:2},{n:'The wall',need:3}];
+function gapStage(st,note){
+  return '<div class="nw3">'+GAPS.map((g,i)=>{const have=st.h[i],done=have>=g.need;
+    return '<div class="nw3-g'+(done?' done':'')+(st.hit===i?' hit':'')+'"><b>'+g.n+'</b><div class="nw3-s">'+Array.from({length:g.need},(_,k)=>'<i class="'+(k<have?'on':'')+'"></i>').join('')+'</div><small>'+(done?'Closed and safe':have+' of '+g.need+' stones')+'</small></div>';}).join('')+'</div>'+(note?'<p class="nw-note">'+note+'</p>':'');
 }
-T.nehemiah={title:'Keep building',
- rule:()=>'Six quick questions. Two courses of the wall already stand. Every right answer adds a course; every miss brings one down. Six points for each course still standing at the end.',
+T.nehemiah={title:'Close the gaps',
+ rule:()=>'Three gaps break the wall: the gate needs three stones, the tower two and the wall three. Each right answer earns a stone, and you choose the gap it goes in. Each miss lets the enemy pull a stone from the tallest gap still open. Close at least two gaps by dusk to light the lamp.',
  async play(c){
-  const me=c.multi?c.me:0;let n=2;const MAX=8;
-  c.stage(wallStage(n,MAX));
-  for(let k=0;k<6;k++){c.count('Wall question '+(k+1)+' of 6');
-   const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,time:12000,label:plural(n,'course')+' standing'});
-   n=r.right?Math.min(MAX,n+1):Math.max(0,n-1);c.sfx(r.right?'plate':'smash');
-   c.stage(wallStage(n,MAX,r.right?n:0));await c.next(k<5?'Next question':'See the lamp',r.right?'right':'miss',r);}
-  if(n)c.award(me,n*6);
-  const ok=n>=4;
-  if(c.multi)return {taker:ok?me:-1,line:plural(n,'course')+' still standing'};
-  return {lit:ok,line:plural(n,'course')+' still standing',need:'keep four courses standing to light it'};
+  const me=c.multi?c.me:0,st={h:[0,0,0],hit:-1},MAXQ=9;let k=0;
+  const open=()=>GAPS.map((g,i)=>i).filter(i=>st.h[i]<GAPS[i].need);
+  c.stage(gapStage(st,'Close at least two gaps before dusk.'));
+  while(k<MAXQ&&open().length){
+    c.count('Dusk draws near: question '+(k+1)+' of up to '+MAXQ);
+    const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,time:15000,label:'Right: earn a stone. Wrong: the enemy pulls one down.'}); k++; st.hit=-1;
+    if(r.right){ const o=open(); let g=o[0];
+      if(o.length>1)g=o[await c.choose({who:c.multi?me:-1,title:'Which gap does this stone go in?',options:o.map(i=>GAPS[i].n+' ('+st.h[i]+' of '+GAPS[i].need+')')})];
+      st.h[g]++; st.hit=g; c.sfx('plate'); c.stage(gapStage(st,st.h[g]>=GAPS[g].need?GAPS[g].n+' is closed, and safe from the enemy.':'A stone is set in '+GAPS[g].n.toLowerCase()+'.')); }
+    else { const o=open().filter(i=>st.h[i]>0).sort((a,b)=>st.h[b]-st.h[a]);
+      if(o.length){ st.h[o[0]]--; st.hit=o[0]; c.sfx('smash'); c.stage(gapStage(st,'The enemy pulls a stone from '+GAPS[o[0]].n.toLowerCase()+'.')); } else c.stage(gapStage(st,'No stone to pull down yet.')); }
+    const closed0=GAPS.filter((g,i)=>st.h[i]>=g.need).length;
+    await c.next(k>=MAXQ||!open().length?'See the lamp':'Next question',r.right?'right':'miss',r);
+  }
+  const closed=GAPS.filter((g,i)=>st.h[i]>=g.need).length,stones=st.h.reduce((a,b)=>a+b,0),pts=stones*5+closed*10,ok=closed>=2;
+  if(pts)c.award(me,pts);
+  const line=closed+' of 3 gaps closed';
+  if(c.multi)return {taker:ok?me:-1,line};
+  return {lit:ok,line,need:'close at least two gaps to light it'};
  }};
 
 /* ---------- Galilee: the great catch ---------- */
@@ -203,10 +213,105 @@ T.joseph={title:'Whose sack holds the cup?',
   }
  }};
 
+/* ---------- Jonah: inside the fish, listening for what is outside ---------- */
+const SND=(f)=>{try{f();}catch(e){}};
+const CUES={
+ waves:['Waves',()=>{noise(0,1.2,500,.09);noise(.4,.9,300,.06);}],
+ gulls:['Gulls',()=>{tone(1900,0,.18,.05,'triangle');tone(1500,.22,.25,.05,'triangle');tone(1800,.6,.2,.04,'triangle');}],
+ splash:['A splash',()=>{noise(0,.5,2200,.12);tone(110,0,.5,.1,'sine');}],
+ thunder:['Thunder',()=>{noise(0,1.4,150,.16);}],
+ bell:['A ship\u2019s bell',()=>{bell(660,0,.1);bell(660,.5,.07);}],
+ creak:['Creaking timber',()=>{tone(130,0,.5,.05,'sawtooth');tone(105,.45,.5,.04,'sawtooth');}],
+ wind:['Wind',()=>{noise(0,1.3,900,.07);}],
+ heart:['A heartbeat',()=>{tone(70,0,.15,.14,'sine');tone(70,.35,.15,.14,'sine');}]
+};
+const ORD=['first','second','third','fourth'];
+function fishStage(head,body,dots){ return '<div class="jf"><p class="jf-h">'+head+'</p><p class="jf-b">'+body+'</p>'+(dots?'<div class="jf-d">'+dots+'</div>':'')+'</div>'; }
+async function playSeq(c,seq,again){
+  for(let i=0;i<seq.length;i++){
+    c.stage(fishStage(again?'Hear it once more':'Listen\u2026',CUES[seq[i]][0],seq.map((x,j)=>'<i class="'+(j<=i?'on':'')+'"></i>').join('')));
+    SND(CUES[seq[i]][1]); await new Promise(r=>setTimeout(r,1700));
+  }
+}
+T.jonah={title:'Inside the fish',
+ rule:()=>'It is dark inside the fish, and you can only hear what is outside. Three times, listen to a short run of sounds, then say what you heard in order. A right answer in between lets you hear the sounds once more. Get six of the eight choices right to light the lamp.',
+ async play(c){
+  const me=c.multi?c.me:0,sizes=[3,4,4];let right=0,total=0;
+  for(let w=0;w<sizes.length;w++){
+    const seq=shuffle(Object.keys(CUES),c.rng).slice(0,sizes[w]);
+    c.count('Wave '+(w+1)+' of 3');
+    await playSeq(c,seq,false);
+    c.stage(fishStage('Surface for air','Answer right to hear the sounds once more.'));
+    c.count('Wave '+(w+1)+' of 3: a breath of air');
+    const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,time:15000,label:'Right: hear the sounds again.'});
+    if(r.right){ c.sfx('right'); await playSeq(c,seq,true); }
+    let remaining=seq.slice(),picked=[];
+    for(let pos=0;pos<seq.length-1;pos++){
+      c.stage(fishStage('Put them in order','What did you hear '+ORD[pos]+'?',picked.map(p=>'<span class="jf-p'+(p.ok?' ok':' no')+'">'+CUES[p.id][0]+'</span>').join('')));
+      c.count('Wave '+(w+1)+' of 3: put them in order');
+      const opts=shuffle(remaining,c.rng),idx=await c.choose({who:c.multi?me:-1,title:'What did you hear '+ORD[pos]+'?',options:opts.map(x=>CUES[x][0])});
+      const pick=opts[idx],ok=pick===seq[pos]; total++; if(ok){right++;c.sfx('up');} else c.sfx('down');
+      picked.push({id:pick,ok}); remaining=remaining.filter(x=>x!==pick);
+    }
+    c.stage(fishStage('It was','<span class="jf-o">'+seq.map(x=>CUES[x][0]).join(' \u2192 ')+'</span>'));
+    c.status('You got '+picked.filter(p=>p.ok).length+' of '+picked.length+' in order.');
+    await c.next(w<sizes.length-1?'The next wave':'See the lamp',picked.every(p=>p.ok)?'right':'miss');
+  }
+  const ok=right>=6;
+  if(right)c.award(me,right*10);
+  const line=right+' of '+total+' sounds placed right';
+  if(c.multi)return {taker:ok?me:-1,line};
+  return {lit:ok,line,need:'place six of the eight sounds right to light it'};
+ }};
+
+/* ---------- The ten lamps: how much oil to burn before the bridegroom comes ---------- */
+const WATCHES=['The evening watch','The midnight watch','The last watch'];
+const BURN=[{n:'Low',oil:1,pts:5},{n:'Steady',oil:2,pts:10},{n:'Bright',oil:3,pts:15}];
+function oilStage(st,note){
+  return '<div class="tw"><div class="tw-oil">'+Array.from({length:9},(_,i)=>'<i class="'+(i<st.oil?'on':'')+'"></i>').join('')+'</div><p class="tw-l">Oil left: '+st.oil+' of 9 \u00b7 Points: '+st.pts+'</p>'
+   +'<div class="tw-w">'+WATCHES.map((n,i)=>'<div class="tw-c'+(st.w===i?' now':'')+'"><b>'+n+'</b><small>'+(st.burn[i]!=null?BURN[st.burn[i]].n+' flame':'Not yet')+'</small></div>').join('')
+   +'<div class="tw-c need"><b>The bridegroom</b><small>'+(st.reveal?'needed '+st.need+' oil':'needs ? oil')+'</small></div></div>'+(note?'<p class="tw-n">'+note+'</p>':'')+'</div>';
+}
+T.lamps={title:'The oil and the night',
+ rule:()=>'The bridegroom is late, and nobody knows how late. You start with nine measures of oil and three watches. Before each watch choose a flame: brighter earns more points for each right answer, but burns more oil. Each wrong answer spills a measure. When he comes you need enough oil left, and you will only find out how much then.',
+ async play(c){
+  const me=c.multi?c.me:0,st={oil:9,pts:0,w:0,burn:[],need:2+Math.floor(c.rng()*3),reveal:false};
+  for(let w=0;w<3;w++){
+    st.w=w;
+    if(w===2) c.status(st.need===2?'You hear music far off: he may be close.':st.need===3?'Faint footsteps, but who can say?':'Only silence: he may be a long way off.');
+    c.stage(oilStage(st,w===2?(st.need===2?'Music far off: he may be close.':st.need===3?'Faint footsteps, but who can say?':'Only silence: he may be a long way off.'):'Choose how brightly to burn.'));
+    const opts=BURN.map((b,i)=>i).filter(i=>BURN[i].oil<=st.oil);
+    let lvl=-1;
+    if(opts.length)lvl=opts[opts.length>1?await c.choose({who:c.multi?me:-1,title:WATCHES[w]+': how bright a flame?',options:opts.map(i=>BURN[i].n+': burns '+BURN[i].oil+' oil, '+BURN[i].pts+' points a right answer')}):0];
+    st.burn[w]=lvl>=0?lvl:null; if(lvl>=0)st.oil-=BURN[lvl].oil;
+    c.stage(oilStage(st,lvl>=0?BURN[lvl].n+' flame: '+BURN[lvl].oil+' oil burned.':'No oil left: the watch passes in the dark.'));
+    if(lvl<0){ await c.next(w<2?'The next watch':'The bridegroom comes','miss'); continue; }
+    for(let q=0;q<2;q++){
+      c.count(WATCHES[w]+': question '+(q+1)+' of 2');
+      const r=await c.question(c.drawQ(),{who:me,pts:0,steal:false,noAward:true,time:15000,label:BURN[lvl].n+' flame: '+BURN[lvl].pts+' points if right. Wrong spills oil.'});
+      if(r.right){st.pts+=BURN[lvl].pts;c.sfx('up');} else {st.oil=Math.max(0,st.oil-1);c.sfx('down');}
+      c.stage(oilStage(st,r.right?'+'+BURN[lvl].pts+' points.':'A measure of oil spills.'));
+      await c.next(q<1?'Next question':(w<2?'The next watch':'The bridegroom comes'),r.right?'right':'miss',r);
+    }
+  }
+  st.reveal=true; const ok=st.oil>=st.need;
+  c.stage(oilStage(st,ok?'You had '+st.oil+' oil and needed '+st.need+': the lamps were burning when he came.':'You had '+st.oil+' oil but needed '+st.need+': the lamps went out before he came.'));
+  c.sfx(ok?'right':'down'); if(st.pts)c.award(me,st.pts);
+  await c.next('See the lamp',ok?'right':'miss');
+  const line=ok?'The lamps were still burning':'The lamps went out';
+  if(c.multi)return {taker:ok?me:-1,line};
+  return {lit:ok,line,need:'keep enough oil for the bridegroom to light it'};
+ }};
+const st4=document.createElement('style');
+st4.textContent='.nw3,.tw-w{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:6px 0}.nw3-g{flex:1;max-width:130px;text-align:center}.nw3-g b{display:block;font-size:14px}.nw3-s{display:flex;flex-direction:column-reverse;gap:3px;margin:6px 0}.nw3-s i{height:22px;border-radius:3px;border:1px dashed rgba(232,212,154,.4)}.nw3-s i.on{background:#b8946a;border:0;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}.nw3-g.done .nw3-s i.on{background:#e8c06a}.nw3-g.hit .nw3-s i.on:last-child{animation:nwp .5s ease-out}.nw3-g small{font-size:12px;opacity:.85}'
++'.jf{text-align:center;padding:16px 8px;border-radius:24px;background:radial-gradient(ellipse at 50% 130%,rgba(150,70,40,.45),transparent 70%),repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 28px)}.jf-h{margin:0;font-size:15px;opacity:.85}.jf-b{margin:8px 0;font-size:clamp(24px,5vw,38px);font-weight:800}.jf-d{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.jf-d i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.2)}.jf-d i.on{background:#ffd27a}.jf-p{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-size:14px}.jf-p.ok{background:#2e7d4f}.jf-p.no{background:#8a3a2a}.jf-o{font-size:clamp(16px,3.6vw,22px)}'
++'.tw{text-align:center}.tw-oil{display:flex;gap:6px;justify-content:center;margin:8px 0}.tw-oil i{width:16px;height:22px;border-radius:50% 50% 60% 60%/40% 40% 60% 60%;border:1px solid rgba(255,210,122,.4)}.tw-oil i.on{background:linear-gradient(#ffe9a0,#e8a455)}.tw-l{margin:0;font-weight:700}.tw-c{flex:1;max-width:120px;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.07)}.tw-c.now{box-shadow:0 0 0 2px #ffd27a}.tw-c b{display:block;font-size:13px}.tw-c small{font-size:12px;opacity:.85}.tw-c.need{background:rgba(120,50,30,.4)}.tw-n{margin:8px 0 0;font-weight:700;font-size:15px}';
+document.head.appendChild(st4);
+
 /* In Carry the Light, the bearer answers and makes each round's key call; everyone else advises.
    Before every world except the Ark (which has its own jobs), the bearer picks the person they will lean on. */
-const ADVISER={redsea:'Who keeps time for you?',jacob:'Who keeps time for you?',jonah:'Who do you trust to judge how deep to go?',galilee:'Who do you trust to judge this storm?',
- paul:'Who is your detective?',joseph:'Who is your detective?',scroll:'Who is your spotter?',nehemiah:'Who keeps you steady?',sinai:'Who keeps you steady?',lamps:'Who keeps watch with you?',daniel:'Who keeps watch with you?'};
+const ADVISER={redsea:'Who keeps time for you?',jacob:'Who keeps time for you?',jonah:'Who listens with you?',galilee:'Who do you trust to judge this storm?',
+ paul:'Who is your detective?',joseph:'Who is your detective?',scroll:'Who is your spotter?',nehemiah:'Who helps you plan the gaps?',sinai:'Who keeps you steady?',lamps:'Who keeps watch with you?',daniel:'Who keeps watch with you?'};
 ['redsea','jonah','paul','joseph','galilee','scroll','ark','lamps','nehemiah','jacob','sinai','daniel'].forEach(id=>{const t=T[id]; if(!t)return; const play=t.play;
   t.play=async function(c){ const who=window.TL_CARRY&&window.TL_CARRY.bearerName(); if(!who)return play.call(this,c);
     let adv='';

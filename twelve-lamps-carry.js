@@ -4,19 +4,19 @@
 (function(){'use strict';
 const $=id=>document.getElementById(id);
 const W={
- redsea:['Race Pharaoh\u2019s chariots across the sea','speed'],jonah:['Dive deep, and know when to surface','risk'],
+ redsea:['Race Pharaoh\u2019s chariots across the sea','speed'],jonah:['Listen in the belly of the fish','listen'],
  paul:['Name the city from the clues','deduce'],joseph:['Find the silver cup','deduce'],
  galilee:['Brave the storm','risk'],scroll:['Read the scroll by torchlight','notice'],
- ark:['Watch the animals board','notice'],lamps:['Keep one lamp burning','endure'],
- nehemiah:['Keep the wall going up','steady'],jacob:['Climb the ladder before the dawn','speed'],
+ ark:['Watch the animals board','notice'],lamps:['Decide how much oil to burn','foresee'],
+ nehemiah:['Close the gaps before dusk','plan'],jacob:['Climb the ladder before the dawn','speed'],
  sinai:['Carve the two tablets','steady'],daniel:['Bring Daniel through the night','endure']};
 /* pacing: how long each world tends to run, so a night is not made of long, question-by-question rounds back to back */
 const LEN={redsea:'short',scroll:'short',jonah:'medium',paul:'medium',joseph:'medium',galilee:'medium',ark:'medium',lamps:'long',nehemiah:'long',jacob:'long',sinai:'long',daniel:'long'},MIN={short:5,medium:7,long:9};
-const SKILL={notice:'Notice',deduce:'Deduce',risk:'Judge a risk',steady:'Stay steady',endure:'Hold on',speed:'Move fast'};
+const SKILL={listen:'Listen',plan:'Plan',foresee:'Plan ahead',notice:'Notice',deduce:'Deduce',risk:'Judge a risk',steady:'Stay steady',endure:'Hold on',speed:'Move fast'};
 const FIRST={ark:'The ramp is coming up. Watch the last few animals carefully. Once that door shuts, somebody will ask what you saw.',
  joseph:'Four brothers have stopped on the road. Somewhere among their sacks is a silver cup. How much evidence will you need before you name a name?',
  daniel:'You can hear one of them breathing. Get the next answer right and it settles. Wake three at once and it will be a very long night.'};
-const BACK={redsea:'Back at the sea. This time, stay ahead of the chariots.',jonah:'Back in the deep. This time, know when to surface.',paul:'Back on the road. More cities to find.',scroll:'Back by torchlight. Read a little faster this time.',lamps:'Back at midnight. This time, keep one flame burning.',nehemiah:'Back on the wall. Build it higher this time.',jacob:'Back at the ladder. This time, reach the top before dawn.',sinai:'Back at the mountain. Carve all six lines this time.',galilee:'Back on the lake. Weigh the storm more carefully this time.',ark:'Back on the ramp. Look harder this time.',joseph:'Back at the sacks. Take your time, and trust the clues.',daniel:'Back in the den. This time, let\u2019s get Daniel to dawn.'};
+const BACK={redsea:'Back at the sea. This time, stay ahead of the chariots.',jonah:'Back in the deep. Listen more closely this time.',paul:'Back on the road. More cities to find.',scroll:'Back by torchlight. Read a little faster this time.',lamps:'Back at midnight. This time, save your oil wisely.',nehemiah:'Back on the wall. Close the gaps this time.',jacob:'Back at the ladder. This time, reach the top before dawn.',sinai:'Back at the mountain. Carve all six lines this time.',galilee:'Back on the lake. Weigh the storm more carefully this time.',ark:'Back on the ramp. Look harder this time.',joseph:'Back at the sacks. Take your time, and trust the clues.',daniel:'Back in the den. This time, let\u2019s get Daniel to dawn.'};
 const RK='tb-twelve-lamps-recent';
 const st=document.createElement('style');
 st.textContent='#carryBox{display:grid;gap:10px;margin-top:8px}#carryBox h3{margin:0;font-size:18px}#carryBox p{margin:0;opacity:.8;font-size:14px}#carryBox .btn{width:100%;text-align:left;font-size:17px;padding:12px 20px}#carryBox small{display:block;font-weight:600;opacity:.75;font-size:13px;margin-top:2px}#carryBox .row{display:flex;flex-wrap:wrap;gap:8px}#carryBox .row .btn{width:auto;text-align:center}#carryBox .card2{display:grid;gap:6px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,205,140,.3)}#carryEnd{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:6px;font-size:clamp(16px,1.8vw,22px)}#carryEnd .dark{opacity:.55}#carryAgain{font-family:var(--flour);font-style:italic;margin:0 0 18px;color:#f6e6c4}';
